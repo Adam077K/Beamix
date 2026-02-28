@@ -1,89 +1,61 @@
----
-description: Create project plan using project-planner agent. No code writing - only plan file generation.
----
+# /plan — Sprint / Feature Planning
 
-# /plan - Project Planning Mode
-
-$ARGUMENTS
-
----
-
-## 🔴 CRITICAL RULES
-
-1. **NO CODE WRITING** - This command creates plan file only
-2. **Use project-planner agent** - NOT Antigravity Agent's native Plan mode
-3. **Socratic Gate** - Ask clarifying questions before planning
-4. **Dynamic Naming** - Plan file named based on task
-
----
-
-## Task
-
-Use the `project-planner` agent with this context:
-
-```
-CONTEXT:
-- User Request: $ARGUMENTS
-- Mode: PLANNING ONLY (no code)
-- Output: docs/PLAN-{task-slug}.md (dynamic naming)
-
-NAMING RULES:
-1. Extract 2-3 key words from request
-2. Lowercase, hyphen-separated
-3. Max 30 characters
-4. Example: "e-commerce cart" → PLAN-ecommerce-cart.md
-
-RULES:
-1. Follow project-planner.md Phase -1 (Context Check)
-2. Follow project-planner.md Phase 0 (Socratic Gate)
-3. Create PLAN-{slug}.md with task breakdown
-4. DO NOT write any code files
-5. REPORT the exact file name created
-```
-
----
-
-## Expected Output
-
-| Deliverable | Location |
-|-------------|----------|
-| Project Plan | `docs/PLAN-{task-slug}.md` |
-| Task Breakdown | Inside plan file |
-| Agent Assignments | Inside plan file |
-| Verification Checklist | Phase X in plan file |
-
----
-
-## After Planning
-
-Tell user:
-```
-[OK] Plan created: docs/PLAN-{slug}.md
-
-Next steps:
-- Review the plan
-- Run `/create` to start implementation
-- Or modify plan manually
-```
-
----
-
-## Naming Examples
-
-| Request | Plan File |
-|---------|-----------|
-| `/plan e-commerce site with cart` | `docs/PLAN-ecommerce-cart.md` |
-| `/plan mobile app for fitness` | `docs/PLAN-fitness-app.md` |
-| `/plan add dark mode feature` | `docs/PLAN-dark-mode.md` |
-| `/plan fix authentication bug` | `docs/PLAN-auth-fix.md` |
-| `/plan SaaS dashboard` | `docs/PLAN-saas-dashboard.md` |
-
----
+Iris orchestrates the team to plan a feature or sprint.
 
 ## Usage
+```
+/plan [feature or sprint goal]
+```
+
+## Examples
 
 ```
-/plan e-commerce site with cart
-/plan mobile app for fitness tracking
-/plan SaaS dashboard with analytics
+/plan "user authentication flow"
+/plan "this week's sprint"
+/plan "v1 launch — what needs to happen"
+```
+
+## What Iris Does
+
+### For a feature:
+1. **Morgan** — extracts the user vision (dream extraction, not form-filling)
+2. **Morgan** — writes the PRD (problem + user stories + success metrics + locked decisions)
+3. **Atlas** — reviews PRD for technical feasibility, estimates effort
+4. **Lyra** — identifies design work needed
+5. **Guardian** — flags security considerations upfront
+6. **Iris** — synthesizes into an ordered task list with owners and done-when criteria
+
+### For a sprint:
+1. Iris reads current `.claude/memory/DECISIONS.md` for context
+2. Iris reads `CLAUDE.md` for current priorities
+3. Proposes sprint plan: tasks / owners / done-when criteria
+4. Asks: "Anything to add, remove, or reprioritize?"
+
+## User Decision Fidelity
+
+Once a decision is made in planning, it's LOCKED:
+- Every locked decision must appear in a task's done-when criteria
+- No deferred ideas sneak into scope
+- Open questions are named explicitly with an owner
+
+## Output Format
+
+```
+## Sprint Plan — [Goal]
+
+### Locked Decisions
+- [Decision + rationale — these will NOT be re-opened]
+
+### Phase 1 — [Name] (parallel where possible)
+- [ ] [Task] → [Agent] | Done when: [specific, testable criteria]
+- [ ] [Task] → [Agent] | Done when: [specific, testable criteria]
+
+### Phase 2 — [Name] (after Phase 1)
+- [ ] [Task] → [Agent] | Done when: [criteria]
+
+### Open Questions
+- [Decision needed + who answers it]
+
+### Out of Scope
+- [Explicitly deferred — so it doesn't creep in]
 ```
