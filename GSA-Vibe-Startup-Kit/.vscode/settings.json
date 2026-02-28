@@ -1,0 +1,6 @@
+{
+  "cursor.general.enableShadowWorkspace": false,
+  "files.associations": {
+    "*.md": "markdown"
+  }
+}

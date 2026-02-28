@@ -1,0 +1,17 @@
+# Local-only: disabled skills for lean configuration
+# These skills are kept in the repository but disabled locally
+.disabled/
+
+# Local / secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / tool caches (keep config, ignore caches)
+.claude/memory/*.local.md
+.planning/state.local.json
