@@ -1,5 +1,7 @@
 # Rex Agent Memory
 
+**Project Repository:** https://github.com/Adam077K/Beamix
+
 ## Research Completed
 
 ### GEO Competitive Landscape (2026-02-27)

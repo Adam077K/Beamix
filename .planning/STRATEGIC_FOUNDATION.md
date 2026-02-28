@@ -1,6 +1,8 @@
 # Beamix — Strategic Foundation
 
 > Single source of truth for the product rebuild. All architecture, design, and development decisions flow from this document.
+>
+> **Repository:** https://github.com/Adam077K/Beamix
 
 ---
 

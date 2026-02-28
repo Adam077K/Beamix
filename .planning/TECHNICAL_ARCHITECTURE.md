@@ -1,6 +1,8 @@
-# Beamix -- Technical Architecture
+# Beamix — Technical Architecture
 
 > Complete technical specification for the Beamix GEO Platform. This document is the authoritative reference for all architecture, schema, API, and integration decisions.
+>
+> **Repository:** https://github.com/Adam077K/Beamix
 
 ---
 

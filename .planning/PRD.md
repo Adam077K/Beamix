@@ -2,6 +2,8 @@
 
 > Product Requirements Document for Beamix, the GEO Platform for SMBs.
 > This is the master index. Each section has a dedicated document with full detail.
+>
+> **Repository:** https://github.com/Adam077K/Beamix
 
 **Version:** 2.0 
 **Date:** 2026-02-27

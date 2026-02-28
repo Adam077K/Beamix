@@ -1,6 +1,7 @@
-# Beamix -- Product Specification
+# Beamix — Product Specification
 
 > Part of the PRD. Translates the Strategic Foundation into buildable requirements.
+> **Repository:** https://github.com/Adam077K/Beamix
 > Source of truth: `.planning/STRATEGIC_FOUNDATION.md`
 
 **Version:** 1.0

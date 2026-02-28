@@ -1,5 +1,6 @@
 # דוח מחקר תחרותי — Beamix
 
+> **Repository:** https://github.com/Adam077K/Beamix
 > **תאריך:** פברואר 2026
 > **נושא:** מחקר תחרותי מקיף בתחום GEO (Generative Engine Optimization) לעסקים קטנים-בינוניים
 > **מטרה:** הבנת הנוף התחרותי, ה-pain points של לקוחות, גודל השוק, ומיצוב אסטרטגי מיטבי ל-Beamix
