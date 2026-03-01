@@ -58,7 +58,7 @@ export function SignupForm() {
         data: {
           full_name: data.fullName,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback${scanId ? `?scan_id=${scanId}` : ''}`,
+        emailRedirectTo: `${window.location.origin}/callback${scanId ? `?scan_id=${scanId}` : ''}`,
       },
     })
 
@@ -75,7 +75,7 @@ export function SignupForm() {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback${scanId ? `?scan_id=${scanId}` : ''}`,
+        redirectTo: `${window.location.origin}/callback${scanId ? `?scan_id=${scanId}` : ''}`,
       },
     })
     if (oauthError) {
@@ -269,7 +269,7 @@ export function SignupForm() {
         <p className="mt-6 text-center text-sm text-[var(--color-muted)]">
           Already have an account?{' '}
           <Link
-            href="/auth/login"
+            href="/login"
             className="font-medium text-[var(--color-accent)] hover:underline"
           >
             Sign in

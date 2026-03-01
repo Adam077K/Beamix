@@ -63,7 +63,7 @@ export function LoginForm() {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`,
+        redirectTo: `${window.location.origin}/callback?redirect=${encodeURIComponent(redirect)}`,
       },
     })
     if (oauthError) {
@@ -110,7 +110,7 @@ export function LoginForm() {
                 Password
               </label>
               <Link
-                href="/auth/forgot-password"
+                href="/forgot-password"
                 className="text-xs text-[var(--color-accent)] hover:underline"
               >
                 Forgot password?
@@ -199,7 +199,7 @@ export function LoginForm() {
         <p className="mt-6 text-center text-sm text-[var(--color-muted)]">
           Don&apos;t have an account?{' '}
           <Link
-            href="/auth/signup"
+            href="/signup"
             className="font-medium text-[var(--color-accent)] hover:underline"
           >
             Sign up free
