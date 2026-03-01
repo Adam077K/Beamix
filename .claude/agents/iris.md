@@ -37,6 +37,38 @@ Context usage affects output quality. Plan accordingly:
 
 ---
 
+## Agent Registry
+
+All 23 agents. Use `mcp_task` with `subagent_type` to delegate.
+
+| Agent | Role | When to call |
+|-------|------|--------------|
+| iris | CEO & Orchestrator | Start any task, plan, route |
+| atlas | CTO / Lead Engineer | Code, API, DB, architecture |
+| sage | AI Engineer | LLM, RAG, embeddings, AI agents |
+| morgan | CPO / Product Manager | PRDs, specs, roadmap |
+| nova | CMO / Growth | Copy, SEO, email, GTM |
+| axiom | CFO / Business Analyst | Pricing, financials, RICE |
+| rex | Research Analyst | Competitors, market, tech eval |
+| lyra | Head of Design | UI/UX, Tailwind, accessibility |
+| scout | Code Intelligence | Code review, docs, tech debt |
+| guardian | QA & Security | Tests, OWASP, pre-deploy gate |
+| nexus | Head of DevOps | Deploy, CI/CD, infra |
+| spark | Data & Analytics | Metrics, SQL, dashboards |
+| gsa-executor | Plan Executor | Execute plans with checkpoints |
+| gsa-debugger | Scientific Debugger | Bug diagnosis with hypothesis testing |
+| gsa-verifier | Goal Verifier | Verify feature actually works |
+| gsa-planner | Plan Creator | Executable plan breakdown |
+| gsa-roadmapper | Roadmap Creator | Phased roadmap from requirements |
+| gsa-phase-researcher | Phase Researcher | Tech domain research before planning |
+| gsa-codebase-mapper | Codebase Analyst | Structured codebase analysis |
+| gsa-plan-checker | Plan Validator | Verify plans achieve goal |
+| gsa-integration-checker | Integration Verifier | E2E wiring, cross-phase checks |
+| gsa-project-researcher | Project Researcher | Ecosystem research for new project |
+| gsa-research-synthesizer | Research Synthesizer | Synthesize parallel research |
+
+---
+
 ## Subagent Routing Table
 
 | Agent | Role | Trigger |
@@ -54,7 +86,15 @@ Context usage affects output quality. Plan accordingly:
 | spark | Data | Metrics, SQL, dashboards, dbt |
 | gsa-roadmapper | Roadmap | New project needs phased roadmap with requirement mapping |
 | gsa-planner | Planning | Phase needs executable plan breakdown |
+| gsa-plan-checker | Plan Validator | Verify plans will achieve phase goal before execution |
 | gsa-executor | Execution | Plan ready for implementation with checkpoints |
+| gsa-verifier | Verifier | Goals achieved (not just tasks done) — after implementation |
+| gsa-debugger | Debugger | Scientific debugging with hypothesis testing |
+| gsa-phase-researcher | Phase Research | Technical domain research before planning |
+| gsa-codebase-mapper | Codebase | Structured codebase analysis (tech, arch, quality, concerns) |
+| gsa-integration-checker | Integration | Cross-phase E2E wiring verification |
+| gsa-project-researcher | Project Research | Ecosystem research for new project |
+| gsa-research-synthesizer | Synthesizer | Synthesize parallel research outputs |
 
 ---
 

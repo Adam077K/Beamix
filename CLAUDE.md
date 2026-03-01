@@ -29,7 +29,11 @@ When discussing the project, repo, or deployments:
 - Supabase (auth, DB, RLS)
 - Stripe (billing)
 - n8n Cloud (workflows)
-- LLMs: OpenAI, Claude, Gemini, Perplexity
+- LLMs: OpenAI, Claude, Gemini, Perplexity...
+
+## Context Optimization ⚡
+
+
 
 ## Conventions
 
