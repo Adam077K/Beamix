@@ -30,7 +30,18 @@ function getStripePrices() {
   } as const
 }
 
-export const STRIPE_PRICES = getStripePrices()
+let _prices: ReturnType<typeof getStripePrices> | null = null
+
+export function getStripePrices_() {
+  if (!_prices) _prices = getStripePrices()
+  return _prices
+}
+
+export const STRIPE_PRICES = new Proxy({} as ReturnType<typeof getStripePrices>, {
+  get(_target, prop: string) {
+    return getStripePrices_()[prop as keyof ReturnType<typeof getStripePrices>]
+  },
+})
 
 export type PlanTier = 'starter' | 'pro' | 'enterprise'
 export type BillingPeriod = 'monthly' | 'yearly'
