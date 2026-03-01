@@ -884,6 +884,67 @@ export interface Database {
           }
         ]
       }
+      blog_posts: {
+        Row: {
+          id: string
+          slug: string
+          title: string
+          excerpt: string
+          content: string
+          cover_image: string | null
+          category: string
+          tags: string[]
+          author_name: string
+          author_avatar: string | null
+          is_featured: boolean
+          is_published: boolean
+          published_at: string | null
+          reading_time_minutes: number
+          seo_title: string | null
+          seo_description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          title: string
+          excerpt: string
+          content: string
+          cover_image?: string | null
+          category?: string
+          tags?: string[]
+          author_name?: string
+          author_avatar?: string | null
+          is_featured?: boolean
+          is_published?: boolean
+          published_at?: string | null
+          reading_time_minutes?: number
+          seo_title?: string | null
+          seo_description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          slug?: string
+          title?: string
+          excerpt?: string
+          content?: string
+          cover_image?: string | null
+          category?: string
+          tags?: string[]
+          author_name?: string
+          author_avatar?: string | null
+          is_featured?: boolean
+          is_published?: boolean
+          published_at?: string | null
+          reading_time_minutes?: number
+          seo_title?: string | null
+          seo_description?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
