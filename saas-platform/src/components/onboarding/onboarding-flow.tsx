@@ -1,0 +1,432 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod/v4'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Globe, Building, Briefcase, MapPin, Loader2, ArrowRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { INDUSTRIES } from '@/constants/industries'
+
+const urlSchema = z.object({
+  url: z.url('Please enter a valid URL'),
+})
+
+const nameSchema = z.object({
+  business_name: z.string().min(2, 'Business name must be at least 2 characters').max(100, 'Business name must be under 100 characters'),
+})
+
+const industrySchema = z.object({
+  industry: z.string().min(1, 'Please select an industry'),
+})
+
+const locationSchema = z.object({
+  location: z.string().min(2, 'Please enter your main market location'),
+})
+
+type UrlFormData = z.infer<typeof urlSchema>
+type NameFormData = z.infer<typeof nameSchema>
+type IndustryFormData = z.infer<typeof industrySchema>
+type LocationFormData = z.infer<typeof locationSchema>
+
+function extractNameFromDomain(url: string): string {
+  try {
+    const hostname = new URL(url).hostname
+    const parts = hostname.replace('www.', '').split('.')
+    if (parts.length > 0) {
+      const name = parts[0]
+      return name.charAt(0).toUpperCase() + name.slice(1)
+    }
+  } catch {
+    // Invalid URL, return empty
+  }
+  return ''
+}
+
+function DotIndicator({ activeIndex }: { activeIndex: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className={`h-2 w-2 rounded-full transition-colors duration-300 ${
+            i === activeIndex
+              ? 'bg-[var(--color-accent)]'
+              : 'bg-[var(--color-card-border)]'
+          }`}
+        />
+      ))}
+    </div>
+  )
+}
+
+const slideVariants = {
+  enter: { x: 60, opacity: 0 },
+  center: { x: 0, opacity: 1 },
+  exit: { x: -60, opacity: 0 },
+}
+
+export function OnboardingFlow() {
+  const router = useRouter()
+  const [step, setStep] = useState<number | null>(null)
+  const [url, setUrl] = useState('')
+  const [scanId, setScanId] = useState<string | null>(null)
+  const [businessName, setBusinessName] = useState('')
+  const [industry, setIndustry] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const pendingUrl = localStorage.getItem('beamix_pending_url')
+    const pendingScanId = localStorage.getItem('beamix_pending_scan_id')
+
+    if (pendingScanId) {
+      setScanId(pendingScanId)
+      setUrl(pendingUrl ?? '')
+      setStep(3)
+    } else if (pendingUrl) {
+      setUrl(pendingUrl)
+      const extracted = extractNameFromDomain(pendingUrl)
+      if (extracted) setBusinessName(extracted)
+      setStep(1)
+    } else {
+      setStep(0)
+    }
+  }, [])
+
+  const urlForm = useForm<UrlFormData>({
+    resolver: zodResolver(urlSchema),
+    defaultValues: { url: '' },
+  })
+
+  const nameForm = useForm<NameFormData>({
+    resolver: zodResolver(nameSchema),
+  })
+
+  const industryForm = useForm<IndustryFormData>({
+    resolver: zodResolver(industrySchema),
+  })
+
+  const locationForm = useForm<LocationFormData>({
+    resolver: zodResolver(locationSchema),
+  })
+
+  // Sync businessName into nameForm default when it changes
+  useEffect(() => {
+    if (businessName) {
+      nameForm.setValue('business_name', businessName)
+    }
+  }, [businessName, nameForm])
+
+  function handleUrlSubmit(data: UrlFormData) {
+    setUrl(data.url)
+    const extracted = extractNameFromDomain(data.url)
+    if (extracted) setBusinessName(extracted)
+    setStep(1)
+  }
+
+  function handleNameSubmit(data: NameFormData) {
+    setBusinessName(data.business_name)
+    setStep(2)
+  }
+
+  function handleIndustrySubmit(data: IndustryFormData) {
+    setIndustry(data.industry)
+    setStep(3)
+  }
+
+  const handleLocationSubmit = useCallback(
+    async (data: LocationFormData) => {
+      setIsSubmitting(true)
+      setError(null)
+
+      try {
+        const response = await fetch('/api/onboarding/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            business_name: businessName,
+            industry,
+            location: data.location,
+            url,
+            scan_id: scanId,
+          }),
+        })
+
+        if (!response.ok) {
+          const body = await response.json()
+          throw new Error(body.error ?? 'Failed to complete onboarding')
+        }
+
+        // Clean up localStorage
+        localStorage.removeItem('beamix_pending_url')
+        localStorage.removeItem('beamix_pending_scan_id')
+
+        router.push('/dashboard')
+        router.refresh()
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Something went wrong')
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    [businessName, industry, url, scanId, router]
+  )
+
+  // Compute which dot is active (steps 0 and 1 share dot 0)
+  function getDotIndex(): number {
+    if (step === null || step <= 1) return 0
+    if (step === 2) return 1
+    return 2
+  }
+
+  if (step === null) {
+    return (
+      <div className="flex h-48 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-[var(--color-accent)]" />
+      </div>
+    )
+  }
+
+  const displayedUrl = url ? new URL(url).hostname.replace('www.', '') : ''
+
+  return (
+    <div
+      className="w-full max-w-lg rounded-[var(--card-radius)] border border-[var(--color-card-border)] bg-[var(--color-card)] p-8 shadow-[var(--shadow-card)]"
+    >
+      <div className="mb-8 flex justify-center">
+        <DotIndicator activeIndex={getDotIndex()} />
+      </div>
+
+      <AnimatePresence mode="wait">
+        {/* Step 0 — URL Input (only if no URL in localStorage) */}
+        {step === 0 && (
+          <motion.div
+            key="step-0"
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+          >
+            <div className="mb-6 flex flex-col items-center text-center">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-accent)]/10">
+                <Globe className="h-6 w-6 text-[var(--color-accent)]" />
+              </div>
+              <h2 className="font-display text-xl font-semibold text-[var(--color-text)]">
+                What&apos;s your business website?
+              </h2>
+              <p className="mt-2 text-sm text-[var(--color-muted)]">
+                We&apos;ll scan it across every major AI engine.
+              </p>
+            </div>
+
+            <form onSubmit={urlForm.handleSubmit(handleUrlSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Input
+                  placeholder="https://yourbusiness.com"
+                  {...urlForm.register('url')}
+                />
+                {urlForm.formState.errors.url && (
+                  <p className="text-xs text-red-500">{urlForm.formState.errors.url.message}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+                size="lg"
+              >
+                Continue
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </form>
+          </motion.div>
+        )}
+
+        {/* Step 1 — Business Name */}
+        {step === 1 && (
+          <motion.div
+            key="step-1"
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+          >
+            <div className="mb-6 flex flex-col items-center text-center">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-accent)]/10">
+                <Building className="h-6 w-6 text-[var(--color-accent)]" />
+              </div>
+              <h2 className="font-display text-xl font-semibold text-[var(--color-text)]">
+                What&apos;s the name of your business?
+              </h2>
+              <p className="mt-2 text-sm text-[var(--color-muted)]">
+                Exactly as customers search for it.
+              </p>
+            </div>
+
+            {displayedUrl && (
+              <div className="mb-4 flex justify-center">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-accent)]/10 px-3 py-1 text-xs font-medium text-[var(--color-accent)]">
+                  <Globe className="h-3 w-3" />
+                  We&apos;re scanning: {displayedUrl}
+                </span>
+              </div>
+            )}
+
+            <form onSubmit={nameForm.handleSubmit(handleNameSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Input
+                  placeholder="Your Business Name"
+                  defaultValue={businessName}
+                  {...nameForm.register('business_name')}
+                />
+                {nameForm.formState.errors.business_name && (
+                  <p className="text-xs text-red-500">{nameForm.formState.errors.business_name.message}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+                size="lg"
+              >
+                Continue
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </form>
+          </motion.div>
+        )}
+
+        {/* Step 2 — Industry */}
+        {step === 2 && (
+          <motion.div
+            key="step-2"
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+          >
+            <div className="mb-6 flex flex-col items-center text-center">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-accent)]/10">
+                <Briefcase className="h-6 w-6 text-[var(--color-accent)]" />
+              </div>
+              <h2 className="font-display text-xl font-semibold text-[var(--color-text)]">
+                What industry are you in?
+              </h2>
+            </div>
+
+            <form
+              onSubmit={industryForm.handleSubmit(handleIndustrySubmit)}
+              className="space-y-4"
+            >
+              <Select
+                onValueChange={(value) => {
+                  setIndustry(value)
+                  industryForm.setValue('industry', value, { shouldValidate: true })
+                }}
+                value={industry}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select your industry" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  {INDUSTRIES.map((ind) => (
+                    <SelectItem key={ind.value} value={ind.value}>
+                      {ind.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {industryForm.formState.errors.industry && (
+                <p className="text-xs text-red-500">{industryForm.formState.errors.industry.message}</p>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+                size="lg"
+              >
+                Continue
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </form>
+          </motion.div>
+        )}
+
+        {/* Step 3 — Location */}
+        {step === 3 && (
+          <motion.div
+            key="step-3"
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+          >
+            <div className="mb-6 flex flex-col items-center text-center">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-accent)]/10">
+                <MapPin className="h-6 w-6 text-[var(--color-accent)]" />
+              </div>
+              <h2 className="font-display text-xl font-semibold text-[var(--color-text)]">
+                Where is your main market?
+              </h2>
+              <p className="mt-2 text-sm text-[var(--color-muted)]">
+                AI searches are highly local. This shapes every result.
+              </p>
+            </div>
+
+            {error && (
+              <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={locationForm.handleSubmit(handleLocationSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Input
+                  placeholder="Tel Aviv, Israel"
+                  {...locationForm.register('location')}
+                />
+                {locationForm.formState.errors.location && (
+                  <p className="text-xs text-red-500">{locationForm.formState.errors.location.message}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+                size="lg"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Setting up...
+                  </>
+                ) : (
+                  <>
+                    Start My Scan
+                    <ArrowRight className="ml-1 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
