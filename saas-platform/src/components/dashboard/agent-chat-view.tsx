@@ -168,13 +168,15 @@ export function AgentChatView({
     setIsRunning(true)
 
     try {
-      const res = await fetch('/api/agents/execute', {
+      const slug = agentTypeToSlug(agentType) ?? agentType.replace(/_/g, '-')
+      const res = await fetch(`/api/agents/${slug}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          agentType,
-          prompt: userMessage,
-          businessId,
+          topic: userMessage,
+          tone: 'professional',
+          targetLength: 'medium',
+          language: 'en',
         }),
       })
 
@@ -193,25 +195,26 @@ export function AgentChatView({
         return
       }
 
-      setRemainingCredits((prev) => prev - (data.creditsCharged ?? meta.credits))
+      setRemainingCredits((prev) => prev - (data.credits_charged ?? meta.credits))
 
-      if (data.output.content) {
+      const output = data.output
+      if (output.type === 'content') {
         setMessages((prev) => [
           ...prev,
           {
             role: 'agent',
-            content: data.output.content,
+            content: output.content,
             outputType: 'content',
-            format: data.output.format,
-            title: data.output.title,
-            creditsCharged: data.creditsCharged,
+            format: output.format,
+            title: output.title,
+            creditsCharged: data.credits_charged,
           },
         ])
-      } else if (data.output.summary) {
+      } else if (output.type === 'structured') {
         const formattedOutput = formatStructuredOutput(
-          data.output.title,
-          data.output.summary,
-          data.output.data
+          output.title,
+          output.summary,
+          output.data
         )
         setMessages((prev) => [
           ...prev,
@@ -219,8 +222,8 @@ export function AgentChatView({
             role: 'agent',
             content: formattedOutput,
             outputType: 'structured',
-            title: data.output.title,
-            creditsCharged: data.creditsCharged,
+            title: output.title,
+            creditsCharged: data.credits_charged,
           },
         ])
       }

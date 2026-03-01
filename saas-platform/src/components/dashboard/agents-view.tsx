@@ -1,6 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   FileText,
   BookOpen,
@@ -20,6 +22,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatDistanceToNow } from 'date-fns'
+import { AgentModal, type AgentExecuteParams } from './agent-modal'
+import { agentTypeToSlug } from '@/lib/agents/config'
 
 interface AgentDef {
   type: string
@@ -102,6 +106,37 @@ interface AgentsViewProps {
 }
 
 export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) {
+  const router = useRouter()
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedAgent, setSelectedAgent] = useState<AgentDef | null>(null)
+  const [isExecuting, setIsExecuting] = useState(false)
+
+  function openModal(agent: AgentDef) {
+    setSelectedAgent(agent)
+    setModalOpen(true)
+  }
+
+  async function handleExecute(params: AgentExecuteParams) {
+    if (!selectedAgent) return
+    setIsExecuting(true)
+    try {
+      const slug = agentTypeToSlug(selectedAgent.type) ?? selectedAgent.type.replace(/_/g, '-')
+      const res = await fetch(`/api/agents/${slug}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setModalOpen(false)
+        router.push(`/dashboard/agents/${selectedAgent.type}?execution=${data.execution_id}`)
+      }
+    } finally {
+      setIsExecuting(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -148,20 +183,26 @@ export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) 
                 <p className="mt-3 text-xs text-[var(--color-muted)] line-clamp-2">
                   {agent.description}
                 </p>
-                <Link href={`/dashboard/agents/${agent.type}`} className="mt-4 block">
+                <div className="mt-4 flex gap-2">
                   <Button
                     size="sm"
-                    className={`w-full ${
+                    className={`flex-1 ${
                       canAfford
                         ? 'bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90'
                         : 'bg-[var(--color-card-border)] text-[var(--color-muted)] cursor-not-allowed'
                     }`}
                     disabled={!canAfford}
+                    onClick={() => openModal(agent)}
                   >
                     <Bot className="mr-1 h-3 w-3" />
-                    {canAfford ? 'Run Agent' : 'Not enough credits'}
+                    {canAfford ? 'Launch Agent' : 'Not enough credits'}
                   </Button>
-                </Link>
+                  <Link href={`/dashboard/agents/${agent.type}`}>
+                    <Button size="sm" variant="outline" className="text-xs">
+                      Chat
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           )
@@ -204,6 +245,20 @@ export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) 
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Agent launch modal */}
+      {selectedAgent && (
+        <AgentModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          agentName={selectedAgent.name}
+          agentSlug={agentTypeToSlug(selectedAgent.type) ?? selectedAgent.type.replace(/_/g, '-')}
+          creditCost={selectedAgent.credits}
+          totalCredits={totalCredits}
+          onExecute={handleExecute}
+          isLoading={isExecuting}
+        />
       )}
     </div>
   )
