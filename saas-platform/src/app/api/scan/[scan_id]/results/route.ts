@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getScan } from '@/lib/scan/store'
+import { createServiceClient } from '@/lib/supabase/server'
 
 export async function GET(
   _request: Request,
@@ -11,9 +11,15 @@ export async function GET(
     return NextResponse.json({ error: 'scan_id is required' }, { status: 400 })
   }
 
-  const scan = getScan(scan_id)
+  const supabase = await createServiceClient()
 
-  if (!scan) {
+  const { data: scan, error } = await supabase
+    .from('free_scans')
+    .select('*')
+    .eq('scan_token', scan_id)
+    .single()
+
+  if (error || !scan) {
     return NextResponse.json({ error: 'Scan not found' }, { status: 404 })
   }
 
@@ -28,13 +34,13 @@ export async function GET(
   }
 
   return NextResponse.json({
-    scan_id: scan.scan_id,
+    scan_id: scan.scan_token,
     business_name: scan.business_name,
     website_url: scan.website_url,
     sector: scan.sector,
     location: scan.location,
     status: scan.status,
-    results: scan.results,
+    results: scan.results_data,
     created_at: scan.created_at,
   })
 }

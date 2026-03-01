@@ -1,7 +1,7 @@
 import { z } from 'zod/v4'
 
 export const scanStartSchema = z.object({
-  website_url: z
+  url: z
     .string()
     .min(1, 'Website URL is required')
     .url('Please enter a valid URL'),

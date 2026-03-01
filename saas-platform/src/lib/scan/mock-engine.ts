@@ -186,7 +186,19 @@ function generateLeaderboard(
   return entries
 }
 
-export function generateMockScanResults(
+export async function runMockScan(
+  scanId: string,
+  businessName: string,
+  sector: string
+): Promise<ScanResults> {
+  // Simulate async LLM processing delay (3-5s)
+  const delay = 3000 + Math.random() * 2000
+  await new Promise((resolve) => setTimeout(resolve, delay))
+
+  return generateScanResults(scanId, businessName, sector)
+}
+
+function generateScanResults(
   scanId: string,
   businessName: string,
   sector: string

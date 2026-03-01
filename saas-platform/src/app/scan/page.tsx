@@ -23,7 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Loader2, Globe, Building2, MapPin, Layers } from 'lucide-react'
+import { Loader2, Globe, Building2, MapPin, Layers, Shield, Clock, Sparkles } from 'lucide-react'
 
 export default function ScanPage() {
   const router = useRouter()
@@ -37,7 +37,7 @@ export default function ScanPage() {
   } = useForm<ScanStartInput>({
     resolver: zodResolver(scanStartSchema),
     defaultValues: {
-      website_url: '',
+      url: '',
       business_name: '',
       sector: '',
       location: '',
@@ -61,6 +61,14 @@ export default function ScanPage() {
       }
 
       const { scan_id } = await res.json()
+
+      // Save scan_id to localStorage so results can be retrieved later
+      try {
+        localStorage.setItem('beamix_last_scan_id', scan_id)
+      } catch {
+        // localStorage not available — ignore
+      }
+
       router.push(`/scan/${scan_id}`)
     } catch {
       setError('Network error. Please try again.')
@@ -68,153 +76,193 @@ export default function ScanPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-bg)] px-4">
-      <div className="mb-8 text-center">
-        <Link href="/" className="inline-block">
-          <span className="font-display text-3xl font-bold text-[var(--color-text)]">
-            Beam<span className="text-[var(--color-accent)]">ix</span>
-          </span>
-        </Link>
-        <p className="mt-2 text-[var(--color-muted)]">
-          Free AI visibility scan — see how AI engines talk about your business
-        </p>
+    <div className="min-h-screen bg-[var(--color-bg)]">
+      {/* Top Bar */}
+      <div className="border-b border-[var(--color-card-border)] bg-white">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
+          <Link href="/">
+            <span className="font-display text-xl font-bold text-[var(--color-text)]">
+              Beam<span className="text-[var(--color-accent)]">ix</span>
+            </span>
+          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/login">
+              <Button variant="ghost" size="sm">
+                Log in
+              </Button>
+            </Link>
+            <Link href="/signup">
+              <Button size="sm" className="bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90">
+                Sign up
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
 
-      <Card
-        className="w-full max-w-lg border-[var(--color-card-border)]"
-        style={{
-          borderRadius: 'var(--card-radius)',
-          boxShadow: 'var(--shadow-card)',
-        }}
-      >
-        <CardHeader>
-          <CardTitle className="font-display text-2xl">
-            Scan your business
-          </CardTitle>
-          <CardDescription>
-            We&apos;ll check how ChatGPT, Gemini, Perplexity, and Claude
-            see your business. Takes about 60 seconds.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            {error && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-                {error}
-              </div>
-            )}
+      {/* Main Content */}
+      <div className="flex flex-col items-center justify-center px-4 py-16">
+        <div className="mb-8 text-center">
+          <h1 className="font-display text-3xl font-bold text-[var(--color-text)] sm:text-4xl">
+            Free AI Visibility Scan
+          </h1>
+          <p className="mt-3 max-w-md text-lg text-[var(--color-muted)]">
+            See how ChatGPT, Gemini, Perplexity, and Claude talk about your business
+          </p>
+        </div>
 
-            <div className="space-y-2">
-              <label htmlFor="website_url" className="text-sm font-medium">
-                Website URL
-              </label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
-                <Input
-                  id="website_url"
-                  type="url"
-                  placeholder="https://yourbusiness.com"
-                  className="pl-10"
-                  {...register('website_url')}
-                />
-              </div>
-              {errors.website_url && (
-                <p className="text-xs text-red-500">
-                  {errors.website_url.message}
-                </p>
+        {/* Trust Pills */}
+        <div className="mb-8 flex flex-wrap items-center justify-center gap-4 text-sm text-[var(--color-muted)]">
+          <span className="flex items-center gap-1.5">
+            <Shield className="h-4 w-4 text-emerald-500" />
+            No credit card required
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Clock className="h-4 w-4 text-[var(--color-accent)]" />
+            Results in ~60 seconds
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4 text-[var(--color-accent-warm)]" />
+            Powered by 4 AI engines
+          </span>
+        </div>
+
+        <Card
+          className="w-full max-w-lg border-[var(--color-card-border)]"
+          style={{
+            borderRadius: 'var(--card-radius)',
+            boxShadow: 'var(--shadow-card)',
+          }}
+        >
+          <CardHeader>
+            <CardTitle className="font-display text-2xl">
+              Scan your business
+            </CardTitle>
+            <CardDescription>
+              We&apos;ll check how AI search engines see your business and show
+              you exactly where you stand vs. competitors.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              {error && (
+                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                  {error}
+                </div>
               )}
-            </div>
 
-            <div className="space-y-2">
-              <label htmlFor="business_name" className="text-sm font-medium">
-                Business name
-              </label>
-              <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
-                <Input
-                  id="business_name"
-                  type="text"
-                  placeholder="Your Business Name"
-                  className="pl-10"
-                  {...register('business_name')}
-                />
+              <div className="space-y-2">
+                <label htmlFor="url" className="text-sm font-medium">
+                  Website URL
+                </label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+                  <Input
+                    id="url"
+                    type="url"
+                    placeholder="https://yourbusiness.com"
+                    className="pl-10"
+                    {...register('url')}
+                  />
+                </div>
+                {errors.url && (
+                  <p className="text-xs text-red-500">
+                    {errors.url.message}
+                  </p>
+                )}
               </div>
-              {errors.business_name && (
-                <p className="text-xs text-red-500">
-                  {errors.business_name.message}
-                </p>
-              )}
-            </div>
 
-            <div className="space-y-2">
-              <label htmlFor="sector" className="text-sm font-medium">
-                Industry
-              </label>
-              <div className="relative">
-                <Layers className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
-                <Select
-                  onValueChange={(value) => setValue('sector', value, { shouldValidate: true })}
-                >
-                  <SelectTrigger className="pl-10">
-                    <SelectValue placeholder="Select your industry" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {INDUSTRIES.map((industry) => (
-                      <SelectItem key={industry.value} value={industry.value}>
-                        {industry.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-2">
+                <label htmlFor="business_name" className="text-sm font-medium">
+                  Business name
+                </label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+                  <Input
+                    id="business_name"
+                    type="text"
+                    placeholder="Your Business Name"
+                    className="pl-10"
+                    {...register('business_name')}
+                  />
+                </div>
+                {errors.business_name && (
+                  <p className="text-xs text-red-500">
+                    {errors.business_name.message}
+                  </p>
+                )}
               </div>
-              {errors.sector && (
-                <p className="text-xs text-red-500">{errors.sector.message}</p>
-              )}
-            </div>
 
-            <div className="space-y-2">
-              <label htmlFor="location" className="text-sm font-medium">
-                Location
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
-                <Input
-                  id="location"
-                  type="text"
-                  placeholder="Tel Aviv, Israel"
-                  className="pl-10"
-                  {...register('location')}
-                />
+              <div className="space-y-2">
+                <label htmlFor="sector" className="text-sm font-medium">
+                  Industry
+                </label>
+                <div className="relative">
+                  <Layers className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+                  <Select
+                    onValueChange={(value) => setValue('sector', value, { shouldValidate: true })}
+                  >
+                    <SelectTrigger className="pl-10">
+                      <SelectValue placeholder="Select your industry" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {INDUSTRIES.map((industry) => (
+                        <SelectItem key={industry.value} value={industry.value}>
+                          {industry.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {errors.sector && (
+                  <p className="text-xs text-red-500">{errors.sector.message}</p>
+                )}
               </div>
-              {errors.location && (
-                <p className="text-xs text-red-500">
-                  {errors.location.message}
-                </p>
-              )}
-            </div>
 
-            <Button
-              type="submit"
-              className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
-              disabled={isSubmitting}
-              size="lg"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Starting scan...
-                </>
-              ) : (
-                'Start free scan'
-              )}
-            </Button>
+              <div className="space-y-2">
+                <label htmlFor="location" className="text-sm font-medium">
+                  Location
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+                  <Input
+                    id="location"
+                    type="text"
+                    placeholder="Tel Aviv, Israel"
+                    className="pl-10"
+                    {...register('location')}
+                  />
+                </div>
+                {errors.location && (
+                  <p className="text-xs text-red-500">
+                    {errors.location.message}
+                  </p>
+                )}
+              </div>
 
-            <p className="text-center text-xs text-[var(--color-muted)]">
-              No credit card required. Results in about 60 seconds.
-            </p>
-          </form>
-        </CardContent>
-      </Card>
+              <Button
+                type="submit"
+                className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+                disabled={isSubmitting}
+                size="lg"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Starting scan...
+                  </>
+                ) : (
+                  'Start free scan'
+                )}
+              </Button>
+
+              <p className="text-center text-xs text-[var(--color-muted)]">
+                100% free. No signup needed. Your data stays private.
+              </p>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
