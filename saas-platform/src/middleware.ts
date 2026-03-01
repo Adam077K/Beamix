@@ -9,8 +9,12 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const { supabaseResponse, user } = await updateSession(request)
 
-  // API scan routes are public
-  if (pathname.startsWith('/api/scan') || pathname.startsWith('/api/health')) {
+  // Public API routes (no auth required)
+  if (
+    pathname.startsWith('/api/scan') ||
+    pathname.startsWith('/api/health') ||
+    pathname.startsWith('/api/stripe/webhooks')
+  ) {
     return supabaseResponse
   }
 
