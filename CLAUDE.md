@@ -12,9 +12,8 @@ Beamix scans SMBs for AI search visibility, diagnoses why they rank (or don't), 
 
 | Path | Purpose |
 |------|---------|
-| `saas-platform/` | Main Next.js app (landing, dashboard, API routes, agents) |
 | `.planning/` | PRD, architecture, specs, competitive research |
-| `agent-memory/` | Rex and other agent memory/context |
+| `agent-memory/` | other agent memory/context |
 | `GSA-Vibe-Startup-Kit/` | GSA toolkit — **separate repo, do not update** |
 
 ## Default References
