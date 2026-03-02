@@ -10,8 +10,14 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    console.error('[CRON:trial-nudges] CRON_SECRET not configured')
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+  }
+
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -51,6 +57,27 @@ export async function GET(request: Request) {
 
     const user = sub.users as unknown as { email: string; full_name: string | null }
     const userName = user.full_name ?? 'there'
+
+    // Check expiration FIRST — skip day 7/12 nudges for expired trials
+    if (daysUntilEnd <= 0) {
+      // Update subscription status
+      await supabase
+        .from('subscriptions')
+        .update({ status: 'canceled', updated_at: new Date().toISOString() })
+        .eq('user_id', sub.user_id)
+        .eq('status', 'trialing')
+
+      const planName = sub.plan_tier === 'pro' ? 'Pro' : sub.plan_tier === 'starter' ? 'Starter' : 'Business'
+
+      const result = await sendTrialExpiredEmail(user.email, {
+        name: userName,
+        planName,
+      })
+
+      if (result.success) sent++
+      else failed++
+      continue
+    }
 
     // Day 7 nudge
     if (daysSinceStart === 7) {
@@ -103,26 +130,6 @@ export async function GET(request: Request) {
           'Weekly ranking reports',
           'Priority recommendations',
         ],
-      })
-
-      if (result.success) sent++
-      else failed++
-    }
-
-    // Day 14 — trial expired
-    if (daysUntilEnd <= 0) {
-      // Update subscription status
-      await supabase
-        .from('subscriptions')
-        .update({ status: 'canceled' })
-        .eq('user_id', sub.user_id)
-        .eq('status', 'trialing')
-
-      const planName = sub.plan_tier === 'pro' ? 'Pro' : sub.plan_tier === 'starter' ? 'Starter' : 'Enterprise'
-
-      const result = await sendTrialExpiredEmail(user.email, {
-        name: userName,
-        planName,
       })
 
       if (result.success) sent++

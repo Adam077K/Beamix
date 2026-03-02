@@ -1,6 +1,6 @@
 import { stripe } from './client'
 import { STRIPE_PRICES, PLAN_LIMITS } from './config'
-import type { PlanTier } from './config'
+import type { PlanTier } from '@/lib/types'
 import { createServiceClient } from '@/lib/supabase/server'
 
 /**
@@ -69,8 +69,8 @@ export function getPlanFromPriceId(priceId: string): PlanTier | null {
     [STRIPE_PRICES.starter_yearly]: 'starter',
     [STRIPE_PRICES.pro_monthly]: 'pro',
     [STRIPE_PRICES.pro_yearly]: 'pro',
-    [STRIPE_PRICES.business_monthly]: 'enterprise',
-    [STRIPE_PRICES.business_yearly]: 'enterprise',
+    [STRIPE_PRICES.business_monthly]: 'business',
+    [STRIPE_PRICES.business_yearly]: 'business',
   }
 
   return priceToTier[priceId] ?? null

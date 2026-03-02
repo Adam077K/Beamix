@@ -564,7 +564,7 @@ export interface Database {
           user_id: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
-          plan_tier: 'free' | 'starter' | 'pro' | 'enterprise'
+          plan_tier: 'free' | 'starter' | 'pro' | 'business'
           status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete'
           current_period_start: string | null
           current_period_end: string | null
@@ -578,7 +578,7 @@ export interface Database {
           user_id: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
-          plan_tier?: 'free' | 'starter' | 'pro' | 'enterprise'
+          plan_tier?: 'free' | 'starter' | 'pro' | 'business'
           status?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete'
           current_period_start?: string | null
           current_period_end?: string | null
@@ -590,7 +590,7 @@ export interface Database {
         Update: {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
-          plan_tier?: 'free' | 'starter' | 'pro' | 'enterprise'
+          plan_tier?: 'free' | 'starter' | 'pro' | 'business'
           status?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete'
           current_period_start?: string | null
           current_period_end?: string | null

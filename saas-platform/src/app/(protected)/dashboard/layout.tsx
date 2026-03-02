@@ -8,39 +8,43 @@ export default async function DashboardLayout({
   children: React.ReactNode
 }) {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
-  if (!user) {
+  // The parent (protected) layout already verifies the user via getUser()
+  // and redirects to /login if unauthenticated. Use getSession() here to
+  // read the user ID from the cookie without a redundant auth round-trip.
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session?.user) {
     redirect('/login')
   }
 
-  // Check if onboarding is completed
-  const { data: profile } = await supabase
-    .from('users')
-    .select('onboarding_completed')
-    .eq('id', user.id)
-    .single()
+  const userId = session.user.id
 
-  if (!profile?.onboarding_completed) {
-    redirect('/onboarding')
-  }
-
-  // Fetch sidebar data in one batch
-  const [businessResult, subscriptionResult] = await Promise.all([
+  // Check if onboarding is completed, and fetch sidebar data in one batch
+  const [profileResult, businessResult, subscriptionResult] = await Promise.all([
+    supabase
+      .from('users')
+      .select('onboarding_completed')
+      .eq('id', userId)
+      .single(),
     supabase
       .from('businesses')
       .select('name')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('is_primary', true)
       .single(),
     supabase
       .from('subscriptions')
       .select('plan_tier, status, trial_end')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single(),
   ])
+
+  if (!profileResult.data?.onboarding_completed) {
+    redirect('/onboarding')
+  }
 
   const businessName = businessResult.data?.name ?? 'My Business'
   const planTier = subscriptionResult.data?.plan_tier ?? 'free'

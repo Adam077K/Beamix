@@ -15,7 +15,7 @@ export async function GET(
 
   const { data: scan, error } = await supabase
     .from('free_scans')
-    .select('*')
+    .select('scan_token, status, business_name, website_url, sector, location, overall_score, results_data, created_at')
     .eq('scan_token', scan_id)
     .single()
 

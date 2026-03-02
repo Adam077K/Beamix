@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod/v4'
@@ -19,7 +19,7 @@ import {
 import { INDUSTRIES } from '@/constants/industries'
 
 const urlSchema = z.object({
-  url: z.url('Please enter a valid URL'),
+  url: z.string().url('Please enter a valid URL'),
 })
 
 const nameSchema = z.object({
@@ -78,6 +78,7 @@ const slideVariants = {
 
 export function OnboardingFlow() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [step, setStep] = useState<number | null>(null)
   const [url, setUrl] = useState('')
   const [scanId, setScanId] = useState<string | null>(null)
@@ -88,7 +89,11 @@ export function OnboardingFlow() {
 
   useEffect(() => {
     const pendingUrl = localStorage.getItem('beamix_pending_url')
-    const pendingScanId = localStorage.getItem('beamix_pending_scan_id')
+    // CRIT-1: scan page stores under 'beamix_last_scan_id', not 'beamix_pending_scan_id'
+    const storedScanId = localStorage.getItem('beamix_last_scan_id')
+    // CRIT-2: also check URL search params as fallback (auth callback passes scan_id here)
+    const urlScanId = searchParams.get('scan_id')
+    const pendingScanId = storedScanId || urlScanId
 
     if (pendingScanId) {
       setScanId(pendingScanId)
@@ -102,7 +107,7 @@ export function OnboardingFlow() {
     } else {
       setStep(0)
     }
-  }, [])
+  }, [searchParams])
 
   const urlForm = useForm<UrlFormData>({
     resolver: zodResolver(urlSchema),
@@ -150,6 +155,20 @@ export function OnboardingFlow() {
       setIsSubmitting(true)
       setError(null)
 
+      // MED-2: validate all required fields before submitting
+      if (!url) {
+        setError('Missing website URL. Please go back and enter it.')
+        setStep(0)
+        setIsSubmitting(false)
+        return
+      }
+      if (!industry) {
+        setError('Missing industry. Please go back and select one.')
+        setStep(2)
+        setIsSubmitting(false)
+        return
+      }
+
       try {
         const response = await fetch('/api/onboarding/complete', {
           method: 'POST',
@@ -170,7 +189,7 @@ export function OnboardingFlow() {
 
         // Clean up localStorage
         localStorage.removeItem('beamix_pending_url')
-        localStorage.removeItem('beamix_pending_scan_id')
+        localStorage.removeItem('beamix_last_scan_id')
 
         router.push('/dashboard')
         router.refresh()

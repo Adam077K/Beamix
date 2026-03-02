@@ -137,7 +137,28 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     return NextResponse.json({ error: 'Failed to create execution record' }, { status: 500 })
   }
 
-  // 6. Run mock agent
+  // 6. Deduct credits BEFORE running the agent (prevent race condition)
+  const { data: deducted } = await supabase.rpc('deduct_credits', {
+    p_user_id: user.id,
+    p_amount: config.cost,
+    p_entity_type: 'agent_execution',
+    p_entity_id: execution.id,
+    p_description: `${config.name} execution`,
+  })
+
+  if (!deducted) {
+    await supabase
+      .from('agent_executions')
+      .update({ status: 'failed', error_message: 'Credit deduction failed' })
+      .eq('id', execution.id)
+
+    return NextResponse.json(
+      { error: 'Credit deduction failed. You may not have enough credits.' },
+      { status: 402 }
+    )
+  }
+
+  // 7. Run mock agent
   const agentOutput: AgentOutput = generateMockOutput(config.dbType, {
     businessName,
     businessUrl: business?.website_url ?? undefined,
@@ -149,7 +170,7 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
   const completedAt = new Date().toISOString()
   const durationMs = new Date(completedAt).getTime() - new Date(startedAt).getTime()
 
-  // 7. Update agent_executions status = 'completed'
+  // 8. Update agent_executions status = 'completed'
   await supabase
     .from('agent_executions')
     .update({
@@ -160,7 +181,7 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     })
     .eq('id', execution.id)
 
-  // 8. Insert into content_generations or agent_outputs
+  // 9. Insert into content_generations or agent_outputs
   if (agentOutput.type === 'content' && config.contentType) {
     await supabase.from('content_generations').insert({
       execution_id: execution.id,
@@ -188,15 +209,6 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
       structured_data: agentOutput.data as Json,
     })
   }
-
-  // 9. Deduct credits
-  await supabase.rpc('deduct_credits', {
-    p_user_id: user.id,
-    p_amount: config.cost,
-    p_entity_type: 'agent_execution',
-    p_entity_id: execution.id,
-    p_description: `${config.name} execution`,
-  })
 
   // 10. Return result
   return NextResponse.json({

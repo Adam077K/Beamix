@@ -1,4 +1,5 @@
 import { z } from 'zod/v4'
+import type { PlanTier } from '@/lib/types'
 
 const stripeEnvSchema = z.object({
   STRIPE_PRICE_STARTER_MONTHLY: z.string().min(1),
@@ -43,14 +44,13 @@ export const STRIPE_PRICES = new Proxy({} as ReturnType<typeof getStripePrices>,
   },
 })
 
-export type PlanTier = 'starter' | 'pro' | 'enterprise'
 export type BillingPeriod = 'monthly' | 'yearly'
 export type TopupSize = 5 | 15
 
-export const PLAN_LIMITS: Record<PlanTier, { queries: number; agent_uses: number; engines: number }> = {
+export const PLAN_LIMITS: Record<Exclude<PlanTier, 'free'>, { queries: number; agent_uses: number; engines: number }> = {
   starter: { queries: 10, agent_uses: 5, engines: 4 },
   pro: { queries: 25, agent_uses: 15, engines: 8 },
-  enterprise: { queries: -1, agent_uses: 50, engines: 10 },
+  business: { queries: -1, agent_uses: 50, engines: 10 },
 }
 
 export const TOPUP_CREDITS: Record<TopupSize, number> = {

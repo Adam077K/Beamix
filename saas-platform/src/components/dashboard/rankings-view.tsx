@@ -13,22 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
 import type { LlmProvider, MentionSentiment } from '@/lib/types/database.types'
-
-const ENGINE_LABELS: Record<string, string> = {
-  chatgpt: 'ChatGPT',
-  gemini: 'Gemini',
-  perplexity: 'Perplexity',
-  claude: 'Claude',
-  google_ai_overviews: 'Google AI',
-}
-
-const ENGINE_COLORS: Record<string, string> = {
-  chatgpt: 'bg-green-100 text-green-700',
-  gemini: 'bg-blue-100 text-blue-700',
-  perplexity: 'bg-purple-100 text-purple-700',
-  claude: 'bg-orange-100 text-orange-700',
-  google_ai_overviews: 'bg-red-100 text-red-700',
-}
+import { PROVIDER_LABELS, PROVIDER_COLORS } from '@/constants/engines'
 
 function getScoreColor(score: number): string {
   if (score >= 75) return 'var(--score-excellent)'
@@ -126,8 +111,8 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
             <div className="space-y-3">
               {latestDetails.map((detail) => (
                 <div key={detail.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-4">
-                  <Badge className={`shrink-0 text-xs ${ENGINE_COLORS[detail.llm_provider] ?? 'bg-gray-100 text-gray-700'}`}>
-                    {ENGINE_LABELS[detail.llm_provider] ?? detail.llm_provider}
+                  <Badge className={`shrink-0 text-xs ${PROVIDER_COLORS[detail.llm_provider] ?? 'bg-gray-100 text-gray-700'}`}>
+                    {PROVIDER_LABELS[detail.llm_provider] ?? detail.llm_provider}
                   </Badge>
                   <div className="flex-1">
                     {detail.is_mentioned ? (

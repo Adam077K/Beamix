@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { ScanResults, LLMEngine } from '@/lib/types'
-import { ENGINE_LABELS } from '@/lib/scan/mock-engine'
+import { ENGINE_LABELS } from '@/constants/engines'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -122,9 +122,10 @@ function ProcessingState() {
   }, [])
 
   const completedCount = engineStatuses.filter((e) => e.status === 'done').length
-  const progressPercent = phase === 'analyzing'
-    ? 80 + Math.min(20, 0)
-    : (completedCount / engineStatuses.length) * 80
+  const progressPercent =
+    phase === 'analyzing'
+      ? 95
+      : (completedCount / engineStatuses.length) * 80
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-bg)] px-4">

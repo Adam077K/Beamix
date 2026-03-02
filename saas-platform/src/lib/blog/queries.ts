@@ -9,7 +9,7 @@ export async function getPublishedPosts(category?: string): Promise<BlogPost[]> 
     let query = supabase
       .from('blog_posts')
       .select('*')
-      .eq('status', 'published')
+      .eq('is_published', true)
       .order('published_at', { ascending: false })
 
     if (category && category !== 'all') {
@@ -36,7 +36,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
       .from('blog_posts')
       .select('*')
       .eq('slug', slug)
-      .eq('status', 'published')
+      .eq('is_published', true)
       .single()
 
     if (error || !data) {
@@ -60,7 +60,7 @@ export async function getRelatedPosts(
     const { data, error } = await supabase
       .from('blog_posts')
       .select('*')
-      .eq('status', 'published')
+      .eq('is_published', true)
       .eq('category', category)
       .neq('slug', excludeSlug)
       .order('published_at', { ascending: false })
@@ -87,7 +87,7 @@ export async function getAllPublishedSlugs(): Promise<{ slug: string; updated_at
     const { data, error } = await supabase
       .from('blog_posts')
       .select('slug, updated_at')
-      .eq('status', 'published')
+      .eq('is_published', true)
 
     if (error || !data || data.length === 0) {
       return SEED_POSTS.map((p) => ({ slug: p.slug, updated_at: p.updated_at }))

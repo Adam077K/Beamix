@@ -36,13 +36,6 @@ function pickN<T>(arr: T[], n: number, rng: () => number): T[] {
 
 const ENGINES: LLMEngine[] = ['chatgpt', 'gemini', 'perplexity', 'claude']
 
-const ENGINE_LABELS: Record<LLMEngine, string> = {
-  chatgpt: 'ChatGPT',
-  gemini: 'Gemini',
-  perplexity: 'Perplexity',
-  claude: 'Claude',
-}
-
 const SENTIMENTS = ['positive', 'neutral', 'negative'] as const
 
 const QUICK_WIN_TEMPLATES: Array<{
@@ -243,4 +236,4 @@ function generateScanResults(
   }
 }
 
-export { ENGINE_LABELS }
+export { ENGINE_LABELS } from '@/constants/engines'

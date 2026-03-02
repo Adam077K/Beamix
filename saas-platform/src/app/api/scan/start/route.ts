@@ -21,6 +21,26 @@ export async function POST(request: Request) {
 
     const supabase = await createServiceClient()
 
+    // SEC-1: IP-based rate limiting — max 3 scans per IP per hour
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      request.headers.get('x-real-ip') ||
+      'unknown'
+
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    const { count } = await supabase
+      .from('free_scans')
+      .select('*', { count: 'exact', head: true })
+      .eq('ip_address', ip)
+      .gte('created_at', oneHourAgo)
+
+    if ((count ?? 0) >= 3) {
+      return NextResponse.json(
+        { error: 'Too many scans. Please try again in an hour.' },
+        { status: 429 }
+      )
+    }
+
     // Insert into free_scans as processing
     const { error: insertError } = await supabase
       .from('free_scans')
@@ -30,7 +50,7 @@ export async function POST(request: Request) {
         business_name,
         sector,
         location,
-        ip_address: request.headers.get('x-forwarded-for') ?? null,
+        ip_address: ip,
         status: 'processing',
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       })
@@ -43,37 +63,38 @@ export async function POST(request: Request) {
       )
     }
 
-    // Run mock scan asynchronously (don't await — respond immediately)
-    // Using an IIFE to run in background without blocking response
-    void (async () => {
-      try {
-        const results = await runMockScan(scanId, business_name, sector)
-        const serviceClient = await createServiceClient()
-        await serviceClient
-          .from('free_scans')
-          .update({
-            status: 'completed',
-            overall_score: results.visibility_score,
-            results_data: JSON.parse(JSON.stringify(results)) as Json,
-          })
-          .eq('scan_token', scanId)
-      } catch (err) {
-        console.error('Mock scan failed:', err)
-        const serviceClient = await createServiceClient()
-        await serviceClient
-          .from('free_scans')
-          .update({ status: 'failed' })
-          .eq('scan_token', scanId)
+    // MED-1: Run scan synchronously before responding (mock completes quickly).
+    // The void IIFE pattern gets killed on Vercel after the response returns.
+    let finalStatus: 'completed' | 'failed' = 'completed'
+    try {
+      const results = await runMockScan(scanId, business_name, sector)
+      const { error: updateError } = await supabase
+        .from('free_scans')
+        .update({
+          status: 'completed',
+          overall_score: results.visibility_score,
+          results_data: JSON.parse(JSON.stringify(results)) as Json,
+        })
+        .eq('scan_token', scanId)
+      if (updateError) {
+        console.error('Failed to update scan results:', updateError)
+        finalStatus = 'failed'
       }
-    })()
+    } catch (err) {
+      console.error('Mock scan failed:', err)
+      finalStatus = 'failed'
+      await supabase
+        .from('free_scans')
+        .update({ status: 'failed' })
+        .eq('scan_token', scanId)
+    }
 
     return NextResponse.json(
       {
         scan_id: scanId,
-        status: 'processing',
-        estimated_time_seconds: 5,
+        status: finalStatus,
       },
-      { status: 202 }
+      { status: finalStatus === 'completed' ? 200 : 500 }
     )
   } catch {
     return NextResponse.json(

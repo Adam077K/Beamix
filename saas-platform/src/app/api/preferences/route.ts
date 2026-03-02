@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 
 const preferencesSchema = z.object({
   language: z.enum(['en', 'he']).optional(),
-  content_language: z.enum(['en', 'he']).optional(),
   timezone: z.string().min(1).max(50).optional(),
   email_weekly_report: z.boolean().optional(),
   email_scan_complete: z.boolean().optional(),

@@ -17,6 +17,13 @@ export function getStripe(): Stripe {
 // Re-export for backwards compat
 export const stripe = new Proxy({} as Stripe, {
   get(_target, prop) {
-    return (getStripe() as unknown as Record<string | symbol, unknown>)[prop]
+    try {
+      const stripeInstance = getStripe()
+      return (stripeInstance as unknown as Record<string | symbol, unknown>)[prop]
+    } catch (err) {
+      throw new Error(
+        `Stripe not configured: ${err instanceof Error ? err.message : 'Missing STRIPE_SECRET_KEY'}`
+      )
+    }
   },
 })

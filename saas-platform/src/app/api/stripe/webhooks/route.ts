@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Invalid signature'
-    return NextResponse.json({ error: `Webhook signature verification failed: ${message}` }, { status: 400 })
+    console.error('[Stripe Webhook] Signature verification failed:', err)
+    return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 })
   }
 
   const supabase = await createServiceClient()
@@ -63,9 +63,8 @@ export async function POST(request: NextRequest) {
         break
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Handler error'
-    console.error(`Webhook handler error for ${event.type}:`, message)
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error(`[Stripe Webhook] Handler error for ${event.type}:`, error)
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 
   return NextResponse.json({ received: true })
@@ -146,6 +145,7 @@ async function handleCheckoutCompleted(
         trial_end: subscription.trial_end
           ? new Date(subscription.trial_end * 1000).toISOString()
           : null,
+        updated_at: new Date().toISOString(),
       })
       .eq('user_id', userId)
 
@@ -175,7 +175,7 @@ async function handleInvoicePaid(
   // Update subscription status to active (in case it was past_due)
   await supabase
     .from('subscriptions')
-    .update({ status: 'active' })
+    .update({ status: 'active', updated_at: new Date().toISOString() })
     .eq('stripe_subscription_id', subscriptionId)
 
   // Allocate monthly credits on each successful payment
@@ -191,7 +191,7 @@ async function handleInvoicePaymentFailed(
 
   await supabase
     .from('subscriptions')
-    .update({ status: 'past_due' })
+    .update({ status: 'past_due', updated_at: new Date().toISOString() })
     .eq('stripe_subscription_id', subscriptionId)
 }
 
@@ -205,6 +205,7 @@ async function handleSubscriptionDeleted(
       status: 'canceled',
       stripe_subscription_id: null,
       plan_tier: 'free',
+      updated_at: new Date().toISOString(),
     })
     .eq('stripe_subscription_id', subscription.id)
 }
@@ -219,28 +220,39 @@ async function handleSubscriptionUpdated(
   const planTier = getPlanFromPriceId(priceId)
   const { periodStart, periodEnd } = getSubscriptionPeriod(subscription)
 
-  const updateData: Record<string, unknown> = {
-    current_period_start: periodStart,
-    current_period_end: periodEnd,
-    cancel_at_period_end: subscription.cancel_at_period_end,
-    trial_end: subscription.trial_end
-      ? new Date(subscription.trial_end * 1000).toISOString()
-      : null,
-  }
-
-  if (planTier) {
-    updateData.plan_tier = planTier
-  }
-
   // Map Stripe status to our status
-  const statusMap: Record<string, string> = {
+  type SubStatus = 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete'
+  const statusMap: Record<string, SubStatus> = {
     active: 'active',
     trialing: 'trialing',
     past_due: 'past_due',
     canceled: 'canceled',
     incomplete: 'incomplete',
   }
-  updateData.status = statusMap[subscription.status] ?? 'active'
+  const mappedStatus: SubStatus = statusMap[subscription.status] ?? 'active'
+
+  const updateData: {
+    current_period_start: string | null
+    current_period_end: string | null
+    cancel_at_period_end: boolean
+    trial_end: string | null
+    status: SubStatus
+    plan_tier?: 'free' | 'starter' | 'pro' | 'business'
+    updated_at: string
+  } = {
+    current_period_start: periodStart,
+    current_period_end: periodEnd,
+    cancel_at_period_end: subscription.cancel_at_period_end,
+    trial_end: subscription.trial_end
+      ? new Date(subscription.trial_end * 1000).toISOString()
+      : null,
+    status: mappedStatus,
+    updated_at: new Date().toISOString(),
+  }
+
+  if (planTier) {
+    updateData.plan_tier = planTier
+  }
 
   await supabase
     .from('subscriptions')

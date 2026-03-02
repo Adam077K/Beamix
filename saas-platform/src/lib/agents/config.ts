@@ -99,7 +99,7 @@ const PLAN_ORDER: Record<string, number> = {
   free: 0,
   starter: 1,
   pro: 2,
-  enterprise: 3,
+  business: 3,
 }
 
 export function isPlanSufficient(userPlan: string, requiredPlan: string): boolean {

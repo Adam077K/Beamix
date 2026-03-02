@@ -7,7 +7,7 @@ const onboardingSchema = z.object({
   business_name: z.string().min(2).max(100),
   industry: z.string().min(1),
   location: z.string().min(2),
-  url: z.url(),
+  url: z.string().url(),
   scan_id: z.string().optional(),
 })
 
@@ -67,6 +67,7 @@ export async function POST(request: Request) {
       .from('free_scans')
       .update({ converted_user_id: user.id })
       .eq('scan_token', scan_id)
+      .is('converted_user_id', null)
       .select('*')
       .single()
 
@@ -125,84 +126,113 @@ async function convertFreeScanResults(
   if (!freeScan.results_data || typeof freeScan.results_data !== 'object' || Array.isArray(freeScan.results_data)) return
   const resultsData = freeScan.results_data as Record<string, Json | undefined>
 
-  // Create a tracked query for the free scan
-  const { data: query, error: queryError } = await supabase
-    .from('tracked_queries')
-    .insert({
-      user_id: userId,
-      business_id: businessId,
-      query_text: `AI visibility scan for ${freeScan.business_name}`,
-      query_category: 'general',
-      target_url: freeScan.website_url,
-      priority: 'high' as const,
-    })
-    .select('id')
-    .single()
+  let queryId: string | null = null
+  let scanResultId: string | null = null
 
-  if (queryError || !query) {
-    console.error('Failed to create tracked query:', queryError?.message)
-    return
-  }
+  try {
+    // Create a tracked query for the free scan
+    const { data: query, error: queryError } = await supabase
+      .from('tracked_queries')
+      .insert({
+        user_id: userId,
+        business_id: businessId,
+        query_text: `AI visibility scan for ${freeScan.business_name}`,
+        query_category: 'general',
+        target_url: freeScan.website_url,
+        priority: 'high' as const,
+      })
+      .select('id')
+      .single()
 
-  // Create scan_result
-  const rawEngines = resultsData.engines
-  const engines = (Array.isArray(rawEngines) ? rawEngines : []) as unknown as FreeScanEngineResult[]
-  const mentionCount = engines.filter((e) => e.is_mentioned).length
-  const mentionedPositions = engines
-    .filter((e) => e.mention_position !== null)
-    .map((e) => e.mention_position as number)
-  const avgPosition =
-    mentionedPositions.length > 0
-      ? mentionedPositions.reduce((a, b) => a + b, 0) / mentionedPositions.length
-      : null
+    if (queryError || !query) {
+      console.error('Failed to create tracked query:', queryError?.message)
+      return
+    }
+    queryId = query.id
 
-  const { data: scanResult, error: scanError } = await supabase
-    .from('scan_results')
-    .insert({
-      query_id: query.id,
-      user_id: userId,
-      business_id: businessId,
-      scan_type: 'free' as const,
-      overall_score: freeScan.overall_score,
-      mention_count: mentionCount,
-      avg_position: avgPosition,
-    })
-    .select('id')
-    .single()
+    // Create scan_result
+    const rawEngines = resultsData.engines
+    const engines = (Array.isArray(rawEngines) ? rawEngines : []) as unknown as FreeScanEngineResult[]
+    const mentionCount = engines.filter((e) => e.is_mentioned).length
+    const mentionedPositions = engines
+      .filter((e) => e.mention_position !== null)
+      .map((e) => e.mention_position as number)
+    const avgPosition =
+      mentionedPositions.length > 0
+        ? mentionedPositions.reduce((a, b) => a + b, 0) / mentionedPositions.length
+        : null
 
-  if (scanError || !scanResult) {
-    console.error('Failed to create scan result:', scanError?.message)
-    return
-  }
+    const { data: scanResult, error: scanError } = await supabase
+      .from('scan_results')
+      .insert({
+        query_id: query.id,
+        user_id: userId,
+        business_id: businessId,
+        scan_type: 'free' as const,
+        overall_score: freeScan.overall_score,
+        mention_count: mentionCount,
+        avg_position: avgPosition,
+      })
+      .select('id')
+      .single()
 
-  // Create scan_result_details for each engine
-  const engineMap: Record<string, string> = {
-    chatgpt: 'chatgpt',
-    gemini: 'gemini',
-    perplexity: 'perplexity',
-    claude: 'claude',
-    google_ai_overviews: 'google_ai_overviews',
-  }
+    if (scanError || !scanResult) {
+      console.error('Failed to create scan result:', scanError?.message)
+      return
+    }
+    scanResultId = scanResult.id
 
-  const details = engines
-    .filter((e) => engineMap[e.engine])
-    .map((e) => ({
-      scan_result_id: scanResult.id,
-      llm_provider: engineMap[e.engine] as 'chatgpt' | 'claude' | 'perplexity' | 'gemini' | 'google_ai_overviews',
-      is_mentioned: e.is_mentioned,
-      mention_position: e.mention_position,
-      mention_context: e.response_snippet || null,
-      sentiment: e.sentiment,
-      competitors_mentioned: e.competitors_mentioned ?? [],
-    }))
+    // Create scan_result_details for each engine
+    const engineMap: Record<string, string> = {
+      chatgpt: 'chatgpt',
+      gemini: 'gemini',
+      perplexity: 'perplexity',
+      claude: 'claude',
+      google_ai_overviews: 'google_ai_overviews',
+    }
 
-  if (details.length > 0) {
-    const { error: detailsError } = await supabase
-      .from('scan_result_details')
-      .insert(details)
+    const details = engines
+      .filter((e) => engineMap[e.engine])
+      .map((e) => ({
+        scan_result_id: scanResult.id,
+        llm_provider: engineMap[e.engine] as 'chatgpt' | 'claude' | 'perplexity' | 'gemini' | 'google_ai_overviews',
+        is_mentioned: e.is_mentioned,
+        mention_position: e.mention_position,
+        mention_context: e.response_snippet || null,
+        sentiment: e.sentiment,
+        competitors_mentioned: e.competitors_mentioned ?? [],
+      }))
 
-    if (detailsError) {
-      console.error('Failed to create scan result details:', detailsError.message)
+    if (details.length > 0) {
+      const { error: detailsError } = await supabase
+        .from('scan_result_details')
+        .insert(details)
+
+      if (detailsError) {
+        console.error('Failed to create scan result details:', detailsError.message)
+      }
+    }
+  } catch (err) {
+    console.error('convertFreeScanResults failed:', err)
+    // Attempt cleanup: delete the scan_result if it was created (details cascade or orphan)
+    if (scanResultId) {
+      const { error: cleanupScanErr } = await supabase
+        .from('scan_results')
+        .delete()
+        .eq('id', scanResultId)
+      if (cleanupScanErr) {
+        console.error('Cleanup: failed to delete scan_result:', cleanupScanErr.message)
+      }
+    }
+    // Attempt cleanup: delete the tracked_query if it was created
+    if (queryId) {
+      const { error: cleanupQueryErr } = await supabase
+        .from('tracked_queries')
+        .delete()
+        .eq('id', queryId)
+      if (cleanupQueryErr) {
+        console.error('Cleanup: failed to delete tracked_query:', cleanupQueryErr.message)
+      }
     }
   }
 }
