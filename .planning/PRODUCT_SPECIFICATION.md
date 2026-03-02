@@ -88,7 +88,7 @@
 | C4 | Rankings Detail | Clicks on a specific query row | Drill-down: Historical rank per LLM over time, which content pieces affected this query, competitor positions for same query | Deep insight |
 | C5 | Dashboard | Notices "Usage: 8/15 agent uses this month" in sidebar | Considers upgrading. Clicks "See Plans" | Contemplating |
 | C6 | Pricing (`/pricing` or settings modal) | Views tier comparison | Current plan highlighted. Next tier shows: more agent uses, more tracked queries, competitor tracking. "Upgrade" button. | Evaluating ROI |
-| C7 | Settings | Clicks "Upgrade to Business" | Stripe checkout (pre-filled with existing payment method). Confirms. Immediate access to new features | Committed |
+| C7 | Settings | Clicks "Upgrade to Business" | Paddle checkout (pre-filled with existing payment method). Confirms. Immediate access to new features | Committed |
 
 **Retention signal:** User who sees ranking improvement in first 30 days has 3x higher retention.
 
@@ -294,7 +294,7 @@ Total Visibility Score = Sum of all 4 LLM scores (max 100)
 
 - **Trigger:** User clicks agent action button from Recommendations, Dashboard, or Content page
 - **Configuration:** Modal with pre-filled inputs (from recommendation context) + optional customization
-- **Execution:** Async via n8n webhook. Frontend shows progress indicator. User can navigate away.
+- **Execution:** Async via server-side worker. Frontend shows progress indicator. User can navigate away.
 - **Completion:** Result appears in Content tab with status "Ready for Review"
 - **Usage tracking:** Each execution decrements `agent_uses_remaining` for the billing period
 - **Error handling:** If agent fails, status set to "Failed" with retry button. No usage deducted for failures.
@@ -390,7 +390,7 @@ interface Recommendation {
 | `language` | Select: "English" / "Hebrew" | Yes | Account default |
 | `additional_instructions` | Textarea | No | Empty |
 
-**Processing (n8n workflow):**
+**Processing (server-side agent):**
 1. Research phase: Query Perplexity for current information about the topic
 2. Competitor analysis: Analyze top-ranked competitor content for the target queries
 3. Outline generation: Create content structure optimized for LLM discovery
@@ -455,7 +455,7 @@ interface ContentOutput {
 | `language` | Select: "English" / "Hebrew" | Yes | Account default |
 | `additional_context` | Textarea | No | Empty |
 
-**Processing (n8n workflow):**
+**Processing (server-side agent):**
 1. Topic research: Perplexity query for latest data, statistics, trends
 2. Outline with hook: Create engaging structure with strong intro
 3. Draft with citations: Write content with factual claims backed by sources
@@ -509,7 +509,7 @@ interface BlogOutput {
 | `focus_area` | Select: "Overall Sentiment" / "Service Quality" / "Competitor Comparison" / "Response Strategy" | Yes | "Overall Sentiment" |
 | `language` | Select: "English" / "Hebrew" / "Both" | Yes | Account default |
 
-**Processing (n8n workflow):**
+**Processing (server-side agent):**
 1. Review collection: Scrape/API-fetch recent reviews (last 6 months, up to 100)
 2. Sentiment analysis: Classify each review as positive/neutral/negative
 3. Theme extraction: Identify recurring topics (e.g., "customer service", "pricing", "speed")
@@ -579,7 +579,7 @@ interface ReviewAnalysis {
 | `schema_types` | Multi-select: "LocalBusiness" / "Organization" / "Product" / "Service" / "FAQ" / "Review" / "BreadcrumbList" | Yes | Auto-detected |
 | `business_details` | Structured form: name, address, phone, hours, services | Yes | Pre-filled from profile |
 
-**Processing (n8n workflow):**
+**Processing (server-side agent):**
 1. Page analysis: Fetch and parse the target page HTML
 2. Existing schema detection: Identify any existing schema markup
 3. Gap analysis: Determine which schema types are missing or incomplete
@@ -633,7 +633,7 @@ interface SchemaOutput {
 | `target_queries` | Multi-select from tracked queries | Yes | Top 5 by impact |
 | `language` | Select: "English" / "Hebrew" / "Both" | Yes | Account default |
 
-**Processing (n8n workflow):**
+**Processing (server-side agent):**
 1. Industry trend analysis: What topics are trending in the user's industry on social
 2. Content calendar creation: Map topics to dates with posting frequency
 3. Post drafting: Write actual post copy for each calendar slot
@@ -714,15 +714,15 @@ interface SocialStrategyOutput {
 
 **Actions:**
 - "Change Plan" -- opens plan comparison modal with upgrade/downgrade flow
-- "Update Payment Method" -- redirects to Stripe Customer Portal
+- "Update Payment Method" -- redirects to Paddle Customer Portal
 - "Cancel Subscription" -- cancellation flow with retention offer ("Switch to Starter instead?")
 - "Download Invoice" -- per invoice row
 
 **Acceptance Criteria:**
-- [ ] Plan changes take effect immediately (prorated via Stripe)
+- [ ] Plan changes take effect immediately (prorated via Paddle)
 - [ ] Downgrade warns user if they exceed new plan limits (e.g., "You have 20 queries but Starter allows 10")
 - [ ] Cancel flow includes retention step before confirming
-- [ ] Invoice download generates PDF via Stripe
+- [ ] Invoice download generates PDF via Paddle
 - [ ] Agent usage resets on billing date (shown clearly)
 
 #### 2.4.3 Language Preference (`/dashboard/settings/preferences`)
@@ -858,9 +858,9 @@ For users who exhaust their monthly agent uses:
 /api/agents/*                       # Agent execution endpoints
 /api/content/*                      # Content CRUD
 /api/credits/*                      # Usage tracking
-/api/stripe/*                       # Stripe integration
-/api/webhooks/stripe                # Stripe webhooks
-/api/webhooks/n8n                   # n8n completion webhooks
+/api/paddle/*                       # Paddle integration
+/api/paddle/webhooks                # Paddle webhooks
+/api/webhooks/agents                # Agent completion webhooks
 /api/cron/*                         # Scheduled job endpoints
 ```
 

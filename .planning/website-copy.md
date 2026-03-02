@@ -135,10 +135,10 @@ Features:
 - 5 agent uses/month
 - 3 competitors tracked
 - Content Writer + Schema Optimizer agents
-- 7-day free trial
+- 14-day free trial
 
 Button: `Start Free Trial`
-Note: `7 days free · No credit card required`
+Note: `14 days free · No credit card required`
 
 ### Pro — $149/mo *(Annual: $119/mo)* `[Most Popular]`
 `For growing businesses serious about AI search visibility and consistent content output.`
@@ -150,10 +150,10 @@ Features:
 - 5 competitors tracked
 - All agents incl. Review Analyzer + Social Strategy
 - Trend charts + weekly digest
-- 7-day free trial
+- 14-day free trial
 
 Button: `Start Free Trial`
-Note: `7 days free · No credit card required`
+Note: `14 days free · No credit card required`
 
 ### Business — $349/mo *(Annual: $279/mo)*
 `For businesses that want daily intelligence, maximum output, and a serious competitive edge.`
@@ -166,10 +166,10 @@ Features:
 - Google AI Overviews tracking
 - PDF/CSV export
 - Daily digest + priority support + onboarding call
-- 7-day free trial
+- 14-day free trial
 
 Button: `Start Free Trial`
-Note: `7 days free · No credit card required`
+Note: `14 days free · No credit card required`
 
 **Add-on note:** `Need more agent uses? Top up anytime: 5 uses for $15 · 15 uses for $35`
 

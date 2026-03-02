@@ -26,9 +26,8 @@ When discussing the project, repo, or deployments:
 
 - Next.js 16, React 19, TypeScript
 - Supabase (auth, DB, RLS)
-- Stripe (billing)
-- n8n Cloud (workflows)
-- LLMs: OpenAI, Claude, Gemini, Perplexity...
+- Paddle (billing)
+- LLMs: OpenAI, Claude, Gemini, Perplexity (direct integration via Next.js API routes)
 
 ## Context Optimization ⚡
 

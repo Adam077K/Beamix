@@ -9,24 +9,24 @@ export default async function DashboardLayout({
 }) {
   const supabase = await createClient()
 
-  // The parent (protected) layout already verifies the user via getUser()
-  // and redirects to /login if unauthenticated. Use getSession() here to
-  // read the user ID from the cookie without a redundant auth round-trip.
+  // getUser() validates the token server-side against Supabase Auth,
+  // unlike getSession() which only reads the JWT from the cookie without
+  // verification. Always use getUser() for auth decisions.
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session?.user) {
+  if (!user) {
     redirect('/login')
   }
 
-  const userId = session.user.id
+  const userId = user.id
 
   // Check if onboarding is completed, and fetch sidebar data in one batch
   const [profileResult, businessResult, subscriptionResult] = await Promise.all([
     supabase
-      .from('users')
-      .select('onboarding_completed')
+      .from('user_profiles')
+      .select('onboarding_completed_at')
       .eq('id', userId)
       .single(),
     supabase
@@ -37,18 +37,18 @@ export default async function DashboardLayout({
       .single(),
     supabase
       .from('subscriptions')
-      .select('plan_tier, status, trial_end')
+      .select('plan_tier, status, trial_ends_at')
       .eq('user_id', userId)
       .single(),
   ])
 
-  if (!profileResult.data?.onboarding_completed) {
+  if (!profileResult.data?.onboarding_completed_at) {
     redirect('/onboarding')
   }
 
   const businessName = businessResult.data?.name ?? 'My Business'
   const planTier = subscriptionResult.data?.plan_tier ?? 'free'
-  const trialEnd = subscriptionResult.data?.trial_end
+  const trialEnd = subscriptionResult.data?.trial_ends_at
   const isTrialing = subscriptionResult.data?.status === 'trialing'
 
   let trialDaysLeft: number | null = null

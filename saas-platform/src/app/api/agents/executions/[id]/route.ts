@@ -18,9 +18,9 @@ export async function GET(
 
   // Fetch execution
   const { data: execution, error: execErr } = await supabase
-    .from('agent_executions')
+    .from('agent_jobs')
     .select(
-      'id, agent_type, status, credits_charged, output_data, error_message, started_at, completed_at, execution_duration_ms, created_at'
+      'id, agent_type, status, credits_cost, output_data, error_message, started_at, completed_at, runtime_ms, created_at'
     )
     .eq('id', id)
     .eq('user_id', user.id)
@@ -40,17 +40,17 @@ export async function GET(
   if (execution.status === 'completed') {
     const [contentResult, outputResult] = await Promise.all([
       supabase
-        .from('content_generations')
+        .from('content_items')
         .select(
           'id, content_type, title, generated_content, content_format, word_count, quality_score, llm_optimization_score, is_favorited, created_at'
         )
-        .eq('execution_id', id),
+        .eq('agent_job_id', id),
       supabase
-        .from('agent_outputs')
+        .from('agent_jobs')
         .select(
           'id, output_type, title, structured_data, summary, is_favorited, created_at'
         )
-        .eq('execution_id', id),
+        .eq('agent_job_id', id),
     ])
 
     if (contentResult.data && contentResult.data.length > 0) {
@@ -66,11 +66,11 @@ export async function GET(
       id: execution.id,
       agentType: execution.agent_type,
       status: execution.status,
-      creditsCharged: execution.credits_charged,
+      creditsCharged: execution.credits_cost,
       errorMessage: execution.error_message,
       startedAt: execution.started_at,
       completedAt: execution.completed_at,
-      durationMs: execution.execution_duration_ms,
+      durationMs: execution.runtime_ms,
       createdAt: execution.created_at,
     },
     content,

@@ -40,8 +40,8 @@ const OUTPUT_TYPE_META: Record<string, { label: string; icon: React.ComponentTyp
 interface ContentLibraryViewProps {
   content: Array<{
     id: string
-    content_type: string
-    title: string | null
+    agent_type: string
+    title: string
     content_format: string
     word_count: number | null
     quality_score: number | null
@@ -50,11 +50,10 @@ interface ContentLibraryViewProps {
   }>
   outputs: Array<{
     id: string
-    output_type: string
-    title: string | null
-    summary: string | null
-    is_favorited: boolean
+    agent_type: string
+    status: string
     created_at: string
+    completed_at: string | null
   }>
 }
 
@@ -65,10 +64,10 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredContent = content.filter((c) =>
-    !searchQuery || (c.title ?? '').toLowerCase().includes(searchQuery.toLowerCase())
+    !searchQuery || c.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
   const filteredOutputs = outputs.filter((o) =>
-    !searchQuery || (o.title ?? '').toLowerCase().includes(searchQuery.toLowerCase()) || (o.summary ?? '').toLowerCase().includes(searchQuery.toLowerCase())
+    !searchQuery || o.agent_type.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const showContent = tab === 'all' || tab === 'content'
@@ -97,7 +96,7 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
             className="pl-10"
           />
         </div>
-        <div className="flex gap-1 rounded-lg border border-[var(--color-card-border)] p-1">
+        <div className="flex gap-1 rounded-lg border border-[var(--color-card-border)] bg-[var(--color-bg)] p-1">
           {(['all', 'content', 'reports'] as Tab[]).map((t) => (
             <Button
               key={t}
@@ -114,7 +113,7 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
 
       {/* Items */}
       {totalItems === 0 ? (
-        <div className="py-16 text-center">
+        <div className="rounded-xl border-2 border-dashed border-[var(--color-card-border)] bg-[var(--color-bg)] py-16 text-center">
           <FileText className="mx-auto h-12 w-12 text-[var(--color-card-border)]" />
           <h2 className="mt-4 font-display text-lg font-semibold text-[var(--color-text)]">
             No content yet
@@ -126,17 +125,17 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
       ) : (
         <div className="space-y-3">
           {showContent && filteredContent.map((item) => {
-            const meta = CONTENT_TYPE_META[item.content_type] ?? { label: item.content_type, icon: FileText, color: 'bg-gray-100 text-gray-700' }
+            const meta = CONTENT_TYPE_META[item.agent_type] ?? { label: item.agent_type, icon: FileText, color: 'bg-gray-100 text-gray-700' }
             const Icon = meta.icon
             return (
-              <Card key={item.id} className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
+              <Card key={item.id} className="card-hover">
                 <CardContent className="flex items-center gap-4 p-4">
                   <div className={`flex h-10 w-10 items-center justify-center rounded-xl shrink-0 ${meta.color}`}>
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-[var(--color-text)] truncate">
-                      {item.title ?? 'Untitled'}
+                      {item.title}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <Badge className={`text-xs ${meta.color}`}>{meta.label}</Badge>
@@ -160,27 +159,23 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
           })}
 
           {showOutputs && filteredOutputs.map((item) => {
-            const meta = OUTPUT_TYPE_META[item.output_type] ?? { label: item.output_type, icon: BarChart3, color: 'bg-gray-100 text-gray-700' }
+            const meta = OUTPUT_TYPE_META[item.agent_type] ?? { label: item.agent_type, icon: BarChart3, color: 'bg-gray-100 text-gray-700' }
             const Icon = meta.icon
             return (
-              <Card key={item.id} className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
+              <Card key={item.id} className="card-hover">
                 <CardContent className="flex items-center gap-4 p-4">
                   <div className={`flex h-10 w-10 items-center justify-center rounded-xl shrink-0 ${meta.color}`}>
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-[var(--color-text)] truncate">
-                      {item.title ?? 'Untitled Report'}
+                      {meta.label}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <Badge className={`text-xs ${meta.color}`}>{meta.label}</Badge>
-                      {item.summary && (
-                        <span className="text-xs text-[var(--color-muted)] truncate max-w-xs">{item.summary}</span>
-                      )}
+                      <Badge className={`text-xs ${meta.color}`}>{item.status}</Badge>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    {item.is_favorited && <Heart className="h-4 w-4 text-red-500 fill-red-500" />}
                     <span className="text-xs text-[var(--color-muted)]">
                       {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                     </span>

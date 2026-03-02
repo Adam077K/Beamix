@@ -11,9 +11,9 @@ export function BlogFeaturedHero({ post }: { post: BlogPost }) {
       <div className="grid md:grid-cols-2 gap-0">
         {/* Image / placeholder */}
         <div className="bg-gradient-to-br from-cyan-50 to-stone-100 min-h-[280px] flex items-center justify-center">
-          {post.cover_image ? (
+          {post.cover_image_url ? (
             <img
-              src={post.cover_image}
+              src={post.cover_image_url}
               alt={post.title}
               className="w-full h-full object-cover"
             />
@@ -34,7 +34,7 @@ export function BlogFeaturedHero({ post }: { post: BlogPost }) {
               Featured
             </span>
             <span className="text-xs font-medium text-stone-400 capitalize">
-              {post.category.replace(/-/g, ' ')}
+              {(post.category ?? '').replace(/-/g, ' ')}
             </span>
           </div>
 

@@ -60,7 +60,7 @@
 
 **HTTP Client:**
 - Axios 1.13.2 - For HTTP requests (alternative to fetch)
-- Stripe 20.2.0 - Stripe SDK (for future payment processing)
+- Paddle Node SDK - Paddle SDK (for future payment processing)
 
 ## Key Dependencies
 
@@ -85,8 +85,7 @@
 - Supabase configuration: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - Service role key: `SUPABASE_SERVICE_ROLE_KEY` (server-side only)
 - Database connection: `DATABASE_URL` for migrations
-- Stripe keys: `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`
-- n8n webhooks: `N8N_*_WEBHOOK` environment variables
+- Paddle keys: `NEXT_PUBLIC_NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_API_KEY`
 - LLM API keys: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `PERPLEXITY_API_KEY`, `GOOGLE_AI_API_KEY`
 - App URL: `NEXT_PUBLIC_APP_URL`
 
@@ -108,8 +107,7 @@
 **Production:**
 - Vercel (for Next.js frontend + API routes)
 - Supabase Cloud (PostgreSQL + Auth)
-- n8n Cloud (workflow orchestration)
-- Stripe (payment processing)
+- Paddle (payment processing)
 
 ---
 

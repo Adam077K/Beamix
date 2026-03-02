@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod/v4'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import type { Json } from '@/lib/types/database.types'
 
 const onboardingSchema = z.object({
@@ -39,34 +39,60 @@ export async function POST(request: Request) {
 
   const { business_name, industry, location, url, scan_id } = parsed.data
 
-  // 1. Create business record
-  const { data: business, error: bizError } = await supabase
+  // 1. Create primary business record.
+  //    Check first so a double-submit (back button / retry) returns the
+  //    existing record instead of failing with a duplicate error.
+  const { data: existingBiz } = await supabase
     .from('businesses')
-    .insert({
-      user_id: user.id,
-      name: business_name,
-      website_url: url,
-      industry,
-      location,
-      is_primary: true,
-    })
     .select('id')
-    .single()
+    .eq('user_id', user.id)
+    .eq('is_primary', true)
+    .maybeSingle()
 
-  if (bizError) {
-    return NextResponse.json(
-      { error: 'Failed to create business', details: bizError.message },
-      { status: 500 }
-    )
+  let business: { id: string } | null = existingBiz
+
+  if (!existingBiz) {
+    const { data: newBiz, error: bizError } = await supabase
+      .from('businesses')
+      .insert({
+        user_id: user.id,
+        name: business_name,
+        website_url: url,
+        industry,
+        location,
+        is_primary: true,
+      })
+      .select('id')
+      .single()
+
+    if (bizError) {
+      return NextResponse.json(
+        { error: 'Failed to create business', details: bizError.message },
+        { status: 500 }
+      )
+    }
+    business = newBiz
+  } else {
+    // Update existing business with latest values
+    await supabase
+      .from('businesses')
+      .update({ name: business_name, website_url: url, industry, location })
+      .eq('id', existingBiz.id)
+  }
+
+  if (!business) {
+    return NextResponse.json({ error: 'Failed to resolve business record' }, { status: 500 })
   }
 
   // 2. If scan_id provided, link the free scan and convert results
   if (scan_id) {
-    // Link free scan to this user
-    const { data: freeScan, error: scanLinkError } = await supabase
+    // Link free scan to this user — must use service client because free_scans
+    // has no RLS UPDATE policy (rows are owned by the service role, not the user)
+    const serviceSupa = await createServiceClient()
+    const { data: freeScan, error: scanLinkError } = await serviceSupa
       .from('free_scans')
       .update({ converted_user_id: user.id })
-      .eq('scan_token', scan_id)
+      .eq('id', scan_id)
       .is('converted_user_id', null)
       .select('*')
       .single()
@@ -76,18 +102,60 @@ export async function POST(request: Request) {
       console.error('Failed to link free scan:', scanLinkError.message)
     } else if (freeScan?.results_data && freeScan.status === 'completed') {
       // Convert free scan results to scan_results + scan_result_details
-      await convertFreeScanResults(supabase, freeScan, user.id, business.id)
+      await convertFreeScanResults(serviceSupa, freeScan, user.id, business.id)
     }
   }
 
-  // 3. Mark onboarding as completed
+  // 3. Mark onboarding as completed.
+  //
+  //    UPSERT instead of UPDATE because the handle_new_user trigger creates
+  //    user_profiles at signup, but if it didn't run (e.g. existing users,
+  //    local dev without the trigger), UPDATE would match 0 rows silently,
+  //    return no error, and leave onboarding_completed_at as null — causing
+  //    the dashboard layout to redirect back to /onboarding forever.
+  const now = new Date().toISOString()
   const { error: profileError } = await supabase
-    .from('users')
-    .update({ onboarding_completed: true })
-    .eq('id', user.id)
+    .from('user_profiles')
+    .upsert(
+      {
+        id: user.id,
+        email: user.email ?? null,
+        full_name: (user.user_metadata?.full_name as string | undefined) ?? null,
+        onboarding_completed_at: now,
+        updated_at: now,
+      },
+      { onConflict: 'id' }
+    )
 
   if (profileError) {
-    console.error('Failed to update onboarding status:', profileError.message)
+    console.error('Failed to upsert onboarding status:', profileError.message)
+    return NextResponse.json(
+      { error: 'Failed to complete onboarding', details: profileError.message },
+      { status: 500 }
+    )
+  }
+
+  // 4. Ensure subscription row exists with trial dates set.
+  //    The trigger creates the row but leaves trial_ends_at null.
+  //    Set it here so the 14-day countdown starts when onboarding completes.
+  const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+  const { error: subError } = await supabase
+    .from('subscriptions')
+    .upsert(
+      {
+        user_id: user.id,
+        status: 'trialing',
+        plan_tier: null,
+        trial_started_at: now,
+        trial_ends_at: trialEnd,
+        updated_at: now,
+      },
+      { onConflict: 'user_id' }
+    )
+
+  if (subError) {
+    // Non-fatal — user can still reach the dashboard, trial just won't show
+    console.error('Failed to upsert subscription trial:', subError.message)
   }
 
   return NextResponse.json({ success: true, business_id: business.id })
@@ -95,10 +163,9 @@ export async function POST(request: Request) {
 
 interface FreeScanRow {
   id: string
-  scan_token: string
   website_url: string
   business_name: string
-  sector: string
+  industry: string
   location: string
   overall_score: number | null
   results_data: Json | null
@@ -115,7 +182,7 @@ interface FreeScanEngineResult {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClient = Awaited<ReturnType<typeof createClient>>
+type SupabaseClient = Awaited<ReturnType<typeof createServiceClient>>
 
 async function convertFreeScanResults(
   supabase: SupabaseClient,
@@ -163,14 +230,14 @@ async function convertFreeScanResults(
         : null
 
     const { data: scanResult, error: scanError } = await supabase
-      .from('scan_results')
+      .from('scans')
       .insert({
         query_id: query.id,
         user_id: userId,
         business_id: businessId,
         scan_type: 'free' as const,
         overall_score: freeScan.overall_score,
-        mention_count: mentionCount,
+        mentions_count: mentionCount,
         avg_position: avgPosition,
       })
       .select('id')
@@ -194,18 +261,17 @@ async function convertFreeScanResults(
     const details = engines
       .filter((e) => engineMap[e.engine])
       .map((e) => ({
-        scan_result_id: scanResult.id,
-        llm_provider: engineMap[e.engine] as 'chatgpt' | 'claude' | 'perplexity' | 'gemini' | 'google_ai_overviews',
+        scan_id: scanResult.id,
+        business_id: businessId,
+        engine: engineMap[e.engine],
         is_mentioned: e.is_mentioned,
-        mention_position: e.mention_position,
-        mention_context: e.response_snippet || null,
+        rank_position: e.mention_position,
         sentiment: e.sentiment,
-        competitors_mentioned: e.competitors_mentioned ?? [],
       }))
 
     if (details.length > 0) {
       const { error: detailsError } = await supabase
-        .from('scan_result_details')
+        .from('scan_engine_results')
         .insert(details)
 
       if (detailsError) {
@@ -217,7 +283,7 @@ async function convertFreeScanResults(
     // Attempt cleanup: delete the scan_result if it was created (details cascade or orphan)
     if (scanResultId) {
       const { error: cleanupScanErr } = await supabase
-        .from('scan_results')
+        .from('scans')
         .delete()
         .eq('id', scanResultId)
       if (cleanupScanErr) {

@@ -30,30 +30,30 @@ export async function GET() {
       .single(),
     supabase
       .from('subscriptions')
-      .select('plan_tier, status, trial_end, current_period_end')
+      .select('plan_tier, status, trial_ends_at, current_period_end')
       .eq('user_id', user.id)
       .single(),
     supabase
-      .from('credits')
-      .select('total_credits, monthly_allocation, rollover_credits, bonus_credits')
+      .from('credit_pools')
+      .select('base_allocation, topup_amount, rollover_amount, used_amount')
       .eq('user_id', user.id)
       .single(),
     supabase
-      .from('scan_results')
-      .select('id, overall_score, mention_count, avg_position, scanned_at, scan_type')
+      .from('scans')
+      .select('id, overall_score, mentions_count, created_at, scan_type')
       .eq('user_id', user.id)
-      .order('scanned_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(5),
     supabase
       .from('recommendations')
-      .select('id, title, description, priority, recommendation_type, status, agent_type, credits_cost')
+      .select('id, title, description, priority, recommendation_type, status, suggested_agent, credits_cost')
       .eq('user_id', user.id)
-      .in('status', ['new', 'in_progress'])
+      .in('status', ['pending', 'in_progress'])
       .order('priority', { ascending: true })
       .limit(10),
     supabase
-      .from('agent_executions')
-      .select('id, agent_type, status, credits_charged, created_at, completed_at')
+      .from('agent_jobs')
+      .select('id, agent_type, status, credits_cost, created_at, completed_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(5),
@@ -83,8 +83,8 @@ export async function GET() {
 
   // Trial days
   let trialDaysLeft: number | null = null
-  if (subscription?.status === 'trialing' && subscription.trial_end) {
-    const diff = new Date(subscription.trial_end).getTime() - Date.now()
+  if (subscription?.status === 'trialing' && subscription.trial_ends_at) {
+    const diff = new Date(subscription.trial_ends_at).getTime() - Date.now()
     trialDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
   }
 
@@ -96,16 +96,16 @@ export async function GET() {
       trial_days_left: trialDaysLeft,
     } : null,
     credits: credits ? {
-      total: credits.total_credits,
-      monthly: credits.monthly_allocation,
-      rollover: credits.rollover_credits,
-      bonus: credits.bonus_credits,
+      total: credits.base_allocation + credits.topup_amount + credits.rollover_amount - credits.used_amount,
+      monthly: credits.base_allocation,
+      rollover: credits.rollover_amount,
+      bonus: credits.topup_amount,
     } : null,
     hero: {
       score: latestScan?.overall_score ?? null,
       delta: scoreDelta,
-      mention_count: latestScan?.mention_count ?? 0,
-      last_scanned: latestScan?.scanned_at ?? null,
+      mention_count: latestScan?.mentions_count ?? 0,
+      last_scanned: latestScan?.created_at ?? null,
     },
     recommendations,
     recent_agents: recentAgents,

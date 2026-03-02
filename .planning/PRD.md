@@ -98,15 +98,15 @@ Every competitor builds dashboards. Beamix does the work.
 | Frontend | Next.js 14 (App Router), React 18, TypeScript |
 | UI | Tailwind CSS (logical properties for RTL), Shadcn UI |
 | Database | Supabase (PostgreSQL + Auth + RLS) |
-| AI Orchestration | n8n Cloud (all LLM calls happen here) |
-| Payments | Stripe (subscriptions + one-time add-ons) |
+| AI Orchestration | Direct LLM API calls from Next.js API routes |
+| Payments | Paddle (subscriptions + one-time add-ons) |
 | LLM APIs | OpenAI (GPT-4o), Anthropic (Claude Sonnet), Perplexity (Sonar), Google (Gemini) |
-| Deployment | Vercel + Supabase Cloud + n8n Cloud |
+| Deployment | Vercel + Supabase Cloud |
 | i18n | next-intl (Hebrew RTL + English LTR) |
 
 ### Architecture Principles
 
-1. **LLM calls ONLY in n8n** — never from API routes. Centralizes cost tracking and retry logic.
+1. **LLM calls in API routes** — direct calls to LLM APIs from Next.js server-side code. Centralizes cost tracking and retry logic.
 2. **Fire-and-forget agents** — API returns 202 immediately, frontend polls for completion.
 3. **RLS is the security boundary** — even if API has bugs, data can't leak across users.
 4. **Credits deducted AFTER success** — failed agents don't charge users.

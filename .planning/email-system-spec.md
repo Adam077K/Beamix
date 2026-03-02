@@ -9,8 +9,7 @@
 
 ## Open Question ⚠️
 
-**Trial duration:** `settings-spec.md` says **7 days**. Email copy below uses **14 days**.
-Adam needs to confirm which is canonical before trial emails are built.
+**Trial duration:** Confirmed **14 days** (locked decision). All specs aligned.
 
 ---
 
@@ -176,7 +175,7 @@ export async function sendCompetitorMoved(params: { to: string; firstName: strin
 ---
 
 ### 6. Trial Day 7 Nudge
-- **Trigger:** Vercel Cron (`/api/cron/trial-nudges`) — daily at 09:00 UTC. Checks `subscriptions` where `trial_started_at + 7 days = today` and `status = 'trialing'`
+- **Trigger:** Vercel Cron (`/api/cron/trial-nudges`) — daily at 09:00 UTC. Checks `subscriptions` where `trial_started_at + 7 days = today` and `status = 'trialing'` (midpoint of 14-day trial)
 - **Subject:** `"Halfway through your trial — here's your progress"`
 - **Content:**
   - Scans completed count
@@ -212,7 +211,7 @@ export async function sendCompetitorMoved(params: { to: string; firstName: strin
 ---
 
 ### 9. Upgrade Confirmation
-- **Trigger:** Stripe webhook `checkout.session.completed`
+- **Trigger:** Paddle webhook `transaction.completed`
 - **Subject:** `"Welcome to Beamix [Plan Name]"`
 - **Content:**
   - Plan name + features now unlocked
@@ -223,7 +222,7 @@ export async function sendCompetitorMoved(params: { to: string; firstName: strin
 ---
 
 ### 10. Invoice Receipt
-- **Trigger:** Stripe webhook `invoice.payment_succeeded`
+- **Trigger:** Paddle webhook `transaction.completed`
 - **Subject:** `"Beamix receipt — [amount]"`
 - **Content:**
   - Amount + date
@@ -234,18 +233,18 @@ export async function sendCompetitorMoved(params: { to: string; firstName: strin
 ---
 
 ### 11. Payment Failed
-- **Trigger:** Stripe webhook `invoice.payment_failed`
+- **Trigger:** Paddle webhook `transaction.payment_failed`
 - **Subject:** `"Action required: payment failed"`
 - **Content:**
   - Amount that failed
-  - Retry date (Stripe auto-retries)
-  - CTA: "Update Payment Method →" → Stripe billing portal
+  - Retry date (Paddle auto-retries)
+  - CTA: "Update Payment Method →" → Paddle billing portal
 - **Opt-out:** Not opt-outable
 
 ---
 
 ### 12. Cancellation Confirmation
-- **Trigger:** Stripe webhook `customer.subscription.deleted`
+- **Trigger:** Paddle webhook `subscription.canceled`
 - **Subject:** `"Your Beamix subscription has been cancelled"`
 - **Content:**
   - Access until date (end of billing period)

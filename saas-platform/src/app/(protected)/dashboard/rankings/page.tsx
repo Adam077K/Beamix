@@ -12,10 +12,10 @@ export default async function RankingsPage() {
 
   // Fetch latest scan ID first, then run remaining queries in parallel
   const latestScanRow = await supabase
-    .from('scan_results')
+    .from('scans')
     .select('id')
     .eq('user_id', user.id)
-    .order('scanned_at', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(1)
     .single()
 
@@ -23,16 +23,16 @@ export default async function RankingsPage() {
 
   const [scansResult, detailsResult, queriesResult] = await Promise.all([
     supabase
-      .from('scan_results')
-      .select('id, overall_score, mention_count, avg_position, scanned_at, scan_type')
+      .from('scans')
+      .select('id, overall_score, mentions_count, created_at, scan_type')
       .eq('user_id', user.id)
-      .order('scanned_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(20),
     latestScanId
       ? supabase
-          .from('scan_result_details')
-          .select('id, scan_result_id, llm_provider, is_mentioned, mention_position, sentiment, mention_context')
-          .eq('scan_result_id', latestScanId)
+          .from('scan_engine_results')
+          .select('id, scan_id, engine, is_mentioned, rank_position, sentiment')
+          .eq('scan_id', latestScanId)
       : Promise.resolve({ data: null }),
     supabase
       .from('tracked_queries')
@@ -42,10 +42,13 @@ export default async function RankingsPage() {
       .order('priority', { ascending: true }),
   ])
 
+  type MentionSentiment = 'positive' | 'neutral' | 'negative'
+  type EngineDetail = { id: string; scan_id: string; engine: string; is_mentioned: boolean; rank_position: number | null; sentiment: MentionSentiment | null }
+
   return (
     <RankingsView
       scans={scansResult.data ?? []}
-      latestDetails={detailsResult.data ?? []}
+      latestDetails={(detailsResult.data ?? []) as EngineDetail[]}
       queries={queriesResult.data ?? []}
     />
   )

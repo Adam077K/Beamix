@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import {
   Building2,
   CreditCard,
@@ -104,15 +104,46 @@ function TagInput({
 // ──────────────────────────────────────────────────────────
 
 function BusinessProfileTab() {
-  const [businessName, setBusinessName] = useState('My Business')
-  const [websiteUrl, setWebsiteUrl] = useState('https://example.com')
-  const [industry, setIndustry] = useState('tech')
-  const [location, setLocation] = useState('Tel Aviv, Israel')
+  const [businessName, setBusinessName] = useState('')
+  const [websiteUrl, setWebsiteUrl] = useState('')
+  const [industry, setIndustry] = useState('')
+  const [location, setLocation] = useState('')
   const [description, setDescription] = useState('')
-  const [services, setServices] = useState<string[]>(['Web Development', 'AI Solutions'])
+  const [services, setServices] = useState<string[]>([])
   const [competitors, setCompetitors] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadBusiness() {
+      try {
+        const res = await fetch('/api/businesses/primary')
+        if (res.ok) {
+          const data = await res.json() as {
+            name: string
+            website_url: string | null
+            industry: string | null
+            location: string | null
+            description: string | null
+            services: string[] | null
+          }
+          setBusinessName(data.name ?? '')
+          setWebsiteUrl(data.website_url ?? '')
+          setIndustry(data.industry ?? '')
+          setLocation(data.location ?? '')
+          setDescription(data.description ?? '')
+          setServices(Array.isArray(data.services) ? data.services : [])
+        }
+        // If 404 (no business yet) or other error, leave form empty and editable
+      } catch {
+        // Network error — leave form empty and editable
+      } finally {
+        setLoading(false)
+      }
+    }
+    void loadBusiness()
+  }, [])
 
   const handleSave = useCallback(async () => {
     setSaving(true)
@@ -146,6 +177,15 @@ function BusinessProfileTab() {
         <CardDescription>Update your business information for more accurate scans.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
+        {loading && (
+          <div className="space-y-3 animate-pulse">
+            <div className="h-9 rounded-lg bg-[var(--color-card-border)]" />
+            <div className="h-9 rounded-lg bg-[var(--color-card-border)]" />
+            <div className="h-9 rounded-lg bg-[var(--color-card-border)]" />
+          </div>
+        )}
+        {!loading && (
+        <>
         {/* Business Name */}
         <div className="space-y-1.5">
           <Label htmlFor="business-name">Business Name</Label>
@@ -251,6 +291,8 @@ function BusinessProfileTab() {
             <span className="text-sm text-emerald-600">Changes saved successfully</span>
           )}
         </div>
+        </>
+        )}
       </CardContent>
     </Card>
   )

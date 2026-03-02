@@ -1,9 +1,8 @@
 import type { Database } from '@/lib/types/database.types'
 
-type AgentExecutionType = Database['public']['Tables']['agent_executions']['Row']['agent_type']
-type ContentType = Database['public']['Tables']['content_generations']['Row']['content_type']
-type AgentOutputType = Database['public']['Tables']['agent_outputs']['Row']['output_type']
-type PlanTier = Database['public']['Tables']['subscriptions']['Row']['plan_tier']
+type AgentType = Database['public']['Tables']['agent_jobs']['Row']['agent_type']
+type ContentFormat = Database['public']['Tables']['content_items']['Row']['content_format']
+type PlanTier = Database['public']['Enums']['plan_tier']
 
 export interface AgentConfig {
   name: string
@@ -11,13 +10,11 @@ export interface AgentConfig {
   minPlan: PlanTier
   icon: string
   /** DB agent_type value */
-  dbType: AgentExecutionType
-  /** If this agent produces content, which content_type to use */
-  contentType?: ContentType
-  /** If this agent produces structured output, which output_type to use */
-  outputType?: AgentOutputType
-  /** Content format for content_generations */
-  contentFormat?: 'markdown' | 'html' | 'json' | 'json-ld'
+  dbType: AgentType
+  /** Whether this agent produces content items */
+  producesContent: boolean
+  /** Content format for content_items */
+  contentFormat?: ContentFormat
 }
 
 /**
@@ -31,7 +28,7 @@ export const AGENT_CONFIG: Record<string, AgentConfig> = {
     minPlan: 'starter',
     icon: 'FileText',
     dbType: 'content_writer',
-    contentType: 'landing_page',
+    producesContent: true,
     contentFormat: 'markdown',
   },
   'blog-writer': {
@@ -40,7 +37,7 @@ export const AGENT_CONFIG: Record<string, AgentConfig> = {
     minPlan: 'starter',
     icon: 'BookOpen',
     dbType: 'blog_writer',
-    contentType: 'blog_post',
+    producesContent: true,
     contentFormat: 'markdown',
   },
   'review-analyzer': {
@@ -49,7 +46,7 @@ export const AGENT_CONFIG: Record<string, AgentConfig> = {
     minPlan: 'starter',
     icon: 'MessageSquare',
     dbType: 'review_analyzer',
-    outputType: 'review_analysis',
+    producesContent: false,
   },
   'schema-optimizer': {
     name: 'Schema Optimizer',
@@ -57,8 +54,8 @@ export const AGENT_CONFIG: Record<string, AgentConfig> = {
     minPlan: 'starter',
     icon: 'Code',
     dbType: 'schema_optimizer',
-    contentType: 'schema_markup',
-    contentFormat: 'json-ld',
+    producesContent: true,
+    contentFormat: 'json_ld',
   },
   'social-strategy': {
     name: 'Social Strategy',
@@ -66,23 +63,24 @@ export const AGENT_CONFIG: Record<string, AgentConfig> = {
     minPlan: 'pro',
     icon: 'Share2',
     dbType: 'social_strategy',
-    outputType: 'social_strategy',
+    producesContent: false,
   },
-  'competitor-research': {
-    name: 'Competitor Research',
+  'competitor-intelligence': {
+    name: 'Competitor Intelligence',
     cost: 4,
     minPlan: 'pro',
     icon: 'Search',
-    dbType: 'competitor_research',
-    outputType: 'competitor_report',
+    dbType: 'competitor_intelligence',
+    producesContent: false,
   },
-  'query-researcher': {
-    name: 'Query Researcher',
+  'faq-agent': {
+    name: 'FAQ Agent',
     cost: 2,
     minPlan: 'starter',
     icon: 'TrendingUp',
-    dbType: 'query_researcher',
-    outputType: 'query_suggestions',
+    dbType: 'faq_agent',
+    producesContent: true,
+    contentFormat: 'markdown',
   },
 } as const
 

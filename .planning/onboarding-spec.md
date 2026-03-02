@@ -330,7 +330,7 @@ BEAMIX
 4. Trigger background scan worker (async — does not block response)
 5. Return `{ scan_id, status: 'processing' }`
 
-**Scan worker handles asynchronously (custom code — no n8n):**
+**Scan worker handles asynchronously (server-side code):**
 - Generates industry-specific prompts
 - Queries all 8 AI engines in parallel
 - Parses responses + extracts mentions, queries, rankings

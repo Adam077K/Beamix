@@ -161,3 +161,12 @@
     font-family: var(--font-outfit), system-ui, sans-serif;
   }
 }
+
+@layer components {
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5;
+  }
+  .card-interactive {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer;
+  }
+}

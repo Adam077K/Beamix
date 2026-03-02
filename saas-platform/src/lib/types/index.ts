@@ -1,14 +1,15 @@
 export type ScanStatus = 'processing' | 'completed' | 'failed'
-export type PlanTier = 'free' | 'starter' | 'pro' | 'business'
+/** Paid plan tiers (matches DB enum). Free tier = null in DB. */
+export type PlanTier = 'starter' | 'pro' | 'business'
 export type LLMEngine = 'chatgpt' | 'gemini' | 'perplexity' | 'claude'
 export type AgentType =
   | 'content_writer'
   | 'blog_writer'
+  | 'faq_agent'
   | 'review_analyzer'
   | 'schema_optimizer'
   | 'social_strategy'
-  | 'competitor_research'
-  | 'query_researcher'
+  | 'competitor_intelligence'
 export type ContentStatus = 'draft' | 'pending_review' | 'published' | 'failed'
 export type RecommendationImpact = 'high' | 'medium' | 'low'
 

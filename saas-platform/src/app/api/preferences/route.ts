@@ -54,7 +54,7 @@ export async function PATCH(request: Request) {
   if (Object.keys(userUpdates).length > 0) {
     userUpdates.updated_at = new Date().toISOString()
     const { error: userError } = await supabase
-      .from('users')
+      .from('user_profiles')
       .update(userUpdates)
       .eq('id', user.id)
 

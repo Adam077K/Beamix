@@ -15,8 +15,8 @@ export async function GET(
 
   const { data: scan, error } = await supabase
     .from('free_scans')
-    .select('scan_token, status, business_name, website_url, sector, location, overall_score, results_data, created_at')
-    .eq('scan_token', scan_id)
+    .select('id, status, business_name, website_url, industry, location, overall_score, results_data, created_at')
+    .eq('id', scan_id)
     .single()
 
   if (error || !scan) {
@@ -34,10 +34,10 @@ export async function GET(
   }
 
   return NextResponse.json({
-    scan_id: scan.scan_token,
+    scan_id: scan.id,
     business_name: scan.business_name,
     website_url: scan.website_url,
-    sector: scan.sector,
+    sector: scan.industry,
     location: scan.location,
     status: scan.status,
     results: scan.results_data,

@@ -9,8 +9,9 @@ export function BeamixFinalCTA() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!url) return
-    localStorage.setItem('beamix_pending_url', url)
-    router.push(`/scan?url=${encodeURIComponent(url)}`)
+    const normalizedUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`
+    localStorage.setItem('beamix_pending_url', normalizedUrl)
+    router.push(`/scan?url=${encodeURIComponent(normalizedUrl)}`)
   }
 
   return (

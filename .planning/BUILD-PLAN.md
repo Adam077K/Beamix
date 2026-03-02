@@ -58,7 +58,7 @@ saas-platform/
 │   │   │   ├── recommendations/route.ts
 │   │   │   ├── credits/balance/route.ts
 │   │   │   ├── onboarding/complete/route.ts
-│   │   │   ├── stripe/
+│   │   │   ├── paddle/
 │   │   │   │   ├── checkout/route.ts
 │   │   │   │   ├── webhooks/route.ts
 │   │   │   │   └── portal/route.ts
@@ -87,7 +87,7 @@ saas-platform/
 │   │   ├── scan/                             ← mock + real engine
 │   │   ├── agents/                           ← agent pipelines
 │   │   ├── email/                            ← Resend wrapper
-│   │   ├── stripe/                           ← Stripe helpers
+│   │   ├── paddle/                           ← Paddle helpers
 │   │   └── types/
 │   ├── constants/
 │   │   └── industries.ts
@@ -146,7 +146,7 @@ npm install recharts
 npm install resend @react-email/components @react-email/render
 
 # Payments
-npm install stripe @stripe/stripe-js
+npm install @paddle/paddle-node-sdk @paddle/paddle-js
 
 # HTTP
 npm install axios
@@ -201,17 +201,17 @@ RESEND_API_KEY=
 RESEND_FROM_EMAIL=hello@beamix.io
 
 # Payments
-STRIPE_SECRET_KEY=
-STRIPE_PUBLISHABLE_KEY=
-STRIPE_WEBHOOK_SECRET=
-STRIPE_PRICE_STARTER_MONTHLY=
-STRIPE_PRICE_STARTER_YEARLY=
-STRIPE_PRICE_PRO_MONTHLY=
-STRIPE_PRICE_PRO_YEARLY=
-STRIPE_PRICE_BUSINESS_MONTHLY=
-STRIPE_PRICE_BUSINESS_YEARLY=
-STRIPE_PRICE_TOPUP_5=
-STRIPE_PRICE_TOPUP_15=
+PADDLE_API_KEY=
+NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=
+PADDLE_WEBHOOK_SECRET=
+PADDLE_PRICE_STARTER_MONTHLY=
+PADDLE_PRICE_STARTER_YEARLY=
+PADDLE_PRICE_PRO_MONTHLY=
+PADDLE_PRICE_PRO_YEARLY=
+PADDLE_PRICE_BUSINESS_MONTHLY=
+PADDLE_PRICE_BUSINESS_YEARLY=
+PADDLE_PRICE_TOPUP_5=
+PADDLE_PRICE_TOPUP_15=
 
 # App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -1132,11 +1132,11 @@ Payment Method: •••• •••• •••• 4242  Visa
 
 API routes needed:
 - `GET /api/billing/summary` → plan, usage, next billing, invoices
-- `POST /api/stripe/portal` → redirect to Stripe portal
-- `POST /api/stripe/checkout` → checkout session for plan change or top-up
+- `POST /api/paddle/portal` → redirect to Paddle portal
+- `POST /api/paddle/checkout` → checkout session for plan change or top-up
 
-**Change Plan modal:** compare current vs new plan, show what's gained/lost, confirm → Stripe Checkout
-**Cancel flow:** retention modal (shows data will persist, suggests downgrade) → if confirmed → Stripe Portal cancel
+**Change Plan modal:** compare current vs new plan, show what's gained/lost, confirm → Paddle Checkout
+**Cancel flow:** retention modal (shows data will persist, suggests downgrade) → if confirmed → Paddle Portal cancel
 
 ### Tab 3 — Preferences
 - Interface Language: [English] [Hebrew] radio
@@ -1243,7 +1243,7 @@ src/components/email/   (React Email templates)
 
 **Trial Start (`trial-start.tsx`):** Day 0. "Your 14-day trial starts now." Shows what's unlocked.
 
-**Trial Day 7 (`trial-day7.tsx`):** "7 days in — here's your progress." Show current rank + any content generated. CTA → Upgrade.
+**Trial Day 7 (`trial-day7.tsx`):** "One week in — here's your progress." Show current rank + any content generated. CTA → Upgrade.
 
 **Trial Day 12 (`trial-day12.tsx`):** URGENCY. "2 days left." Show what will be lost. CTA → Upgrade Now.
 
@@ -1268,10 +1268,10 @@ src/components/email/   (React Email templates)
 
 ---
 
-## PHASE 10 — Stripe Billing
+## PHASE 10 — Paddle Billing
 **Agent: Atlas + Axiom**
 
-### Stripe Products to Create:
+### Paddle Products to Create:
 ```
 Products:
   - Beamix Starter (subscription)
@@ -1293,24 +1293,24 @@ Prices:
 
 ### API Routes:
 
-**`POST /api/stripe/checkout`:**
+**`POST /api/paddle/checkout`:**
 - Input: `{ plan_tier, billing_period, type: 'subscription'|'topup', topup_size? }`
-- Creates Stripe Checkout Session
+- Creates Paddle Checkout Session
 - success_url: `/dashboard/settings?success=true`
 - cancel_url: `/pricing`
 - Returns: `{ url }` → frontend redirects
 
-**`POST /api/stripe/webhooks`:**
-- Verify signature with `stripe.webhooks.constructEvent()`
+**`POST /api/paddle/webhooks`:**
+- Verify signature with `paddle.webhooks.unmarshal()`
 - Handle:
-  - `checkout.session.completed` → update `subscriptions` table, set plan_tier + status='active'
+  - `transaction.completed` → update `subscriptions` table, set plan_tier + status='active'
   - `invoice.paid` → record payment, allocate monthly credits
-  - `invoice.payment_failed` → set status='past_due', send payment_failed email
-  - `customer.subscription.deleted` → set status='canceled', send cancellation email
+  - `transaction.payment_failed` → set status='past_due', send payment_failed email
+  - `subscription.canceled` → set status='canceled', send cancellation email
   - `customer.subscription.updated` → handle plan changes
 
-**`POST /api/stripe/portal`:**
-- Creates Stripe Customer Portal session
+**`POST /api/paddle/portal`:**
+- Creates Paddle Customer Portal session
 - Return `{ url }` → redirect
 
 ---
@@ -1415,7 +1415,7 @@ Priority for translation: landing page, nav, scan results page, dashboard zone t
 - XSS: React auto-escapes ✓
 - CSRF: Next.js built-in ✓
 - Rate limiting on scan API ✓ (IP-based, in Phase 2)
-- Stripe webhook signature verification ✓
+- Paddle webhook signature verification ✓
 - RLS on all Supabase tables ✓
 - No secrets in client bundle ✓ (server-only env vars)
 - Content Security Policy headers
@@ -1435,7 +1435,7 @@ Priority for translation: landing page, nav, scan results page, dashboard zone t
 
 ### Final checklist:
 - [ ] All 15 email templates tested
-- [ ] Stripe webhooks registered
+- [ ] Paddle webhooks registered
 - [ ] Supabase RLS verified (no data leakage)
 - [ ] `/api/health` returns 200
 - [ ] Free scan flow end-to-end tested
@@ -1459,7 +1459,7 @@ Priority for translation: landing page, nav, scan results page, dashboard zone t
 | Industry list | 25+ items in `src/constants/industries.ts` |
 | Rate limit | 3 free scans/day per IP |
 | Credits deduction | AFTER success (not before) |
-| n8n | NO — direct Next.js API routes only |
+| AI orchestration | Direct LLM API calls from Next.js API routes |
 | Brand name | Beamix (not Quleex) |
 | Agents rollover | 20% of monthly allowance, capped at 50% |
 | Score system | Per engine: mention(10)+rank(8/5/2)+sentiment(4/2/0)+url(3) = max 25 each |
@@ -1494,7 +1494,7 @@ Phase 0 (Bootstrap)
     → Phase 7 (Settings) [needs Phase 5]
     → Phase 8 (Pricing) [can run parallel]
   → Phase 9 (Email) [needs Phase 5 for triggers]
-  → Phase 10 (Stripe) [needs Phase 7 billing tab]
+  → Phase 10 (Paddle) [needs Phase 7 billing tab]
   → Phase 11 (Blog) [independent, can run any time]
   → Phase 12 (Real LLMs) [needs API keys]
   → Phase 13 (i18n) [after all UI built]
@@ -1517,7 +1517,7 @@ Phase 0 (Bootstrap)
 | 7 | Settings tabs all render, billing tab shows plan, save profile updates DB |
 | 8 | Pricing page renders, smart CTA shows correct text based on auth state |
 | 9 | Test email: `sendEmail(welcomeEmail({...}))` renders correctly, Resend delivers |
-| 10 | Stripe checkout opens, test payment completes, subscription row updated in Supabase |
+| 10 | Paddle checkout opens, test payment completes, subscription row updated in Supabase |
 | 11 | /blog lists posts, /blog/[slug] renders Markdown, sitemap.xml returns valid XML |
 | 12 | Real scan returns non-mocked data consistent with actual LLM responses |
 | 13 | Language toggle switches UI to Hebrew with RTL layout |

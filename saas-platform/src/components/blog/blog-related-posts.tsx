@@ -16,7 +16,7 @@ export function BlogRelatedPosts({ posts }: { posts: BlogPost[] }) {
             className="bg-white rounded-[20px] border border-stone-200 p-6 hover:shadow-md transition-shadow group"
           >
             <span className="text-xs font-medium text-stone-400 capitalize mb-2 block">
-              {post.category.replace(/-/g, ' ')}
+              {(post.category ?? '').replace(/-/g, ' ')}
             </span>
             <h4 className="font-[family-name:var(--font-outfit)] font-bold text-lg text-[#141310] mb-2 group-hover:text-[#06B6D4] transition-colors leading-snug">
               {post.title}

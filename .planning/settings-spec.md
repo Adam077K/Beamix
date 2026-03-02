@@ -15,7 +15,7 @@ Before any UI spec, the trial logic must be clear because it affects every scree
 
 | Property | Value |
 |---|---|
-| Duration | 7 days from signup |
+| Duration | 14 days from signup |
 | Credit card required to start | No |
 | What's accessible during trial | Scan results, ranking data, leaderboard, competitor names, quick wins (3 free recs) |
 | What's locked during trial | All AI agents, additional scans, full recommendations, content library |
@@ -27,7 +27,7 @@ Before any UI spec, the trial logic must be clear because it affects every scree
 ```
 User signs up
      │
-     ├── Trial starts (7 days)
+     ├── Trial starts (14 days)
      │       │
      │       ├── Can see: scan results, rankings, leaderboard, 3 quick wins
      │       └── Cannot use: agents, extra scans, full recommendations
@@ -41,7 +41,7 @@ User signs up
      │
      └── User upgrades at any point
              │
-             └── Stripe Checkout → payment → webhook → plan_tier updated
+             └── Paddle Checkout → payment → webhook → plan_tier updated
                      │
                      └── Immediate unlock of all plan features
 ```
@@ -194,7 +194,7 @@ User signs up
 - "Save Changes" button is only active when there are unsaved changes (dirty state)
 - Saves all fields at once on button click — not on blur
 - Success toast: "Profile saved. We'll refresh your recommendations at the next scan."
-- If URL or location changed: trigger recommendation regeneration flag in background (n8n picks this up on next cycle)
+- If URL or location changed: trigger recommendation regeneration flag in background (cron job picks this up on next cycle)
 
 ### Competitor Management
 - "+ Add Competitor" opens small inline form: name (text) + URL (text)
@@ -253,7 +253,7 @@ User signs up
 
 ### Trial State — Billing Tab
 
-**When user is in 7-day trial:**
+**When user is in 14-day trial:**
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -337,10 +337,10 @@ If user selects a lower plan than current:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**Step 3 — Stripe Checkout (for upgrade or new plan after trial):**
-- Redirect to Stripe-hosted checkout page
+**Step 3 — Paddle Checkout (for upgrade or new plan after trial):**
+- Redirect to Paddle-hosted checkout page
 - Pre-filled with user email from Supabase auth
-- On success: Stripe sends webhook → `checkout.session.completed`
+- On success: Paddle sends webhook → `transaction.completed`
 - Webhook handler: updates `subscriptions` table, credits, plan_tier
 - User redirected back to: `/dashboard/settings/billing?upgrade=success`
 
@@ -356,8 +356,8 @@ If user selects a lower plan than current:
 ### Update Payment Method
 
 - Button: "Update Payment Method"
-- Action: redirect to Stripe Customer Portal (`/api/stripe/create-portal-session`)
-- Stripe Portal handles: card update, billing history download, subscription management
+- Action: redirect to Paddle Customer Portal (`/api/paddle/create-portal-session`)
+- Paddle Portal handles: card update, billing history download, subscription management
 - On return: back to `/dashboard/settings/billing`
 
 ### Cancel Subscription Flow
@@ -387,7 +387,7 @@ If user selects a lower plan than current:
 - Cancel takes effect at end of current billing period
 - User keeps access until then
 - Toast: "Subscription cancelled. You have access until March 28, 2026."
-- Stripe webhook `customer.subscription.deleted` → update subscriptions table
+- Paddle webhook `subscription.canceled` → update subscriptions table
 
 ### Add-On Purchase (Agent Top-Up)
 
@@ -397,13 +397,13 @@ Need more agent uses this month?
 [5 uses for $15]    [15 uses for $35]
 ```
 
-- Each button triggers Stripe Checkout in "payment" mode (one-time, not subscription)
+- Each button triggers Paddle Checkout in "payment" mode (one-time, not subscription)
 - On success: webhook → credits table updated → toast "5 agent uses added"
 
 ### Invoice History
 
 - List: date, plan, amount, [Download PDF]
-- PDF download links directly to Stripe-hosted invoice PDF
+- PDF download links directly to Paddle-hosted invoice PDF
 - Show last 12 invoices. "Load more" for older.
 
 ---
@@ -522,24 +522,24 @@ Need more agent uses this month?
 └──────────────────────────────────────────────────────┘
 ```
 
-**Dev note:** During trial, all "Fix with Agent" buttons render as `[🔒 Upgrade to Fix This →]`. Clicking opens the upgrade modal (plan selection → Stripe Checkout). The recommendation data is real — only the action is gated.
+**Dev note:** During trial, all "Fix with Agent" buttons render as `[🔒 Upgrade to Fix This →]`. Clicking opens the upgrade modal (plan selection → Paddle Checkout). The recommendation data is real — only the action is gated.
 
 ---
 
-## Stripe Webhook Events to Handle
+## Paddle Webhook Events to Handle
 
 | Event | Action |
 |---|---|
-| `checkout.session.completed` | Activate subscription, update plan_tier, allocate credits |
+| `transaction.completed` | Activate subscription, update plan_tier, allocate credits |
 | `customer.subscription.updated` | Sync plan changes, update limits |
-| `customer.subscription.deleted` | Downgrade to read-only, clear plan_tier |
-| `invoice.payment_succeeded` | Record invoice, reset monthly credits |
-| `invoice.payment_failed` | Flag subscription as past_due, show payment failure banner |
-| `customer.subscription.trial_will_end` | Send email 2 days before trial ends (Stripe handles this) |
+| `subscription.canceled` | Downgrade to read-only, clear plan_tier |
+| `transaction.completed` | Record invoice, reset monthly credits |
+| `transaction.payment_failed` | Flag subscription as past_due, show payment failure banner |
+| `subscription.trial_expiring` | Send email 2 days before trial ends (Paddle handles this) |
 
 **Dev note:** All webhook events must be idempotent — check `event.id` before processing to handle duplicates.
 
 ---
 
 *Document version: 1.0 | Created: 2026-02-28 | Author: Iris (CEO Agent)*
-*Trial duration: 7 days, no credit card required. Agents locked during trial. Read-only after trial expires.*
+*Trial duration: 14 days, no credit card required. Agents locked during trial. Read-only after trial expires.*

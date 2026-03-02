@@ -228,7 +228,7 @@ jest.mock('@tanstack/react-query', () => ({
 ```
 
 **What to Mock:**
-- External API calls (Supabase, OpenAI, Stripe)
+- External API calls (Supabase, OpenAI, Paddle)
 - Next.js server utilities (createClient, middleware)
 - Browser APIs (fetch, localStorage, window)
 - Third-party libraries with side effects

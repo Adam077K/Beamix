@@ -21,14 +21,17 @@ export async function GET(request: Request) {
 
   // Get active users with weekly report enabled
   const { data: users, error: usersError } = await supabase
-    .from('users')
+    .from('user_profiles')
     .select(`
       id,
       email,
       full_name,
       notification_preferences!inner(email_weekly_report)
     `)
-    .eq('onboarding_completed', true)
+    // NOTE: This embedded join relies on PostgREST detecting the implicit FK via
+    // user_profiles.id <-> notification_preferences.user_id. If this query fails
+    // at runtime, refactor to separate queries like trial-nudges approach.
+    .not('onboarding_completed_at', 'is', null)
 
   if (usersError) {
     console.error('[CRON:weekly-digest] Failed to fetch users:', usersError)
@@ -43,6 +46,10 @@ export async function GET(request: Request) {
   let sent = 0
   let failed = 0
 
+  // TODO(perf): N+1 query pattern — each user triggers 4 sequential DB queries
+  // (businesses, scans, recommendations, content_items + tracked_queries).
+  // Acceptable for MVP with low user counts. When user base grows, refactor to batch
+  // queries using .in('user_id', userIds) similar to trial-nudges approach.
   for (const user of eligibleUsers) {
     // Get user's primary business
     const { data: business } = await supabase
@@ -59,7 +66,7 @@ export async function GET(request: Request) {
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
 
     const { data: recentScans } = await supabase
-      .from('scan_results')
+      .from('scans')
       .select('overall_score')
       .eq('user_id', user.id)
       .eq('business_id', business.id)
@@ -73,7 +80,7 @@ export async function GET(request: Request) {
       .gte('created_at', oneWeekAgo.toISOString())
 
     const { count: contentCount } = await supabase
-      .from('content_generations')
+      .from('content_items')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .gte('created_at', oneWeekAgo.toISOString())
@@ -83,7 +90,7 @@ export async function GET(request: Request) {
       .from('tracked_queries')
       .select(`
         query_text,
-        scan_results(overall_score)
+        scans(overall_score)
       `)
       .eq('user_id', user.id)
       .eq('is_active', true)
@@ -95,8 +102,10 @@ export async function GET(request: Request) {
     const previousScore = recentScans?.[recentScans.length - 1]?.overall_score ?? latestScore
     const rankChange = latestScore - previousScore
 
-    const topQueryScans = topQuery?.scan_results as unknown as Array<{ overall_score: number | null }> | undefined
+    const topQueryScans = topQuery?.scans as unknown as Array<{ overall_score: number | null }> | undefined
     const topQueryScore = topQueryScans?.[0]?.overall_score ?? 0
+
+    if (!user.email) continue
 
     const result = await sendWeeklyDigestEmail(user.email, {
       name: user.full_name ?? 'there',

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod/v4'
 import { createClient } from '@/lib/supabase/server'
-import type { Json } from '@/lib/types/database.types'
 
 const updateBusinessSchema = z.object({
   name: z.string().min(2).max(100),
@@ -11,6 +10,34 @@ const updateBusinessSchema = z.object({
   description: z.string().max(500).optional().nullable(),
   services: z.array(z.string().min(1).max(100)).max(20).optional(),
 })
+
+export async function GET() {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { data: business, error } = await supabase
+    .from('businesses')
+    .select('name, website_url, industry, location, description, services')
+    .eq('user_id', user.id)
+    .eq('is_primary', true)
+    .single()
+
+  if (error || !business) {
+    return NextResponse.json(
+      { error: 'Primary business not found' },
+      { status: 404 }
+    )
+  }
+
+  return NextResponse.json(business)
+}
 
 export async function PUT(request: Request) {
   const supabase = await createClient()
@@ -59,11 +86,11 @@ export async function PUT(request: Request) {
     .from('businesses')
     .update({
       name,
-      website_url: website_url ?? null,
-      industry: industry ?? null,
-      location: location ?? null,
-      description: description ?? null,
-      services: (services ?? []) as unknown as Json,
+      website_url: website_url ?? undefined,
+      industry: industry ?? undefined,
+      location: location ?? undefined,
+      description: description ?? undefined,
+      services: services ?? undefined,
       updated_at: new Date().toISOString(),
     })
     .eq('id', business.id)

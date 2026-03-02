@@ -29,9 +29,21 @@ export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const rawRedirect = searchParams.get('redirect') ?? '/dashboard'
-  const redirect = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//')
-    ? rawRedirect
-    : '/dashboard'
+  // Validate redirect to prevent open-redirect attacks:
+  // - Must start with exactly one forward slash (relative path)
+  // - Reject protocol-relative URLs (//)
+  // - Reject backslash (browser normalizes \ to / enabling //host bypass)
+  // - Reject encoded characters that could bypass checks
+  const isSafeRedirect =
+    rawRedirect.startsWith('/') &&
+    !rawRedirect.startsWith('//') &&
+    !rawRedirect.includes('\\') &&
+    !rawRedirect.includes('%0') &&
+    !rawRedirect.includes('%2f') &&
+    !rawRedirect.includes('%2F') &&
+    !rawRedirect.includes('%5c') &&
+    !rawRedirect.includes('%5C')
+  const redirect = isSafeRedirect ? rawRedirect : '/dashboard'
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

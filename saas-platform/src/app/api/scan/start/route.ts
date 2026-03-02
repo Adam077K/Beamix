@@ -17,14 +17,15 @@ export async function POST(request: Request) {
     }
 
     const { url, business_name, sector, location } = parsed.data
-    const scanId = crypto.randomUUID()
 
     const supabase = await createServiceClient()
 
     // SEC-1: IP-based rate limiting — max 3 scans per IP per hour
+    // Prefer x-real-ip (set by Vercel from the connecting IP, not spoofable)
+    // over x-forwarded-for (can be appended to by upstream proxies/clients).
     const ip =
-      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
       request.headers.get('x-real-ip') ||
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
       'unknown'
 
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
@@ -41,21 +42,22 @@ export async function POST(request: Request) {
       )
     }
 
-    // Insert into free_scans as processing
-    const { error: insertError } = await supabase
+    // Insert into free_scans — id is auto-generated, sector maps to industry column
+    const { data: insertedScan, error: insertError } = await supabase
       .from('free_scans')
       .insert({
-        scan_token: scanId,
         website_url: url,
         business_name,
-        sector,
+        industry: sector,
         location,
         ip_address: ip,
         status: 'processing',
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       })
+      .select('id')
+      .single()
 
-    if (insertError) {
+    if (insertError || !insertedScan) {
       console.error('Failed to insert free_scan:', insertError)
       return NextResponse.json(
         { error: 'Failed to start scan' },
@@ -63,8 +65,9 @@ export async function POST(request: Request) {
       )
     }
 
+    const scanId = insertedScan.id
+
     // MED-1: Run scan synchronously before responding (mock completes quickly).
-    // The void IIFE pattern gets killed on Vercel after the response returns.
     let finalStatus: 'completed' | 'failed' = 'completed'
     try {
       const results = await runMockScan(scanId, business_name, sector)
@@ -75,7 +78,7 @@ export async function POST(request: Request) {
           overall_score: results.visibility_score,
           results_data: JSON.parse(JSON.stringify(results)) as Json,
         })
-        .eq('scan_token', scanId)
+        .eq('id', scanId)
       if (updateError) {
         console.error('Failed to update scan results:', updateError)
         finalStatus = 'failed'
@@ -86,7 +89,7 @@ export async function POST(request: Request) {
       await supabase
         .from('free_scans')
         .update({ status: 'failed' })
-        .eq('scan_token', scanId)
+        .eq('id', scanId)
     }
 
     return NextResponse.json(

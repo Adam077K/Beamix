@@ -195,7 +195,7 @@ export function AgentChatView({
         return
       }
 
-      setRemainingCredits((prev) => prev - (data.credits_charged ?? meta.credits))
+      setRemainingCredits((prev) => prev - (data.credits_cost ?? meta.credits))
 
       const output = data.output
       if (output.type === 'content') {
@@ -207,7 +207,7 @@ export function AgentChatView({
             outputType: 'content',
             format: output.format,
             title: output.title,
-            creditsCharged: data.credits_charged,
+            creditsCharged: data.credits_cost,
           },
         ])
       } else if (output.type === 'structured') {
@@ -223,7 +223,7 @@ export function AgentChatView({
             content: formattedOutput,
             outputType: 'structured',
             title: output.title,
-            creditsCharged: data.credits_charged,
+            creditsCharged: data.credits_cost,
           },
         ])
       }

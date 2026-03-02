@@ -4,12 +4,12 @@
 
 ## Pattern Overview
 
-**Overall:** Layered N-tier architecture with clear separation between presentation, API, and data layers, built on Next.js 14 with serverless functions orchestrating external AI services via n8n.
+**Overall:** Layered N-tier architecture with clear separation between presentation, API, and data layers, built on Next.js 14 with serverless functions orchestrating LLM API calls directly.
 
 **Key Characteristics:**
 - Server-client component split with Next.js App Router for modern React patterns
 - API layer built on Next.js route handlers with middleware-style error handling
-- Async agent execution model: API triggers n8n workflows that run independently
+- Async agent execution model: API routes call LLM APIs directly and run independently
 - State management split: React Query for server state, Zustand for client UI state
 - Database-enforced security through Supabase Row-Level Security (RLS)
 
@@ -25,7 +25,7 @@
 **API Layer (Route Handlers):**
 - Purpose: Authentication enforcement, input validation, business logic, database operations, external service triggering
 - Location: `src/app/api/` organized by domain (queries, content, agents, credits, dashboard)
-- Contains: Next.js POST/GET/PUT/DELETE handlers with error wrapping, Supabase queries, n8n webhook triggers
+- Contains: Next.js POST/GET/PUT/DELETE handlers with error wrapping, Supabase queries, direct LLM API calls
 - Depends on: `lib/api/auth.ts` (user verification), `lib/api/errors.ts` (error types), `lib/api/responses.ts` (response formatting), `lib/supabase/server.ts` (server client)
 - Used by: Frontend via fetch calls, external systems via webhooks
 
@@ -34,18 +34,18 @@
 - **Zustand:** Client UI state (sidebar, modals, loading states) - managed in `src/lib/zustand/stores/ui-store.ts`
 
 **Data Access Layer:**
-- Purpose: Provide authenticated clients (browser, API routes, n8n) to Supabase
+- Purpose: Provide authenticated clients (browser, API routes) to Supabase
 - Location: `src/lib/supabase/client.ts` (browser), `src/lib/supabase/server.ts` (server), `src/lib/supabase/middleware.ts` (auth middleware)
 - Contains: Supabase client initialization with cookie-based session management
 - Depends on: Supabase SDK, Next.js cookies API
 - Used by: API routes, React components, hooks
 
-**Async Orchestration Layer (n8n):**
+**Async Agent Execution Layer:**
 - Purpose: AI workflow orchestration - calling LLMs, processing results asynchronously
-- Location: External n8n Cloud instance (triggered via webhooks from `src/app/api/agents/`)
-- Contains: Visual workflows for content generation, competitor research, recommendations
+- Location: Next.js API routes in `src/app/api/agents/` calling LLM APIs directly
+- Contains: Agent logic for content generation, competitor research, recommendations
 - Depends on: LLM APIs (OpenAI, Anthropic, Perplexity, Gemini), Supabase (write results)
-- Used by: API routes triggering workflows via POST requests
+- Used by: Frontend triggering agent executions via POST requests to API routes
 
 **Authentication Layer:**
 - Purpose: User session verification, credit balance checks
@@ -74,15 +74,15 @@
    - Validates input (topic length, format)
    - Calls `checkCredits()` - throws 402 if insufficient
    - Inserts record in `agent_executions` table with status='pending'
-   - Triggers n8n webhook via `fetch()` (fire-and-forget, no wait)
+   - Calls LLM APIs directly via async execution (fire-and-forget pattern)
    - Returns `{ execution_id, status: 'processing' }` immediately (202 Accepted pattern)
 5. Frontend receives execution_id, starts polling `GET /api/dashboard/overview` every 5 seconds
-6. When `agent_executions.status` changes to 'completed', n8n has written result to `content_generations` table
+6. When `agent_executions.status` changes to 'completed', agent has written result to `content_generations` table
 7. Frontend displays result to user, deducts credits in `credit_transactions` table
 
 **Rankings Check (Scheduled):**
 
-1. n8n scheduler triggers daily at 9 AM UTC
+1. Scheduled job triggers daily at 9 AM UTC
 2. Fetches all active queries per user
 3. Calls ChatGPT, Claude, Perplexity, Gemini with each query
 4. Stores results in `ranking_results` table
@@ -153,11 +153,11 @@
 **Agent Endpoints:**
 - Location: `src/app/api/agents/{content-writer,query-researcher,competitor-research}/route.ts`
 - Triggers: Frontend form submissions triggering async content generation
-- Responsibilities: Validate input, check credits, create execution record, trigger n8n workflow
+- Responsibilities: Validate input, check credits, create execution record, execute agent via LLM API calls
 
 **Webhooks:**
-- Location: Not yet implemented, would be at `src/app/api/webhooks/stripe`, `src/app/api/webhooks/n8n`
-- Triggers: Stripe events, n8n workflow completion events
+- Location: Not yet implemented, would be at `src/app/api/paddle/webhooks`
+- Triggers: Paddle events
 - Responsibilities: Verify webhook signature, update database state based on external events
 
 ## Error Handling
@@ -187,13 +187,13 @@
    - Development mode includes stack trace in response
 
 5. **Async Processing Errors:**
-   - n8n workflow errors are logged in `agent_executions` table (status='failed', error_message)
+   - Agent execution errors are logged in `agent_executions` table (status='failed', error_message)
    - Frontend polls and displays error to user
    - No error response sent to frontend (since API returned 202)
 
 ## Cross-Cutting Concerns
 
-**Logging:** `console.error()` and `console.log()` statements in API routes and n8n workflows. No structured logging library. Logs appear in Vercel function logs and n8n execution logs.
+**Logging:** `console.error()` and `console.log()` statements in API routes. No structured logging library. Logs appear in Vercel function logs.
 
 **Validation:**
 - Frontend: React Hook Form with Zod (via `resolvers: zodResolver()`)
@@ -212,11 +212,11 @@
 
 **Data Encryption:**
 - Passwords encrypted by Supabase Auth
-- API keys (LLM, n8n webhooks) stored in environment variables
+- LLM API keys stored in environment variables
 - Database connections over TLS to Supabase cloud
 
 **Rate Limiting:**
 - Not implemented in code (would be in Vercel Function Layer or API middleware)
-- Stripe handles payment rate limiting
-- n8n handles workflow execution rate limiting
+- Paddle handles payment rate limiting
+- LLM provider rate limits apply per API key
 

@@ -5,11 +5,11 @@ import { AgentChatView } from '@/components/dashboard/agent-chat-view'
 const VALID_AGENTS = [
   'content_writer',
   'blog_writer',
+  'faq_agent',
   'review_analyzer',
   'schema_optimizer',
   'social_strategy',
-  'competitor_research',
-  'query_researcher',
+  'competitor_intelligence',
 ]
 
 export default async function AgentChatPage({
@@ -38,8 +38,8 @@ export default async function AgentChatPage({
       .eq('is_primary', true)
       .single(),
     supabase
-      .from('credits')
-      .select('total_credits')
+      .from('credit_pools')
+      .select('base_allocation, topup_amount, rollover_amount, used_amount')
       .eq('user_id', user.id)
       .single(),
   ])
@@ -49,7 +49,7 @@ export default async function AgentChatPage({
       agentType={agent_id}
       businessName={businessResult.data?.name ?? 'My Business'}
       businessId={businessResult.data?.id ?? ''}
-      totalCredits={creditsResult.data?.total_credits ?? 0}
+      totalCredits={creditsResult.data ? (creditsResult.data.base_allocation + creditsResult.data.topup_amount + creditsResult.data.rollover_amount - creditsResult.data.used_amount) : 0}
     />
   )
 }

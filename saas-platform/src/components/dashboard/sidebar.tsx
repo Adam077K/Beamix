@@ -13,6 +13,7 @@ import {
   ChevronsRight,
   LogOut,
   Crown,
+  X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -36,9 +37,11 @@ interface SidebarProps {
   businessName: string
   planTier: string
   trialDaysLeft: number | null
+  onClose?: () => void
+  className?: string
 }
 
-export function Sidebar({ businessName, planTier, trialDaysLeft }: SidebarProps) {
+export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, className }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
@@ -54,19 +57,30 @@ export function Sidebar({ businessName, planTier, trialDaysLeft }: SidebarProps)
     <aside
       className={cn(
         'flex h-screen flex-col border-r border-[var(--color-card-border)] bg-white transition-all duration-200',
-        collapsed ? 'w-16' : 'w-60'
+        collapsed ? 'w-16' : 'w-60',
+        className
       )}
     >
       {/* Logo */}
       <div className="flex h-14 items-center justify-between border-b border-[var(--color-card-border)] px-4">
         {!collapsed && (
-          <Link href="/dashboard" className="font-display text-lg font-bold text-[var(--color-text)]">
+          <Link href="/dashboard" className="font-display text-xl font-bold text-[var(--color-text)]">
             Beam<span className="text-[var(--color-accent)]">ix</span>
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-accent-warm)] ml-0.5 mb-2"></span>
           </Link>
         )}
+        {onClose ? (
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-[var(--color-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)] transition-colors md:hidden"
+            aria-label="Close menu"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : null}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="rounded-md p-1 text-[var(--color-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)]"
+          className="hidden rounded-md p-1 text-[var(--color-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)] transition-colors md:block"
         >
           {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
         </button>
@@ -76,7 +90,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft }: SidebarProps)
       {trialDaysLeft !== null && trialDaysLeft > 0 && !collapsed && (
         <div className="mx-3 mt-3 rounded-xl bg-gradient-to-r from-cyan-50 to-orange-50 p-3">
           <div className="flex items-center gap-2">
-            <Crown className="h-4 w-4 text-[var(--color-accent-warm)]" />
+            <Crown className="h-4 w-4 animate-pulse text-[var(--color-accent-warm)]" />
             <span className="text-xs font-semibold text-[var(--color-text)]">
               {trialDaysLeft} days left in trial
             </span>
@@ -101,10 +115,12 @@ export function Sidebar({ businessName, planTier, trialDaysLeft }: SidebarProps)
             <Link
               key={item.href}
               href={item.href}
+              title={collapsed ? item.label : undefined}
+              onClick={onClose}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
                 isActive
-                  ? 'bg-cyan-50 text-[var(--color-accent)]'
+                  ? 'bg-gradient-to-r from-cyan-50 to-cyan-50/50 text-[var(--color-accent)] font-semibold border-l-2 border-[var(--color-accent)]'
                   : 'text-[var(--color-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)]'
               )}
             >
@@ -126,7 +142,8 @@ export function Sidebar({ businessName, planTier, trialDaysLeft }: SidebarProps)
         )}
         <button
           onClick={handleSignOut}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--color-muted)] hover:bg-red-50 hover:text-red-600"
+          title={collapsed ? 'Sign out' : undefined}
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--color-muted)] transition-colors hover:bg-red-50/70 hover:text-red-600"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           {!collapsed && <span>Sign out</span>}

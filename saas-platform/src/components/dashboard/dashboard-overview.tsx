@@ -68,25 +68,24 @@ interface DashboardOverviewProps {
     title: string
     description: string
     priority: string
-    recommendation_type: string
+    recommendation_type: string | null
     status: string
-    agent_type: string | null
+    suggested_agent: string | null
     credits_cost: number | null
   }>
   recentAgents: Array<{
     id: string
     agent_type: string
     status: string
-    credits_charged: number
+    credits_cost: number
     created_at: string
     completed_at: string | null
   }>
   recentScans: Array<{
     id: string
     overall_score: number | null
-    mention_count: number
-    avg_position: number | null
-    scanned_at: string
+    mentions_count: number
+    created_at: string
   }>
 }
 
@@ -118,12 +117,13 @@ export function DashboardOverview({
 
       {/* Zone 1: Hero metrics */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Visibility Score */}
-        <Card className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
+        {/* Visibility Score — spans 2 columns on lg */}
+        <Card className="lg:col-span-2 overflow-hidden">
+          <div className="h-1 rounded-t-[20px] bg-gradient-to-r from-cyan-400 to-cyan-500" />
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-sm text-[var(--color-muted)]">Visibility Score</span>
-              <BarChart3 className="h-4 w-4 text-[var(--color-muted)]" />
+              <BarChart3 className="h-4 w-4 text-[var(--color-accent)]" />
             </div>
             <div className="mt-2 flex items-end gap-2">
               <span
@@ -165,11 +165,12 @@ export function DashboardOverview({
         </Card>
 
         {/* Mentions */}
-        <Card className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
+        <Card className="overflow-hidden">
+          <div className="h-1 rounded-t-[20px] bg-gradient-to-r from-orange-400 to-orange-500" />
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-sm text-[var(--color-muted)]">AI Mentions</span>
-              <Zap className="h-4 w-4 text-[var(--color-muted)]" />
+              <Zap className="h-4 w-4 text-[var(--color-accent-warm)]" />
             </div>
             <div className="mt-2">
               <span className="font-display text-3xl font-bold text-[var(--color-text)]">
@@ -181,11 +182,12 @@ export function DashboardOverview({
         </Card>
 
         {/* Credits */}
-        <Card className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
+        <Card className="overflow-hidden">
+          <div className="h-1 rounded-t-[20px] bg-gradient-to-r from-emerald-400 to-emerald-500" />
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-sm text-[var(--color-muted)]">Credits</span>
-              <Bot className="h-4 w-4 text-[var(--color-muted)]" />
+              <Bot className="h-4 w-4 text-emerald-500" />
             </div>
             <div className="mt-2">
               <span className="font-display text-3xl font-bold text-[var(--color-text)]">
@@ -195,29 +197,12 @@ export function DashboardOverview({
             </div>
           </CardContent>
         </Card>
-
-        {/* Last Scanned */}
-        <Card className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[var(--color-muted)]">Last Scan</span>
-              <Clock className="h-4 w-4 text-[var(--color-muted)]" />
-            </div>
-            <div className="mt-2">
-              <span className="font-display text-lg font-bold text-[var(--color-text)]">
-                {lastScanned
-                  ? formatDistanceToNow(new Date(lastScanned), { addSuffix: true })
-                  : 'No scans yet'}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Zone 2 + 3: Action Queue + Engine Status */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Action Queue (recommendations) */}
-        <Card className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-display text-lg">
               <AlertTriangle className="h-5 w-5 text-[var(--color-accent-warm)]" />
@@ -234,7 +219,7 @@ export function DashboardOverview({
                 {recommendations.slice(0, 5).map((rec) => {
                   const style = PRIORITY_STYLES[rec.priority] ?? PRIORITY_STYLES.medium
                   return (
-                    <div key={rec.id} className="flex items-start gap-3 rounded-xl bg-[var(--color-bg)] p-3">
+                    <div key={rec.id} className="card-hover flex items-start gap-3 rounded-xl bg-[var(--color-bg)] p-3">
                       <Badge className={`shrink-0 text-xs ${style.bg} ${style.text}`}>
                         {rec.priority}
                       </Badge>
@@ -246,7 +231,7 @@ export function DashboardOverview({
                           {rec.description}
                         </p>
                       </div>
-                      {rec.agent_type && (
+                      {rec.suggested_agent && (
                         <Badge variant="outline" className="shrink-0 text-xs">
                           <Bot className="mr-1 h-3 w-3" />
                           Auto-fix
@@ -269,7 +254,7 @@ export function DashboardOverview({
         </Card>
 
         {/* Engine Status */}
-        <Card className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-display text-lg">
               <BarChart3 className="h-5 w-5 text-[var(--color-accent)]" />
@@ -297,21 +282,14 @@ export function DashboardOverview({
                     claude: 'bg-orange-100 text-orange-700',
                   }
                   return (
-                    <div key={engine} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3">
+                    <div key={engine} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3 transition-colors duration-150 hover:bg-[var(--color-card-border)]/30">
                       <Badge className={`text-xs ${colors[engine]}`}>
                         {labels[engine]}
                       </Badge>
-                      <div className="flex-1">
-                        <div className="h-2 rounded-full bg-[var(--color-card-border)]">
-                          <div
-                            className="h-2 rounded-full bg-[var(--color-accent)]"
-                            style={{ width: `${Math.min(100, (score ?? 0) / 4 * (Math.random() * 0.5 + 0.75))}%` }}
-                          />
-                        </div>
-                      </div>
-                      <span className="text-xs font-medium text-[var(--color-muted)]">
+                      <div className="flex-1" />
+                      <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-200 bg-emerald-50">
                         Active
-                      </span>
+                      </Badge>
                     </div>
                   )
                 })}
@@ -330,7 +308,7 @@ export function DashboardOverview({
       {/* Zone 4 + 5: Recent Activity + Scan History */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Agent Activity */}
-        <Card className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-display text-lg">
               <Bot className="h-5 w-5 text-[var(--color-accent)]" />
@@ -339,7 +317,7 @@ export function DashboardOverview({
           </CardHeader>
           <CardContent>
             {recentAgents.length === 0 ? (
-              <div className="text-center py-6">
+              <div className="rounded-xl border-2 border-dashed border-[var(--color-card-border)] bg-[var(--color-bg)] py-6 text-center">
                 <Bot className="mx-auto h-8 w-8 text-[var(--color-card-border)]" />
                 <p className="mt-2 text-sm text-[var(--color-muted)]">
                   No agent activity yet
@@ -353,7 +331,7 @@ export function DashboardOverview({
             ) : (
               <div className="space-y-3">
                 {recentAgents.map((agent) => (
-                  <div key={agent.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3">
+                  <div key={agent.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3 transition-colors duration-150 hover:bg-[var(--color-card-border)]/30">
                     {agent.status === 'completed' && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />}
                     {agent.status === 'running' && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[var(--color-accent)]" />}
                     {agent.status === 'failed' && <XCircle className="h-4 w-4 shrink-0 text-red-500" />}
@@ -387,7 +365,7 @@ export function DashboardOverview({
         </Card>
 
         {/* Scan History */}
-        <Card className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-display text-lg">
               <BarChart3 className="h-5 w-5 text-[var(--color-accent-warm)]" />
@@ -396,7 +374,7 @@ export function DashboardOverview({
           </CardHeader>
           <CardContent>
             {recentScans.length === 0 ? (
-              <div className="text-center py-6">
+              <div className="rounded-xl border-2 border-dashed border-[var(--color-card-border)] bg-[var(--color-bg)] py-6 text-center">
                 <BarChart3 className="mx-auto h-8 w-8 text-[var(--color-card-border)]" />
                 <p className="mt-2 text-sm text-[var(--color-muted)]">
                   No scans yet
@@ -405,7 +383,7 @@ export function DashboardOverview({
             ) : (
               <div className="space-y-3">
                 {recentScans.map((scan) => (
-                  <div key={scan.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3">
+                  <div key={scan.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3 transition-colors duration-150 hover:bg-[var(--color-card-border)]/30">
                     <div
                       className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white"
                       style={{ backgroundColor: scan.overall_score !== null ? getScoreColor(scan.overall_score) : 'var(--color-card-border)' }}
@@ -417,12 +395,11 @@ export function DashboardOverview({
                         Score: {scan.overall_score ?? 'N/A'}
                       </p>
                       <p className="text-xs text-[var(--color-muted)]">
-                        {scan.mention_count} mentions
-                        {scan.avg_position !== null && ` · Avg pos: #${Math.round(scan.avg_position)}`}
+                        {scan.mentions_count} mentions
                       </p>
                     </div>
                     <span className="text-xs text-[var(--color-muted)]">
-                      {formatDistanceToNow(new Date(scan.scanned_at), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(scan.created_at), { addSuffix: true })}
                     </span>
                   </div>
                 ))}

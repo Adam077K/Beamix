@@ -12,13 +12,13 @@ export default async function AgentsPage() {
 
   const [creditsResult, recentExecutionsResult] = await Promise.all([
     supabase
-      .from('credits')
-      .select('total_credits')
+      .from('credit_pools')
+      .select('base_allocation, topup_amount, rollover_amount, used_amount')
       .eq('user_id', user.id)
       .single(),
     supabase
-      .from('agent_executions')
-      .select('id, agent_type, status, credits_charged, created_at, completed_at')
+      .from('agent_jobs')
+      .select('id, agent_type, status, credits_cost, created_at, completed_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(10),
@@ -26,7 +26,7 @@ export default async function AgentsPage() {
 
   return (
     <AgentsView
-      totalCredits={creditsResult.data?.total_credits ?? 0}
+      totalCredits={creditsResult.data ? (creditsResult.data.base_allocation + creditsResult.data.topup_amount + creditsResult.data.rollover_amount - creditsResult.data.used_amount) : 0}
       recentExecutions={recentExecutionsResult.data ?? []}
     />
   )

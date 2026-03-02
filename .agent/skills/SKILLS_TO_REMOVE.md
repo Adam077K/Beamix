@@ -1,9 +1,9 @@
 # רשימת Skills להסרה — Beamix (מלאה)
 
-בהתבסס על הפרויקט Beamix (GEO Platform, Next.js, Supabase, Stripe, n8n, Vercel):
+בהתבסס על הפרויקט Beamix (GEO Platform, Next.js, Supabase, Paddle, Vercel):
 רשימת **~200 skills** שכנראה לא תשמש בפרויקט הזה (מעודכן — הוסרו skills שימושיים).
 
-**סטאק:** Next.js 16, React 19, TypeScript, Supabase, Stripe, n8n Cloud, Vercel
+**סטאק:** Next.js 16, React 19, TypeScript, Supabase, Paddle, Vercel
 
 ---
 
@@ -520,8 +520,7 @@ xss-html-injection
 - **Next.js/React:** nextjs-app-router-patterns, nextjs-best-practices, nextjs-supabase-auth, react-*
 - **SEO/GEO:** geo-fundamentals, seo-*, programmatic-seo, schema-markup
 - **AI/LLM:** ai-engineer, rag-engineer, langgraph, llm-*, prompt-engineering
-- **n8n:** n8n-code-python, n8n-mcp-tools-expert, n8n-node-configuration
-- **Payments:** stripe-integration
+- **Payments:** paddle-integration
 - **Jobs:** inngest, trigger-dev
 - **Content:** copywriting, content-creator, content-marketer
 - **Deploy:** vercel-deployment

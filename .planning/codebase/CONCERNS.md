@@ -4,31 +4,31 @@
 
 ## Tech Debt
 
-**Fire-and-Forget Webhook Calls:**
-- Issue: Multiple API routes trigger n8n workflows without awaiting responses or implementing retry logic
+**Fire-and-Forget Agent Calls:**
+- Issue: Multiple API routes trigger LLM agent workflows without awaiting responses or implementing retry logic
 - Files:
   - `src/app/api/agents/content-writer/route.ts` (line 65-78)
   - `src/app/api/agents/competitor-research/route.ts` (line 76-86)
   - `src/app/api/agents/query-researcher/route.ts` (line 73-84)
   - `src/app/api/onboarding/complete/route.ts` (line 46-58)
-- Impact: Webhooks may fail silently. Failed n8n triggers result in incomplete workflows (analysis never runs, credits never deducted, user never sees results). No error tracking beyond console.log.
+- Impact: LLM calls may fail silently. Failed agent triggers result in incomplete workflows (analysis never runs, credits never deducted, user never sees results). No error tracking beyond console.log.
 - Fix approach:
-  1. Implement request/response logging to a `webhook_calls` table
+  1. Implement request/response logging to a `agent_calls` table
   2. Add exponential backoff retry logic with max 3 attempts
-  3. Create a background job monitor to detect failed webhooks after 5 minutes
+  3. Create a background job monitor to detect failed agent executions after 5 minutes
   4. Alert to error tracking service (Sentry) on repeated failures
 
-**Incomplete Stripe Integration:**
-- Issue: Stripe webhook directory is empty (`src/app/api/stripe/`) - no webhook handler for payment events
-- Files: `src/app/api/stripe/` (empty directory)
+**Incomplete Paddle Integration:**
+- Issue: Paddle webhook directory is empty (`src/app/api/paddle/`) - no webhook handler for payment events
+- Files: `src/app/api/paddle/` (empty directory)
 - Impact:
-  - Stripe payment webhooks cannot be processed
+  - Paddle payment webhooks cannot be processed
   - Credit purchases won't be applied to user accounts
   - Subscription upgrades/downgrades won't update database
   - Refunds cannot be handled
 - Fix approach:
-  1. Create `src/app/api/stripe/webhooks/route.ts` with full webhook signature verification
-  2. Handle events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`
+  1. Create `src/app/api/paddle/webhooks/route.ts` with full webhook signature verification
+  2. Handle events: `transaction.completed`, `customer.subscription.updated`, `subscription.canceled`, `transaction.completed`
   3. Create transaction records in database
   4. Reconcile credits in response to webhook events
 
@@ -63,12 +63,12 @@
 ## Known Bugs
 
 **Onboarding TODO Comment:**
-- Issue: Commented-out n8n webhook trigger in onboarding flow
+- Issue: Commented-out agent trigger in onboarding flow
 - Files: `src/app/(protected)/onboarding/page.tsx` (lines 71-75)
 - Symptoms: Initial analysis workflow may not be triggered when user completes onboarding
 - Trigger: Complete onboarding form, redirect to dashboard
-- Workaround: Manually trigger workflow via n8n API or API route
-- Fix: Uncomment and test the webhook trigger with valid URL
+- Workaround: Manually trigger analysis via API route
+- Fix: Uncomment and test the agent trigger call
 
 **Missing Query Ownership Verification in Some Routes:**
 - Issue: Some API routes don't verify that the user owns the resource before returning data
@@ -86,15 +86,15 @@
 
 ## Security Considerations
 
-**Unauthenticated Webhook Endpoints:**
-- Risk: n8n webhooks can be called by anyone with the URL. No secret key validation.
-- Files: `src/app/api/agents/content-writer/route.ts` - calls n8n webhook URL without auth
-- Current mitigation: n8n webhooks are hidden URLs (hard to guess), but discoverable in source code or network logs
+**Unauthenticated Agent Endpoints:**
+- Risk: Agent API endpoints could be called without proper auth validation.
+- Files: `src/app/api/agents/content-writer/route.ts` - needs auth enforcement
+- Current mitigation: `getAuthenticatedUser()` check in most routes
 - Recommendations:
-  1. Store webhook URLs in Supabase secrets instead of env vars
-  2. Add `Authorization: Bearer {SECRET}` header to webhook calls
-  3. Implement n8n webhook signature verification if supported
-  4. Rotate webhook URLs regularly
+  1. Verify all agent endpoints call `getAuthenticatedUser()` before processing
+  2. Add rate limiting per user on agent endpoints
+  3. Implement request signing for internal service calls
+  4. Add audit logging for all agent executions
 
 **Insufficient Input Validation on Onboarding:**
 - Risk: Website URL and company name are user-supplied but may contain XSS or injection vectors
@@ -115,7 +115,7 @@
   3. Use database trigger to reject credit deduction if balance insufficient
 
 **Error Response Information Disclosure:**
-- Risk: Error messages may expose internal database schema or n8n workflow details
+- Risk: Error messages may expose internal database schema or agent execution details
 - Files: `src/lib/api/responses.ts` (line 62) - exposes error.stack in development
 - Current mitigation: Stack traces only shown in development mode
 - Recommendations:
@@ -170,7 +170,7 @@
 **Credit System (Transactional Integrity):**
 - Files:
   - `src/lib/api/auth.ts` (checkCredits function)
-  - `src/app/api/agents/*/route.ts` (credit checks before n8n triggers)
+  - `src/app/api/agents/*/route.ts` (credit checks before agent execution)
   - Database: `credits` table
 - Why fragile:
   - Credit check is not atomic with deduction
@@ -195,14 +195,14 @@
 
 ## Scaling Limits
 
-**Webhook Queue Not Implemented:**
+**Agent Execution Queue Not Implemented:**
 - Current capacity:
-  - Single HTTP call per agent request
-  - No queue if n8n is down
-- Limit: If n8n takes >30s to respond, API route timeouts on Vercel (30s limit)
+  - Single LLM call per agent request
+  - No queue if LLM APIs are down
+- Limit: If LLM calls take >30s, API route timeouts on Vercel (30s limit)
 - Scaling path:
   1. Implement message queue (Supabase pg_queue or Bull with Redis)
-  2. Queue webhook calls, retry with exponential backoff
+  2. Queue agent calls, retry with exponential backoff
   3. Monitor queue depth, alert if > 1000 pending jobs
 
 **Database Connection Pool:**
@@ -213,11 +213,11 @@
   2. Monitor connection count in Supabase metrics
   3. Upgrade plan tier if hitting limits
 
-**N8N Execution Concurrency:**
-- Current capacity: Depends on n8n plan (likely 5-10 concurrent executions)
-- Limit: Spikes during peak hours may queue workflows for hours
+**LLM API Concurrency:**
+- Current capacity: Depends on LLM API rate limits per provider
+- Limit: Spikes during peak hours may hit rate limits or queue requests
 - Scaling path:
-  1. Monitor n8n execution queue depth
+  1. Monitor LLM API rate limit headers and queue depth
   2. Implement client-side queue with max 1 pending request per user
   3. Show user "queue position: 3" message if waiting
 
@@ -248,15 +248,10 @@
 
 ## Missing Critical Features
 
-**No Error Recovery for Failed n8n Workflows:**
-- Problem: If n8n workflow fails midway (e.g., API rate limit on OpenAI), user credits are already deducted but content never generated
+**No Error Recovery for Failed Agent Executions:**
+- Problem: If an agent execution fails midway (e.g., API rate limit on OpenAI), user credits are already deducted but content never generated
 - Blocks: User cannot retry, credits are lost
 - Recommendation: Implement workflow state machine in database to track completion, refund credits on failure
-
-**No Webhook Signature Verification:**
-- Problem: Can't verify n8n callbacks actually came from n8n
-- Blocks: Cannot trust webhook data integrity
-- Recommendation: Ask n8n for shared secret, implement HMAC verification
 
 **No Audit Logging:**
 - Problem: Cannot track who performed what action when
@@ -283,9 +278,9 @@
 - Priority: High
 
 **Webhook Failure Scenarios:**
-- What's not tested: What happens if n8n webhook is down, returns error, or times out
+- What's not tested: What happens if LLM API is down, returns error, or times out
 - Files: `src/app/api/agents/*/route.ts`, `src/app/api/onboarding/complete/route.ts`
-- Risk: Silent failures lead to incomplete workflows, user sees no result
+- Risk: Silent failures lead to incomplete agent executions, user sees no result
 - Priority: High
 
 **Supabase RLS Policies:**

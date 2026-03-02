@@ -81,7 +81,7 @@ Use "major AI engines" in all user-facing copy until the exact number is finaliz
 
 **Animation behavior:**
 - Each engine row animates sequentially — "Checking..." → "Analyzing..." → green checkmark
-- Progress is fake-sequential (real processing is parallel in n8n) but gives the user something to watch
+- Progress is fake-sequential (real processing is parallel on server) but gives the user something to watch
 - Estimated time shown: "Results in about 60 seconds"
 - Background: dark, atmospheric — mirrors the hero illustration mood
 
@@ -396,7 +396,7 @@ When expanded:
 `Already have an account? Log in to save this scan`
 
 **Trust signals below button:**
-`7-day free trial · No credit card required · Cancel anytime`
+`14-day free trial · No credit card required · Cancel anytime`
 
 **Dev note:** The CTA button passes `?scan=[scan_token]` to the signup URL so the scan is linked to the account automatically after registration. This is the critical conversion handoff.
 

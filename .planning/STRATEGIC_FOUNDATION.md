@@ -149,8 +149,8 @@ Each of these maps to a specific agent capability in the product.
 
 - **Team:** Solo founder + AI-assisted development (Claude, etc.)
 - **Timeline:** 7-day sprint to paying product
-- **Stack:** Next.js 14, React 18, TypeScript, Supabase, Tailwind CSS, Stripe
-- **AI orchestration:** n8n Cloud for agent workflows
+- **Stack:** Next.js 14, React 18, TypeScript, Supabase, Tailwind CSS, Paddle
+- **AI orchestration:** Direct LLM API calls from Next.js API routes
 - **Deployment:** Vercel + Supabase Cloud
 
 ---

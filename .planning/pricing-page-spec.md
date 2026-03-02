@@ -52,10 +52,10 @@ All CTAs on this page are context-aware. Three states:
 `Start free. Upgrade when you see results.`
 
 **Subheadline:**
-`Every plan includes a 7-day free trial — no credit card required. See your AI visibility first, then decide if you want to fix it.`
+`Every plan includes a 14-day free trial — no credit card required. See your AI visibility first, then decide if you want to fix it.`
 
 **Trust signals (3 pills, horizontal row):**
-- `7-day free trial`
+- `14-day free trial`
 - `No credit card required`
 - `Cancel anytime`
 
@@ -138,7 +138,7 @@ Four cards, side by side on desktop, stacked on mobile.
 - Email digest: weekly
 
 **CTA Button:** `Start Free Trial`
-**Note below button:** `7 days free · No credit card required`
+**Note below button:** `14 days free · No credit card required`
 
 ---
 
@@ -165,7 +165,7 @@ Four cards, side by side on desktop, stacked on mobile.
 - Support: priority email
 
 **CTA Button:** `Start Free Trial`
-**Note below button:** `7 days free · No credit card required`
+**Note below button:** `14 days free · No credit card required`
 
 ---
 
@@ -194,7 +194,7 @@ Four cards, side by side on desktop, stacked on mobile.
 - Top-up: 5 uses/$15 or 15 uses/$35
 
 **CTA Button:** `Start Free Trial`
-**Note below button:** `7 days free · No credit card required`
+**Note below button:** `14 days free · No credit card required`
 
 ---
 
@@ -327,14 +327,14 @@ Yes — up to 20% of your monthly allocation rolls over each month. If you're on
 **Q4: Can I change plans anytime?**
 Yes. Upgrade anytime — your new plan activates immediately. Downgrade anytime — the lower plan takes effect at the end of your current billing period. No lock-in, no fees.
 
-**Q5: What happens after the 7-day free trial?**
-After 7 days, your account moves to a read-only state. All your scan data is saved — you can still see your visibility score, rankings, and competitor data. To run new scans or use agents, upgrade to any paid plan. No charges happen automatically — we never require a credit card to start.
+**Q5: What happens after the 14-day free trial?**
+After 14 days, your account moves to a read-only state. All your scan data is saved — you can still see your visibility score, rankings, and competitor data. To run new scans or use agents, upgrade to any paid plan. No charges happen automatically — we never require a credit card to start.
 
 **Q6: Is there a contract or commitment?**
 No contract. All plans are month-to-month (or annual if you choose). Cancel anytime in two clicks from your dashboard. If you cancel, access continues until the end of your paid period.
 
 **Q7: Do you offer refunds?**
-If you're not satisfied within the first 7 days of a paid plan, contact us and we'll make it right. After that, we don't offer prorated refunds for mid-cycle cancellations — but you keep access until your period ends.
+If you're not satisfied within the first 14 days of a paid plan, contact us and we'll make it right. After that, we don't offer prorated refunds for mid-cycle cancellations — but you keep access until your period ends.
 
 **Q8: Can I add team members?**
 Team seats are coming soon. Today, each account is single-user. We'll notify you when team access launches — you can opt in from your Settings page.
@@ -355,7 +355,7 @@ Team seats are coming soon. Today, each account is single-user. We'll notify you
 - Default: `Scan My Business — Free →` → `/`
 - With scan_id: `Continue with My Scan →` → `/signup?scan_id=XXX`
 
-**Trust line:** `7-day free trial on all paid plans · No credit card required · Cancel anytime`
+**Trust line:** `14-day free trial on all paid plans · No credit card required · Cancel anytime`
 
 **Secondary link:** `View the comparison table ↑` (anchor link back to Section 4)
 

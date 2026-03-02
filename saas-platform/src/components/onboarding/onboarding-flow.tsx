@@ -88,26 +88,47 @@ export function OnboardingFlow() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const pendingUrl = localStorage.getItem('beamix_pending_url')
-    // CRIT-1: scan page stores under 'beamix_last_scan_id', not 'beamix_pending_scan_id'
+    // Runs ONCE on mount. searchParams is read from the closure at mount time —
+    // using [] prevents this effect from re-running mid-flow and resetting the step.
+    const rawPendingUrl = localStorage.getItem('beamix_pending_url')
+    // Normalize URL — add https:// if the user typed a bare domain (e.g. "example.com")
+    const pendingUrl = rawPendingUrl
+      ? /^https?:\/\//i.test(rawPendingUrl)
+        ? rawPendingUrl
+        : `https://${rawPendingUrl}`
+      : null
     const storedScanId = localStorage.getItem('beamix_last_scan_id')
-    // CRIT-2: also check URL search params as fallback (auth callback passes scan_id here)
+    // Also check URL params — auth callback may pass scan_id as a query param
     const urlScanId = searchParams.get('scan_id')
     const pendingScanId = storedScanId || urlScanId
 
-    if (pendingScanId) {
-      setScanId(pendingScanId)
-      setUrl(pendingUrl ?? '')
-      setStep(3)
-    } else if (pendingUrl) {
+    // Restore any mid-flow progress saved by earlier steps
+    const savedName = localStorage.getItem('beamix_onboarding_name') ?? ''
+    const savedIndustry = localStorage.getItem('beamix_onboarding_industry') ?? ''
+    const savedStep = parseInt(localStorage.getItem('beamix_onboarding_step') ?? '0', 10)
+
+    if (pendingScanId) setScanId(pendingScanId)
+
+    if (pendingUrl) {
       setUrl(pendingUrl)
       const extracted = extractNameFromDomain(pendingUrl)
-      if (extracted) setBusinessName(extracted)
+      const nameToUse = savedName || extracted
+      if (nameToUse) setBusinessName(nameToUse)
+    } else if (savedName) {
+      setBusinessName(savedName)
+    }
+    if (savedIndustry) setIndustry(savedIndustry)
+
+    // Restore saved step if the user was mid-flow; otherwise derive from available data
+    if (savedStep > 0 && (pendingUrl || pendingScanId)) {
+      setStep(savedStep)
+    } else if (pendingScanId || pendingUrl) {
       setStep(1)
     } else {
-      setStep(0)
+      setStep(savedStep > 0 ? savedStep : 0)
     }
-  }, [searchParams])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // intentionally run once — avoids resetting step mid-flow on re-renders
 
   const urlForm = useForm<UrlFormData>({
     resolver: zodResolver(urlSchema),
@@ -135,18 +156,24 @@ export function OnboardingFlow() {
 
   function handleUrlSubmit(data: UrlFormData) {
     setUrl(data.url)
+    localStorage.setItem('beamix_pending_url', data.url)
     const extracted = extractNameFromDomain(data.url)
     if (extracted) setBusinessName(extracted)
+    localStorage.setItem('beamix_onboarding_step', '1')
     setStep(1)
   }
 
   function handleNameSubmit(data: NameFormData) {
     setBusinessName(data.business_name)
+    localStorage.setItem('beamix_onboarding_name', data.business_name)
+    localStorage.setItem('beamix_onboarding_step', '2')
     setStep(2)
   }
 
   function handleIndustrySubmit(data: IndustryFormData) {
     setIndustry(data.industry)
+    localStorage.setItem('beamix_onboarding_industry', data.industry)
+    localStorage.setItem('beamix_onboarding_step', '3')
     setStep(3)
   }
 
@@ -178,18 +205,25 @@ export function OnboardingFlow() {
             industry,
             location: data.location,
             url,
-            scan_id: scanId,
+            // Omit scan_id entirely when null — z.string().optional() rejects null
+            ...(scanId ? { scan_id: scanId } : {}),
           }),
         })
 
         if (!response.ok) {
           const body = await response.json()
-          throw new Error(body.error ?? 'Failed to complete onboarding')
+          const msg = body.details
+            ? `${body.error}: ${body.details}`
+            : (body.error ?? 'Failed to complete onboarding')
+          throw new Error(msg)
         }
 
-        // Clean up localStorage
+        // Clean up all onboarding localStorage keys
         localStorage.removeItem('beamix_pending_url')
         localStorage.removeItem('beamix_last_scan_id')
+        localStorage.removeItem('beamix_onboarding_name')
+        localStorage.removeItem('beamix_onboarding_industry')
+        localStorage.removeItem('beamix_onboarding_step')
 
         router.push('/dashboard')
         router.refresh()
@@ -217,7 +251,12 @@ export function OnboardingFlow() {
     )
   }
 
-  const displayedUrl = url ? new URL(url).hostname.replace('www.', '') : ''
+  let displayedUrl = ''
+  try {
+    if (url) displayedUrl = new URL(url).hostname.replace('www.', '')
+  } catch {
+    displayedUrl = url
+  }
 
   return (
     <div

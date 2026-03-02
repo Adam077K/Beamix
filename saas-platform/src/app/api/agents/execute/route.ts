@@ -10,11 +10,11 @@ import {
 const VALID_AGENT_TYPES = [
   'content_writer',
   'blog_writer',
+  'faq_agent',
   'review_analyzer',
   'schema_optimizer',
   'social_strategy',
-  'competitor_research',
-  'query_researcher',
+  'competitor_intelligence',
 ] as const
 
 const ExecuteSchema = z.object({
@@ -68,17 +68,21 @@ export async function POST(request: Request) {
 
   // Check credit balance
   const { data: credits } = await supabase
-    .from('credits')
-    .select('total_credits')
+    .from('credit_pools')
+    .select('base_allocation, topup_amount, rollover_amount, used_amount')
     .eq('user_id', user.id)
     .single()
 
-  if (!credits || credits.total_credits < creditCost) {
+  const available = credits
+    ? (credits.base_allocation + credits.topup_amount + credits.rollover_amount - credits.used_amount)
+    : 0
+
+  if (!credits || available < creditCost) {
     return NextResponse.json(
       {
         error: 'Insufficient credits',
         required: creditCost,
-        available: credits?.total_credits ?? 0,
+        available,
       },
       { status: 402 }
     )
@@ -86,15 +90,15 @@ export async function POST(request: Request) {
 
   // Create execution record as pending
   const { data: execution, error: execErr } = await supabase
-    .from('agent_executions')
+    .from('agent_jobs')
     .insert({
       user_id: user.id,
       business_id: businessId,
       agent_type: agentType,
       status: 'pending',
-      input_data: { prompt, businessName: business.name } as Json,
-      credits_charged: creditCost,
-      llm_calls: [] as Json,
+      input_params: { prompt, businessName: business.name } as Json,
+      credits_cost: creditCost,
+      llm_calls_count: 0,
     })
     .select('id')
     .single()
@@ -110,15 +114,15 @@ export async function POST(request: Request) {
   const { data: deducted } = await supabase.rpc('deduct_credits', {
     p_user_id: user.id,
     p_amount: creditCost,
-    p_entity_type: 'agent_execution',
-    p_entity_id: execution.id,
+    p_agent_job_id: execution.id,
+    p_pool_type: 'agent',
     p_description: `${agentType} agent execution`,
   })
 
   if (!deducted) {
     // Credit deduction failed — cancel execution
     await supabase
-      .from('agent_executions')
+      .from('agent_jobs')
       .update({ status: 'failed', error_message: 'Credit deduction failed' })
       .eq('id', execution.id)
 
@@ -138,27 +142,25 @@ export async function POST(request: Request) {
     userPrompt: prompt,
   })
 
-  // Store output in the appropriate table
+  // Store content output in content_items table
   if (output.type === 'content') {
     const { error: contentErr } = await supabase
-      .from('content_generations')
+      .from('content_items')
       .insert({
-        execution_id: execution.id,
+        agent_job_id: execution.id,
         user_id: user.id,
         business_id: businessId,
-        content_type: output.contentType,
+        agent_type: agentType,
         title: output.title,
-        generated_content: output.content,
+        content: output.content,
         content_format: output.format,
         word_count: output.wordCount,
-        quality_score: 85,
-        llm_optimization_score: 78,
         metadata: { prompt, agentType } as Json,
       })
 
     if (contentErr) {
       await supabase
-        .from('agent_executions')
+        .from('agent_jobs')
         .update({
           status: 'failed',
           error_message: `Failed to store content: ${contentErr.message}`,
@@ -172,50 +174,23 @@ export async function POST(request: Request) {
         { status: 500 }
       )
     }
-  } else {
-    const { error: outputErr } = await supabase
-      .from('agent_outputs')
-      .insert({
-        execution_id: execution.id,
-        user_id: user.id,
-        output_type: output.outputType,
-        title: output.title,
-        structured_data: output.data as Json,
-        summary: output.summary,
-      })
-
-    if (outputErr) {
-      await supabase
-        .from('agent_executions')
-        .update({
-          status: 'failed',
-          error_message: `Failed to store output: ${outputErr.message}`,
-          started_at: startedAt,
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', execution.id)
-
-      return NextResponse.json(
-        { error: 'Failed to store agent output' },
-        { status: 500 }
-      )
-    }
   }
+  // Structured outputs are stored in agent_jobs.output_data (set below)
 
   // Mark execution as completed
   const completedAt = new Date().toISOString()
   const durationMs = new Date(completedAt).getTime() - new Date(startedAt).getTime()
 
   await supabase
-    .from('agent_executions')
+    .from('agent_jobs')
     .update({
       status: 'completed',
       output_data: (output.type === 'content'
         ? { title: output.title, wordCount: output.wordCount, format: output.format }
-        : { title: output.title, summary: output.summary }) as Json,
+        : { title: output.title, summary: output.summary, data: output.data }) as Json,
       started_at: startedAt,
       completed_at: completedAt,
-      execution_duration_ms: durationMs,
+      runtime_ms: durationMs,
     })
     .eq('id', execution.id)
 
@@ -226,7 +201,7 @@ export async function POST(request: Request) {
     creditsCharged: creditCost,
     output: {
       type: output.type,
-      title: output.type === 'content' ? output.title : output.title,
+      title: output.title,
       ...(output.type === 'content'
         ? {
             content: output.content,

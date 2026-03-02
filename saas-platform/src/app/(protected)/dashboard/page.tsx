@@ -25,26 +25,27 @@ export default async function DashboardPage() {
       .eq('is_primary', true)
       .single(),
     supabase
-      .from('credits')
-      .select('total_credits, monthly_allocation')
+      .from('credit_pools')
+      .select('base_allocation, rollover_amount, topup_amount, used_amount')
       .eq('user_id', user.id)
+      .eq('pool_type', 'agent')
       .single(),
     supabase
-      .from('scan_results')
-      .select('id, overall_score, mention_count, avg_position, scanned_at')
+      .from('scans')
+      .select('id, overall_score, mentions_count, created_at')
       .eq('user_id', user.id)
-      .order('scanned_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(5),
     supabase
       .from('recommendations')
-      .select('id, title, description, priority, recommendation_type, status, agent_type, credits_cost')
+      .select('id, title, description, priority, recommendation_type, status, suggested_agent, credits_cost')
       .eq('user_id', user.id)
-      .in('status', ['new', 'in_progress'])
+      .in('status', ['pending', 'in_progress'])
       .order('priority', { ascending: true })
       .limit(5),
     supabase
-      .from('agent_executions')
-      .select('id, agent_type, status, credits_charged, created_at, completed_at')
+      .from('agent_jobs')
+      .select('id, agent_type, status, credits_cost, created_at, completed_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(5),
@@ -72,10 +73,10 @@ export default async function DashboardPage() {
       businessUrl={business?.website_url ?? null}
       score={latestScan?.overall_score ?? null}
       scoreDelta={scoreDelta}
-      mentionCount={latestScan?.mention_count ?? 0}
-      lastScanned={latestScan?.scanned_at ?? null}
-      totalCredits={credits?.total_credits ?? 0}
-      monthlyCredits={credits?.monthly_allocation ?? 0}
+      mentionCount={latestScan?.mentions_count ?? 0}
+      lastScanned={latestScan?.created_at ?? null}
+      totalCredits={credits ? (credits.base_allocation + credits.rollover_amount + credits.topup_amount - credits.used_amount) : 0}
+      monthlyCredits={credits?.base_allocation ?? 0}
       recommendations={recommendations}
       recentAgents={recentAgents}
       recentScans={scans}

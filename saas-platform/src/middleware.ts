@@ -1,69 +1,54 @@
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
-
-const PUBLIC_ROUTES = ['/', '/scan', '/pricing', '/blog']
-const AUTH_ROUTES = ['/login', '/signup', '/forgot-password']
-const PROTECTED_ROUTES = ['/dashboard', '/onboarding']
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  const { supabaseResponse, user } = await updateSession(request)
+  let supabaseResponse = NextResponse.next({ request })
 
-  // Public API routes (no auth required)
-  if (
-    pathname.startsWith('/api/scan') ||
-    pathname.startsWith('/api/health') ||
-    pathname.startsWith('/api/stripe/webhooks')
-  ) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn(
+      '[middleware] NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing. ' +
+      'Auth session refresh is disabled — all requests pass through unauthenticated.'
+    )
     return supabaseResponse
   }
 
-  // Public routes pass through
-  if (PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'))) {
-    return supabaseResponse
-  }
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll()
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) =>
+          request.cookies.set(name, value)
+        )
+        supabaseResponse = NextResponse.next({ request })
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options)
+        )
+      },
+    },
+  })
 
-  // Auth routes: redirect to dashboard if logged in
-  if (AUTH_ROUTES.some((r) => pathname.startsWith(r))) {
-    if (user) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-    return supabaseResponse
-  }
-
-  // Protected routes: redirect to login if not logged in
-  if (PROTECTED_ROUTES.some((r) => pathname.startsWith(r))) {
-    if (!user) {
-      const loginUrl = new URL('/login', request.url)
-      loginUrl.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(loginUrl)
-    }
-    return supabaseResponse
-  }
-
-  // Protected API routes
-  if (
-    pathname.startsWith('/api/agents') ||
-    pathname.startsWith('/api/dashboard') ||
-    pathname.startsWith('/api/businesses') ||
-    pathname.startsWith('/api/queries') ||
-    pathname.startsWith('/api/content') ||
-    pathname.startsWith('/api/recommendations') ||
-    pathname.startsWith('/api/credits') ||
-    pathname.startsWith('/api/onboarding') ||
-    pathname.startsWith('/api/stripe')
-  ) {
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    return supabaseResponse
-  }
+  // Refresh the session token. Must be called before any response is returned
+  // so that updated Set-Cookie headers are forwarded to the browser.
+  // Redirect logic lives in (protected)/layout.tsx — not here.
+  await supabase.auth.getUser()
 
   return supabaseResponse
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    /*
+     * Match all request paths except:
+     * - _next/static  (static files)
+     * - _next/image   (image optimisation)
+     * - favicon.ico
+     * - public assets (svg, png, jpg, jpeg, gif, webp, ico)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }

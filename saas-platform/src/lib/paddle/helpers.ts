@@ -1,13 +1,16 @@
-import { stripe } from './client'
-import { STRIPE_PRICES, PLAN_LIMITS } from './config'
+import { paddle } from './client'
+import { PADDLE_PRICES } from './config'
 import type { PlanTier } from '@/lib/types'
 import { createServiceClient } from '@/lib/supabase/server'
 
 /**
- * Looks up the stripe_customer_id on the subscriptions table.
- * If none exists, creates a Stripe customer and stores the ID.
+ * Looks up the paddle_customer_id on the subscriptions table.
+ * If none exists, creates a Paddle customer and stores the ID.
+ *
+ * Paddle customers are created via the Paddle API (server-side).
+ * The customer ID is then stored in Supabase for future lookups.
  */
-export async function getOrCreateStripeCustomer(
+export async function getOrCreatePaddleCustomer(
   userId: string,
   email: string
 ): Promise<string> {
@@ -15,7 +18,7 @@ export async function getOrCreateStripeCustomer(
 
   const { data: subscription, error } = await supabase
     .from('subscriptions')
-    .select('stripe_customer_id')
+    .select('paddle_customer_id')
     .eq('user_id', userId)
     .single()
 
@@ -23,31 +26,32 @@ export async function getOrCreateStripeCustomer(
     throw new Error(`Failed to fetch subscription: ${error.message}`)
   }
 
-  if (subscription?.stripe_customer_id) {
-    return subscription.stripe_customer_id
+  if (subscription?.paddle_customer_id) {
+    return subscription.paddle_customer_id
   }
 
-  const customer = await stripe.customers.create({
+  // Create customer in Paddle
+  const customer = await paddle.customers.create({
     email,
-    metadata: { supabase_user_id: userId },
+    customData: { supabase_user_id: userId },
   })
 
   if (subscription) {
     const { error: updateError } = await supabase
       .from('subscriptions')
-      .update({ stripe_customer_id: customer.id })
+      .update({ paddle_customer_id: customer.id })
       .eq('user_id', userId)
 
     if (updateError) {
-      throw new Error(`Failed to store stripe_customer_id: ${updateError.message}`)
+      throw new Error(`Failed to store paddle_customer_id: ${updateError.message}`)
     }
   } else {
     const { error: insertError } = await supabase
       .from('subscriptions')
       .insert({
         user_id: userId,
-        stripe_customer_id: customer.id,
-        plan_tier: 'free',
+        paddle_customer_id: customer.id,
+        plan_tier: null,
         status: 'trialing',
       })
 
@@ -60,17 +64,17 @@ export async function getOrCreateStripeCustomer(
 }
 
 /**
- * Maps a Stripe price ID back to a plan tier.
+ * Maps a Paddle price ID back to a plan tier.
  * Returns null if the price ID is not recognized (e.g. a top-up).
  */
 export function getPlanFromPriceId(priceId: string): PlanTier | null {
   const priceToTier: Record<string, PlanTier> = {
-    [STRIPE_PRICES.starter_monthly]: 'starter',
-    [STRIPE_PRICES.starter_yearly]: 'starter',
-    [STRIPE_PRICES.pro_monthly]: 'pro',
-    [STRIPE_PRICES.pro_yearly]: 'pro',
-    [STRIPE_PRICES.business_monthly]: 'business',
-    [STRIPE_PRICES.business_yearly]: 'business',
+    [PADDLE_PRICES.starter_monthly]: 'starter',
+    [PADDLE_PRICES.starter_yearly]: 'starter',
+    [PADDLE_PRICES.pro_monthly]: 'pro',
+    [PADDLE_PRICES.pro_yearly]: 'pro',
+    [PADDLE_PRICES.business_monthly]: 'business',
+    [PADDLE_PRICES.business_yearly]: 'business',
   }
 
   return priceToTier[priceId] ?? null
@@ -82,8 +86,8 @@ export function getPlanFromPriceId(priceId: string): PlanTier | null {
  */
 export function getTopupAmountFromPriceId(priceId: string): number | null {
   const priceToAmount: Record<string, number> = {
-    [STRIPE_PRICES.topup_5]: 5,
-    [STRIPE_PRICES.topup_15]: 15,
+    [PADDLE_PRICES.topup_5]: 5,
+    [PADDLE_PRICES.topup_15]: 15,
   }
 
   return priceToAmount[priceId] ?? null
@@ -97,8 +101,16 @@ export function getTopupAmountFromPriceId(priceId: string): number | null {
 export async function allocateMonthlyCredits(userId: string): Promise<void> {
   const supabase = await createServiceClient()
 
+  // Fetch the user's plan to pass to the RPC
+  const { data: sub } = await supabase
+    .from('subscriptions')
+    .select('plan_tier')
+    .eq('user_id', userId)
+    .single()
+
   const { error } = await supabase.rpc('allocate_monthly_credits', {
     p_user_id: userId,
+    p_plan_id: sub?.plan_tier ?? 'starter',
   })
 
   if (error) {
@@ -113,8 +125,8 @@ export async function addTopupCredits(userId: string, amount: number): Promise<v
   const supabase = await createServiceClient()
 
   const { data: credits, error: fetchError } = await supabase
-    .from('credits')
-    .select('bonus_credits, total_credits')
+    .from('credit_pools')
+    .select('id, topup_amount, base_allocation, rollover_amount, used_amount')
     .eq('user_id', userId)
     .single()
 
@@ -122,15 +134,12 @@ export async function addTopupCredits(userId: string, amount: number): Promise<v
     throw new Error(`Failed to fetch credits: ${fetchError.message}`)
   }
 
-  const newBonus = (credits?.bonus_credits ?? 0) + amount
-  const newTotal = (credits?.total_credits ?? 0) + amount
+  const newTopup = (credits?.topup_amount ?? 0) + amount
+  const newTotal = (credits?.base_allocation ?? 0) + newTopup + (credits?.rollover_amount ?? 0) - (credits?.used_amount ?? 0)
 
   const { error: updateError } = await supabase
-    .from('credits')
-    .update({
-      bonus_credits: newBonus,
-      total_credits: newTotal,
-    })
+    .from('credit_pools')
+    .update({ topup_amount: newTopup })
     .eq('user_id', userId)
 
   if (updateError) {
@@ -139,10 +148,11 @@ export async function addTopupCredits(userId: string, amount: number): Promise<v
 
   await supabase.from('credit_transactions').insert({
     user_id: userId,
-    transaction_type: 'bonus',
+    pool_id: credits!.id,
+    pool_type: 'agent' as const,
+    transaction_type: 'topup' as const,
     amount,
     balance_after: newTotal,
     description: `Top-up: ${amount} agent uses purchased`,
-    metadata: {},
   })
 }

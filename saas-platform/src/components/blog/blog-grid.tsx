@@ -13,9 +13,9 @@ export function BlogGrid({ posts }: { posts: BlogPost[] }) {
         >
           {/* Image / placeholder */}
           <div className="bg-gradient-to-br from-stone-50 to-stone-100 h-48 flex items-center justify-center">
-            {post.cover_image ? (
+            {post.cover_image_url ? (
               <img
-                src={post.cover_image}
+                src={post.cover_image_url}
                 alt={post.title}
                 className="w-full h-full object-cover"
               />
@@ -30,7 +30,7 @@ export function BlogGrid({ posts }: { posts: BlogPost[] }) {
           <div className="p-6 flex flex-col flex-1">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xs font-medium text-stone-400 capitalize">
-                {post.category.replace(/-/g, ' ')}
+                {(post.category ?? '').replace(/-/g, ' ')}
               </span>
               <span className="text-xs text-stone-300">&middot;</span>
               <span className="text-xs text-stone-400">

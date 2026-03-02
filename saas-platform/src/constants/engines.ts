@@ -1,5 +1,6 @@
 import type { LLMEngine } from '@/lib/types'
-import type { LlmProvider } from '@/lib/types/database.types'
+
+export type LlmProvider = 'chatgpt' | 'gemini' | 'perplexity' | 'claude' | 'google_ai_overviews'
 
 /** Human-readable labels for free-scan LLM engines */
 export const ENGINE_LABELS: Record<LLMEngine, string> = {

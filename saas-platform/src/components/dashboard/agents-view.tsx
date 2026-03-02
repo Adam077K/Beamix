@@ -99,7 +99,7 @@ interface AgentsViewProps {
     id: string
     agent_type: string
     status: string
-    credits_charged: number
+    credits_cost: number
     created_at: string
     completed_at: string | null
   }>
@@ -163,47 +163,53 @@ export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) 
           return (
             <Card
               key={agent.type}
-              className="border-[var(--color-card-border)] transition-shadow hover:shadow-md"
-              style={{ borderRadius: 'var(--card-radius)' }}
+              className="card-interactive"
             >
-              <CardContent className="p-5">
+              <CardContent className="relative p-5">
+                {/* Credits badge in top right */}
+                <Badge variant="outline" className="absolute top-3 right-3 text-xs">
+                  {agent.credits} credits
+                </Badge>
                 <div className="flex items-start gap-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${agent.color}`}>
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${agent.color}`}>
                     <Icon className="h-5 w-5" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-display text-sm font-semibold text-[var(--color-text)]">
+                  <div className="flex-1 min-w-0 pr-16">
+                    <h3 className="font-display text-base font-semibold text-[var(--color-text)]">
                       {agent.name}
                     </h3>
-                    <Badge variant="outline" className="mt-1 text-xs">
-                      {agent.credits} credits
-                    </Badge>
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-[var(--color-muted)] line-clamp-2">
+                <p className="mt-3 text-sm text-[var(--color-muted)] line-clamp-3">
                   {agent.description}
                 </p>
                 <div className="mt-4 flex gap-2">
                   <Button
                     size="sm"
-                    className={`flex-1 ${
+                    className={`w-full ${
                       canAfford
                         ? 'bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90'
                         : 'bg-[var(--color-card-border)] text-[var(--color-muted)] cursor-not-allowed'
                     }`}
                     disabled={!canAfford}
-                    onClick={() => openModal(agent)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      openModal(agent)
+                    }}
                   >
                     <Bot className="mr-1 h-3 w-3" />
                     {canAfford ? 'Launch Agent' : 'Not enough credits'}
                   </Button>
-                  <Link href={`/dashboard/agents/${agent.type}`}>
-                    <Button size="sm" variant="outline" className="text-xs">
-                      Chat
-                    </Button>
-                  </Link>
                 </div>
               </CardContent>
+              {/* Make the card itself clickable to navigate to chat */}
+              <Link
+                href={`/dashboard/agents/${agent.type}`}
+                className="absolute inset-0 z-0"
+                aria-label={`Open ${agent.name} chat`}
+              >
+                <span className="sr-only">Open {agent.name}</span>
+              </Link>
             </Card>
           )
         })}
@@ -211,7 +217,7 @@ export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) 
 
       {/* Recent executions */}
       {recentExecutions.length > 0 && (
-        <Card className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
+        <Card>
           <CardContent className="p-6">
             <h2 className="mb-4 font-display text-lg font-semibold text-[var(--color-text)]">
               Recent Runs
@@ -220,7 +226,7 @@ export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) 
               {recentExecutions.map((exec) => {
                 const agentDef = AGENTS.find((a) => a.type === exec.agent_type)
                 return (
-                  <div key={exec.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3">
+                  <div key={exec.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3 transition-colors duration-150 hover:bg-[var(--color-card-border)]/30">
                     {exec.status === 'completed' && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />}
                     {exec.status === 'running' && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[var(--color-accent)]" />}
                     {exec.status === 'failed' && <XCircle className="h-4 w-4 shrink-0 text-red-500" />}
@@ -233,7 +239,7 @@ export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) 
                         {agentDef?.name ?? exec.agent_type}
                       </p>
                       <p className="text-xs text-[var(--color-muted)]">
-                        {exec.credits_charged} credits · {formatDistanceToNow(new Date(exec.created_at), { addSuffix: true })}
+                        {exec.credits_cost} credits · {formatDistanceToNow(new Date(exec.created_at), { addSuffix: true })}
                       </p>
                     </div>
                     <Badge variant="outline" className="shrink-0 text-xs capitalize">

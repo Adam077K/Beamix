@@ -37,14 +37,14 @@
 +------+------------------+------------------+-----------+-----------+
        |                  |                  |           |
        v                  v                  v           v
-+------------+   +----------------+   +-----------+  +----------+
-| SUPABASE   |   | n8n CLOUD      |   | STRIPE    |  | LLM APIs |
-| - PostgreSQL|   | - AI Workflows |   | - Billing |  | - OpenAI |
-| - Auth     |   | - Cron Jobs    |   | - Subs    |  | - Claude |
-| - RLS      |   | - Webhooks     |   | - Credits |  | - Pplx   |
-| - Realtime |   |                |   |           |  | - Gemini |
-| - Storage  |   |                |   |           |  |          |
-+------------+   +----------------+   +-----------+  +----------+
++------------+   +-----------+  +----------+
+| SUPABASE   |   | PADDLE    |  | LLM APIs |
+| - PostgreSQL|   | - Billing |  | - OpenAI |
+| - Auth     |   | - Subs    |  | - Claude |
+| - RLS      |   | - Credits |  | - Pplx   |
+| - Realtime |   |           |  | - Gemini |
+| - Storage  |   |           |  |          |
++------------+   +-----------+  +----------+
 ```
 
 ### Component Responsibilities
@@ -52,15 +52,15 @@
 | Component | Responsibility | Communication |
 |-----------|---------------|---------------|
 | **Next.js Frontend** | UI rendering, form handling, real-time polling | HTTPS to API routes |
-| **Next.js API Routes** | Auth enforcement, input validation, orchestration | Supabase SDK, HTTP to n8n |
+| **Next.js API Routes** | Auth enforcement, input validation, orchestration, LLM calls | Supabase SDK, direct LLM API calls |
 | **Supabase** | Data persistence, auth, RLS, real-time subscriptions | PostgreSQL wire protocol |
 
-| **Stripe** | Subscription billing, payment processing | Webhooks to API routes |
-| **LLM APIs** | Query ranking checks, content generation | Called exclusively from n8n |
+| **Paddle** | Subscription billing, payment processing | Webhooks to API routes |
+| **LLM APIs** | Query ranking checks, content generation | Called from Next.js API routes |
 
 ### Key Design Decisions
 
-1. **LLM calls happen ONLY in n8n** -- never from API routes directly. This centralizes cost tracking, retry logic, and rate limiting in one place.
+1. **LLM calls happen in API routes** -- direct calls to LLM APIs from server-side code. This keeps all logic in the codebase with centralized cost tracking, retry logic, and rate limiting.
 2. **Fire-and-forget pattern** for agent execution -- API returns 202 Accepted immediately, frontend polls `agent_executions` table for status.
 3. **RLS is the security boundary** -- even if an API route has a bug, Supabase RLS prevents data leakage across users.
 4. **Credits are deducted AFTER success** -- if an agent fails, the user is not charged.
@@ -78,9 +78,9 @@
    b. Validate input with Zod
    c. Generate scan_token (UUID)
    d. Insert row into free_scans table (status='pending')
-   e. Trigger n8n webhook: /webhook/free-scan
+   e. Trigger async scan worker (background task)
    f. Return { scan_token, status: 'processing' }
-5. n8n Workflow (async, ~60-90s):
+5. Scan Worker (async, ~60-90s):
    a. Query 4 LLMs with 3 auto-generated prompts for sector+location
    b. Parse each response for brand mention, position, sentiment
    c. Write results to free_scan_results table
@@ -102,10 +102,10 @@
    c. Check credits: SELECT total_credits FROM credits WHERE user_id = $1
    d. If insufficient: return 402 with credits_required and credits_available
    e. Insert into agent_executions (status='pending', input_data=payload)
-   f. POST to n8n webhook with { execution_id, user_id, ...payload }
+   f. Start async agent worker with { execution_id, user_id, ...payload }
    g. Return 202 { execution_id, status: 'processing' }
 5. Frontend starts polling GET /api/agents/executions/{execution_id} every 5s
-6. n8n Workflow (async, 2-5 min):
+6. Agent Worker (async, 2-5 min):
    a. Research phase (Perplexity sonar-pro)
    b. Outline phase (Claude claude-sonnet-4-5-20250929)
    c. Write phase (Claude claude-sonnet-4-5-20250929)
@@ -123,7 +123,7 @@
 ```
 2. Fetch all active tracked_queries grouped by user
 3. For each user batch (max 50 queries):
-   a. Query 4 LLMs per query (parallel within n8n)
+   a. Query 4 LLMs per query (parallel via Promise.all)
    b. Parse responses for mention, position, sentiment, competitors
    c. Batch insert into scan_results table
    d. Compare to previous day's results
@@ -436,8 +436,8 @@ CREATE INDEX idx_agent_outputs_type ON agent_outputs(output_type);
 CREATE TABLE public.subscriptions (
   id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id                 UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  stripe_customer_id      TEXT UNIQUE,
-  stripe_subscription_id  TEXT UNIQUE,
+  paddle_customer_id      TEXT UNIQUE,
+  paddle_subscription_id  TEXT UNIQUE,
   plan_tier               TEXT NOT NULL
     CHECK (plan_tier IN ('free', 'starter', 'pro', 'enterprise')),
   status                  TEXT NOT NULL DEFAULT 'active'
@@ -451,7 +451,7 @@ CREATE TABLE public.subscriptions (
 );
 
 CREATE INDEX idx_subscriptions_user_id ON subscriptions(user_id);
-CREATE INDEX idx_subscriptions_stripe_customer ON subscriptions(stripe_customer_id);
+CREATE INDEX idx_subscriptions_paddle_customer ON subscriptions(paddle_customer_id);
 CREATE INDEX idx_subscriptions_status ON subscriptions(status);
 ```
 
@@ -469,8 +469,8 @@ CREATE TABLE public.plans (
   features            JSONB NOT NULL DEFAULT '[]'::jsonb,
   price_monthly_usd   NUMERIC(8,2),
   price_annual_usd    NUMERIC(8,2),
-  stripe_price_monthly TEXT,
-  stripe_price_annual  TEXT,
+  paddle_price_monthly TEXT,
+  paddle_price_annual  TEXT,
   is_active           BOOLEAN NOT NULL DEFAULT TRUE,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -547,7 +547,7 @@ CREATE TABLE public.free_scans (
   overall_score   NUMERIC(4,2),
   results_data    JSONB,
   converted_user_id UUID REFERENCES users(id),
-  expires_at      TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '7 days',
+  expires_at      TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '14 days',
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

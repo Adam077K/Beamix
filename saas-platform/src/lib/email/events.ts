@@ -68,7 +68,7 @@ export async function sendTrialStartEmail(to: string, props: TrialStartEmailProp
 export async function sendTrialDay7Email(to: string, props: TrialDay7EmailProps) {
   return sendEmail({
     to,
-    subject: "7 days in — here's your progress",
+    subject: "One week in — here's your progress",
     react: createElement(TrialDay7Email, props),
   })
 }

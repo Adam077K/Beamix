@@ -4,35 +4,28 @@
 
 ## APIs & External Services
 
-**AI Models (for n8n workflows):**
+**AI Models (called directly from Next.js API routes):**
 - OpenAI GPT-4o - Content generation, quality checking
-  - SDK: OpenAI API (called from n8n, not directly from app)
-  - Auth: `OPENAI_API_KEY` (server-side, n8n credentials)
+  - SDK: OpenAI API (server-side)
+  - Auth: `OPENAI_API_KEY` (server-side env var)
 
 - Anthropic Claude Opus 4.5 - Content writing, research
-  - SDK: Anthropic API (called from n8n)
-  - Auth: `ANTHROPIC_API_KEY` (server-side, n8n credentials)
+  - SDK: Anthropic API (server-side)
+  - Auth: `ANTHROPIC_API_KEY` (server-side env var)
 
 - Perplexity API - Web research and current information
-  - SDK: Perplexity HTTP API (called from n8n)
-  - Auth: `PERPLEXITY_API_KEY` (server-side, n8n credentials)
+  - SDK: Perplexity HTTP API (server-side)
+  - Auth: `PERPLEXITY_API_KEY` (server-side env var)
 
 - Google Gemini - Ranking analysis and insights
-  - SDK: Google AI Studio API (called from n8n)
-  - Auth: `GOOGLE_AI_API_KEY` (server-side, n8n credentials)
+  - SDK: Google AI Studio API (server-side)
+  - Auth: `GOOGLE_AI_API_KEY` (server-side env var)
 
-**Workflow Orchestration:**
-- n8n Cloud - AI agent orchestration platform
-  - Integration: Webhook-based HTTP calls from Next.js API routes to n8n workflows
-  - Webhooks configured:
-    - `N8N_INITIAL_ANALYSIS_WEBHOOK` - Initial ranking analysis on onboarding completion
-    - `N8N_CONTENT_WRITER_WEBHOOK` - Content generation agent
-    - `N8N_COMPETITOR_RESEARCH_WEBHOOK` - Competitive analysis
-    - `N8N_QUERY_RESEARCHER_WEBHOOK` - Query discovery and research
-    - `N8N_SCHEDULED_RANKING_WEBHOOK` - Daily ranking updates (scheduled)
-    - `N8N_RECOMMENDATION_GENERATOR_WEBHOOK` - Weekly recommendation generation
-  - Trigger mechanism: POST requests from API routes in `src/app/api/agents/*`
-  - Implementation: Native fetch() calls with JSON payloads
+**AI Agent Orchestration:**
+- Direct LLM integration via Next.js API routes — no external workflow tools
+  - Agent endpoints in `src/app/api/agents/*` call LLM APIs directly
+  - Trigger mechanism: POST requests from frontend to API routes
+  - Implementation: Native fetch() calls to LLM provider APIs with JSON payloads
 
 **Unsplash Integration:**
 - Image CDN: images.unsplash.com
@@ -94,9 +87,6 @@
 **Database Deployment:**
 - Supabase Cloud - Managed PostgreSQL hosting
 
-**Workflow Deployment:**
-- n8n Cloud - Managed workflow platform
-
 **CI Pipeline:**
 - Not detected as separate service
 - Vercel deployments trigger on git push automatically
@@ -112,22 +102,17 @@
 - `SUPABASE_SERVICE_ROLE_KEY` - Secret, server-side only
 - `DATABASE_URL` - Secret, for migrations
 
-**Stripe (placeholder, not yet integrated):**
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Public
-- `STRIPE_SECRET_KEY` - Secret
-- `STRIPE_WEBHOOK_SECRET` - Secret
-- `STRIPE_PRICE_*` - Multiple price IDs for plans and credits
+**Paddle (placeholder, not yet integrated):**
+- `NEXT_PUBLIC_NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` - Public
+- `PADDLE_API_KEY` - Secret
+- `PADDLE_WEBHOOK_SECRET` - Secret
+- `PADDLE_PRICE_*` - Multiple price IDs for plans and credits
 
 **LLM APIs:**
-- `OPENAI_API_KEY` - Secret, passed to n8n
-- `ANTHROPIC_API_KEY` - Secret, passed to n8n
-- `PERPLEXITY_API_KEY` - Secret, passed to n8n
-- `GOOGLE_AI_API_KEY` - Secret, passed to n8n
-
-**n8n:**
-- `N8N_WEBHOOK_BASE_URL` - Workspace URL
-- `N8N_API_KEY` - Secret, for triggering workflows
-- `N8N_*_WEBHOOK` - Individual webhook URLs for each workflow
+- `OPENAI_API_KEY` - Secret, used in API routes
+- `ANTHROPIC_API_KEY` - Secret, used in API routes
+- `PERPLEXITY_API_KEY` - Secret, used in API routes
+- `GOOGLE_AI_API_KEY` - Secret, used in API routes
 
 **App:**
 - `NEXT_PUBLIC_APP_URL` - Public, app domain
@@ -142,24 +127,14 @@
 ## Webhooks & Callbacks
 
 **Incoming:**
-- n8n workflow completion callbacks - Not yet implemented (workflows update database directly)
-- Stripe webhook endpoint - Empty directory `src/app/api/stripe/` (planned for Phase 2)
+- Paddle webhook endpoint - Empty directory `src/app/api/paddle/` (planned for Phase 2)
 
-**Outgoing (API routes calling webhooks):**
-- POST to n8n initial analysis webhook on onboarding completion: `src/app/api/onboarding/complete/route.ts`
-- POST to content writer webhook: `src/app/api/agents/content-writer/route.ts`
-- POST to competitor research webhook: `src/app/api/agents/competitor-research/route.ts`
-- POST to query researcher webhook: `src/app/api/agents/query-researcher/route.ts`
-- All use standard fetch() with JSON request body containing agent parameters
-
-**Webhook Pattern (all n8n webhooks):**
-```typescript
-fetch(webhookUrl, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(payload)
-})
-```
+**Outgoing (API routes calling LLM APIs):**
+- Agent execution on onboarding completion: `src/app/api/onboarding/complete/route.ts`
+- Content writer agent: `src/app/api/agents/content-writer/route.ts`
+- Competitor research agent: `src/app/api/agents/competitor-research/route.ts`
+- Query researcher agent: `src/app/api/agents/query-researcher/route.ts`
+- All call LLM provider APIs directly via fetch() with JSON payloads
 
 ## API Route Structure
 

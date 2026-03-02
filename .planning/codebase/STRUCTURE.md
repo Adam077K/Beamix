@@ -48,7 +48,7 @@ saas-platform/
 │   │   │   ├── onboarding/
 │   │   │   │   └── complete/route.ts
 │   │   │   └── webhooks/
-│   │   │       └── stripe/route.ts    # Stripe webhook handler
+│   │   │       └── paddle/route.ts    # Paddle webhook handler
 │   │   ├── layout.tsx                 # Root layout with providers
 │   │   ├── page.tsx                   # Marketing homepage
 │   │   ├── globals.css                # Global styles + Tailwind
@@ -150,7 +150,7 @@ saas-platform/
 
 **`src/app/(protected)/`** - Protected dashboard pages requiring authentication. Layout includes sidebar navigation, logout button. Middleware redirects unauthenticated users to `/login`.
 
-**`src/app/api/`** - Next.js API route handlers organized by domain (queries, content, agents, etc.). Each route is a serverless function. POST requests trigger async n8n workflows.
+**`src/app/api/`** - Next.js API route handlers organized by domain (queries, content, agents, etc.). Each route is a serverless function. POST requests trigger async agent executions via direct LLM API calls.
 
 **`src/components/ui/`** - Shadcn UI component library (unstyled, Tailwind-based). Imported from `@/components/ui/` throughout codebase. Some custom animations added (AnimatedCounter, BounceCard, etc.).
 
@@ -238,7 +238,7 @@ saas-platform/
 - Authentication: Always call `getAuthenticatedUser()` first to verify session
 - Error handling: Wrap handler with `withErrorHandler()` on export
 - Response: Use `successResponse(data, meta)` for 200, throw custom errors for failures
-- n8n trigger: For async processing, use `fetch()` to POST to n8n webhook URL (fire-and-forget)
+- Agent execution: For async processing, call LLM APIs directly from the API route (fire-and-forget pattern)
 
 **Utilities/Helpers:**
 - Shared API utilities: `src/lib/api/{function}.ts` (e.g., `responses.ts`, `errors.ts`)
@@ -280,5 +280,5 @@ saas-platform/
 - Purpose: Production environment variables (set in Vercel dashboard)
 - Generated: No (configured in Vercel)
 - Committed: No (never check in production secrets)
-- Contains: Live Supabase URL, Stripe keys, n8n webhooks
+- Contains: Live Supabase URL, Paddle keys, LLM API keys
 

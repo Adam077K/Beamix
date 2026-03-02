@@ -13,7 +13,7 @@ export function TrialDay7Email({
   return (
     <EmailLayout preview={`${daysLeft} days in — here's your progress`}>
       <Section style={content}>
-        <Text style={styles.heading}>7 Days In — Here&apos;s Your Progress</Text>
+        <Text style={styles.heading}>One Week In — Here&apos;s Your Progress</Text>
         <Text style={styles.paragraph}>
           Hi {name}, you&apos;re halfway through your trial. Here&apos;s what you&apos;ve
           accomplished so far.

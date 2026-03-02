@@ -12,8 +12,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
-import type { LlmProvider, MentionSentiment } from '@/lib/types/database.types'
+import type { LlmProvider } from '@/constants/engines'
 import { PROVIDER_LABELS, PROVIDER_COLORS } from '@/constants/engines'
+
+type MentionSentiment = 'positive' | 'neutral' | 'negative'
 
 function getScoreColor(score: number): string {
   if (score >= 75) return 'var(--score-excellent)'
@@ -26,19 +28,17 @@ interface RankingsViewProps {
   scans: Array<{
     id: string
     overall_score: number | null
-    mention_count: number
-    avg_position: number | null
-    scanned_at: string
+    mentions_count: number
+    created_at: string
     scan_type: string
   }>
   latestDetails: Array<{
     id: string
-    scan_result_id: string
-    llm_provider: LlmProvider
+    scan_id: string
+    engine: string
     is_mentioned: boolean
-    mention_position: number | null
+    rank_position: number | null
     sentiment: MentionSentiment | null
-    mention_context: string | null
   }>
   queries: Array<{
     id: string
@@ -66,7 +66,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
 
       {/* Current score card */}
       {hasData && (
-        <Card className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
+        <Card className="bg-gradient-to-r from-white to-cyan-50/30">
           <CardContent className="p-6">
             <div className="flex items-center gap-6">
               <div
@@ -78,15 +78,10 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
               <div>
                 <p className="text-sm text-[var(--color-muted)]">Current Visibility Score</p>
                 <p className="text-lg font-semibold text-[var(--color-text)]">
-                  {latestScan.mention_count} engine{latestScan.mention_count !== 1 ? 's' : ''} mention you
+                  {latestScan.mentions_count} engine{latestScan.mentions_count !== 1 ? 's' : ''} mention you
                 </p>
-                {latestScan.avg_position !== null && (
-                  <p className="text-sm text-[var(--color-muted)]">
-                    Average position: #{Math.round(latestScan.avg_position)}
-                  </p>
-                )}
                 <p className="text-xs text-[var(--color-muted)]">
-                  Last scanned {formatDistanceToNow(new Date(latestScan.scanned_at), { addSuffix: true })}
+                  Last scanned {formatDistanceToNow(new Date(latestScan.created_at), { addSuffix: true })}
                 </p>
               </div>
             </div>
@@ -95,7 +90,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
       )}
 
       {/* Per-engine breakdown */}
-      <Card className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-display text-lg">
             <BarChart3 className="h-5 w-5 text-[var(--color-accent)]" />
@@ -110,9 +105,9 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
           ) : (
             <div className="space-y-3">
               {latestDetails.map((detail) => (
-                <div key={detail.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-4">
-                  <Badge className={`shrink-0 text-xs ${PROVIDER_COLORS[detail.llm_provider] ?? 'bg-gray-100 text-gray-700'}`}>
-                    {PROVIDER_LABELS[detail.llm_provider] ?? detail.llm_provider}
+                <div key={detail.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-4 transition-colors duration-150 hover:bg-[var(--color-card-border)]/30">
+                  <Badge className={`shrink-0 text-xs ${PROVIDER_COLORS[detail.engine as LlmProvider] ?? 'bg-gray-100 text-gray-700'}`}>
+                    {PROVIDER_LABELS[detail.engine as LlmProvider] ?? detail.engine}
                   </Badge>
                   <div className="flex-1">
                     {detail.is_mentioned ? (
@@ -121,9 +116,9 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
                           <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                           Mentioned
                         </span>
-                        {detail.mention_position !== null && (
+                        {detail.rank_position !== null && (
                           <span className="text-[var(--color-muted)]">
-                            Position: <strong className="text-[var(--color-text)]">#{detail.mention_position}</strong>
+                            Position: <strong className="text-[var(--color-text)]">#{detail.rank_position}</strong>
                           </span>
                         )}
                         {detail.sentiment && (
@@ -141,11 +136,6 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
                         Not mentioned
                       </span>
                     )}
-                    {detail.mention_context && (
-                      <p className="mt-1 text-xs text-[var(--color-muted)] line-clamp-2">
-                        &ldquo;{detail.mention_context}&rdquo;
-                      </p>
-                    )}
                   </div>
                 </div>
               ))}
@@ -155,7 +145,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
       </Card>
 
       {/* Tracked Queries */}
-      <Card className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-display text-lg">
             <Search className="h-5 w-5 text-[var(--color-accent-warm)]" />
@@ -170,7 +160,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
           ) : (
             <div className="space-y-2">
               {queries.map((q) => (
-                <div key={q.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3">
+                <div key={q.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3 transition-colors duration-150 hover:bg-[var(--color-card-border)]/30">
                   <Badge variant="outline" className="shrink-0 text-xs capitalize">
                     {q.priority}
                   </Badge>
@@ -191,14 +181,14 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
 
       {/* Scan History */}
       {scans.length > 1 && (
-        <Card className="border-[var(--color-card-border)]" style={{ borderRadius: 'var(--card-radius)' }}>
+        <Card>
           <CardHeader>
             <CardTitle className="font-display text-lg">Scan History</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {scans.map((scan) => (
-                <div key={scan.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3">
+                <div key={scan.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3 transition-colors duration-150 hover:bg-[var(--color-card-border)]/30">
                   <div
                     className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
                     style={{ backgroundColor: scan.overall_score !== null ? getScoreColor(scan.overall_score) : 'var(--color-card-border)' }}
@@ -210,11 +200,11 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
                       Score: {scan.overall_score ?? 'N/A'}
                     </span>
                     <span className="ml-2 text-xs text-[var(--color-muted)]">
-                      {scan.mention_count} mentions · {scan.scan_type}
+                      {scan.mentions_count} mentions · {scan.scan_type}
                     </span>
                   </div>
                   <span className="text-xs text-[var(--color-muted)]">
-                    {formatDistanceToNow(new Date(scan.scanned_at), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(scan.created_at), { addSuffix: true })}
                   </span>
                 </div>
               ))}

@@ -29,12 +29,12 @@ export async function GET(request: Request) {
     .select(`
       user_id,
       plan_tier,
-      trial_end,
+      trial_ends_at,
       created_at,
-      users!inner(email, full_name)
+      user_profiles!inner(email, full_name)
     `)
     .eq('status', 'trialing')
-    .not('trial_end', 'is', null)
+    .not('trial_ends_at', 'is', null)
 
   if (error) {
     console.error('[CRON:trial-nudges] Failed to fetch subscriptions:', error)
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
   let failed = 0
 
   for (const sub of trialingSubs ?? []) {
-    const trialEnd = new Date(sub.trial_end!)
+    const trialEnd = new Date(sub.trial_ends_at!)
     const trialStart = new Date(sub.created_at)
     const daysSinceStart = Math.floor(
       (now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24)
@@ -55,7 +55,7 @@ export async function GET(request: Request) {
       (trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     )
 
-    const user = sub.users as unknown as { email: string; full_name: string | null }
+    const user = sub.user_profiles as unknown as { email: string; full_name: string | null }
     const userName = user.full_name ?? 'there'
 
     // Check expiration FIRST — skip day 7/12 nudges for expired trials
@@ -63,7 +63,7 @@ export async function GET(request: Request) {
       // Update subscription status
       await supabase
         .from('subscriptions')
-        .update({ status: 'canceled', updated_at: new Date().toISOString() })
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
         .eq('user_id', sub.user_id)
         .eq('status', 'trialing')
 
@@ -91,7 +91,7 @@ export async function GET(request: Request) {
       let currentScore = 0
       if (business) {
         const { data: latestScan } = await supabase
-          .from('scan_results')
+          .from('scans')
           .select('overall_score')
           .eq('user_id', sub.user_id)
           .eq('business_id', business.id)
@@ -103,7 +103,7 @@ export async function GET(request: Request) {
       }
 
       const { count: contentCount } = await supabase
-        .from('content_generations')
+        .from('content_items')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', sub.user_id)
 

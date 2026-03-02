@@ -25,7 +25,7 @@ interface ContentOutput {
     | 'review_response'
   title: string
   content: string
-  format: 'markdown' | 'html' | 'json' | 'json-ld'
+  format: 'markdown' | 'html' | 'json_ld' | 'plain_text' | 'structured_report'
   wordCount: number
 }
 
@@ -268,7 +268,7 @@ function generateSchemaMarkup(ctx: AgentContext): ContentOutput {
     contentType: 'schema_markup',
     title,
     content,
-    format: 'json-ld',
+    format: 'json_ld',
     wordCount: content.split(/\s+/).length,
   }
 }

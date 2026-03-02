@@ -5,7 +5,7 @@
 
 > This document supersedes all scattered SQL snippets in other specs.
 > Every table, relation, and policy is defined here.
-> The existing code (types/index.ts, API routes) references an older schema built around n8n and single-business-per-user — that schema is deprecated. Build against this document.
+> The existing code (types/index.ts, API routes) references an older schema — that schema is deprecated. Build against this document.
 
 ---
 
@@ -167,7 +167,7 @@ CREATE POLICY "businesses: own rows only"
 
 ### Table: `subscriptions`
 
-One row per user. Stripe is the source of truth; this table mirrors it.
+One row per user. Paddle is the source of truth; this table mirrors it.
 
 ```sql
 CREATE TYPE subscription_status AS ENUM (
@@ -189,12 +189,12 @@ CREATE TABLE public.subscriptions (
     user_id                 UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
     plan_tier               plan_tier,                -- NULL = no paid plan (trial only)
     status                  subscription_status NOT NULL DEFAULT 'trialing',
-    stripe_customer_id      TEXT UNIQUE,
-    stripe_subscription_id  TEXT UNIQUE,
-    stripe_price_id         TEXT,
+    paddle_customer_id      TEXT UNIQUE,
+    paddle_subscription_id  TEXT UNIQUE,
+    paddle_price_id         TEXT,
     billing_interval        TEXT,                      -- 'month' | 'year'
     trial_started_at        TIMESTAMPTZ,               -- set when first scan starts (per founder decision)
-    trial_ends_at           TIMESTAMPTZ,               -- trial_started_at + 7 days
+    trial_ends_at           TIMESTAMPTZ,               -- trial_started_at + 14 days
     current_period_start    TIMESTAMPTZ,
     current_period_end      TIMESTAMPTZ,
     cancelled_at            TIMESTAMPTZ,
@@ -208,15 +208,15 @@ CREATE TABLE public.subscriptions (
 -- When free_scans INSERT fires (or scans INSERT for authenticated users):
 -- If subscriptions.trial_started_at IS NULL:
 --   SET trial_started_at = now()
---   SET trial_ends_at = now() + interval '7 days'
+--   SET trial_ends_at = now() + interval '14 days'
 -- This is handled in the API layer (POST /api/scan/start), not a DB trigger.
 ```
 
 **Indexes:**
 ```sql
 CREATE INDEX subscriptions_user_id_idx ON public.subscriptions(user_id);
-CREATE INDEX subscriptions_stripe_customer_idx ON public.subscriptions(stripe_customer_id);
-CREATE INDEX subscriptions_stripe_sub_idx ON public.subscriptions(stripe_subscription_id);
+CREATE INDEX subscriptions_paddle_customer_idx ON public.subscriptions(paddle_customer_id);
+CREATE INDEX subscriptions_paddle_sub_idx ON public.subscriptions(paddle_subscription_id);
 ```
 
 **RLS:**
@@ -326,7 +326,7 @@ CREATE TABLE public.credit_transactions (
     balance_after   INTEGER NOT NULL,             -- pool remaining after this transaction
     description     TEXT,
     agent_job_id    UUID,                         -- FK to agent_jobs (nullable)
-    stripe_invoice_id TEXT,                       -- for topup transactions
+    paddle_invoice_id TEXT,                       -- for topup transactions
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
@@ -1240,7 +1240,7 @@ CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.blog_posts
 2. **C2 resolved** — standardize on `scan_id` (UUID) everywhere. `scan_token` deprecated.
 3. **C3 resolved — Option A** — Free scan מיובא לדשבורד לאחר signup. Onboarding לא מפעיל סקן חדש אם יש scan_id. Trial מתחיל רטרואקטיבית מ-free_scans.created_at.
 4. **C4 resolved** — Trial starts when first scan begins (`free_scans` INSERT or `scans` INSERT).
-5. **C6 resolved** — No n8n. All automation is custom code.
+5. **C6 resolved** — All automation is custom server-side code (direct LLM API calls).
 6. **I6** — Manual scan rate limits: Starter 1/week, Pro 1/day, Business unlimited — pending approval.
 7. **Email system** — Resend integration spec not yet written. Schema has `notification_preferences` but email templates are not designed.
 
