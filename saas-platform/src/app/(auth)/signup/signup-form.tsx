@@ -45,6 +45,7 @@ export function SignupForm() {
     formState: { errors, isSubmitting },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
+    mode: 'onTouched',
   })
 
   async function onSubmit(data: SignupFormData) {

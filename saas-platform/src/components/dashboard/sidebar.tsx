@@ -46,6 +46,9 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
 
+  // On mobile (when onClose is set), never collapse -- always show full sidebar
+  const effectiveCollapsed = collapsed && !onClose
+
   async function handleSignOut() {
     const supabase = createClient()
     await supabase.auth.signOut()
@@ -57,13 +60,13 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
     <aside
       className={cn(
         'flex h-screen flex-col border-r border-[var(--color-card-border)] bg-white transition-all duration-200',
-        collapsed ? 'w-16' : 'w-60',
+        effectiveCollapsed ? 'w-16' : 'w-60',
         className
       )}
     >
       {/* Logo */}
       <div className="flex h-14 items-center justify-between border-b border-[var(--color-card-border)] px-4">
-        {!collapsed && (
+        {!effectiveCollapsed && (
           <Link href="/dashboard" className="font-display text-xl font-bold text-[var(--color-text)]">
             Beam<span className="text-[var(--color-accent)]">ix</span>
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-accent-warm)] ml-0.5 mb-2"></span>
@@ -87,7 +90,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
       </div>
 
       {/* Trial banner */}
-      {trialDaysLeft !== null && trialDaysLeft > 0 && !collapsed && (
+      {trialDaysLeft !== null && trialDaysLeft > 0 && !effectiveCollapsed && (
         <div className="mx-3 mt-3 rounded-xl bg-gradient-to-r from-cyan-50 to-orange-50 p-3">
           <div className="flex items-center gap-2">
             <Crown className="h-4 w-4 animate-pulse text-[var(--color-accent-warm)]" />
@@ -115,7 +118,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
             <Link
               key={item.href}
               href={item.href}
-              title={collapsed ? item.label : undefined}
+              title={effectiveCollapsed ? item.label : undefined}
               onClick={onClose}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
@@ -125,7 +128,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
               )}
             >
               <Icon className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
+              {!effectiveCollapsed && <span>{item.label}</span>}
             </Link>
           )
         })}
@@ -133,7 +136,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
 
       {/* Footer */}
       <div className="border-t border-[var(--color-card-border)] p-3">
-        {!collapsed && (
+        {!effectiveCollapsed && (
           <div className="mb-2 truncate text-xs text-[var(--color-muted)]">
             <span className="font-medium text-[var(--color-text)]">{businessName}</span>
             <br />
@@ -142,11 +145,11 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
         )}
         <button
           onClick={handleSignOut}
-          title={collapsed ? 'Sign out' : undefined}
+          title={effectiveCollapsed ? 'Sign out' : undefined}
           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-[var(--color-muted)] transition-colors hover:bg-red-50/70 hover:text-red-600"
         >
           <LogOut className="h-4 w-4 shrink-0" />
-          {!collapsed && <span>Sign out</span>}
+          {!effectiveCollapsed && <span>Sign out</span>}
         </button>
       </div>
     </aside>

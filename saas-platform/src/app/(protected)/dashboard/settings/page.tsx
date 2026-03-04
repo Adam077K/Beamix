@@ -481,6 +481,41 @@ function PreferencesTab() {
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  // Load saved preferences from DB on mount
+  useEffect(() => {
+    async function loadPreferences() {
+      try {
+        const res = await fetch('/api/preferences')
+        if (res.ok) {
+          const data = await res.json() as {
+            interface_lang?: string
+            content_lang?: string
+            timezone?: string
+            weekly_digest?: boolean
+            scan_complete_emails?: boolean
+            competitor_alerts?: boolean
+            agent_completion?: boolean
+          }
+          setInterfaceLanguage((data.interface_lang ?? 'en') as 'en' | 'he')
+          setContentLanguage((data.content_lang ?? 'en') as 'en' | 'he')
+          setTimezone(data.timezone ?? 'Asia/Jerusalem')
+          setNotifications({
+            weeklyDigest: data.weekly_digest ?? true,
+            rankingDrop: data.scan_complete_emails ?? true,
+            competitorMovement: data.competitor_alerts ?? false,
+            agentComplete: data.agent_completion ?? true,
+          })
+        }
+      } catch {
+        // Network error — use defaults
+      } finally {
+        setLoading(false)
+      }
+    }
+    void loadPreferences()
+  }, [])
 
   function toggleNotification(key: keyof typeof notifications) {
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }))
@@ -494,13 +529,13 @@ function PreferencesTab() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          language: interfaceLanguage,
-          content_language: contentLanguage,
+          interface_lang: interfaceLanguage,
+          content_lang: contentLanguage,
           timezone,
-          email_weekly_report: notifications.weeklyDigest,
-          email_scan_complete: notifications.rankingDrop,
-          email_recommendations: notifications.competitorMovement,
-          email_agent_complete: notifications.agentComplete,
+          weekly_digest: notifications.weeklyDigest,
+          scan_complete_emails: notifications.rankingDrop,
+          competitor_alerts: notifications.competitorMovement,
+          agent_completion: notifications.agentComplete,
         }),
       })
       if (res.ok) {
@@ -511,6 +546,14 @@ function PreferencesTab() {
       setSaving(false)
     }
   }, [interfaceLanguage, contentLanguage, timezone, notifications])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12 text-sm text-[var(--color-muted)]">
+        Loading preferences...
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

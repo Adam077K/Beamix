@@ -3,13 +3,49 @@ import { z } from 'zod/v4'
 import { createClient } from '@/lib/supabase/server'
 
 const preferencesSchema = z.object({
-  language: z.enum(['en', 'he']).optional(),
+  interface_lang: z.enum(['en', 'he']).optional(),
+  content_lang: z.enum(['en', 'he']).optional(),
   timezone: z.string().min(1).max(50).optional(),
-  email_weekly_report: z.boolean().optional(),
-  email_scan_complete: z.boolean().optional(),
-  email_recommendations: z.boolean().optional(),
-  email_agent_complete: z.boolean().optional(),
+  weekly_digest: z.boolean().optional(),
+  scan_complete_emails: z.boolean().optional(),
+  competitor_alerts: z.boolean().optional(),
+  agent_completion: z.boolean().optional(),
 })
+
+export async function GET() {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const [profileResult, notifResult] = await Promise.all([
+    supabase
+      .from('user_profiles')
+      .select('interface_lang, content_lang, timezone')
+      .eq('id', user.id)
+      .single(),
+    supabase
+      .from('notification_preferences')
+      .select('weekly_digest, scan_complete_emails, competitor_alerts, agent_completion')
+      .eq('user_id', user.id)
+      .single(),
+  ])
+
+  return NextResponse.json({
+    interface_lang: profileResult.data?.interface_lang ?? 'en',
+    content_lang: profileResult.data?.content_lang ?? 'en',
+    timezone: profileResult.data?.timezone ?? 'Asia/Jerusalem',
+    weekly_digest: notifResult.data?.weekly_digest ?? true,
+    scan_complete_emails: notifResult.data?.scan_complete_emails ?? true,
+    competitor_alerts: notifResult.data?.competitor_alerts ?? false,
+    agent_completion: notifResult.data?.agent_completion ?? true,
+  })
+}
 
 export async function PATCH(request: Request) {
   const supabase = await createClient()
@@ -38,17 +74,19 @@ export async function PATCH(request: Request) {
   }
 
   const {
-    language,
+    interface_lang,
+    content_lang,
     timezone,
-    email_weekly_report,
-    email_scan_complete,
-    email_recommendations,
-    email_agent_complete,
+    weekly_digest,
+    scan_complete_emails,
+    competitor_alerts,
+    agent_completion,
   } = parsed.data
 
   // Update user profile (language, timezone)
   const userUpdates: Record<string, string> = {}
-  if (language !== undefined) userUpdates.language = language
+  if (interface_lang !== undefined) userUpdates.interface_lang = interface_lang
+  if (content_lang !== undefined) userUpdates.content_lang = content_lang
   if (timezone !== undefined) userUpdates.timezone = timezone
 
   if (Object.keys(userUpdates).length > 0) {
@@ -68,10 +106,10 @@ export async function PATCH(request: Request) {
 
   // Update notification preferences
   const notifUpdates: Record<string, boolean | string> = {}
-  if (email_weekly_report !== undefined) notifUpdates.email_weekly_report = email_weekly_report
-  if (email_scan_complete !== undefined) notifUpdates.email_scan_complete = email_scan_complete
-  if (email_recommendations !== undefined) notifUpdates.email_recommendations = email_recommendations
-  if (email_agent_complete !== undefined) notifUpdates.email_agent_complete = email_agent_complete
+  if (weekly_digest !== undefined) notifUpdates.weekly_digest = weekly_digest
+  if (scan_complete_emails !== undefined) notifUpdates.scan_complete_emails = scan_complete_emails
+  if (competitor_alerts !== undefined) notifUpdates.competitor_alerts = competitor_alerts
+  if (agent_completion !== undefined) notifUpdates.agent_completion = agent_completion
 
   if (Object.keys(notifUpdates).length > 0) {
     notifUpdates.updated_at = new Date().toISOString()

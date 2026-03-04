@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import {
   BarChart3,
   CheckCircle2,
@@ -8,8 +9,10 @@ import {
   Minus,
   ThumbsDown,
   Search,
+  ScanSearch,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
 import type { LlmProvider } from '@/constants/engines'
@@ -64,6 +67,29 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
         </p>
       </div>
 
+      {/* Empty state */}
+      {!hasData && (
+        <Card className="border-dashed border-2 border-[var(--color-card-border)]">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-accent)]/10">
+              <ScanSearch className="h-8 w-8 text-[var(--color-accent)]" />
+            </div>
+            <h2 className="font-display text-lg font-semibold text-[var(--color-text)]">
+              No rankings data yet
+            </h2>
+            <p className="mt-2 max-w-sm text-sm text-[var(--color-muted)]">
+              Run your first scan to see your AI visibility score across ChatGPT, Gemini, Perplexity, and more.
+            </p>
+            <Button asChild className="mt-6 bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90">
+              <Link href="/scan">
+                <ScanSearch className="mr-2 h-4 w-4" />
+                Run Your First Scan
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Current score card */}
       {hasData && (
         <Card className="bg-gradient-to-r from-white to-cyan-50/30">
@@ -90,7 +116,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
       )}
 
       {/* Per-engine breakdown */}
-      <Card>
+      {hasData && <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-display text-lg">
             <BarChart3 className="h-5 w-5 text-[var(--color-accent)]" />
@@ -142,10 +168,10 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
             </div>
           )}
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* Tracked Queries */}
-      <Card>
+      {hasData && <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-display text-lg">
             <Search className="h-5 w-5 text-[var(--color-accent-warm)]" />
@@ -177,7 +203,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
             </div>
           )}
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* Scan History */}
       {scans.length > 1 && (

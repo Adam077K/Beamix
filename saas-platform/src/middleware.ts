@@ -34,8 +34,21 @@ export async function middleware(request: NextRequest) {
 
   // Refresh the session token. Must be called before any response is returned
   // so that updated Set-Cookie headers are forwarded to the browser.
-  // Redirect logic lives in (protected)/layout.tsx — not here.
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Protect /dashboard and /onboarding routes at the edge — block unauthenticated
+  // requests before any HTML is sent. API routes handle their own auth.
+  const protectedPaths = ['/dashboard', '/onboarding']
+  const isProtectedRoute = protectedPaths.some(path =>
+    request.nextUrl.pathname.startsWith(path)
+  )
+
+  if (isProtectedRoute && !user) {
+    const loginUrl = request.nextUrl.clone()
+    loginUrl.pathname = '/login'
+    loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
+    return NextResponse.redirect(loginUrl)
+  }
 
   return supabaseResponse
 }

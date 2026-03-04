@@ -169,4 +169,36 @@
   .card-interactive {
     @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer;
   }
+  .glass-card {
+    @apply bg-white/60 backdrop-blur-xl border border-white/80 shadow-lg rounded-[20px];
+  }
+  .glass-card-dark {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl rounded-[20px];
+  }
+  .glass-input-wrap {
+    @apply bg-white/70 backdrop-blur-xl border border-white/80 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-[20px];
+  }
+  .glass-nav {
+    @apply bg-white/70 backdrop-blur-lg border-b border-white/60 shadow-sm;
+  }
+  .card-hover-lift {
+    @apply transition-all duration-200 hover:-translate-y-1.5 hover:shadow-xl;
+  }
+  .heading-display {
+    font-family: var(--font-outfit), system-ui, sans-serif;
+    @apply font-extrabold tracking-[-0.03em] leading-[0.95];
+  }
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-widest;
+  }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
