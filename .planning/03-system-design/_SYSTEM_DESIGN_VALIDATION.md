@@ -326,7 +326,7 @@ Every feature from the competitive blueprint, assessed for Beamix inclusion.
 | Daily Auto Monitoring | 13/15 | Yes -- P0 | Table stakes. Inngest cron already designed. |
 | Multi-Engine (4+ engines) | 15/15 | Yes -- P0 | 4 at launch, 8+ by Phase 2, 10+ Phase 3. |
 | Prompt Volume Data | 5/15 (Profound, Writesonic, Ahrefs, Gauge, Spotlight) | Yes -- Phase 3 | Cannot match proprietary datasets, but aggregate estimation is competitively necessary for query prioritization. |
-| Prompt Auto-Suggestions | 3/15 (Peec, SE Visible, Gauge) | Yes -- P1 | Reduces onboarding friction. Auto-suggest based on industry + website content. |
+| Prompt Auto-Suggestions | 3/15 (Peec, SE Visible, Gauge) | Yes -- Growth Phase | Nice-to-have, not launch-blocking. Auto-suggest based on industry + website content. |
 | Near Real-Time Monitoring | 1/15 (RankPrompt: 15-30 min) | No -- Skip | Resource-intensive. Daily/3-day scans sufficient for SMBs. Not worth the infrastructure cost. |
 
 ### ANALYSIS
@@ -340,16 +340,16 @@ Every feature from the competitive blueprint, assessed for Beamix inclusion.
 | Competitor Benchmarking | 15/15 | Yes -- P0 | Table stakes. Already designed. |
 | Regional/Multi-Language | 5/15 (Profound, Goodie, Peec, Airefs, RankPrompt) | Yes -- Phase 2 | Essential for Hebrew-first positioning and Israeli multi-city tracking. |
 | Brand Narrative Analysis | 2/15 (AthenaHQ ACE, Spotlight) | Yes -- Phase 3 | Differentiating intelligence. Adds "why" to "what." Only 2 competitors, both expensive. |
-| Persona-Based Tracking | 1/15 (Scrunch) | No -- Phase 4 | Only one competitor. Enterprise feature. Defer. |
-| Customer Journey Stages | 1/15 (Spotlight) | No -- Phase 4 | Only one competitor. Defer. |
+| Persona-Based Tracking | 1/15 (Scrunch) | No -- Phase 4 | Only one competitor. Data Model CLOSED — Pipeline Integration DEFERRED. `personas` table exists. Scan pipeline does not query or use personas at launch. Full integration is Phase 4. |
+| Customer Journey Stages | 1/15 (Spotlight) | No -- Phase 4 | Only one competitor. SPEC ONLY — Phase 4 Implementation. Data model and classification logic fully designed in Intelligence Layer. Pipeline integration deferred to Phase 4. No `journey_stage` column on `scan_results` at launch. |
 
 ### CONTENT & AGENTS
 
 | Feature | Competitors | Required? | Justification |
 |---------|-------------|-----------|---------------|
 | Content Generation | 7/15 (Profound, Gauge, Writesonic, Bear, Goodie, Spotlight, RankPrompt) | Yes -- P0 | Core differentiator. Already built. |
-| AI Agents (Autonomous) | 3/15 (Profound, Bear, Gauge) | Yes -- P0 | Beamix's #1 competitive advantage. Only agents under $100. |
-| CMS Auto-Publish (WordPress) | 6/15 | Yes -- Phase 2 | High impact. Eliminates copy-paste friction. 40%+ of websites are WordPress. |
+| AI Agents (Autonomous) | 3/15 (Profound, Bear, Gauge) | Yes -- P0 | Beamix's #1 competitive advantage. Most comprehensive interactive autonomous agent suite with streaming chat UX under $100/month. (Note: Verify RankPrompt current pricing — as of research date they offered content generation + WP publishing at $29/month. Beamix differentiator is interactive streaming agent chat + multi-agent workflows, not just content generation.) |
+| CMS Auto-Publish (WordPress) | 6/15 | Yes -- Pro tier (Phase 2) | High impact. Eliminates copy-paste friction. 40%+ of websites are WordPress. Gated to Pro tier (not Business). |
 | PR/Outreach Automation | 1/15 (Bear AI) | Yes -- Phase 3 | High SMB value (can't afford PR agencies). Citation Builder agent already designed. |
 | Content Type Variety (6+) | 2/15 (RankPrompt: 6 types, Writesonic: blogs/ads/social/landing) | Yes -- Phase 3 | RankPrompt offers this at $29. Must match at $49. |
 | Content Voice Training | 1/15 (Goodie: Author Stamp) | Yes -- Phase 3 | Prevents generic-sounding output. High perceived value. |
@@ -358,7 +358,7 @@ Every feature from the competitive blueprint, assessed for Beamix inclusion.
 | LLMS.txt Support | 1/15 (Bear AI) | Yes -- P1 | Already designed. Low effort, high perceived value. |
 | Agent Workflows | 1/15 (Profound) | Yes -- Phase 3 | Event-triggered chains are a natural extension of Inngest architecture. |
 | Recurring Agent Execution | 2/15 (Profound, Goodie) | Yes -- Phase 3 | Content freshness matters. Scheduled re-optimization. |
-| Editorial Queue / Review | 1/15 (Profound) | No -- Phase 4 | Single-user SMBs don't need multi-person review workflows. Defer to agency tier. |
+| Editorial Queue / Review | 1/15 (Profound) | MVP: Self-Review Queue | MVP: single-user approve/reject via `in_review` status. Multi-person editorial deferred to agency tier (Phase 4). |
 
 ### TECHNICAL
 
@@ -381,7 +381,7 @@ Every feature from the competitive blueprint, assessed for Beamix inclusion.
 
 | Feature | Competitors | Required? | Justification |
 |---------|-------------|-----------|---------------|
-| WordPress | 6/15 | Yes -- Phase 2 | Most important CMS integration. High demand. |
+| WordPress | 6/15 | Yes -- Pro tier (Phase 2) | Most important CMS integration. High demand. Moved from Business to Pro tier — 6 competitors offer it at lower tiers. |
 | GA4 | 6/15 | Yes -- Phase 2 | Proves ROI. Widely expected. |
 | GSC | 3/15 (AthenaHQ, Gauge, Goodie) | Yes -- Phase 3 | Enriches data. Keyword-to-prompt correlation. |
 | Slack | 3/15 (Profound, AthenaHQ, Gauge) | Yes -- Phase 2 | Low effort. Pro+ feature. |
@@ -456,13 +456,13 @@ Cross-cutting concerns and data flows that require coordination between agents w
 
 ## 4. Innovation Opportunities
 
-Features no competitor has that Beamix could uniquely deliver. Ranked by feasibility and SMB value.
+8 features uniquely combined in Beamix — 5 genuinely novel, 3 with the most comprehensive implementation in the market. Ranked by feasibility and SMB value.
 
 ### Innovation 1: "Fix It" Button — One-Click Agent Trigger from Any Gap
 
 **What it is:** Every dashboard view where a problem is identified (gap analysis, low sentiment, missing citation, competitor outranking) has a contextual "Fix It" button that launches the appropriate agent with pre-loaded context.
 
-**Why no competitor has it:** Competitors separate monitoring and action into different product sections. Profound's agents are launched from a separate "Agents" tab, not from the dashboard insight.
+**Partial competitor equivalents:** Gauge's AI Analyst executes strategy from insights. AthenaHQ's Action Center drafts optimizations. However, neither integrates the trigger directly into every dashboard insight view with pre-loaded agent context — Beamix's implementation is the most comprehensive.
 
 **Why Beamix can build it:** Agent system + dashboard are built by the same team in the same codebase. Cross-agent context sharing is already designed. Technical cost: routing logic to map gap type --> agent type.
 
@@ -476,7 +476,7 @@ Features no competitor has that Beamix could uniquely deliver. Ranked by feasibi
 
 **What it is:** After each agent creates content and it's published, Beamix tracks the visibility change and shows: "This blog post improved your ChatGPT visibility by +12 points."
 
-**Why no competitor has it at this granularity:** Bear AI and Gauge track content performance generally, but none attribute specific visibility changes to specific agent outputs at the per-content-piece level.
+**Partial competitor equivalents:** Bear AI tracks blog agent output performance. Gauge tracks content performance generally. However, neither attributes specific visibility changes to specific agent outputs at the per-content-piece level — Beamix provides the most granular attribution.
 
 **Why Beamix can build it:** scan_results + content_items + timestamp correlation. Data already exists; needs a correlation query and display.
 
@@ -546,7 +546,7 @@ Features no competitor has that Beamix could uniquely deliver. Ranked by feasibi
 
 **What it is:** Weekly email/dashboard showing a precise diff: "This week: +3 new mentions in ChatGPT, -1 mention in Perplexity. Competitor X gained 2 new citations from [URL]. Your blog post from Tuesday was cited for the first time by Gemini."
 
-**Why no competitor has it at this granularity:** Weekly digests exist (Otterly, Writesonic) but show aggregate numbers, not specific diffs with competitor context and content attribution.
+**Partial competitor equivalents:** Otterly generates reports with historical data. SE Visible has historical trend analysis. However, neither provides per-query, per-engine diffs with competitor context and content attribution at the granularity Beamix offers.
 
 **Why Beamix can build it:** All data exists in scan_results, content_items, competitor tracking. Diff computation is a query.
 
@@ -610,7 +610,7 @@ Needed for retention, competitive parity, and preventing early churn.
 | **FAQ Agent** | Low-effort agent addition. Completes basic agent set. |
 | **Review Analyzer Agent** | Pro tier unlock. Differentiation at SMB price. |
 | **Social Strategy Agent** | Pro tier unlock. Content calendar is high perceived value. |
-| **WordPress Integration** | 6/15 competitors. Eliminates copy-paste friction. |
+| **WordPress Integration (Pro tier)** | 6/15 competitors. Eliminates copy-paste friction. Moved from Business to Pro tier. |
 | **GA4 Integration** | 6/15 competitors. Proves ROI. Reduces churn. |
 | **Slack Integration** | 3/15 competitors. Low effort. |
 | **"Ask Beamix" Chat** | Reuses existing chat infrastructure. Gauge's differentiator brought to SMB price. |
@@ -664,8 +664,8 @@ Features competitors have that Beamix should NOT build. Each with reasoning.
 | **White-Label Reports (MVP)** | Otterly, RankPrompt | Agency feature. Not relevant for single-business SMB users. Phase 4 at earliest. |
 | **Multi-Workspace/Agency (MVP)** | Profound, Otterly, RankPrompt | Requires data model changes. Not needed for core SMB persona. Phase 4. |
 | **Editorial Queue / Multi-User Review** | Profound | Single-user SMBs don't need editorial workflows. This solves an enterprise team problem Beamix users don't have. |
-| **Persona-Based Tracking (MVP)** | Scrunch | Only 1/15 competitors. Adds complexity SMBs won't use. Phase 4 at earliest. |
-| **Customer Journey Stage Mapping (MVP)** | Spotlight | Only 1/15 competitors. Sophisticated feature for sophisticated users. Phase 4 at earliest. |
+| **Persona-Based Tracking (MVP)** | Scrunch | Only 1/15 competitors. Data model CLOSED; pipeline integration DEFERRED to Phase 4. Adds complexity SMBs won't use. |
+| **Customer Journey Stage Mapping (MVP)** | Spotlight | Only 1/15 competitors. SPEC ONLY — Phase 4 implementation. Classification logic designed in Intelligence Layer but no pipeline integration or DB column at launch. |
 | **Content Comparison Tool** | RankScale | "Current vs optimized" side-by-side. Interesting but low priority. Agents already produce optimized content -- showing the diff adds little value when the agent does the work. |
 | **SOC 2 Compliance** | Airefs, Profound | Enterprise requirement. Not needed for SMB product. Build when enterprise customers demand it. |
 
@@ -687,9 +687,15 @@ Features competitors have that Beamix should NOT build. Each with reasoning.
 | **Edge cases documented** | 6 |
 | **Module integration points** | 6 |
 
+### Competitive Context Notes
+
+**Otterly Bulk Query Tracking:** Otterly supports bulk query import (50+ queries at once). Beamix data model supports this — no hard limit on `tracked_queries` table. UX for bulk add/import (CSV upload, paste-multiple) is a Growth Phase feature, not launch-blocking.
+
+**Data Freshness Warning:** Competitive research conducted February-March 2026. Features and pricing of competitors change rapidly. Validate against current competitor websites before using for positioning claims. Re-verify all competitor feature claims if more than 60 days have elapsed since March 1-4, 2026.
+
 ### Completeness Verdict
 
-The new system design will close all competitive gaps IF:
+The new system design closes the addressable competitive gaps (4/7 MISSING closed, 3/7 intentionally deferred, 7/7 PARTIAL upgraded) IF:
 
 1. **Every PARTIAL item** has a concrete specification (not a one-liner deferral)
 2. **Every MISSING item marked "Required"** has at least a data model note, phase assignment, and implementation approach

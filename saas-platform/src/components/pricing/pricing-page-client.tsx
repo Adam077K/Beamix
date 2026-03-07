@@ -326,12 +326,12 @@ export function PricingPageClient({ isLoggedIn, scanId }: PricingPageClientProps
             Start free. Upgrade when you see results.
           </h1>
           <p className="text-lg text-stone-500 mb-6 max-w-xl mx-auto">
-            Every plan includes a 14-day free trial. No credit card required.
+            Every plan includes a 7-day free trial. No credit card required.
           </p>
           <div className="flex items-center justify-center gap-4 text-sm text-stone-400">
             <span className="flex items-center gap-1.5">
               <CheckIcon className="text-[#06B6D4]" />
-              14-day trial
+              7-day trial
             </span>
             <span className="flex items-center gap-1.5">
               <CheckIcon className="text-[#06B6D4]" />

@@ -1,3 +1,5 @@
+> ⚠️ **ARCHIVED** — Historical reference. Current source of truth: `.planning/03-system-design/BEAMIX_SYSTEM_DESIGN.md` | Archived: 2026-03-05
+
 # Beamix — Engineering Plan
 
 > **The definitive technical blueprint for building Beamix.**

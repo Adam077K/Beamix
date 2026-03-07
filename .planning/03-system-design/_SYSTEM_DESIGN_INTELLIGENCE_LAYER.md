@@ -33,7 +33,7 @@ Model selection is not one-size-fits-all. Each task is matched to a model based 
 | **Claude Haiku 4.5** | Anthropic | Response parsing, classification, mention detection, sentiment scoring, quick extraction | Fastest Anthropic model. Parsing a 500-word AI response for business mentions is a pattern-matching task, not a reasoning task. Haiku handles it in under 1 second at sub-cent cost. | ~$0.001/call |
 | **Claude Sonnet 4.6** | Anthropic | Content generation, outlining, analysis, report writing, cross-agent reasoning | The workhorse. Sonnet balances intelligence with cost. Content generation requires coherent multi-paragraph output with industry knowledge, prompt-aware structuring, and brand voice adherence. Sonnet delivers this consistently without Opus-level pricing. | ~$0.02-0.08/call |
 | **GPT-4o** | OpenAI | Quality assurance gate, fact checking, alternative perspective generation | Using a different vendor's model as the QA gate prevents systematic blind spots. If Claude Sonnet generates content, GPT-4o evaluates it. This cross-model QA catches hallucinations and tonal issues that same-model QA would miss. | ~$0.02-0.05/call |
-| **Gemini 2.0 Flash** | Google | Bulk scan queries (cheapest per-token), high-volume classification | When scanning 10 engines across 75 tracked queries, Gemini Flash handles the "was this business mentioned?" question at 1/5th the cost of other models. Ideal for high-fan-out, low-reasoning tasks. | ~$0.0005/call |
+| **Gemini 2.0 Flash** | Google | Bulk scan queries (cheapest per-token), high-volume classification, Haiku overflow for cost diversification | When scanning 10 engines across 75 tracked queries, Gemini Flash handles the "was this business mentioned?" question at 1/5th the cost of other models. Also serves as a cost-diversification option: some Haiku parsing calls (mention detection, basic classification) can be routed to Flash when Anthropic rate limits are hit or for A/B cost comparison. Ideal for high-fan-out, low-reasoning tasks. | ~$0.0005/call |
 | **Perplexity Sonar Pro** | Perplexity | Real-time web research for agents, citation discovery, competitive intelligence | Sonar Pro returns grounded, cited answers from live web data. Every content agent begins with a Perplexity research step to ensure outputs contain current facts, not training-data fossils. | ~$0.01-0.03/call |
 | **Claude Opus 4.6** | Anthropic | Brand narrative analysis, content voice profile extraction, complex multi-step reasoning | Reserved for tasks where reasoning quality directly impacts product value. Extracting a business's writing voice from 5 web pages, or analyzing why an AI engine frames a brand negatively, requires the kind of nuanced judgment only a frontier model delivers. Used sparingly. | ~$0.10-0.30/call |
 
@@ -54,13 +54,16 @@ LLM costs are the single largest variable expense in Beamix. The system is desig
 
 **Principle 3: Budget gates at every level.** Each engine adapter has a daily USD budget cap. Each agent execution tracks cumulative token spend and aborts if cost exceeds 2x the expected budget for that agent type. The system-level daily budget alerts at 80% and hard-stops at 100%.
 
+> **Note:** All cost estimates in this section are projections based on per-call pricing extrapolated to 1K businesses. Actual costs at pre-launch volume (<1K users) will be significantly lower. Re-validate these estimates at 100, 500, and 1K paying customer milestones.
+
 **Cost Estimates per Operation:**
 
 | Operation | Estimated Cost | Breakdown |
 |-----------|---------------|-----------|
-| Free scan (4 engines, 3 prompts) | $0.05-0.10 | Engine queries: ~$0.03, Parsing (Haiku x4): ~$0.004, Scoring + readiness: ~$0.01, Quick wins (Sonnet): ~$0.02 |
-| Scheduled scan (8 engines, 25 queries) | $0.80-1.50 | Engine queries: ~$0.40, Parsing (Haiku x200): ~$0.20, Scoring: ~$0.05, Recommendations (Sonnet): ~$0.15 |
+| Free scan (4 engines, 3 prompts) | $0.10-0.15 | Engine queries: ~$0.036, Parsing (5 Haiku stages × 12 responses = 60 Haiku calls): ~$0.060, Scoring + readiness: ~$0.01, Quick wins (Sonnet): ~$0.02. Note: parsing requires 5 separate Haiku calls per response (mention detection, position extraction, sentiment, citations, competitor extraction). Stage 6 (context window extraction) is algorithmic. |
+| Scheduled scan (8 engines, 25 queries) | $1.50-3.00 | Engine queries: ~$0.80, Parsing (5 Haiku calls × 200 responses): ~$1.00, Scoring: ~$0.05, Recommendations (Sonnet): ~$0.15. Note: /month, not /week — scheduled scans run on monthly cadence per tier. |
 | Agent execution (typical) | $0.15-0.40 | Research (Perplexity): ~$0.03, Outline (Sonnet): ~$0.03, Write (Sonnet): ~$0.08, QA (GPT-4o): ~$0.03 |
+| A8 Competitor Intelligence (per run) | $3.00-6.00 | 3 competitors × 25 queries × 8 engines = 600 engine calls (~$2.40) + parsing (5 stages × 600 responses = 3,000 Haiku calls: ~$3.00) + comparative analysis (Sonnet x2): ~$0.50 |
 | Ask Beamix chat turn | $0.02-0.05 | Context assembly + Sonnet response |
 
 ### 1.4 Quality Assurance Philosophy
@@ -72,6 +75,46 @@ Quality in an LLM-powered product cannot be guaranteed by the model alone. Beami
 **Layer 2: Cross-model QA scoring.** For content-producing agents, a second LLM from a different provider scores the output on five dimensions: factual accuracy (0-100), relevance to the business (0-100), GEO optimization quality (0-100), readability (0-100), and brand voice adherence (0-100). The composite score must exceed 70/100 to pass. Below 60/100, the agent retries once with adjusted parameters. Below 60/100 on retry, the execution fails and credits are released.
 
 **Layer 3: Human feedback loop.** When users edit agent-generated content before publishing, those edits are captured as training signals. The delta between the generated version and the user's edited version feeds back into future prompt construction for that business, progressively improving personalization.
+
+**QA Fallback Chain:** When the primary QA model (GPT-4o) is unavailable, the system follows this chain:
+1. **Primary:** GPT-4o (cross-vendor QA for Claude-generated content)
+2. **Fallback:** Gemini 1.5 Pro (maintains cross-vendor principle — different vendor from generator)
+3. **Last resort:** Deliver output with "unreviewed" flag visible in content library. **Never use Sonnet to QA Sonnet-generated content** — same-model QA has systematic blind spots.
+
+### 1.5 Scan Methodology Limitations
+
+Beamix scans AI engines via their APIs, not via the consumer-facing chat interfaces. This creates a structural difference between what Beamix measures and what an end user experiences:
+
+**Key Differences:**
+- **API responses ≠ consumer responses:** API responses may differ from web/app chat in ranking, formatting, and citation behavior. Consumer interfaces apply additional UI-level filtering, personalization, and formatting.
+- **No personalization signal:** API queries have no user history, location cookies, or session context. Consumer AI responses may be personalized based on the user's prior interactions.
+- **Rate-limited sampling:** Beamix queries a representative set of prompts per scan, not exhaustive coverage. Visibility scores are statistical estimates, not census data.
+
+**Marketing Language Guidance:**
+- Use "AI visibility signal" or "AI visibility indicator" rather than "AI ranking" — Beamix measures a signal that correlates with consumer visibility, not an exact ranking.
+- Use "mentioned in X of Y engines" rather than "ranked #N" — mention detection is reliable; exact position numbering is approximate.
+- Clearly state in scan results: "Results are based on API queries and may differ from what a user sees in [Engine]'s chat interface."
+
+**Mitigation Strategies:**
+- Periodic calibration: Monthly spot-check comparing API responses vs. consumer responses for 50 random prompts across engines.
+- Confidence scoring: Lower confidence scores for engines with known API/consumer divergence.
+- Transparency: Dashboard shows "API-based" label on all scan metrics.
+
+### 1.6 Prompt Injection Defense
+
+Every LLM interaction in Beamix is a potential prompt injection surface. Defenses are applied at three boundaries:
+
+**Input Sanitization (user-facing inputs → LLM prompts):**
+- All user-provided text (business name, services, tracked queries, agent parameters) is stripped of instruction-like patterns before inclusion in prompts.
+- Known injection patterns (e.g., "ignore previous instructions," "system prompt:", "you are now") are detected and rejected with a user-facing error.
+
+**Structural Separation (prompt architecture):**
+- System prompts and user inputs are structurally separated using XML-tagged boundaries (e.g., `<business_context>`, `<user_input>`).
+- LLM instructions never appear in the same section as user-provided data.
+
+**Engine Response Validation (AI engine outputs → parsing pipeline):**
+- Engine responses are treated as untrusted data. The parsing pipeline uses Haiku with strict extraction instructions, never executing or interpreting instructions found within engine responses.
+- Output parsing validates against expected schemas; unexpected structures are logged and flagged.
 
 ---
 
@@ -124,6 +167,7 @@ Each AI engine is queried through an isolated adapter module. Adapters normalize
 - **Response format:** Technical, structured responses. DeepSeek tends toward factual, citation-heavy answers. Good for industries where technical accuracy matters. Less opinionated than Grok or ChatGPT.
 - **Parsing challenges:** DeepSeek's training data has known gaps for non-English markets. Hebrew responses are significantly weaker than English. Israeli businesses may not appear in DeepSeek's knowledge base at all, requiring careful interpretation of "not mentioned" (is the business unknown to DeepSeek, or genuinely not relevant?).
 - **Reliability:** Moderate. API has experienced multi-hour outages. Rate limits are adequate (50 RPM). Used as a supplementary engine, not a primary one.
+- **Pricing disclaimer:** DeepSeek pricing is subject to change. Verify current API pricing at deepseek.com before finalizing cost model. Last verified: March 2026.
 
 #### Copilot (Microsoft) --- Browser Simulation, Deferred
 
@@ -183,8 +227,11 @@ Hebrew and English are first-class languages in prompt generation. This is not s
 - Hebrew prompts use natural Israeli speech patterns ("?מי הכי טוב ב-X באזור Y"). Location names use local format (Tel Aviv-Yafo, not Tel Aviv-Jaffa). Industry terms use the Hebrew equivalent where one exists, or the English term transliterated when the Hebrew term is uncommon.
 - Language detection is based on the business's configured language in settings. Dual-language businesses generate prompts in both languages, effectively doubling scan coverage.
 - Future languages extend this system by adding new prompt template sets per language. The architecture supports any language without structural changes.
+- **Hebrew transliteration dependency:** Business names that originate in Hebrew must be transliterated consistently for English-language prompts (e.g., "בימיקס" → "Beamix"). Use a Hebrew transliteration library (e.g., `hebrew-transliteration` npm package or custom mapping table in `src/constants/transliteration.ts`) to ensure consistent Romanization across prompts, parsing, and display. Inconsistent transliteration causes false "not mentioned" results when the AI engine uses a different Romanization than the parser expects.
 
-**Prompt Auto-Suggestion Based on Website Content Analysis (GAP CLOSURE):**
+**Prompt Auto-Suggestion Based on Website Content Analysis (GAP CLOSURE — Growth Phase):**
+
+> **Priority:** Growth Phase (not Launch Critical). Only 3/15 competitors have this feature. Research Synthesis rates it "Should-Have." Valuable but not table-stakes.
 
 Competitors like Peec and Gauge offer smart prompt suggestions. Beamix closes this gap with an LLM-powered prompt suggestion system that analyzes the business's own website to recommend what to track.
 
@@ -273,11 +320,13 @@ ParsedEngineResult (structured, typed, storable)
 
 **Parsing Cost at Scale:**
 
-| Scan Type | Parse Calls | Cost |
-|-----------|-------------|------|
-| Free scan (4 engines x 3 prompts) | 12 Haiku calls | ~$0.012 |
-| Scheduled scan (8 engines x 25 queries) | 200 Haiku calls | ~$0.20 |
-| All daily scans (1K businesses) | ~200K Haiku calls | ~$200/day |
+> **Note:** S1.3 per-operation estimates are correct. The table below was previously understated by 5x because it counted per-response rather than per-stage. Each response passes through 5 Haiku-assisted stages (mention detection, position extraction, sentiment scoring, citation extraction, competitor extraction). Stage 6 (Context Window Extraction) is algorithmic (substring extraction around mention spans) and does not use Haiku.
+
+| Scan Type | Responses | Haiku Calls (responses x 5 stages) | Cost |
+|-----------|-----------|-------------------------------------|------|
+| Free scan (4 engines x 3 prompts) | 12 responses | 60 Haiku calls | ~$0.060 |
+| Scheduled scan (8 engines x 25 queries) | 200 responses | 1,000 Haiku calls | ~$1.00 |
+| All daily scans (1K businesses) | ~200K responses | ~1M Haiku calls | ~$1,000/day |
 
 ### 2.4 Scoring Algorithm
 
@@ -344,7 +393,7 @@ All agents share a unified execution framework via Inngest step functions. The f
 **Quality Assurance Gates:**
 - Between Stage 1 and 2: Validate that research returned at least 3 substantive data points. If Perplexity returns thin results, retry with broadened query terms.
 - Between Stage 3 and 4: Structural validation --- verify output contains required sections (title, meta description, body, FAQ). Verify word count is within 80-120% of target.
-- After Stage 4: QA score >= 70 to pass. Score 60-69: retry Stage 3 with increased temperature (0.8) and explicit instruction to address QA feedback. Score < 60 on retry: fail execution, release credits.
+- After Stage 4: QA score >= 70 to pass. Score 60-69: retry Stage 3 at the SAME temperature (0.7) with QA feedback injected into the prompt as explicit correction instructions. Increasing temperature on retry reduces coherence; injecting feedback is more effective. Score < 60 on retry: fail execution, release credits.
 
 **Output Format:**
 - Title (string)
@@ -386,11 +435,13 @@ All agents share a unified execution framework via Inngest step functions. The f
 | 3. Write | Claude Sonnet 4.6 | Full blog post following outline, weaving in research data | Complete blog in markdown with inline citations, statistics, examples | 0.7 | 4,000 |
 | 4. GEO Optimize | Claude Sonnet 4.6 | Add FAQ section, schema hints, internal linking suggestions, citation anchors | Augmented content with FAQ, schema, link suggestions, optimized headers | 0.5 | 2,000 |
 | 5. Title Generation | GPT-4o | Generate 3 title variants optimized for AI discoverability and click-through | 3 titles ranked by GEO-optimization score with rationale | 0.8 | 500 |
+| 6. Content QA | GPT-4o | Cross-model quality gate: check factual accuracy, GEO optimization quality, citation validity, heading structure | QA score (0-100) + specific feedback per dimension. If score < 80: one revision loop (Sonnet revision with QA feedback → GPT-4o re-check → publish regardless of second score) | 0.5 | 1,500 |
 
 **Quality Gates:**
 - Post-research: Minimum 3 unique data points or facts gathered.
 - Post-write: Word count within target range, all outline sections addressed.
 - Structural validation: H2/H3 hierarchy present, FAQ section contains 3+ Q&A pairs, at least 2 internal statistics or data points cited.
+- **Post-QA (Stage 6):** GPT-4o scores on factual accuracy, GEO optimization, citation validity, and heading structure. Score < 80 triggers one Sonnet revision with QA feedback injected, followed by GPT-4o re-check. Content publishes after at most one revision loop regardless of second score. This ensures A2 follows the system's cross-model QA mandate: "the model that generates content never grades its own work."
 
 **Output Format:**
 - 3 title options with selection rationale
@@ -547,10 +598,12 @@ This is a single-pass analysis, not a multi-stage pipeline. The Sonnet model rec
 |-------|-------|---------|--------|------|------------|
 | 1. Research | Perplexity sonar-pro | Competitor social presence, trending topics in the industry, platform-specific trends | Research brief: competitor posting frequency, successful content formats, trending hashtags, platform recommendations | 0.5 | 1,500 |
 | 2. Strategy + Calendar | Claude Sonnet 4.6 | 30-day content calendar with post ideas, optimal posting times, platform strategy | 30-day calendar + 12-15 detailed post ideas with captions, hashtags, platform-specific formats (LinkedIn, Instagram, X, Facebook) | 0.7 | 4,000 |
+| 3. QA Gate | GPT-4o | Score social strategy quality: relevance, platform appropriateness, GEO alignment, brand voice | Quality scorecard (0-100). Pass threshold: 70. Below 60: retry Stage 2 with QA feedback. | 0.3 | 1,000 |
 
 **Quality Gates:**
 - Calendar must span exactly 30 days with at least 3 posts per week.
 - Each post idea must include: platform, caption, hashtags, visual direction, and connection to a GEO-relevant topic.
+- Post-QA: Same threshold as other content agents (70+ pass, 60-69 retry with feedback, <60 fail).
 
 **Output Format:**
 - Platform strategy overview (which platforms, why, posting frequency)
@@ -577,6 +630,14 @@ This is a single-pass analysis, not a multi-stage pipeline. The Sonnet model rec
 | 1. Multi-Engine Scan | All active engines | Query the same tracked prompts with competitor names to gather their visibility data | Raw competitor scan results across all engines | -- | -- |
 | 2. Comparative Analysis | Claude Sonnet 4.6 | Deep comparison: where competitors outperform, why AI prefers them, structural/content advantages | Structured comparison matrix: per-engine, per-query visibility, citation sources competitors earn, content formats they use | 0.5 | 3,000 |
 | 3. Strategic Report | Claude Sonnet 4.6 | Generate actionable intelligence: gaps to close, strategies to steal, unique angles to exploit | Intelligence report with prioritized action items, each linked to a specific agent that can execute the fix | 0.7 | 4,000 |
+
+**Cost Note:** A8 is the most expensive agent per execution. For a Pro-tier user with 3 tracked competitors: 3 competitors × 25 queries × 8 engines = 600 engine calls. Estimated cost: $3-6 per run. Budget accordingly — A8 runs should be limited to post-scan triggers and manual requests, not scheduled daily.
+
+**Perplexity Rate Limit Budget:** A8 claims a dedicated Perplexity token bucket of 40% of total RPM budget (16 RPM of 40 RPM total). At 3 competitors × 25 queries = 75 Perplexity calls per run, a single A8 execution takes ~5 minutes of dedicated Perplexity bandwidth.
+
+- **Fallback model:** If Perplexity rate limit is hit, fall back to DeepSeek for the research stage using the same research prompt. DeepSeek provides adequate research quality for competitor analysis at lower cost, though without Perplexity's real-time web grounding.
+- **Queue management:** A8 runs are queued. If queue depth > 5, user sees "Expected wait: ~X min" estimated from current queue × average execution time.
+- **Caching:** Competitor research results are cached 24 hours per competitor domain. If a competitor was analyzed within 24h (by any user in the same industry), the cached result is used instead of re-querying.
 
 **Quality Gates:**
 - Comparison must cover all tracked queries and all active engines.
@@ -665,12 +726,12 @@ This is a single-pass analysis, not a multi-stage pipeline. The Sonnet model rec
 | 2. Algorithmic Scoring | Scoring algorithm (no LLM) | Compute scores across 5 categories using weighted factors | Numeric scores per category and per factor | -- | -- |
 | 3. Report Generation | Claude Sonnet 4.6 | Transform scores into actionable improvement plan with prioritized recommendations | Detailed report: per-category analysis, specific improvements, implementation difficulty, expected impact | 0.7 | 4,000 |
 
-**Scoring Categories (unchanged from engineering plan):**
-- Content Quality (25%): content depth, FAQ presence, freshness, readability
+**Scoring Categories (canonical weights from Product Layer):**
+- Content Quality (30%): content depth, FAQ presence, freshness, readability
 - Technical Structure (25%): schema markup, meta tags, heading hierarchy, page speed, sitemap
 - Authority Signals (20%): domain indicators, backlink signals, brand mentions
 - Semantic Alignment (15%): topic coverage vs. tracked queries, conversational format
-- AI Accessibility (15%): robots.txt allows AI bots, llms.txt present, JS rendering friendliness
+- AI Accessibility (10%): robots.txt allows AI bots, llms.txt present, JS rendering friendliness
 
 **Output Format:**
 - Overall AI Readiness Score (0-100%)
@@ -707,6 +768,8 @@ Single-model conversational pipeline using Claude Sonnet 4.6 with SSE streaming.
 
 **Credit Cost:** Zero. Included in Pro+ tier. No agent credit deduction.
 
+**Vercel Timeout:** Vercel Pro plan required for 60s function timeout. Default 10s is insufficient for multi-turn conversations. Add `export const maxDuration = 60` to the `/api/agents/chat` API route. Long responses should use chunked streaming to keep the connection alive.
+
 **Output Format:** Real-time streamed natural language response. Not stored permanently --- conversation exists only during the active session.
 
 ---
@@ -742,7 +805,12 @@ This closes the gap identified against Goodie AI's "Author Stamp" feature. Witho
 7. First-person style (we/I/company name/passive)
 8. Cultural markers (Israeli informality, English formality, bilingual patterns)
 
-**Storage:** Voice profile stored as a structured JSON document in the `businesses` table (or a dedicated `voice_profiles` table). All content-producing agents inject this profile into their system prompts.
+**Minimum Content Threshold:**
+- < 300 words total extracted: Skip voice training. Set `voice_profile_status = 'insufficient_content'`. Show user message: "Not enough content to train voice profile — generate content first or add more pages."
+- 300-1,000 words: Basic profile only (tone + style dimensions 1-4, no pattern analysis on dimensions 5-8). Confidence flagged as "low."
+- > 1,000 words: Full profile across all 8 dimensions.
+
+**Storage:** Voice profile stored as a structured JSON document in the `content_voice_profiles` table. All content-producing agents inject this profile into their system prompts. Quality-critical path — voice affects all content output.
 
 **Quality Gates:**
 - User must approve the verification sample before the profile is activated.
@@ -845,6 +913,12 @@ This closes the gap against AthenaHQ's Athena Citation Engine (ACE). Visibility 
 
 **Why Opus for Stage 1:** Narrative extraction requires synthesizing across dozens of AI responses from different engines, identifying consistent themes versus outlier framings, and understanding the difference between what AI says explicitly versus what it implies. This is a high-reasoning task where Opus delivers measurably better outputs than Sonnet.
 
+**Context Overflow Handling:** If combined scan data + mention contexts exceed 100K characters:
+1. Chunk input into 10K-character segments grouped by engine.
+2. Summarize each chunk with Haiku (extract key narratives, themes, and sentiment per chunk).
+3. Synthesize all chunk summaries with Opus in Stage 1.
+4. Add `max_input_tokens` guard: if content exceeds 200K characters after chunking, warn user that analysis will be based on a representative sample (most recent 3 scans per engine) rather than full history.
+
 **Quality Gates:**
 - Each narrative must be supported by at least 3 engine responses (not a one-off from a single engine).
 - Source attribution must be grounded in actual citation data, not speculated.
@@ -917,12 +991,15 @@ Trigger: scan.completed where visibility_score dropped > 15%
 **Workflow 2: New Business Onboarding**
 ```
 Trigger: onboarding.completed (first scan + profile setup)
-  --> A13 (Voice Training) runs on user's website
-  --> A14 (Pattern Analyzer) runs for user's industry
-  --> A11 (AI Readiness) runs full audit
-  --> A4 (Recommendations) generates initial action items
+  --> PARALLEL: [A13 (Voice Training), A14 (Pattern Analyzer), A11 (AI Readiness)]
+      A13 runs on user's website (voice extraction)
+      A14 runs for user's industry (pattern analysis)
+      A11 runs full audit (readiness scoring)
+  --> SEQUENTIAL (after all parallel complete):
+      A4 (Recommendations) generates initial action items (uses outputs from A13, A14, A11)
   --> Notification: "Your AI profile is ready. Here are your top 3 priorities."
 ```
+Note: A13, A14, and A11 are independent and run in parallel via `Promise.all()` in the Inngest step function. A4 depends on their outputs and runs only after all three complete.
 
 **Workflow 3: Content Lifecycle**
 ```
@@ -1098,6 +1175,17 @@ An Inngest post-processing step after each scan classifies each tracked query in
 | **Awareness** | Informational, exploratory | "What is GEO?" "How do AI search engines work?" |
 | **Consideration** | Comparative, evaluative | "Best GEO tools 2026" "Beamix vs Profound" |
 | **Decision** | Transactional, specific | "Beamix pricing" "How to sign up for Beamix" |
+| **Retention** | Usage, how-to, support | "How to use Beamix agents" "Beamix dashboard tutorial" |
+
+**Example Query-to-Stage Mappings (for few-shot classification):**
+
+| Query | Stage | Reasoning |
+|-------|-------|-----------|
+| "what is dental implant" | Awareness | Generic informational, no brand or comparison intent |
+| "best dental clinic tools for patient management" | Consideration | Comparative ("best"), evaluating options |
+| "DentaPro vs SmileTech pricing" | Decision | Direct brand comparison with pricing intent |
+| "how to use DentaPro appointment system" | Retention | Existing customer seeking usage guidance |
+| "DentaPro pricing plans" | Decision | Specific brand + pricing = purchase intent |
 
 **Dashboard Insight:**
 
@@ -1197,13 +1285,16 @@ When behavioral analysis identifies a likely AI crawler, it is flagged as "Unide
 
 | Operation | Model Mix | Estimated Cost | Monthly Volume (1K businesses) | Monthly Cost |
 |-----------|-----------|---------------|-------------------------------|-------------|
-| Free scan (one-time) | 4 engines + Haiku (parse) + Sonnet (readiness) | $0.05-0.10 | ~3,000 scans | $150-300 |
-| Scheduled scan (recurring) | 4-10 engines + Haiku (parse) + Sonnet (recommendations) | $0.80-1.50 | ~4,000 scans/week | $3,200-6,000/week |
+| Free scan (one-time) | 4 engines + Haiku (5 stages × 12 responses = 60 calls) + Sonnet (readiness) | $0.10-0.15 | ~3,000 scans | $300-450 |
+| Scheduled scan (recurring) | 4-10 engines + Haiku (5 stages × 200 responses = 1,000 calls) + Sonnet (recommendations) | $1.50-3.00 | ~4,000 scans/month | $6,000-12,000 |
 | Agent execution (avg) | Perplexity + Sonnet (x2) + GPT-4o | $0.15-0.40 | ~5,000 executions | $750-2,000 |
+| A8 Competitor Intelligence | All engines (3 competitors × 25 queries) + parsing (5 stages × 600 responses) + Sonnet (x2) | $3.00-6.00 | ~500 runs | $1,500-3,000 |
 | Ask Beamix (chat turn) | Sonnet | $0.02-0.05 | ~10,000 turns | $200-500 |
-| Voice training (one-time) | Opus + Sonnet | $0.30-0.50 | ~200 trainings | $60-100 |
+| Voice training (one-time) | Opus + Sonnet | $0.14-0.18 | ~200 trainings | $28-36 |
 | Content refresh (monthly) | Haiku + Perplexity + Sonnet | $0.20-0.40 | ~2,000 audits | $400-800 |
-| **Total estimated monthly LLM cost at 1K businesses** | | | | **$8,000-18,000** |
+| **Total estimated monthly LLM cost at 1K businesses** | | | | **$15,000-25,000** |
+
+> **Pricing implication:** At $15K-25K/month LLM cost for 1K businesses, Beamix must achieve $15-25 ARPU minimum across paid tiers to maintain healthy margins. Free tier scans ($0.10-0.15 each) are loss leaders budgeted at <5% of total LLM spend. These estimates are speculative at pre-launch volume (<1K users) and should be re-validated at 100, 500, and 1K paying customers. The previous estimate of $20K-40K was based on per-response parsing counts; corrected per-stage counts reduce the range.
 
 ### 8.2 Quality Scoring for Agent Outputs
 
@@ -1232,7 +1323,7 @@ Every LLM call has a fallback strategy. No user action should fail silently beca
 | Primary Call | Fallback 1 | Fallback 2 | Final Fallback |
 |-------------|-----------|-----------|---------------|
 | Claude Sonnet (content generation) | Retry with increased timeout (30s) | GPT-4o as alternative generator | Queue for retry in 15 minutes, notify user |
-| GPT-4o (QA gate) | Claude Sonnet as alternative QA | Skip QA, deliver with "unreviewed" flag | Deliver without QA score |
+| GPT-4o (QA gate) | Gemini 1.5 Pro as cross-model QA (maintains cross-vendor principle) | Skip QA, deliver with "unreviewed" flag visible to user | Deliver without QA score, mark "unreviewed" in content library |
 | Perplexity sonar-pro (research) | Retry once | Skip research, use business context only | Generate with disclaimer "based on existing data only" |
 | Claude Haiku (parsing) | Gemini Flash as alternative parser | Regex-based basic mention detection | Mark as "parse failed," store raw response for manual review |
 | Engine query (any) | Retry with exponential backoff (1s, 2s, 4s) | Skip engine, mark as "unavailable" in results | Score computed from available engines only |
@@ -1251,6 +1342,15 @@ Every LLM call has a fallback strategy. No user action should fail silently beca
 | Perplexity | 40 | 5 | 10s | $30 |
 | Grok (xAI) | 50 | 10 | 5s | $20 |
 | DeepSeek | 50 | 10 | 5s | $10 |
+
+**Perplexity Scaling Strategy:**
+
+Perplexity's 40 RPM limit is the tightest bottleneck in the scan pipeline. At 1K businesses, peak scan batches can generate 200+ Perplexity calls in minutes. Mitigation strategies, in order of preference:
+
+1. **Prompt-level caching (24h TTL):** Identical scan prompts across users in the same industry/location produce structurally similar Perplexity responses. Cache Perplexity responses by prompt hash with 24h TTL. At 1K businesses with overlapping industries, this can reduce actual Perplexity calls by 40-60%.
+2. **Tier upgrade:** Perplexity offers higher RPM tiers for enterprise accounts. Budget $200-500/month for a Perplexity Pro/Enterprise tier when volume exceeds 30 RPM sustained average.
+3. **Off-peak batching:** Schedule scan batches in 15-minute windows, staggered by timezone. Israeli businesses scan at 2-4 AM local time; international businesses at their respective off-peak windows. This spreads Perplexity load across hours instead of concentrating it.
+4. **Research-only fallback:** If all above are insufficient, restrict Perplexity to research-phase calls only (agent Stage 1) and replace Perplexity scan queries with Gemini Flash + web search augmentation. This is a quality trade-off and should be a last resort.
 
 **Queuing:** Inngest provides built-in concurrency control. Scan and agent functions declare their concurrency limits in their function configuration. Inngest queues excess invocations and processes them as capacity becomes available. No separate Redis queue is needed until 10K+ users.
 

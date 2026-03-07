@@ -1,6 +1,8 @@
+> ⚠️ **ARCHIVED** — Historical reference. Current source of truth: `.planning/03-system-design/_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md` | Archived: 2026-03-05
+
 # Beamix — Technical Architecture
 
-> Complete technical specification for the Beamix GEO Platform. This document is the authoritative reference for all architecture, schema, API, and integration decisions.
+> ~~Complete technical specification~~ — This is now superseded. See `.planning/03-system-design/`.
 >
 > **Repository:** https://github.com/Adam077K/Beamix
 

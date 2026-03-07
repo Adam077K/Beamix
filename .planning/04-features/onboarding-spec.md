@@ -1,7 +1,11 @@
 # Beamix — Onboarding Flow Spec
-**Version:** 1.0
+
+> **Last synced:** March 2026 — aligned with 03-system-design/
+
+**Version:** 1.1
 **Date:** 2026-02-28
-**Status:** Draft — Ready for Dev
+**Last Updated:** 2026-03-06 — synced with System Design v2.1
+**Status:** Updated
 
 > The onboarding is a bridge, not a destination. Its only job is to collect the minimum data required to start a scan — and get out of the way as fast as possible. Every extra field is a conversion killer.
 
@@ -13,8 +17,8 @@
 |---|---|---|
 | URL handling | Pre-filled, not re-asked | User already typed it. Asking again = friction + distrust |
 | Competitor collection | Not in onboarding | Scan finds them automatically. Add manually later via Settings. |
-| Number of steps | 3 (or 4 if no URL) | Each extra step loses ~10-15% of users. 3 is the minimum viable. |
-| Scan trigger timing | Fires on "Start My Scan" click | Every second saved = better conversion. User arrives to a scan already running. |
+| Number of steps | 4 (business → queries → competitors → ready) | Step 0 (URL) shown only if no URL from free scan. Onboarding dots always show 3 visible steps (Step 0 is hidden from count if shown). |
+| Scan trigger timing | Fires on onboarding complete via Inngest event | POST /api/onboarding/complete → emits `onboarding/complete` event → triggers New Business Onboarding workflow (A13+A14+A11 parallel → A4 → notify). Trial clock starts on first /dashboard visit. |
 | Data persistence | Supabase only (not localStorage) | localStorage is lost on new tab. Supabase is the source of truth. localStorage used only as temporary handoff. |
 
 ---
@@ -332,7 +336,7 @@ BEAMIX
 
 **Scan worker handles asynchronously (server-side code):**
 - Generates industry-specific prompts
-- Queries all 8 AI engines in parallel
+- Queries Phase 1 AI engines (4: ChatGPT, Gemini, Perplexity, Claude) in parallel
 - Parses responses + extracts mentions, queries, rankings
 - Writes results to `scan_engine_results`, `scan_queries`, `scan_mentions`
 - Updates `scans.status` to `'completed'`
@@ -352,7 +356,10 @@ DO UPDATE SET name = $business_name, website_url = $website_url,
 
 **`free_scans` table:**
 ```sql
-INSERT INTO free_scans (scan_token, website_url, business_name, sector, location,
+-- ⚠️ BUG: Authenticated user scans must go to `scans` table, not `free_scans`.
+-- free_scans is for pre-auth anonymous scans only. This SQL block needs correction.
+-- TODO: Replace with INSERT INTO scans (...) for authenticated user flow.
+INSERT INTO free_scans (scan_id, website_url, business_name, sector, location,
                         status, converted_user_id)
 VALUES (gen_random_uuid(), $website_url, $business_name, $industry, $location,
         'processing', $user_id);

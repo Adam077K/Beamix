@@ -1,6 +1,8 @@
 # מחקר מתחרים מעמיק — Beamix GEO Platform
 
 > **תאריך:** מרץ 2026
+> **Last Verified:** March 4, 2026
+> **⚠️ Freshness Notice:** All competitor data was collected March 1-4, 2026. GEO market evolves rapidly — re-verify pricing, features, and capabilities before any launch decisions. Data older than 60 days should be treated as potentially stale.
 > **מטרה:** ניתוח מעמיק של 15 מתחרים בשוק ה-GEO/AEO — מוצרים, פיצ'רים, דאשבורדים, מעקב פרמטרים, סוכנים, תמחור, ובידול
 > **Repository:** https://github.com/Adam077K/Beamix
 

@@ -113,7 +113,7 @@ export function SignupForm() {
       <CardHeader className="text-center">
         <CardTitle className="font-display text-2xl">Create your account</CardTitle>
         <CardDescription>
-          Start your 14-day free trial. No credit card required.
+          Start your 7-day free trial. No credit card required.
         </CardDescription>
       </CardHeader>
       <CardContent>

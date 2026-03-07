@@ -605,7 +605,7 @@ function GatedCTA({ scanId }: { scanId: string }) {
             Unlock 5 More Personalized Fixes
           </h3>
           <p className="mx-auto mt-2 max-w-sm text-sm text-[var(--color-muted)]">
-            Sign up for a free 14-day trial to get detailed, AI-generated action
+            Sign up for a free 7-day trial to get detailed, AI-generated action
             items tailored to your business.
           </p>
           <Link href={`/signup?scan_id=${scanId}`}>
@@ -716,7 +716,7 @@ function ConversionCTA({ scanId }: { scanId: string }) {
         </h3>
         <p className="mx-auto mt-3 max-w-md text-[var(--color-muted)]">
           Beamix AI agents can implement these fixes automatically.
-          Start your 14-day free trial — no credit card required.
+          Start your 7-day free trial — no credit card required.
         </p>
         <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Link href={`/signup?scan_id=${scanId}`}>

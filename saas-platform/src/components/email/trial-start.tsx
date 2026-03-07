@@ -11,7 +11,7 @@ export function TrialStartEmail({
   unlockedFeatures,
 }: TrialStartEmailProps) {
   return (
-    <EmailLayout preview={`Your 14-day ${planName} trial starts now`}>
+    <EmailLayout preview={`Your 7-day ${planName} trial starts now`}>
       <Section style={content}>
         <Text style={styles.heading}>Your 14-Day Trial Starts Now</Text>
         <Text style={styles.paragraph}>

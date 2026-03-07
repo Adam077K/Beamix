@@ -1,8 +1,11 @@
 # Beamix — Strategic Foundation
 
-> Single source of truth for the product rebuild. All architecture, design, and development decisions flow from this document.
+> **Last synced:** March 2026 — aligned with 03-system-design/
+
+> Strategic foundation for Beamix. For the complete system design (agents, DB, APIs, intelligence), see `.planning/03-system-design/BEAMIX_SYSTEM_DESIGN.md`.
 >
 > **Repository:** https://github.com/Adam077K/Beamix
+> **Last Updated:** 2026-03-06 — Aligned with System Design v2.1
 
 ---
 
@@ -18,7 +21,7 @@
 
 ## 2. The Customer
 
-**Primary persona:** Marketing manager or business owner at an SMB (2-500 employees)
+**Primary persona:** Marketing manager or business owner at an SMB (5-200 employees)
 
 **Key traits:**
 - Non-technical — doesn't want to learn a tool, wants results
@@ -51,22 +54,44 @@ People no longer search only on Google. They ask ChatGPT, Gemini, Perplexity, an
 
 ## 4. The Product — Three-Phase Experience
 
+**Platform scale:** 23 pages, 90+ features across 10 modules, 16 AI agents (A1-A16), 10 AI scan engines in 3 rollout phases.
+
+**Seven Structural Advantages:**
+1. **Hebrew/RTL first** — Zero competitors serve Hebrew. Monopoly on Israeli market.
+2. **Agent-first architecture** — Most comprehensive interactive autonomous agent suite under $100/month.
+3. **Closed-loop system** — Scan → fix → measure in one platform (competitors break this loop).
+4. **Cross-model QA** — GPT-4o reviews Claude's output. No single-model blind spots.
+5. **Inngest-native** — Background jobs with retry, concurrency, observability built-in.
+6. **Event-driven workflows** — Automated multi-agent chains (visibility drop → auto-fix).
+7. **Progressive voice learning** — Content improves with every user edit.
+
 ### Phase 1: HOOK — Free Scan (Day 1 value)
 - User enters their website URL + business sector + location
-- Beamix queries all major LLMs with relevant prompts about that sector/location
+- Beamix queries 4 AI engines (Phase 1: ChatGPT, Gemini, Perplexity, Claude) with relevant prompts
 - Results: Visual dashboard showing where they rank (or don't) in each model
 - Emotional impact: "I had no idea I was invisible. My competitor is ranked #2."
 - **This is free for everyone.** This is the top of the funnel.
 
 ### Phase 2: SOLVE — AI Agents Do the Work (Paid)
-- After seeing the problem, agents analyze WHY and create fixes:
-  - **Content Writer Agent** — writes optimized content (website copy, landing pages)
-  - **Blog Writer Agent** — creates blog posts targeting AI-discoverable topics
-  - **Review Analyzer Agent** — analyzes reviews (positive + negative), provides recommendations
-  - **Schema Optimizer Agent** — generates structured data/schema markup for the website
-  - **Recommendations Agent** — ongoing analysis of what to improve next
-- User receives recommendations and content → approves → publishes themselves
-- Regular re-scanning to show improvement over time
+- After seeing the problem, 16 AI agents analyze WHY and create fixes:
+  - **Recommendations Agent (A4)** — auto-runs after every scan, prioritizes what to fix next (free)
+  - **Content Writer Agent (A1)** — writes GEO-optimized website pages
+  - **Blog Writer Agent (A2)** — creates long-form blog posts targeting AI-discoverable topics
+  - **Review Analyzer Agent (A6)** — reputation analysis + response templates
+  - **Schema Optimizer Agent (A3)** — generates JSON-LD structured data
+  - **FAQ Agent (A5)** — FAQ content matching AI queries
+  - **Social Strategy Agent (A7)** — 30-day social content calendar
+  - **Competitor Intelligence Agent (A8)** — deep competitive analysis + action items
+  - **Citation Builder Agent (A9)** — outreach templates for citation sources
+  - **LLMS.txt Generator (A10)** — AI-readable site description file
+  - **AI Readiness Auditor (A11)** — comprehensive website AI audit
+  - **Ask Beamix (A12)** — conversational data analyst (streaming, Pro+)
+  - **Content Voice Trainer (A13)** — learns business writing voice from website (Growth Phase)
+  - **Content Pattern Analyzer (A14)** — what makes cited content succeed (Growth Phase)
+  - **Content Refresh Agent (A15)** — audits + updates stale published content (Growth Phase)
+  - **Brand Narrative Analyst (A16)** — WHY AI says what it says about your brand (Growth Phase)
+- User receives recommendations and content → reviews → publishes (or auto-publishes via WordPress integration)
+- Regular re-scanning via Inngest cron jobs shows improvement over time
 
 ### Phase 3: CONNECT — Full Autopilot (Future)
 - User connects platforms: website CMS, social media, review sites, business tools
@@ -138,8 +163,8 @@ Each of these maps to a specific agent capability in the product.
 
 ## 8. Markets
 
-**Primary:** Israel (Hebrew + English) — home market, direct feedback, language differentiator
-**Secondary:** Global English-speaking markets (US, UK, Australia, etc.)
+**Primary:** Israeli SMBs first (Hebrew + English) — home market, direct feedback, Hebrew-first = zero competitors.
+**Secondary:** Global English-speaking SMBs (US, UK, Australia, etc.)
 
 **Language support from day 1:** Hebrew (RTL) + English (LTR)
 
@@ -148,28 +173,35 @@ Each of these maps to a specific agent capability in the product.
 ## 9. Development Constraints
 
 - **Team:** Solo founder + AI-assisted development (Claude, etc.)
-- **Timeline:** 7-day sprint to paying product
-- **Stack:** Next.js 14, React 18, TypeScript, Supabase, Tailwind CSS, Paddle
-- **AI orchestration:** Direct LLM API calls from Next.js API routes
+- **Stack:** Next.js 16, React 19, TypeScript strict, Supabase, Tailwind CSS, Paddle, Inngest, Resend
+- **AI orchestration:** Direct LLM API integration. Background jobs via Inngest (NOT n8n). No workflow tools.
 - **Deployment:** Vercel + Supabase Cloud
+- **Billing:** Paddle only (Stripe removed)
 
 ---
 
 ## 10. Revenue Model
 
-**Freemium:**
-- Free: Initial scan + basic results (limited detail)
-- Paid: Full dashboard, AI agents, ongoing monitoring, content generation
+**Freemium + subscription:**
+- Free: Initial scan + basic results (limited detail). No "free" tier in DB — free = null `plan_tier`.
+- Paid: Full dashboard, AI agents, ongoing monitoring, content generation.
+- Trial: 7 days starting on **first dashboard visit** (not signup), capped at 5 agent credits.
 
-**Subscription tiers (to be defined during product design):**
-- Starter: Individual / micro-business
-- Pro: Growing SMB
-- Enterprise: Larger teams, multiple brands
+**Subscription tiers:**
+
+| | Free Scan | Starter | Pro | Business |
+|---|---|---|---|---|
+| **Price** | $0 | $49/mo | $149/mo | $349/mo |
+| **Tracked queries** | 0 | 10 | 25 | 75 |
+| **Agent uses/month** | 0 | 5 | 15 | 50 |
+| **Scan frequency** | One-time | Weekly | Every 3 days | Daily |
+| **AI engines** | 4 (Phase 1) | 4 | 8 | 10 |
+| **Competitors tracked** | 0 | 3 | 5 | 10 |
 
 **Key pricing principles:**
 - Must be affordable for SMBs (NOT $250+/month like competitors)
-- Value must be obvious before payment is required
-- No confusing credit systems that expire
+- Value must be obvious before payment is required (free scan → trial → paid)
+- Credit system: hold on job start → confirm on success → release on failure. Rollover cap: 20% of monthly allocation.
 
 ---
 

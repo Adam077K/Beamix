@@ -137,7 +137,7 @@ export async function POST(request: Request) {
 
   // 4. Ensure subscription row exists with trial dates set.
   //    The trigger creates the row but leaves trial_ends_at null.
-  //    Set it here so the 14-day countdown starts when onboarding completes.
+  //    Set it here so the 7-day countdown starts when onboarding completes.
   const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
   const { error: subError } = await supabase
     .from('subscriptions')

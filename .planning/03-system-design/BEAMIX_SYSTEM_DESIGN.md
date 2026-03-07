@@ -1,10 +1,10 @@
 # Beamix System Design — Master Document
 
-> **Version:** 2.0
+> **Version:** 2.1
 > **Date:** March 4, 2026
 > **Authors:** Morgan (CPO), Atlas (CTO), Sage (AI Engineer), Rex (Research Analyst)
 > **Replaces:** `ENGINEERING_PLAN.md` (v1.0)
-> **Status:** All competitive gaps from CTO Gap Analysis are CLOSED.
+> **Status:** 4/7 MISSING gaps closed, 3/7 intentionally deferred with reasoning. 7/7 PARTIAL gaps upgraded.
 
 ---
 
@@ -36,7 +36,7 @@ Scan (find problems) → Diagnose (prioritize) → Fix (agents execute) → Meas
 ### Seven Structural Advantages
 
 1. **Hebrew/RTL first** — Zero competitors serve Hebrew. Monopoly on Israeli market.
-2. **Agent-first architecture** — Only autonomous agents under $100/month in the market.
+2. **Agent-first architecture** — Most comprehensive interactive autonomous agent suite with streaming chat UX under $100/month. (Note: RankPrompt offers content generation + WP publishing at $29/month, but without interactive streaming agent chat or multi-agent workflows.)
 3. **Closed-loop system** — Scan → fix → measure in one platform (competitors break this loop).
 4. **Cross-model QA** — GPT-4o reviews Claude's output. No single-model blind spots.
 5. **Inngest-native** — Background jobs with retry, concurrency, observability built-in.
@@ -53,7 +53,7 @@ Scan (find problems) → Diagnose (prioritize) → Fix (agents execute) → Meas
 |------|-----|---------|
 | Landing | `/` | Conversion page: hero, social proof, features, pricing, CTA |
 | Free Scan | `/scan` | Anonymous 60-second AI visibility scan |
-| Scan Results | `/scan/[scanId]` | Public shareable results with signup CTA |
+| Scan Results | `/scan/[scan_id]` | Public shareable results with signup CTA |
 | Login | `/login` | Supabase Auth login |
 | Signup | `/signup` | Registration with optional `?scan_id=` import |
 | Forgot Password | `/forgot-password` | Password reset flow |
@@ -86,7 +86,7 @@ Scan (find problems) → Diagnose (prioritize) → Fix (agents execute) → Meas
 | Agent System | 16 agents | Content, schema, FAQ, citations, voice training, patterns, refresh, narrative |
 | Content Engine | 10 | Library, editor, versioning, 12 content types, voice profiles, CMS publish |
 | Competitive Intelligence | 6 | Share of voice, gap analysis, competitor monitoring, anonymous tracking |
-| Alert System | 9 types | Visibility, sentiment, competitor, credit, content performance alerts |
+| Alert System | 9 alert types | Visibility, sentiment, competitor, credit, content performance alerts |
 | Integration Hub | 7 | WordPress, GA4, GSC, Slack, Cloudflare, Paddle, API keys |
 | AI Readiness | 6 | Website audit, 5-category scoring, improvement roadmap, progress tracking |
 | Settings | 6 | Business profile, billing portal, preferences, language, integrations |
@@ -104,12 +104,12 @@ The agent system is Beamix's core differentiator. Each agent is a multi-stage LL
 | # | Agent | Purpose | LLM Pipeline | Credits |
 |---|-------|---------|-------------|---------|
 | A1 | Content Writer | GEO-optimized website pages | Perplexity → Sonnet → Sonnet → GPT-4o QA | 1 |
-| A2 | Blog Writer | Long-form blog posts for citation | Perplexity → Sonnet → Sonnet → Sonnet → GPT-4o | 1 |
+| A2 | Blog Writer | Long-form blog posts for citation | Perplexity → Sonnet → Sonnet → Sonnet → GPT-4o (titles) → GPT-4o QA | 1 |
 | A3 | Schema Optimizer | JSON-LD structured data | cheerio → Haiku → Sonnet → validator | 1 |
 | A4 | Recommendations | Prioritized action items (auto after scan) | Sonnet (single-pass analysis) | 0 (system) |
 | A5 | FAQ Agent | FAQ content matching AI queries | Haiku → Sonnet → Haiku (schema) | 1 |
 | A6 | Review Analyzer | Reputation analysis + response templates | Perplexity → Sonnet → Sonnet | 1 |
-| A7 | Social Strategy | 30-day social content calendar | Perplexity → Sonnet | 1 |
+| A7 | Social Strategy | 30-day social content calendar | Perplexity → Sonnet → GPT-4o QA | 1 |
 | A8 | Competitor Intelligence | Deep competitive analysis + action items | Multi-engine scan → Sonnet → Sonnet | 1 |
 | A9 | Citation Builder | Outreach templates for citation sources | Haiku → Perplexity → Sonnet | 1 |
 | A10 | LLMS.txt Generator | AI-readable site description file | cheerio → Sonnet | 1 |
@@ -127,7 +127,7 @@ Agents A13-A16 are NEW — they close all competitive gaps identified in the CTO
 | Workflow | Trigger | Chain |
 |----------|---------|-------|
 | Visibility Drop Response | Score drops >15% | A4 → A8 → A1 → Notify |
-| New Business Onboarding | Onboarding complete | A13 → A14 → A11 → A4 → Notify |
+| New Business Onboarding | Onboarding complete | A13 + A14 + A11 (parallel) → A4 → Notify |
 | Content Lifecycle | Content published | Schedule A15 (30d) → Correlate scans → Notify impact |
 | Competitor Alert Response | Competitor overtakes | A8 → A4 → Notify |
 
@@ -177,41 +177,57 @@ RLS is enabled on every table. Service role key used only in Inngest functions a
 | `/api/scan/*` | 5 | Mixed | Free scan, manual scan, status, results, history |
 | `/api/agents/*` | 5 | Required | Execute, status, cancel, history, chat |
 | `/api/content/*` | 6 | Required | CRUD, publish to CMS, performance data |
-| `/api/dashboard/*` | 5 | Required | Overview, rankings, trends, competitors, recommendations |
-| `/api/settings/*` | 4 | Required | Business profile, preferences, notifications |
-| `/api/billing/*` | 3 | Required | Status, portal link, Paddle webhooks |
-| `/api/integrations/*` | 4 | Required | CRUD for WordPress, GA4, GSC, Slack |
-| `/api/alerts/*` | 3 | Required | Alert rules CRUD, notification list, mark read |
+| `/api/dashboard/*` | 6 | Required | Overview, rankings, trends, competitors, recommendations, ai-readiness |
+| `/api/settings/*` | 9 | Required | Business profile, preferences, notifications, billing, integrations, language, export, account, password |
+| `/api/billing/*` | 5 | Required | Status, portal link, Paddle webhooks, usage, invoices |
+| `/api/integrations/*` | 6 | Required | CRUD for WordPress, GA4, GSC, Slack, Cloudflare, test-connection |
+| `/api/alerts/*` | 5 | Required | Alert rules CRUD, notification list, mark read, preferences, bulk actions |
 | `/api/competitors/*` | 3 | Required | CRUD, comparison data |
 | `/api/workflows/*` | 4 | Required | CRUD, trigger, run history |
-| `/api/analytics/*` | 3 | Required | Prompt volumes, citation sources, brand narrative |
-| `/api/v1/*` | 12 | API key | Public REST API (Business tier) |
+| `/api/analytics/*` | 4 | Required | Prompt volumes, citation sources, brand narrative, content performance |
+| `/api/v1/*` | 9 | API key | Public REST API (Business tier) |
 | `/api/onboarding/*` | 1 | Required | Complete onboarding |
 | `/api/inngest` | 1 | Inngest key | Inngest serve endpoint |
 
 > Full route specs with validation, rate limits, response shapes → `_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md` §3
 
-### 4.4 Background Jobs (15 Inngest Functions)
+### 4.4 Background Jobs (14 Inngest Functions)
 
 | Function | Trigger | Duration | Concurrency |
 |----------|---------|----------|-------------|
-| `scan/free` | Event | 30-60s | 20 system |
-| `scan/scheduled` | Cron (per tier) | 60-120s | 50 system |
-| `scan/manual` | Event | 60-120s | 10 system |
-| `agent/execute` | Event | 60-300s | 3 per user, 20 system |
-| `agent/ask-beamix` | Event (streaming) | 5-15s | 5 per user |
-| `workflow/execute` | Event | 5-30min | 2 per user |
-| `alert/evaluate` | Event (post-scan) | 5-10s | 50 system |
-| `cron/scheduled-scans` | Every 1h | 1-5min | 1 |
-| `cron/monthly-credits` | 1st of month | 30s | 1 |
-| `cron/trial-nudges` | Daily 10am | 30s | 1 |
-| `cron/weekly-digest` | Sunday 9am | 2min | 1 |
-| `cron/prompt-volume-agg` | Weekly Sunday 3am | 5-15min | 1 |
-| `cron/cleanup` | Daily 4am | 1-5min | 1 |
-| `cron/content-refresh-check` | Weekly (per tier) | 5-20min | 1 |
-| `cron/voice-refinement` | Monthly | 5-10min | 1 |
+| `scan.free` | Event | 30-60s | 25 system |
+| `scan.scheduled` | Cron (every 1h) | 60-120s | 50 system |
+| `scan.manual` | Event | 60-120s | 10 system |
+| `agent.execute` | Event | 60-300s | 3 per user, 20 system |
+| `workflow.execute`| Event | 5-30min | 5 total, 1 per user |
+| `alert.evaluate` | Event (post-scan) | 5-10s | 50 system |
+| `cron.scheduled-scans` | Every 1 hour | 1-5min | 1 |
+| `cron.monthly-credits` | 1st of month | 30s | 1 |
+| `cron.trial-nudges` | Daily 10am | 30s | 1 |
+| `cron.weekly-digest` | Monday 8AM UTC | 2min | 1 |
+| `cron.prompt-volume-agg` | Weekly Sunday 3:30am UTC | 5-15min | 1 |
+| `cron.cleanup` | Daily 4am | 1-5min | 1 |
+| `cron.content-refresh-check` | Daily 6AM UTC | 5-20min | 1 |
+| `cron.voice-refinement` | Weekly Sunday 3AM UTC | 5-10min | 1 |
 
 > Full function specs with retry, steps, event flows → `_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md` §4
+
+### 4.5 Inngest Event Registry
+
+Canonical event names used across the system. All events use `/` separators.
+
+| Event Name | Emitted By | Consumed By | Payload |
+|------------|-----------|-------------|---------|
+| `scan/free.start` | `/api/scan/start` | `scan.free` | `{ scanId, businessUrl, language, ip }` |
+| `scan/manual.start` | `/api/scan/start` (authenticated) | `scan.manual` | `{ scanId, businessId, userId }` |
+| `scan/complete` | `scan.free`, `scan.manual`, `scan.scheduled` | `alert.evaluate`, workflows | `{ scanId, businessId, userId, scores }` |
+| `agent/execute.start` | `/api/agents/execute` | `agent.execute` | `{ jobId, agentType, businessId, userId, params }` |
+| `agent/execute.complete` | `agent.execute` | workflows, `alert.evaluate` | `{ jobId, agentType, businessId, contentId }` |
+| `workflow/trigger` | `alert.evaluate`, manual | `workflow.execute` | `{ workflowId, triggerId, businessId }` |
+| `onboarding/complete` | `/api/onboarding/complete` | workflows (New Business Onboarding) | `{ userId, businessId }` |
+| `content/published` | `/api/content/publish` | workflows (Content Lifecycle) | `{ contentId, businessId, agentType }` |
+| `billing/subscription.changed` | `/api/billing/webhooks` | `cron.monthly-credits` (immediate allocation) | `{ userId, planId, status }` |
+| `alert/rule.triggered` | `alert.evaluate` | notification delivery | `{ alertRuleId, businessId, channel, payload }` |
 
 ---
 
@@ -256,16 +272,22 @@ Raw AI Response
   → Structured ParsedEngineResult
 ```
 
-### 5.4 Cost Estimates (at 1K businesses)
+### 5.4 Cost Estimates (at 1K businesses) — CORRECTED
+
+**Note:** Previous estimates underestimated costs 2-5x due to two errors: (1) parsing pipeline uses 5 Haiku calls per response, not 1, and (2) scan cost was labeled "/week" but compared against "/month" budget. Corrected below.
 
 | Category | Monthly Cost |
 |----------|-------------|
-| Scan operations | $3,500-6,500/week |
-| Agent executions | $750-2,000 |
+| Scan operations (corrected: 5x parse cost) | $8,000-14,000 |
+| Agent executions (corrected: A8 3-6x multiplier) | $2,000-5,000 |
 | Voice training | $60-100 |
 | Content refresh | $400-800 |
 | Chat (Ask Beamix) | $200-500 |
-| **Total LLM cost** | **$8,000-18,000/month** |
+| **Total LLM cost** | **$15,000-25,000/month** |
+
+> **Pricing implication:** At $15K-25K/month LLM cost for 1K businesses, Beamix must achieve $15-25 ARPU minimum across paid tiers to maintain healthy margins. Free tier scans are loss leaders budgeted at <5% of total LLM spend. These estimates are speculative at pre-launch volume and should be re-validated at 100, 500, and 1K paying customers. See Intelligence Layer §8 for mitigation strategies (caching, Perplexity scaling, model substitution).
+
+> Full cost model → `_SYSTEM_DESIGN_INTELLIGENCE_LAYER.md` §8
 
 > Full intelligence specs → `_SYSTEM_DESIGN_INTELLIGENCE_LAYER.md`
 
@@ -275,17 +297,17 @@ Raw AI Response
 
 Every gap from the CTO Gap Analysis (`_GAP_ANALYSIS_CTO.md`) is now addressed:
 
-### Previously MISSING (7 items) — All CLOSED
+### Previously MISSING (7 items) — 4 Closed, 3 Intentionally Deferred
 
-| Gap | Solution | Layer |
-|-----|----------|-------|
-| Prompt Volume Data / Trending Topics | `prompt_library` + `prompt_volumes` tables + weekly aggregation cron + dashboard widget | Architecture + Intelligence |
-| Content Pattern Analysis | Agent A14 (Content Pattern Analyzer) with cheerio crawl + Sonnet analysis | Intelligence |
-| Persona-Based Tracking | `personas` table + prompt modifiers + persona-segmented scanning | Architecture + Product |
-| Customer Journey Stage Mapping | Haiku classification of queries into awareness/consideration/decision | Intelligence |
-| White-Label / Agency Mode | Deferred (intentional skip — see Validation §5) | — |
-| Looker Studio Connector | Deferred (Growth Phase feature) | — |
-| CDN-Level Site Optimization (AXP) | Deferred (Moat Builder — see Validation §5) | — |
+| Gap | Solution | Status | Layer |
+|-----|----------|--------|-------|
+| Prompt Volume Data / Trending Topics | `prompt_library` + `prompt_volumes` tables + weekly aggregation cron + dashboard widget | CLOSED | Architecture + Intelligence |
+| Content Pattern Analysis | Agent A14 (Content Pattern Analyzer) with cheerio crawl + Sonnet analysis | CLOSED | Intelligence |
+| Persona-Based Tracking | `personas` table + prompt modifiers. Data model CLOSED. Scan pipeline does not query or use personas at launch. | Data Model CLOSED — Pipeline Integration DEFERRED (Phase 4) | Architecture + Product |
+| Customer Journey Stage Mapping | Haiku classification of queries into awareness/consideration/decision. Data model and classification logic fully designed in Intelligence Layer. Pipeline integration deferred to Phase 4. No `journey_stage` column on `scan_results` at launch. | SPEC ONLY — Phase 4 Implementation | Intelligence |
+| White-Label / Agency Mode | Intentional skip — enterprise scope, premature for MVP. Requires multi-tenant architecture not justified at current scale. | DEFERRED | — |
+| Looker Studio Connector | Intentional skip — agency-specific feature. REST API (Business tier) covers data export needs. Revisit when agency tier launches. | DEFERRED | — |
+| CDN-Level Site Optimization (AXP) | Intentional skip — Scrunch-only feature, very high implementation effort, low competitive pressure. Revisit as Moat Builder. | DEFERRED | — |
 
 ### Previously PARTIAL (7 items) — All UPGRADED
 
@@ -308,7 +330,7 @@ Every gap from the CTO Gap Analysis (`_GAP_ANALYSIS_CTO.md`) is now addressed:
 | Brand Narrative Analysis | Agent A16 — WHY AI says what it says | Intelligence |
 | Agent Workflow Chains | Event-triggered multi-agent automation | Architecture + Intelligence |
 | Recurring Agent Execution | Scheduled runs via workflow system | Architecture |
-| Editorial Review Queue | `in_review` status in content lifecycle | Product + Architecture |
+| Self-Review Queue (MVP) | `in_review` status in content lifecycle. MVP: single user review/approve. Multi-person editorial deferred to agency tier. | Product + Architecture |
 | Content Performance Tracking | Publication → visibility correlation pipeline | Architecture + Intelligence |
 | Prompt Auto-Suggestion | LLM-powered prompt recommendations from website analysis | Intelligence |
 
@@ -321,7 +343,7 @@ Every gap from the CTO Gap Analysis (`_GAP_ANALYSIS_CTO.md`) is now addressed:
 From Rex's validation analysis:
 
 ### Launch Critical (18 items)
-- Scan engine with 4 API engines (ChatGPT, Gemini, Perplexity, Claude)
+- Scan engine with 3 free-tier engines (ChatGPT, Gemini, Perplexity) — Claude is Pro-tier only
 - Response parsing with 0-100 sentiment
 - Visibility scoring algorithm
 - Free scan flow (viral acquisition)
@@ -330,7 +352,7 @@ From Rex's validation analysis:
 - Credit system (hold/confirm/release)
 - Onboarding 4-step flow
 - Content library with editor
-- WordPress integration
+- WordPress integration (Pro tier)
 - Alert system (email + in-app)
 - Settings (business, billing, preferences)
 - Paddle billing integration
@@ -367,7 +389,7 @@ From Rex's validation analysis:
 - Agent suggestion engine
 - Cross-agent memory
 - Cloudflare integration
-- Editorial review workflows
+- Multi-person editorial review workflows
 - Hebrew prompt library (unique — zero competition)
 - "What Changed" weekly diff reports
 - Competitor weakness alerts
@@ -395,16 +417,16 @@ From Rex's validation analysis:
 
 ## 8. Innovation Opportunities (Unique to Beamix)
 
-Rex identified 8 features NO competitor has:
+Rex identified 8 features uniquely combined in Beamix — 5 genuinely novel, 3 with significantly deeper implementation than competitors:
 
-1. **"Fix It" Button** — One-click agent execution from any gap/recommendation in the dashboard.
-2. **Agent Impact Scorecard** — Per-content ROI proof: "This article improved your ChatGPT visibility by 2 positions."
-3. **Hebrew Prompt Library** — Zero competition in Hebrew AI search optimization. First-mover monopoly.
-4. **Competitor Weakness Alerts** — Notify when a competitor's visibility drops, creating an overtake opportunity.
-5. **AI Readiness Progress Tracker** — Gamified score improvement with milestones and celebration UX.
-6. **Cross-Agent Memory** — Agents remember previous outputs and user edits across executions.
-7. **"What Changed" Weekly Diff** — Automated weekly report: what changed in AI's perception of your business.
-8. **Agent Suggestion Engine** — Dashboard recommends which agent to run next based on scan data + business state.
+1. **"Fix It" Button** — One-click agent execution from any gap/recommendation in the dashboard. *Market-leading:* Gauge's AI Analyst and AthenaHQ's Action Center have partial equivalents, but none integrate the trigger directly into every dashboard insight view with pre-loaded agent context.
+2. **Agent Impact Scorecard** — Per-content ROI proof: "This article improved your ChatGPT visibility by 2 positions." *Market-leading:* Bear AI and Gauge track content performance generally, but Beamix attributes specific visibility changes to specific agent outputs at the per-content-piece level.
+3. **Hebrew Prompt Library** — Zero competition in Hebrew AI search optimization. First-mover monopoly. *Genuinely unique.*
+4. **Competitor Weakness Alerts** — Notify when a competitor's visibility drops, creating an overtake opportunity. *Genuinely unique.*
+5. **AI Readiness Progress Tracker** — Gamified score improvement with milestones and celebration UX. *Genuinely unique.*
+6. **Cross-Agent Memory** — Agents remember previous outputs and user edits across executions. *Genuinely unique.*
+7. **"What Changed" Weekly Diff** — Automated weekly report: what changed in AI's perception of your business. *Most comprehensive:* Otterly and SE Visible have weekly reports with historical data, but Beamix provides per-query, per-engine diffs with competitor context and content attribution at granularity no competitor matches.
+8. **Agent Suggestion Engine** — Dashboard recommends which agent to run next based on scan data + business state. *Genuinely unique.*
 
 ---
 
@@ -445,9 +467,9 @@ Six complete data flows are documented in the Architecture Layer:
 |----------|------|---------|
 | **This file** (`BEAMIX_SYSTEM_DESIGN.md`) | Executive overview | Master index, summaries, gap closure status |
 | `_SYSTEM_DESIGN_PRODUCT_LAYER.md` | ~75KB | 23 pages, 90+ features, 4 user journeys, 16 agents (UX) |
-| `_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md` | ~100KB | 32 tables, all APIs, 15 Inngest jobs, security, caching |
+| `_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md` | ~100KB | 32 tables, all APIs, 14 Inngest jobs, security, caching |
 | `_SYSTEM_DESIGN_INTELLIGENCE_LAYER.md` | ~80KB | 16 agent pipelines, scan engine, data intelligence, costs |
-| `_SYSTEM_DESIGN_VALIDATION.md` | ~55KB | 21 gap closures, 47 feature parity checks, 8 innovations |
+| `_SYSTEM_DESIGN_VALIDATION.md` | ~55KB | 21 gap closures, 49 feature parity checks, 8 innovations |
 | `_GAP_ANALYSIS_CTO.md` | ~20KB | Original gap analysis (reference — now superseded) |
 | `ENGINEERING_PLAN.md` | ~60KB | Previous plan (reference — now superseded by this design) |
 

@@ -1,8 +1,12 @@
 # Beamix — Scan Results Page Spec
+
+> **Last synced:** March 2026 — aligned with 03-system-design/
+
 **Route:** `/scan/[scan_id]`
-**Version:** 1.0
+**Version:** 1.1
 **Date:** 2026-02-28
-**Status:** Draft — Pending Founder Review
+**Last Updated:** 2026-03-06 — synced with System Design v2.1
+**Status:** Updated
 
 > This page is the emotional core of the Beamix product. It is the moment a business owner discovers their AI visibility reality. Every design and copy decision must serve one goal: create enough emotional impact that the user signs up.
 
@@ -17,17 +21,17 @@
 
 ---
 
-## AI Engines — Coverage Decision
+## AI Engines — Coverage Decision (LOCKED — System Design v2.1)
 
-**Current PRD (4 engines):** ChatGPT, Gemini, Perplexity, Claude
+**Phase 1 — Launch (3 free engines + Claude for paid):** Free/Starter = ChatGPT, Gemini 2.0 Flash, Perplexity Sonar Pro. Pro adds Claude Sonnet 4.6, Google AI Overviews, Grok (xAI), You.com (7 total). Business = Pro 7 + TBD (9+).
+**Phase 2 — Growth:** Additional engines TBD
+**Phase 3 — Deferred:** Copilot, AI Overviews (reliable), Meta AI — require browser simulation, deferred. Bing Copilot has no public API — removed from all tiers.
 
-**Market context from competitive research:**
-Competitors cover: ChatGPT, Perplexity, Gemini, Claude, Copilot, Grok, DeepSeek, Google AI Overviews, Meta AI, Llama
+**Free scan** uses 3 engines (ChatGPT, Gemini, Perplexity). Show 3 cards on results page.
 
-**Decision required from founder:** How many engines does Beamix actually scan at launch?
+**Copy guidance:** Free scan page: "Scan across major AI search engines." Results page: Show exactly which engines ran (3 cards for free scan). Do NOT claim Copilot or AI Overviews until Phase 3 ships.
 
-**Recommended approach for copy and UI:**
-Use "major AI engines" in all user-facing copy until the exact number is finalized. Do not hardcode "4" or "10" until the product decision is locked. When locked, update this doc and all copy.
+> *Updated 2026-03-06 — Copilot removed (no public API). Engine counts: Free/Starter=3, Pro=7, Business=9+.*
 
 **Placeholder in this spec:** "major AI engines" — replace with exact count and list when decided.
 
@@ -299,7 +303,7 @@ When expanded:
   [Other engines] ...
 ```
 
-**Dev note:** This section pulls from `scan_result_details` per LLM. Show only engines that were actually scanned for this scan. Future engines can be added without redesign.
+**Dev note:** This section pulls from `scan_engine_results` per LLM (columns: engine, rank_position, is_mentioned, sentiment, business_id, scan_id). Show only engines that were actually scanned for this scan. Future engines can be added without redesign.
 
 ---
 
@@ -396,9 +400,26 @@ When expanded:
 `Already have an account? Log in to save this scan`
 
 **Trust signals below button:**
-`14-day free trial · No credit card required · Cancel anytime`
+`7-day free trial · No credit card required · Cancel anytime`
 
-**Dev note:** The CTA button passes `?scan=[scan_token]` to the signup URL so the scan is linked to the account automatically after registration. This is the critical conversion handoff.
+**Dev note:** The CTA button passes `?scan_id=[scan_id]` to the signup URL so the scan is linked to the account automatically after registration. This is the critical conversion handoff.
+
+### Scan Methodology Limitations Disclosure
+
+Below the per-engine breakdown (Section 4), include a small expandable disclosure:
+
+```
+[ℹ️ How we scan — methodology note ▼]
+
+Results are based on API queries to each AI engine and may differ from what a user
+sees in the consumer chat interface. API responses may not reflect personalization,
+location-based filtering, or UI-level formatting applied by each engine.
+
+Beamix measures an "AI visibility signal" — a reliable indicator that correlates
+with consumer-facing visibility, but not an exact ranking guarantee.
+```
+
+**Dev note:** This disclosure is required per Intelligence Layer §1.5 (Scan Methodology Limitations). Keep it collapsed by default. Use "AI visibility signal" or "AI visibility indicator" — not "AI ranking" — in all marketing copy.
 
 ---
 
@@ -446,9 +467,11 @@ interface ScanResultsData {
   per_engine_results: {
     engine: string;                         // 'chatgpt' | 'gemini' | 'perplexity' | 'claude' | ...
     rank: number | null;
-    sentiment: 'positive' | 'neutral' | 'negative' | null;
+    sentiment_score: number;                // 0-100 integer (0=very negative, 50=neutral, 100=very positive)
+    sentiment_label: 'positive' | 'neutral' | 'negative';  // Derived from score: 0-33=negative, 34-66=neutral, 67-100=positive
     mentioned: boolean;
   }[];
+  ai_readiness_score?: number;              // 0-100 AI readiness audit score (quick assessment from website analysis)
   quick_wins: {
     title: string;
     description: string;

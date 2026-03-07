@@ -1,5 +1,9 @@
 # Beamix — Landing Page Copy
-**Version:** 1.0 | **Date:** 2026-02-28 | **Status:** Draft — Pending Founder Review
+
+> **Last synced:** March 2026 — aligned with 03-system-design/
+
+**Version:** 1.1 | **Date:** 2026-02-28 | **Status:** Updated
+**Updated:** 2026-03-06 — Aligned with System Design v2.1. Trial: 7 days. Pricing: Starter $49, Pro $149, Business $349. 16 agents (A1-A16). 10 engines (3 phases). 23 pages. Hebrew-first positioning.
 
 ---
 
@@ -130,46 +134,50 @@ Button: `Scan My Business — Free`
 `For small businesses ready to fix their AI visibility and start ranking.`
 
 Features:
+- 4 AI engines scanned
 - 10 tracked queries
 - Weekly scans
 - 5 agent uses/month
 - 3 competitors tracked
-- Content Writer + Schema Optimizer agents
-- 14-day free trial
+- 4 agents: Content Writer, Blog Writer, FAQ Agent, Schema Optimizer
+- 7-day free trial (includes 5 free agent credits)
 
 Button: `Start Free Trial`
-Note: `14 days free · No credit card required`
+Note: `7 days free · 5 agent credits included · No credit card required`
 
 ### Pro — $149/mo *(Annual: $119/mo)* `[Most Popular]`
 `For growing businesses serious about AI search visibility and consistent content output.`
 
 Features:
+- 8 AI engines scanned
 - 25 tracked queries
 - Scans every 3 days
 - 15 agent uses/month
 - 5 competitors tracked
-- All agents incl. Review Analyzer + Social Strategy
+- 15 agents (all except Brand Narrative Analyst)
 - Trend charts + weekly digest
-- 14-day free trial
+- 7-day free trial (includes 5 free agent credits)
 
 Button: `Start Free Trial`
-Note: `14 days free · No credit card required`
+Note: `7 days free · 5 agent credits included · No credit card required`
 
 ### Business — $349/mo *(Annual: $279/mo)*
 `For businesses that want daily intelligence, maximum output, and a serious competitive edge.`
 
 Features:
+- 10+ AI engines scanned
 - 75 tracked queries
 - Daily scans
 - 50 agent uses/month
 - 10 competitors tracked
+- All 16 agents incl. Brand Narrative Analyst
 - Google AI Overviews tracking
 - PDF/CSV export
 - Daily digest + priority support + onboarding call
-- 14-day free trial
+- 7-day free trial (includes 5 free agent credits)
 
 Button: `Start Free Trial`
-Note: `14 days free · No credit card required`
+Note: `7 days free · 5 agent credits included · No credit card required`
 
 **Add-on note:** `Need more agent uses? Top up anytime: 5 uses for $15 · 15 uses for $35`
 
@@ -186,22 +194,13 @@ Note: `14 days free · No credit card required`
 **Label:** `WHAT SMB OWNERS SAY`
 **Headline:** `SMBs that switched from dashboards to doing.`
 
-**Testimonial 1**
-> "Within 3 weeks, we went from completely invisible to ranking #2 on Perplexity for 'insurance company Tel Aviv'. The blog agent wrote content in 90 seconds that would have taken me two days."
-
-— Yael K., Marketing Manager, Insurance Company, Tel Aviv
-
-**Testimonial 2**
-> "I tried another GEO tool and got a beautiful dashboard with data I had no idea what to do with. Beamix showed me the exact same problem and then just fixed it. That's the whole difference."
-
-— Avi R., Owner, Relocation Company, Israel
-
-**Testimonial 3**
-> "$49 a month, and it generated a full FAQ page that started showing up in ChatGPT recommendations within 10 days. I've never had an ROI this fast on any marketing tool."
-
-— Sarah M., Owner, Law Firm, Tel Aviv
-
-*(Dev note: Placeholder quotes. Replace with real beta user quotes when available. Keep the specific results format — numbers, timeframes, outcomes.)*
+> **Dev note — NO PLACEHOLDER QUOTES.**
+> This section should only go live with real testimonials from actual beta users.
+> Format to use when quotes are available: specific results, numbers, timeframes, outcomes.
+> Example format: "[Specific result] in [timeframe]. [One sentence about the difference Beamix made]."
+> — [First name, last initial], [Role], [Business type], [City]
+>
+> Until real quotes are collected: **hide this section entirely** (do not render placeholder text or fake names).
 
 ---
 

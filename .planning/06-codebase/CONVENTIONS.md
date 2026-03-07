@@ -1,6 +1,6 @@
 # Coding Conventions
 
-**Analysis Date:** 2025-02-27
+> **Last synced:** March 2026 — aligned with 03-system-design/
 
 ## Naming Patterns
 
@@ -11,8 +11,8 @@
   - Example: `/api/queries/route.ts`, `/api/credits/balance/route.ts`
 - Utilities and hooks: camelCase with `.ts` or `.tsx` extension
   - Example: `useQueries.ts`, `useDashboardData.ts`, `index.ts`
-- Configuration files: camelCase or lowercase with specific extensions
-  - Example: `tsconfig.json`, `eslint.config.mjs`, `tailwind.config.ts`
+- Inngest functions: kebab-case with `.ts` extension
+  - Example: `scan-free.ts`, `agent-execute.ts`, `workflow-execute.ts`
 
 **Functions:**
 - camelCase for all functions
@@ -23,7 +23,6 @@
 
 **Variables:**
 - camelCase for local variables and constants
-  - Example: `dateRange`, `dashboardData`, `isLoading`, `creditsRemaining`
 - UPPER_SNAKE_CASE for true constants (rarely used)
 - snake_case only for database column names and object keys matching database schema
 
@@ -31,171 +30,107 @@
 - PascalCase for all TypeScript types and interfaces
   - Example: `MetricsCardProps`, `TrackedQuery`, `AuthenticatedUser`, `SuccessResponse<T>`
 - Union types use string literals: `'high' | 'medium' | 'low'`
-- Database table types match schema: `Customer`, `ProspectLead`, `RankingHistory`
 
 ## Code Style
 
 **Formatting:**
 - ESLint enforces code style using `eslint-config-next` and `eslint-config-next/typescript`
-- No Prettier config found; ESLint rules are primary style guide
-- Indentation: 2 spaces (implicit from codebase)
-- Line length: No strict limit enforced, but generally keep reasonable
-
-**Linting:**
-- ESLint version 9 with Next.js and TypeScript configs
-- Config file: `eslint.config.mjs` (uses new ESLint flat config format)
-- Rules include Next.js core web vitals and TypeScript best practices
-- Run linting: `npm run lint`
+- No Prettier config; ESLint rules are primary style guide
+- Indentation: 2 spaces
+- Line length: No strict limit enforced
 
 **TypeScript:**
 - Strict mode enabled: `"strict": true` in `tsconfig.json`
 - No `any` types allowed without justification
-- `noEmit: true` - TypeScript used for type checking only, compilation via Next.js
-- Target: ES2017, module: esnext
-- Path aliases configured: `@/*` maps to `./src/*`
+- No `as unknown as` escape hatches
+- `noEmit: true` — TypeScript used for type checking only, compilation via Next.js
+- Path aliases: `@/*` maps to `./src/*`
+
+**Zod:**
+- Import from `zod/v4` (Zod v4 syntax)
+- Zod validation on EVERY API endpoint — no exceptions
+- Use Zod for environment variable validation at startup
+
+## Architecture Rules
+
+**Server Components by default:**
+- Client Components (`'use client'`) only when interactivity is required (forms, state, event handlers, browser APIs)
+- Server Components for data fetching, static rendering, layout
+
+**All scan + agent work in Inngest functions:**
+- API routes NEVER call LLM APIs directly
+- API routes emit Inngest events and return 202
+- All LLM pipelines, retries, and concurrency in `src/inngest/` functions
+
+**No raw SQL from client:**
+- All queries via Supabase client with RLS enforced
+- Service role key only in Inngest functions + webhook handlers
+
+**Credit system:**
+- Hold/confirm/release pattern
+- Hold credit on job start, confirm on success, release on failure
+- Users never charged for failed agent executions
+- Credit hold must be idempotent (Inngest step retries must not re-hold)
+
+**Credential encryption:**
+- AES-256-GCM for integration credentials (WordPress, GA4, GSC, Slack, Cloudflare)
+- SHA-256 hashing for API keys
+- LLM API keys in environment variables only
+
+**No N+1 queries:**
+- Always batch or join
+- Apply date range filters at database level, not in application code
 
 ## Import Organization
 
 **Order:**
 1. React and Next.js imports
-   - `import { useState } from 'react'`
-   - `import type { NextRequest } from 'next/server'`
-   - `import Link from 'next/link'`
 2. Third-party library imports
-   - `import { useQuery, useMutation } from '@tanstack/react-query'`
-   - `import { create } from 'zustand'`
-   - `import { clsx } from 'clsx'`
 3. Local absolute imports (using `@/` alias)
-   - `import { MetricsCard } from '@/components/dashboard/MetricsCard'`
-   - `import { useQueries } from '@/lib/hooks/useQueries'`
-   - `import { createClient } from '@/lib/supabase/server'`
 4. Type imports (use `import type` for types only)
-   - `import type { Metadata } from "next"`
-   - `import { NextResponse } from 'next/server'`
 
 **Path Aliases:**
-- `@/*` = `./src/*` - Used exclusively for all local imports
-- Example: `@/lib/utils`, `@/components/ui`, `@/app/api`
+- `@/*` = `./src/*` — Used exclusively for all local imports
 
 ## Error Handling
-
-**Patterns:**
-- Custom error classes in `lib/api/errors.ts` for API-specific errors
-- All error classes extend `APIError` with status code and optional code
-- Common errors:
-  - `UnauthorizedError` (401)
-  - `ForbiddenError` (403)
-  - `NotFoundError` (404)
-  - `BadRequestError` (400)
-  - `InsufficientCreditsError` (402)
-  - `InternalServerError` (500)
 
 **API Routes:**
 - Use `withErrorHandler()` wrapper for consistent error handling
 - Pattern: `export const GET = withErrorHandler(handleGet)`
-- Try/catch blocks in handlers, errors thrown as custom exceptions
-- `errorResponse()` function converts exceptions to JSON responses with status codes
-- Development mode includes error stack traces; production hides them
+- Throw custom error classes: `UnauthorizedError` (401), `BadRequestError` (400), `InsufficientCreditsError` (402), `NotFoundError` (404), `ForbiddenError` (403)
+- `errorResponse()` converts exceptions to JSON with status codes
+- Development mode includes stack traces; production hides them
 
 **Frontend:**
 - React Query handles async errors with `error` state in hooks
 - Components check `isLoading` and `error` states
-- Errors displayed via UI or toast notifications (not implemented yet)
+- Error boundaries for unexpected failures
 
-**Logging:**
-- `console.error()` with context prefix in API routes
-  - Example: `console.error('[API Error]', error)`
-  - Example: `console.error('[API] [/api/queries/create]', error)`
-- Client-side: `console.warn()` for warnings (example in type utils)
-
-## Comments
-
-**When to Comment:**
-- JSDoc comments on exported functions and types
-- Explain "why" not "what" (code shows what, comments explain intent)
-- Section headers with horizontal line separators at top of files
-  - Example: `// ================================================`
-
-**JSDoc/TSDoc:**
-- Used on utility functions and type exports
-  - Example: `/** Utility function to merge Tailwind CSS classes */`
-  - Example: `/** Format a number as currency */`
-- Parameters and return types documented in JSDoc
-- Not required for obvious component props (TypeScript handles that)
-
-**File Section Headers:**
-- All API routes and major modules include header comments
-  - Format: `// ================================================` then purpose
-  - Example: `// Queries API Routes` with HTTP method descriptions
-
-## Function Design
-
-**Size:**
-- Generally keep functions under 50 lines
-- Complex logic broken into smaller helpers
-- API route handlers typically 20-40 lines after wrapping with `withErrorHandler`
-
-**Parameters:**
-- Use object destructuring for multiple parameters
-  - Example: `function MetricsCard({ title, value, subtitle, icon, trend }: MetricsCardProps)`
-  - Better readability than positional args
-- Optional parameters marked with `?` in TypeScript
-- Provide sensible defaults where appropriate
-
-**Return Values:**
-- Always specify return type in TypeScript
-  - Example: `function formatDate(...): string`
-  - Example: `async function handler(...): Promise<NextResponse>`
-- Return custom response objects from API routes via `successResponse<T>()` or `errorResponse()`
-- Use early returns to reduce nesting
-
-## Module Design
-
-**Exports:**
-- Use named exports for most modules
-  - Example: `export function useQueries() { ... }`
-  - Example: `export class APIError extends Error { ... }`
-- Default exports only for page components and main entry points
-  - Example: `export default function DashboardPage() { ... }`
-
-**Barrel Files:**
-- Index files aggregate exports from directory
-  - Example: `src/lib/hooks/index.ts` (if created)
-  - Example: `src/components/landing/shared/index.ts` exists
-- Used to simplify imports: `import { Button } from '@/components/landing/shared'`
-
-**Organization:**
-- Group related code: utils, hooks, components, API routes each have own directory
-- Shared UI components in `src/components/ui/` (Shadcn components)
-- Page-specific components in `src/components/{section}/`
-- API routes mirror feature structure: `/api/queries/`, `/api/content/`, etc.
+**Inngest Functions:**
+- Use `step.run()` for each retryable operation
+- Failed steps retry automatically (configurable retry count)
+- On final failure: release held credits, update job status to 'failed'
 
 ## API Response Format
 
-**Success Responses:**
+**Success:**
 ```typescript
 {
   success: true,
   data: T,
-  meta: {
-    timestamp: "2025-02-27T...",
-    // additional metadata
-  }
+  meta: { timestamp: "2026-03-01T..." }
 }
 ```
 
-**Error Responses:**
+**Error:**
 ```typescript
 {
   success: false,
   error: {
     message: "User-friendly error message",
-    code: "ERROR_CODE_STRING",
-    details: undefined // only in development
+    code: "ERROR_CODE_STRING"
   },
-  meta: {
-    timestamp: "2025-02-27T..."
-  }
+  meta: { timestamp: "2026-03-01T..." }
 }
 ```
 
@@ -204,31 +139,16 @@
 **Functional Components:**
 - Always functional components with hooks, no class components
 - Use `'use client'` directive for client-side components
-- Use Server Components (no directive) when possible for performance
+- Server Components (no directive) when possible for performance
 
 **Component Structure:**
 ```typescript
 // 1. Imports (organized as above)
-import { useState } from 'react'
-import { Card } from '@/components/ui/card'
-
 // 2. Interface definitions
-interface ComponentProps {
-  title: string
-  value: number
-}
-
 // 3. Component function
-export function Component({ title, value }: ComponentProps) {
-  // 4. Hooks at top
-  const [state, setState] = useState(null)
-
-  // 5. Event handlers
-  const handleClick = () => { ... }
-
-  // 6. Render logic
-  return <div>...</div>
-}
+// 4. Hooks at top of function body
+// 5. Event handlers
+// 6. Render logic
 ```
 
 **Props:**
@@ -236,42 +156,38 @@ export function Component({ title, value }: ComponentProps) {
 - Name interfaces as `{ComponentName}Props`
 - Use destructuring in function signature
 
-**Hooks:**
-- React hooks from `react`
-- React Query hooks for server state: `useQuery`, `useMutation`, `useQueryClient`
-- Custom hooks in `lib/hooks/` directory
-- Zustand store hooks for client state
-
 ## Database Patterns
 
 **Column Naming:**
-- snake_case for all database columns
-- Examples: `user_id`, `created_at`, `is_active`, `avg_ranking`
-- Matches PostgreSQL conventions
+- snake_case for all database columns (PostgreSQL convention)
 
-**Type Matching:**
-- TypeScript interfaces match database tables
-- Optional fields use `| null` not `?` for database nullability
-- Example: `avg_ranking: number | null` means column is nullable
+**Critical DB Conventions (from System Design v2.1):**
+- Use `scan_id` everywhere (NOT `scan_token`)
+- Table: `scan_engine_results` (NOT `scan_engine_responses`)
+- Table: `agent_jobs` (NOT `agent_executions`)
+- Table: `content_items` (NOT `content_generations`)
+- Table: `credit_pools` (NOT `credits`)
+- Table: `user_profiles` (NOT `customers` or `users`)
+- `subscription_status` enum: `'cancelled'` (UK spelling — NOT `'canceled'`)
+- `plan_tier` enum: `'starter' | 'pro' | 'business'` — NO `'free'` value (free tier = null subscription)
+- `agent_type` enum: `'competitor_intelligence'` (NOT `'competitor_research'`), `'faq_agent'` (NOT `'query_researcher'`)
+- `sentiment_score`: integer 0-100 (NOT an enum)
+- `content_output_format`: `'json_ld'`, `'plain_text'`, `'structured_report'` (NOT `'json-ld'` or `'json'`)
+- `credit_transactions.transaction_type`: use `'topup'` (NOT `'bonus'`)
 
 ## State Management
 
 **React Query (Server State):**
 - Primary tool for API data fetching and caching
-- Configured in `lib/react-query/client.ts`
 - Default: 5-minute staleTime, 10-minute gcTime
 - Queries: `refetchOnWindowFocus: false`, `refetchOnReconnect: true`
 - Mutations: 1 retry default
 
 **Zustand (Client State):**
-- Used for UI-only state (modals, sidebar, loading messages)
+- UI-only state (modals, sidebar, loading messages)
 - Store in `lib/zustand/stores/`
-- Example: `useUIStore` for sidebar, modal, loading states
 - Simple create/set pattern, no complex middleware
-
-**Props:**
-- Avoid prop drilling; use context or state management for deeply nested data
 
 ---
 
-*Convention analysis: 2025-02-27*
+*Convention analysis: 2026-02-27 | Updated: March 2026 — synced with System Design v2.1*

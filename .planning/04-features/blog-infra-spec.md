@@ -1,7 +1,11 @@
 # Beamix — Blog Infrastructure Spec
-**Version:** 1.0
+
+> **Last synced:** March 2026 — aligned with 03-system-design/
+
+**Version:** 1.1
 **Date:** 2026-02-28
-**Status:** Draft — Phase 2 (infrastructure planned now, build later)
+**Last Updated:** 2026-03-06 — synced with System Design v2.1
+**Status:** Updated — Blog is built (Phase 11 complete). List page, [slug] page, 4 seed posts, markdown rendering.
 
 > Goal: Drive organic SEO traffic. Publish manually + AI-generated + programmatic SEO content.
 > Blog is planned but **not built in MVP**. This spec defines the full architecture to build from when ready.

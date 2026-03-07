@@ -60,7 +60,7 @@ export async function sendAgentCompleteEmail(to: string, props: AgentCompleteEma
 export async function sendTrialStartEmail(to: string, props: TrialStartEmailProps) {
   return sendEmail({
     to,
-    subject: 'Your 14-day trial starts now',
+    subject: 'Your 7-day trial starts now',
     react: createElement(TrialStartEmail, props),
   })
 }

@@ -49,7 +49,7 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 **What the user sees:**
 - Navigation bar with logo, product links, login/signup, language toggle (HE/EN)
 - Hero section with headline, subheadline, and free scan input field (URL + business name + industry)
-- Trust bar: engine logos (ChatGPT, Gemini, Perplexity, Claude)
+- Trust bar: engine logos (ChatGPT, Gemini, Perplexity, Claude, Grok, and more) — do NOT include Bing Copilot (no public API, deferred to Phase 3)
 - "How It Works" section: 3 steps (Scan, Diagnose, Fix)
 - Product preview: dashboard screenshot or interactive demo
 - Agent showcase: what the AI agents actually do
@@ -94,7 +94,7 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 - Loading state: animated progress showing engines being queried in real-time
 - Results view (when complete):
   - **Visibility Score** -- 0-100 gauge, color-coded (red/yellow/green)
-  - **Per-Engine Breakdown** -- 4 cards (ChatGPT, Gemini, Perplexity, Bing Copilot) showing mentioned/not mentioned, position, sentiment
+  - **Per-Engine Breakdown** -- 3 cards (ChatGPT, Gemini, Perplexity) showing mentioned/not mentioned, position, sentiment — free tier uses 3 engines (Copilot removed, no public API)
   - **AI Readiness Score** -- 0-100% with 5-category breakdown (Content Quality, Technical Structure, Authority Signals, Semantic Alignment, AI Accessibility)
   - **Top Competitor** -- who AI recommends instead of you
   - **Leaderboard** -- your position among detected competitors
@@ -104,8 +104,20 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
   - "See how to fix this" (links to agent descriptions)
   - Share button: "My AI visibility score is 34/100. Check yours at beamix.io"
 
+**Scan states and failure handling:**
+
+| State | Condition | What the user sees |
+|-------|-----------|-------------------|
+| **Loading** | Scan in progress, engines responding | Animated progress: "Scanning X of 4 AI engines..." with per-engine status indicators (spinning/done/failed). Poll interval: 3 seconds. |
+| **Partial results** | Some engines complete, others still running | Completed engines show results immediately. Pending engines show skeleton cards with spinner. User can read completed results while waiting. |
+| **Timeout** | >90 seconds elapsed, some engines haven't responded | Show completed results. Failed engines show: "This engine timed out — results unavailable for this scan." Overall score calculated from available engines with note: "Score based on X of 4 engines." |
+| **Full error** | All engines failed or API error | Error illustration + "We couldn't complete your scan right now. This is usually temporary." + "Try Again" primary CTA button + "Contact support" secondary link. |
+| **Expired scan_id** | Scan older than 14 days or invalid ID | "This scan has expired. Free scan results are available for 14 days." + "Run a New Free Scan" CTA linking to `/scan`. |
+| **Rate limited** | Same IP/fingerprint submitted too many scans | "You've reached the free scan limit. Create an account for unlimited scans and full AI visibility insights." + "Sign Up Free" CTA. |
+| **Page refresh** | User refreshes during scan | Polling resumes from current state. Already-completed engine results display immediately. No data loss. |
+
 **User actions:** View results, share results URL, click signup CTA, start another scan.
-**Data in:** GET `/api/scan/[scan_id]/results` (polls until complete).
+**Data in:** GET `/api/scan/[scan_id]/results` (polls every 3 seconds until complete or timeout).
 **Data out:** Signup click carries `scan_id` as query param.
 **Connects to:** Signup (with scan_id), Landing page (new scan).
 
@@ -166,23 +178,31 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 
 ---
 
-### 2.7 Onboarding (4 Steps)
+### 2.7 Onboarding (3 Steps + Welcome Screen)
 
 **URL:** `/onboarding`
 **Purpose:** Collect business information, set up the user's workspace, and import free scan if applicable.
 
+**Step structure and progress indicator:**
+
+| Screen | Content | Counted in dots? |
+|--------|---------|-----------------|
+| **Step 0 — Welcome** | Welcome screen. If `scan_id` present: "We found your scan results!" with auto-import confirmation. If no `scan_id`: brief intro to what Beamix does and what the onboarding will set up. Always shown. | No — not counted |
+| **Step 1 — Business** | Business details: name, website URL, industry (dropdown), location, description. Pre-populated from scan data if available. | Yes — dot 1 |
+| **Step 2 — Queries** | Services (multi-select or freeform tags) + add 1-3 competitor names or URLs (optional, can skip). | Yes — dot 2 |
+| **Step 3 — Competitors** | Competitor names or URLs (optional, can skip). Language (HE/EN) and notification preferences. | Yes — dot 3 |
+| **Ready Screen** | Completion confirmation: "Your workspace is ready!" with summary of what was set up and a "Go to Dashboard" CTA. Not counted as a step — this is a transition screen. | No — not counted |
+
+**Progress indicator:** 3 dots, always visible from Step 1 onward. Step 0 (Welcome) and the Ready screen have no dots. Active dot is filled, upcoming dots are outlined, completed dots are checked.
+
 **What the user sees:**
-- Progress indicator: 3 dots (step 0 is hidden from count)
-- Step 0 (if `scan_id` present): "We found your scan results!" -- auto-import confirmation
-- Step 1: Business details -- name, website URL, industry (dropdown), location, description
-- Step 2: Services -- multi-select or freeform tags for services offered
-- Step 3: Competitors -- add 1-3 competitor names or URLs (optional, can skip)
-- Step 4: Preferences -- language (HE/EN), notification preferences
 - Animated transitions between steps
+- Back button available on Steps 1-3 (not on Step 0 or Ready)
+- Skip button on Step 3 (competitors are optional)
 
 **User actions:** Fill each step, navigate back/forward, skip optional steps, complete onboarding.
 **Data in:** If `scan_id` present, fetch free scan data to pre-populate business fields.
-**Data out:** POST `/api/onboarding/complete` -- creates `businesses` record, links free scan data via UPSERT to `user_profiles`, starts 14-day trial clock on first dashboard visit.
+**Data out:** POST `/api/onboarding/complete` -- creates `businesses` record, links free scan data via UPSERT to `user_profiles`, starts 7-day trial clock on first dashboard visit.
 **Connects to:** Dashboard.
 
 ---
@@ -198,7 +218,8 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
   - Navigation: Overview, Rankings, Recommendations, Content Library, Agent Hub, Competitors, AI Readiness, Settings
   - Quick actions: [Run Scan] [New Agent]
   - Agent usage meter: progress bar (e.g., "8/15 uses this month")
-  - Notification bell with unread count
+  - Notification bell with unread count badge — click navigates to `/dashboard/notifications`
+  - Ask Beamix floating chat bubble (persistent, bottom-right corner — see A12 spec)
   - User avatar + dropdown (settings, billing, logout)
 
 - **Main content area:**
@@ -209,9 +230,9 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
   - **Recent Agent Activity** -- last 5 agent runs with status, type, output preview
   - **Competitor Snapshot** -- mini comparison bar chart (your brand vs top 3 competitors)
   - **Content Performance Summary** -- published content count + visibility impact delta (NEW -- gap closure)
-  - **Prompt Volume Trends** -- top 3 trending queries in your industry (NEW -- gap closure)
+  - **Trending Search Queries** (NEW -- gap closure) -- top 5 AI search queries in your category this week. Source: `prompt_library` table (aggregated weekly by cron). Each query shows: query text, volume trend arrow (up/down/stable vs last week), your current mention rate for that query (e.g., "Mentioned in 2/4 engines"). CTA per query: "Target this query" links to Content Writer agent pre-filled with the query as topic.
 
-**User actions:** Click any widget to drill down, run a scan, trigger an agent from recommendations, toggle time ranges on trend chart, click notification bell.
+**User actions:** Click any widget to drill down, run a scan, trigger an agent from recommendations, toggle time ranges on trend chart, click notification bell, click "Target this query" on trending queries.
 **Data in:** `scan_results`, `scan_engine_results`, `recommendations`, `agent_jobs`, `competitors`, `content_items`, `credit_pools`.
 **Data out:** Agent trigger events, scan trigger events.
 **Connects to:** Rankings, Recommendations, Content Library, Agent Hub, Competitors, AI Readiness, Settings.
@@ -280,9 +301,20 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
   - Review actions: Approve (move to Published), Request Changes (add comment, move back to Draft), Reject
   - Review history: who reviewed, when, notes
 
-**User actions:** Filter, favorite, open content editor, change status, export/download, publish to WordPress, view performance metrics, review items in queue.
+**Pagination, search, and bulk actions:**
+- **Pagination:** 20 items per page. Page controls at bottom: Previous / page numbers / Next. Total item count displayed (e.g., "Showing 1-20 of 47 items").
+- **Search:** Full-text search bar at top of content list. Searches title and content body preview. Instant filtering as user types (debounced 300ms). Clear button to reset search.
+- **Filter bar:** Agent type dropdown, status multi-select (Draft / Ready for Review / Published / Archived), date range picker, content type dropdown. Filters combine with AND logic. Active filters shown as removable chips.
+- **Sort:** Default newest first. Options: newest, oldest, last modified, alphabetical (title).
+- **Bulk actions:** Checkbox on each content card. "Select all on page" checkbox in header. When 1+ items selected, bulk action bar appears above the list:
+  - "Delete selected" (confirmation modal: "Delete X items? This cannot be undone.")
+  - "Archive selected" (moves to Archived status)
+  - "Export selected" (downloads as ZIP of Markdown files, Business tier only)
+  - Selection count displayed: "3 items selected"
+
+**User actions:** Filter, search, paginate, select items, perform bulk actions, favorite, open content editor, change status, export/download, publish to WordPress, view performance metrics, review items in queue.
 **Data in:** `content_items`, `agent_jobs`, scan correlation data.
-**Data out:** Status updates, WordPress publish events, export downloads.
+**Data out:** Status updates, WordPress publish events, export downloads, bulk delete/archive operations.
 **Connects to:** Content Editor (click to edit), Agent Hub (regenerate), Rankings (performance correlation).
 
 ---
@@ -324,7 +356,7 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 - **Agent categories:**
   - Content Creation: Content Writer, Blog Writer, FAQ Agent, Social Strategy
   - Technical: Schema Optimizer, LLMS.txt Generator, AI Readiness Auditor
-  - Intelligence: Competitor Intelligence, Review Analyzer, Citation Builder, Recommendations (system)
+  - Intelligence: Competitor Intelligence, Review Analyzer, Citation Builder, Brand Narrative Analyst, Recommendations (system)
   - Conversational: Ask Beamix
   - NEW agents (gap closure):
     - **Content Voice Trainer** -- trains on business's existing website content to match their writing style
@@ -332,19 +364,38 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
     - **Content Refresh Agent** -- audits published content for staleness, suggests or auto-applies updates
 - **Usage meter:** "8/15 agent uses this month" with bar + top-up CTA
 - **Recurring Executions Panel** (NEW -- gap closure): shows scheduled/recurring agent runs (e.g., "Content Refresh runs monthly on your published articles")
-- **Agent Workflow Builder** (NEW -- gap closure): visual chain builder connecting events to agent actions (e.g., "Visibility drop > 15% --> Auto-run Recommendations --> Draft Content Fix --> Queue for Review")
+- **Automation Toggles (MVP):** 4 pre-built workflow cards, each with ON/OFF toggle and simple config:
+    1. "Visibility Drop Response" — trigger threshold: 10%/15%/20% dropdown
+    2. "New Content Lifecycle" — auto-audit published content after 30 days
+    3. "Competitor Alert Response" — auto-analyze when a competitor overtakes you
+    4. "Onboarding Sequence" — runs automatically on signup (always on)
+- **Agent Workflow Builder (Phase 3 — deferred):** Visual chain builder connecting events to agent actions. Deferred to post-launch; MVP uses pre-built toggles above. Will be built only if user demand validates the need for custom workflows.
 
-**User actions:** Launch agent, view past runs, set up recurring schedules, create workflows, upgrade tier for locked agents, buy top-ups.
-**Data in:** Agent configuration, `agent_jobs`, `credit_pools`, workflow definitions.
-**Data out:** Agent trigger events, workflow creation.
+**Agent card states:**
+
+| State | Visual | Copy |
+|-------|--------|------|
+| **Loading** | Skeleton card: gray placeholder for icon, name, description, and button. Subtle shimmer animation. | — |
+| **Available** | Full card with agent info, tier badge, "Run" button (primary style). | "Run" button label |
+| **Running** | Card shows progress indicator (spinning icon) + current step name. "Run" button replaced with "Running..." (disabled, secondary style). | Step name updates: "Researching competitors...", "Generating content...", "Quality checking..." |
+| **Completed** | Card shows green check + "Last run: 2 hours ago." "Run" button returns to available state. | "Run Again" button label |
+| **Error** | Card shows red warning icon + error message (1 line). Retry button appears. | "Something went wrong. [Retry]" |
+| **Unavailable** | Card shows gray overlay + clock icon. | "Agent temporarily unavailable. Usually back within a few minutes." |
+| **Locked (wrong tier)** | Card shows lock icon overlay. Description visible but dimmed. | "Available on Pro plan. [Upgrade]" |
+
+**User actions:** Launch agent, view past runs, set up recurring schedules, toggle automations, upgrade tier for locked agents, buy top-ups.
+**Data in:** Agent configuration, `agent_jobs`, `credit_pools`, automation settings.
+**Data out:** Agent trigger events, automation toggle updates.
 **Connects to:** Agent Chat (individual agent run), Content Library (outputs), Billing (top-ups/upgrades).
 
 ---
 
 ### 2.14 Dashboard: Agent Chat
 
-**URL:** `/dashboard/agents/[agent_id]`
+**URL:** `/dashboard/agents/[agentType]` (slug, e.g., `content-writer`, `faq`, `competitor-intelligence`)
 **Purpose:** Interactive, real-time agent execution with streaming output.
+
+> **URL parameter:** `agentType` is a string slug matching the agent's machine name (e.g., `content-writer`, `blog-writer`, `schema-optimizer`, `faq`, `review-analyzer`, `social-strategy`, `competitor-intelligence`, `citation-builder`, `llms-txt`, `ai-readiness`, `ask-beamix`, `voice-trainer`, `pattern-analyzer`, `content-refresh`, `brand-narrative`). This is NOT a database UUID. To view a specific past run, use `/dashboard/agents/[agentType]/run/[job_id]`.
 
 **What the user sees:**
 - **Chat interface** (full page):
@@ -417,7 +468,33 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 
 ---
 
-### 2.17 Dashboard: Settings (4 Tabs)
+### 2.17 Dashboard: Empty States (MAJ-9)
+
+Every dashboard page has an empty state shown when the user has no data for that section. Pattern: centered illustration/icon + headline + description (1 sentence) + primary CTA button.
+
+| Page | Icon/Illustration | Headline | Description | CTA Button | CTA Action |
+|------|-------------------|----------|-------------|------------|------------|
+| **Overview** | Bar chart with magnifying glass | "See how AI engines see your business" | "Run your first scan to get your visibility score and AI readiness report." | "Run First Scan" | Navigate to `/scan` or trigger manual scan |
+| **Rankings** | Podium / ranking list | "Track your AI search rankings" | "After your first scan, you'll see how you rank across every AI engine." | "Run First Scan" | Navigate to `/scan` |
+| **Agents Hub** | Robot with wrench | "AI agents that do the work for you" | "Run an agent to generate content, optimize your site, or analyze competitors." | "Explore Agents" | Scroll to agent cards or open first recommended agent |
+| **Content Library** | Document with sparkle | "Your AI-optimized content lives here" | "Content created by agents appears here. Edit, publish, or save for later." | "Create First Content" | Open Content Writer agent (A1) |
+| **Competitive Intelligence** | Binoculars / spy glass | "Know what your competitors are doing" | "Add competitors to track how they rank across AI engines compared to you." | "Add Competitor" | Open competitor add modal |
+| **Analytics** | Line chart trending up | "Track your visibility over time" | "After 2+ scans, you'll see trends, improvements, and alerts here." | "View Scan Schedule" | Navigate to settings or scan page |
+| **AI Readiness** | Checklist with checkmarks | "How AI-ready is your website?" | "Run an AI readiness audit to get a detailed improvement roadmap." | "Run AI Audit" | Trigger A11 (AI Readiness Auditor) |
+| **Alerts** | Bell with plus | "Never miss a visibility change" | "Set up alerts for ranking drops, competitor moves, or scan completions." | "Create First Alert" | Open alert creation form |
+| **Credits** | Coin stack | "Your agent credits" | "Credits are used when agents run. Your monthly allocation refreshes on your billing date." | "View Plans" | Navigate to `/pricing` (if no plan) or show allocation (if has plan) |
+
+**Design Rules:**
+- Illustration: Simple line art or icon, monochrome with brand accent color. Max 120x120px.
+- Headline: Bold, 20-24px, max 8 words.
+- Description: Regular weight, 14-16px, max 20 words. No jargon.
+- CTA: Primary button style (brand color). Single CTA per empty state.
+- Layout: Vertically centered in the content area. No sidebar changes.
+- Transition: Empty state disappears permanently once the page has data. No animation — just replaced by real content on next load.
+
+---
+
+### 2.18 Dashboard: Settings (4 Tabs)
 
 **URL:** `/dashboard/settings`
 
@@ -437,7 +514,20 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 **Data:** `user_profiles`, `notification_preferences`.
 
 #### Tab 4: Integrations
-**What the user sees:** Integration cards -- WordPress, GA4, Google Search Console, Slack, Cloudflare, Looker Studio, Public API. Each shows: connected/disconnected status, connect button, configuration options.
+**What the user sees:** Integration cards -- WordPress (Pro+), GA4 (Pro+), Google Search Console (Pro+), Slack (Pro+), Cloudflare (Business), Public API (Business). Each shows: connected/disconnected status, connect button, configuration options. Looker Studio card shows "Coming Soon — Growth Phase" with description: "Connect via REST API in the meantime."
+
+**Integration readiness triggers:**
+
+| Integration | Shows as "Connected" when | Shows as "Not Connected" when | Shows as "Coming Soon" when |
+|-------------|--------------------------|-------------------------------|----------------------------|
+| GA4 | `integrations` row exists with `type = 'ga4'` and valid `ga4_credentials` for this business | Row missing or credentials expired/revoked | Never — always available for Pro+ |
+| Google Search Console | `integrations` row exists with `type = 'gsc'` and valid `gsc_credentials` for this business | Row missing or credentials expired | Never — always available for Pro+ |
+| WordPress | `integrations` row exists with `type = 'wordpress'` and valid `wordpress_credentials` for this business | Row missing or credentials invalid | Never — always available for Pro+ |
+| Slack | `integrations` row exists with `type = 'slack'` and valid `webhook_url` for this business | Row missing or webhook invalid | Never — always available for Pro+ |
+| Cloudflare | `integrations` row exists with `type = 'cloudflare'` and valid API token | Row missing or token invalid | Never — always available for Business |
+| Public API | At least one `api_keys` row exists for this user | No API keys generated | Never — always available for Business |
+| Looker Studio | — | — | Always "Coming Soon" until native connector is built and deployed in Growth Phase |
+
 **User actions:** Connect/disconnect integrations, configure settings, generate API keys (Business tier).
 **Data:** `integrations`, `api_keys`.
 
@@ -445,7 +535,107 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 
 ---
 
-### 2.18 Pricing Page
+### 2.19 Dashboard: Notifications
+
+**URL:** `/dashboard/notifications`
+**Purpose:** View and manage all alert notifications. Accessible via the notification bell icon in the sidebar.
+
+**What the user sees:**
+- **Notification list** (newest first): each notification displays:
+  - Type icon (color-coded by severity): visibility drop (red down-arrow), improvement (green up-arrow), competitor (orange binoculars), sentiment (purple chart), scan/agent complete (blue check), credit warning (yellow coin), trial (red clock)
+  - Title (e.g., "Visibility dropped 18% on ChatGPT")
+  - Description (1-2 sentences of context, e.g., "Your visibility score for 'best plumber in Tel Aviv' dropped from 72 to 54 after last scan.")
+  - Timestamp (relative: "2 hours ago", "Yesterday", "March 3")
+  - "View details" link — navigates to the relevant dashboard page (Rankings for visibility alerts, Competitors for competitor alerts, Agent Hub for agent alerts, Settings > Billing for trial/credit alerts)
+  - Unread indicator (blue dot, left side)
+- **Filter bar:** All | Unread | By type dropdown (Visibility Change, Sentiment Shift, Competitor Alert, Scan Complete, Agent Complete, Credit Warning, Trial)
+- **Mark all as read** button (top right, enabled when unread notifications exist)
+- **Notification preferences** link at bottom: "Manage notification settings" links to Settings > Preferences tab
+
+**Empty state:** Bell icon + "No notifications yet" + "Notifications appear when your visibility changes, agents complete, or competitors make moves." + "Set Up Alerts" CTA linking to Settings > Preferences.
+
+**User actions:** Read notifications, filter by type/status, mark all as read, click through to relevant pages, navigate to notification preferences.
+**Data in:** `notifications` table, filtered by `user_id`, ordered by `created_at DESC`.
+**Data out:** Mark-as-read updates (`notifications.read_at`).
+**Connects to:** All dashboard pages (via "View details" links), Settings > Preferences (notification config).
+
+---
+
+### 2.20 Post-Trial Experience (CRIT-7)
+
+**What happens when the 7-day trial expires without payment:**
+
+| Phase | Duration | Access Level | UI State |
+|-------|----------|-------------|----------|
+| **Active Trial** | Days 1-14 | Full access | Normal dashboard with trial countdown banner |
+| **Grace Period** | Days 15-44 (30 days) | Read-only dashboard | Yellow banner: "Your trial has ended. Subscribe to continue using Beamix." All action buttons disabled (scans, agents, content creation). Data visible but not actionable. |
+| **Lockout** | Days 45-134 (90 days) | Login only, no dashboard | Red banner: "Your account is locked. Subscribe to restore access." Data retained but hidden. |
+| **Data Deletion** | Day 135+ | N/A | Account and all data permanently deleted per GDPR. |
+
+**Re-activation:** User can subscribe at ANY point during grace/lockout to instantly restore full access with all data intact.
+
+**Email triggers:**
+- 3 days before trial ends: "Your trial ends in 3 days" (N9 alert)
+- Day trial expires: "Your trial has ended — here's what you'll lose"
+- 14 days after expiry: "Your data is still here — reactivate now"
+- 25 days after expiry: "Final warning — account lockout in 5 days"
+
+**Auth middleware behavior:** Check `subscriptions.status` and `trial_ends_at`. If expired and no active plan: allow dashboard routes but inject `readOnly: true` into page props. Block all POST/PATCH/DELETE API routes except billing endpoints.
+
+#### Trial Expired State — Per-Page Behavior
+
+**Global elements (all dashboard pages during grace period):**
+- Persistent yellow banner at top of every page: "Your trial has ended — upgrade to keep access." [Upgrade Now] button in banner.
+- All data remains visible (read-only) for the 30-day grace period.
+- Sidebar navigation works normally — user can browse all pages.
+
+| Page | What remains visible | What is disabled | Disabled element behavior |
+|------|---------------------|-----------------|--------------------------|
+| **Overview** | All widgets, scores, charts, trend data (last snapshot) | "Run Scan" button, "Run Agent" buttons on recommendations, quick actions in sidebar | Disabled buttons show tooltip: "Upgrade to run scans and agents" |
+| **Rankings** | Full rankings table, filters, expandable rows, citations, persona filter | CSV export button | Tooltip: "Upgrade to export data" |
+| **Recommendations** | All recommendation cards visible with impact levels and evidence | "Run Agent" buttons on each card, status change actions (dismiss, mark in progress) | Agent buttons show tooltip: "Upgrade to run agents." Cards are read-only. |
+| **Content Library** | All content items visible, filterable, searchable | "Create" button, status change actions, publish button, delete, editorial queue actions | Tooltip: "Upgrade to manage content" |
+| **Agent Hub** | All agent cards visible with descriptions and last run info | All "Run" buttons, automation toggles, schedule configuration, top-up CTA | Run buttons show tooltip: "Upgrade to run agents." Usage meter shows "Trial ended." |
+| **Agent Chat** | Previous conversation history visible (read-only scroll) | Input form, "Run Agent" button, all action bar buttons | Message at top of chat: "Your trial has ended. Upgrade to run agents and create new content." |
+| **Competitors** | Competitor list, share of voice, comparison table, gap analysis | "Add Competitor" button, "Run Analysis" buttons | Tooltip: "Upgrade to manage competitors" |
+| **AI Readiness** | Last audit scores and breakdown visible | "Run Full Audit" button, "Fix" buttons on recommendations | Tooltip: "Upgrade to run audits" |
+| **Settings — Billing** | **Fully functional** — this is the upgrade path | Nothing disabled | Paddle checkout, plan selection, payment method update all work normally |
+| **Settings — Business** | Current values visible | All edit fields and save button | Fields are grayed out. Note: "Upgrade to update your business profile." |
+| **Settings — Preferences** | Current preferences visible | All toggles and save button | Grayed out with same upgrade note |
+| **Settings — Integrations** | Connection status visible | Connect/disconnect buttons, configuration | Tooltip: "Upgrade to manage integrations" |
+
+### 2.21 Account Deletion Flow (MAJ-7 — GDPR)
+
+**Trigger:** Settings > Account > "Delete My Account" button (red, bottom of page).
+
+**Flow:**
+
+| Step | What Happens | UI |
+|------|--------------|----|
+| 1. Click "Delete Account" | Confirmation modal appears | Modal: "This will permanently delete your account and all data after 30 days. This cannot be undone." |
+| 2. Type "DELETE" to confirm | User types the word DELETE in an input field | Input field + disabled "Confirm Deletion" button (enabled when text matches) |
+| 3. Submit | API call `POST /api/settings/delete-account` | Loading spinner, then redirect to `/goodbye` |
+| 4. Immediate effects | Account deactivated: can't log in, all sessions invalidated, Paddle subscription cancelled | Email: "Your account has been scheduled for deletion" |
+| 5. 30-day grace period | Data retained but inaccessible. User can email support to cancel deletion. | Support email link in confirmation email |
+| 6. Day 31: Purge | Background job permanently deletes all user data | Final email: "Your data has been permanently deleted" |
+
+**What Gets Deleted (Day 31):**
+- `user_profiles`, `businesses`, `scans`, `scan_results`, `scan_engine_results`
+- `content_items`, `agent_jobs`, `recommendations`, `alert_rules`
+- `credit_pools`, `credit_transactions`, `notification_preferences`
+- Voice profiles, tracked queries, competitor data
+
+**What Gets Retained (legal):**
+- `subscriptions` and `invoices` records — retained 7 years for tax/legal compliance (anonymized: user_id replaced with hash, name/email removed)
+- Aggregate analytics (non-PII): total scans run, agents used — for internal metrics only
+
+**Cancel Deletion:** User emails support within 30 days → admin endpoint `POST /api/admin/cancel-deletion` reactivates account.
+
+**Auth Middleware:** Check `user_profiles.deleted_at`. If not null → reject all routes, return 403 with "Account scheduled for deletion" message.
+
+---
+
+### 2.22 Pricing Page
 
 **URL:** `/pricing`
 **Purpose:** Display plans, drive upgrades and new signups.
@@ -465,24 +655,30 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 
 ---
 
-### 2.19 Blog
+### 2.23 Blog
 
 **URL:** `/blog` and `/blog/[slug]`
 **Purpose:** SEO + thought leadership + education about GEO.
 
 **What the user sees:**
-- Blog index: grid of posts with cover image, title, category, date, read time
+- Blog index: grid of posts with cover image, title, category, date, read time, author name
 - Blog post: full article with table of contents, author info, related posts, CTA to free scan
 - Categories: GEO, AI Search, Case Studies, Product Updates, Guides
 
+**Author spec:** Blog posts are authored by the Beamix team (human-written). The Blog Writer agent (A2) generates content for the *user's own website*, not the Beamix public blog.
+- `author_name` (string): Display name of the author (e.g., "Adam K.")
+- `author_role` (string): Role or title (e.g., "Founder, Beamix" or "GEO Research Lead")
+- Author info displayed below the post title: avatar placeholder + name + role
+- No AI-generated blog posts in the public blog — all content is human-written and editorially reviewed
+
 **User actions:** Browse, read, share, click CTA to scan.
-**Data in:** `blog_posts` table.
+**Data in:** `blog_posts` table (includes `author_name`, `author_role` columns).
 **Data out:** Free scan CTA clicks.
 **Connects to:** Free Scan, Landing page.
 
 ---
 
-### 2.20 About Page
+### 2.24 About Page
 
 **URL:** `/about`
 **Purpose:** Company story, team, mission.
@@ -493,26 +689,39 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 
 ---
 
-### 2.21 Terms of Service
+### 2.25 Terms of Service
 
 **URL:** `/terms`
 **Purpose:** Legal terms. Static page.
 
 ---
 
-### 2.22 Privacy Policy
+### 2.26 Privacy Policy
 
 **URL:** `/privacy`
 **Purpose:** Privacy policy. Static page. GDPR compliance information.
 
 ---
 
-### 2.23 API Documentation (Future)
+### 2.27 API Documentation (Future)
 
 **URL:** `/docs/api`
 **Purpose:** Public API reference for Business tier users.
 
-**What the user sees:** REST API endpoint documentation, authentication guide, code examples, rate limits, response schemas.
+**Page structure:**
+1. **Overview** — What the Beamix API provides, who it's for (Business tier), base URL (`https://api.beamix.io/v1`), versioning policy.
+2. **Authentication** — API key in `Authorization: Bearer <api_key>` header. Key generation in Settings > Integrations. Scopes: `read` (GET endpoints), `write` (POST/PATCH), `execute` (agent triggers). Keys are shown once on creation and stored as hashed values.
+3. **Endpoints by category:**
+   - **Scan** — `GET /v1/scans`, `GET /v1/scans/:id`, `POST /v1/scans` (trigger manual scan)
+   - **Agents** — `GET /v1/agents`, `POST /v1/agents/:type/run`, `GET /v1/agents/jobs/:id`
+   - **Business** — `GET /v1/business`, `PATCH /v1/business`, `GET /v1/business/competitors`
+   - **Reports** — `GET /v1/reports/visibility`, `GET /v1/reports/rankings`, `GET /v1/reports/content`
+4. **Rate limits** — 100 requests/minute per API key. 429 response with `Retry-After` header. Rate limit headers on every response: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
+5. **SDK / Example code** — cURL examples for every endpoint. JavaScript/TypeScript SDK snippet (future). Response format: JSON with consistent error schema (`{ error: { code, message, details } }`).
+
+**Content generation:** Auto-generated from OpenAPI spec file. Rendered with a static docs framework (e.g., Mintlify or custom Next.js page).
+
+**What the user sees:** Interactive endpoint explorer with request/response examples, copy-to-clipboard code blocks, try-it-out sandbox (future).
 **User actions:** Read docs, copy code examples, navigate to API key generation in settings.
 **Connects to:** Settings (API key management).
 
@@ -524,12 +733,12 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 
 | # | Feature | What It Does | Where It Lives | Data Needed | Connections |
 |---|---------|-------------|---------------|-------------|-------------|
-| S1 | Free Scan | URL + name + industry + location --> 4 LLMs x 3 prompts --> visibility score, per-engine ranking, AI readiness score, competitor callout. Shareable URL 14 days. | `/scan`, `/scan/[scan_id]` | Business input, LLM responses | Signup (conversion), Onboarding (import) |
+| S1 | Free Scan | URL + name + industry + location --> 3 engines (ChatGPT, Gemini, Perplexity) x 3 prompts --> visibility score, per-engine ranking, AI readiness score, competitor callout. Shareable URL 30 days. | `/scan`, `/scan/[scan_id]` | Business input, LLM responses | Signup (conversion), Onboarding (import) |
 | S2 | AI Readiness Score | 0-100% scoring across 5 categories. Computed as part of free scan. Shareable card. | Free scan results, AI Readiness dashboard | Website crawl data (cheerio) | Free Scan, AI Readiness page |
-| S3 | Multi-Engine Scanning | Query 4/8/10+ AI engines by tier. ChatGPT, Gemini, Perplexity, Copilot, Claude, AI Overviews, Grok, AI Mode, Meta AI, DeepSeek. | Background (Inngest), Results in Rankings | Engine API responses | Rankings, Overview |
+| S3 | Multi-Engine Scanning | Query 4/8/10+ AI engines by tier. Free: ChatGPT, Gemini, Perplexity, Bing Copilot. Pro adds: Claude, Grok, You.com, Google AI Overviews (**Phase 3 — no stable API available at launch; will be added when browser simulation layer is built**). Business: all Pro engines + future engines. | Background (Inngest), Results in Rankings | Engine API responses | Rankings, Overview |
 | S4 | Scheduled Scans | Automated: weekly (Starter), every 3 days (Pro), daily (Business). Inngest cron. | Background | `businesses`, `tracked_queries`, `subscriptions` | Rankings, Alerts, Recommendations |
 | S5 | Manual Scan Trigger | On-demand re-scan. Rate-limited per tier (1/week, 1/day, 1/hour). | Dashboard Overview (button) | Current scan data | Rankings |
-| S6 | Prompt Auto-Generation | Auto-generate 3-8 industry/location-specific prompts per business. | Scan pipeline (internal) | Business profile, industry, location | Scan execution |
+| S6 | Prompt Auto-Generation | Auto-generate 3-8 industry/location-specific prompts per business. **Auto-suggestions (suggesting prompts based on platform trends) is a Growth Phase feature** — requires ~500+ scans in a category before volume data is meaningful. Launch version uses rule-based generation from industry + location + services. | Scan pipeline (internal) | Business profile, industry, location | Scan execution |
 | S7 | Sentiment Scoring (0-100) | Numeric sentiment per engine per scan. Replaces enum with 0-100 scale for trend granularity. | Rankings table, Per-engine grid | LLM-parsed sentiment | Rankings, Trend charts, Alerts |
 | S8 | Source-Level Citation Tracking | Show exact URLs AI cites when discussing the business. Per-engine, per-query. | Rankings (expandable row), dedicated Citations panel | Citation URLs extracted from LLM responses | Rankings, Competitive Intel, Content Strategy |
 | S9 | Historical Trend Storage | All scan results stored for trend analysis. 30d/60d/90d/all-time views. | Trend Chart widget | `scan_results` time series | Overview, Rankings |
@@ -560,7 +769,7 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 
 ---
 
-### 3.3 Agent System Module (15 agents)
+### 3.3 Agent System Module (16 agents)
 
 #### Existing Agents (12)
 
@@ -579,13 +788,46 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 | A11 | AI Readiness Auditor | Full website audit: deep crawl (up to 50 pages), 5-category scoring, detailed improvement roadmap. | Agent Hub, Agent Chat, AI Readiness page | Website URL | AI Readiness Dashboard |
 | A12 | Ask Beamix (Conversational Analyst) | Chat-based Q&A about user's data. "Why did my visibility drop?" "What should I focus on?" SSE streaming. No credit cost. | Agent Hub (dedicated chat), accessible from any dashboard page | Full business context + scan history | All dashboard data |
 
-#### New Agents (3 -- Closing Competitive Gaps)
+#### New Agents (4 -- Closing Competitive Gaps)
 
 | # | Agent | What It Does | Where It Lives | Data Needed | Connections |
 |---|-------|-------------|---------------|-------------|-------------|
 | A13 | Content Voice Trainer (NEW) | Analyzes business's existing website content + past edits to learn their writing voice. Produces a "voice profile" that all content agents use. Inspired by Goodie's Author Stamp. | Agent Hub, Settings (voice training section) | Website URL (crawl existing content), past content edits in Content Library | All content agents (A1, A2, A5, A7) use trained voice |
 | A14 | Content Pattern Analyzer (NEW) | Analyzes top-cited content in user's niche. Extracts structural/tonal patterns that make content get cited by AI. Produces a "citation playbook." Inspired by Spotlight. | Agent Hub, Agent Chat | Scan results (cited URLs), Perplexity research on top content | Content Writer, Blog Writer (use patterns in generation) |
 | A15 | Content Refresh Agent (NEW) | Audits existing published content for staleness. Identifies outdated facts, broken links, missing queries. Suggests updates or auto-generates refreshed versions. Can run on a schedule (monthly). Inspired by Profound Workflows. | Agent Hub, Content Library (refresh indicators) | `content_items` (published), latest scan results, current web data | Content Library, Content Editor |
+| A16 | Brand Narrative Analyst (NEW) | Analyzes WHY AI says what it says about the business. Deep narrative extraction across all engine responses: positioning themes, factual gaps, misperceptions, competitor framing. Produces a "Brand Narrative Report" with actionable reframing strategies. Pro+ tier. | Agent Hub (Intelligence category), Agent Chat, Rankings (narrative panel) | All raw LLM responses for business across scans, competitor scan data, business profile | Recommendations, Content Writer (narrative-aligned content), Competitive Intel |
+
+#### A16: Brand Narrative Analyst (NEW) — Full Spec
+
+**Purpose:** Understand the narrative AI engines have built about your business — and how to change it.
+
+**Input Form:**
+- Business (auto-selected, or dropdown if multiple)
+- Focus area (optional): "pricing perception," "expertise reputation," "comparison framing"
+- Competitor to compare (optional): select from tracked competitors
+
+**Streaming Phases:**
+1. "Collecting AI responses..." — Gathers all recent scan data for the business
+2. "Analyzing narrative patterns..." — Opus identifies recurring themes, positioning, factual claims
+3. "Comparing competitor framing..." — How AI positions you vs competitors
+4. "Generating reframing strategy..." — Sonnet produces actionable recommendations
+5. "Quality review..." — GPT-4o cross-model QA
+
+**Output Format:**
+- **Narrative Summary** — 2-3 paragraph overview of how AI perceives the business
+- **Theme Analysis** — Table of recurring themes (positive, neutral, negative) with frequency
+- **Factual Accuracy** — List of claims AI makes, flagged as accurate/inaccurate/outdated
+- **Competitor Framing** — How AI positions you relative to competitors (side-by-side)
+- **Reframing Strategy** — 5-8 specific content/messaging changes to shift the narrative
+- **Priority Actions** — Top 3 actions with "Fix with Agent" buttons (A1, A2, A5)
+
+**Agent Hub Card:**
+- Icon: magnifying glass + speech bubble
+- Tagline: "Understand why AI says what it says about you"
+- Category: Intelligence
+- Credit cost: 1
+
+**Connections:** Feeds into Recommendations (narrative-based priorities), Content Writer (narrative-aligned topics), Competitive Intelligence (narrative gap analysis).
 
 ---
 
@@ -642,12 +884,12 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 
 | # | Integration | What It Does | Tier | Data Flow |
 |---|------------|-------------|------|-----------|
-| I1 | WordPress | Publish content directly to WordPress as draft. REST API + Application Passwords. | Business | Content Editor --> WP REST API --> WP post (draft) |
+| I1 | WordPress | Publish content directly to WordPress as draft. REST API + Application Passwords. | Pro+ | Content Editor --> WP REST API --> WP post (draft) |
 | I2 | GA4 | AI traffic attribution. Identify visits from AI referral domains. Correlate visibility with traffic. | Pro+ | GA4 API --> daily fetch --> analytics_snapshots --> Attribution dashboard |
 | I3 | Google Search Console | Keyword ranking data from traditional search. Correlate with AI visibility. Feed into prompt generation. | Pro+ | GSC API --> keyword data --> scan prompt improvement, dual-visibility view |
 | I4 | Slack | Push alerts to Slack channel. Incoming webhook (Phase 1), full app (Phase 2). | Pro+ | Alert pipeline --> Slack webhook --> formatted Block Kit message |
 | I5 | Cloudflare/Vercel | AI crawler detection. Which AI bots visit which pages. | Business | CDN analytics API --> crawler data --> AI Readiness dashboard |
-| I6 | Looker Studio (NEW) | Export Beamix data to Google Looker Studio for custom reporting. | Business | Data connector --> Looker Studio community connector |
+| I6 | Looker Studio | **Intentionally deferred.** Native Looker Studio connector is a post-launch Growth Phase feature. Business tier users can connect via the Public REST API (I7) for custom reporting in the meantime. Deferred because: building a community connector requires maintaining a separate GCP project and data schema mapping that is not justified before validating Business tier demand. | Business (deferred) | — |
 | I7 | Public API | REST API for custom integrations. 12 endpoints, scoped API keys, rate-limited. | Business | API key auth --> read/write/execute scopes --> JSON responses |
 
 ---
@@ -683,7 +925,7 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 | # | Feature | What It Does | Where It Lives |
 |---|---------|-------------|---------------|
 | B1 | Plan Selection | Choose Starter/Pro/Business. Monthly or annual (20% discount). | Pricing page, Settings > Billing |
-| B2 | Trial Management | 14-day free trial. Clock starts on first dashboard visit. Full Pro features during trial. | Onboarding, Settings > Billing |
+| B2 | Trial Management | 7-day free trial with 5 agent credits. Clock starts on first dashboard visit. Full Pro features during trial. | Onboarding, Settings > Billing |
 | B3 | Agent Use Tracking | Track used/available agent uses. 20% rollover cap. Top-up purchases. | Agent Hub (meter), Overview (sidebar), Settings > Billing |
 | B4 | Paddle Checkout | Subscription creation, plan changes, cancellation. Paddle overlay. | Pricing page, Settings > Billing |
 | B5 | Webhook Processing | Handle Paddle events: subscription created/updated/cancelled, payment succeeded/failed. | Background (API route) |
@@ -725,7 +967,7 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 5. FIRST DASHBOARD VIEW
    --> Dashboard overview loads with real scan data
    --> Visibility Score prominent, all recommendations visible
-   --> "Welcome" banner: "Your 14-day Pro trial is active. Run your first agent!"
+   --> "Welcome" banner: "Your 7-day trial (5 agent credits) is active. Run your first agent!"
    --> Top recommendation: "Add FAQ content for your top query" with [Run Agent] button
 
 6. FIRST AGENT RUN
@@ -737,7 +979,7 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
    --> Reviews generated FAQ content
    --> Saves to Content Library
 
-7. CONVERSION MOMENT (within 14 days)
+7. CONVERSION MOMENT (within 7 days)
    --> Trial nudge emails at day 3, 7, 10
    --> Agent uses running low (5/15 used)
    --> Visibility score improved after content published
@@ -821,7 +1063,7 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 
 5. MONITOR & EXPORT
    --> Weekly digest email shows: visibility trend, content performance, competitor changes
-   --> Opens Looker Studio with Beamix connector -- builds custom agency report
+   --> Connects custom dashboard via REST API (Looker Studio native connector deferred to Growth Phase)
    --> Exports CSV of all scan data for client presentation
 ```
 
@@ -1061,16 +1303,39 @@ Every agent (except Ask Beamix and Recommendations) follows this UX pattern:
 
 **Purpose:** Natural language Q&A about your dashboard data.
 
-**User sees when running:**
-- Persistent chat interface (not a one-shot run)
+**UI Element: Floating Chat Bubble**
+
+Ask Beamix is accessible from every dashboard page via a persistent floating chat bubble in the bottom-right corner.
+
+| State | Behavior |
+|-------|----------|
+| **Collapsed (default)** | Circular button (48x48px) in bottom-right corner, 24px from edges. Beamix logo or chat icon. Subtle pulse animation on first visit to draw attention. Badge shows unread suggested questions count. |
+| **Expanded** | Click bubble → chat panel slides up (400px wide × 520px tall). Panel overlays dashboard content, does not push/resize it. Semi-transparent backdrop on mobile. |
+| **Active conversation** | Chat messages with SSE streaming. User input at bottom. "Suggested questions" chips above input based on current page context. Typing indicator while AI responds. |
+| **Minimized** | Click X or click outside → panel collapses back to bubble. Conversation preserved — reopening shows full history. |
+| **Page-aware context** | Bubble knows which dashboard page the user is on. On Rankings page: suggests "Why did my visibility drop?" On Agents page: suggests "Which agent should I run next?" |
+
+**Panel Layout (top to bottom):**
+1. Header: "Ask Beamix" + minimize button (X)
+2. Chat messages area (scrollable): AI messages with data citations (clickable links to dashboard sections), user messages right-aligned
+3. Suggested question chips (2-3, contextual to current page)
+4. Input field: placeholder "Ask about your data..." + send button
+
+**Responsive behavior:**
+- Desktop (>1024px): 400×520px panel, bottom-right overlay
+- Tablet (768-1024px): 360×480px panel, same position
+- Mobile (<768px): Full-screen takeover with back button to return to dashboard
+
+**User sees when chatting:**
 - User types questions: "Why did my visibility drop last week?", "Which competitor is growing fastest?", "What content should I write next?"
 - SSE streaming responses with data citations
-- Suggested follow-up questions
+- Suggested follow-up questions after each response
 
 **Input:** Natural language questions.
 **Output:** Natural language answers with specific data references.
-**Where output lives:** Not stored -- real-time conversation only. (Future: save conversation threads.)
+**Where output lives:** Not stored — real-time conversation only. (Future: save conversation threads.)
 **Connections:** Reads all dashboard data: scan results, rankings, competitors, content, agent history.
+**Cost:** No credits consumed. Included in all paid tiers. Rate limited to 30 turns/hour.
 
 ---
 
@@ -1125,9 +1390,11 @@ Every agent (except Ask Beamix and Recommendations) follows this UX pattern:
 
 ### Agent Workflow System (NEW -- Closing Gap)
 
+> **Phase: Post-Launch (Growth Phase).** MVP ships with the 4 pre-built automation toggles defined in §2.13 only. The visual workflow builder described below is the long-term vision and will ship in Growth Phase after validating core agent usage patterns. Do not build the visual builder for launch.
+
 **Purpose:** Automate multi-agent chains triggered by events.
 
-**What the user sees:**
+**What the user sees (Growth Phase):**
 - Visual workflow builder in Agent Hub
 - Trigger types:
   - **Event triggers:** Visibility drop >X%, new competitor detected, sentiment shift, content published
@@ -1172,15 +1439,15 @@ Every agent (except Ask Beamix and Recommendations) follows this UX pattern:
 |--------|------------------|-----------------------------|-------|
 | Scan Engine | 10 | 2 (Prompt Volume, Brand Narrative) | 12 |
 | Dashboard & Analytics | 12 | 2 (Content Performance, Prompt Trends) | 14 |
-| Agent System | 12 agents | 3 agents (Voice, Patterns, Refresh) + Workflows + Recurring | 15 agents + 2 systems |
+| Agent System | 12 agents | 4 agents (Voice, Patterns, Refresh, Narrative) + Workflows + Recurring | 16 agents + 2 systems |
 | Content Engine | 4 | 6 (Voice Training, Typed Templates, Impact Tracking, WordPress, Editorial Queue, Pattern Library) | 10 |
 | Competitive Intelligence | 5 | 1 (Source-Level Citation Comparison) | 6 |
 | Alert System | 9 | 0 | 9 |
-| Integration Hub | 5 | 2 (Looker Studio, expanded GSC) | 7 |
+| Integration Hub | 5 | 2 (Looker Studio [deferred], expanded GSC) | 7 (6 at launch) |
 | AI Readiness | 6 | 0 | 6 |
 | Settings | 6 | 0 | 6 |
 | Billing | 5 | 0 | 5 |
-| **Total** | **74** | **16** | **90+ features, 15 agents** |
+| **Total** | **74** | **17** | **91+ features, 16 agents** |
 
 Every gap identified in the CTO's analysis is addressed above. The product layer now covers: Content Performance Tracking (C7), Content Voice Training (A13/C5), Typed Content Templates (C6), Agent Workflows, Recurring Agent Execution, Prompt Volume Data (S11/D14), Source-Level Citation Analytics (S8/CI5), Brand Narrative Analysis (S12), Persona-Based Tracking (D3 persona filter), Customer Journey Stage Mapping (Recommendations journey tags), Content Pattern Analysis (A14/C10), and Editorial Queue (C9).
 

@@ -178,7 +178,7 @@ One active subscription per user. Created by the `handle_new_user` trigger with 
 | paddle_customer_id | text | | Paddle customer reference |
 | status | text | NOT NULL, DEFAULT 'trialing', CHECK IN ('trialing', 'active', 'past_due', 'cancelled', 'paused') | UK spelling for 'cancelled' — matches Paddle |
 | trial_starts_at | timestamptz | | Set on first dashboard visit |
-| trial_ends_at | timestamptz | | trial_starts_at + 14 days |
+| trial_ends_at | timestamptz | | trial_starts_at + 7 days |
 | current_period_start | timestamptz | | Billing period start |
 | current_period_end | timestamptz | | Billing period end |
 | cancel_at | timestamptz | | Scheduled cancellation date |
@@ -194,13 +194,13 @@ One active subscription per user. Created by the `handle_new_user` trigger with 
 
 #### `credit_pools`
 
-Tracks agent usage credits per user per billing cycle. One pool per user.
+Tracks agent usage credits per user per billing cycle. A user may have multiple pools (monthly allocation + top-up purchases), distinguished by `pool_type`.
 
 | Column | Type | Constraints | Purpose |
 |--------|------|-------------|---------|
 | id | uuid | PK, DEFAULT gen_random_uuid() | Primary key |
-| user_id | uuid | UNIQUE, NOT NULL, FK → auth.users(id) ON DELETE CASCADE | Credit owner |
-| pool_type | text | NOT NULL, DEFAULT 'monthly', CHECK IN ('monthly', 'topup') | Pool category |
+| user_id | uuid | NOT NULL, FK → auth.users(id) ON DELETE CASCADE | Credit owner |
+| pool_type | text | NOT NULL, DEFAULT 'monthly', CHECK IN ('monthly', 'topup', 'trial') | Pool category — 'trial' is temporary (5 credits, deleted on first paid upgrade) |
 | base_allocation | integer | NOT NULL, DEFAULT 0 | Monthly plan allocation |
 | rollover_amount | integer | NOT NULL, DEFAULT 0 | Rolled over from previous month (capped at 20% of base) |
 | topup_amount | integer | NOT NULL, DEFAULT 0 | One-time purchased credits |
@@ -213,8 +213,8 @@ Tracks agent usage credits per user per billing cycle. One pool per user.
 
 **Available credits computation:** `base_allocation + rollover_amount + topup_amount - used_amount - held_amount`. This is enforced by the `hold_credits` RPC function which checks this value is >= requested hold amount.
 
-**Indexes:** Unique on `user_id` (implicit).
-**RLS:** Users can SELECT their own pool. Only service role can INSERT/UPDATE (credit operations happen in Inngest).
+**Indexes:** UNIQUE on `(user_id, pool_type)` — a user has exactly one pool of each type: one 'monthly', one 'topup', one 'trial'. Trial pool is deleted on upgrade to paid plan; allocate_monthly_credits RPC handles this.
+**RLS:** Users can SELECT their own pools. Only service role can INSERT/UPDATE (credit operations happen in Inngest).
 
 #### `credit_transactions`
 
@@ -226,7 +226,7 @@ Immutable audit trail of every credit operation.
 | user_id | uuid | NOT NULL, FK → auth.users(id) ON DELETE CASCADE | Transaction owner |
 | pool_id | uuid | NOT NULL, FK → credit_pools(id) | Associated pool |
 | pool_type | text | NOT NULL, DEFAULT 'monthly' | Pool type at time of transaction |
-| transaction_type | text | NOT NULL, CHECK IN ('allocation', 'hold', 'confirm', 'release', 'topup', 'rollover', 'expire') | Operation type — no 'bonus', use 'topup' |
+| transaction_type | text | NOT NULL, CHECK IN ('allocation', 'hold', 'confirm', 'release', 'topup', 'rollover', 'expire', 'system_grant') | Operation type — no 'bonus', use 'topup'. 'system_grant' for zero-cost system-initiated agent runs (onboarding). |
 | amount | integer | NOT NULL | Positive for additions, negative for deductions |
 | balance_after | integer | NOT NULL | Running balance after this transaction |
 | agent_job_id | uuid | FK → agent_jobs(id) | For hold/confirm/release — links to the job |
@@ -238,6 +238,79 @@ Immutable audit trail of every credit operation.
 - `idx_credit_txn_job` on `(agent_job_id)` WHERE `agent_job_id IS NOT NULL` — lookup transactions for a specific agent job.
 
 **RLS:** Users can SELECT their own transactions. Only service role can INSERT.
+
+#### Credit System RPCs
+
+All credit operations are implemented as PostgreSQL RPC functions called via `supabase.rpc()`. They use `SELECT ... FOR UPDATE` row-level locking to prevent race conditions from concurrent agent executions.
+
+**`hold_credits(p_user_id uuid, p_amount integer, p_job_id uuid) → jsonb`**
+
+Reserves credits for an in-progress agent job. Returns `{ success: true, pool_id }` or `{ success: false, error: 'insufficient_credits' }`.
+
+Logic:
+1. `SELECT ... FOR UPDATE` on `credit_pools` WHERE `user_id = p_user_id` ORDER BY `pool_type = 'monthly'` first (monthly pool is consumed before topup).
+2. Compute available: `base_allocation + rollover_amount + topup_amount - used_amount - held_amount` summed across all pools.
+3. If available < `p_amount`: return error.
+4. **Idempotency guard (Inngest retry safety):** Check `credit_transactions` for existing `transaction_type = 'hold'` with `agent_job_id = p_job_id`. If found, return the existing hold's pool_id without creating a duplicate.
+5. Deduct from monthly pool first. If monthly pool has insufficient available, split across monthly and topup pools.
+6. INCREMENT `held_amount` on the affected pool(s).
+7. INSERT `credit_transactions` row(s) with `transaction_type = 'hold'`, `agent_job_id = p_job_id`.
+8. Return success with the primary pool_id.
+
+Transaction isolation: `SERIALIZABLE` (prevents phantom reads on concurrent holds).
+
+**`confirm_credits(p_job_id uuid) → jsonb`**
+
+Moves held credits to consumed after successful agent completion. Returns `{ success: true }` or `{ success: false, error: 'no_hold_found' }`.
+
+Logic:
+1. Find `credit_transactions` WHERE `agent_job_id = p_job_id` AND `transaction_type = 'hold'`. If none: return error.
+2. **Idempotency guard:** Check for existing `transaction_type = 'confirm'` with same `p_job_id`. If found, return success without double-confirming.
+3. `SELECT ... FOR UPDATE` on the affected `credit_pools` row(s).
+4. DECREMENT `held_amount`, INCREMENT `used_amount` by the held amount.
+5. INSERT `credit_transactions` row with `transaction_type = 'confirm'`.
+6. Return success.
+
+**`release_credits(p_job_id uuid) → jsonb`**
+
+Releases held credits back to available after agent failure or cancellation. Returns `{ success: true }` or `{ success: false, error: 'no_hold_found' }`.
+
+Logic:
+1. Find `credit_transactions` WHERE `agent_job_id = p_job_id` AND `transaction_type = 'hold'`. If none: return error.
+2. **Idempotency guard:** Check for existing `transaction_type = 'release'` with same `p_job_id`. If found, return success without double-releasing.
+3. `SELECT ... FOR UPDATE` on the affected `credit_pools` row(s).
+4. DECREMENT `held_amount` by the held amount.
+5. INSERT `credit_transactions` row with `transaction_type = 'release'`.
+6. Return success.
+
+**`allocate_monthly_credits(p_user_id uuid, p_plan_id uuid) → jsonb`**
+
+Allocates monthly credit quota. Called by `cron.monthly-credits` on the 1st of each month. Returns `{ success: true, allocated: N }`.
+
+Logic:
+1. **Idempotency guard:** Check if a `credit_transactions` row with `transaction_type = 'allocation'` exists for this user in the current calendar month. If found, return success without re-allocating.
+2. Look up `plans` row by `p_plan_id` to get `monthly_agent_uses`.
+3. `SELECT ... FOR UPDATE` on `credit_pools` WHERE `user_id = p_user_id` AND `pool_type = 'monthly'`.
+4. Compute rollover: `MIN(base_allocation - used_amount, FLOOR(base_allocation * 0.20))`. Negative values clamped to 0.
+5. SET `rollover_amount` = computed rollover, `base_allocation` = plan's `monthly_agent_uses`, `used_amount` = 0, `held_amount` = 0, `period_start` = NOW(), `period_end` = end of current month.
+6. If user had a `trial` pool: delete it (trial credits are replaced by the full monthly allocation on first payment).
+6. INSERT `credit_transactions` row with `transaction_type = 'allocation'`.
+7. INSERT `credit_transactions` row with `transaction_type = 'rollover'` if rollover > 0.
+8. Return success with allocated amount.
+
+**Stuck hold cleanup:** A cron job (`cron.cleanup`) releases any credits where `transaction_type = 'hold'` with no corresponding 'confirm' or 'release' and `created_at < NOW() - INTERVAL '2 hours'`. This catches agent functions that timed out or crashed without confirming or releasing.
+
+#### System-Initiated Onboarding Agents
+
+When a user completes onboarding (`onboarding.complete` event), three agents are automatically triggered: A13 (Content Voice Trainer), A14 (Content Pattern Analyzer), and A11 (Recommendations). These are **system-initiated** and **bypass the credit system entirely**.
+
+**Business rules:**
+- System-initiated agents fire only when `user_profiles.onboarding_completed_at IS NULL` at the time of the event. Once set, this timestamp is permanent — no replay is possible.
+- After completion, `onboarding_completed_at` is set immediately (before agent events are emitted), so duplicate `onboarding.complete` events are no-ops.
+- System-initiated agent runs are logged in `credit_transactions` as `transaction_type = 'system_grant'` with `amount = 0` for cost monitoring and audit trail. They do NOT decrement any credit pool.
+- These agents are one-time setup only. Users cannot re-trigger them. To regenerate a voice profile or pattern analysis, the user must use the standard agent execution flow with normal credit deduction.
+
+**`credit_transactions.transaction_type` update:** Add `'system_grant'` to the CHECK constraint: `CHECK IN ('allocation', 'hold', 'confirm', 'release', 'topup', 'rollover', 'expire', 'system_grant')`.
 
 ### 2.3 Scan Tables
 
@@ -313,6 +386,7 @@ Per-engine results for each scan. Normalized rows, not JSONB blob. One row per e
 | mention_context | text | | 2-3 sentences surrounding the mention |
 | competitors_mentioned | text[] | DEFAULT '{}' | Other businesses found in response |
 | citations | jsonb | DEFAULT '[]' | Array of {url, title, domain} objects — source-level citation tracking |
+| prompt_library_id | uuid | FK → prompt_library(id) | Links scan result to the prompt template used — enables prompt volume aggregation without text matching |
 | raw_response_hash | text | | SHA-256 of raw response (for deduplication/change detection) |
 | tokens_used | integer | | LLM tokens consumed |
 | latency_ms | integer | | Response time |
@@ -366,7 +440,7 @@ Tracks every agent execution — pending, running, completed, failed.
 | id | uuid | PK, DEFAULT gen_random_uuid() | Primary key |
 | user_id | uuid | NOT NULL, FK → auth.users(id) ON DELETE CASCADE | Job owner |
 | business_id | uuid | NOT NULL, FK → businesses(id) ON DELETE CASCADE | Target business |
-| agent_type | text | NOT NULL, CHECK IN ('content_writer', 'blog_writer', 'schema_optimizer', 'recommendations', 'faq_agent', 'review_analyzer', 'social_strategy', 'competitor_intelligence', 'citation_builder', 'llms_txt', 'ai_readiness', 'ask_beamix') | Which agent runs |
+| agent_type | text | NOT NULL, CHECK IN ('content_writer', 'blog_writer', 'schema_optimizer', 'recommendations', 'faq_agent', 'review_analyzer', 'social_strategy', 'competitor_intelligence', 'citation_builder', 'llms_txt', 'ai_readiness', 'content_voice_trainer', 'content_pattern_analyzer', 'content_refresh', 'brand_narrative_analyst') | Which agent runs |
 | status | text | NOT NULL, DEFAULT 'pending', CHECK IN ('pending', 'running', 'completed', 'failed', 'cancelled') | Job lifecycle |
 | input_data | jsonb | NOT NULL, DEFAULT '{}' | User-provided parameters (topic, tone, word count, etc.) |
 | output_data | jsonb | | For non-content agents: full output. For content agents: summary only (content goes to content_items). |
@@ -506,7 +580,7 @@ Stores trained voice profiles for content generation. Addresses the "Author Stam
 | created_at | timestamptz | NOT NULL, DEFAULT NOW() | |
 | updated_at | timestamptz | NOT NULL, DEFAULT NOW() | |
 
-**Training pipeline:** User provides website URL or selects existing content items. System crawls pages (cheerio), extracts text content, sends to Claude Sonnet for voice analysis (tone, structure, vocabulary patterns, formality), generates a `voice_description` and selects representative `example_excerpts`. These are then injected into content agent prompts as style guidance.
+**Training pipeline:** User provides website URL or selects existing content items. System crawls pages (cheerio), extracts text content, sends to Claude Opus (`claude-opus-4-6`) for voice analysis (tone, structure, vocabulary patterns, formality), generates a `voice_description` and selects representative `example_excerpts`. These are then injected into content agent prompts as style guidance. **Model justification:** Opus is used instead of Sonnet because voice profile quality is critical — the voice profile affects all subsequent content output across every content-generating agent. The higher model cost is justified by the compounding quality impact.
 
 **Indexes:** `idx_voice_profiles_biz` on `(business_id)`.
 **RLS:** Users can SELECT, INSERT, UPDATE, DELETE for their own businesses.
@@ -552,6 +626,7 @@ Results when we scan for competitor visibility alongside the user's business.
 **Indexes:**
 - `idx_comp_scans_scan` on `(scan_id)` — all competitor results for a scan.
 - `idx_comp_scans_competitor` on `(competitor_id, created_at DESC)` — competitor visibility trend.
+- UNIQUE on `(competitor_id, scan_id)` — one result per competitor per scan.
 
 **RLS:** Users can SELECT where `business_id` belongs to them. Service role inserts.
 
@@ -679,8 +754,24 @@ User-defined automation workflows that chain agents together based on trigger ev
 | created_at | timestamptz | NOT NULL, DEFAULT NOW() | |
 | updated_at | timestamptz | NOT NULL, DEFAULT NOW() | |
 
-**steps JSONB structure:**
-Each step is an object: `{ step_order: 1, agent_type: "ai_readiness", input_config: {}, condition: "previous_step.score < 60", depends_on: [], on_failure: "skip" | "abort" }`. Steps can depend on previous steps and reference their output in conditions.
+**steps JSONB schema (Zod-validated on API write):**
+
+```typescript
+const WorkflowStepSchema = z.object({
+  step_order: z.number().int().min(1),           // Execution sequence (1-based)
+  agent_type: z.enum([...AGENT_TYPES]),           // Which agent to run
+  input_config: z.record(z.unknown()).default({}), // Agent-specific parameters (topic, tone, etc.)
+  condition: z.string().nullable().default(null),  // JS-like expression evaluated against previous step output
+                                                   // e.g., "previous_step.qa_score < 0.6" or "previous_step.output_data.score < 60"
+                                                   // null = always execute
+  depends_on: z.array(z.number().int()).default([]), // step_order values this step waits for
+  on_failure: z.enum(["skip", "abort"]).default("skip"), // What to do if this step fails
+});
+
+const WorkflowStepsSchema = z.array(WorkflowStepSchema).min(1).max(10);
+```
+
+Steps can depend on previous steps and reference their output in conditions. Maximum 10 steps per workflow to cap resource usage.
 
 **Indexes:** `idx_workflows_biz` on `(business_id)` WHERE `is_active = true`.
 **RLS:** Full CRUD for own businesses.
@@ -749,6 +840,66 @@ Stores analyzed brand narratives — what AI says about a business and WHY. Addr
 
 **Pipeline:** After each scan completes and engine results are stored, a separate Inngest step sends all mention contexts and competitor contexts to Claude Sonnet with a narrative analysis prompt. The model identifies recurring themes, brand positioning statements, and factual inaccuracies. The output is stored as a `brand_narratives` row and compared to the previous analysis for change detection.
 
+#### `competitor_share_of_voice` (NEW)
+
+Weekly share-of-voice data, computed by `cron.weekly-digest`. Stores the percentage of AI engine mentions each competitor captures relative to the business.
+
+| Column | Type | Constraints | Purpose |
+|--------|------|-------------|---------|
+| id | uuid | PK, DEFAULT gen_random_uuid() | Primary key |
+| business_id | uuid | NOT NULL, FK → businesses(id) ON DELETE CASCADE | Business being analyzed |
+| competitor_id | uuid | NOT NULL, FK → competitors(id) ON DELETE CASCADE | Competitor being measured |
+| week_start | date | NOT NULL | Start of the measurement week (Monday) |
+| voice_share_pct | numeric(5,2) | NOT NULL | Percentage of mentions this competitor captures (0.00-100.00) |
+| mention_count | integer | NOT NULL, DEFAULT 0 | Total mentions for this competitor during the week |
+| created_at | timestamptz | NOT NULL, DEFAULT NOW() | |
+
+**Indexes:**
+- `idx_sov_biz_week` on `(business_id, week_start DESC)` — weekly share-of-voice trends.
+- UNIQUE on `(business_id, competitor_id, week_start)` — one measurement per competitor per week.
+
+**RLS:** Users can SELECT where `business_id` belongs to them. Service role inserts (computed by `cron.weekly-digest`).
+
+**Computation:** For each business, the weekly digest cron aggregates all `scan_engine_results` and `competitor_scans` from the past 7 days. It counts total mentions per entity (the business + each tracked competitor), then computes each entity's share as a percentage of total mentions. The business itself is stored in `competitor_share_of_voice` with `competitor_id = NULL` to represent self-share.
+
+#### `crawler_detections` (NEW)
+
+AI crawler visit data pulled from Cloudflare integration. Tracks which AI bots visit the user's site.
+
+| Column | Type | Constraints | Purpose |
+|--------|------|-------------|---------|
+| id | uuid | PK, DEFAULT gen_random_uuid() | Primary key |
+| business_id | uuid | NOT NULL, FK → businesses(id) ON DELETE CASCADE | Business site being crawled |
+| crawler_name | text | NOT NULL | Normalized AI crawler name (e.g., 'GPTBot', 'ClaudeBot', 'Google-Extended') |
+| detected_at | timestamptz | NOT NULL | When the crawl was detected |
+| page_url | text | | Which page was accessed |
+| user_agent | text | | Full user agent string |
+| created_at | timestamptz | NOT NULL, DEFAULT NOW() | |
+
+**Indexes:**
+- `idx_crawler_biz_date` on `(business_id, detected_at DESC)` — recent crawler activity.
+- `idx_crawler_biz_name` on `(business_id, crawler_name)` — per-crawler trends.
+
+**RLS:** Users can SELECT where `business_id` belongs to them. Service role inserts (populated by Cloudflare integration sync).
+
+#### `ai_readiness_history` (NEW)
+
+Weekly AI readiness score snapshots for trend analysis. Populated by a weekly cron job.
+
+| Column | Type | Constraints | Purpose |
+|--------|------|-------------|---------|
+| id | uuid | PK, DEFAULT gen_random_uuid() | Primary key |
+| business_id | uuid | NOT NULL, FK → businesses(id) ON DELETE CASCADE | Business measured |
+| score | integer | NOT NULL, CHECK (score >= 0 AND score <= 100) | Overall AI readiness score |
+| score_breakdown | jsonb | NOT NULL, DEFAULT '{}' | Per-category scores: { schema_markup, content_freshness, structured_data, mobile_friendly, page_speed } |
+| recorded_at | timestamptz | NOT NULL, DEFAULT NOW() | When this snapshot was taken |
+
+**Indexes:**
+- `idx_readiness_biz_date` on `(business_id, recorded_at DESC)` — readiness trend queries.
+- UNIQUE on `(business_id, recorded_at::date)` — one snapshot per business per day.
+
+**RLS:** Users can SELECT where `business_id` belongs to them. Service role inserts (populated by weekly cron).
+
 ### 2.9 Alert & Notification Tables
 
 #### `alert_rules`
@@ -760,7 +911,7 @@ User-configurable alert rules. Each rule defines a condition that triggers a not
 | id | uuid | PK, DEFAULT gen_random_uuid() | Primary key |
 | user_id | uuid | NOT NULL, FK → auth.users(id) ON DELETE CASCADE | Owner |
 | business_id | uuid | NOT NULL, FK → businesses(id) ON DELETE CASCADE | Business to monitor |
-| alert_type | text | NOT NULL, CHECK IN ('visibility_drop', 'visibility_improvement', 'new_competitor', 'competitor_overtake', 'sentiment_shift', 'credit_low', 'content_performance_change') | Alert category |
+| alert_type | text | NOT NULL, CHECK IN ('visibility_drop', 'visibility_improvement', 'new_competitor', 'competitor_overtake', 'sentiment_shift', 'credit_low', 'content_performance', 'scan_complete', 'agent_complete', 'trial_ending') | Alert category |
 | threshold | jsonb | NOT NULL | Threshold config (e.g., {drop_percent: 15} or {score_below: 40}) |
 | channels | text[] | NOT NULL, DEFAULT '{inapp}' | Array of 'inapp', 'email', 'slack' |
 | is_active | boolean | DEFAULT true | |
@@ -838,6 +989,48 @@ Third-party service connections per business.
 
 **RLS:** Full CRUD for own businesses.
 
+#### `ga4_metrics` (NEW)
+
+Daily GA4 traffic data pulled by integration sync. Tracks AI referral traffic attribution.
+
+| Column | Type | Constraints | Purpose |
+|--------|------|-------------|---------|
+| id | uuid | PK, DEFAULT gen_random_uuid() | Primary key |
+| business_id | uuid | NOT NULL, FK → businesses(id) ON DELETE CASCADE | Business this data belongs to |
+| date | date | NOT NULL | Measurement date |
+| sessions | integer | NOT NULL, DEFAULT 0 | Total sessions |
+| organic_sessions | integer | NOT NULL, DEFAULT 0 | Sessions from organic search |
+| ai_referral_sessions | integer | NOT NULL, DEFAULT 0 | Sessions from AI referral domains (chatgpt.com, perplexity.ai, claude.ai, etc.) |
+| created_at | timestamptz | NOT NULL, DEFAULT NOW() | |
+
+**Indexes:**
+- `idx_ga4_metrics_biz_date` on `(business_id, date DESC)` — time-series queries.
+- UNIQUE on `(business_id, date)` — one row per business per day, upserted on each sync.
+
+**RLS:** Users can SELECT where `business_id` belongs to them. Service role inserts (populated by GA4 integration sync cron).
+
+#### `gsc_data` (NEW)
+
+Google Search Console data pulled by integration sync. Provides traditional search context for GEO insights.
+
+| Column | Type | Constraints | Purpose |
+|--------|------|-------------|---------|
+| id | uuid | PK, DEFAULT gen_random_uuid() | Primary key |
+| business_id | uuid | NOT NULL, FK → businesses(id) ON DELETE CASCADE | Business this data belongs to |
+| date | date | NOT NULL | Measurement date |
+| query | text | NOT NULL | Search query |
+| clicks | integer | NOT NULL, DEFAULT 0 | Click count |
+| impressions | integer | NOT NULL, DEFAULT 0 | Impression count |
+| position | numeric(5,1) | | Average position |
+| created_at | timestamptz | NOT NULL, DEFAULT NOW() | |
+
+**Indexes:**
+- `idx_gsc_data_biz_date` on `(business_id, date DESC)` — time-series queries.
+- `idx_gsc_data_biz_query` on `(business_id, query)` — per-query trend queries.
+- UNIQUE on `(business_id, date, query)` — one row per business per query per day.
+
+**RLS:** Users can SELECT where `business_id` belongs to them. Service role inserts (populated by GSC integration sync cron).
+
 #### `api_keys`
 
 API access for Business tier users.
@@ -849,7 +1042,7 @@ API access for Business tier users.
 | key_hash | text | NOT NULL | SHA-256 hash of the API key (never store plaintext) |
 | key_prefix | text | NOT NULL | First 8 characters for display (bmx_abc12345...) |
 | name | text | NOT NULL, DEFAULT 'Default' | User-assigned name |
-| scopes | text[] | DEFAULT '{read}', CHECK array elements IN ('read', 'write', 'execute') | Permission scopes |
+| scopes | text[] | DEFAULT '{read}', CHECK (scopes <@ ARRAY['read', 'write', 'execute']::text[]) | Permission scopes — uses array containment operator to validate all elements |
 | rate_limit | integer | DEFAULT 100 | Requests per minute for this key |
 | last_used_at | timestamptz | | |
 | expires_at | timestamptz | | NULL means no expiry |
@@ -881,6 +1074,7 @@ Internal blog/CMS for Beamix's own content marketing.
 | tags | text[] | DEFAULT '{}' | Tags |
 | is_published | boolean | DEFAULT false | Published state |
 | published_at | timestamptz | | |
+| view_count | integer | NOT NULL, DEFAULT 0 | Page views (incremented by analytics cron or API) |
 | seo_title | text | | Custom SEO title |
 | seo_description | text | | Custom meta description |
 | created_at | timestamptz | NOT NULL, DEFAULT NOW() | |
@@ -888,8 +1082,32 @@ Internal blog/CMS for Beamix's own content marketing.
 
 **Indexes:** Unique on `slug`. `idx_blog_published` on `(is_published, published_at DESC)` WHERE `is_published = true`.
 **RLS:** All users can SELECT published posts. Service role manages CRUD.
+**View counting:** `POST /api/blog/[slug]/view` increments `view_count` via `UPDATE blog_posts SET view_count = view_count + 1 WHERE slug = $1`. No auth required. Rate limited to 1 per IP per slug per hour via Upstash to prevent abuse.
 
-### 2.12 Complete Table Summary
+### 2.12 Auto-Update Triggers
+
+All tables with `updated_at` columns require an automatic trigger to keep the value current:
+
+```sql
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+Apply to every table with `updated_at`: `user_profiles`, `businesses`, `subscriptions`, `credit_pools`, `content_items`, `content_voice_profiles`, `agent_workflows`, `notification_preferences`, `integrations`, `api_keys`, `blog_posts`:
+
+```sql
+CREATE TRIGGER set_updated_at
+  BEFORE UPDATE ON <table_name>
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+```
+
+### 2.13 Complete Table Summary
 
 | # | Table | Purpose | Row Growth Rate | RLS |
 |---|-------|---------|----------------|-----|
@@ -925,6 +1143,13 @@ Internal blog/CMS for Beamix's own content marketing.
 | 30 | integrations | Third-party connections | 0-5/business | Own CRUD |
 | 31 | api_keys | Public API credentials | 1-3/user (Business tier) | Own CRUD |
 | 32 | blog_posts | Beamix blog CMS | Low (editorial) | Public read, service write |
+| 33 | ga4_metrics | GA4 traffic data (daily AI referral tracking) | 1/business/day (with integration) | Own read, service write |
+| 34 | gsc_data | Google Search Console query data | ~50/business/week | Own read, service write |
+| 35 | competitor_share_of_voice | Weekly share-of-voice percentages | ~5-10/business/week | Own read, service write |
+| 36 | crawler_detections | AI crawler visit records from Cloudflare | Variable per business | Own read, service write |
+| 37 | ai_readiness_history | Weekly AI readiness score snapshots | 1/business/week | Own read, service write |
+
+**Note:** Rate limiting is handled by Upstash Redis (`@upstash/ratelimit`) — no database table is needed for rate limit counters.
 
 ---
 
@@ -932,21 +1157,21 @@ Internal blog/CMS for Beamix's own content marketing.
 
 All API routes live under `src/app/api/`. Every route follows these universal patterns:
 
-**Authentication:** Extract Supabase session from cookies via `createClient()`. Return 401 if no session. Exception: `/api/scan/start` (anonymous), `/api/scan/[scanId]/status` (anonymous), `/api/scan/[scanId]/results` (anonymous), `/api/inngest` (Inngest signing key), `/api/billing/webhooks` (Paddle signature verification).
+**Authentication:** Extract Supabase session from cookies via `createClient()`. Return 401 if no session. Exception: `/api/scan/start` (anonymous), `/api/scan/[scan_id]/status` (anonymous), `/api/scan/[scan_id]/results` (anonymous), `/api/inngest` (Inngest signing key), `/api/billing/webhooks` (Paddle signature verification).
 
 **Validation:** Every request body and query parameter is validated with Zod before any business logic runs. Validation errors return 400 with a structured error body: `{ error: string, details?: ZodError['issues'] }`.
 
 **Response shape:** Success responses follow `{ data: T }` for GET requests and `{ data: T, message?: string }` for mutations. Error responses follow `{ error: string, code?: string }`.
 
-**Rate limiting:** Applied per route group, per user (authenticated) or per IP (anonymous). Checked via Supabase-based counter. Returns 429 with `Retry-After` header when exceeded.
+**Rate limiting:** Applied per route group, per user (authenticated) or per IP (anonymous). Handled by Upstash Redis (`@upstash/ratelimit`) — no database table needed. Returns 429 with `Retry-After` header when exceeded.
 
 ### 3.1 Scan Routes — `/api/scan/*`
 
 | Route | Method | Auth | Purpose |
 |-------|--------|------|---------|
 | `/api/scan/start` | POST | None (IP rate limited) | Start anonymous free scan |
-| `/api/scan/[scanId]/status` | GET | None | Poll scan status |
-| `/api/scan/[scanId]/results` | GET | None | Get completed scan results |
+| `/api/scan/[scan_id]/status` | GET | None | Poll scan status |
+| `/api/scan/[scan_id]/results` | GET | None | Get completed scan results |
 | `/api/scan/manual` | POST | Required | Trigger manual scan for a business |
 | `/api/scan/history` | GET | Required | List scan history for a business |
 
@@ -956,14 +1181,14 @@ All API routes live under `src/app/api/`. Every route follows these universal pa
 - Process: Validate input. Check IP rate limit against `free_scans` table. Generate nanoid for `scan_id`. Insert row into `free_scans` with status 'pending'. Send Inngest event `scan/free.start`. Return 202 with `{ data: { scan_id } }`.
 - Error: 429 if rate limited. 400 if validation fails.
 
-**GET /api/scan/[scanId]/status**
-- Input: `scanId` path parameter
+**GET /api/scan/[scan_id]/status**
+- Input: `scan_id` path parameter
 - Process: Lookup `free_scans` by `scan_id`. Return status and partial progress data.
 - Response: `{ data: { status, progress_pct?, engines_completed? } }`
 - Error: 404 if scan not found.
 
-**GET /api/scan/[scanId]/results**
-- Input: `scanId` path parameter
+**GET /api/scan/[scan_id]/results**
+- Input: `scan_id` path parameter
 - Process: Lookup `free_scans` by `scan_id` where status = 'completed'. Return full `results_data`.
 - Error: 404 if not found. 202 if still processing.
 
@@ -1053,6 +1278,13 @@ All API routes live under `src/app/api/`. Every route follows these universal pa
 | `/api/settings/voice-profiles` | GET/POST | Required | Manage voice profiles |
 | `/api/settings/voice-profiles/[id]` | PATCH/DELETE | Required | Update/delete voice profile |
 | `/api/settings/voice-profiles/train` | POST | Required | Train new voice profile from URL |
+| `/api/settings/export` | POST | Required | GDPR data export — generates full user data package |
+
+**POST /api/settings/export**
+- Auth: Required.
+- Process: Collects all user data: profile, businesses, scans, scan_engine_results, content_items, agent_jobs, recommendations, alert_rules, notification_preferences, credit_pools, credit_transactions. Generates JSON package. Sends download link via email (Resend). Large exports are generated async via Inngest and emailed when ready.
+- Response: `{ data: { export_id, status: 'processing' } }` — 202 Accepted.
+- Rate limit: 1 per user per 24 hours.
 
 ### 3.6 Billing Routes — `/api/billing/*`
 
@@ -1086,8 +1318,14 @@ All API routes live under `src/app/api/`. Every route follows these universal pa
 |-------|--------|------|---------|
 | `/api/alerts/rules` | GET/POST | Required | List/create alert rules |
 | `/api/alerts/rules/[id]` | PATCH/DELETE | Required | Update/delete alert rule |
+| `/api/alerts/notifications` | GET | Required | List user notifications (paginated, 20 per page) |
+| `/api/alerts/notifications/[id]` | PATCH | Required | Mark single notification as read |
+| `/api/alerts/notifications/mark-all-read` | POST | Required | Mark all unread notifications as read |
+| `/api/recommendations` | GET | Required | List recommendations for a business (query: business_id, status?, impact?, page, per_page) |
+| `/api/recommendations/[id]` | PATCH | Required | Update recommendation status (new → in_progress, in_progress → completed, any → dismissed) |
 | `/api/competitors` | GET/POST | Required | List/add competitors |
 | `/api/competitors/[id]` | PATCH/DELETE | Required | Update/delete competitor |
+| `/api/crawlers` | GET | Required | List AI crawler detections for a business (query: business_id, period?) |
 
 ### 3.9 Workflow Routes (NEW) — `/api/workflows/*`
 
@@ -1134,7 +1372,7 @@ Rate limit: 100 requests per minute per API key (configurable per key).
 
 **POST /api/onboarding/complete**
 - Input: `{ business_name, website_url, industry, location?, services?, scan_id? }`
-- Process: UPSERT `user_profiles` (set onboarding_completed_at). Create `businesses` record. If `scan_id` provided: link `free_scans.converted_user_id`, convert free scan results into `scans` + `scan_engine_results`. Set trial dates on `subscriptions`. Create default `alert_rules`. Create default `tracked_queries` from industry constants.
+- Process: UPSERT `user_profiles` (set onboarding_completed_at). Create `businesses` record. If `scan_id` provided: link `free_scans.converted_user_id`, convert free scan results into `scans` + `scan_engine_results`. Set trial dates on `subscriptions`. Allocate trial credit pool: INSERT INTO credit_pools (user_id, pool_type, base_allocation) VALUES (user_id, 'trial', 5) — 5 credits for entire trial period. Create default `alert_rules`. Create default `tracked_queries` from industry constants.
 
 ---
 
@@ -1152,12 +1390,12 @@ Vercel serverless functions have a 10-60 second timeout depending on plan. Scan 
 
 **`scan.free.run`**
 - Trigger: Event `scan/free.start`
-- Concurrency: 50 total (system-wide)
+- Concurrency: 25 total (system-wide)
 - Timeout: 120s
 - Retries: 1
 - Steps:
   1. `generate-prompts` — Generate 3 prompts based on business name, industry, location, language (recommendation, comparison, specific)
-  2. `query-and-crawl` — Fan out to 4 free-tier engines (ChatGPT, Gemini, Perplexity, Bing Copilot) in parallel + crawl website via cheerio for AI readiness. Promise.allSettled ensures partial results if one engine fails.
+  2. `query-and-crawl` — Fan out to 3 free-tier engines (ChatGPT, Gemini, Perplexity) in parallel + crawl website via cheerio for AI readiness. Promise.allSettled ensures partial results if one engine fails. (Claude is Pro-tier only. Bing Copilot removed — no public API.)
   3. `parse-responses` — Send each raw response to Claude Haiku for mention detection, position extraction, sentiment scoring (0-100), citation extraction, competitor identification
   4. `compute-scores` — Compute visibility score (weighted average across engines), AI readiness score (5 categories), generate quick wins, extract leaderboard
   5. `store-results` — UPDATE `free_scans` with results_data and status='completed'
@@ -1165,7 +1403,7 @@ Vercel serverless functions have a 10-60 second timeout depending on plan. Scan 
 
 **`scan.scheduled.run`**
 - Trigger: Event `scan/scheduled.start` (emitted by `cron.scheduled-scans`)
-- Concurrency: 20 total, 1 per user (prevents one user from monopolizing the queue)
+- Concurrency: 50 total, 1 per user (prevents one user from monopolizing the queue)
 - Timeout: 300s
 - Retries: 1
 - Steps:
@@ -1195,7 +1433,7 @@ Vercel serverless functions have a 10-60 second timeout depending on plan. Scan 
 
 **`agent.execute`**
 - Trigger: Event `agent/execute`
-- Concurrency: 20 total, 3 per user (key: `event.data.userId`)
+- Concurrency: 20 total, 5 per user (key: `event.data.userId`)
 - Timeout: 600s
 - Retries: 1
 - Steps:
@@ -1206,18 +1444,35 @@ Vercel serverless functions have a 10-60 second timeout depending on plan. Scan 
   5. `qa` — Quality gate (GPT-4o, score 0.00-1.00)
   6. `finalize` — If QA >= 0.7: confirm credit hold, store output, insert content_item if applicable, notify user. If QA < 0.7 on first try: retry write step with adjusted parameters. If still < 0.7: release credit hold, mark job failed, notify user.
 
-**`agent.ask-beamix`**
-- Trigger: Event `agent/ask-beamix`
-- Concurrency: 10 total
-- Timeout: 30s
-- Retries: 0
-- Not a step function — direct streaming response via SSE. Context assembly happens in the API route before streaming begins.
+**~~`agent.ask-beamix`~~ REMOVED** — Ask Beamix requires SSE streaming which is incompatible with Inngest background functions. It is implemented as a direct API route handler at `/api/agents/chat` (see Section 3). Not an Inngest function.
+
+**`cron.content-refresh-check`**
+- Trigger: Cron `0 6 * * *` (daily at 6AM UTC)
+- Concurrency: 1 (singleton)
+- Timeout: 300s
+- Retries: 2
+- Steps:
+  1. `find-stale-content` — Query `content_items` where `updated_at < NOW() - INTERVAL '30 days'` AND `status = 'published'`. Group by business.
+  2. `evaluate-refresh-need` — For each stale item, check if related scan scores have changed since content was created. If score delta > 10 points, flag for refresh.
+  3. `trigger-refresh-agents` — For each flagged item, emit `agent/execute` event with `agent_type = 'content_refresh'` (respects credit availability — skips if insufficient credits).
+  4. `record-check` — Log the check results for observability.
+
+**`cron.voice-refinement`**
+- Trigger: Cron `0 3 * * 0` (weekly, Sunday 3:00AM UTC)
+- Concurrency: 1 (singleton)
+- Timeout: 600s
+- Retries: 1
+- Steps:
+  1. `find-eligible-profiles` — Query `voice_profiles` that have been used by ≥3 content agents since last refinement.
+  2. `collect-performance-data` — For each profile, gather content performance metrics (scan score changes post-publication).
+  3. `refine-voice` — Run Claude Opus (`claude-opus-4-6`) with the existing voice profile + performance feedback to produce an updated voice profile. Store as new version (keeps previous version for rollback). Quality-critical — voice profile affects all content output.
+  4. `notify-users` — Send in-app notification that voice profile has been refined with summary of changes.
 
 #### Workflow Functions (NEW)
 
 **`workflow.execute`**
 - Trigger: Event `workflow/execute`
-- Concurrency: 5 total, 1 per user
+- Concurrency: 5 per user (key: `event.data.userId`)
 - Timeout: 1800s (30 minutes — workflows chain multiple agents)
 - Retries: 0 (individual agent steps have their own retries)
 - Steps: Dynamic based on workflow definition.
@@ -1241,16 +1496,38 @@ Vercel serverless functions have a 10-60 second timeout depending on plan. Scan 
   2. `evaluate-rules` — For each rule: check threshold against provided context data. Check deduplication (cooldown_hours vs last_triggered_at).
   3. `route-notifications` — For each triggered alert: check notification_preferences, create notification in DB, send email via Resend if configured, POST to Slack webhook if configured.
 
+#### Data Functions
+
+**`gdpr.export`**
+- Trigger: Event `gdpr/export-requested`
+- Concurrency: 5 total, 1 per user
+- Timeout: 300s
+- Retries: 1
+- Steps:
+  1. `gather-data` — Query all user data from all tables: user_profiles, businesses, scans, scan_engine_results, content_items, content_versions, agent_jobs, recommendations, alert_rules, notification_preferences, credit_pools, credit_transactions, competitors, tracked_queries, integrations (credentials excluded), api_keys (hashes excluded).
+  2. `serialize` — Serialize all data to a JSON package with table names as top-level keys.
+  3. `upload` — Upload JSON file to Supabase Storage (bucket: `gdpr-exports`, path: `{user_id}/{timestamp}.json`). Set expiry: 24 hours.
+  4. `notify` — Send download link via Resend using the `gdpr-export-ready` email template. Link is a signed Supabase Storage URL valid for 24 hours.
+  5. `schedule-cleanup` — Send a delayed Inngest event (`gdpr/export-cleanup`) scheduled for 24 hours later to delete the file from storage.
+
+**`gdpr.export-cleanup`**
+- Trigger: Event `gdpr/export-cleanup`
+- Concurrency: 10 total
+- Timeout: 30s
+- Retries: 2
+- Steps:
+  1. `delete-file` — Delete the export file from Supabase Storage.
+
 #### Cron Functions
 
 | Function | Schedule | Concurrency | Timeout | Purpose |
 |----------|----------|-------------|---------|---------|
-| `cron.scheduled-scans` | `0 2 * * *` (daily 2AM UTC) | 1 | 600s | Fetch all businesses with active subscriptions where `next_scan_at <= NOW()`. Send `scan/scheduled.start` event for each. |
+| `cron.scheduled-scans` | `0 * * * *` (every 1 hour) | 1 | 600s | Runs hourly to check which users are due for a scan based on their plan tier (Pro=daily, Business=every 4h). Fetches all businesses with active subscriptions where `next_scan_at <= NOW()`. Sends `scan/scheduled.start` event for each. Not all scans run every hour — it is a polling loop. |
 | `cron.monthly-credits` | `0 0 1 * *` (1st of month midnight) | 1 | 300s | For each active subscriber: compute rollover (20% cap of base), reset `used_amount` to 0, set new `base_allocation` from plan, record transactions. Reset `workflow.runs_this_month` counters. |
 | `cron.trial-nudges` | `0 10 * * *` (daily 10AM UTC) | 1 | 120s | Find users where trial_ends_at is 3 days away and no nudge sent. Send Resend email. |
 | `cron.weekly-digest` | `0 8 * * 1` (Monday 8AM UTC) | 1 | 300s | For each subscribed user: compile weekly summary (score changes, agent activity, recommendations). Send via Resend. |
-| `cron.prompt-volume-aggregation` | `0 4 * * 0` (Sunday 4AM UTC) | 1 | 300s | Aggregate week's scan data into `prompt_library` volume estimates and `prompt_volumes` time series. |
-| `cron.cleanup` | `0 3 * * *` (daily 3AM UTC) | 1 | 120s | Delete free_scans older than 14 days where `converted_user_id IS NULL`. Delete notifications older than 90 days. Purge expired API keys. |
+| `cron.prompt-volume-aggregation` | `30 3 * * 0` (Sunday 3:30AM UTC) | 1 | 300s | Aggregate week's scan data into `prompt_library` volume estimates and `prompt_volumes` time series. Staggered 30 min after voice-refinement (3:00AM) to avoid concurrent load. |
+| `cron.cleanup` | `0 4 * * *` (daily 4AM UTC) | 1 | 120s | Delete free_scans older than 14 days where `converted_user_id IS NULL`. Delete notifications older than 90 days. Purge expired API keys. Release stuck credit holds older than 2 hours (holds with no corresponding confirm or release). |
 
 ### 4.3 Event Flow
 
@@ -1267,7 +1544,7 @@ User triggers agent → API sends "agent/execute" event
                    → Runs agent.execute function
                    → On completion: may send "alert/evaluate" event
 
-Cron fires at 2AM → cron.scheduled-scans runs
+Cron fires hourly → cron.scheduled-scans runs
                   → Sends N "scan/scheduled.start" events (one per business)
                   → Each scan runs independently
                   → Each scan completion sends "alert/evaluate"
@@ -1573,6 +1850,11 @@ Full RLS matrix (abbreviated — all 32 tables are covered):
 | api_keys | own | own | — | own |
 | plans | all | service | service | — |
 | blog_posts | public (published) | service | service | — |
+| ga4_metrics | own (via join) | service | — | cascade |
+| gsc_data | own (via join) | service | — | cascade |
+| competitor_share_of_voice | own (via join) | service | — | cascade |
+| crawler_detections | own (via join) | service | — | cascade |
+| ai_readiness_history | own (via join) | service | — | cascade |
 
 ### 7.3 API Key Management
 
@@ -1596,20 +1878,51 @@ Integration credentials (WordPress passwords, OAuth tokens, Slack webhooks) are 
 
 ### 7.5 Rate Limiting Strategy
 
+All rate limiting uses **Upstash Redis** via `@upstash/ratelimit` with the **sliding window** algorithm. In-memory counters are not used — they do not work on Vercel serverless (each function invocation gets a fresh memory space). Rate limiting is handled entirely by Upstash Redis — no database table is needed for rate limit counters.
+
+**Environment variables:** `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`.
+
 | Route | Limit | Scope | Method |
 |-------|-------|-------|--------|
-| POST /api/scan/start | 3 per 24h | Per IP | Count in free_scans table |
-| POST /api/scan/manual | Tier-based (1/week, 1/day, 1/hour) | Per user | Count in scans table |
-| POST /api/agents/*/execute | 10 per hour | Per user | Count in agent_jobs table |
-| POST /api/agents/chat | 30 per hour | Per user | In-memory counter (Vercel Edge) |
-| GET /api/dashboard/* | 60 per minute | Per user | In-memory counter |
-| POST /api/billing/webhooks | 100 per minute | Per IP | In-memory counter |
-| /api/v1/* | 100 per minute | Per API key | Count via api_keys.rate_limit |
-| All other routes | 30 per minute | Per user | In-memory counter |
+| POST /api/scan/start (no auth) | 3 per 24h | Per IP | Upstash sliding window |
+| POST /api/scan/start (auth, free) | 1 per 24h | Per user | Upstash sliding window |
+| POST /api/scan/manual | Tier-based (1/week, 1/day, 1/hour) | Per user | Upstash sliding window |
+| POST /api/agents/*/execute | 10 per hour | Per user | Upstash sliding window |
+| POST /api/agents/chat | 30 per hour | Per user | Upstash sliding window |
+| GET /api/dashboard/* | 60 per minute | Per user | Upstash sliding window |
+| POST /api/billing/portal | 10 per hour | Per user | Upstash sliding window |
+| POST /api/billing/webhooks | 100 per minute | Per IP | Upstash sliding window |
+| /api/v1/* | 100 per minute | Per API key | Upstash sliding window (key: `api:{key_prefix}`) |
+| All other routes | 30 per minute | Per user | Upstash sliding window |
 
-**Implementation (Phase 1):** Supabase-based counters for scan and agent rate limits (already querying these tables). In-memory counters (Map in middleware) for general route limits. Sufficient for <10K users.
+**Response on limit exceeded:** 429 with `Retry-After` header (seconds until window resets).
 
-**Upgrade path (Phase 2, 10K+ users):** Migrate to Upstash Redis for all rate limiting. Provides atomic operations, TTL-based expiry, and distributed counters across Vercel edge regions.
+**Implementation pattern:**
+```
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
+
+// Example: agent chat limiter
+const chatLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(30, "1 h"),
+  prefix: "ratelimit:agents:chat",
+});
+
+// In route handler:
+const { success, reset } = await chatLimiter.limit(userId);
+if (!success) {
+  return Response.json({ error: "Rate limit exceeded" }, {
+    status: 429,
+    headers: { "Retry-After": String(Math.ceil((reset - Date.now()) / 1000)) },
+  });
+}
+```
 
 ### 7.6 GDPR Compliance
 
@@ -1644,7 +1957,7 @@ This is the most important data flow in the system — it touches scan, citation
 TRIGGER
   │
   ├─ Free scan: User submits form on /scan → POST /api/scan/start → Inngest "scan/free.start"
-  ├─ Scheduled: Cron at 2AM UTC → finds due businesses → Inngest "scan/scheduled.start" per business
+  ├─ Scheduled: Cron every hour → finds due businesses (next_scan_at <= NOW()) → Inngest "scan/scheduled.start" per business
   └─ Manual: User clicks "Run Scan" → POST /api/scan/manual → Inngest "scan/manual.start"
   │
   ▼
@@ -1662,7 +1975,7 @@ STEP 2: ENGINE QUERY FAN-OUT
   │  ├─ Perplexity (Perplexity API) ────┤  (partial results OK)
   │  ├─ Grok (xAI API) [Pro+] ─────────┤
   │  ├─ DeepSeek (DeepSeek API) [Pro+] ─┤
-  │  └─ Copilot [Business] ────────────┘
+  │  └─ (Future engines) [Business] ───┘
   │
   │  Parallel: Website crawl (cheerio) for AI readiness scoring
   │
@@ -1877,10 +2190,22 @@ RULE EVALUATION
   │   ├─ visibility_drop: current_score < previous_score * (1 - threshold/100)
   │   ├─ visibility_improvement: current_score > previous_score * (1 + threshold/100)
   │   ├─ new_competitor: competitor in engine results NOT in competitors table
-  │   ├─ competitor_overtake: competitor position < user position (was previously >=)
+  │   ├─ competitor_overtake: a competitor's avg rank_position surpasses the business's
+  │   │    avg rank_position for the same query set over 2 consecutive scans.
+  │   │    Data source: scan_engine_results joined on scan_id for current + previous scan.
+  │   │    Fires once per competitor per overtake event (not on every scan where they lead).
   │   ├─ sentiment_shift: dominant sentiment changed (positive→negative or vice versa)
   │   ├─ credit_low: available_credits / base_allocation < threshold_percent
-  │   └─ content_performance_change: published content's delta exceeds threshold
+  │   ├─ content_performance: fires when a content_item's visibility_score_after drops
+  │   │    >20% vs the 30-day rolling average of its content_performance rows.
+  │   │    Data source: content_performance table for the specific content_item.
+  │   ├─ scan_complete: fires after every scan completion for the business. No threshold.
+  │   │    Useful for "notify me after every scan" rules. Always triggers if rule is active.
+  │   ├─ agent_complete: fires after every agent_jobs completion for the user.
+  │   │    Includes job summary (agent_type, status, qa_score) in notification body.
+  │   └─ trial_ending: fires when subscriptions.trial_ends_at - NOW() <= threshold.days.
+  │        Evaluated by cron.trial-nudges (not by scan-triggered alert.evaluate).
+  │        Cross-referenced here for completeness — actual delivery is via cron.
   │
   ▼
 DEDUPLICATION

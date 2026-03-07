@@ -1,10 +1,30 @@
 # Beamix — Engineering Plan
 
-> **The definitive technical blueprint for building Beamix.**
-> Covers every system, feature, data flow, and architectural decision.
-> No pricing, no timelines — pure engineering.
+> **Last synced:** March 2026 — aligned with 03-system-design/
+
+> ⚠️ **SUPERSEDED** — This document has been replaced by the 03-system-design/ files. See `.planning/03-system-design/BEAMIX_SYSTEM_DESIGN.md` for the current engineering plan.
+
+The original phase-based structure below has been replaced by a priority-based classification in the System Design v2.1:
+
+### Current Priority Classification (from System Design v2.1 section 7)
+
+**Launch Critical (18 items):**
+Scan engine (4 free-tier engines), response parsing (0-100 sentiment), visibility scoring, free scan flow, dashboard overview, 12 original agents (A1-A12), credit system (hold/confirm/release), onboarding 4-step flow, content library with editor, WordPress integration (Pro tier), alert system (email + in-app), settings (business/billing/preferences), Paddle billing, Supabase auth, recommendations agent (auto post-scan), prompt generation per industry, source-level citation tracking, AI readiness scoring.
+
+**Growth Phase — 3 months (15 items):**
+Content voice training (A13), content pattern analyzer (A14), content refresh agent (A15), brand narrative analyst (A16), agent workflow chains, content performance tracking, prompt volume estimation, typed content templates (6 types), GA4 integration, GSC integration, Slack integration, customer journey stage mapping, competitive intelligence dashboard, recurring agent execution, prompt auto-suggestion.
+
+**Moat Builders — 3-6 months (20 items):**
+Persona-based tracking, browser simulation (Copilot, AI Overviews), multi-region scanning, public REST API, brand narrative history + trends, content performance attribution, agent suggestion engine, cross-agent memory, Cloudflare integration, multi-person editorial review workflows, Hebrew prompt library, "What Changed" weekly diff reports, competitor weakness alerts, AI readiness progress tracker (gamified).
+
+**Intentionally Skipped (14 items):**
+White-label agency mode, Looker Studio connector, CDN-level site optimization, Shopify/e-commerce, YouTube/TikTok/Reddit monitoring, Contentful/Sanity CMS, AI Mode browser simulation, full revenue attribution, multi-workspace, Webflow integration, Akamai/AWS CloudFront CDN, Reddit alerts, Gamma integration, Amazon Rufus engine.
+
+> See `BEAMIX_SYSTEM_DESIGN.md` section 7 and `_SYSTEM_DESIGN_VALIDATION.md` section 5 for full classification with reasoning.
 
 ---
+
+## Original Plan (Historical Reference)
 
 ## Table of Contents
 

@@ -1,3 +1,7 @@
+> ⚠️ **DUPLICATE** — This is a copy of `.planning/02-competitive/COMPETITIVE_RESEARCH_DEEP.md`.
+> Refer to the `02-competitive/` folder for the maintained version.
+> *Noted: 2026-03-05*
+
 # מחקר מתחרים מעמיק — Beamix GEO Platform
 
 > **תאריך:** מרץ 2026 2
@@ -709,7 +713,7 @@ Google AI Overviews, ChatGPT, Perplexity (3 AI + YouTube/TikTok/Reddit/Web)
 
 | כשלקוח אומר... | התשובה שלנו |
 |----------------|-------------|
-| "Profound יותר טוב" | "Profound מתחיל ב-$99 רק ל-ChatGPT. ב-$49 אתה מקבל 4 engines + agents שכותבים תוכן" |
+| "Profound יותר טוב" | "Profound מתחיל ב-$99 רק ל-ChatGPT. ב-$49 אתה מקבל 3 engines + agents שכותבים תוכן" |
 | "Otterly רק $29" | "Otterly מראה data. Beamix כותבת לך את התוכן שמתקן את הבעיה" |
 | "Writesonic ב-$49" | "GEO features ב-Writesonic מתחילים ב-$249. ב-$49 שלנו אתה מקבל GEO + agents" |
 | "Ahrefs כבר יש לי" | "Brand Radar דיווח 3 mentions מתוך 123 בבדיקה. ויש לו בעיות accuracy חמורות" |

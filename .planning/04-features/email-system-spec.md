@@ -1,15 +1,23 @@
 # Beamix — Email System Spec
-**Version:** 1.0
+
+> **Last synced:** March 2026 — aligned with 03-system-design/
+
+**Version:** 1.1
 **Date:** 2026-02-28
-**Status:** Draft — Ready for Implementation
+**Last Updated:** 2026-03-06 — synced with System Design v2.1
+**Status:** Updated
 
 > Email provider: **Resend**. Templates: **React Email**. All sends go through one typed wrapper.
 
 ---
 
-## Open Question ⚠️
+## Trial Duration — UPDATED ⚠️
 
-**Trial duration:** Confirmed **14 days** (locked decision). All specs aligned.
+**Trial duration:** **7 days** (updated 2026-03-05 per System Design v2.1). Starts on **first dashboard visit** (not signup).
+- Trial nudge emails: Day 3 and Day 6 (not Day 7 and Day 12 as previously specced — update template names/timing below)
+- `trial-day7.tsx` → rename logic to `trial-day3.tsx` (fires on Day 3 of trial)
+- `trial-day12.tsx` → rename logic to `trial-day6.tsx` (fires on Day 6 of trial)
+- Trial credit cap during trial: 5 agent credits
 
 ---
 
@@ -163,7 +171,7 @@ export async function sendCompetitorMoved(params: { to: string; firstName: strin
 
 ### 5. Trial Start
 - **Trigger:** First scan begins (`POST /api/scan/start` or `/api/scan/[id]/claim` for free scan import)
-- **Subject:** `"Your 14-day Beamix trial has started"`
+- **Subject:** `"Your 7-day Beamix trial has started"`
 - **Content:**
   - What's included in trial
   - Trial end date (formatted)
@@ -174,8 +182,8 @@ export async function sendCompetitorMoved(params: { to: string; firstName: strin
 
 ---
 
-### 6. Trial Day 7 Nudge
-- **Trigger:** Vercel Cron (`/api/cron/trial-nudges`) — daily at 09:00 UTC. Checks `subscriptions` where `trial_started_at + 7 days = today` and `status = 'trialing'` (midpoint of 14-day trial)
+### 6. Trial Day 3 Nudge
+- **Trigger:** Inngest cron (`cron.trial-nudges`) — daily at 10:00 AM UTC. Checks `subscriptions` where `trial_starts_at + 3 days = today` and `status = 'trialing'` (midpoint of 7-day trial)
 - **Subject:** `"Halfway through your trial — here's your progress"`
 - **Content:**
   - Scans completed count
@@ -187,9 +195,9 @@ export async function sendCompetitorMoved(params: { to: string; firstName: strin
 
 ---
 
-### 7. Trial Day 12 — Urgency
-- **Trigger:** Same cron, checks `trial_ends_at - now() <= 2 days`
-- **Subject:** `"2 days left in your Beamix trial"`
+### 7. Trial Day 6 — Urgency
+- **Trigger:** Same Inngest cron, checks `trial_ends_at - now() <= 1 day`
+- **Subject:** `"1 day left in your Beamix trial"`
 - **Content:**
   - What gets locked when trial ends (list)
   - Current score + what they've improved
@@ -294,28 +302,16 @@ export async function sendCompetitorMoved(params: { to: string; firstName: strin
 
 ---
 
-## Vercel Cron Config
+## Cron Config (Inngest)
 
-File: `vercel.json`
-```json
-{
-  "crons": [
-    { "path": "/api/cron/weekly-digest", "schedule": "0 8 * * 1" },
-    { "path": "/api/cron/trial-nudges",  "schedule": "0 9 * * *"  }
-  ]
-}
-```
+Per System Design v2.1, all cron jobs run as Inngest functions (not Vercel Cron):
 
-Cron handlers require Vercel authentication:
-```typescript
-// app/api/cron/trial-nudges/route.ts
-export async function GET(req: Request) {
-  if (req.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new Response('Unauthorized', { status: 401 })
-  }
-  // ... run logic
-}
-```
+| Function | Schedule | Purpose |
+|---|---|---|
+| `cron.trial-nudges` | Daily 10:00 AM UTC | Day 3 and Day 6 trial nudge emails |
+| `cron.weekly-digest` | Monday 8:00 AM UTC | Weekly ranking digest to all active users |
+
+All Inngest functions are served via `/api/inngest` endpoint. Inngest handles retry, concurrency, and observability.
 
 ---
 

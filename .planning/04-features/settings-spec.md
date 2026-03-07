@@ -1,7 +1,11 @@
 # Beamix — Settings & Billing Spec
-**Version:** 1.0
+
+> **Last synced:** March 2026 — aligned with 03-system-design/
+
+**Version:** 1.1
 **Date:** 2026-02-28
-**Status:** Draft — Ready for Dev
+**Last Updated:** 2026-03-06 — synced with System Design v2.1
+**Status:** Updated
 
 > Settings is where trust is built or broken. The billing section especially must be transparent, predictable, and never surprising. No dark patterns.
 
@@ -15,7 +19,7 @@ Before any UI spec, the trial logic must be clear because it affects every scree
 
 | Property | Value |
 |---|---|
-| Duration | 14 days from signup |
+| Duration | 7 days from first dashboard visit (NOT from signup) |
 | Credit card required to start | No |
 | What's accessible during trial | Scan results, ranking data, leaderboard, competitor names, quick wins (3 free recs) |
 | What's locked during trial | All AI agents, additional scans, full recommendations, content library |
@@ -25,9 +29,9 @@ Before any UI spec, the trial logic must be clear because it affects every scree
 ### Trial State Logic
 
 ```
-User signs up
+User signs up → completes onboarding → arrives at /dashboard (FIRST VISIT)
      │
-     ├── Trial starts (14 days)
+     ├── Trial starts (7 days from first dashboard visit)
      │       │
      │       ├── Can see: scan results, rankings, leaderboard, 3 quick wins
      │       └── Cannot use: agents, extra scans, full recommendations
@@ -253,7 +257,7 @@ User signs up
 
 ### Trial State — Billing Tab
 
-**When user is in 14-day trial:**
+**When user is in 7-day trial:**
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -398,7 +402,7 @@ Need more agent uses this month?
 ```
 
 - Each button triggers Paddle Checkout in "payment" mode (one-time, not subscription)
-- On success: webhook → credits table updated → toast "5 agent uses added"
+- On success: webhook → `credit_pools` table updated → toast "5 agent uses added"
 
 ### Invoice History
 
@@ -450,21 +454,26 @@ Need more agent uses this month?
 
 ## Tab 4 — Integrations
 
+Per System Design v2.1, the integration hub supports 5 platforms (+ Paddle billing, which is in the Billing tab):
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  Integrations                                                   │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  Connect Beamix directly to your platforms.                     │
-│  Publish content with one click — coming soon.                  │
+│  Connect Beamix to your platforms.                              │
 │                                                                 │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐  │
-│  │   WordPress      │  │      Wix         │  │  Webflow     │  │
-│  │   [Coming Soon]  │  │  [Coming Soon]   │  │ [Coming Soon]│  │
+│  │   WordPress      │  │  Google          │  │  Google      │  │
+│  │   CMS Publish    │  │  Analytics (GA4) │  │  Search      │  │
+│  │   [Pro+]         │  │  [Growth Phase]  │  │  Console     │  │
+│  │   [Connect →]    │  │  [Coming Soon]   │  │  [Growth]    │  │
 │  └──────────────────┘  └──────────────────┘  └──────────────┘  │
 │                                                                 │
 │  ┌──────────────────┐  ┌──────────────────┐                     │
-│  │  Google Business │  │  Facebook Pages  │                     │
+│  │   Slack          │  │  Cloudflare      │                     │
+│  │   Alert Delivery │  │  DNS/CDN         │                     │
+│  │   [Growth Phase] │  │  [Business]      │                     │
 │  │   [Coming Soon]  │  │  [Coming Soon]   │                     │
 │  └──────────────────┘  └──────────────────┘                     │
 │                                                                 │
@@ -477,7 +486,7 @@ Need more agent uses this month?
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**Dev note:** "Notify me" toggle is a boolean in `notification_preferences` table. No backend integration work in MVP. The cards are pure UI — no click handlers other than the toggle.
+**Dev note:** WordPress is launch-critical (Pro tier, one-click CMS publish). GA4, GSC, Slack are Growth Phase. Cloudflare is Moat Builder (Business tier). All integration credentials encrypted with AES-256-GCM at application layer. OAuth flow for GA4/GSC. "Notify me" toggle is boolean in `notification_preferences`.
 
 ---
 
@@ -501,7 +510,7 @@ Need more agent uses this month?
 │  │              │  │              │  │              │          │
 │  │  [🔒 Locked] │  │  [🔒 Locked] │  │  [🔒 Locked] │          │
 │  └──────────────┘  └──────────────┘  └──────────────┘          │
-│  ... (all 7 agents locked)                                      │
+│  ... (all 16 agents locked during trial)                         │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -542,4 +551,4 @@ Need more agent uses this month?
 ---
 
 *Document version: 1.0 | Created: 2026-02-28 | Author: Iris (CEO Agent)*
-*Trial duration: 14 days, no credit card required. Agents locked during trial. Read-only after trial expires.*
+*Trial duration: 7 days from first dashboard visit, no credit card required. 5 agent credit cap during trial. Read-only after trial expires.*

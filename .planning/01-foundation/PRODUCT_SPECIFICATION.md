@@ -1,13 +1,22 @@
 # Beamix — Product Specification
 
+> **Last synced:** March 2026 — aligned with 03-system-design/
+
 > Part of the PRD. Translates the Strategic Foundation into buildable requirements.
 > **Repository:** https://github.com/Adam077K/Beamix
-> Source of truth: `.planning/STRATEGIC_FOUNDATION.md`
 
-**Version:** 1.0
+**Version:** 1.2
 **Date:** 2026-02-27
+**Last Updated:** 2026-03-06 — synced with System Design v2.1
 **Author:** Morgan (CPO Agent)
-**Status:** Ready for Review
+**Status:** Updated
+
+> **Source of truth:** `.planning/03-system-design/_SYSTEM_DESIGN_PRODUCT_LAYER.md`
+> This document covers user journeys and high-level feature summary. For full page specs, data flows, and agent UX, defer to the system design.
+>
+> **Key numbers:** 23 pages, 90+ features across 10 modules, 16 AI agents (A1-A16), 10 AI scan engines (3 phases), 4 user journeys, 32 DB tables.
+> **Trial:** 7 days starting on first dashboard visit (not signup). Capped at 5 agent credits.
+> **Pricing tiers:** Starter ($49/mo) / Pro ($149/mo) / Business ($349/mo). No "Free" plan_tier in DB — free tier = null.
 
 ---
 
@@ -39,7 +48,7 @@
 | A6 | Scan Results | Clicks "Get Your Action Plan" (CTA below blurred section) | Modal: Email capture form. "Enter your email to save your scan and get a free action plan." | Willing to trade email |
 | A7 | Email Capture | Enters email, clicks "Send My Plan" | Email sent with scan summary + 3 free recommendations. Redirect to `/signup?scan=[scan_id]` | Committed |
 | A8 | Signup (`/signup`) | Pre-filled email. Adds password, confirms business details | Account created. Scan linked to account. Redirect to `/dashboard` with scan data already populated | Relief / Excitement |
-| A9 | Dashboard (first visit) | Sees full scan results + "14-day free trial" banner | Dashboard shows: Visibility Score, per-LLM rankings, 5-8 recommendations with "Fix This" buttons. Trial counter: "13 days remaining" | Empowered |
+| A9 | Dashboard (first visit) | Sees full scan results + trial banner | Dashboard shows: Visibility Score, per-LLM rankings, 5-8 recommendations with "Fix This" buttons. Trial counter: "7 days remaining" (trial clock starts on first dashboard visit, not signup) | Empowered |
 
 **Conversion points measured:**
 - Scan started (A3)
@@ -119,8 +128,8 @@
    - "Top rated insurance agents in Israel"
    - "Best [industry] near [location]" (generic template)
    - "Compare insurance companies in Tel Aviv"
-2. Each prompt is sent to: ChatGPT (GPT-4o), Gemini (1.5 Pro), Perplexity (Sonar), Claude (Opus 4.5)
-3. Responses are parsed for: business name mention (exact + fuzzy match), position in list (if list format), sentiment of mention (positive/neutral/negative), URL citation (yes/no)
+2. Each prompt is sent to Phase 1 engines: ChatGPT (GPT-4o), Gemini (2.0 Flash), Perplexity (Sonar Pro), Claude (Sonnet 4.6). Phase 2 adds: Grok, DeepSeek, You.com. Phase 3 (deferred): Copilot, AI Overviews, Meta AI via browser simulation.
+3. Responses are parsed for: business name mention (exact + fuzzy match), position in list (if list format), sentiment score 0-100 integer (NOT enum — 0=very negative, 50=neutral, 100=very positive), URL citation (yes/no)
 4. Results are aggregated into a Visibility Score (0-100)
 
 **Visibility Score Calculation:**
@@ -216,8 +225,8 @@ Total Visibility Score = Sum of all 4 LLM scores (max 100)
 | Per-LLM rank change | Delta from previous scan | Per scan cycle |
 | Visibility trend | Historical scores, 30/60/90 day view | Accumulated |
 | Top 3 recommendations | From `recommendations` table, sorted by impact | After each analysis |
-| Agent usage | Count of `agent_executions` this billing period | Real-time |
-| Content status | Count of items by status in `content_generations` | Real-time |
+| Agent usage | Count of `agent_jobs` this billing period | Real-time |
+| Content status | Count of items by status in `content_items` | Real-time |
 
 **Acceptance Criteria:**
 - [ ] Dashboard loads in under 2 seconds with cached data
@@ -309,7 +318,7 @@ Each plan tier includes a set number of "agent uses" per month. One agent execut
 
 **Purpose:** Analyzes the user's current visibility data, identifies gaps, and generates a prioritized list of specific actions to improve AI search rankings.
 
-**Trigger:** Runs automatically after each scan cycle. User can also trigger manually ("Refresh Recommendations").
+**Trigger:** Runs automatically after each scan cycle (emitted by `scan/complete` Inngest event). User can also trigger manually ("Refresh Recommendations"). Does NOT consume a credit (0 credits — system agent).
 
 **Inputs (automatic):**
 - All `ranking_results` for user's tracked queries
@@ -678,6 +687,16 @@ interface SocialStrategyOutput {
 
 ---
 
+> **Note:** Agents A7 (Social Strategy), A8 (Competitor Intelligence), A9 (Citation Builder), A10 (LLMS.txt Generator), A11 (AI Readiness Auditor), A12 (Ask Beamix) are also part of the Launch Critical set. Full specs in `.planning/03-system-design/_SYSTEM_DESIGN_PRODUCT_LAYER.md` §5.
+>
+> **Growth Phase agents (A13-A16 — not at launch):**
+> - **A13 Content Voice Trainer** — learns the business's writing style from existing website content. Uses Opus for high-quality voice extraction. (1 credit)
+> - **A14 Content Pattern Analyzer** — analyzes what makes cited content succeed; crawls top-ranked content for the user's queries. (1 credit)
+> - **A15 Content Refresh Agent** — audits published content for staleness; suggests and rewrites outdated sections. (1 credit)
+> - **A16 Brand Narrative Analyst** — explains WHY AI says what it says about the business; identifies narrative gaps. Uses Opus for depth. (1 credit)
+
+---
+
 ### 2.4 Settings & Account
 
 #### 2.4.1 Business Profile (`/dashboard/settings/profile`)
@@ -739,12 +758,21 @@ interface SocialStrategyOutput {
 - [ ] Content generation language is independent of interface language
 - [ ] Language preference persisted to user profile in database
 
-#### 2.4.4 Connected Platforms (Phase 3 -- Future)
+#### 2.4.4 Integrations (`/dashboard/settings/integrations`)
 
-**Placeholder page** showing:
-- "Coming soon: Connect your website, social media, and review platforms"
-- Visual mockups of: WordPress, Wix, Facebook, Google Business Profile
-- "Notify me when available" toggle
+7 integrations available (access varies by plan):
+
+| Integration | Plan | Purpose |
+|-------------|------|---------|
+| WordPress | Pro+ | Publish content directly from Content Library to WordPress |
+| Google Analytics 4 | Pro+ | Import traffic data for content performance attribution |
+| Google Search Console | Pro+ | Import organic rankings to correlate with AI visibility |
+| Slack | Pro+ | Alert notifications to Slack channel |
+| Cloudflare | Business | Analytics integration |
+| Paddle | All paid | Billing portal access (auto-connected at signup) |
+| API Keys | Business | REST API access for custom integrations |
+
+**OAuth flow:** WordPress, GA4, GSC, Slack use OAuth. Cloudflare uses API token. Credentials encrypted at rest (AES-256-GCM).
 
 ---
 
@@ -762,12 +790,12 @@ interface SocialStrategyOutput {
 |---|---|---|---|---|
 | **Price** | $0 | $49/mo | $149/mo | $349/mo |
 | **Annual price** | -- | $39/mo (billed $468/yr) | $119/mo (billed $1,428/yr) | $279/mo (billed $3,348/yr) |
-| **Trial** | N/A | 14-day free trial | 14-day free trial | 14-day free trial |
+| **Trial** | N/A | 7-day free trial | 7-day free trial | 7-day free trial |
 | | | | | |
 | **Scanning** | | | | |
 | Free scan | 1 (no account) | Included | Included | Included |
 | Tracked queries | 0 | 10 | 25 | 75 |
-| LLMs scanned | 4 | 4 | 4 | 4 + Google AI Overviews |
+| LLMs scanned | 3 | 3 | 7 | 9 |
 | Scan frequency | One-time | Weekly | Every 3 days | Daily |
 | | | | | |
 | **AI Agents** | | | | |
@@ -857,9 +885,8 @@ For users who exhaust their monthly agent uses:
 /api/recommendations/*              # Recommendations data
 /api/agents/*                       # Agent execution endpoints
 /api/content/*                      # Content CRUD
-/api/credits/*                      # Usage tracking
-/api/paddle/*                       # Paddle integration
-/api/paddle/webhooks                # Paddle webhooks
+/api/billing/*                      # Paddle billing (status, portal, usage, invoices)
+/api/billing/webhooks               # Paddle webhook endpoint (canonical path)
 /api/webhooks/agents                # Agent completion webhooks
 /api/cron/*                         # Scheduled job endpoints
 ```

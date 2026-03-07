@@ -31,7 +31,7 @@ const PLANS = [
 
 const FAQ = [
   { q: 'What is a free scan?', a: 'A free scan checks your business across 4 major AI engines and shows your visibility score, rank, and 3 quick wins. No account required.' },
-  { q: 'Do I need a credit card for the trial?', a: 'No. Your 14-day free trial starts without any payment information required.' },
+  { q: 'Do I need a credit card for the trial?', a: 'No. Your 7-day free trial starts without any payment information required.' },
   { q: 'What are AI agent uses?', a: 'Each time you use an AI agent (like Blog Writer or Schema Optimizer) to generate content, it counts as one agent use.' },
   { q: 'What happens after the trial ends?', a: 'Your data is preserved. You can upgrade to keep access, or your account enters read-only mode.' },
   { q: 'Can I cancel anytime?', a: 'Yes. Cancel with one click from your settings. No questions, no penalties.' },
@@ -51,7 +51,7 @@ export function BeamixPricing() {
         <h2 className="text-center font-[family-name:var(--font-outfit)] font-bold text-4xl md:text-5xl text-[#141310] mb-4">
           Start free. Upgrade when you see results.
         </h2>
-        <p className="text-center text-stone-500 mb-8">14-day free trial on all plans. No credit card required.</p>
+        <p className="text-center text-stone-500 mb-8">7-day free trial on all plans. No credit card required.</p>
 
         {/* Toggle */}
         <div className="flex items-center justify-center gap-3 mb-12">

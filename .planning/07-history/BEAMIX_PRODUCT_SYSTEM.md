@@ -1,3 +1,5 @@
+> ⚠️ **ARCHIVED** — Historical reference. Current source of truth: `.planning/03-system-design/BEAMIX_SYSTEM_DESIGN.md` | Archived: 2026-03-05
+
 # Beamix — Complete Product & System Blueprint
 
 > **Master Document** — Synthesized from 4 specialist perspectives (CPO, CTO, CFO, Research Analyst)

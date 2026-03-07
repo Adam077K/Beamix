@@ -1,8 +1,12 @@
 # Beamix — Pricing Page Spec
+
+> **Last synced:** March 2026 — aligned with 03-system-design/
+
 **Route:** `/pricing`
-**Version:** 1.0
+**Version:** 1.1
 **Date:** 2026-02-28
-**Status:** Draft — Ready for Dev
+**Last Updated:** 2026-03-06 — synced with System Design v2.1
+**Status:** Updated
 
 > The standalone pricing page serves high-intent visitors — people who Googled "beamix pricing" or clicked Pricing in the nav. They want detail. Give them everything.
 
@@ -26,7 +30,7 @@ All CTAs on this page are context-aware. Three states:
 | Has scan | `?scan_id=XXX` in URL, not logged in | `Continue with My Scan →` | `/signup?scan_id=XXX` |
 | Has scan + logged in | `?scan_id=XXX` + authenticated session | `Apply Scan to My Account →` | `/dashboard?import_scan=XXX` |
 
-**Dev note:** On page mount, read `scan_id` from URL params (`useSearchParams()`). Check Supabase auth session. Set CTA variant accordingly. The `scan_id` is passed from `/scan/[id]` when user clicks the upgrade CTA there. During signup, read `scan_id` from the URL and store in Supabase session/localStorage. After account creation, link the `free_scans` record to the new `user_id` via: `UPDATE free_scans SET converted_user_id = $user_id WHERE scan_token = $scan_id`.
+**Dev note:** On page mount, read `scan_id` from URL params (`useSearchParams()`). Check Supabase auth session. Set CTA variant accordingly. The `scan_id` is passed from `/scan/[id]` when user clicks the upgrade CTA there. During signup, read `scan_id` from the URL and store in Supabase session/localStorage. After account creation, link the `free_scans` record to the new `user_id` via: `UPDATE free_scans SET converted_user_id = $user_id WHERE scan_id = $scan_id`.
 
 ---
 
@@ -52,10 +56,10 @@ All CTAs on this page are context-aware. Three states:
 `Start free. Upgrade when you see results.`
 
 **Subheadline:**
-`Every plan includes a 14-day free trial — no credit card required. See your AI visibility first, then decide if you want to fix it.`
+`Every plan includes a 7-day free trial — no credit card required. See your AI visibility first, then decide if you want to fix it.`
 
 **Trust signals (3 pills, horizontal row):**
-- `14-day free trial`
+- `7-day free trial`
 - `No credit card required`
 - `Cancel anytime`
 
@@ -129,16 +133,13 @@ Four cards, side by side on desktop, stacked on mobile.
 - Weekly scans
 - 5 agent uses/month
 - 3 competitors tracked
-- Content Writer agent
-- Blog Writer agent
-- FAQ Agent
-- Schema Optimizer agent
+- 4 agents: A1 Content Writer, A2 Blog Writer, A3 Schema Optimizer, A5 FAQ Agent
 - Markdown + HTML output
 - 4 weeks trend history
 - Email digest: weekly
 
 **CTA Button:** `Start Free Trial`
-**Note below button:** `14 days free · No credit card required`
+**Note below button:** `7 days free · 5 agent credits included · No credit card required`
 
 ---
 
@@ -157,7 +158,8 @@ Four cards, side by side on desktop, stacked on mobile.
 - Scans every 3 days
 - 15 agent uses/month
 - 5 competitors tracked
-- All 7 agents (incl. Review Analyzer, Social Strategy, Competitor Intelligence)
+- 15 agents: A1-A15 (all except A16 Brand Narrative Analyst)
+  - Includes: Review Analyzer, Social Strategy, Competitor Intelligence, Citation Builder, Ask Beamix, AI Readiness Auditor, Content Voice Trainer, Content Pattern Analyzer, Content Refresh Agent
 - Markdown + HTML + JSON-LD output
 - 12 weeks trend history
 - Export: PDF + CSV
@@ -165,7 +167,7 @@ Four cards, side by side on desktop, stacked on mobile.
 - Support: priority email
 
 **CTA Button:** `Start Free Trial`
-**Note below button:** `14 days free · No credit card required`
+**Note below button:** `7 days free · 5 agent credits included · No credit card required`
 
 ---
 
@@ -184,7 +186,7 @@ Four cards, side by side on desktop, stacked on mobile.
 - Daily scans
 - 50 agent uses/month
 - 10 competitors tracked
-- All 7 agents
+- All 16 agents incl. A16 Brand Narrative Analyst (Business-exclusive)
 - Markdown + HTML + JSON-LD output
 - Google AI Overviews tracking
 - 52 weeks trend history
@@ -194,7 +196,7 @@ Four cards, side by side on desktop, stacked on mobile.
 - Top-up: 5 uses/$15 or 15 uses/$35
 
 **CTA Button:** `Start Free Trial`
-**Note below button:** `14 days free · No credit card required`
+**Note below button:** `7 days free · 5 agent credits included · No credit card required`
 
 ---
 
@@ -228,19 +230,28 @@ Full-width table. Sticky column headers on scroll (desktop). Horizontally scroll
 | Competitors tracked | 1 (top only) | 3 | 5 | 10 |
 | Trend history | — | 4 weeks | 12 weeks | 52 weeks |
 
-### Group: AI Agents
+### Group: AI Agents (16 Total — A1 through A16)
 
 | Feature | Free Scan | Starter | Pro | Business |
 |---|---|---|---|---|
 | Agent uses per month | — | 5 | 15 | 50 |
 | Agent use top-up | — | Available | Available | Available |
-| Content Writer | — | Included | Included | Included |
-| Blog Writer | — | Included | Included | Included |
-| FAQ Agent | — | Included | Included | Included |
-| Schema Optimizer | — | Included | Included | Included |
-| Review Analyzer | — | — | Included | Included |
-| Social Strategy | — | — | Included | Included |
-| Competitor Intelligence | — | — | Included | Included |
+| Content Writer (A1) | — | Included | Included | Included |
+| Blog Writer (A2) | — | Included | Included | Included |
+| Schema Optimizer (A3) | — | Included | Included | Included |
+| Recommendations (A4) | — | Auto | Auto | Auto |
+| FAQ Agent (A5) | — | Included | Included | Included |
+| Review Analyzer (A6) | — | — | Included | Included |
+| Social Strategy (A7) | — | — | Included | Included |
+| Competitor Intelligence (A8) | — | — | Included | Included |
+| Citation Builder (A9) | — | — | Included | Included |
+| LLMS.txt Generator (A10) | — | Included | Included | Included |
+| AI Readiness Auditor (A11) | — | Included | Included | Included |
+| Ask Beamix (A12) | — | — | Included | Included |
+| Content Voice Trainer (A13) | — | — | Included | Included |
+| Content Pattern Analyzer (A14) | — | — | Included | Included |
+| Content Refresh Agent (A15) | — | — | Included | Included |
+| Brand Narrative Analyst (A16) | — | — | — | Included |
 
 ### Group: Content Output
 
@@ -327,14 +338,14 @@ Yes — up to 20% of your monthly allocation rolls over each month. If you're on
 **Q4: Can I change plans anytime?**
 Yes. Upgrade anytime — your new plan activates immediately. Downgrade anytime — the lower plan takes effect at the end of your current billing period. No lock-in, no fees.
 
-**Q5: What happens after the 14-day free trial?**
-After 14 days, your account moves to a read-only state. All your scan data is saved — you can still see your visibility score, rankings, and competitor data. To run new scans or use agents, upgrade to any paid plan. No charges happen automatically — we never require a credit card to start.
+**Q5: What happens after the 7-day free trial?**
+After 7 days, your account moves to a read-only state. All your scan data is saved — you can still see your visibility score, rankings, and competitor data. To run new scans or use agents, upgrade to any paid plan. No charges happen automatically — we never require a credit card to start.
 
 **Q6: Is there a contract or commitment?**
 No contract. All plans are month-to-month (or annual if you choose). Cancel anytime in two clicks from your dashboard. If you cancel, access continues until the end of your paid period.
 
 **Q7: Do you offer refunds?**
-If you're not satisfied within the first 14 days of a paid plan, contact us and we'll make it right. After that, we don't offer prorated refunds for mid-cycle cancellations — but you keep access until your period ends.
+If you're not satisfied within the first 7 days of a paid plan, contact us and we'll make it right. After that, we don't offer prorated refunds for mid-cycle cancellations — but you keep access until your period ends.
 
 **Q8: Can I add team members?**
 Team seats are coming soon. Today, each account is single-user. We'll notify you when team access launches — you can opt in from your Settings page.
@@ -355,7 +366,7 @@ Team seats are coming soon. Today, each account is single-user. We'll notify you
 - Default: `Scan My Business — Free →` → `/`
 - With scan_id: `Continue with My Scan →` → `/signup?scan_id=XXX`
 
-**Trust line:** `14-day free trial on all paid plans · No credit card required · Cancel anytime`
+**Trust line:** `7-day free trial on all paid plans · No credit card required · Cancel anytime`
 
 **Secondary link:** `View the comparison table ↑` (anchor link back to Section 4)
 

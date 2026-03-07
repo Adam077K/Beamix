@@ -1,7 +1,11 @@
 # Beamix — Dashboard Spec
-**Version:** 1.0
+
+> **Last synced:** March 2026 — aligned with 03-system-design/
+
+**Version:** 1.1
 **Date:** 2026-02-28
-**Status:** Draft — Pending Founder Review
+**Last Updated:** 2026-03-06 — synced with System Design v2.1
+**Status:** Updated
 
 > The dashboard is where the product lives. Every design decision flows from one principle: the user should feel like they have a competitive advantage — and that advantage is growing.
 
@@ -15,19 +19,24 @@
 ┌─────────────────┐
 │  BEAMIX         │
 │                 │
-│  ● Dashboard    │  ← Overview, rank position, action queue
+│  ● Dashboard    │  ← Overview, visibility gauge, recs, activity
 │  ○ Rankings     │  ← Per-query, per-engine drill-down
-│  ○ Agents       │  ← All agent launchers
-│  ○ Content      │  ← Everything agents have created
-│  ○ Settings     │  ← Profile, billing, preferences
+│  ○ Recommendations │ ← AI-generated action items + "Fix with Agent"
+│  ○ Content      │  ← Content library + editor (/dashboard/content/[id])
+│  ○ Agents       │  ← All 16 agent launchers + run history
+│  ○ Competitors  │  ← Competitive intelligence dashboard (NEW)
+│  ○ AI Readiness │  ← AI readiness score + roadmap (NEW)
+│  ○ Settings     │  ← Business, billing (Paddle), preferences, integrations
 │                 │
 │  ─────────────  │
 │                 │
 │  [Plan: Pro]    │  ← Current plan badge
-│  Agents: 8/15   │  ← Monthly usage bar
+│  Credits: 8/15  │  ← Monthly usage bar (credit_pools)
 │  [avatar] Name  │  ← User identity
 └─────────────────┘
 ```
+
+> **Updated 2026-03-05:** Added /dashboard/competitors, /dashboard/ai-readiness, /dashboard/recommendations as separate nav items per System Design v2.1. Agent hub now shows 16 agents (A1-A12 launch, A13-A16 growth phase).
 
 **Mobile bottom nav (5 items max):**
 `Dashboard | Rankings | Agents | Content | ··· (Settings)`
@@ -135,7 +144,7 @@
 - #8–15: Red-orange — "You need to act"
 - Not ranked: Red — "You're invisible"
 
-**Dev note:** Rank is calculated as the user's average position across all AI engines and tracked queries combined, then compared to detected competitors in the same industry + location. Stored in the scan_results table. If no previous scan exists, no delta is shown.
+**Dev note:** Rank is calculated as the user's average position across all AI engines and tracked queries combined, then compared to detected competitors in the same industry + location. Stored in the `scans` table. If no previous scan exists, no delta is shown.
 
 ---
 
@@ -486,7 +495,7 @@ When user clicks Launch on any agent:
 **After clicking Generate:**
 - Modal closes
 - Toast: "Blog Writer is running. We'll notify you when it's ready. (~2 min)"
-- Agent execution tracked in `agent_executions` table
+- Agent execution tracked in `agent_jobs` table
 - User can navigate away — result appears in Content tab when complete
 - Badge appears on Content nav item: `Content (1 pending)`
 
@@ -590,29 +599,29 @@ Tabs: [Business Profile]  [Billing]  [Preferences]  [Integrations]  [Team (comin
 
 **Preferences:** Interface language (EN/HE), content generation language, email notification frequency, timezone.
 
-**Integrations (Coming Soon):**
+**Integrations:**
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Integrations                                               │
 │                                                             │
-│  Connect Beamix directly to your platforms — coming soon.   │
+│  Connect Beamix to your platforms.                          │
 │                                                             │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │  WordPress   │  │     Wix      │  │   Webflow    │      │
-│  │  Coming soon │  │  Coming soon │  │  Coming soon │      │
+│  │  WordPress   │  │  Google      │  │  Google      │      │
+│  │  (Pro+)      │  │  Analytics   │  │  Search      │      │
+│  │  CMS publish │  │  GA4         │  │  Console     │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 │                                                             │
 │  ┌──────────────┐  ┌──────────────┐                         │
-│  │   Google     │  │   Facebook   │                         │
-│  │  Business    │  │    Pages     │                         │
-│  │  Coming soon │  │  Coming soon │                         │
+│  │   Slack      │  │  Cloudflare  │                         │
+│  │  Alerts      │  │  (Business)  │                         │
 │  └──────────────┘  └──────────────┘                         │
 │                                                             │
 │  [Notify me when integrations launch →]                     │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
-**Dev note:** Integrations tab is UI-only in MVP. "Notify me" toggle saves a boolean to `notification_preferences` table. No backend integration work required at this stage.
+**Dev note:** WordPress integration is launch-critical (Pro tier). GA4, GSC, Slack are Growth Phase. Cloudflare is Moat Builder. "Notify me" toggle saves boolean to `notification_preferences`. Per System Design v2.1: all integration credentials encrypted with AES-256-GCM.
 
 ---
 
@@ -644,12 +653,12 @@ Tabs: [Business Profile]  [Billing]  [Preferences]  [Integrations]  [Team (comin
 
 | Zone | Primary Data Source | Update Trigger |
 |---|---|---|
-| Hero rank | `scan_results` + `scan_result_details` (aggregated) | Each scan cycle |
-| Leaderboard | `competitors` + their `scan_result_details` | Each scan cycle |
+| Hero rank | `scans` + `scan_engine_results` (aggregated) | Each scan cycle |
+| Leaderboard | `competitors` + their `scan_engine_results` | Each scan cycle |
 | Action Queue | `recommendations` table | After each scan + manual refresh |
-| Recent Activity | `agent_executions` + `content_generations` | Real-time (Supabase Realtime) |
-| Engine Status | `scan_result_details` per engine | Each scan cycle |
-| Agent usage | `credits` table | After each execution |
+| Recent Activity | `agent_jobs` + `content_items` | Real-time (Supabase Realtime) |
+| Engine Status | `scan_engine_results` per engine | Each scan cycle |
+| Agent usage | `credit_pools` table | After each execution |
 
 **Dev note:** Use React Query with `staleTime` per zone:
 - Rank / Leaderboard: 5 min
@@ -674,19 +683,42 @@ Key visual principles:
 
 ---
 
-## Agent List — Complete
+## Agent List — Complete (16 Agents, A1-A16)
 
-| Agent | Uses | Plan Required | Output |
-|---|---|---|---|
-| Content Writer | 1 | Starter+ | Website page (Markdown + HTML) |
-| Blog Writer | 1 | Starter+ | Blog post (Markdown + HTML) |
-| FAQ Agent | 1 | Starter+ | FAQ page (Markdown + JSON-LD) |
-| Schema Optimizer | 1 | Starter+ | JSON-LD schema markup |
-| Review Analyzer | 1 | Pro+ | Analysis report + response templates |
-| Social Strategy | 1 | Pro+ | Content calendar + post copy |
-| Competitor Intelligence | 2 | Pro+ | Intelligence report (JSONB) |
+### Launch Agents (A1-A12)
 
-**Total: 7 agents.** Starter gets 4. Pro+ gets all 7.
+| # | Agent | Credits | Plan Required | Output |
+|---|---|---|---|---|
+| A1 | Content Writer | 1 | Starter+ | GEO-optimized website pages |
+| A2 | Blog Writer | 1 | Starter+ | Long-form blog posts |
+| A3 | Schema Optimizer | 1 | Starter+ | JSON-LD structured data |
+| A4 | Recommendations | 0 (system) | All | Prioritized action items (auto after scan) |
+| A5 | FAQ Agent | 1 | Starter+ | FAQ content matching AI queries |
+| A6 | Review Analyzer | 1 | Pro+ | Reputation analysis + response templates |
+| A7 | Social Strategy | 1 | Pro+ | 30-day social content calendar |
+| A8 | Competitor Intelligence | 1 | Pro+ | Deep competitive analysis + action items |
+| A9 | Citation Builder | 1 | Pro+ | Outreach templates for citation sources |
+| A10 | LLMS.txt Generator | 1 | Starter+ | AI-readable site description file |
+| A11 | AI Readiness Auditor | 1 | Starter+ | Comprehensive website AI audit |
+| A12 | Ask Beamix | 0 (Pro+) | Pro+ | Conversational data analyst (streaming) |
+
+### Growth Phase Agents (A13-A16)
+
+| # | Agent | Credits | Plan Required | Output |
+|---|---|---|---|---|
+| A13 | Content Voice Trainer | 1 | Pro+ | Learn business's writing voice |
+| A14 | Content Pattern Analyzer | 1 | Pro+ | What makes cited content succeed |
+| A15 | Content Refresh Agent | 1 | Pro+ | Audit + update stale content |
+| A16 | Brand Narrative Analyst | 1 | Business | WHY AI says what it says |
+
+**Total: 16 agents.** Starter gets A1-A5, A10-A11. Pro+ gets A1-A16 (except A16). Business gets all 16.
+
+### Additional Dashboard Features (per System Design v2.1)
+
+- **Content Voice Profiles:** `/dashboard/content` shows voice profile status per business. Trained by A13.
+- **Agent Workflow Chains:** Event-triggered multi-agent automation (e.g., Visibility Drop → A4 → A8 → A1 → Notify). Configured in `/dashboard/agents`.
+- **Alert System:** 9 alert types (visibility, sentiment, competitor, credit, content performance). Settings in `/dashboard/settings` preferences tab. Notifications: in-app + email + Slack.
+- **Citation Analytics:** Source-level citation tracking in `/dashboard/rankings` row expansion. Shows which URLs are cited instead of the user's business.
 
 ---
 
