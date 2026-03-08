@@ -37,7 +37,7 @@ export default async function DashboardLayout({
       .single(),
     supabase
       .from('subscriptions')
-      .select('plan_tier, status, trial_ends_at')
+      .select('status, trial_ends_at, plan_tier')
       .eq('user_id', userId)
       .single(),
   ])
@@ -47,9 +47,10 @@ export default async function DashboardLayout({
   }
 
   const businessName = businessResult.data?.name ?? 'My Business'
-  const planTier = subscriptionResult.data?.plan_tier ?? 'free'
-  const trialEnd = subscriptionResult.data?.trial_ends_at
-  const isTrialing = subscriptionResult.data?.status === 'trialing'
+  const sub = subscriptionResult.data
+  const planTier = sub?.plan_tier ?? null
+  const trialEnd = sub?.trial_ends_at
+  const isTrialing = sub?.status === 'trialing'
 
   let trialDaysLeft: number | null = null
   if (isTrialing && trialEnd) {
@@ -60,7 +61,7 @@ export default async function DashboardLayout({
   return (
     <DashboardShell
       businessName={businessName}
-      planTier={planTier}
+      planTier={planTier ?? 'free'}
       trialDaysLeft={trialDaysLeft}
     >
       {children}

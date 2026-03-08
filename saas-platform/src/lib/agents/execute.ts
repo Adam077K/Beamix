@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { z } from 'zod/v4'
+import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import type { Json } from '@/lib/types/database.types'
 import { AGENT_CONFIG, isPlanSufficient } from './config'

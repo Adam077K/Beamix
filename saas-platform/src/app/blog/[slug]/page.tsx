@@ -23,22 +23,22 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   }
 
   return {
-    title: post.seo_title ?? `${post.title} — Beamix Blog`,
-    description: post.seo_description ?? post.excerpt,
+    title: post.og_title ?? `${post.title} — Beamix Blog`,
+    description: post.meta_description ?? post.excerpt ?? undefined,
     openGraph: {
-      title: post.seo_title ?? post.title,
-      description: post.seo_description ?? post.excerpt,
+      title: post.og_title ?? post.title,
+      description: post.og_description ?? post.excerpt ?? undefined,
       type: 'article',
       publishedTime: post.published_at ?? undefined,
       images: post.og_image_url ? [{ url: post.og_image_url }] : undefined,
     },
     twitter: {
       card: 'summary_large_image',
-      title: post.seo_title ?? post.title,
-      description: post.seo_description ?? post.excerpt,
+      title: post.og_title ?? post.title,
+      description: post.og_description ?? post.excerpt ?? undefined,
     },
     alternates: {
-      canonical: `/blog/${post.slug}`,
+      canonical: post.canonical_url ?? `/blog/${post.slug}`,
     },
   }
 }
@@ -79,7 +79,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               variant="secondary"
               className="bg-cyan-50 text-cyan-700 border-0 text-xs font-medium"
             >
-              {categoryLabel(post.category)}
+              {categoryLabel(post.category ?? '')}
             </Badge>
           </div>
 
@@ -162,7 +162,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     variant="secondary"
                     className="bg-cyan-50 text-cyan-700 border-0 text-xs font-medium"
                   >
-                    {categoryLabel(related.category)}
+                    {categoryLabel(related.category ?? '')}
                   </Badge>
                   <h4 className="font-[family-name:var(--font-outfit)] font-semibold text-[#141310] leading-snug group-hover:text-cyan-600 transition-colors">
                     {related.title}

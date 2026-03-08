@@ -1,53 +1,63 @@
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
+import { updateSession } from '@/lib/supabase/middleware'
+
+// Routes that authenticated users should be redirected away from
+const AUTH_ROUTES = ['/login', '/signup']
+
+// Routes that require authentication — unauthenticated requests are redirected to /login
+const PROTECTED_ROUTES = ['/dashboard', '/onboarding']
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
+  const { pathname } = request.nextUrl
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  let supabaseResponse: NextResponse
+  let user: Awaited<ReturnType<typeof updateSession>>['user']
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  try {
+    ;({ supabaseResponse, user } = await updateSession(request))
+  } catch (err) {
+    // Missing env vars — log and pass through. updateSession throws when env is absent.
     console.warn(
-      '[middleware] NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is missing. ' +
-      'Auth session refresh is disabled — all requests pass through unauthenticated.'
+      '[middleware] updateSession failed (likely missing Supabase env vars). ' +
+        'Auth session refresh is disabled — all requests pass through unauthenticated.',
+      err
     )
-    return supabaseResponse
+    return NextResponse.next({ request })
   }
 
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll()
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value)
-        )
-        supabaseResponse = NextResponse.next({ request })
-        cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options)
-        )
-      },
-    },
-  })
+  // Redirect authenticated users away from auth pages (login, signup)
+  if (user && AUTH_ROUTES.some((route) => pathname.startsWith(route))) {
+    const dashboardUrl = request.nextUrl.clone()
+    dashboardUrl.pathname = '/dashboard'
+    dashboardUrl.search = ''
+    return NextResponse.redirect(dashboardUrl)
+  }
 
-  // Refresh the session token. Must be called before any response is returned
-  // so that updated Set-Cookie headers are forwarded to the browser.
-  const { data: { user } } = await supabase.auth.getUser()
-
-  // Protect /dashboard and /onboarding routes at the edge — block unauthenticated
-  // requests before any HTML is sent. API routes handle their own auth.
-  const protectedPaths = ['/dashboard', '/onboarding']
-  const isProtectedRoute = protectedPaths.some(path =>
-    request.nextUrl.pathname.startsWith(path)
+  // Gate protected routes — unauthenticated → /login?next={path}
+  const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
+    pathname.startsWith(route)
   )
 
   if (isProtectedRoute && !user) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
-    loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
+    loginUrl.search = ''
+    loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
+  }
+
+  // Onboarding check: authenticated users on /dashboard/* without the completion
+  // cookie are redirected to /onboarding until they finish the flow.
+  // TODO: Cookie is set by /api/onboarding/complete on completion.
+  if (
+    user &&
+    pathname.startsWith('/dashboard') &&
+    request.cookies.get('beamix-onboarding-complete')?.value !== '1'
+  ) {
+    const onboardingUrl = request.nextUrl.clone()
+    onboardingUrl.pathname = '/onboarding'
+    onboardingUrl.search = ''
+    return NextResponse.redirect(onboardingUrl)
   }
 
   return supabaseResponse
@@ -61,7 +71,8 @@ export const config = {
      * - _next/image   (image optimisation)
      * - favicon.ico
      * - public assets (svg, png, jpg, jpeg, gif, webp, ico)
+     * - /api/inngest  (Inngest webhook — must be excluded from session refresh)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/inngest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }

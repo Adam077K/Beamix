@@ -1,12 +1,28 @@
 {
   "crons": [
     {
+      "path": "/api/cron/scheduled-scans",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/monthly-credits",
+      "schedule": "0 0 1 * *"
+    },
+    {
+      "path": "/api/cron/trial-nudges",
+      "schedule": "0 10 * * *"
+    },
+    {
       "path": "/api/cron/weekly-digest",
       "schedule": "0 8 * * 1"
     },
     {
-      "path": "/api/cron/trial-nudges",
-      "schedule": "0 9 * * *"
+      "path": "/api/cron/cleanup",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/content-refresh-check",
+      "schedule": "0 6 * * *"
     }
   ]
 }

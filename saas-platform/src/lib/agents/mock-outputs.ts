@@ -622,9 +622,9 @@ export function generateMockOutput(agentType: string, ctx: AgentContext): AgentO
       return generateSchemaMarkup(ctx)
     case 'social_strategy':
       return generateSocialStrategy(ctx)
-    case 'competitor_research':
+    case 'competitor_intelligence':
       return generateCompetitorReport(ctx)
-    case 'query_researcher':
+    case 'faq_agent':
       return generateQuerySuggestions(ctx)
     default:
       return generateBlogPost(ctx)
@@ -637,6 +637,6 @@ export const AGENT_CREDIT_COSTS: Record<string, number> = {
   review_analyzer: 2,
   schema_optimizer: 2,
   social_strategy: 3,
-  competitor_research: 4,
-  query_researcher: 2,
+  competitor_intelligence: 4,
+  faq_agent: 2,
 }

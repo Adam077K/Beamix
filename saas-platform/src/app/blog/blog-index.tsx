@@ -37,7 +37,7 @@ function PostCard({ post }: { post: BlogPost }) {
             variant="secondary"
             className="bg-cyan-50 text-cyan-700 border-0 text-xs font-medium"
           >
-            {categoryLabel(post.category)}
+            {categoryLabel(post.category ?? '')}
           </Badge>
           <span className="text-xs text-stone-400 flex items-center gap-1">
             <Clock className="w-3 h-3" />
@@ -84,7 +84,7 @@ function FeaturedPostHero({ post }: { post: BlogPost }) {
               variant="secondary"
               className="bg-cyan-50 text-cyan-700 border-0 text-xs font-medium"
             >
-              {categoryLabel(post.category)}
+              {categoryLabel(post.category ?? '')}
             </Badge>
             <span className="text-xs text-stone-400 flex items-center gap-1">
               <Clock className="w-3 h-3" />

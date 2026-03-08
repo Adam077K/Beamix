@@ -76,7 +76,7 @@ const AGENTS: AgentDef[] = [
     color: 'bg-pink-100 text-pink-700',
   },
   {
-    type: 'competitor_research',
+    type: 'competitor_intelligence',
     name: 'Competitor Research',
     description: 'Deep-dive analysis of how your competitors rank in AI search and what strategies they use.',
     icon: Search,
@@ -84,7 +84,7 @@ const AGENTS: AgentDef[] = [
     color: 'bg-orange-100 text-orange-700',
   },
   {
-    type: 'query_researcher',
+    type: 'faq_agent',
     name: 'Query Researcher',
     description: 'Discover what questions potential customers ask AI engines about your industry and location.',
     icon: MessageSquare,

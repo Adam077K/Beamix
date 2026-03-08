@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod/v4'
+import { z } from 'zod'
 import { paddle } from '@/lib/paddle/client'
 import { PADDLE_PRICES } from '@/lib/paddle/config'
 import { getOrCreatePaddleCustomer } from '@/lib/paddle/helpers'

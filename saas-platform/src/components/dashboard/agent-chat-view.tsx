@@ -93,7 +93,7 @@ const AGENT_META: Record<
       'Plan authority-building strategy',
     ],
   },
-  competitor_research: {
+  competitor_intelligence: {
     name: 'Competitor Research',
     description: 'Analyze competitor AI visibility',
     icon: Search,
@@ -105,7 +105,7 @@ const AGENT_META: Record<
       'Compare visibility scores',
     ],
   },
-  query_researcher: {
+  faq_agent: {
     name: 'Query Researcher',
     description: 'Discover customer AI search queries',
     icon: MessageSquare,

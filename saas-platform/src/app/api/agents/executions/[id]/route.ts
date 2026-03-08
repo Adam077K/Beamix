@@ -38,27 +38,18 @@ export async function GET(
   let structuredOutput = null
 
   if (execution.status === 'completed') {
-    const [contentResult, outputResult] = await Promise.all([
-      supabase
-        .from('content_items')
-        .select(
-          'id, content_type, title, generated_content, content_format, word_count, quality_score, llm_optimization_score, is_favorited, created_at'
-        )
-        .eq('agent_job_id', id),
-      supabase
-        .from('agent_jobs')
-        .select(
-          'id, output_type, title, structured_data, summary, is_favorited, created_at'
-        )
-        .eq('agent_job_id', id),
-    ])
+    const contentResult = await supabase
+      .from('content_items')
+      .select(
+        'id, agent_type, title, content, content_format, word_count, is_favorited, created_at'
+      )
+      .eq('agent_job_id', id)
 
     if (contentResult.data && contentResult.data.length > 0) {
       content = contentResult.data[0]
     }
-    if (outputResult.data && outputResult.data.length > 0) {
-      structuredOutput = outputResult.data[0]
-    }
+    // structured output lives in execution.output_data — no second agent_jobs query needed
+    structuredOutput = execution.output_data ?? null
   }
 
   return NextResponse.json({

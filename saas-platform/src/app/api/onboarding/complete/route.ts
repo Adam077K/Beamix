@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import { z } from 'zod/v4'
+import { z } from 'zod'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { sendWelcomeEmail, sendTrialStartEmail } from '@/lib/email/events'
 import type { Json } from '@/lib/types/database.types'
 
 const onboardingSchema = z.object({
@@ -138,7 +139,7 @@ export async function POST(request: Request) {
   // 4. Ensure subscription row exists with trial dates set.
   //    The trigger creates the row but leaves trial_ends_at null.
   //    Set it here so the 7-day countdown starts when onboarding completes.
-  const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+  const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   const { error: subError } = await supabase
     .from('subscriptions')
     .upsert(
@@ -158,7 +159,51 @@ export async function POST(request: Request) {
     console.error('Failed to upsert subscription trial:', subError.message)
   }
 
-  return NextResponse.json({ success: true, business_id: business.id })
+  // 5. Send welcome + trial-start emails (non-blocking, non-fatal)
+  const userName = (user.user_metadata?.full_name as string | undefined) ?? business_name
+  const userEmail = user.email
+
+  if (userEmail) {
+    // Fire both emails in parallel — failures are logged but do not block onboarding
+    const emailResults = await Promise.allSettled([
+      sendWelcomeEmail(userEmail, {
+        name: userName,
+        scanId: scan_id,
+      }),
+      sendTrialStartEmail(userEmail, {
+        name: userName,
+        planName: 'Starter',
+        trialEndDate: new Date(trialEnd).toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+        unlockedFeatures: [
+          'AI visibility scanning across 3 engines',
+          'Smart recommendations',
+          '5 AI agent credits',
+          'Weekly digest reports',
+        ],
+      }),
+    ])
+
+    for (const result of emailResults) {
+      if (result.status === 'rejected') {
+        console.error('[ONBOARDING] Email send failed:', result.reason)
+      } else if (!result.value.success) {
+        console.error('[ONBOARDING] Email send error:', result.value.error)
+      }
+    }
+  }
+
+  const response = NextResponse.json({ success: true, business_id: business.id })
+  response.cookies.set('beamix-onboarding-complete', '1', {
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365, // 1 year
+    httpOnly: false, // must be readable by middleware
+    sameSite: 'lax',
+  })
+  return response
 }
 
 interface FreeScanRow {
@@ -238,7 +283,6 @@ async function convertFreeScanResults(
         scan_type: 'free' as const,
         overall_score: freeScan.overall_score,
         mentions_count: mentionCount,
-        avg_position: avgPosition,
       })
       .select('id')
       .single()

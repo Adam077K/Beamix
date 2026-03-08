@@ -41,8 +41,8 @@ const AGENT_LABELS: Record<string, string> = {
   schema_optimizer: 'Schema Optimizer',
   recommendations: 'Recommendations',
   social_strategy: 'Social Strategy',
-  competitor_research: 'Competitor Research',
-  query_researcher: 'Query Researcher',
+  competitor_intelligence: 'Competitor Intelligence',
+  faq_agent: 'FAQ Agent',
   initial_analysis: 'Initial Analysis',
   free_scan: 'Free Scan',
 }

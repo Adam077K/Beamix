@@ -14,6 +14,10 @@ import {
   LogOut,
   Crown,
   X,
+  Zap,
+  Users,
+  Bell,
+  Lightbulb,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -28,8 +32,12 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Rankings', href: '/dashboard/rankings', icon: BarChart3 },
+  { label: 'AI Readiness', href: '/dashboard/ai-readiness', icon: Zap },
+  { label: 'Competitors', href: '/dashboard/competitors', icon: Users },
   { label: 'AI Agents', href: '/dashboard/agents', icon: Bot },
   { label: 'Content', href: '/dashboard/content', icon: FileText },
+  { label: 'Recommendations', href: '/dashboard/recommendations', icon: Lightbulb },
+  { label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 

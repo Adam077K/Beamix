@@ -2,18 +2,24 @@ export interface BlogPost {
   id: string
   title: string
   slug: string
-  excerpt: string
+  excerpt: string | null
   content: string
   cover_image_url: string | null
   author_id: string | null
-  status: 'draft' | 'published' | 'archived'
+  author_name: string
+  author_avatar_url: string | null
+  status: 'draft' | 'scheduled' | 'published' | 'archived'
   published_at: string | null
-  category: string
-  tags: string[]
-  seo_title: string | null
-  seo_description: string | null
+  category: string | null
+  tags: string[] | null
+  lang: string
+  meta_description: string | null
+  canonical_url: string | null
+  og_title: string | null
+  og_description: string | null
   og_image_url: string | null
-  reading_time_minutes: number
+  structured_data: Record<string, unknown> | null
+  reading_time_minutes: number | null
   view_count: number
   created_at: string
   updated_at: string

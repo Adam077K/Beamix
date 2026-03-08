@@ -9,7 +9,7 @@ export async function getPublishedPosts(category?: string): Promise<BlogPost[]> 
     let query = supabase
       .from('blog_posts')
       .select('*')
-      .eq('is_published', true)
+      .eq('status', 'published')
       .order('published_at', { ascending: false })
 
     if (category && category !== 'all') {
@@ -22,7 +22,7 @@ export async function getPublishedPosts(category?: string): Promise<BlogPost[]> 
       return filterSeedPosts(category)
     }
 
-    return data as unknown as BlogPost[]
+    return data as BlogPost[]
   } catch {
     return filterSeedPosts(category)
   }
@@ -36,31 +36,33 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
       .from('blog_posts')
       .select('*')
       .eq('slug', slug)
-      .eq('is_published', true)
+      .eq('status', 'published')
       .single()
 
     if (error || !data) {
       return SEED_POSTS.find((p) => p.slug === slug) ?? null
     }
 
-    return data as unknown as BlogPost
+    return data as BlogPost
   } catch {
     return SEED_POSTS.find((p) => p.slug === slug) ?? null
   }
 }
 
 export async function getRelatedPosts(
-  category: string,
+  category: string | null,
   excludeSlug: string,
   limit: number = 3
 ): Promise<BlogPost[]> {
+  if (!category) return []
+
   try {
     const supabase = await createClient()
 
     const { data, error } = await supabase
       .from('blog_posts')
       .select('*')
-      .eq('is_published', true)
+      .eq('status', 'published')
       .eq('category', category)
       .neq('slug', excludeSlug)
       .order('published_at', { ascending: false })
@@ -72,7 +74,7 @@ export async function getRelatedPosts(
         .slice(0, limit)
     }
 
-    return data as unknown as BlogPost[]
+    return data as BlogPost[]
   } catch {
     return SEED_POSTS
       .filter((p) => p.category === category && p.slug !== excludeSlug)
@@ -87,7 +89,7 @@ export async function getAllPublishedSlugs(): Promise<{ slug: string; updated_at
     const { data, error } = await supabase
       .from('blog_posts')
       .select('slug, updated_at')
-      .eq('is_published', true)
+      .eq('status', 'published')
 
     if (error || !data || data.length === 0) {
       return SEED_POSTS.map((p) => ({ slug: p.slug, updated_at: p.updated_at }))
