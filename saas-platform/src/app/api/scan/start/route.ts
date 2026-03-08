@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { scanStartSchema } from '@/lib/scan/validation'
 import { createServiceClient } from '@/lib/supabase/server'
-import { runMockScan } from '@/lib/scan/mock-engine'
-import type { Json } from '@/lib/types/database.types'
+import { inngest } from '@/inngest/client'
 
 export async function POST(request: Request) {
   try {
@@ -51,8 +50,8 @@ export async function POST(request: Request) {
         industry: sector,
         location,
         ip_address: ip,
-        status: 'processing',
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'pending',
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       })
       .select('id')
       .single()
@@ -67,37 +66,23 @@ export async function POST(request: Request) {
 
     const scanId = insertedScan.id
 
-    // MED-1: Run scan synchronously before responding (mock completes quickly).
-    let finalStatus: 'completed' | 'failed' = 'completed'
-    try {
-      const results = await runMockScan(scanId, business_name, sector)
-      const { error: updateError } = await supabase
-        .from('free_scans')
-        .update({
-          status: 'completed',
-          overall_score: results.visibility_score,
-          results_data: JSON.parse(JSON.stringify(results)) as Json,
-        })
-        .eq('id', scanId)
-      if (updateError) {
-        console.error('Failed to update scan results:', updateError)
-        finalStatus = 'failed'
-      }
-    } catch (err) {
-      console.error('Mock scan failed:', err)
-      finalStatus = 'failed'
-      await supabase
-        .from('free_scans')
-        .update({ status: 'failed' })
-        .eq('id', scanId)
-    }
-
-    return NextResponse.json(
-      {
-        scan_id: scanId,
-        status: finalStatus,
+    // Fire Inngest event — scan runs async via scan-free function
+    await inngest.send({
+      name: 'scan/free.started',
+      data: {
+        scanId,
+        businessName: business_name,
+        websiteUrl: url,
+        industry: sector,
+        location: location ?? undefined,
+        language: 'en',
       },
-      { status: finalStatus === 'completed' ? 200 : 500 }
+    })
+
+    // Return 202 immediately — client polls for results using scan_id
+    return NextResponse.json(
+      { scan_id: scanId, status: 'processing' },
+      { status: 202 }
     )
   } catch {
     return NextResponse.json(

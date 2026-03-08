@@ -3,7 +3,10 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import type { Json } from '@/lib/types/database.types'
 import { AGENT_CONFIG, isPlanSufficient } from './config'
-import { generateMockOutput, type AgentOutput } from './mock-outputs'
+import type { AgentOutput } from './mock-outputs'
+import { holdCredits, confirmCredits, releaseCredits, InsufficientCreditsError } from './credit-guard'
+import { runAgentLLM } from './llm-runner'
+import { runQAGate } from './qa-gate'
 
 /**
  * Shared Zod schema for agent execution input.
@@ -21,6 +24,7 @@ export type AgentInput = z.infer<typeof agentInputSchema>
 /**
  * Shared agent execution handler.
  * Implements the 10-step pattern for all agent types.
+ * Uses hold/confirm/release credit pattern for safe deduction.
  */
 export async function executeAgent(slug: string, request: Request): Promise<NextResponse> {
   const config = AGENT_CONFIG[slug]
@@ -62,20 +66,20 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     )
   }
 
-  // 3. Credits check
+  // 3. Credits balance check (fast-fail before creating a DB record)
   const { data: credits } = await supabase
     .from('credit_pools')
-    .select('base_allocation, topup_amount, rollover_amount, used_amount')
+    .select('base_allocation, topup_amount, rollover_amount, used_amount, held_amount')
     .eq('user_id', user.id)
     .single()
 
-  const totalCredits = credits
-    ? (credits.base_allocation + credits.topup_amount + credits.rollover_amount - credits.used_amount)
+  const availableCredits = credits
+    ? (credits.base_allocation + credits.topup_amount + credits.rollover_amount - credits.used_amount - (credits.held_amount ?? 0))
     : 0
 
-  if (totalCredits < config.cost) {
+  if (availableCredits < config.cost) {
     return NextResponse.json(
-      { error: `Not enough credits. You need ${config.cost} but have ${totalCredits}.` },
+      { error: `Not enough credits. You need ${config.cost} but have ${availableCredits}.` },
       { status: 402 }
     )
   }
@@ -96,7 +100,15 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     )
   }
 
-  const input = parsed.data
+  // Sanitize topic and targetKeyword to prevent prompt injection (strip system-level formatting)
+  const rawInput = parsed.data
+  const input = {
+    ...rawInput,
+    topic: rawInput.topic.replace(/```/g, '').replace(/^(system|user|assistant):/gim, '').trim(),
+    targetKeyword: rawInput.targetKeyword
+      ? rawInput.targetKeyword.replace(/```/g, '').replace(/^(system|user|assistant):/gim, '').trim()
+      : undefined,
+  }
 
   // Look up business context
   const { data: business } = await supabase
@@ -140,73 +152,120 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     return NextResponse.json({ error: 'Failed to create execution record' }, { status: 500 })
   }
 
-  // 6. Deduct credits BEFORE running the agent (prevent race condition)
-  const { data: deducted } = await supabase.rpc('deduct_credits', {
-    p_user_id: user.id,
-    p_amount: config.cost,
-    p_agent_job_id: execution.id,
-    p_pool_type: 'agent',
-    p_description: `${config.name} execution`,
-  })
-
-  if (!deducted) {
+  // 6. Hold credits BEFORE running the agent (prevents race conditions)
+  try {
+    await holdCredits(user.id, config.dbType, execution.id)
+  } catch (err) {
     await supabase
       .from('agent_jobs')
-      .update({ status: 'failed', error_message: 'Credit deduction failed' })
+      .update({ status: 'failed', error_message: 'Credit hold failed' })
       .eq('id', execution.id)
 
-    return NextResponse.json(
-      { error: 'Credit deduction failed. You may not have enough credits.' },
-      { status: 402 }
-    )
+    if (err instanceof InsufficientCreditsError) {
+      return NextResponse.json(
+        { error: 'Not enough credits to run this agent.' },
+        { status: 402 }
+      )
+    }
+    return NextResponse.json({ error: 'Failed to reserve credits' }, { status: 500 })
   }
 
-  // 7. Run mock agent
-  const agentOutput: AgentOutput = generateMockOutput(config.dbType, {
-    businessName,
-    businessUrl: business?.website_url ?? undefined,
-    industry: business?.industry ?? undefined,
-    location: business?.location ?? undefined,
-    userPrompt: input.topic,
-  })
+  // 7. Run real LLM agent
+  let agentOutput: AgentOutput
+  try {
+    agentOutput = await runAgentLLM(
+      config,
+      {
+        name: businessName,
+        websiteUrl: business.website_url ?? undefined,
+        industry: business.industry ?? undefined,
+        location: business.location ?? undefined,
+      },
+      input,
+    )
+  } catch (err) {
+    // Release credits on failure so they're not locked
+    await releaseCredits(execution.id)
+    await supabase
+      .from('agent_jobs')
+      .update({ status: 'failed', error_message: String(err) })
+      .eq('id', execution.id)
+    console.error('[executeAgent] LLM execution failed:', err)
+    return NextResponse.json({ error: 'Agent execution failed. Credits have been refunded.' }, { status: 500 })
+  }
 
   const completedAt = new Date().toISOString()
   const durationMs = new Date(completedAt).getTime() - new Date(startedAt).getTime()
 
-  // 8. Update agent_jobs status = 'completed'
-  await supabase
-    .from('agent_jobs')
-    .update({
+  // QA gate (Fix LG-2): run for content-type outputs, warn but never block the agent
+  let qaScore: number | undefined
+  if (agentOutput.type === 'content') {
+    try {
+      const qaResult = await runQAGate(agentOutput.content, { businessName })
+      qaScore = qaResult.score
+      if (!qaResult.passed) {
+        console.warn(
+          `[executeAgent] QA gate did not pass for job ${execution.id}. Score: ${qaResult.score}/100`,
+        )
+      }
+    } catch (qaErr) {
+      console.warn('[executeAgent] QA gate threw, skipping:', qaErr)
+    }
+  }
+
+  // Steps 8-10 wrapped in try/catch so credits are released on any post-LLM failure
+  try {
+    // 8. Update agent_jobs status = 'completed'
+    // qa_score column may not exist in DB yet — ignore column errors gracefully
+    const jobUpdate: Record<string, unknown> = {
       status: 'completed',
       output_data: agentOutput as unknown as Json,
       completed_at: completedAt,
       runtime_ms: durationMs,
-    })
-    .eq('id', execution.id)
+    }
+    if (qaScore !== undefined) {
+      jobUpdate.qa_score = qaScore
+    }
+    await supabase.from('agent_jobs').update(jobUpdate).eq('id', execution.id)
 
-  // 9. Insert into content_items (structured output is stored in agent_jobs.output_data)
-  if (agentOutput.type === 'content' && config.producesContent) {
-    await supabase.from('content_items').insert({
-      agent_job_id: execution.id,
-      user_id: user.id,
-      business_id: businessId,
-      agent_type: config.dbType,
-      title: agentOutput.title,
-      content: agentOutput.content,
-      content_format: config.contentFormat ?? 'markdown',
-      word_count: agentOutput.wordCount,
-      metadata: {
-        tone: input.tone,
-        targetLength: input.targetLength,
-        language: input.language,
-        targetKeyword: input.targetKeyword,
-      },
-    })
+    // 9. Insert into content_items (for content-producing agents)
+    if (agentOutput.type === 'content' && config.producesContent) {
+      await supabase.from('content_items').insert({
+        agent_job_id: execution.id,
+        user_id: user.id,
+        business_id: businessId,
+        agent_type: config.dbType,
+        title: agentOutput.title,
+        content: agentOutput.content,
+        content_format: config.contentFormat ?? 'markdown',
+        word_count: agentOutput.wordCount,
+        metadata: {
+          tone: input.tone,
+          targetLength: input.targetLength,
+          language: input.language,
+          targetKeyword: input.targetKeyword,
+        },
+      })
+    }
+    // Structured outputs are stored in agent_jobs.output_data (set in step 8).
+
+    // 10. Confirm credits after successful completion
+    await confirmCredits(execution.id)
+  } catch (postErr) {
+    // Release credits so they are not locked permanently
+    await releaseCredits(execution.id)
+    await supabase
+      .from('agent_jobs')
+      .update({ status: 'failed', error_message: String(postErr) })
+      .eq('id', execution.id)
+    console.error('[executeAgent] Post-LLM step failed, credits released:', postErr)
+    return NextResponse.json(
+      { error: 'Failed to save agent output. Credits have been refunded.' },
+      { status: 500 },
+    )
   }
-  // Structured outputs (type === 'structured') are already stored
-  // in agent_jobs.output_data (set above in step 8).
 
-  // 10. Return result
+  // Return result
   return NextResponse.json({
     execution_id: execution.id,
     status: 'completed',

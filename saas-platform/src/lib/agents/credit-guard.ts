@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { AGENT_CONFIG } from './config'
 
 export class InsufficientCreditsError extends Error {
   constructor() {
@@ -7,26 +8,10 @@ export class InsufficientCreditsError extends Error {
   }
 }
 
-const AGENT_COSTS: Record<string, number> = {
-  content_writer: 2,
-  blog_writer: 3,
-  schema_optimizer: 1,
-  recommendations: 1,
-  faq_agent: 1,
-  review_analyzer: 2,
-  social_strategy: 2,
-  competitor_intelligence: 2,
-  citation_builder: 2,
-  llms_txt: 1,
-  ai_readiness: 1,
-  content_voice_trainer: 1,
-  content_pattern_analyzer: 1,
-  content_refresh: 1,
-  brand_narrative_analyst: 2,
-}
-
-export function getAgentCreditCost(agentType: string): number {
-  return AGENT_COSTS[agentType] || 1
+function getAgentCreditCost(agentType: string): number {
+  // Find config entry by dbType (underscore form) — config keys are slug form
+  const entry = Object.values(AGENT_CONFIG).find((c) => c.dbType === agentType)
+  return entry?.cost ?? 1
 }
 
 function getServiceClient() {
@@ -36,25 +21,51 @@ function getServiceClient() {
   )
 }
 
-export async function holdCredits(userId: string, agentType: string): Promise<string> {
+/**
+ * Hold credits for an in-progress agent job.
+ * The jobId serves as the hold reference — pass it to confirmCredits/releaseCredits.
+ */
+export async function holdCredits(userId: string, agentType: string, jobId: string): Promise<void> {
   const supabase = getServiceClient()
   const cost = getAgentCreditCost(agentType)
   const { data, error } = await supabase.rpc('hold_credits', {
     p_user_id: userId,
     p_amount: cost,
+    p_job_id: jobId,
   })
-  if (error || !data) throw new InsufficientCreditsError()
-  return data as string
+
+  if (error) {
+    // RPC-level error (network, missing function, etc.) — not a credit issue
+    console.error('[holdCredits] RPC error:', error)
+    throw new Error(`Credit hold failed: ${error.message}`)
+  }
+
+  const result = data as { success: boolean; error?: string } | null
+  if (!result?.success) {
+    // Explicit insufficient credits returned from the DB function
+    if (result?.error === 'insufficient_credits') {
+      throw new InsufficientCreditsError()
+    }
+    throw new Error(`Credit hold returned failure: ${result?.error ?? 'unknown'}`)
+  }
 }
 
-export async function confirmCredits(holdId: string): Promise<void> {
+/**
+ * Confirm held credits after successful agent completion.
+ * Moves held credits to consumed — idempotent.
+ */
+export async function confirmCredits(jobId: string): Promise<void> {
   const supabase = getServiceClient()
-  const { error } = await supabase.rpc('confirm_credits', { p_hold_id: holdId })
+  const { error } = await supabase.rpc('confirm_credits', { p_job_id: jobId })
   if (error) console.error('confirm_credits error:', error)
 }
 
-export async function releaseCredits(holdId: string): Promise<void> {
+/**
+ * Release held credits after agent failure or cancellation.
+ * Returns held credits to available balance — idempotent.
+ */
+export async function releaseCredits(jobId: string): Promise<void> {
   const supabase = getServiceClient()
-  const { error } = await supabase.rpc('release_credits', { p_hold_id: holdId })
+  const { error } = await supabase.rpc('release_credits', { p_job_id: jobId })
   if (error) console.error('release_credits error:', error)
 }

@@ -5,6 +5,15 @@ export const agentExecute = inngest.createFunction(
   { id: 'agent-execute', name: 'Execute Agent Pipeline' },
   { event: 'agent/execute.requested' },
   async ({ event, step }) => {
+    // Real LLM execution happens via the HTTP /api/agents/* routes.
+    // This Inngest function is not yet wired to the real pipeline.
+    // Throw immediately to make any accidental activation visible.
+    throw new Error(
+      '[agent-execute] This Inngest function is not yet implemented. ' +
+      'Agent execution runs via the HTTP endpoint (src/lib/agents/execute.ts).'
+    )
+
+    // eslint-disable-next-line no-unreachable
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
     const { jobId, agentType, businessId, userId, inputData, holdId } = event.data
 
@@ -45,10 +54,10 @@ export const agentExecute = inngest.createFunction(
         })
       })
 
-      // Confirm credit hold
+      // Confirm credit hold — jobId is the hold reference
       if (holdId) {
         await step.run('confirm-credits', async () => {
-          await supabase.rpc('confirm_credits', { p_hold_id: holdId })
+          await supabase.rpc('confirm_credits', { p_job_id: holdId })
         })
       }
 
@@ -60,9 +69,9 @@ export const agentExecute = inngest.createFunction(
           error_message: String(error),
         }).eq('id', jobId)
 
-        // Release credit hold on failure
+        // Release credit hold on failure — jobId is the hold reference
         if (holdId) {
-          await supabase.rpc('release_credits', { p_hold_id: holdId })
+          await supabase.rpc('release_credits', { p_job_id: holdId })
         }
       })
       throw error
