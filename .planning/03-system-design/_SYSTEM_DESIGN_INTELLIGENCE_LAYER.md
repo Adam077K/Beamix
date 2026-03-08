@@ -1377,3 +1377,194 @@ Every new LLM integration must be logged in the model registry with: task name, 
 ---
 
 > **This document defines every intelligent operation in Beamix.** Every LLM call type, every pipeline stage, every quality gate, every cost control mechanism. The intelligence layer is not bolted on --- it is the product. Build it with the same rigor you would apply to a database schema or API contract, because in an AI-native product, the prompts ARE the product.
+
+---
+
+## Phase 2 & 3 Intelligence Expansions (March 2026)
+
+> **Source:** Feature planning sprint March 8, 2026. Full engineering specs in `.planning/04-features/new-features-batch-[1-3]-spec.md`. Cost analysis in `.planning/08-agents_work/PRICING-IMPACT-ANALYSIS.md`. 10 of 11 features approved (F8 Social Monitoring rejected).
+
+---
+
+### F9: 30-Minute Scan Refresh — Engine Rotation Strategy (Business Tier)
+
+**Current state:** `cron.scheduled-scans` runs every 60 minutes. Each full sweep queries all active engines in parallel with 5 Haiku calls per engine response for parsing.
+
+**New state (Strategy D — Priority Rotation):**
+- Business tier only: cron interval reduced to 30 minutes
+- Each 30-min cycle scans a **priority queue** of 2-3 engines (not all engines)
+- Priority order rotates: ChatGPT → Gemini → Perplexity → Claude → Grok → (repeat)
+- Full 7-engine sweep completes every ~3.5 hours
+- **Model change:** Haiku replaces Sonnet for all priority-cycle parsing; Sonnet reserved for full-sweep cycles
+- **Cost impact:** Net flat vs. current hourly (rotation + Haiku tier offset the 2x frequency)
+- Starter/Pro remain on hourly cadence
+
+**Inngest changes:**
+- `cron.scheduled-scans` gets a `tier` discriminator: Business → 30-min cron, others → 60-min
+- New function: `scan.engine-rotation-cycle` — reads priority queue, pops next 2-3 engines, runs scan, updates queue tail
+- Existing `scan.full-sweep` retained for daily full sweeps across all tiers
+
+---
+
+### F1: AI Crawler Feed Pipeline (Pro+)
+
+**What it does:** Detects which AI bots (GPTBot, ClaudeBot, PerplexityBot, GoogleBot-Extended) crawl the user's website, which pages, and at what frequency.
+
+**Data ingestion — user must connect one source:**
+- **Cloudflare** (OAuth): Reads server-side logs via Cloudflare Logs API — no user code installation
+- **Vercel** (OAuth): Reads Edge Function logs with same bot taxonomy
+- **Script snippet**: User installs `<script>` tag; beacon fires to `/api/crawler-ping` on each load; UA string parsed server-side
+
+**Processing pipeline:**
+1. Log ingestion (Inngest daily cron): Pull raw log entries from connected source
+2. Bot classification (algorithmic — no LLM): Match UA strings against `ai_bot_ua_patterns` table
+3. Aggregation: Normalize to `crawler_events` table (`bot_name, page_url, crawl_count, last_seen_at, business_id`)
+4. Weekly summary (optional Haiku): 3-sentence natural-language crawl summary — "GPTBot crawled 4 pages this week but skipped your Services page"
+5. Alert trigger: Key page with 0 crawls in 14 days → `crawler.stale-page-alert` event
+
+**New tables:** `crawler_events`, `ai_bot_ua_patterns`
+**LLM cost:** ~$0.02/business/month (Haiku weekly summary only; core is algorithmic)
+**Tier:** Pro and Business
+
+---
+
+### F3: Topic/Query Clustering Pipeline (Pro+)
+
+**What it does:** Groups tracked queries into semantic clusters (e.g., "pricing queries," "location queries") to aid navigation above 30+ tracked queries.
+
+**On new query insert:**
+1. `query.added` Inngest event fires
+2. Haiku classifies query into existing cluster label for the business, or creates new cluster
+3. `tracked_queries.cluster_id` updated
+
+**Monthly batch re-cluster:**
+1. Inngest monthly cron: `query.recluster-batch`
+2. For each business with 20+ queries: generate embeddings (OpenAI `text-embedding-3-small`)
+3. k-means clustering in-process (no external ML service needed at this scale)
+4. Update `query_clusters` table; regenerate labels via Haiku if cluster membership changed >20%
+
+**New tables:** `query_clusters` (`id, business_id, label, query_ids[], created_at`)
+**Column:** `tracked_queries.cluster_id` FK → `query_clusters`
+**LLM cost:** ~$0.001/new query (Haiku) + ~$0.05/business/month for monthly batch
+**Tier:** Pro and Business
+
+---
+
+### F4: Conversation Explorer Pipeline (Pro+)
+
+**Two modes by tier:**
+
+**Pro — LLM-generated query landscape:**
+- User selects industry/niche → Haiku generates 20-30 example queries people in that niche ask AI engines
+- Cached 7 days per `(industry, location)` pair
+- User can click any query to add to tracked queries
+- Cost: ~$0.003-0.012/session (Haiku, aggressive caching)
+
+**Business — Live Perplexity exploration:**
+- User enters topic → Perplexity Sonar Pro fetches real "related questions" from live AI conversation landscape
+- Real-time; results shown with streaming SSE
+- Cost: ~$0.05-0.20/session (Perplexity Sonar Pro)
+
+**Privacy:** Data is never cross-user. Sessions use only the requesting user's business profile. No query aggregation across users to feed another user's explorer.
+
+---
+
+### F6: Browser Simulation Pipeline (Pro+ — 3 No-API Engines)
+
+**Engines covered (no public API exists):**
+- Bing Copilot, Google AI Overviews (SGE), Google AI Mode
+
+**Infrastructure:** Browserbase (managed Playwright cloud) at ~$6/Pro user/month for ~60 sessions/month
+
+**Pipeline:**
+1. Scheduled scan includes these 3 engines for Pro/Business users
+2. Inngest `scan.browser-simulation` sends session request to Browserbase API
+3. Playwright script: navigate → type query → wait for AI response → extract text
+4. Haiku parses screenshot/HTML: mention status, rank position, sentiment
+5. Results → `scan_engine_results` (same schema; `engine` = `'copilot'` | `'ai_overviews'` | `'google_ai_mode'`)
+
+**LLM cost:** $0.30/month (Haiku parsing) + $6/month (Browserbase) = ~$6.30/Pro user/month
+**Tier:** Pro and Business
+
+---
+
+### F7: Web Mention Tracking Pipeline (All paid tiers)
+
+**What it does:** Tracks brand mentions on the traditional web (news, blogs, forums) — linked and unlinked citations.
+
+**Implementation via Perplexity leverage:**
+- Perplexity brand-search query: `"[business_name]" site:news OR site:blog OR site:reddit`
+- Haiku extracts: mention URL, source type, linked vs. unlinked, sentiment
+- Stored in `web_mentions` (`id, business_id, mention_url, source_type, is_linked, sentiment, excerpt, found_at, scan_cycle_id`)
+
+**Cadence:** Starter: weekly | Pro: daily | Business: daily + on-demand trigger
+
+**Alert integration:** Negative sentiment mention → `mention.negative-alert` event → row in `alerts` table
+
+**LLM cost:** ~$0.03-0.25/business/month depending on tier cadence
+**Tier:** All paid tiers
+
+---
+
+### F10: City-Level / Multi-Region Scanning (Starter: 1, Pro: 5, Business: unlimited)
+
+**What it does:** Appends location modifiers to tracked queries; stores results per-location; enables visibility comparison across cities.
+
+**Schema changes:**
+- New table: `scan_regions` (`id, business_id, region_label, location_modifier, is_primary`)
+  - Example: `{region_label: "Tel Aviv", location_modifier: " בתל אביב"}` (Hebrew) or `" in Tel Aviv"` (English)
+- `scan_engine_results` gains `region_id` column (FK → `scan_regions`, nullable)
+
+**Execution:** For each active query × each active region → generates location-specific query variant → scanned in parallel (same Inngest concurrency model)
+
+**Non-primary region cadence:** Non-primary regions scanned every 6 hours (not 30-min), mitigating linear cost growth
+
+**Hebrew context:** Location modifiers added in the query's language — Hebrew queries get Hebrew modifiers, English get English.
+
+**Tier limits:** Starter: 1 region (auto-set from business city in profile) | Pro: up to 5 | Business: unlimited (cap 20 recommended for cost control)
+**Cost:** ~$2.30/city/month per Pro user (mitigated cadence)
+
+---
+
+### F11: Prompt Volume Data — GSC Integration (Pro+)
+
+**What it does:** Shows estimated monthly query volume for tracked queries using Google Search Console as the primary source.
+
+**GSC path (approved, primary):**
+1. User connects GSC in Settings → Integrations (OAuth)
+2. Beamix fetches query performance data via Google Search Console API
+3. Query volume for matching queries stored as `prompt_volume_estimate` in `tracked_queries`
+4. Displayed as "Prompt Volume" column in Rankings page
+
+**Internal panel (all tiers — secondary source):**
+- Anonymized aggregation of how often each query template is tracked across all Beamix users in same industry
+- Shown as Low/Medium/High/Very High category (not exact numbers)
+
+**Rejected path:** Paid keyword APIs (Semrush, Ahrefs, Keyword Planner) — $0.01-0.05/query at scale. Do not implement.
+
+**LLM cost:** $0 (fully algorithmic)
+**Tier:** GSC-sourced exact volume: Pro+; Internal panel categories: all tiers
+
+---
+
+### Updated LLM Cost Model (Post March 2026)
+
+| Tier | Baseline | F1 | F3 | F4 | F6 Browser | F7 Mentions | F9 Savings | F10/city | **Net Delta** |
+|------|---------|----|----|----|-----------|-----------|-----------|---------|--------------|
+| Starter | $5-8 | $0 | $0 | $0 | $0 | $0.03 | $0 | $0 (1 region) | **+$0.03** |
+| Pro | $15-20 | $0.02 | $0.05 | $0.10 | $6.30 | $0.15 | $0 | $2.30 × n | **+$6-9 + cities** |
+| Business | $20-25 | $0.02 | $0.05 | $0.20 | $6.30 | $0.25 | **−$15.30** | $2.30 × n (capped) | **−$8 net** |
+
+**Key insight:** Business tier saves money after F9 rotation. Pro adds $6-9/month — well within Pro margin. Starter adds ~$0. Business price increase to $449 (from $349) is under evaluation for the F6+F9+F10 value unlock.
+
+---
+
+### F8: Social Platform Monitoring — Evaluated and Rejected (March 2026)
+
+YouTube/TikTok/Reddit social monitoring was analyzed and **rejected as out of scope** for Beamix's GEO positioning:
+- Social mentions ≠ AI engine visibility — different product category entirely
+- YouTube API costs unpredictable at scale ($50-200/month per business)
+- Ahrefs Brand Radar already owns this space; Beamix has no defensible differentiation
+- Adds scope without strengthening the "AI search visibility" narrative
+
+**Decision: Do not build.** Re-evaluate only as a separate product or third-party partnership (Ahrefs/Brand24 integration).

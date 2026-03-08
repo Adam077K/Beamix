@@ -1148,6 +1148,8 @@ CREATE TRIGGER set_updated_at
 | 35 | competitor_share_of_voice | Weekly share-of-voice percentages | ~5-10/business/week | Own read, service write |
 | 36 | crawler_detections | AI crawler visit records from Cloudflare | Variable per business | Own read, service write |
 | 37 | ai_readiness_history | Weekly AI readiness score snapshots | 1/business/week | Own read, service write |
+| 38 | scan_regions | Per-business city/region scan targets | 1-20/business by tier | Own CRUD, service read |
+| 39 | exploration_cache | Industry-level conversation explorer result cache | Shared (no user data), 24h TTL | No RLS (no user data), service write |
 
 **Note:** Rate limiting is handled by Upstash Redis (`@upstash/ratelimit`) — no database table is needed for rate limit counters.
 
@@ -1174,6 +1176,7 @@ All API routes live under `src/app/api/`. Every route follows these universal pa
 | `/api/scan/[scan_id]/results` | GET | None | Get completed scan results |
 | `/api/scan/manual` | POST | Required | Trigger manual scan for a business |
 | `/api/scan/history` | GET | Required | List scan history for a business |
+| `/api/scan/regions` | GET/POST/DELETE | Required | CRUD for scan_regions table. GET lists regions; POST adds a city (tier-limited: Starter=1, Pro=5, Business=20); DELETE removes a non-home region. |
 
 **POST /api/scan/start**
 - Input: `{ business_name: string, website_url: string(url), industry: string, location?: string, language?: 'en' | 'he' }`
@@ -1336,7 +1339,7 @@ All API routes live under `src/app/api/`. Every route follows these universal pa
 | `/api/workflows/[id]/run` | POST | Required | Manually trigger workflow |
 | `/api/workflows/[id]/runs` | GET | Required | List workflow run history |
 
-### 3.10 Analytics Routes (NEW) — `/api/analytics/*`
+### 3.10 Analytics Routes — `/api/analytics/*`
 
 | Route | Method | Auth | Purpose |
 |-------|--------|------|---------|
@@ -1344,6 +1347,10 @@ All API routes live under `src/app/api/`. Every route follows these universal pa
 | `/api/analytics/prompt-volumes` | GET | Required | Prompt volume estimates |
 | `/api/analytics/prompt-trends` | GET | Required | Trending prompts by industry |
 | `/api/analytics/brand-narrative` | GET | Required | Brand narrative analysis |
+| `/api/analytics/crawler-feed` | GET | Required (Pro+) | AI bot crawl activity from Cloudflare integration. Params: businessId, days (7/30/90), bot (optional). |
+| `/api/analytics/explore` | POST | Required (Pro+) | Conversation Explorer — generates industry query suggestions via Haiku (Pro) or Perplexity Sonar (Business). Caches results 24h per (industry, location, seedTopic, source). |
+| `/api/analytics/prompt-volume` | GET | Required | Per-query volume data — real GSC impressions (Pro+) or estimated band (all tiers). |
+| `/api/dashboard/web-mentions` | GET | Required (All paid) | Web mentions from citation_sources where mention_type='web_mention'. Params: businessId, since, limit. |
 
 ### 3.11 Public API Routes — `/api/v1/*`
 
@@ -1368,6 +1375,7 @@ Rate limit: 100 requests per minute per API key (configurable per key).
 | Route | Method | Auth | Purpose |
 |-------|--------|------|---------|
 | `/api/onboarding/complete` | POST | Required | Complete onboarding flow |
+| `/api/onboarding/suggest-competitors` | POST | Required | Auto-suggest competitors via Perplexity+Haiku. Body: businessType, city, country, websiteUrl. Rate limit: 3/user/day. Results are ephemeral (not persisted). |
 | `/api/preferences` | GET/PATCH | Required | User preferences (locale, timezone) |
 
 **POST /api/onboarding/complete**
@@ -1522,12 +1530,16 @@ Vercel serverless functions have a 10-60 second timeout depending on plan. Scan 
 
 | Function | Schedule | Concurrency | Timeout | Purpose |
 |----------|----------|-------------|---------|---------|
-| `cron.scheduled-scans` | `0 * * * *` (every 1 hour) | 1 | 600s | Runs hourly to check which users are due for a scan based on their plan tier (Pro=daily, Business=every 4h). Fetches all businesses with active subscriptions where `next_scan_at <= NOW()`. Sends `scan/scheduled.start` event for each. Not all scans run every hour — it is a polling loop. |
+| `cron.scheduled-scans` | `*/30 * * * *` (every 30 min) | 1 | 600s | Fires every 30 minutes. For Business tier: runs priority-query cycles (top 5 queries × 3 engines, Gemini Flash parsing) every 30 min; full scans (all queries × 7 engines, Haiku parsing) every 6 hours. For Pro/Starter: continues hourly polling. Sends `scan/scheduled.start` or `scan/priority.start` events. Net cost for Business: -$15.30/month vs old 4h cadence (Strategy D). |
 | `cron.monthly-credits` | `0 0 1 * *` (1st of month midnight) | 1 | 300s | For each active subscriber: compute rollover (20% cap of base), reset `used_amount` to 0, set new `base_allocation` from plan, record transactions. Reset `workflow.runs_this_month` counters. |
 | `cron.trial-nudges` | `0 10 * * *` (daily 10AM UTC) | 1 | 120s | Find users where trial_ends_at is 3 days away and no nudge sent. Send Resend email. |
 | `cron.weekly-digest` | `0 8 * * 1` (Monday 8AM UTC) | 1 | 300s | For each subscribed user: compile weekly summary (score changes, agent activity, recommendations). Send via Resend. |
 | `cron.prompt-volume-aggregation` | `30 3 * * 0` (Sunday 3:30AM UTC) | 1 | 300s | Aggregate week's scan data into `prompt_library` volume estimates and `prompt_volumes` time series. Staggered 30 min after voice-refinement (3:00AM) to avoid concurrent load. |
-| `cron.cleanup` | `0 4 * * *` (daily 4AM UTC) | 1 | 120s | Delete free_scans older than 14 days where `converted_user_id IS NULL`. Delete notifications older than 90 days. Purge expired API keys. Release stuck credit holds older than 2 hours (holds with no corresponding confirm or release). |
+| `cron.cleanup` | `0 4 * * *` (daily 4AM UTC) | 1 | 120s | Delete free_scans older than 14 days where `converted_user_id IS NULL`. Delete notifications older than 90 days. Purge expired API keys. Release stuck credit holds older than 2 hours. Delete `exploration_cache` rows where `expires_at < NOW()`. |
+| `cron.crawler-feed-sync` | `0 3 * * *` (daily 3AM UTC) | 10 | 90s | For each business with active Cloudflare integration: call Cloudflare Analytics GraphQL API, filter AI bot user-agents, aggregate by (bot_name, page_path), upsert into `crawler_detections`. Optional Haiku narrative summary for Pro+ businesses with >20 events. Runs in parallel batches of 10. |
+| `cron.query-recluster` | `0 4 * * 0` (Sunday 4AM UTC) | 5 | 300s | Re-classify `tracked_queries` rows where `cluster_confidence < 0.7` AND `cluster_overridden = false`. Uses Haiku classification. Processes up to 500 queries per run in batches of 100. Skips user-overridden clusters. |
+| `cron.gsc-sync` | `0 2 * * 0` (Sunday 2AM UTC) | 5 | 300s | For each business with active GSC integration: pull last 7 days of query data from Google Search Console API, upsert into `gsc_data`, refresh `prompt_volumes` confidence scores for matched queries. Handles token refresh on `invalid_grant`. Immediate sync also triggered by `gsc/connected` event on OAuth completion. |
+| `cron.priority-score-update` | `0 1 * * *` (daily 1AM UTC) | 5 | 120s | Recompute `priority_score` for all tracked_queries: `(normalized_volume_rank × 0.6) + (volatility_score × 0.4)`. Sets `is_priority = true` for top 5 per business. No LLM calls — pure SQL computation. Business tier only. |
 
 ### 4.3 Event Flow
 
@@ -1720,6 +1732,18 @@ Workflow trigger → API sends "workflow/execute" event
 **Connection:** Cloudflare Analytics API via API token stored in integrations.
 
 **Data flow:** Inbound. Periodic Inngest job fetches bot analytics data filtered by known AI bot user agents.
+
+### 5.10 Browserbase
+
+**What it provides:** Managed Playwright browser sessions for scanning AI engines that have no public API — Bing Copilot, Google AI Overviews, Google AI Mode.
+
+**Why not Vercel serverless:** Vercel's 10-second function timeout kills browser sessions. Browserbase sessions run inside Inngest step functions (5-minute limit) where browser interaction completes reliably.
+
+**Connection:** `BROWSERBASE_API_KEY` + `BROWSERBASE_PROJECT_ID` env vars. Adapter at `src/lib/scan/browserbase-client.ts`. Session concurrency cap: 5 (Browserbase rate limit).
+
+**Cost:** ~$0.10/session. Pro user on weekly scans: 60 sessions/month = $6/user/month. Gated to Pro+.
+
+**Data flow:** Outbound. Inngest scan function opens sessions, submits prompts via DOM interaction, extracts AI response text, closes session. Results flow through the same 5-stage Haiku parsing pipeline as API-based engines. Results stored in `scan_engine_results` with `collection_method = 'browser'`.
 
 ---
 

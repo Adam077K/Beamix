@@ -1,7 +1,7 @@
 # Beamix System Design — Master Document
 
-> **Version:** 2.1
-> **Date:** March 4, 2026
+> **Version:** 2.2
+> **Date:** March 8, 2026
 > **Authors:** Morgan (CPO), Atlas (CTO), Sage (AI Engineer), Rex (Research Analyst)
 > **Replaces:** `ENGINEERING_PLAN.md` (v1.0)
 > **Status:** 4/7 MISSING gaps closed, 3/7 intentionally deferred with reasoning. 7/7 PARTIAL gaps upgraded.
@@ -42,12 +42,13 @@ Scan (find problems) → Diagnose (prioritize) → Fix (agents execute) → Meas
 5. **Inngest-native** — Background jobs with retry, concurrency, observability built-in.
 6. **Event-driven workflows** — Automated multi-agent chains (visibility drop → auto-fix).
 7. **Progressive voice learning** — Content improves with every user edit.
+8. **Browser simulation for non-API engines** — Bing Copilot, Google AI Overviews, and Google AI Mode scanned via headless browser. Only SMB GEO platform with this capability. Pro/Business only.
 
 ---
 
 ## 2. Platform at a Glance
 
-### 2.1 Page Map (23 Pages)
+### 2.1 Page Map (23 Pages + Phase 2 & 3)
 
 | Page | URL | Purpose |
 |------|-----|---------|
@@ -74,26 +75,47 @@ Scan (find problems) → Diagnose (prioritize) → Fix (agents execute) → Meas
 | Terms | `/terms` | Terms of service |
 | Privacy | `/privacy` | Privacy policy |
 | API Docs | `/docs/api` | REST API documentation (Business tier) |
+| **AI Crawler Feed** *(Phase 2)* | `/dashboard/crawler-feed` | AI bot crawl tracking — which bots visit which pages (Pro+) |
+| **Conversation Explorer** *(Phase 2)* | `/dashboard/explore` | Browse what your industry niche asks across AI engines (Pro+) |
 
 > Full page specifications (layout, components, data flows, connections) → `_SYSTEM_DESIGN_PRODUCT_LAYER.md` §2
 
 ### 2.2 Feature Count Summary
 
-| Module | Features | Key Capabilities |
-|--------|----------|-----------------|
-| Scan Engine | 12 | 10 AI engines, prompt generation, LLM parsing, scoring, scheduling |
-| Dashboard & Analytics | 14 | Visibility gauge, trends, rankings, content performance, brand narrative |
-| Agent System | 16 agents | Content, schema, FAQ, citations, voice training, patterns, refresh, narrative |
-| Content Engine | 10 | Library, editor, versioning, 12 content types, voice profiles, CMS publish |
-| Competitive Intelligence | 6 | Share of voice, gap analysis, competitor monitoring, anonymous tracking |
-| Alert System | 9 alert types | Visibility, sentiment, competitor, credit, content performance alerts |
-| Integration Hub | 7 | WordPress, GA4, GSC, Slack, Cloudflare, Paddle, API keys |
-| AI Readiness | 6 | Website audit, 5-category scoring, improvement roadmap, progress tracking |
-| Settings | 6 | Business profile, billing portal, preferences, language, integrations |
-| Billing | 5 | Paddle checkout, subscription management, credit system, usage tracking |
-| **Total** | **90+** | |
+| Module | Phase 1 | Phase 2 & 3 | Total | Key Capabilities |
+|--------|---------|-------------|-------|-----------------|
+| Scan Engine | 12 | +3 | 15 | 10 AI engines + browser sim, 30-min refresh (Business), city-level scanning |
+| Dashboard & Analytics | 14 | +3 | 17 | Visibility gauge, trends, rankings, query clustering, region filter, prompt volume |
+| Agent System | 16 agents | +0 | 16 agents | Content, schema, FAQ, citations, voice training, patterns, refresh, narrative |
+| Content Engine | 10 | +1 | 11 | Library, editor, versioning, comparison tool, voice profiles, CMS publish |
+| Competitive Intelligence | 6 | +2 | 8 | Share of voice, gap analysis, auto-suggest competitors, competitor monitoring |
+| Web Presence | 0 | +2 | 2 | AI crawler feed, web mention tracking |
+| Alert System | 9 alert types | +0 | 9 | Visibility, sentiment, competitor, credit, content, mention alerts |
+| Integration Hub | 7 | +1 | 8 | WordPress, GA4, GSC (prompt volume), Slack, Cloudflare, Paddle, API keys |
+| AI Readiness | 6 | +0 | 6 | Website audit, 5-category scoring, improvement roadmap, web mentions tab |
+| Settings | 6 | +1 | 7 | Business profile, billing portal, preferences, language, integrations, regions |
+| Billing | 5 | +0 | 5 | Paddle checkout, subscription management, credit system, usage tracking |
+| **Total** | **91+** | **+13** | **103+** | |
 
 > Full feature inventory with descriptions → `_SYSTEM_DESIGN_PRODUCT_LAYER.md` §3
+
+### 2.3 Phase 2 & 3 Roadmap (March 2026)
+
+| Feature | Tier | Priority | Status |
+|---------|------|----------|--------|
+| F9: 30-Min Scan Refresh (engine rotation) | Business | High | Spec complete |
+| F2: Content Comparison Tool | All paid | High | Spec complete |
+| F5: Auto-Suggest Competitors | All tiers | High | Spec complete |
+| F7: Web Mention Tracking | All paid | High | Spec complete |
+| F1: AI Crawler Feed | Pro+ | Medium | Spec complete |
+| F3: Topic/Query Clustering | Pro+ | Medium | Spec complete |
+| F6: Browser Simulation (Copilot, AI Overviews, AI Mode) | Pro+ | High (Phase 3) | Spec complete |
+| F4: Conversation Explorer | Pro+ | Medium (Phase 3) | Spec complete |
+| F10: City-Level Scanning | All tiers | Medium | Spec complete |
+| F11: Prompt Volume Data (GSC) | Pro+ | Medium | Spec complete |
+| F8: Social Monitoring | — | **REJECTED** | Out of scope |
+
+> Pricing review completed March 2026. Current pricing absorbs all new feature costs. Business tier increase to $449 under evaluation. → `.planning/08-agents_work/PRICING-IMPACT-ANALYSIS.md`
 
 ---
 

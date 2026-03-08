@@ -1,6 +1,7 @@
 # Codebase Concerns
 
 > **Last synced:** March 2026 — aligned with 03-system-design/
+> **Note:** System Design v2.1 (March 2026) addresses many concerns below. Items marked RESOLVED were closed in that release. See `.planning/03-system-design/BEAMIX_SYSTEM_DESIGN.md`.
 
 ## Tech Debt
 

@@ -195,7 +195,7 @@ Each of these maps to a specific agent capability in the product.
 | **Tracked queries** | 0 | 10 | 25 | 75 |
 | **Agent uses/month** | 0 | 5 | 15 | 50 |
 | **Scan frequency** | One-time | Weekly | Every 3 days | Daily |
-| **AI engines** | 4 (Phase 1) | 4 | 8 | 10 |
+| **AI engines** | 4 (Phase 1) | 4 | 7 | 10 |
 | **Competitors tracked** | 0 | 3 | 5 | 10 |
 
 **Key pricing principles:**

@@ -23,15 +23,15 @@
 
 ## AI Engines — Coverage Decision (LOCKED — System Design v2.1)
 
-**Phase 1 — Launch (3 free engines + Claude for paid):** Free/Starter = ChatGPT, Gemini 2.0 Flash, Perplexity Sonar Pro. Pro adds Claude Sonnet 4.6, Google AI Overviews, Grok (xAI), You.com (7 total). Business = Pro 7 + TBD (9+).
-**Phase 2 — Growth:** Additional engines TBD
-**Phase 3 — Deferred:** Copilot, AI Overviews (reliable), Meta AI — require browser simulation, deferred. Bing Copilot has no public API — removed from all tiers.
+**Phase 1 — Launch (4 engines, API):** ChatGPT, Gemini, Perplexity, Claude. Used by Free scan, Starter, and all paid tiers. Claude is Phase 1 — NOT a paid-only engine.
+**Phase 2 — Growth (3 more, API):** + Grok (xAI), DeepSeek, You.com. Total: 7 engines. Available to Pro and Business tiers.
+**Phase 3 — Deferred (3 more, browser simulation):** + Copilot, AI Overviews, Meta AI. Browser simulation only — deferred. Do NOT claim until shipped.
 
-**Free scan** uses 3 engines (ChatGPT, Gemini, Perplexity). Show 3 cards on results page.
+**Free scan** uses all 4 Phase 1 engines (ChatGPT, Gemini, Perplexity, Claude). Show 4 cards on results page.
 
-**Copy guidance:** Free scan page: "Scan across major AI search engines." Results page: Show exactly which engines ran (3 cards for free scan). Do NOT claim Copilot or AI Overviews until Phase 3 ships.
+**Copy guidance:** Free scan page: "Scan across 4 major AI search engines." Results page: Show exactly which engines ran (4 cards for free scan). Do NOT claim Copilot or AI Overviews until Phase 3 ships.
 
-> *Updated 2026-03-06 — Copilot removed (no public API). Engine counts: Free/Starter=3, Pro=7, Business=9+.*
+> *Updated 2026-03-08 — Engine counts corrected: Free/Starter=4 (Phase 1), Pro=7 (Phase 1+2), Business=10 (Phase 1+2+3). Claude is Phase 1 (all tiers including free). Phase 2: Grok, DeepSeek, You.com.*
 
 **Placeholder in this spec:** "major AI engines" — replace with exact count and list when decided.
 
@@ -64,7 +64,7 @@
 
 ## Phase 0 — Scan Running State
 
-**What the user sees while the scan is processing (60–90 seconds)**
+**What the user sees while the scan is processing (30–60 seconds)**
 
 **Layout:**
 ```
@@ -94,7 +94,7 @@
 - Subtext: `We're querying every major AI engine with real prompts about your business.`
 - Bottom line: `Results in about 60 seconds — we'll show you exactly where you stand.`
 
-**Dev note:** This screen is shown from the moment the scan is triggered until `status = 'completed'` in the database. Poll `/api/scan/[token]/status` every 3 seconds.
+**Dev note:** This screen is shown from the moment the scan is triggered until `status = 'completed'` in the database. Poll `/api/scan/[scan_id]/status` every 3 seconds.
 
 ---
 

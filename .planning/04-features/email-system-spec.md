@@ -190,7 +190,7 @@ export async function sendCompetitorMoved(params: { to: string; firstName: strin
   - Agent uses count
   - Score change since trial start
   - CTA: "See What's Left to Improve →"
-- **Timing:** Day 7 of trial, 09:00 user local time (approximate via UTC)
+- **Timing:** Day 3 of trial, 09:00 user local time (approximate via UTC)
 - **Opt-out:** Not opt-outable
 
 ---
@@ -264,7 +264,7 @@ export async function sendCompetitorMoved(params: { to: string; firstName: strin
 ---
 
 ### 13. Weekly Digest
-- **Trigger:** Vercel Cron every Monday 08:00 UTC → `/api/cron/weekly-digest`
+- **Trigger:** Inngest cron (`cron.weekly-digest`) — Monday 08:00 AM UTC
   - Batches users (50 per batch, 1s delay between batches — Resend rate limit)
   - Skips users opted out or with no scans in 30 days
 - **Subject:** `"Your AI visibility this week: [↑/↓ X points]"`
@@ -365,7 +365,7 @@ CREATE POLICY "users: own preferences only"
 | Category | Opt-outable | Emails |
 |---|---|---|
 | TRANSACTIONAL | No | Welcome, Magic Link, Scan Complete*, Upgrade, Receipt, Payment Failed, Cancellation |
-| TRIAL | No | Trial Start, Day 7, Day 12, Expired |
+| TRIAL | No | Trial Start, Day 3, Day 6, Expired |
 | ENGAGEMENT | Yes | Agent Complete, Weekly Digest, Ranking Drop, Competitor Moved |
 
 *Scan Complete: opt-outable after the first scan (first scan = welcome flow, subsequent = opt-out allowed)

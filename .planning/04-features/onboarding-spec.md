@@ -45,7 +45,7 @@ ONBOARDING (/onboarding)
        │       Steps: business name + industry + location only
        │       On complete → POST /api/scan/[scan_id]/claim
        │         → links free_scan to user, imports results to scans table
-       │         → trial starts retroactively from free_scan.created_at
+       │         → trial starts from first /dashboard visit (not from free scan timestamp)
        │         → redirect to /dashboard (results already there)
        │
        └─ WITHOUT scan_id (came directly to signup):
@@ -338,7 +338,7 @@ BEAMIX
 - Generates industry-specific prompts
 - Queries Phase 1 AI engines (4: ChatGPT, Gemini, Perplexity, Claude) in parallel
 - Parses responses + extracts mentions, queries, rankings
-- Writes results to `scan_engine_results`, `scan_queries`, `scan_mentions`
+- Writes results to `scan_engine_results` (tables `scan_queries` and `scan_mentions` do not exist — only `scan_engine_results` per the 32-table schema)
 - Updates `scans.status` to `'completed'`
 
 ---

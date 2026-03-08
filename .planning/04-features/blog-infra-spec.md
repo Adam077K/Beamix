@@ -8,7 +8,7 @@
 **Status:** Updated — Blog is built (Phase 11 complete). List page, [slug] page, 4 seed posts, markdown rendering.
 
 > Goal: Drive organic SEO traffic. Publish manually + AI-generated + programmatic SEO content.
-> Blog is planned but **not built in MVP**. This spec defines the full architecture to build from when ready.
+> Blog is **built** (Phase 11 complete) — list page, [slug] page, 4 seed posts, markdown rendering, `blog_posts` DB table for metadata.
 
 ---
 

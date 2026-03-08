@@ -26,6 +26,8 @@
 | **Product Layer** | 23 pages, 90+ features, user journeys, 16 agents UX | `.planning/03-system-design/_SYSTEM_DESIGN_PRODUCT_LAYER.md` |
 | **Intelligence Layer** | 16 agent pipelines, scan engine, LLM costs | `.planning/03-system-design/_SYSTEM_DESIGN_INTELLIGENCE_LAYER.md` |
 | **Validation** | Gap closure, competitive parity, priority classification | `.planning/03-system-design/_SYSTEM_DESIGN_VALIDATION.md` |
+| **Feature Specs (12 specs)** | Detailed engineering specs for all features (launch + Phase 2 & 3) | `.planning/04-features/` |
+| **Pricing Impact Analysis** | Cost analysis for 11 new features + pricing recommendations | `.planning/08-agents_work/PRICING-IMPACT-ANALYSIS.md` |
 
 ---
 
@@ -80,7 +82,7 @@ Every competitor builds dashboards. Beamix does the work.
 | **Tracked queries** | 0 | 10 | 25 | 75 |
 | **Agent uses/month** | 0 | 5 | 15 | 50 |
 | **Scan frequency** | One-time | Weekly | Every 3 days | Daily |
-| **AI engines** | 4 (Phase 1) | 4 | 8 | 10 |
+| **AI engines** | 4 (Phase 1) | 4 | 7 | 10 |
 | **Competitors tracked** | 0 | 3 | 5 | 10 |
 | **Trial** | N/A | 7 days | 7 days | 7 days |
 

@@ -1456,3 +1456,241 @@ Every gap identified in the CTO's analysis is addressed above. The product layer
 > **This is the definitive product layer for Beamix.**
 > Every page, every feature, every user journey, every agent. No code. No pricing. No timelines.
 > All competitive gaps closed. Ready for engineering handoff.
+
+---
+
+## Phase 2 & 3 Product Expansions (March 2026)
+
+> **Source:** Feature planning sprint March 8, 2026. Full engineering specs in `.planning/04-features/new-features-batch-[1-3]-spec.md`. 10 of 11 features approved to build.
+
+### Updated Feature Count (Post March 2026)
+
+| Module | Phase 1 Total | Phase 2 & 3 New | Grand Total |
+|--------|--------------|-----------------|-------------|
+| Scan Engine | 12 | +3 (F9 refresh, F10 regions, F11 GSC) | 15 |
+| Dashboard & Analytics | 14 | +3 (F3 clustering, F4 explorer, F10 region filter) | 17 |
+| Agent System | 16 agents + 2 systems | +0 agents (existing handle new tasks) | 16 agents |
+| Content Engine | 10 | +1 (F2 comparison tool) | 11 |
+| Competitive Intelligence | 6 | +2 (F5 auto-suggest, F7 mentions) | 8 |
+| Web Presence | 0 | +2 (F1 crawler feed, F7 mention tracking) | 2 |
+| Browser Simulation | 0 | +1 (F6 — 3 new engines) | 3 engines |
+| **Total** | **91+ features** | **+12 new features** | **103+ features, 16 agents** |
+
+---
+
+### F1: AI Crawler Feed (Pro+)
+
+**New page:** `/dashboard/crawler-feed`
+
+**What users see:**
+- Timeline of AI bot crawl activity: which bots visited, which pages, how recently
+- Bot cards: GPTBot, ClaudeBot, PerplexityBot, GoogleBot-Extended, Anthropic Bot
+- "Pages not crawled" warning list — key pages the business owner should prioritize for AI discoverability
+- Weekly summary card: Haiku-generated plain-English summary of crawl trends
+- Alert when key pages have had 0 AI bot crawls in 14+ days
+
+**Setup flow:**
+- First visit → setup modal: choose connection method (Cloudflare OAuth / Vercel OAuth / Script snippet)
+- Script snippet: copy-paste `<script>` tag into site `<head>`
+- Cloudflare/Vercel: OAuth flow → read-only log access granted
+
+**Empty state:** "Connect your website to see which AI bots are discovering your content — and which pages they're missing."
+
+**Connections:** Alerts system, Settings → Integrations (shows connection status)
+**Tier gate:** Pro and Business. Starter sees a "Pro feature" lock with upgrade CTA.
+
+---
+
+### F2: Content Comparison Tool (All paid tiers)
+
+**Added to:** Content Editor (`/dashboard/content/[id]`)
+
+**What users see:**
+- New "Compare Versions" button in the content editor toolbar
+- Side-by-side diff view: original content (left) vs. current AI-optimized version (right)
+- Highlighted diffs: additions in green, removals in red, unchanged in gray
+- "What changed?" summary: character count, word count delta, key phrase additions
+- Optional "Explain this change" button: on-demand Haiku call that explains the reasoning behind each major change in plain language (~$0.002/click)
+
+**Implementation:** Client-side diff rendering using a Markdown diff library (no LLM calls for the base diff view). The "Explain" button is the only LLM touchpoint.
+
+**Connections:** `content_versions` table (already exists), Content Library, Content Editor.
+**Tier:** All paid tiers. Free scan users cannot access content editor.
+
+---
+
+### F3: Topic/Query Clustering (Pro+)
+
+**Added to:** Rankings page (`/dashboard/rankings`)
+
+**What users see:**
+- Queries grouped into labeled clusters in the sidebar or as collapsible groups in the table
+- Cluster labels auto-generated: "Pricing Queries," "Location Queries," "Review Queries," "Service Discovery Queries"
+- Click cluster → filter table to show only those queries
+- Cluster count badge: "7 queries" next to each cluster label
+- "Unclustered" catch-all group for newly added queries awaiting classification
+
+**Auto-clustering flow:**
+- New query added → classified into cluster within seconds (Inngest async)
+- Monthly re-cluster: clusters reorganize as query set grows — user sees "Your query clusters were updated" notification
+
+**Empty state (< 5 queries tracked):** Clustering UI hidden; shown only when 5+ queries tracked.
+
+**Connections:** `tracked_queries` table, `query_clusters` table (new), Rankings filter system.
+**Tier:** Pro and Business. Starter sees standard list view (no clustering).
+
+---
+
+### F4: Conversation Explorer (Pro+)
+
+**New page:** `/dashboard/explore`
+
+**What users see:**
+- Industry query landscape: "What are people asking AI about [your industry] in [your city]?"
+- Grid of query cards with estimated relative volume (Low / Medium / High)
+- "+ Track This Query" button on each card → adds to `tracked_queries`
+- Pro tier: LLM-generated landscape, refreshed weekly
+- Business tier: Live exploration mode — enter any topic → real-time Perplexity results
+
+**Pro tier UI:**
+- Pre-loaded landscape of 20-30 queries based on business type + location
+- "Refresh landscape" button (limited: 4/month)
+- Last updated timestamp
+
+**Business tier UI:**
+- Live search bar: "What do people ask about ___?"
+- Real-time streaming results as Perplexity searches
+- Recent explorations history (last 10 sessions)
+
+**Privacy note (shown in UI):** "This view shows industry-wide patterns, not data from other Beamix users."
+
+**Empty state:** "Discover what potential customers are asking AI about your industry — and start tracking the queries that matter."
+
+**Connections:** `tracked_queries`, Rankings page (queries flow directly in), Recommendations page (new query discovery → new recommendations).
+**Tier:** Pro (LLM-generated), Business (live Perplexity mode)
+
+---
+
+### F5: Auto-Suggest Competitors (All tiers — onboarding enhancement)
+
+**Added to:** Onboarding Step 3 (Competitors step) + Settings → Competitive Intelligence
+
+**What users see in onboarding:**
+- After entering business type and location, onboarding pre-populates a list of 5-10 suggested competitors
+- Each suggestion shows: business name, city, inferred category
+- User checks/unchecks competitors to add to tracking
+- "Add more" text input still available for manual additions
+
+**What users see in settings:**
+- Settings → Competitive Intelligence tab: "Suggest more competitors" button
+- Triggers same pipeline as onboarding, re-runs with updated business profile data
+
+**Implementation:** One Haiku call at onboarding step 3 load (not on button click) — preemptively generated to feel instant. Perplexity used for Israeli businesses (better local business awareness). Cached for 30 days per `(business_type, city)` pair.
+
+**Connections:** `competitors` table, Onboarding flow (Step 3), Settings tabs.
+**Tier:** All tiers (it's an onboarding feature). Starter, Pro, Business all benefit.
+
+---
+
+### F6: Browser Simulation Engines (Pro+)
+
+**Not a new UI page** — extends existing scan infrastructure. Results appear in existing Rankings and Recommendations pages.
+
+**What users see:**
+- Rankings page: 3 new engine columns: "Bing Copilot," "Google AI Overviews," "Google AI Mode"
+- These columns only visible to Pro/Business users
+- Starter users see these columns locked with "Pro feature" badge
+
+**How results appear:**
+- Same format as API-based engines: visibility score, rank position, mention status, sentiment
+- "Browser simulation" badge on these 3 columns (tooltip: "This result is captured via browser simulation — may vary from real user experience")
+
+**Alert integration:** Visibility drop in Copilot/AI Overviews triggers same alert types as other engines.
+
+**Connections:** `scan_engine_results` (3 new engine rows), Rankings page, Recommendations (new action items based on these engines), Alert system.
+**Tier:** Pro and Business. Engines not available at Starter.
+
+---
+
+### F7: Web Mention Tracking (All paid tiers)
+
+**Added to:** AI Readiness page (`/dashboard/ai-readiness`) as a new "Web Mentions" tab
+
+**What users see:**
+- Feed of web mentions: news articles, blog posts, forum discussions where brand is mentioned
+- Each mention card: source name, URL, date, linked vs. unlinked badge, sentiment indicator
+- Metrics strip: total mentions this month, linked %, sentiment breakdown
+- "Claim unlinked mention" quick action: opens agent to draft outreach email requesting a link
+- Filter by: source type (news / blog / forum), date range, sentiment, linked status
+
+**Cadence display:** Shows when next mention scan runs ("Next scan in 2 hours" for Pro; "Updated daily" for Starter)
+
+**Alert integration:** New negative mention → "New Brand Mention" alert in notification bell with severity based on source authority.
+
+**Connections:** `web_mentions` table (new), `alerts` table, AI Readiness page, Alert system, Agent Hub (outreach email agent).
+**Tier:** All paid tiers. Cadence: Starter weekly, Pro daily, Business daily + on-demand.
+
+---
+
+### F9: 30-Minute Scan Refresh (Business Tier — scan cadence UI)
+
+**Not a new page** — affects existing scan status displays across the dashboard.
+
+**What Business users see:**
+- Dashboard overview: "Last updated: 12 minutes ago" (vs. Starter/Pro: "Last updated: 45 minutes ago")
+- Rankings page: freshness badge shows "30-min refresh" for Business tier
+- Settings → Billing: scan frequency listed as "Every 30 minutes" under Business plan features
+- Pricing page: "30-min scan refresh" listed as a Business-only feature
+
+**Connections:** Scan engine cron (backend), Dashboard overview "last updated" timestamp, Rankings freshness badge, Pricing page feature matrix.
+**Tier:** Business only.
+
+---
+
+### F10: City-Level Scanning (Starter: 1, Pro: 5, Business: unlimited)
+
+**Added to:** Rankings page, Settings → Business Profile
+
+**Rankings page — what users see:**
+- New "Region" dropdown filter (appears when user has 2+ regions configured)
+- Default: shows primary region (business city)
+- Switching region: table refreshes to show that city's scan results
+- Multi-region comparison view: side-by-side columns (Pro/Business)
+
+**Settings → Business Profile — what users see:**
+- New "Scanning Regions" section: list of configured cities
+- "Add region" button (within tier limit)
+- Each region: label, location modifier, primary toggle, delete button
+- Starter: 1 region (shown as "Your primary city — upgrade to Pro to track more cities")
+
+**Empty state for non-primary regions:** "Start tracking [Tel Aviv] — add it to your regions to see how AI engines rank you there."
+
+**Hebrew/RTL note:** City names and location modifiers shown in the UI language (Hebrew or English based on user preference). Location modifiers sent to AI engines in the query language.
+
+**Connections:** `scan_regions` table (new), `scan_engine_results.region_id` (new column), Rankings page, Settings.
+**Tier:** Starter 1 region, Pro 5 regions, Business unlimited (soft cap 20).
+
+---
+
+### F11: Prompt Volume Data (Pro+)
+
+**Added to:** Rankings page as a new column
+
+**What users see:**
+- "Prompt Volume" column in the Rankings table: shows estimated monthly query volume
+- Pro/Business (GSC connected): shows exact GSC search volume for matching queries
+- Pro/Business (no GSC): shows internal panel category — Low / Medium / High / Very High
+- All tiers: internal panel category visible (as a broad signal)
+
+**GSC connection prompt:**
+- Rankings page: banner "Connect Google Search Console to see real query volume data" → links to Settings → Integrations
+- Settings → Integrations: Google Search Console OAuth flow (already has an Integrations tab; GSC is a new integration card)
+
+**Connections:** `tracked_queries.prompt_volume_estimate` (new column), Rankings page, Settings → Integrations.
+**Tier:** Exact GSC volume: Pro+. Panel categories: all tiers.
+
+---
+
+### F8: Social Platform Monitoring — Rejected (March 2026)
+
+Social monitoring (YouTube/TikTok/Reddit) was evaluated in March 2026 and rejected as out of scope. Social mentions are a different product category from AI search visibility. Do not add social platform pages or UI to Beamix. See Intelligence Layer Phase 2 section for full reasoning.

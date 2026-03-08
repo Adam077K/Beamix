@@ -217,8 +217,8 @@ Full-width table. Sticky column headers on scroll (desktop). Horizontally scroll
 
 | Feature | Free Scan | Starter | Pro | Business |
 |---|---|---|---|---|
-| AI engines scanned | All major | 4 engines | 8 engines | 10+ engines |
-| Google AI Overviews tracking | — | — | — | Included |
+| AI engines scanned | 4 engines | 4 engines | 7 engines | 10 engines |
+| Google AI Overviews tracking | — | — | — | Phase 3 (deferred — browser simulation) |
 | Scan frequency | One-time | Weekly | Every 3 days | Daily |
 | Manual scan trigger | — | — | Included | Included |
 
@@ -302,7 +302,7 @@ Full-width table. Sticky column headers on scroll (desktop). Horizontally scroll
 ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
 │   Starter        │  │   Pro            │  │   Business       │
 │                  │  │                  │  │                  │
-│  4 Engines       │  │  8 Engines       │  │  10+ Engines     │
+│  4 Engines       │  │  7 Engines       │  │  10+ Engines     │
 │                  │  │                  │  │                  │
 │  [logo] [logo]   │  │  [logo] [logo]   │  │  [logo] [logo]   │
 │  [logo] [logo]   │  │  [logo] [logo]   │  │  [logo] [logo]   │

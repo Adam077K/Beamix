@@ -541,7 +541,7 @@ interface ReviewAnalysis {
   themes: {
     theme: string;                   // "Customer Service"
     mention_count: number;
-    avg_sentiment: 'positive' | 'neutral' | 'negative';
+    avg_sentiment: number;                    // 0-100 integer (0=very negative, 50=neutral, 100=very positive)
     sample_quotes: string[];         // 2-3 representative quotes
   }[];
   competitor_comparison?: {
@@ -795,7 +795,7 @@ interface SocialStrategyOutput {
 | **Scanning** | | | | |
 | Free scan | 1 (no account) | Included | Included | Included |
 | Tracked queries | 0 | 10 | 25 | 75 |
-| LLMs scanned | 3 | 3 | 7 | 9 |
+| LLMs scanned | 4 | 4 | 7 | 10 |
 | Scan frequency | One-time | Weekly | Every 3 days | Daily |
 | | | | | |
 | **AI Agents** | | | | |
@@ -1013,7 +1013,7 @@ Agent-generated content respects the user's `content_language` preference:
 |----------|-----------|--------|
 | Agent uses (not credits) as usage model | Strategic Foundation says "no confusing credit systems." Flat agent uses are simpler to understand: "You get 15 uses/month." | Locked |
 | 4 tiers: Free Scan + Starter ($49) + Pro ($149) + Business ($349) | Must be affordable for SMBs, clear progression, under $250 for entry paid tier. $49 is under $50 psychological threshold. $349 is under competitor's $500+ entry. | Locked |
-| 6 agents (not 4 from old PRD) | Strategic Foundation defines 6 agents. Content Writer and Blog Writer are separate because outputs differ (website pages vs blog posts). Social Strategy agent added. | Locked |
+| 16 agents (A1-A16) | Platform ships with 12 launch agents (A1-A12) and 4 Growth Phase agents (A13-A16). Content Writer and Blog Writer are separate because outputs differ (website pages vs blog posts). A12 Ask Beamix is 0-credit, Pro+. A4 Recommendations is 0-credit, auto-runs post-scan. | Locked |
 | Hebrew + English from day 1 | Strategic Foundation explicitly states this. Old PRD had "Hebrew in Phase 2" -- overridden. | Locked |
 | Free scan requires no account | Strategic Foundation: "This is free for everyone. Top of funnel." Zero friction principle. | Locked |
 | Scan results shareable via URL for 30 days | Enables word-of-mouth sharing: "Look at this, my competitor ranks #2 and I'm invisible" | Locked |

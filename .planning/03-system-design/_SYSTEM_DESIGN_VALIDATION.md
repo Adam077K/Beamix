@@ -711,3 +711,51 @@ The three agents (Morgan/Product, Atlas/Architecture, Sage/Intelligence) should 
 > **Every competitive claim is sourced to specific competitors.**
 > **Use this to verify completeness of all three system design layers.**
 > **Author: Rex (Research Analyst) | March 2026**
+
+---
+
+## March 2026 Competitive Gap Closure (Feature Sprint)
+
+> **Date:** March 8, 2026. 11 competitor features analyzed; 10 approved to build; 1 rejected. Full specs in `.planning/04-features/new-features-batch-[1-3]-spec.md`.
+
+### Gap Closure Status by Competitor
+
+| Competitor Feature | Source Competitor(s) | Beamix Feature | Status | Tier |
+|-------------------|---------------------|----------------|--------|------|
+| AI bot crawl tracking | Scrunch AI | F1: AI Crawler Feed | Spec complete — Phase 2 | Pro+ |
+| Content diff view | RankScale | F2: Content Comparison Tool | Spec complete — Phase 2 | All paid |
+| Query topic clustering | SE Visible | F3: Topic/Query Clustering | Spec complete — Phase 2 | Pro+ |
+| Conversation/query explorer | Profound | F4: Conversation Explorer | Spec complete — Phase 3 (Moat Builder) | Pro+ |
+| Competitor auto-suggest | Peec AI, SE Visible | F5: Auto-Suggest Competitors | Spec complete — Phase 2 | All tiers |
+| Browser simulation (no-API engines) | Peec AI, RankPrompt | F6: Browser Simulation | Spec complete — Phase 3 (Moat Builder) | Pro+ |
+| Unlinked/web brand mention tracking | Ahrefs Brand Radar | F7: Web Mention Tracking | Spec complete — Phase 2 | All paid |
+| Social monitoring (YouTube/TikTok/Reddit) | Ahrefs Brand Radar | F8: Social Monitoring | **REJECTED** — out of scope | N/A |
+| 15-30 min scan refresh | RankPrompt (15 min) | F9: 30-Min Scan Refresh | Spec complete — High Priority | Business |
+| City/region-level scanning | Peec AI | F10: City-Level Scanning | Spec complete — Phase 2 | Starter/Pro/Business |
+| Real prompt volume data | Profound, Ahrefs | F11: Prompt Volume (GSC) | Spec complete — Phase 2 (GSC path only) | Pro+ |
+
+### Deferred Gaps (Previously Noted) — Status Update
+
+| Gap | Previous Status | March 2026 Status |
+|-----|----------------|-------------------|
+| Multi-region scanning | Intentionally deferred | **Now addressed by F10 spec** |
+| Browser simulation for Copilot/AI Overviews | Not in original scope | **Now addressed by F6 spec** |
+| Prompt volume data | Noted as "weak proxy" | **Addressed by F11 GSC integration** |
+
+### Pricing Validation (March 2026)
+
+- Current pricing reviewed against new feature cost stack — see `.planning/08-agents_work/PRICING-IMPACT-ANALYSIS.md`
+- **Verdict:** Current tiers (Starter $49, Pro $149, Business $349) absorb all new feature costs
+- **Under evaluation:** Business tier price increase to $449 — decision needed before F6 ships
+- Starter/Pro margins remain healthy post all 10 features
+
+### Remaining Intentional Gaps (Unchanged)
+
+These gaps remain deferred by design — not addressed in this sprint:
+
+| Gap | Reason for Deferral |
+|-----|---------------------|
+| Social media monitoring | Out of scope for GEO platform; Ahrefs owns this |
+| Google Looker Studio integration | Low priority; GSC direct integration covers the core need |
+| Enterprise multi-seat / agency portal | Phase 4+ — SMB focus maintained through Phase 3 |
+| Custom LLM fine-tuning per business | Cost prohibitive at SMB scale; not on roadmap |

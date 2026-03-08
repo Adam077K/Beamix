@@ -311,7 +311,7 @@ User signs up → completes onboarding → arrives at /dashboard (FIRST VISIT)
 │  │  10 queries│  │  25 queries  │  │  75 queries           │   │
 │  │  5 agents  │  │  15 agents   │  │  50 agents            │   │
 │  │  Weekly    │  │  Every 3d    │  │  Daily scans          │   │
-│  │  4 engines │  │  8 engines   │  │  10+ engines          │   │
+│  │  4 engines │  │  7 engines   │  │  10+ engines          │   │
 │  │            │  │              │  │                       │   │
 │  │  [Select]  │  │  Current     │  │  [Select]             │   │
 │  └────────────┘  └──────────────┘  └───────────────────────┘   │
@@ -454,7 +454,7 @@ Need more agent uses this month?
 
 ## Tab 4 — Integrations
 
-Per System Design v2.1, the integration hub supports 5 platforms (+ Paddle billing, which is in the Billing tab):
+Per System Design v2.1, the integration hub supports 6 platforms (+ Paddle billing, which is in the Billing tab): WordPress (Pro tier), GA4, GSC, Slack, Cloudflare, and API key management.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

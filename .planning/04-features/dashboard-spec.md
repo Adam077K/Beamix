@@ -321,7 +321,7 @@ Manual scan button — triggers immediate re-scan (rate limited per plan).
 - When scan completes: page auto-refreshes (via Supabase Realtime subscription on `free_scans` table) with a smooth transition — no manual refresh required
 - A banner appears: "Your scan is ready! Here's your AI visibility report." with a brief animation
 
-**Dev note:** Subscribe to Supabase Realtime on `scan_results` for the user's business. When first result appears, trigger page data refresh with React Query `invalidateQueries`.
+**Dev note:** Subscribe to Supabase Realtime on `scans` for the user's business. When first result appears, trigger page data refresh with React Query `invalidateQueries`.
 
 ---
 
@@ -590,7 +590,7 @@ When user clicks Launch on any agent:
 **Tabbed layout.**
 
 ```
-Tabs: [Business Profile]  [Billing]  [Preferences]  [Integrations]  [Team (coming soon)]
+Tabs: [Business Profile]  [Billing]  [Preferences]  [Integrations]
 ```
 
 **Business Profile:** Business name, URL, industry, location, description, services, logo upload, competitor list.
