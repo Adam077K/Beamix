@@ -1,12 +1,11 @@
 import { inngest } from '../client'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-
 export const scanFree = inngest.createFunction(
   { id: 'scan-free', name: 'Process Free Scan' },
   { event: 'scan/free.started' },
   async ({ event, step }) => {
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
     const { scanId, businessName, websiteUrl, industry, location, language } = event.data
 
     await step.run('update-status-processing', async () => {

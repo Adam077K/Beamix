@@ -1,12 +1,11 @@
 import { inngest } from '../client'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-
 export const scanManual = inngest.createFunction(
   { id: 'scan-manual', name: 'Process Manual Scan' },
   { event: 'scan/manual.started' },
   async ({ event, step }) => {
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
     const { scanId, businessId, userId } = event.data
 
     await step.run('update-status', async () => {
