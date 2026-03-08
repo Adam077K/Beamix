@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { LanguageToggle } from '@/components/auth/language-toggle'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AuthLayout({
   children,
 }: {

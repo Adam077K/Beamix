@@ -82,14 +82,18 @@ export async function getRelatedPosts(
 }
 
 export async function getAllPublishedSlugs(): Promise<string[]> {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select('slug')
-    .eq('is_published', true)
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('slug')
+      .eq('is_published', true)
 
-  if (error) return []
-  return (data ?? []).map(p => p.slug)
+    if (error) return []
+    return (data ?? []).map(p => p.slug)
+  } catch {
+    return []
+  }
 }
 
 export function formatDate(dateString: string): string {
