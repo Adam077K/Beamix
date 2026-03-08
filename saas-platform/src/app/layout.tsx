@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Outfit, Inter } from 'next/font/google'
 import { Providers } from '@/components/providers'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 const outfit = Outfit({
@@ -32,6 +33,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${outfit.variable} ${inter.variable} antialiased`}>
         <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   )
