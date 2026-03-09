@@ -1,29 +1,29 @@
-import { BeamixNav } from '@/components/landing/beamix-nav'
-import { BeamixHero } from '@/components/landing/beamix-hero'
-import { BeamixTrustBar } from '@/components/landing/beamix-trust-bar'
-import { BeamixWakeupCall } from '@/components/landing/beamix-wakeup-call'
-import { BeamixProductPreview } from '@/components/landing/beamix-product-preview'
-import { BeamixHowItWorks } from '@/components/landing/beamix-how-it-works'
-import { BeamixAgentsShowcase } from '@/components/landing/beamix-agents-showcase'
-import { BeamixPricing } from '@/components/landing/beamix-pricing'
-import { BeamixTestimonials } from '@/components/landing/beamix-testimonials'
-import { BeamixFinalCTA } from '@/components/landing/beamix-final-cta'
-import { BeamixFooter } from '@/components/landing/beamix-footer'
+import { HpNav } from '@/components/landing/hp-nav'
+import { HpHero } from '@/components/landing/hp-hero'
+import { HpHeroIllustration } from '@/components/landing/hp-hero-illustration'
+import { HpTrustBar } from '@/components/landing/hp-trust-bar'
+import { HpFeatureSection } from '@/components/landing/hp-feature-section'
+import { HpStats } from '@/components/landing/hp-stats'
+import { HpTestimonial } from '@/components/landing/hp-testimonial'
+import { HpFeatureCards } from '@/components/landing/hp-feature-cards'
+import { HpFinalCta } from '@/components/landing/hp-final-cta'
+import { HpFooter } from '@/components/landing/hp-footer'
 
 export default function HomePage() {
   return (
-    <main className="bg-[#FAFAF8]">
-      <BeamixNav />
-      <BeamixHero />
-      <BeamixTrustBar />
-      <BeamixWakeupCall />
-      <BeamixProductPreview />
-      <BeamixHowItWorks />
-      <BeamixAgentsShowcase />
-      <BeamixPricing />
-      <BeamixTestimonials />
-      <BeamixFinalCTA />
-      <BeamixFooter />
+    <main className="bg-[#FAFAF7]">
+      <HpNav />
+      <HpHero />
+      <HpHeroIllustration />
+      <HpTrustBar />
+      <HpFeatureSection />
+      <HpStats />
+      <div className="max-w-4xl mx-auto px-6 py-0"><hr className="border-[#E8E6E1]" /></div>
+      <HpTestimonial />
+      <div className="max-w-4xl mx-auto px-6 py-0"><hr className="border-[#E8E6E1]" /></div>
+      <HpFeatureCards />
+      <HpFinalCta />
+      <HpFooter />
     </main>
   )
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Outfit, Inter } from 'next/font/google'
+import { Outfit, Inter, Source_Serif_4 } from 'next/font/google'
 import { Providers } from '@/components/providers'
 import './globals.css'
 
@@ -17,6 +17,13 @@ const inter = Inter({
   display: 'swap',
 })
 
+const sourceSerif4 = Source_Serif_4({
+  variable: '--font-serif',
+  subsets: ['latin'],
+  weight: ['400', '600', '700'],
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
   title: 'Beamix — Stop Being Invisible to AI Search',
   description:
@@ -30,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} ${inter.variable} antialiased`}>
+      <body className={`${outfit.variable} ${inter.variable} ${sourceSerif4.variable} antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>
