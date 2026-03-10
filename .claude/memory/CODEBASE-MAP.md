@@ -24,7 +24,7 @@
 | `CLAUDE.md` | Project context for all agents |
 | `AGENTS.md` | Agent routing table and skill map |
 | `.claude/agents/*.md` | All 12 agent definitions |
-| `.agent/skills/` | 938+ skills from antigravity repo |
+| `.agent/skills/` | 426+ skills from antigravity repo |
 
 *Scout: expand this table after `/audit`*
 

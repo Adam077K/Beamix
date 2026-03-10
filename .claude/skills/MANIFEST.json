@@ -1,0 +1,3951 @@
+{
+  "version": "1.0.0",
+  "generated": "2026-03-09",
+  "totalSkills": 423,
+  "skills": [
+    {
+      "name": "ab-test-setup",
+      "description": "Structured guide for setting up A/B tests with mandatory gates for hypothesis, metrics, and execution readiness.",
+      "tags": [
+        "testing"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/ab-test-setup/SKILL.md"
+    },
+    {
+      "name": "accessibility-compliance-accessibility-audit",
+      "description": "You are an accessibility expert specializing in WCAG compliance, inclusive design, and assistive technology compatibility. Conduct audits, identify barriers, and provide remediation guidance.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/accessibility-compliance-accessibility-audit/SKILL.md"
+    },
+    {
+      "name": "address-github-comments",
+      "description": "Use when you need to address review or issue comments on an open GitHub Pull Request using the gh CLI.",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/address-github-comments/SKILL.md"
+    },
+    {
+      "name": "agent-evaluation",
+      "description": "Testing and benchmarking LLM agents including behavioral testing, capability assessment, reliability metrics, and production monitoring\\u2014where even top agents achieve less than 50% on re...",
+      "tags": [
+        "ai"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/agent-evaluation/SKILL.md"
+    },
+    {
+      "name": "agent-memory-mcp",
+      "description": "A hybrid memory system that provides persistent, searchable knowledge management for AI agents (Architecture, Patterns, Decisions).",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/agent-memory-mcp/SKILL.md"
+    },
+    {
+      "name": "agent-memory-systems",
+      "description": "Memory is the cornerstone of intelligent agents. Without it, every interaction starts from zero. This skill covers the architecture of agent memory: short-term (context window), long-term (vector s...",
+      "tags": [
+        "ai"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/agent-memory-systems/SKILL.md"
+    },
+    {
+      "name": "agent-orchestration-improve-agent",
+      "description": "Systematic improvement of existing agents through performance analysis, prompt engineering, and continuous iteration.",
+      "tags": [
+        "ai",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/agent-orchestration-improve-agent/SKILL.md"
+    },
+    {
+      "name": "agent-orchestration-multi-agent-optimize",
+      "description": "Optimize multi-agent systems with coordinated profiling, workload distribution, and cost-aware orchestration. Use when improving agent performance, throughput, or reliability.",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/agent-orchestration-multi-agent-optimize/SKILL.md"
+    },
+    {
+      "name": "agent-tool-builder",
+      "description": "Tools are how AI agents interact with the world. A well-designed tool is the difference between an agent that works and one that hallucinates, fails silently, or costs 10x more tokens than necessar...",
+      "tags": [
+        "ai"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/agent-tool-builder/SKILL.md"
+    },
+    {
+      "name": "ai-agent-development",
+      "description": "AI agent development workflow for building autonomous agents, multi-agent systems, and agent orchestration with CrewAI, LangGraph, and custom agents.",
+      "tags": [
+        "ai"
+      ],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/ai-agent-development/SKILL.md"
+    },
+    {
+      "name": "ai-agents-architect",
+      "description": "Expert in designing and building autonomous AI agents. Masters tool use, memory systems, planning strategies, and multi-agent orchestration. Use when: build agent, AI agent, autonomous agent, tool ...",
+      "tags": [
+        "ai"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/ai-agents-architect/SKILL.md"
+    },
+    {
+      "name": "ai-engineer",
+      "description": "Build production-ready LLM applications, advanced RAG systems, and intelligent agents. Implements vector search, multimodal AI, agent orchestration, and enterprise AI integrations. Use PROACTIVELY for",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/ai-engineer/SKILL.md"
+    },
+    {
+      "name": "ai-ml",
+      "description": "AI and machine learning workflow covering LLM application development, RAG implementation, agent architecture, ML pipelines, and AI-powered features.",
+      "tags": [
+        "ai"
+      ],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/ai-ml/SKILL.md"
+    },
+    {
+      "name": "ai-product",
+      "description": "Every product will be AI-powered. The question is whether you'll build it right or ship a demo that falls apart in production.  This skill covers LLM integration patterns, RAG architecture, prompt ...",
+      "tags": [
+        "ai",
+        "git"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/ai-product/SKILL.md"
+    },
+    {
+      "name": "ai-wrapper-product",
+      "description": "Expert in building products that wrap AI APIs (OpenAI, Anthropic, etc.) into focused tools people will pay for. Not just 'ChatGPT but different' - products that solve specific problems with AI. Cov...",
+      "tags": [
+        "ai",
+        "git"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/ai-wrapper-product/SKILL.md"
+    },
+    {
+      "name": "algolia-search",
+      "description": "Expert patterns for Algolia search implementation, indexing strategies, React InstantSearch, and relevance tuning Use when: adding search to, algolia, instantsearch, search api, search functionality.",
+      "tags": [
+        "language"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/algolia-search/SKILL.md"
+    },
+    {
+      "name": "analytics-tracking",
+      "description": "",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/analytics-tracking/SKILL.md"
+    },
+    {
+      "name": "api-design-principles",
+      "description": "Master REST and GraphQL API design principles to build intuitive, scalable, and maintainable APIs that delight developers. Use when designing new APIs, reviewing API specifications, or establishing...",
+      "tags": [
+        "backend",
+        "devops",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/api-design-principles/SKILL.md"
+    },
+    {
+      "name": "api-documentation",
+      "description": "API documentation workflow for generating OpenAPI specs, creating developer guides, and maintaining comprehensive API documentation.",
+      "tags": [
+        "backend"
+      ],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/api-documentation/SKILL.md"
+    },
+    {
+      "name": "api-documentation-generator",
+      "description": "Generate comprehensive, developer-friendly API documentation from code, including endpoints, parameters, examples, and best practices",
+      "tags": [
+        "backend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/api-documentation-generator/SKILL.md"
+    },
+    {
+      "name": "api-documenter",
+      "description": "Master API documentation with OpenAPI 3.1, AI-powered tools, and modern developer experience practices. Create interactive docs, generate SDKs, and build comprehensive developer portals. Use PROACTIVE",
+      "tags": [
+        "backend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/api-documenter/SKILL.md"
+    },
+    {
+      "name": "api-patterns",
+      "description": "API design principles and decision-making. REST vs GraphQL vs tRPC selection, response formats, versioning, pagination.",
+      "tags": [
+        "backend",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/api-patterns/SKILL.md"
+    },
+    {
+      "name": "api-security-best-practices",
+      "description": "Implement secure API design patterns including authentication, authorization, input validation, rate limiting, and protection against common API vulnerabilities",
+      "tags": [
+        "backend",
+        "security",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/api-security-best-practices/SKILL.md"
+    },
+    {
+      "name": "api-security-testing",
+      "description": "API security testing workflow for REST and GraphQL APIs covering authentication, authorization, rate limiting, input validation, and security best practices.",
+      "tags": [
+        "backend",
+        "security",
+        "testing"
+      ],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/api-security-testing/SKILL.md"
+    },
+    {
+      "name": "api-testing-observability-api-mock",
+      "description": "You are an API mocking expert specializing in realistic mock services for development, testing, and demos. Design mocks that simulate real API behavior and enable parallel development.",
+      "tags": [
+        "backend",
+        "testing"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/api-testing-observability-api-mock/SKILL.md"
+    },
+    {
+      "name": "app-builder",
+      "description": "Main application building orchestrator. Creates full-stack applications from natural language requests. Determines project type, selects tech stack, coordinates agents.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/app-builder/SKILL.md"
+    },
+    {
+      "name": "application-performance-performance-optimization",
+      "description": "Optimize end-to-end application performance with profiling, observability, and backend/frontend tuning. Use when coordinating performance optimization across the stack.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/application-performance-performance-optimization/SKILL.md"
+    },
+    {
+      "name": "architect-review",
+      "description": "Master software architect specializing in modern architecture",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/architect-review/SKILL.md"
+    },
+    {
+      "name": "architecture",
+      "description": "Architectural decision-making framework. Requirements analysis, trade-off evaluation, ADR documentation. Use when making architecture decisions or analyzing system design.",
+      "tags": [
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/architecture/SKILL.md"
+    },
+    {
+      "name": "architecture-decision-records",
+      "description": "Write and maintain Architecture Decision Records (ADRs) following best practices for technical decision documentation. Use when documenting significant technical decisions, reviewing past architect...",
+      "tags": [
+        "devops",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/architecture-decision-records/SKILL.md"
+    },
+    {
+      "name": "architecture-patterns",
+      "description": "Implement proven backend architecture patterns including Clean Architecture, Hexagonal Architecture, and Domain-Driven Design. Use when architecting complex backend systems or refactoring existing ...",
+      "tags": [
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/architecture-patterns/SKILL.md"
+    },
+    {
+      "name": "audio-transcriber",
+      "description": "Transform audio recordings into professional Markdown documentation with intelligent summaries using LLM integration",
+      "tags": [],
+      "source": "community",
+      "risk": "safe",
+      "path": ".agent/skills/audio-transcriber/SKILL.md"
+    },
+    {
+      "name": "auth-implementation-patterns",
+      "description": "Master authentication and authorization patterns including JWT, OAuth2, session management, and RBAC to build secure, scalable access control systems. Use when implementing auth systems, securing A...",
+      "tags": [
+        "security",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/auth-implementation-patterns/SKILL.md"
+    },
+    {
+      "name": "autonomous-agent-patterns",
+      "description": "Design patterns for building autonomous coding agents. Covers tool integration, permission systems, browser automation, and human-in-the-loop workflows. Use when building AI agents, designing tool ...",
+      "tags": [
+        "ai",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/autonomous-agent-patterns/SKILL.md"
+    },
+    {
+      "name": "autonomous-agents",
+      "description": "Autonomous agents are AI systems that can independently decompose goals, plan actions, execute tools, and self-correct without constant human guidance. The challenge isn't making them capable - it'...",
+      "tags": [
+        "ai"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/autonomous-agents/SKILL.md"
+    },
+    {
+      "name": "backend-architect",
+      "description": "Expert backend architect specializing in scalable API design, microservices architecture, and distributed systems. Masters REST/GraphQL/gRPC APIs, event-driven architectures, service mesh patterns, an",
+      "tags": [
+        "backend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/backend-architect/SKILL.md"
+    },
+    {
+      "name": "backend-dev-guidelines",
+      "description": "Opinionated backend development standards for Node.js + Express + TypeScript microservices. Covers layered architecture, BaseController pattern, dependency injection, Prisma repositories, Zod valid...",
+      "tags": [
+        "backend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/backend-dev-guidelines/SKILL.md"
+    },
+    {
+      "name": "backend-development-feature-development",
+      "description": "Orchestrate end-to-end backend feature development from requirements to deployment. Use when coordinating multi-phase feature delivery across teams and services.",
+      "tags": [
+        "backend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/backend-development-feature-development/SKILL.md"
+    },
+    {
+      "name": "backend-security-coder",
+      "description": "Expert in secure backend coding practices specializing in input validation, authentication, and API security. Use PROACTIVELY for backend security implementations or security code reviews.",
+      "tags": [
+        "backend",
+        "security"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/backend-security-coder/SKILL.md"
+    },
+    {
+      "name": "bash-defensive-patterns",
+      "description": "Master defensive Bash programming techniques for production-grade scripts. Use when writing robust shell scripts, CI/CD pipelines, or system utilities requiring fault tolerance and safety.",
+      "tags": [
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/bash-defensive-patterns/SKILL.md"
+    },
+    {
+      "name": "bash-linux",
+      "description": "Bash/Linux terminal patterns. Critical commands, piping, error handling, scripting. Use when working on macOS or Linux systems.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/bash-linux/SKILL.md"
+    },
+    {
+      "name": "bash-pro",
+      "description": "Master of defensive Bash scripting for production automation, CI/CD pipelines, and system utilities. Expert in safe, portable, and testable shell scripts.",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/bash-pro/SKILL.md"
+    },
+    {
+      "name": "bash-scripting",
+      "description": "Bash scripting workflow for creating production-ready shell scripts with defensive patterns, error handling, and testing.",
+      "tags": [],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/bash-scripting/SKILL.md"
+    },
+    {
+      "name": "beautiful-prose",
+      "description": "Hard-edged writing style contract for timeless, forceful English prose without AI tics",
+      "tags": [
+        "git"
+      ],
+      "source": "https://github.com/SHADOWPR0/beautiful_prose",
+      "risk": "safe",
+      "path": ".agent/skills/beautiful-prose/SKILL.md"
+    },
+    {
+      "name": "behavioral-modes",
+      "description": "AI operational modes (brainstorm, implement, debug, review, teach, ship, orchestrate). Use to adapt behavior based on task type.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/behavioral-modes/SKILL.md"
+    },
+    {
+      "name": "billing-automation",
+      "description": "Build automated billing systems for recurring payments, invoicing, subscription lifecycle, and dunning management. Use when implementing subscription billing, automating invoicing, or managing recu...",
+      "tags": [
+        "business"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/billing-automation/SKILL.md"
+    },
+    {
+      "name": "brainstorming",
+      "description": "Use before creative or constructive work (features, architecture, behavior). Transforms vague ideas into validated designs through disciplined reasoning and collaboration.",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/brainstorming/SKILL.md"
+    },
+    {
+      "name": "broken-authentication",
+      "description": "This skill should be used when the user asks to \\\"test for broken authentication vulnerabilities\\\", \\\"assess session management security\\\", \\\"perform credential stuffing tests\\\", \\\"evaluate ...",
+      "tags": [
+        "security"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/broken-authentication/SKILL.md"
+    },
+    {
+      "name": "browser-automation",
+      "description": "Browser automation powers web testing, scraping, and AI agent interactions. The difference between a flaky script and a reliable system comes down to understanding selectors, waiting strategies, an...",
+      "tags": [],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/browser-automation/SKILL.md"
+    },
+    {
+      "name": "browser-extension-builder",
+      "description": "Expert in building browser extensions that solve real problems - Chrome, Firefox, and cross-browser extensions. Covers extension architecture, manifest v3, content scripts, popup UIs, monetization ...",
+      "tags": [],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/browser-extension-builder/SKILL.md"
+    },
+    {
+      "name": "bun-development",
+      "description": "Modern JavaScript/TypeScript development with Bun runtime. Covers package management, bundling, testing, and migration from Node.js. Use when working with Bun, optimizing JS/TS development speed, o...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/bun-development/SKILL.md"
+    },
+    {
+      "name": "business-analyst",
+      "description": "Master modern business analysis with AI-powered analytics, real-time dashboards, and data-driven insights. Build comprehensive KPI frameworks, predictive models, and strategic recommendations. Use PRO",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/business-analyst/SKILL.md"
+    },
+    {
+      "name": "c4-architecture-c4-architecture",
+      "description": "Generate comprehensive C4 architecture documentation for an existing repository/codebase using a bottom-up analysis approach.",
+      "tags": [
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/c4-architecture-c4-architecture/SKILL.md"
+    },
+    {
+      "name": "c4-code",
+      "description": "Expert C4 Code-level documentation specialist. Analyzes code directories to create comprehensive C4 code-level documentation including function signatures, arguments, dependencies, and code structure.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/c4-code/SKILL.md"
+    },
+    {
+      "name": "c4-component",
+      "description": "Expert C4 Component-level documentation specialist. Synthesizes C4 Code-level documentation into Component-level architecture, defining component boundaries, interfaces, and relationships. Creates com",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/c4-component/SKILL.md"
+    },
+    {
+      "name": "c4-container",
+      "description": "Expert C4 Container-level documentation specialist. Synthesizes Component-level documentation into Container-level architecture, mapping components to deployment units, documenting container interface",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/c4-container/SKILL.md"
+    },
+    {
+      "name": "c4-context",
+      "description": "Expert C4 Context-level documentation specialist. Creates high-level system context diagrams, documents personas, user journeys, system features, and external dependencies. Synthesizes container and c",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/c4-context/SKILL.md"
+    },
+    {
+      "name": "cc-skill-backend-patterns",
+      "description": "Backend architecture patterns, API design, database optimization, and server-side best practices for Node.js, Express, and Next.js API routes.",
+      "tags": [
+        "backend",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/cc-skill-backend-patterns/SKILL.md"
+    },
+    {
+      "name": "cc-skill-coding-standards",
+      "description": "Universal coding standards, best practices, and patterns for TypeScript, JavaScript, React, and Node.js development.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/cc-skill-coding-standards/SKILL.md"
+    },
+    {
+      "name": "cc-skill-continuous-learning",
+      "description": "Development skill from everything-claude-code",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/cc-skill-continuous-learning/SKILL.md"
+    },
+    {
+      "name": "cc-skill-frontend-patterns",
+      "description": "Frontend development patterns for React, Next.js, state management, performance optimization, and UI best practices.",
+      "tags": [
+        "frontend",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/cc-skill-frontend-patterns/SKILL.md"
+    },
+    {
+      "name": "cc-skill-project-guidelines-example",
+      "description": "Project Guidelines Skill (Example)",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/cc-skill-project-guidelines-example/SKILL.md"
+    },
+    {
+      "name": "cc-skill-security-review",
+      "description": "Use this skill when adding authentication, handling user input, working with secrets, creating API endpoints, or implementing payment/sensitive features. Provides comprehensive security checklist a...",
+      "tags": [
+        "security"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/cc-skill-security-review/SKILL.md"
+    },
+    {
+      "name": "cc-skill-strategic-compact",
+      "description": "Development skill from everything-claude-code",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/cc-skill-strategic-compact/SKILL.md"
+    },
+    {
+      "name": "changelog-automation",
+      "description": "Automate changelog generation from commits, PRs, and releases following Keep a Changelog format. Use when setting up release workflows, generating release notes, or standardizing commit conventions.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/changelog-automation/SKILL.md"
+    },
+    {
+      "name": "chrome-extension-developer",
+      "description": "Expert in building Chrome Extensions using Manifest V3. Covers background scripts, service workers, content scripts, and cross-context communication.",
+      "tags": [],
+      "source": "community",
+      "risk": "safe",
+      "path": ".agent/skills/chrome-extension-developer/SKILL.md"
+    },
+    {
+      "name": "cicd-automation-workflow-automate",
+      "description": "You are a workflow automation expert specializing in creating efficient CI/CD pipelines, GitHub Actions workflows, and automated development processes. Design automation that reduces manual work, i...",
+      "tags": [
+        "devops",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/cicd-automation-workflow-automate/SKILL.md"
+    },
+    {
+      "name": "clarity-gate",
+      "description": "Pre-ingestion verification for epistemic quality in RAG systems with 9-point verification and Two-Round HITL workflow",
+      "tags": [],
+      "source": "https://github.com/frmoretto/clarity-gate",
+      "risk": "safe",
+      "path": ".agent/skills/clarity-gate/SKILL.md"
+    },
+    {
+      "name": "claude-code-guide",
+      "description": "Master guide for using Claude Code effectively. Includes configuration templates, prompting strategies \\\\\\\"Thinking\\\\\\\" keywords, debugging techniques, and best practices for interacting wit...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/claude-code-guide/SKILL.md"
+    },
+    {
+      "name": "claude-d3js-skill",
+      "description": "Creating interactive data visualisations using d3.js. This skill should be used when creating custom charts, graphs, network diagrams, geographic visualisations, or any complex SVG-based data visua...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/claude-d3js-skill/SKILL.md"
+    },
+    {
+      "name": "clean-code",
+      "description": "Applies principles from Robert C. Martin's 'Clean Code'. Use this skill when writing, reviewing, or refactoring code to ensure high quality, readability, and maintainability. Covers naming, functio...",
+      "tags": [],
+      "source": "ClawForge (https://github.com/jackjin1997/ClawForge)",
+      "risk": "safe",
+      "path": ".agent/skills/clean-code/SKILL.md"
+    },
+    {
+      "name": "clerk-auth",
+      "description": "Expert patterns for Clerk auth implementation, middleware, organizations, webhooks, and user sync Use when: adding authentication, clerk auth, user authentication, sign in, sign up.",
+      "tags": [
+        "security"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/clerk-auth/SKILL.md"
+    },
+    {
+      "name": "cloud-architect",
+      "description": "Expert cloud architect specializing in AWS/Azure/GCP multi-cloud infrastructure design, advanced IaC (Terraform/OpenTofu/CDK), FinOps cost optimization, and modern architectural patterns. Masters serv",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/cloud-architect/SKILL.md"
+    },
+    {
+      "name": "cloud-devops",
+      "description": "Cloud infrastructure and DevOps workflow covering AWS, Azure, GCP, Kubernetes, Terraform, CI/CD, monitoring, and cloud-native development.",
+      "tags": [
+        "devops"
+      ],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/cloud-devops/SKILL.md"
+    },
+    {
+      "name": "code-documentation-code-explain",
+      "description": "You are a code education expert specializing in explaining complex code through clear narratives, visual diagrams, and step-by-step breakdowns. Transform difficult concepts into understandable expl...",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/code-documentation-code-explain/SKILL.md"
+    },
+    {
+      "name": "code-documentation-doc-generate",
+      "description": "You are a documentation expert specializing in creating comprehensive, maintainable documentation from code. Generate API docs, architecture diagrams, user guides, and technical references using AI...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/code-documentation-doc-generate/SKILL.md"
+    },
+    {
+      "name": "code-refactoring-context-restore",
+      "description": "Use when working with code refactoring context restore",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/code-refactoring-context-restore/SKILL.md"
+    },
+    {
+      "name": "code-refactoring-refactor-clean",
+      "description": "You are a code refactoring expert specializing in clean code principles, SOLID design patterns, and modern software engineering best practices. Analyze and refactor the provided code to improve its...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/code-refactoring-refactor-clean/SKILL.md"
+    },
+    {
+      "name": "code-refactoring-tech-debt",
+      "description": "You are a technical debt expert specializing in identifying, quantifying, and prioritizing technical debt in software projects. Analyze the codebase to uncover debt, assess its impact, and create acti",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/code-refactoring-tech-debt/SKILL.md"
+    },
+    {
+      "name": "code-review-ai-ai-review",
+      "description": "You are an expert AI-powered code review specialist combining automated static analysis, intelligent pattern recognition, and modern DevOps practices. Leverage AI tools (GitHub Copilot, Qodo, GPT-5, C",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/code-review-ai-ai-review/SKILL.md"
+    },
+    {
+      "name": "code-review-checklist",
+      "description": "Comprehensive checklist for conducting thorough code reviews covering functionality, security, performance, and maintainability",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/code-review-checklist/SKILL.md"
+    },
+    {
+      "name": "code-review-excellence",
+      "description": "Master effective code review practices to provide constructive feedback, catch bugs early, and foster knowledge sharing while maintaining team morale. Use when reviewing pull requests, establishing...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/code-review-excellence/SKILL.md"
+    },
+    {
+      "name": "code-reviewer",
+      "description": "Elite code review expert specializing in modern AI-powered code",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/code-reviewer/SKILL.md"
+    },
+    {
+      "name": "codebase-cleanup-deps-audit",
+      "description": "You are a dependency security expert specializing in vulnerability scanning, license compliance, and supply chain security. Analyze project dependencies for known vulnerabilities, licensing issues,...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/codebase-cleanup-deps-audit/SKILL.md"
+    },
+    {
+      "name": "codebase-cleanup-refactor-clean",
+      "description": "You are a code refactoring expert specializing in clean code principles, SOLID design patterns, and modern software engineering best practices. Analyze and refactor the provided code to improve its...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/codebase-cleanup-refactor-clean/SKILL.md"
+    },
+    {
+      "name": "codebase-cleanup-tech-debt",
+      "description": "You are a technical debt expert specializing in identifying, quantifying, and prioritizing technical debt in software projects. Analyze the codebase to uncover debt, assess its impact, and create acti",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/codebase-cleanup-tech-debt/SKILL.md"
+    },
+    {
+      "name": "codex-review",
+      "description": "Professional code review with auto CHANGELOG generation, integrated with Codex AI",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/codex-review/SKILL.md"
+    },
+    {
+      "name": "commit",
+      "description": "Create commit messages following Sentry conventions. Use when committing code changes, writing commit messages, or formatting git history. Follows conventional commits with Sentry-specific issue re...",
+      "tags": [
+        "git"
+      ],
+      "source": "https://github.com/getsentry/skills/tree/main/plugins/sentry-skills/skills/commit",
+      "risk": "safe",
+      "path": ".agent/skills/commit/SKILL.md"
+    },
+    {
+      "name": "competitive-landscape",
+      "description": "This skill should be used when the user asks to \\\\\\\"analyze competitors\", \"assess competitive landscape\", \"identify differentiation\", \"evaluate market positioning\", \"apply Porter's Five Forces\", or re",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/competitive-landscape/SKILL.md"
+    },
+    {
+      "name": "competitor-alternatives",
+      "description": "When the user wants to create competitor comparison or alternative pages for SEO and sales enablement. Also use when the user mentions 'alternative page,' 'vs page,' 'competitor comparison,' 'compa...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/competitor-alternatives/SKILL.md"
+    },
+    {
+      "name": "comprehensive-review-full-review",
+      "description": "Use when working with comprehensive review full review",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/comprehensive-review-full-review/SKILL.md"
+    },
+    {
+      "name": "comprehensive-review-pr-enhance",
+      "description": "You are a PR optimization expert specializing in creating high-quality pull requests that facilitate efficient code reviews. Generate comprehensive PR descriptions, automate review processes, and e...",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/comprehensive-review-pr-enhance/SKILL.md"
+    },
+    {
+      "name": "computer-use-agents",
+      "description": "Build AI agents that interact with computers like humans do - viewing screens, moving cursors, clicking buttons, and typing text. Covers Anthropic's Computer Use, OpenAI's Operator/CUA, and open-so...",
+      "tags": [
+        "ai"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/computer-use-agents/SKILL.md"
+    },
+    {
+      "name": "concise-planning",
+      "description": "Use when a user asks for a plan for a coding task, to generate a clear, actionable, and atomic checklist.",
+      "tags": [
+        "devops"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/concise-planning/SKILL.md"
+    },
+    {
+      "name": "content-creator",
+      "description": "Create SEO-optimized marketing content with consistent brand voice. Includes brand voice analyzer, SEO optimizer, content frameworks, and social media templates. Use when writing blog posts, creati...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/content-creator/SKILL.md"
+    },
+    {
+      "name": "content-marketer",
+      "description": "Elite content marketing strategist specializing in AI-powered content creation, omnichannel distribution, SEO optimization, and data-driven performance marketing. Masters modern content tools, social",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/content-marketer/SKILL.md"
+    },
+    {
+      "name": "context-compression",
+      "description": "Design and evaluate compression strategies for long-running sessions",
+      "tags": [
+        "git"
+      ],
+      "source": "https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering/tree/main/skills/context-compression",
+      "risk": "safe",
+      "path": ".agent/skills/context-compression/SKILL.md"
+    },
+    {
+      "name": "context-degradation",
+      "description": "Recognize patterns of context failure: lost-in-middle, poisoning, distraction, and clash",
+      "tags": [],
+      "source": "https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering/tree/main/skills/context-degradation",
+      "risk": "safe",
+      "path": ".agent/skills/context-degradation/SKILL.md"
+    },
+    {
+      "name": "context-fundamentals",
+      "description": "Understand what context is, why it matters, and the anatomy of context in agent systems",
+      "tags": [],
+      "source": "https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering/tree/main/skills/context-fundamentals",
+      "risk": "safe",
+      "path": ".agent/skills/context-fundamentals/SKILL.md"
+    },
+    {
+      "name": "context-management-context-restore",
+      "description": "Use when working with context management context restore",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/context-management-context-restore/SKILL.md"
+    },
+    {
+      "name": "context-management-context-save",
+      "description": "Use when working with context management context save",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/context-management-context-save/SKILL.md"
+    },
+    {
+      "name": "context-manager",
+      "description": "Elite AI context engineering specialist mastering dynamic context management, vector databases, knowledge graphs, and intelligent memory systems. Orchestrates context across multi-agent workflows, ent",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/context-manager/SKILL.md"
+    },
+    {
+      "name": "context-optimization",
+      "description": "Apply compaction, masking, and caching strategies",
+      "tags": [],
+      "source": "https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering/tree/main/skills/context-optimization",
+      "risk": "safe",
+      "path": ".agent/skills/context-optimization/SKILL.md"
+    },
+    {
+      "name": "context-window-management",
+      "description": "Strategies for managing LLM context windows including summarization, trimming, routing, and avoiding context rot Use when: context window, token limit, context management, context engineering, long...",
+      "tags": [],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/context-window-management/SKILL.md"
+    },
+    {
+      "name": "context7-auto-research",
+      "description": "Automatically fetch latest library/framework documentation for Claude Code via Context7 API",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/context7-auto-research/SKILL.md"
+    },
+    {
+      "name": "conversation-memory",
+      "description": "Persistent memory systems for LLM conversations including short-term, long-term, and entity-based memory Use when: conversation memory, remember, memory persistence, long-term memory, chat history.",
+      "tags": [],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/conversation-memory/SKILL.md"
+    },
+    {
+      "name": "copilot-sdk",
+      "description": "Build applications powered by GitHub Copilot using the Copilot SDK. Use when creating programmatic integrations with Copilot across Node.js/TypeScript, Python, Go, or .NET. Covers session managemen...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/copilot-sdk/SKILL.md"
+    },
+    {
+      "name": "copy-editing",
+      "description": "When the user wants to edit, review, or improve existing marketing copy. Also use when the user mentions 'edit this copy,' 'review my copy,' 'copy feedback,' 'proofread,' 'polish this,' 'make this ...",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/copy-editing/SKILL.md"
+    },
+    {
+      "name": "copywriting",
+      "description": "",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/copywriting/SKILL.md"
+    },
+    {
+      "name": "core-components",
+      "description": "Core component library and design system patterns. Use when building UI, using design tokens, or working with the component library.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/core-components/SKILL.md"
+    },
+    {
+      "name": "cost-optimization",
+      "description": "Optimize cloud costs through resource rightsizing, tagging strategies, reserved instances, and spending analysis. Use when reducing cloud expenses, analyzing infrastructure costs, or implementing c...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/cost-optimization/SKILL.md"
+    },
+    {
+      "name": "cqrs-implementation",
+      "description": "Implement Command Query Responsibility Segregation for scalable architectures. Use when separating read and write models, optimizing query performance, or building event-sourced systems.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/cqrs-implementation/SKILL.md"
+    },
+    {
+      "name": "create-pr",
+      "description": "Create pull requests following Sentry conventions. Use when opening PRs, writing PR descriptions, or preparing changes for review. Follows Sentry's code review guidelines.",
+      "tags": [
+        "git"
+      ],
+      "source": "https://github.com/getsentry/skills/tree/main/plugins/sentry-skills/skills/create-pr",
+      "risk": "safe",
+      "path": ".agent/skills/create-pr/SKILL.md"
+    },
+    {
+      "name": "crewai",
+      "description": "Expert in CrewAI - the leading role-based multi-agent framework used by 60% of Fortune 500 companies. Covers agent design with roles and goals, task definition, crew orchestration, process types (s...",
+      "tags": [
+        "ai"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/crewai/SKILL.md"
+    },
+    {
+      "name": "customer-support",
+      "description": "Elite AI-powered customer support specialist mastering conversational AI, automated ticketing, sentiment analysis, and omnichannel support experiences. Integrates modern support tools, chatbot platfor",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/customer-support/SKILL.md"
+    },
+    {
+      "name": "data-engineer",
+      "description": "Build scalable data pipelines, modern data warehouses, and real-time streaming architectures. Implements Apache Spark, dbt, Airflow, and cloud-native data platforms. Use PROACTIVELY for data pipeline",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/data-engineer/SKILL.md"
+    },
+    {
+      "name": "data-engineering-data-driven-feature",
+      "description": "Build features guided by data insights, A/B testing, and continuous measurement using specialized agents for analysis, implementation, and experimentation.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/data-engineering-data-driven-feature/SKILL.md"
+    },
+    {
+      "name": "data-engineering-data-pipeline",
+      "description": "You are a data pipeline architecture expert specializing in scalable, reliable, and cost-effective data pipelines for batch and streaming data processing.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/data-engineering-data-pipeline/SKILL.md"
+    },
+    {
+      "name": "data-quality-frameworks",
+      "description": "Implement data quality validation with Great Expectations, dbt tests, and data contracts. Use when building data quality pipelines, implementing validation rules, or establishing data contracts.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/data-quality-frameworks/SKILL.md"
+    },
+    {
+      "name": "data-scientist",
+      "description": "Expert data scientist for advanced analytics, machine learning, and statistical modeling. Handles complex data analysis, predictive modeling, and business intelligence. Use PROACTIVELY for data analys",
+      "tags": [
+        "devops"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/data-scientist/SKILL.md"
+    },
+    {
+      "name": "data-storytelling",
+      "description": "Transform data into compelling narratives using visualization, context, and persuasive structure. Use when presenting analytics to stakeholders, creating data reports, or building executive present...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/data-storytelling/SKILL.md"
+    },
+    {
+      "name": "data-structure-protocol",
+      "description": "Give agents persistent structural memory of a codebase — navigate dependencies, track public APIs, and understand why connections exist without re-reading the whole repo.",
+      "tags": [
+        "git"
+      ],
+      "source": "https://github.com/k-kolomeitsev/data-structure-protocol",
+      "risk": "safe",
+      "path": ".agent/skills/data-structure-protocol/SKILL.md"
+    },
+    {
+      "name": "database",
+      "description": "Database development and operations workflow covering SQL, NoSQL, database design, migrations, optimization, and data engineering.",
+      "tags": [
+        "database"
+      ],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/database/SKILL.md"
+    },
+    {
+      "name": "database-design",
+      "description": "Database design principles and decision-making. Schema design, indexing strategy, ORM selection, serverless databases.",
+      "tags": [
+        "database"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/database-design/SKILL.md"
+    },
+    {
+      "name": "database-migration",
+      "description": "Execute database migrations across ORMs and platforms with zero-downtime strategies, data transformation, and rollback procedures. Use when migrating databases, changing schemas, performing data tr...",
+      "tags": [
+        "database"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/database-migration/SKILL.md"
+    },
+    {
+      "name": "datadog-automation",
+      "description": "Automate Datadog tasks via Rube MCP (Composio): query metrics, search logs, manage monitors/dashboards, create events and downtimes. Always search tools first for current schemas.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/datadog-automation/SKILL.md"
+    },
+    {
+      "name": "ddd-context-mapping",
+      "description": "Map relationships between bounded contexts and define integration contracts using DDD context mapping patterns.",
+      "tags": [
+        "architecture"
+      ],
+      "source": "self",
+      "risk": "safe",
+      "path": ".agent/skills/ddd-context-mapping/SKILL.md"
+    },
+    {
+      "name": "ddd-strategic-design",
+      "description": "Design DDD strategic artifacts including subdomains, bounded contexts, and ubiquitous language for complex business domains.",
+      "tags": [
+        "architecture"
+      ],
+      "source": "self",
+      "risk": "safe",
+      "path": ".agent/skills/ddd-strategic-design/SKILL.md"
+    },
+    {
+      "name": "ddd-tactical-patterns",
+      "description": "Apply DDD tactical patterns in code using entities, value objects, aggregates, repositories, and domain events with explicit invariants.",
+      "tags": [
+        "architecture"
+      ],
+      "source": "self",
+      "risk": "safe",
+      "path": ".agent/skills/ddd-tactical-patterns/SKILL.md"
+    },
+    {
+      "name": "debugger",
+      "description": "Debugging specialist for errors, test failures, and unexpected behavior. Use proactively when encountering any issues.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/debugger/SKILL.md"
+    },
+    {
+      "name": "debugging-strategies",
+      "description": "Master systematic debugging techniques, profiling tools, and root cause analysis to efficiently track down bugs across any codebase or technology stack. Use when investigating bugs, performance iss...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/debugging-strategies/SKILL.md"
+    },
+    {
+      "name": "debugging-toolkit-smart-debug",
+      "description": "Use when working with debugging toolkit smart debug",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/debugging-toolkit-smart-debug/SKILL.md"
+    },
+    {
+      "name": "deep-research",
+      "description": "Execute autonomous multi-step research using Google Gemini Deep Research Agent. Use for: market analysis, competitive landscaping, literature reviews, technical research, due diligence. Takes 2-10 ...",
+      "tags": [],
+      "source": "https://github.com/sanjay3290/ai-skills/tree/main/skills/deep-research",
+      "risk": "safe",
+      "path": ".agent/skills/deep-research/SKILL.md"
+    },
+    {
+      "name": "dependency-management-deps-audit",
+      "description": "You are a dependency security expert specializing in vulnerability scanning, license compliance, and supply chain security. Analyze project dependencies for known vulnerabilities, licensing issues,...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/dependency-management-deps-audit/SKILL.md"
+    },
+    {
+      "name": "dependency-upgrade",
+      "description": "Manage major dependency version upgrades with compatibility analysis, staged rollout, and comprehensive testing. Use when upgrading framework versions, updating major dependencies, or managing brea...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/dependency-upgrade/SKILL.md"
+    },
+    {
+      "name": "deployment-procedures",
+      "description": "Production deployment principles and decision-making. Safe deployment workflows, rollback strategies, and verification. Teaches thinking, not scripts.",
+      "tags": [
+        "devops",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/deployment-procedures/SKILL.md"
+    },
+    {
+      "name": "design-orchestration",
+      "description": "",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/design-orchestration/SKILL.md"
+    },
+    {
+      "name": "development",
+      "description": "Comprehensive web, mobile, and backend development workflow bundling frontend, backend, full-stack, and mobile development skills for end-to-end application delivery.",
+      "tags": [],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/development/SKILL.md"
+    },
+    {
+      "name": "devops-troubleshooter",
+      "description": "Expert DevOps troubleshooter specializing in rapid incident response, advanced debugging, and modern observability. Masters log analysis, distributed tracing, Kubernetes debugging, performance optimiz",
+      "tags": [
+        "devops"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/devops-troubleshooter/SKILL.md"
+    },
+    {
+      "name": "dispatching-parallel-agents",
+      "description": "Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/dispatching-parallel-agents/SKILL.md"
+    },
+    {
+      "name": "distributed-debugging-debug-trace",
+      "description": "You are a debugging expert specializing in setting up comprehensive debugging environments, distributed tracing, and diagnostic tools. Configure debugging workflows, implement tracing solutions, an...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/distributed-debugging-debug-trace/SKILL.md"
+    },
+    {
+      "name": "distributed-tracing",
+      "description": "Implement distributed tracing with Jaeger and Tempo to track requests across microservices and identify performance bottlenecks. Use when debugging microservices, analyzing request flows, or implem...",
+      "tags": [
+        "devops"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/distributed-tracing/SKILL.md"
+    },
+    {
+      "name": "doc-coauthoring",
+      "description": "Guide users through a structured workflow for co-authoring documentation. Use when user wants to write documentation, proposals, technical specs, decision docs, or similar structured content. This ...",
+      "tags": [
+        "security"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/doc-coauthoring/SKILL.md"
+    },
+    {
+      "name": "docker-expert",
+      "description": "Docker containerization expert with deep knowledge of multi-stage builds, image optimization, container security, Docker Compose orchestration, and production deployment patterns. Use PROACTIVELY f...",
+      "tags": [
+        "devops"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/docker-expert/SKILL.md"
+    },
+    {
+      "name": "docs-architect",
+      "description": "Creates comprehensive technical documentation from existing codebases. Analyzes architecture, design patterns, and implementation details to produce long-form technical manuals and ebooks. Use PROACTI",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/docs-architect/SKILL.md"
+    },
+    {
+      "name": "documentation",
+      "description": "Documentation generation workflow covering API docs, architecture docs, README files, code comments, and technical writing.",
+      "tags": [],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/documentation/SKILL.md"
+    },
+    {
+      "name": "documentation-generation-doc-generate",
+      "description": "You are a documentation expert specializing in creating comprehensive, maintainable documentation from code. Generate API docs, architecture diagrams, user guides, and technical references using AI...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/documentation-generation-doc-generate/SKILL.md"
+    },
+    {
+      "name": "documentation-templates",
+      "description": "Documentation templates and structure guidelines. README, API docs, code comments, and AI-friendly documentation.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/documentation-templates/SKILL.md"
+    },
+    {
+      "name": "domain-driven-design",
+      "description": "Plan and route Domain-Driven Design work from strategic modeling to tactical implementation and evented architecture patterns.",
+      "tags": [
+        "ai"
+      ],
+      "source": "self",
+      "risk": "safe",
+      "path": ".agent/skills/domain-driven-design/SKILL.md"
+    },
+    {
+      "name": "dx-optimizer",
+      "description": "Developer Experience specialist. Improves tooling, setup, and workflows. Use PROACTIVELY when setting up new projects, after team feedback, or when development friction is noticed.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/dx-optimizer/SKILL.md"
+    },
+    {
+      "name": "e2e-testing",
+      "description": "End-to-end testing workflow with Playwright for browser automation, visual regression, cross-browser testing, and CI/CD integration.",
+      "tags": [
+        "testing"
+      ],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/e2e-testing/SKILL.md"
+    },
+    {
+      "name": "e2e-testing-patterns",
+      "description": "Master end-to-end testing with Playwright and Cypress to build reliable test suites that catch bugs, improve confidence, and enable fast deployment. Use when implementing E2E tests, debugging flaky...",
+      "tags": [
+        "testing",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/e2e-testing-patterns/SKILL.md"
+    },
+    {
+      "name": "email-sequence",
+      "description": "When the user wants to create or optimize an email sequence, drip campaign, automated email flow, or lifecycle email program. Also use when the user mentions \\\"email sequence,\\\" \\\"drip campa...",
+      "tags": [
+        "ai",
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/email-sequence/SKILL.md"
+    },
+    {
+      "name": "email-systems",
+      "description": "Email has the highest ROI of any marketing channel. $36 for every $1 spent. Yet most startups treat it as an afterthought - bulk blasts, no personalization, landing in spam folders.  This skill cov...",
+      "tags": [
+        "ai",
+        "growth"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/email-systems/SKILL.md"
+    },
+    {
+      "name": "embedding-strategies",
+      "description": "Select and optimize embedding models for semantic search and RAG applications. Use when choosing embedding models, implementing chunking strategies, or optimizing embedding quality for specific dom...",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/embedding-strategies/SKILL.md"
+    },
+    {
+      "name": "environment-setup-guide",
+      "description": "Guide developers through setting up development environments with proper tools, dependencies, and configurations",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/environment-setup-guide/SKILL.md"
+    },
+    {
+      "name": "error-debugging-error-analysis",
+      "description": "You are an expert error analysis specialist with deep expertise in debugging distributed systems, analyzing production incidents, and implementing comprehensive observability solutions.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/error-debugging-error-analysis/SKILL.md"
+    },
+    {
+      "name": "error-debugging-error-trace",
+      "description": "You are an error tracking and observability expert specializing in implementing comprehensive error monitoring solutions. Set up error tracking systems, configure alerts, implement structured loggi...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/error-debugging-error-trace/SKILL.md"
+    },
+    {
+      "name": "error-debugging-multi-agent-review",
+      "description": "Use when working with error debugging multi agent review",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/error-debugging-multi-agent-review/SKILL.md"
+    },
+    {
+      "name": "error-detective",
+      "description": "Search logs and codebases for error patterns, stack traces, and anomalies. Correlates errors across systems and identifies root causes. Use PROACTIVELY when debugging issues, analyzing logs, or invest",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/error-detective/SKILL.md"
+    },
+    {
+      "name": "error-diagnostics-error-analysis",
+      "description": "You are an expert error analysis specialist with deep expertise in debugging distributed systems, analyzing production incidents, and implementing comprehensive observability solutions.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/error-diagnostics-error-analysis/SKILL.md"
+    },
+    {
+      "name": "error-diagnostics-error-trace",
+      "description": "You are an error tracking and observability expert specializing in implementing comprehensive error monitoring solutions. Set up error tracking systems, configure alerts, implement structured logging,",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/error-diagnostics-error-trace/SKILL.md"
+    },
+    {
+      "name": "error-diagnostics-smart-debug",
+      "description": "Use when working with error diagnostics smart debug",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/error-diagnostics-smart-debug/SKILL.md"
+    },
+    {
+      "name": "error-handling-patterns",
+      "description": "Master error handling patterns across languages including exceptions, Result types, error propagation, and graceful degradation to build resilient applications. Use when implementing error handling...",
+      "tags": [
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/error-handling-patterns/SKILL.md"
+    },
+    {
+      "name": "evaluation",
+      "description": "Build evaluation frameworks for agent systems",
+      "tags": [],
+      "source": "https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering/tree/main/skills/evaluation",
+      "risk": "safe",
+      "path": ".agent/skills/evaluation/SKILL.md"
+    },
+    {
+      "name": "exa-search",
+      "description": "Semantic search, similar content discovery, and structured research using Exa API",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/exa-search/SKILL.md"
+    },
+    {
+      "name": "executing-plans",
+      "description": "Use when you have a written implementation plan to execute in a separate session with review checkpoints",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/executing-plans/SKILL.md"
+    },
+    {
+      "name": "file-organizer",
+      "description": "Intelligently organizes files and folders by understanding context, finding duplicates, and suggesting better organizational structures. Use when user wants to clean up directories, organize downlo...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/file-organizer/SKILL.md"
+    },
+    {
+      "name": "file-uploads",
+      "description": "Expert at handling file uploads and cloud storage. Covers S3, Cloudflare R2, presigned URLs, multipart uploads, and image optimization. Knows how to handle large files without blocking. Use when: f...",
+      "tags": [],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/file-uploads/SKILL.md"
+    },
+    {
+      "name": "find-bugs",
+      "description": "Find bugs, security vulnerabilities, and code quality issues in local branch changes. Use when asked to review changes, find bugs, security review, or audit code on the current branch.",
+      "tags": [],
+      "source": "https://github.com/getsentry/skills/tree/main/plugins/sentry-skills/skills/find-bugs",
+      "risk": "safe",
+      "path": ".agent/skills/find-bugs/SKILL.md"
+    },
+    {
+      "name": "finishing-a-development-branch",
+      "description": "Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/finishing-a-development-branch/SKILL.md"
+    },
+    {
+      "name": "firecrawl-scraper",
+      "description": "Deep web scraping, screenshots, PDF parsing, and website crawling using Firecrawl API",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/firecrawl-scraper/SKILL.md"
+    },
+    {
+      "name": "fix-review",
+      "description": "Verify fix commits address audit findings without new bugs",
+      "tags": [],
+      "source": "https://github.com/trailofbits/skills/tree/main/plugins/fix-review",
+      "risk": "safe",
+      "path": ".agent/skills/fix-review/SKILL.md"
+    },
+    {
+      "name": "form-cro",
+      "description": "",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/form-cro/SKILL.md"
+    },
+    {
+      "name": "fp-ts-errors",
+      "description": "Handle errors as values using fp-ts Either and TaskEither for cleaner, more predictable TypeScript code. Use when implementing error handling patterns with fp-ts.",
+      "tags": [],
+      "source": "https://github.com/whatiskadudoing/fp-ts-skills",
+      "risk": "safe",
+      "path": ".agent/skills/fp-ts-errors/SKILL.md"
+    },
+    {
+      "name": "fp-ts-pragmatic",
+      "description": "A practical, jargon-free guide to fp-ts functional programming - the 80/20 approach that gets results without the academic overhead. Use when writing TypeScript with fp-ts library.",
+      "tags": [
+        "ai",
+        "git"
+      ],
+      "source": "https://github.com/whatiskadudoing/fp-ts-skills",
+      "risk": "safe",
+      "path": ".agent/skills/fp-ts-pragmatic/SKILL.md"
+    },
+    {
+      "name": "fp-ts-react",
+      "description": "Practical patterns for using fp-ts with React - hooks, state, forms, data fetching. Use when building React apps with functional programming patterns. Works with React 18/19, Next.js 14/15.",
+      "tags": [
+        "frontend"
+      ],
+      "source": "https://github.com/whatiskadudoing/fp-ts-skills",
+      "risk": "safe",
+      "path": ".agent/skills/fp-ts-react/SKILL.md"
+    },
+    {
+      "name": "framework-migration-code-migrate",
+      "description": "You are a code migration expert specializing in transitioning codebases between frameworks, languages, versions, and platforms. Generate comprehensive migration plans, automated migration scripts, and",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/framework-migration-code-migrate/SKILL.md"
+    },
+    {
+      "name": "framework-migration-deps-upgrade",
+      "description": "You are a dependency management expert specializing in safe, incremental upgrades of project dependencies. Plan and execute dependency updates with minimal risk, proper testing, and clear migration pa",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/framework-migration-deps-upgrade/SKILL.md"
+    },
+    {
+      "name": "framework-migration-legacy-modernize",
+      "description": "Orchestrate a comprehensive legacy system modernization using the strangler fig pattern, enabling gradual replacement of outdated components while maintaining continuous business operations through ex",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/framework-migration-legacy-modernize/SKILL.md"
+    },
+    {
+      "name": "free-tool-strategy",
+      "description": "When the user wants to plan, evaluate, or build a free tool for marketing purposes \\u2014 lead generation, SEO value, or brand awareness. Also use when the user mentions \\\"engineering as mar...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/free-tool-strategy/SKILL.md"
+    },
+    {
+      "name": "frontend-design",
+      "description": "Create distinctive, production-grade frontend interfaces with intentional aesthetics, high craft, and non-generic visual identity. Use when building or styling web UIs, components, pages, dashboard...",
+      "tags": [
+        "frontend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/frontend-design/SKILL.md"
+    },
+    {
+      "name": "frontend-dev-guidelines",
+      "description": "Opinionated frontend development standards for modern React + TypeScript applications. Covers Suspense-first data fetching, lazy loading, feature-based architecture, MUI v7 styling, TanStack Router...",
+      "tags": [
+        "frontend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/frontend-dev-guidelines/SKILL.md"
+    },
+    {
+      "name": "frontend-developer",
+      "description": "Build React components, implement responsive layouts, and handle client-side state management. Masters React 19, Next.js 15, and modern frontend architecture. Optimizes performance and ensures accessi",
+      "tags": [
+        "frontend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/frontend-developer/SKILL.md"
+    },
+    {
+      "name": "frontend-security-coder",
+      "description": "Expert in secure frontend coding practices specializing in XSS prevention, output sanitization, and client-side security patterns. Use PROACTIVELY for frontend security implementations or client-side",
+      "tags": [
+        "frontend",
+        "security"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/frontend-security-coder/SKILL.md"
+    },
+    {
+      "name": "frontend-ui-dark-ts",
+      "description": "Build dark-themed React applications using Tailwind CSS with custom theming, glassmorphism effects, and Framer Motion animations. Use when creating dashboards, admin panels, or data-rich interfaces...",
+      "tags": [
+        "frontend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/frontend-ui-dark-ts/SKILL.md"
+    },
+    {
+      "name": "full-stack-orchestration-full-stack-feature",
+      "description": "Use when working with full stack orchestration full stack feature",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/full-stack-orchestration-full-stack-feature/SKILL.md"
+    },
+    {
+      "name": "gdpr-data-handling",
+      "description": "Implement GDPR-compliant data handling with consent management, data subject rights, and privacy by design. Use when building systems that process EU personal data, implementing privacy controls, o...",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/gdpr-data-handling/SKILL.md"
+    },
+    {
+      "name": "gemini-api-dev",
+      "description": "Use this skill when building applications with Gemini models, Gemini API, working with multimodal content (text, images, audio, video), implementing function calling, using structured outputs, or n...",
+      "tags": [
+        "backend",
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/gemini-api-dev/SKILL.md"
+    },
+    {
+      "name": "geo-fundamentals",
+      "description": "Generative Engine Optimization for AI search engines (ChatGPT, Claude, Perplexity).",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/geo-fundamentals/SKILL.md"
+    },
+    {
+      "name": "git-advanced-workflows",
+      "description": "Master advanced Git workflows including rebasing, cherry-picking, bisect, worktrees, and reflog to maintain clean history and recover from any situation. Use when managing complex Git histories, co...",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/git-advanced-workflows/SKILL.md"
+    },
+    {
+      "name": "git-pr-workflows-git-workflow",
+      "description": "Orchestrate a comprehensive git workflow from code review through PR creation, leveraging specialized agents for quality assurance, testing, and deployment readiness. This workflow implements modern g",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/git-pr-workflows-git-workflow/SKILL.md"
+    },
+    {
+      "name": "git-pr-workflows-onboard",
+      "description": "You are an **expert onboarding specialist and knowledge transfer architect** with deep experience in remote-first organizations, technical team integration, and accelerated learning methodologies. You",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/git-pr-workflows-onboard/SKILL.md"
+    },
+    {
+      "name": "git-pr-workflows-pr-enhance",
+      "description": "You are a PR optimization expert specializing in creating high-quality pull requests that facilitate efficient code reviews. Generate comprehensive PR descriptions, automate review processes, and ensu",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/git-pr-workflows-pr-enhance/SKILL.md"
+    },
+    {
+      "name": "git-pushing",
+      "description": "Stage, commit, and push git changes with conventional commit messages. Use when user wants to commit and push changes, mentions pushing to remote, or asks to save and push their work. Also activate...",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/git-pushing/SKILL.md"
+    },
+    {
+      "name": "github-actions-templates",
+      "description": "Create production-ready GitHub Actions workflows for automated testing, building, and deploying applications. Use when setting up CI/CD with GitHub Actions, automating development workflows, or cre...",
+      "tags": [
+        "devops",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/github-actions-templates/SKILL.md"
+    },
+    {
+      "name": "github-automation",
+      "description": "Automate GitHub repositories, issues, pull requests, branches, CI/CD, and permissions via Rube MCP (Composio). Manage code workflows, review PRs, search code, and handle deployments programmatically.",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/github-automation/SKILL.md"
+    },
+    {
+      "name": "github-issue-creator",
+      "description": "Convert raw notes, error logs, voice dictation, or screenshots into crisp GitHub-flavored markdown issue reports. Use when the user pastes bug info, error messages, or informal descriptions and wan...",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/github-issue-creator/SKILL.md"
+    },
+    {
+      "name": "github-workflow-automation",
+      "description": "Automate GitHub workflows with AI assistance. Includes PR reviews, issue triage, CI/CD integration, and Git operations. Use when automating GitHub workflows, setting up PR review automation, creati...",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/github-workflow-automation/SKILL.md"
+    },
+    {
+      "name": "gitlab-automation",
+      "description": "Automate GitLab project management, issues, merge requests, pipelines, branches, and user operations via Rube MCP (Composio). Always search tools first for current schemas.",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/gitlab-automation/SKILL.md"
+    },
+    {
+      "name": "gitlab-ci-patterns",
+      "description": "Build GitLab CI/CD pipelines with multi-stage workflows, caching, and distributed runners for scalable automation. Use when implementing GitLab CI/CD, optimizing pipeline performance, or setting up...",
+      "tags": [
+        "devops",
+        "git",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/gitlab-ci-patterns/SKILL.md"
+    },
+    {
+      "name": "google-analytics-automation",
+      "description": "Automate Google Analytics tasks via Rube MCP (Composio): run reports, list accounts/properties, funnels, pivots, key events. Always search tools first for current schemas.",
+      "tags": [
+        "language"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/google-analytics-automation/SKILL.md"
+    },
+    {
+      "name": "grafana-dashboards",
+      "description": "Create and manage production Grafana dashboards for real-time visualization of system and application metrics. Use when building monitoring dashboards, visualizing metrics, or creating operational ...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/grafana-dashboards/SKILL.md"
+    },
+    {
+      "name": "graphql",
+      "description": "GraphQL gives clients exactly the data they need - no more, no less. One endpoint, typed schema, introspection. But the flexibility that makes it powerful also makes it dangerous. Without proper co...",
+      "tags": [],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/graphql/SKILL.md"
+    },
+    {
+      "name": "graphql-architect",
+      "description": "Master modern GraphQL with federation, performance optimization, and enterprise security. Build scalable schemas, implement advanced caching, and design real-time systems. Use PROACTIVELY for GraphQL",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/graphql-architect/SKILL.md"
+    },
+    {
+      "name": "hubspot-automation",
+      "description": "Automate HubSpot CRM operations (contacts, companies, deals, tickets, properties) via Rube MCP using Composio integration.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/hubspot-automation/SKILL.md"
+    },
+    {
+      "name": "hubspot-integration",
+      "description": "Expert patterns for HubSpot CRM integration including OAuth authentication, CRM objects, associations, batch operations, webhooks, and custom objects. Covers Node.js and Python SDKs. Use when: hubs...",
+      "tags": [],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/hubspot-integration/SKILL.md"
+    },
+    {
+      "name": "hugging-face-cli",
+      "description": "Execute Hugging Face Hub operations using the `hf` CLI. Use when the user needs to download models/datasets/spaces, upload files to Hub repositories, create repos, manage local cache, or run comput...",
+      "tags": [],
+      "source": "https://github.com/huggingface/skills/tree/main/skills/hugging-face-cli",
+      "risk": "safe",
+      "path": ".agent/skills/hugging-face-cli/SKILL.md"
+    },
+    {
+      "name": "hugging-face-jobs",
+      "description": "This skill should be used when users want to run any workload on Hugging Face Jobs infrastructure. Covers UV scripts, Docker-based jobs, hardware selection, cost estimation, authentication with tok...",
+      "tags": [],
+      "source": "https://github.com/huggingface/skills/tree/main/skills/hugging-face-jobs",
+      "risk": "safe",
+      "path": ".agent/skills/hugging-face-jobs/SKILL.md"
+    },
+    {
+      "name": "hybrid-search-implementation",
+      "description": "Combine vector and keyword search for improved retrieval. Use when implementing RAG systems, building search engines, or when neither approach alone provides sufficient recall.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/hybrid-search-implementation/SKILL.md"
+    },
+    {
+      "name": "i18n-localization",
+      "description": "Internationalization and localization patterns. Detecting hardcoded strings, managing translations, locale files, RTL support.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/i18n-localization/SKILL.md"
+    },
+    {
+      "name": "inngest",
+      "description": "Inngest expert for serverless-first background jobs, event-driven workflows, and durable execution without managing queues or workers. Use when: inngest, serverless background job, event-driven wor...",
+      "tags": [],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/inngest/SKILL.md"
+    },
+    {
+      "name": "intercom-automation",
+      "description": "Automate Intercom tasks via Rube MCP (Composio): conversations, contacts, companies, segments, admins. Always search tools first for current schemas.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/intercom-automation/SKILL.md"
+    },
+    {
+      "name": "iterate-pr",
+      "description": "Iterate on a PR until CI passes. Use when you need to fix CI failures, address review feedback, or continuously push fixes until all checks are green. Automates the feedback-fix-push-wait cycle.",
+      "tags": [
+        "git"
+      ],
+      "source": "https://github.com/getsentry/skills/tree/main/plugins/sentry-skills/skills/iterate-pr",
+      "risk": "safe",
+      "path": ".agent/skills/iterate-pr/SKILL.md"
+    },
+    {
+      "name": "javascript-mastery",
+      "description": "Comprehensive JavaScript reference covering 33+ essential concepts every developer should know. From fundamentals like primitives and closures to advanced patterns like async/await and functional p...",
+      "tags": [
+        "language"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/javascript-mastery/SKILL.md"
+    },
+    {
+      "name": "javascript-pro",
+      "description": "Master modern JavaScript with ES6+, async patterns, and Node.js APIs. Handles promises, event loops, and browser/Node compatibility. Use PROACTIVELY for JavaScript optimization, async debugging, or co",
+      "tags": [
+        "git",
+        "language"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/javascript-pro/SKILL.md"
+    },
+    {
+      "name": "javascript-testing-patterns",
+      "description": "Implement comprehensive testing strategies using Jest, Vitest, and Testing Library for unit tests, integration tests, and end-to-end testing with mocking, fixtures, and test-driven development. Use...",
+      "tags": [
+        "testing",
+        "language",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/javascript-testing-patterns/SKILL.md"
+    },
+    {
+      "name": "javascript-typescript-typescript-scaffold",
+      "description": "You are a TypeScript project architecture expert specializing in scaffolding production-ready Node.js and frontend applications. Generate complete project structures with modern tooling (pnpm, Vite, N",
+      "tags": [
+        "language"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/javascript-typescript-typescript-scaffold/SKILL.md"
+    },
+    {
+      "name": "kaizen",
+      "description": "Guide for continuous improvement, error proofing, and standardization. Use this skill when the user wants to improve code quality, refactor, or discuss process improvements.",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/kaizen/SKILL.md"
+    },
+    {
+      "name": "kpi-dashboard-design",
+      "description": "Design effective KPI dashboards with metrics selection, visualization best practices, and real-time monitoring patterns. Use when building business dashboards, selecting metrics, or designing data ...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/kpi-dashboard-design/SKILL.md"
+    },
+    {
+      "name": "langchain-architecture",
+      "description": "Design LLM applications using the LangChain framework with agents, memory, and tool integration patterns. Use when building LangChain applications, implementing AI agents, or creating complex LLM w...",
+      "tags": [
+        "ai",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/langchain-architecture/SKILL.md"
+    },
+    {
+      "name": "langfuse",
+      "description": "Expert in Langfuse - the open-source LLM observability platform. Covers tracing, prompt management, evaluation, datasets, and integration with LangChain, LlamaIndex, and OpenAI. Essential for debug...",
+      "tags": [],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/langfuse/SKILL.md"
+    },
+    {
+      "name": "langgraph",
+      "description": "Expert in LangGraph - the production-grade framework for building stateful, multi-actor AI applications. Covers graph construction, state management, cycles and branches, persistence with checkpoin...",
+      "tags": [],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/langgraph/SKILL.md"
+    },
+    {
+      "name": "last30days",
+      "description": "Research a topic from the last 30 days on Reddit + X + Web, become an expert, and write copy-paste-ready prompts for the user's target tool.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/last30days/SKILL.md"
+    },
+    {
+      "name": "launch-strategy",
+      "description": "When the user wants to plan a product launch, feature announcement, or release strategy. Also use when the user mentions 'launch,' 'Product Hunt,' 'feature release,' 'announcement,' 'go-to-market,'...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/launch-strategy/SKILL.md"
+    },
+    {
+      "name": "legacy-modernizer",
+      "description": "Refactor legacy codebases, migrate outdated frameworks, and implement gradual modernization. Handles technical debt, dependency updates, and backward compatibility. Use PROACTIVELY for legacy system u",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/legacy-modernizer/SKILL.md"
+    },
+    {
+      "name": "legal-advisor",
+      "description": "Draft privacy policies, terms of service, disclaimers, and legal notices. Creates GDPR-compliant texts, cookie policies, and data processing agreements. Use PROACTIVELY for legal documentation, compli",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/legal-advisor/SKILL.md"
+    },
+    {
+      "name": "linear-automation",
+      "description": "Automate Linear tasks via Rube MCP (Composio): issues, projects, cycles, teams, labels. Always search tools first for current schemas.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/linear-automation/SKILL.md"
+    },
+    {
+      "name": "lint-and-validate",
+      "description": "Automatic quality control, linting, and static analysis procedures. Use after every code modification to ensure syntax correctness and project standards. Triggers onKeywords: lint, format, check, v...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/lint-and-validate/SKILL.md"
+    },
+    {
+      "name": "linux-shell-scripting",
+      "description": "This skill should be used when the user asks to \\\"create bash scripts\\\", \\\"automate Linux tasks\\\", \\\"monitor system resources\\\", \\\"backup files\\\", \\\"manage users\\\", or \\\"write production she...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/linux-shell-scripting/SKILL.md"
+    },
+    {
+      "name": "linux-troubleshooting",
+      "description": "Linux system troubleshooting workflow for diagnosing and resolving system issues, performance problems, and service failures.",
+      "tags": [],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/linux-troubleshooting/SKILL.md"
+    },
+    {
+      "name": "llm-app-patterns",
+      "description": "Production-ready patterns for building LLM applications. Covers RAG pipelines, agent architectures, prompt IDEs, and LLMOps monitoring. Use when designing AI applications, implementing RAG, buildin...",
+      "tags": [
+        "ai",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/llm-app-patterns/SKILL.md"
+    },
+    {
+      "name": "llm-application-dev-ai-assistant",
+      "description": "You are an AI assistant development expert specializing in creating intelligent conversational interfaces, chatbots, and AI-powered applications. Design comprehensive AI assistant solutions with natur",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/llm-application-dev-ai-assistant/SKILL.md"
+    },
+    {
+      "name": "llm-application-dev-langchain-agent",
+      "description": "You are an expert LangChain agent developer specializing in production-grade AI systems using LangChain 0.1+ and LangGraph.",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/llm-application-dev-langchain-agent/SKILL.md"
+    },
+    {
+      "name": "llm-application-dev-prompt-optimize",
+      "description": "You are an expert prompt engineer specializing in crafting effective prompts for LLMs through advanced techniques including constitutional AI, chain-of-thought reasoning, and model-specific optimizati",
+      "tags": [
+        "ai",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/llm-application-dev-prompt-optimize/SKILL.md"
+    },
+    {
+      "name": "llm-evaluation",
+      "description": "Implement comprehensive evaluation strategies for LLM applications using automated metrics, human feedback, and benchmarking. Use when testing LLM performance, measuring AI application quality, or ...",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/llm-evaluation/SKILL.md"
+    },
+    {
+      "name": "manifest",
+      "description": "Install and configure the Manifest observability plugin for your agents. Use when setting up telemetry, configuring API keys, or troubleshooting the plugin.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/manifest/SKILL.md"
+    },
+    {
+      "name": "market-sizing-analysis",
+      "description": "This skill should be used when the user asks to \\\\\\\"calculate TAM\\\\\\\", \"determine SAM\", \"estimate SOM\", \"size the market\", \"calculate market opportunity\", \"what's the total addressable market\", or req",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/market-sizing-analysis/SKILL.md"
+    },
+    {
+      "name": "marketing-ideas",
+      "description": "Provide proven marketing strategies and growth ideas for SaaS and software products, prioritized using a marketing feasibility scoring system.",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/marketing-ideas/SKILL.md"
+    },
+    {
+      "name": "marketing-psychology",
+      "description": "Apply behavioral science and mental models to marketing decisions, prioritized using a psychological leverage and feasibility scoring system.",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/marketing-psychology/SKILL.md"
+    },
+    {
+      "name": "mcp-builder",
+      "description": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate exte...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/mcp-builder/SKILL.md"
+    },
+    {
+      "name": "mcp-builder-ms",
+      "description": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate exte...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/mcp-builder-ms/SKILL.md"
+    },
+    {
+      "name": "memory-systems",
+      "description": "Design short-term, long-term, and graph-based memory architectures",
+      "tags": [],
+      "source": "https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering/tree/main/skills/memory-systems",
+      "risk": "safe",
+      "path": ".agent/skills/memory-systems/SKILL.md"
+    },
+    {
+      "name": "mermaid-expert",
+      "description": "Create Mermaid diagrams for flowcharts, sequences, ERDs, and architectures. Masters syntax for all diagram types and styling. Use PROACTIVELY for visual documentation, system diagrams, or process flow",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/mermaid-expert/SKILL.md"
+    },
+    {
+      "name": "micro-saas-launcher",
+      "description": "Expert in launching small, focused SaaS products fast - the indie hacker approach to building profitable software. Covers idea validation, MVP development, pricing, launch strategies, and growing t...",
+      "tags": [
+        "growth",
+        "business"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/micro-saas-launcher/SKILL.md"
+    },
+    {
+      "name": "microservices-patterns",
+      "description": "Design microservices architectures with service boundaries, event-driven communication, and resilience patterns. Use when building distributed systems, decomposing monoliths, or implementing micros...",
+      "tags": [
+        "growth",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/microservices-patterns/SKILL.md"
+    },
+    {
+      "name": "ml-engineer",
+      "description": "Build production ML systems with PyTorch 2.x, TensorFlow, and modern ML frameworks. Implements model serving, feature engineering, A/B testing, and monitoring. Use PROACTIVELY for ML model deployment,",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/ml-engineer/SKILL.md"
+    },
+    {
+      "name": "modern-javascript-patterns",
+      "description": "Master ES6+ features including async/await, destructuring, spread operators, arrow functions, promises, modules, iterators, generators, and functional programming patterns for writing clean, effici...",
+      "tags": [
+        "language",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/modern-javascript-patterns/SKILL.md"
+    },
+    {
+      "name": "multi-agent-brainstorming",
+      "description": "",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/multi-agent-brainstorming/SKILL.md"
+    },
+    {
+      "name": "multi-agent-patterns",
+      "description": "Master orchestrator, peer-to-peer, and hierarchical multi-agent architectures",
+      "tags": [
+        "ai",
+        "architecture"
+      ],
+      "source": "https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering/tree/main/skills/multi-agent-patterns",
+      "risk": "safe",
+      "path": ".agent/skills/multi-agent-patterns/SKILL.md"
+    },
+    {
+      "name": "multi-platform-apps-multi-platform",
+      "description": "Build and deploy the same feature consistently across web, mobile, and desktop platforms using API-first architecture and parallel implementation strategies.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/multi-platform-apps-multi-platform/SKILL.md"
+    },
+    {
+      "name": "n8n-code-python",
+      "description": "Write Python code in n8n Code nodes. Use when writing Python in n8n, using _input/_json/_node syntax, working with standard library, or need to understand Python limitations in n8n Code nodes.",
+      "tags": [
+        "language"
+      ],
+      "source": "https://github.com/czlonkowski/n8n-skills/tree/main/skills/n8n-code-python",
+      "risk": "safe",
+      "path": ".agent/skills/n8n-code-python/SKILL.md"
+    },
+    {
+      "name": "n8n-mcp-tools-expert",
+      "description": "Expert guide for using n8n-mcp MCP tools effectively. Use when searching for nodes, validating configurations, accessing templates, managing workflows, or using any n8n-mcp tool. Provides tool sele...",
+      "tags": [],
+      "source": "https://github.com/czlonkowski/n8n-skills/tree/main/skills/n8n-mcp-tools-expert",
+      "risk": "safe",
+      "path": ".agent/skills/n8n-mcp-tools-expert/SKILL.md"
+    },
+    {
+      "name": "n8n-node-configuration",
+      "description": "Operation-aware node configuration guidance. Use when configuring nodes, understanding property dependencies, determining required fields, choosing between get_node detail levels, or learning commo...",
+      "tags": [
+        "backend"
+      ],
+      "source": "https://github.com/czlonkowski/n8n-skills/tree/main/skills/n8n-node-configuration",
+      "risk": "safe",
+      "path": ".agent/skills/n8n-node-configuration/SKILL.md"
+    },
+    {
+      "name": "nano-image-generator",
+      "description": "Generate images using Nano Banana Pro (Gemini 3 Pro Preview). Use when creating app icons, logos, UI graphics, marketing banners, social media images, illustrations, diagrams, or any visual assets. Tr",
+      "tags": [],
+      "source": "unknown",
+      "risk": "unknown",
+      "path": ".agent/skills/nano-image-generator/SKILL.md"
+    },
+    {
+      "name": "neon-postgres",
+      "description": "Expert patterns for Neon serverless Postgres, branching, connection pooling, and Prisma/Drizzle integration Use when: neon database, serverless postgres, database branching, neon postgres, postgres...",
+      "tags": [
+        "database"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/neon-postgres/SKILL.md"
+    },
+    {
+      "name": "nestjs-expert",
+      "description": "Nest.js framework expert specializing in module architecture, dependency injection, middleware, guards, interceptors, testing with Jest/Supertest, TypeORM/Mongoose integration, and Passport.js auth...",
+      "tags": [
+        "backend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/nestjs-expert/SKILL.md"
+    },
+    {
+      "name": "network-engineer",
+      "description": "Expert network engineer specializing in modern cloud networking, security architectures, and performance optimization. Masters multi-cloud connectivity, service mesh, zero-trust networking, SSL/TLS, g",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/network-engineer/SKILL.md"
+    },
+    {
+      "name": "nextjs-app-router-patterns",
+      "description": "Master Next.js 14+ App Router with Server Components, streaming, parallel routes, and advanced data fetching. Use when building Next.js applications, implementing SSR/SSG, or optimizing React Serve...",
+      "tags": [
+        "frontend",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/nextjs-app-router-patterns/SKILL.md"
+    },
+    {
+      "name": "nextjs-best-practices",
+      "description": "Next.js App Router principles. Server Components, data fetching, routing patterns.",
+      "tags": [
+        "frontend",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/nextjs-best-practices/SKILL.md"
+    },
+    {
+      "name": "nextjs-supabase-auth",
+      "description": "Expert integration of Supabase Auth with Next.js App Router Use when: supabase auth next, authentication next.js, login supabase, auth middleware, protected route.",
+      "tags": [
+        "frontend",
+        "database",
+        "security"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/nextjs-supabase-auth/SKILL.md"
+    },
+    {
+      "name": "nodejs-backend-patterns",
+      "description": "Build production-ready Node.js backend services with Express/Fastify, implementing middleware patterns, error handling, authentication, database integration, and API design best practices. Use when...",
+      "tags": [
+        "backend",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/nodejs-backend-patterns/SKILL.md"
+    },
+    {
+      "name": "nodejs-best-practices",
+      "description": "Node.js development principles and decision-making. Framework selection, async patterns, security, and architecture. Teaches thinking, not copying.",
+      "tags": [
+        "backend",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/nodejs-best-practices/SKILL.md"
+    },
+    {
+      "name": "notion-automation",
+      "description": "Automate Notion tasks via Rube MCP (Composio): pages, databases, blocks, comments, users. Always search tools first for current schemas.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/notion-automation/SKILL.md"
+    },
+    {
+      "name": "nx-workspace-patterns",
+      "description": "Configure and optimize Nx monorepo workspaces. Use when setting up Nx, configuring project boundaries, optimizing build caching, or implementing affected commands.",
+      "tags": [
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/nx-workspace-patterns/SKILL.md"
+    },
+    {
+      "name": "onboarding-cro",
+      "description": "When the user wants to optimize post-signup onboarding, user activation, first-run experience, or time-to-value. Also use when the user mentions \\\"onboarding flow,\\\" \\\"activation rate,\\\" \\\"u...",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/onboarding-cro/SKILL.md"
+    },
+    {
+      "name": "openapi-spec-generation",
+      "description": "Generate and maintain OpenAPI 3.1 specifications from code, design-first specs, and validation patterns. Use when creating API documentation, generating SDKs, or ensuring API contract compliance.",
+      "tags": [
+        "backend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/openapi-spec-generation/SKILL.md"
+    },
+    {
+      "name": "os-scripting",
+      "description": "Operating system and shell scripting troubleshooting workflow for Linux, macOS, and Windows. Covers bash scripting, system administration, debugging, and automation.",
+      "tags": [],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/os-scripting/SKILL.md"
+    },
+    {
+      "name": "page-cro",
+      "description": "",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/page-cro/SKILL.md"
+    },
+    {
+      "name": "paid-ads",
+      "description": "When the user wants help with paid advertising campaigns on Google Ads, Meta (Facebook/Instagram), LinkedIn, Twitter/X, or other ad platforms. Also use when the user mentions 'PPC,' 'paid media,' '...",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/paid-ads/SKILL.md"
+    },
+    {
+      "name": "parallel-agents",
+      "description": "Multi-agent orchestration patterns. Use when multiple independent tasks can run with different domain expertise or when comprehensive analysis requires multiple perspectives.",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/parallel-agents/SKILL.md"
+    },
+    {
+      "name": "payment-integration",
+      "description": "Integrate Stripe, PayPal, and payment processors. Handles checkout flows, subscriptions, webhooks, and PCI compliance. Use PROACTIVELY when implementing payments, billing, or subscription features.",
+      "tags": [
+        "business"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/payment-integration/SKILL.md"
+    },
+    {
+      "name": "paywall-upgrade-cro",
+      "description": "When the user wants to create or optimize in-app paywalls, upgrade screens, upsell modals, or feature gates. Also use when the user mentions \\\"paywall,\\\" \\\"upgrade screen,\\\" \\\"upgrade modal,...",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/paywall-upgrade-cro/SKILL.md"
+    },
+    {
+      "name": "performance-engineer",
+      "description": "Expert performance engineer specializing in modern observability,",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/performance-engineer/SKILL.md"
+    },
+    {
+      "name": "performance-profiling",
+      "description": "Performance profiling principles. Measurement, analysis, and optimization techniques.",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/performance-profiling/SKILL.md"
+    },
+    {
+      "name": "performance-testing-review-ai-review",
+      "description": "You are an expert AI-powered code review specialist combining automated static analysis, intelligent pattern recognition, and modern DevOps practices. Leverage AI tools (GitHub Copilot, Qodo, GPT-5, C",
+      "tags": [
+        "ai",
+        "testing"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/performance-testing-review-ai-review/SKILL.md"
+    },
+    {
+      "name": "performance-testing-review-multi-agent-review",
+      "description": "Use when working with performance testing review multi agent review",
+      "tags": [
+        "ai",
+        "testing"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/performance-testing-review-multi-agent-review/SKILL.md"
+    },
+    {
+      "name": "personal-tool-builder",
+      "description": "Expert in building custom tools that solve your own problems first. The best products often start as personal tools - scratch your own itch, build for yourself, then discover others have the same i...",
+      "tags": [],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/personal-tool-builder/SKILL.md"
+    },
+    {
+      "name": "plan-writing",
+      "description": "Structured task planning with clear breakdowns, dependencies, and verification criteria. Use when implementing features, refactoring, or any multi-step work.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/plan-writing/SKILL.md"
+    },
+    {
+      "name": "planning-with-files",
+      "description": "Implements Manus-style file-based planning for complex tasks. Creates task_plan.md, findings.md, and progress.md. Use when starting complex multi-step tasks, research projects, or any task requirin...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/planning-with-files/SKILL.md"
+    },
+    {
+      "name": "playwright-skill",
+      "description": "Complete browser automation with Playwright. Auto-detects dev servers, writes clean test scripts to /tmp. Test pages, fill forms, take screenshots, check responsive design, validate UX, test login ...",
+      "tags": [
+        "testing"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/playwright-skill/SKILL.md"
+    },
+    {
+      "name": "popup-cro",
+      "description": "Create and optimize popups, modals, overlays, slide-ins, and banners to increase conversions without harming user experience or brand trust.",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/popup-cro/SKILL.md"
+    },
+    {
+      "name": "posix-shell-pro",
+      "description": "Expert in strict POSIX sh scripting for maximum portability across Unix-like systems. Specializes in shell scripts that run on any POSIX-compliant shell (dash, ash, sh, bash --posix).",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/posix-shell-pro/SKILL.md"
+    },
+    {
+      "name": "postgres-best-practices",
+      "description": "Postgres performance optimization and best practices from Supabase. Use this skill when writing, reviewing, or optimizing Postgres queries, schema designs, or database configurations.",
+      "tags": [
+        "database",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/postgres-best-practices/SKILL.md"
+    },
+    {
+      "name": "postgresql",
+      "description": "Design a PostgreSQL-specific schema. Covers best-practices, data types, indexing, constraints, performance patterns, and advanced features",
+      "tags": [
+        "database"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/postgresql/SKILL.md"
+    },
+    {
+      "name": "postgresql-optimization",
+      "description": "PostgreSQL database optimization workflow for query tuning, indexing strategies, performance analysis, and production database management.",
+      "tags": [
+        "database"
+      ],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/postgresql-optimization/SKILL.md"
+    },
+    {
+      "name": "posthog-automation",
+      "description": "Automate PostHog tasks via Rube MCP (Composio): events, feature flags, projects, user profiles, annotations. Always search tools first for current schemas.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/posthog-automation/SKILL.md"
+    },
+    {
+      "name": "postmortem-writing",
+      "description": "Write effective blameless postmortems with root cause analysis, timelines, and action items. Use when conducting incident reviews, writing postmortem documents, or improving incident response proce...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/postmortem-writing/SKILL.md"
+    },
+    {
+      "name": "pricing-strategy",
+      "description": "Design pricing, packaging, and monetization strategies based on value, customer willingness to pay, and growth objectives.",
+      "tags": [
+        "devops",
+        "business",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/pricing-strategy/SKILL.md"
+    },
+    {
+      "name": "prisma-expert",
+      "description": "Prisma ORM expert for schema design, migrations, query optimization, relations modeling, and database operations. Use PROACTIVELY for Prisma schema issues, migration problems, query performance, re...",
+      "tags": [
+        "database",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/prisma-expert/SKILL.md"
+    },
+    {
+      "name": "product-manager-toolkit",
+      "description": "Comprehensive toolkit for product managers including RICE prioritization, customer interview analysis, PRD templates, discovery frameworks, and go-to-market strategies. Use for feature prioritizati...",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/product-manager-toolkit/SKILL.md"
+    },
+    {
+      "name": "production-code-audit",
+      "description": "Autonomously deep-scan entire codebase line-by-line, understand architecture and patterns, then systematically transform it to production-grade, corporate-level professional quality with optimizations",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/production-code-audit/SKILL.md"
+    },
+    {
+      "name": "programmatic-seo",
+      "description": "",
+      "tags": [
+        "growth",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/programmatic-seo/SKILL.md"
+    },
+    {
+      "name": "prompt-caching",
+      "description": "Caching strategies for LLM prompts including Anthropic prompt caching, response caching, and CAG (Cache Augmented Generation) Use when: prompt caching, cache prompt, response cache, cag, cache augm...",
+      "tags": [
+        "ai",
+        "git"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/prompt-caching/SKILL.md"
+    },
+    {
+      "name": "prompt-engineer",
+      "description": "Transforms user prompts into optimized prompts using frameworks (RTF, RISEN, Chain of Thought, RODES, Chain of Density, RACE, RISE, STAR, SOAP, CLEAR, GROW)",
+      "tags": [
+        "ai",
+        "git"
+      ],
+      "source": "community",
+      "risk": "safe",
+      "path": ".agent/skills/prompt-engineer/SKILL.md"
+    },
+    {
+      "name": "prompt-engineering",
+      "description": "Expert guide on prompt engineering patterns, best practices, and optimization techniques. Use when user wants to improve prompts, learn prompting strategies, or debug agent behavior.",
+      "tags": [
+        "ai",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/prompt-engineering/SKILL.md"
+    },
+    {
+      "name": "prompt-engineering-patterns",
+      "description": "Master advanced prompt engineering techniques to maximize LLM performance, reliability, and controllability in production. Use when optimizing prompts, improving LLM outputs, or designing productio...",
+      "tags": [
+        "ai",
+        "git",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/prompt-engineering-patterns/SKILL.md"
+    },
+    {
+      "name": "prompt-library",
+      "description": "Curated collection of high-quality prompts for various use cases. Includes role-based prompts, task-specific templates, and prompt refinement techniques. Use when user needs prompt templates, role-...",
+      "tags": [
+        "ai",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/prompt-library/SKILL.md"
+    },
+    {
+      "name": "radix-ui-design-system",
+      "description": "Build accessible design systems with Radix UI primitives. Headless component customization, theming strategies, and compound component patterns for production-grade UI libraries.",
+      "tags": [
+        "architecture"
+      ],
+      "source": "self",
+      "risk": "safe",
+      "path": ".agent/skills/radix-ui-design-system/SKILL.md"
+    },
+    {
+      "name": "rag-engineer",
+      "description": "Expert in building Retrieval-Augmented Generation systems. Masters embedding models, vector databases, chunking strategies, and retrieval optimization for LLM applications. Use when: building RAG, ...",
+      "tags": [
+        "ai"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/rag-engineer/SKILL.md"
+    },
+    {
+      "name": "rag-implementation",
+      "description": "RAG (Retrieval-Augmented Generation) implementation workflow covering embedding selection, vector database setup, chunking strategies, and retrieval optimization.",
+      "tags": [
+        "ai"
+      ],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/rag-implementation/SKILL.md"
+    },
+    {
+      "name": "react-best-practices",
+      "description": "React and Next.js performance optimization guidelines from Vercel Engineering. This skill should be used when writing, reviewing, or refactoring React/Next.js code to ensure optimal performance pat...",
+      "tags": [
+        "frontend",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/react-best-practices/SKILL.md"
+    },
+    {
+      "name": "react-flow-architect",
+      "description": "Expert ReactFlow architect for building interactive graph applications with hierarchical node-edge systems, performance optimization, and auto-layout integration. Use when Claude needs to create or...",
+      "tags": [
+        "frontend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/react-flow-architect/SKILL.md"
+    },
+    {
+      "name": "react-flow-node-ts",
+      "description": "Create React Flow node components with TypeScript types, handles, and Zustand integration. Use when building custom nodes for React Flow canvas, creating visual workflow editors, or implementing no...",
+      "tags": [
+        "frontend",
+        "backend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/react-flow-node-ts/SKILL.md"
+    },
+    {
+      "name": "react-modernization",
+      "description": "Upgrade React applications to latest versions, migrate from class components to hooks, and adopt concurrent features. Use when modernizing React codebases, migrating to React Hooks, or upgrading to...",
+      "tags": [
+        "frontend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/react-modernization/SKILL.md"
+    },
+    {
+      "name": "react-native-architecture",
+      "description": "Build production React Native apps with Expo, navigation, native modules, offline sync, and cross-platform patterns. Use when developing mobile apps, implementing native integrations, or architecti...",
+      "tags": [
+        "frontend",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/react-native-architecture/SKILL.md"
+    },
+    {
+      "name": "react-nextjs-development",
+      "description": "React and Next.js 14+ application development with App Router, Server Components, TypeScript, Tailwind CSS, and modern frontend patterns.",
+      "tags": [
+        "frontend"
+      ],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/react-nextjs-development/SKILL.md"
+    },
+    {
+      "name": "react-patterns",
+      "description": "Modern React patterns and principles. Hooks, composition, performance, TypeScript best practices.",
+      "tags": [
+        "frontend",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/react-patterns/SKILL.md"
+    },
+    {
+      "name": "react-state-management",
+      "description": "Master modern React state management with Redux Toolkit, Zustand, Jotai, and React Query. Use when setting up global state, managing server state, or choosing between state management solutions.",
+      "tags": [
+        "frontend"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/react-state-management/SKILL.md"
+    },
+    {
+      "name": "react-ui-patterns",
+      "description": "Modern React UI patterns for loading states, error handling, and data fetching. Use when building UI components, handling async data, or managing UI states.",
+      "tags": [
+        "frontend",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/react-ui-patterns/SKILL.md"
+    },
+    {
+      "name": "readme",
+      "description": "When the user wants to create or update a README.md file for a project. Also use when the user says 'write readme,' 'create readme,' 'document this project,' 'project documentation,' or asks for he...",
+      "tags": [],
+      "source": "https://github.com/Shpigford/skills/tree/main/readme",
+      "risk": "safe",
+      "path": ".agent/skills/readme/SKILL.md"
+    },
+    {
+      "name": "receiving-code-review",
+      "description": "Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requires technical rigor and verification, not performat...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/receiving-code-review/SKILL.md"
+    },
+    {
+      "name": "reference-builder",
+      "description": "Creates exhaustive technical references and API documentation. Generates comprehensive parameter listings, configuration guides, and searchable reference materials. Use PROACTIVELY for API docs, confi",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/reference-builder/SKILL.md"
+    },
+    {
+      "name": "referral-program",
+      "description": "When the user wants to create, optimize, or analyze a referral program, affiliate program, or word-of-mouth strategy. Also use when the user mentions 'referral,' 'affiliate,' 'ambassador,' 'word of...",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/referral-program/SKILL.md"
+    },
+    {
+      "name": "requesting-code-review",
+      "description": "Use when completing tasks, implementing major features, or before merging to verify work meets requirements",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/requesting-code-review/SKILL.md"
+    },
+    {
+      "name": "research-engineer",
+      "description": "An uncompromising Academic Research Engineer. Operates with absolute scientific rigor, objective criticism, and zero flair. Focuses on theoretical correctness, formal verification, and optimal impl...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/research-engineer/SKILL.md"
+    },
+    {
+      "name": "schema-markup",
+      "description": "",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/schema-markup/SKILL.md"
+    },
+    {
+      "name": "screen-reader-testing",
+      "description": "Test web applications with screen readers including VoiceOver, NVDA, and JAWS. Use when validating screen reader compatibility, debugging accessibility issues, or ensuring assistive technology supp...",
+      "tags": [
+        "testing"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/screen-reader-testing/SKILL.md"
+    },
+    {
+      "name": "screenshots",
+      "description": "Generate marketing screenshots of your app using Playwright. Use when the user wants to create screenshots for Product Hunt, social media, landing pages, or documentation.",
+      "tags": [],
+      "source": "https://github.com/Shpigford/skills/tree/main/screenshots",
+      "risk": "safe",
+      "path": ".agent/skills/screenshots/SKILL.md"
+    },
+    {
+      "name": "search-specialist",
+      "description": "Expert web researcher using advanced search techniques and",
+      "tags": [
+        "devops"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/search-specialist/SKILL.md"
+    },
+    {
+      "name": "secrets-management",
+      "description": "Implement secure secrets management for CI/CD pipelines using Vault, AWS Secrets Manager, or native platform solutions. Use when handling sensitive credentials, rotating secrets, or securing CI/CD ...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/secrets-management/SKILL.md"
+    },
+    {
+      "name": "security-audit",
+      "description": "Comprehensive security auditing workflow covering web application testing, API security, penetration testing, vulnerability scanning, and security hardening.",
+      "tags": [
+        "security"
+      ],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/security-audit/SKILL.md"
+    },
+    {
+      "name": "security-auditor",
+      "description": "Expert security auditor specializing in DevSecOps, comprehensive cybersecurity, and compliance frameworks. Masters vulnerability assessment, threat modeling, secure authentication (OAuth2/OIDC), OWASP",
+      "tags": [
+        "security"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/security-auditor/SKILL.md"
+    },
+    {
+      "name": "security-bluebook-builder",
+      "description": "Build security Blue Books for sensitive apps",
+      "tags": [
+        "security"
+      ],
+      "source": "https://github.com/SHADOWPR0/security-bluebook-builder",
+      "risk": "safe",
+      "path": ".agent/skills/security-bluebook-builder/SKILL.md"
+    },
+    {
+      "name": "security-compliance-compliance-check",
+      "description": "You are a compliance expert specializing in regulatory requirements for software systems including GDPR, HIPAA, SOC2, PCI-DSS, and other industry standards. Perform compliance audits and provide im...",
+      "tags": [
+        "security"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/security-compliance-compliance-check/SKILL.md"
+    },
+    {
+      "name": "security-requirement-extraction",
+      "description": "Derive security requirements from threat models and business context. Use when translating threats into actionable requirements, creating security user stories, or building security test cases.",
+      "tags": [
+        "security"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/security-requirement-extraction/SKILL.md"
+    },
+    {
+      "name": "security-scanning-security-dependencies",
+      "description": "You are a security expert specializing in dependency vulnerability analysis, SBOM generation, and supply chain security. Scan project dependencies across ecosystems to identify vulnerabilities, ass...",
+      "tags": [
+        "devops",
+        "security"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/security-scanning-security-dependencies/SKILL.md"
+    },
+    {
+      "name": "security-scanning-security-hardening",
+      "description": "Coordinate multi-layer security scanning and hardening across application, infrastructure, and compliance controls.",
+      "tags": [
+        "security"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/security-scanning-security-hardening/SKILL.md"
+    },
+    {
+      "name": "security-scanning-security-sast",
+      "description": "Static Application Security Testing (SAST) for code vulnerability analysis across multiple languages and frameworks",
+      "tags": [
+        "security"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/security-scanning-security-sast/SKILL.md"
+    },
+    {
+      "name": "segment-cdp",
+      "description": "Expert patterns for Segment Customer Data Platform including Analytics.js, server-side tracking, tracking plans with Protocols, identity resolution, destinations configuration, and data governance ...",
+      "tags": [],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/segment-cdp/SKILL.md"
+    },
+    {
+      "name": "senior-architect",
+      "description": "Comprehensive software architecture skill for designing scalable, maintainable systems using ReactJS, NextJS, NodeJS, Express, React Native, Swift, Kotlin, Flutter, Postgres, GraphQL, Go, Python. I...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/senior-architect/SKILL.md"
+    },
+    {
+      "name": "senior-fullstack",
+      "description": "Comprehensive fullstack development skill for building complete web applications with React, Next.js, Node.js, GraphQL, and PostgreSQL. Includes project scaffolding, code quality analysis, architec...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/senior-fullstack/SKILL.md"
+    },
+    {
+      "name": "sentry-automation",
+      "description": "Automate Sentry tasks via Rube MCP (Composio): manage issues/events, configure alerts, track releases, monitor projects and teams. Always search tools first for current schemas.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/sentry-automation/SKILL.md"
+    },
+    {
+      "name": "seo-audit",
+      "description": "",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/seo-audit/SKILL.md"
+    },
+    {
+      "name": "seo-authority-builder",
+      "description": "Analyzes content for E-E-A-T signals and suggests improvements to build authority and trust. Identifies missing credibility elements. Use PROACTIVELY for YMYL topics.",
+      "tags": [
+        "security",
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/seo-authority-builder/SKILL.md"
+    },
+    {
+      "name": "seo-cannibalization-detector",
+      "description": "Analyzes multiple provided pages to identify keyword overlap and potential cannibalization issues. Suggests differentiation strategies. Use PROACTIVELY when reviewing similar content.",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/seo-cannibalization-detector/SKILL.md"
+    },
+    {
+      "name": "seo-content-auditor",
+      "description": "Analyzes provided content for quality, E-E-A-T signals, and SEO best practices. Scores content and provides improvement recommendations based on established guidelines. Use PROACTIVELY for content rev",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/seo-content-auditor/SKILL.md"
+    },
+    {
+      "name": "seo-content-planner",
+      "description": "Creates comprehensive content outlines and topic clusters for SEO. Plans content calendars and identifies topic gaps. Use PROACTIVELY for content strategy and planning.",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/seo-content-planner/SKILL.md"
+    },
+    {
+      "name": "seo-content-refresher",
+      "description": "Identifies outdated elements in provided content and suggests updates to maintain freshness. Finds statistics, dates, and examples that need updating. Use PROACTIVELY for older content.",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/seo-content-refresher/SKILL.md"
+    },
+    {
+      "name": "seo-content-writer",
+      "description": "Writes SEO-optimized content based on provided keywords and topic briefs. Creates engaging, comprehensive content following best practices. Use PROACTIVELY for content creation tasks.",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/seo-content-writer/SKILL.md"
+    },
+    {
+      "name": "seo-fundamentals",
+      "description": "",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/seo-fundamentals/SKILL.md"
+    },
+    {
+      "name": "seo-keyword-strategist",
+      "description": "Analyzes keyword usage in provided content, calculates density, suggests semantic variations and LSI keywords based on the topic. Prevents over-optimization. Use PROACTIVELY for content optimization.",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/seo-keyword-strategist/SKILL.md"
+    },
+    {
+      "name": "seo-meta-optimizer",
+      "description": "Creates optimized meta titles, descriptions, and URL suggestions based on character limits and best practices. Generates compelling, keyword-rich metadata. Use PROACTIVELY for new content.",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/seo-meta-optimizer/SKILL.md"
+    },
+    {
+      "name": "seo-snippet-hunter",
+      "description": "Formats content to be eligible for featured snippets and SERP features. Creates snippet-optimized content blocks based on best practices. Use PROACTIVELY for question-based content.",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/seo-snippet-hunter/SKILL.md"
+    },
+    {
+      "name": "seo-structure-architect",
+      "description": "Analyzes and optimizes content structure including header hierarchy, suggests schema markup, and internal linking opportunities. Creates search-friendly content organization. Use PROACTIVELY for conte",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/seo-structure-architect/SKILL.md"
+    },
+    {
+      "name": "server-management",
+      "description": "Server management principles and decision-making. Process management, monitoring strategy, and scaling decisions. Teaches thinking, not commands.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/server-management/SKILL.md"
+    },
+    {
+      "name": "service-mesh-expert",
+      "description": "Expert service mesh architect specializing in Istio, Linkerd, and cloud-native networking patterns. Masters traffic management, security policies, observability integration, and multi-cluster mesh con",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/service-mesh-expert/SKILL.md"
+    },
+    {
+      "name": "service-mesh-observability",
+      "description": "Implement comprehensive observability for service meshes including distributed tracing, metrics, and visualization. Use when setting up mesh monitoring, debugging latency issues, or implementing SL...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/service-mesh-observability/SKILL.md"
+    },
+    {
+      "name": "sharp-edges",
+      "description": "Identify error-prone APIs and dangerous configurations",
+      "tags": [],
+      "source": "https://github.com/trailofbits/skills/tree/main/plugins/sharp-edges",
+      "risk": "safe",
+      "path": ".agent/skills/sharp-edges/SKILL.md"
+    },
+    {
+      "name": "signup-flow-cro",
+      "description": "When the user wants to optimize signup, registration, account creation, or trial activation flows. Also use when the user mentions \\\"signup conversions,\\\" \\\"registration friction,\\\" \\\"signup...",
+      "tags": [
+        "growth"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/signup-flow-cro/SKILL.md"
+    },
+    {
+      "name": "similarity-search-patterns",
+      "description": "Implement efficient similarity search with vector databases. Use when building semantic search, implementing nearest neighbor queries, or optimizing retrieval performance.",
+      "tags": [
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/similarity-search-patterns/SKILL.md"
+    },
+    {
+      "name": "slack-automation",
+      "description": "Automate Slack messaging, channel management, search, reactions, and threads via Rube MCP (Composio). Send messages, search conversations, manage channels/users, and react to messages programmatica...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/slack-automation/SKILL.md"
+    },
+    {
+      "name": "slo-implementation",
+      "description": "Define and implement Service Level Indicators (SLIs) and Service Level Objectives (SLOs) with error budgets and alerting. Use when establishing reliability targets, implementing SRE practices, or m...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/slo-implementation/SKILL.md"
+    },
+    {
+      "name": "social-content",
+      "description": "When the user wants help creating, scheduling, or optimizing social media content for LinkedIn, Twitter/X, Instagram, TikTok, Facebook, or other platforms. Also use when the user mentions 'LinkedIn...",
+      "tags": [
+        "devops"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/social-content/SKILL.md"
+    },
+    {
+      "name": "software-architecture",
+      "description": "Guide for quality focused software architecture. This skill should be used when users want to write code, design architecture, analyze code, in any case that relates to software development.",
+      "tags": [
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/software-architecture/SKILL.md"
+    },
+    {
+      "name": "sql-optimization-patterns",
+      "description": "Master SQL query optimization, indexing strategies, and EXPLAIN analysis to dramatically improve database performance and eliminate slow queries. Use when debugging slow queries, designing database...",
+      "tags": [
+        "database",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/sql-optimization-patterns/SKILL.md"
+    },
+    {
+      "name": "sql-pro",
+      "description": "Master modern SQL with cloud-native databases, OLTP/OLAP optimization, and advanced query techniques. Expert in performance tuning, data modeling, and hybrid analytical systems. Use PROACTIVELY for da",
+      "tags": [
+        "database",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/sql-pro/SKILL.md"
+    },
+    {
+      "name": "startup-analyst",
+      "description": "Expert startup business analyst specializing in market sizing, financial modeling, competitive analysis, and strategic planning for early-stage companies. Use PROACTIVELY when the user asks about mark",
+      "tags": [
+        "business"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/startup-analyst/SKILL.md"
+    },
+    {
+      "name": "startup-business-analyst-business-case",
+      "description": "Generate comprehensive investor-ready business case document with market, solution, financials, and strategy",
+      "tags": [
+        "business"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/startup-business-analyst-business-case/SKILL.md"
+    },
+    {
+      "name": "startup-business-analyst-financial-projections",
+      "description": "Create detailed 3-5 year financial model with revenue, costs, cash flow, and scenarios",
+      "tags": [
+        "devops",
+        "business",
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/startup-business-analyst-financial-projections/SKILL.md"
+    },
+    {
+      "name": "startup-business-analyst-market-opportunity",
+      "description": "Generate comprehensive market opportunity analysis with TAM/SAM/SOM calculations",
+      "tags": [
+        "business"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/startup-business-analyst-market-opportunity/SKILL.md"
+    },
+    {
+      "name": "startup-financial-modeling",
+      "description": "This skill should be used when the user asks to \\\\\\\"create financial projections\", \"build a financial model\", \"forecast revenue\", \"calculate burn rate\", \"estimate runway\", \"model cash flow\", or reques",
+      "tags": [
+        "devops",
+        "business"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/startup-financial-modeling/SKILL.md"
+    },
+    {
+      "name": "startup-metrics-framework",
+      "description": "This skill should be used when the user asks about \\\\\\\"key startup metrics\", \"SaaS metrics\", \"CAC and LTV\", \"unit economics\", \"burn multiple\", \"rule of 40\", \"marketplace metrics\", or requests guidance",
+      "tags": [
+        "business"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/startup-metrics-framework/SKILL.md"
+    },
+    {
+      "name": "stride-analysis-patterns",
+      "description": "Apply STRIDE methodology to systematically identify threats. Use when analyzing system security, conducting threat modeling sessions, or creating security documentation.",
+      "tags": [
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/stride-analysis-patterns/SKILL.md"
+    },
+    {
+      "name": "stripe-integration",
+      "description": "Implement Stripe payment processing for robust, PCI-compliant payment flows including checkout, subscriptions, and webhooks. Use when integrating Stripe payments, building subscription systems, or ...",
+      "tags": [
+        "business"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/stripe-integration/SKILL.md"
+    },
+    {
+      "name": "subagent-driven-development",
+      "description": "Use when executing implementation plans with independent tasks in the current session",
+      "tags": [
+        "ai"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/subagent-driven-development/SKILL.md"
+    },
+    {
+      "name": "systematic-debugging",
+      "description": "Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/systematic-debugging/SKILL.md"
+    },
+    {
+      "name": "tailwind-design-system",
+      "description": "Build scalable design systems with Tailwind CSS, design tokens, component libraries, and responsive patterns. Use when creating component libraries, implementing design systems, or standardizing UI...",
+      "tags": [
+        "frontend",
+        "ai",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/tailwind-design-system/SKILL.md"
+    },
+    {
+      "name": "tailwind-patterns",
+      "description": "Tailwind CSS v4 principles. CSS-first configuration, container queries, modern patterns, design token architecture.",
+      "tags": [
+        "frontend",
+        "ai",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/tailwind-patterns/SKILL.md"
+    },
+    {
+      "name": "tavily-web",
+      "description": "Web search, content extraction, crawling, and research capabilities using Tavily API",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/tavily-web/SKILL.md"
+    },
+    {
+      "name": "tdd-orchestrator",
+      "description": "Master TDD orchestrator specializing in red-green-refactor discipline, multi-agent workflow coordination, and comprehensive test-driven development practices. Enforces TDD best practices across teams",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/tdd-orchestrator/SKILL.md"
+    },
+    {
+      "name": "tdd-workflow",
+      "description": "Test-Driven Development workflow principles. RED-GREEN-REFACTOR cycle.",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/tdd-workflow/SKILL.md"
+    },
+    {
+      "name": "tdd-workflows-tdd-cycle",
+      "description": "Use when working with tdd workflows tdd cycle",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/tdd-workflows-tdd-cycle/SKILL.md"
+    },
+    {
+      "name": "tdd-workflows-tdd-green",
+      "description": "Implement the minimal code needed to make failing tests pass in the TDD green phase.",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/tdd-workflows-tdd-green/SKILL.md"
+    },
+    {
+      "name": "tdd-workflows-tdd-red",
+      "description": "Generate failing tests for the TDD red phase to define expected behavior and edge cases.",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/tdd-workflows-tdd-red/SKILL.md"
+    },
+    {
+      "name": "tdd-workflows-tdd-refactor",
+      "description": "Use when working with tdd workflows tdd refactor",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/tdd-workflows-tdd-refactor/SKILL.md"
+    },
+    {
+      "name": "team-collaboration-issue",
+      "description": "You are a GitHub issue resolution expert specializing in systematic bug investigation, feature implementation, and collaborative development workflows. Your expertise spans issue triage, root cause an",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/team-collaboration-issue/SKILL.md"
+    },
+    {
+      "name": "team-collaboration-standup-notes",
+      "description": "You are an expert team communication specialist focused on async-first standup practices, AI-assisted note generation from commit history, and effective remote team coordination patterns.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/team-collaboration-standup-notes/SKILL.md"
+    },
+    {
+      "name": "team-composition-analysis",
+      "description": "This skill should be used when the user asks to \\\\\\\"plan team structure\", \"determine hiring needs\", \"design org chart\", \"calculate compensation\", \"plan equity allocation\", or requests organizational d",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/team-composition-analysis/SKILL.md"
+    },
+    {
+      "name": "test-automator",
+      "description": "Master AI-powered test automation with modern frameworks, self-healing tests, and comprehensive quality engineering. Build scalable testing strategies with advanced CI/CD integration. Use PROACTIVELY",
+      "tags": [
+        "testing"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/test-automator/SKILL.md"
+    },
+    {
+      "name": "test-driven-development",
+      "description": "Use when implementing any feature or bugfix, before writing implementation code",
+      "tags": [
+        "testing"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/test-driven-development/SKILL.md"
+    },
+    {
+      "name": "test-fixing",
+      "description": "Run tests and systematically fix all failing tests using smart error grouping. Use when user asks to fix failing tests, mentions test failures, runs test suite and failures occur, or requests to ma...",
+      "tags": [
+        "testing"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/test-fixing/SKILL.md"
+    },
+    {
+      "name": "testing-patterns",
+      "description": "Jest testing patterns, factory functions, mocking strategies, and TDD workflow. Use when writing unit tests, creating test factories, or following TDD red-green-refactor cycle.",
+      "tags": [
+        "testing",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/testing-patterns/SKILL.md"
+    },
+    {
+      "name": "testing-qa",
+      "description": "Comprehensive testing and QA workflow covering unit testing, integration testing, E2E testing, browser automation, and quality assurance.",
+      "tags": [
+        "testing"
+      ],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/testing-qa/SKILL.md"
+    },
+    {
+      "name": "threat-mitigation-mapping",
+      "description": "Map identified threats to appropriate security controls and mitigations. Use when prioritizing security investments, creating remediation plans, or validating control effectiveness.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/threat-mitigation-mapping/SKILL.md"
+    },
+    {
+      "name": "threat-modeling-expert",
+      "description": "Expert in threat modeling methodologies, security architecture review, and risk assessment. Masters STRIDE, PASTA, attack trees, and security requirement extraction. Use for security architecture r...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/threat-modeling-expert/SKILL.md"
+    },
+    {
+      "name": "tool-design",
+      "description": "Build tools that agents can use effectively, including architectural reduction patterns",
+      "tags": [],
+      "source": "https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering/tree/main/skills/tool-design",
+      "risk": "safe",
+      "path": ".agent/skills/tool-design/SKILL.md"
+    },
+    {
+      "name": "trigger-dev",
+      "description": "Trigger.dev expert for background jobs, AI workflows, and reliable async execution with excellent developer experience and TypeScript-first design. Use when: trigger.dev, trigger dev, background ta...",
+      "tags": [],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/trigger-dev/SKILL.md"
+    },
+    {
+      "name": "turborepo-caching",
+      "description": "Configure Turborepo for efficient monorepo builds with local and remote caching. Use when setting up Turborepo, optimizing build pipelines, or implementing distributed caching.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/turborepo-caching/SKILL.md"
+    },
+    {
+      "name": "tutorial-engineer",
+      "description": "Creates step-by-step tutorials and educational content from code. Transforms complex concepts into progressive learning experiences with hands-on examples. Use PROACTIVELY for onboarding guides, featu",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/tutorial-engineer/SKILL.md"
+    },
+    {
+      "name": "typescript-advanced-types",
+      "description": "Master TypeScript's advanced type system including generics, conditional types, mapped types, template literals, and utility types for building type-safe applications. Use when implementing complex...",
+      "tags": [
+        "language"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/typescript-advanced-types/SKILL.md"
+    },
+    {
+      "name": "typescript-expert",
+      "description": ">-",
+      "tags": [
+        "language"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/typescript-expert/SKILL.md"
+    },
+    {
+      "name": "typescript-pro",
+      "description": "Master TypeScript with advanced types, generics, and strict type safety. Handles complex type systems, decorators, and enterprise-grade patterns. Use PROACTIVELY for TypeScript architecture, type infe",
+      "tags": [
+        "git",
+        "language"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/typescript-pro/SKILL.md"
+    },
+    {
+      "name": "ui-skills",
+      "description": "Opinionated, evolving constraints to guide agents when building interfaces",
+      "tags": [],
+      "source": "https://github.com/ibelick/ui-skills",
+      "risk": "safe",
+      "path": ".agent/skills/ui-skills/SKILL.md"
+    },
+    {
+      "name": "ui-ux-designer",
+      "description": "Create interface designs, wireframes, and design systems. Masters user research, accessibility standards, and modern design tools. Specializes in design tokens, component libraries, and inclusive desi",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/ui-ux-designer/SKILL.md"
+    },
+    {
+      "name": "ui-ux-pro-max",
+      "description": "UI/UX design intelligence. 50 styles, 21 palettes, 50 font pairings, 20 charts, 9 stacks (React, Next.js, Vue, Svelte, SwiftUI, React Native, Flutter, Tailwind, shadcn/ui). Actions: plan, build, cr...",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/ui-ux-pro-max/SKILL.md"
+    },
+    {
+      "name": "ui-visual-validator",
+      "description": "Rigorous visual validation expert specializing in UI testing, design system compliance, and accessibility verification. Masters screenshot analysis, visual regression testing, and component validation",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/ui-visual-validator/SKILL.md"
+    },
+    {
+      "name": "unit-testing-test-generate",
+      "description": "Generate comprehensive, maintainable unit tests across languages with strong coverage and edge case focus.",
+      "tags": [
+        "testing"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/unit-testing-test-generate/SKILL.md"
+    },
+    {
+      "name": "using-git-worktrees",
+      "description": "Use when starting feature work that needs isolation from current workspace or before executing implementation plans - creates isolated git worktrees with smart directory selection and safety verifi...",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/using-git-worktrees/SKILL.md"
+    },
+    {
+      "name": "varlock-claude-skill",
+      "description": "Secure environment variable management ensuring secrets are never exposed in Claude sessions, terminals, logs, or git commits",
+      "tags": [],
+      "source": "https://github.com/wrsmith108/varlock-claude-skill",
+      "risk": "safe",
+      "path": ".agent/skills/varlock-claude-skill/SKILL.md"
+    },
+    {
+      "name": "vector-database-engineer",
+      "description": "Expert in vector databases, embedding strategies, and semantic search implementation. Masters Pinecone, Weaviate, Qdrant, Milvus, and pgvector for RAG applications, recommendation systems, and similar",
+      "tags": [
+        "database"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/vector-database-engineer/SKILL.md"
+    },
+    {
+      "name": "vector-index-tuning",
+      "description": "Optimize vector index performance for latency, recall, and memory. Use when tuning HNSW parameters, selecting quantization strategies, or scaling vector search infrastructure.",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/vector-index-tuning/SKILL.md"
+    },
+    {
+      "name": "vercel-deploy-claimable",
+      "description": "Deploy applications and websites to Vercel. Use this skill when the user requests deployment actions such as 'Deploy my app', 'Deploy this to production', 'Create a preview deployment', 'Deploy and...",
+      "tags": [
+        "devops",
+        "ai"
+      ],
+      "source": "https://github.com/vercel-labs/agent-skills/tree/main/skills/claude.ai/vercel-deploy-claimable",
+      "risk": "safe",
+      "path": ".agent/skills/vercel-deploy-claimable/SKILL.md"
+    },
+    {
+      "name": "vercel-deployment",
+      "description": "Expert knowledge for deploying to Vercel with Next.js Use when: vercel, deploy, deployment, hosting, production.",
+      "tags": [
+        "devops"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "safe",
+      "path": ".agent/skills/vercel-deployment/SKILL.md"
+    },
+    {
+      "name": "verification-before-completion",
+      "description": "Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evide...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/verification-before-completion/SKILL.md"
+    },
+    {
+      "name": "voice-agents",
+      "description": "Voice agents represent the frontier of AI interaction - humans speaking naturally with AI systems. The challenge isn't just speech recognition and synthesis, it's achieving natural conversation flo...",
+      "tags": [
+        "ai"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/voice-agents/SKILL.md"
+    },
+    {
+      "name": "wcag-audit-patterns",
+      "description": "Conduct WCAG 2.2 accessibility audits with automated testing, manual verification, and remediation guidance. Use when auditing websites for accessibility, fixing WCAG violations, or implementing ac...",
+      "tags": [
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/wcag-audit-patterns/SKILL.md"
+    },
+    {
+      "name": "web-design-guidelines",
+      "description": "Review UI code for Web Interface Guidelines compliance. Use when asked to \\\\\\\"review my UI\\\\\\\", \\\\\\\"check accessibility\\\\\\\", \\\\\\\"audit design\\\\\\\", \\\\\\\"review UX\\\\\\\", or \\\\\\\"check my site aga...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/web-design-guidelines/SKILL.md"
+    },
+    {
+      "name": "web-performance-optimization",
+      "description": "Optimize website and web application performance including loading speed, Core Web Vitals, bundle size, caching strategies, and runtime performance",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/web-performance-optimization/SKILL.md"
+    },
+    {
+      "name": "web-security-testing",
+      "description": "Web application security testing workflow for OWASP Top 10 vulnerabilities including injection, XSS, authentication flaws, and access control issues.",
+      "tags": [
+        "security",
+        "testing"
+      ],
+      "source": "personal",
+      "risk": "safe",
+      "path": ".agent/skills/web-security-testing/SKILL.md"
+    },
+    {
+      "name": "webapp-testing",
+      "description": "Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browse...",
+      "tags": [
+        "testing"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/webapp-testing/SKILL.md"
+    },
+    {
+      "name": "wiki-architect",
+      "description": "Analyzes code repositories and generates hierarchical documentation structures with onboarding guides. Use when the user wants to create a wiki, generate documentation, map a codebase structure, or...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/wiki-architect/SKILL.md"
+    },
+    {
+      "name": "wiki-changelog",
+      "description": "Analyzes git commit history and generates structured changelogs categorized by change type. Use when the user asks about recent changes, wants a changelog, or needs to understand what changed in th...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/wiki-changelog/SKILL.md"
+    },
+    {
+      "name": "wiki-onboarding",
+      "description": "Generates two complementary onboarding guides \\u2014 a Principal-Level architectural deep-dive and a Zero-to-Hero contributor walkthrough. Use when the user wants onboarding documentation fo...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/wiki-onboarding/SKILL.md"
+    },
+    {
+      "name": "wiki-page-writer",
+      "description": "Generates rich technical documentation pages with dark-mode Mermaid diagrams, source code citations, and first-principles depth. Use when writing documentation, generating wiki pages, creating tech...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/wiki-page-writer/SKILL.md"
+    },
+    {
+      "name": "wiki-qa",
+      "description": "Answers questions about a code repository using source file analysis. Use when the user asks a question about how something works, wants to understand a component, or needs help navigating the code...",
+      "tags": [
+        "testing"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/wiki-qa/SKILL.md"
+    },
+    {
+      "name": "wiki-researcher",
+      "description": "Conducts multi-turn iterative deep research on specific topics within a codebase with zero tolerance for shallow analysis. Use when the user wants an in-depth investigation, needs to understand how...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/wiki-researcher/SKILL.md"
+    },
+    {
+      "name": "wiki-vitepress",
+      "description": "Packages generated wiki Markdown into a VitePress static site with dark theme, dark-mode Mermaid diagrams with click-to-zoom, and production build output. Use when the user wants to create a browsa...",
+      "tags": [
+        "git"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/wiki-vitepress/SKILL.md"
+    },
+    {
+      "name": "workflow-automation",
+      "description": "Workflow automation is the infrastructure that makes AI agents reliable. Without durable execution, a network hiccup during a 10-step payment flow means lost money and angry customers. With it, wor...",
+      "tags": [
+        "git"
+      ],
+      "source": "vibeship-spawner-skills (Apache 2.0)",
+      "risk": "unknown",
+      "path": ".agent/skills/workflow-automation/SKILL.md"
+    },
+    {
+      "name": "workflow-orchestration-patterns",
+      "description": "Design durable workflows with Temporal for distributed systems. Covers workflow vs activity separation, saga patterns, state management, and determinism constraints. Use when building long-running ...",
+      "tags": [
+        "git",
+        "architecture"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/workflow-orchestration-patterns/SKILL.md"
+    },
+    {
+      "name": "writing-plans",
+      "description": "Use when you have a spec or requirements for a multi-step task, before touching code",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/writing-plans/SKILL.md"
+    },
+    {
+      "name": "xss-html-injection",
+      "description": "This skill should be used when the user asks to \\\"test for XSS vulnerabilities\\\", \\\"perform cross-site scripting attacks\\\", \\\"identify HTML injection flaws\\\", \\\"exploit client-side injection...",
+      "tags": [
+        "security"
+      ],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/xss-html-injection/SKILL.md"
+    },
+    {
+      "name": "zustand-store-ts",
+      "description": "Create Zustand stores with TypeScript, subscribeWithSelector middleware, and proper state/action separation. Use when building React state management, creating global stores, or implementing reacti...",
+      "tags": [],
+      "source": "community",
+      "risk": "unknown",
+      "path": ".agent/skills/zustand-store-ts/SKILL.md"
+    }
+  ]
+}
