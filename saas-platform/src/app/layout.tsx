@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Outfit, Inter, Source_Serif_4 } from 'next/font/google'
+import { Outfit, Inter, Source_Serif_4, Fraunces, DM_Serif_Display, PT_Sans, Plus_Jakarta_Sans, Figtree } from 'next/font/google'
 import { Providers } from '@/components/providers'
 import './globals.css'
 
@@ -24,6 +24,41 @@ const sourceSerif4 = Source_Serif_4({
   display: 'swap',
 })
 
+const fraunces = Fraunces({
+  variable: '--font-fraunces',
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  display: 'swap',
+})
+
+const dmSerifDisplay = DM_Serif_Display({
+  variable: '--font-dm-serif',
+  subsets: ['latin'],
+  weight: ['400'],
+  display: 'swap',
+})
+
+const ptSans = PT_Sans({
+  variable: '--font-pt-sans',
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  display: 'swap',
+})
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: '--font-jakarta',
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  display: 'swap',
+})
+
+const figtree = Figtree({
+  variable: '--font-figtree',
+  subsets: ['latin'],
+  weight: ['600'],
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
   title: 'Beamix — Stop Being Invisible to AI Search',
   description:
@@ -37,7 +72,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} ${inter.variable} ${sourceSerif4.variable} antialiased`}>
+      <body className={`${outfit.variable} ${inter.variable} ${sourceSerif4.variable} ${fraunces.variable} ${dmSerifDisplay.variable} ${ptSans.variable} ${plusJakartaSans.variable} ${figtree.variable} antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>

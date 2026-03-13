@@ -1,44 +1,38 @@
 'use client'
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { FileText, HelpCircle, Code2, Link2 } from 'lucide-react'
+import { FileText, BookOpen, HelpCircle, Code2, Search, Star } from 'lucide-react'
 
 const cards = [
   {
     icon: FileText,
     title: 'Content Writer',
-    description:
-      'Generates AI-optimized business descriptions that get you mentioned across ChatGPT, Gemini, and Perplexity.',
-    gradient: 'from-amber-50 to-orange-50',
-    iconColor: '#F59E0B',
-    accent: '#FEF3C7',
+    description: 'Writes GEO-optimized pages that AI engines cite.',
+  },
+  {
+    icon: BookOpen,
+    title: 'Blog Writer',
+    description: 'Long-form articles targeting the exact queries AI answers.',
   },
   {
     icon: HelpCircle,
-    title: 'FAQ Generator',
-    description:
-      'Creates Q&A content structured to match how AI engines surface answers for your industry.',
-    gradient: 'from-green-50 to-emerald-50',
-    iconColor: '#4A7C59',
-    accent: '#F0FDF4',
+    title: 'FAQ Agent',
+    description: 'Conversational Q&A in the format AI searches.',
   },
   {
     icon: Code2,
     title: 'Schema Optimizer',
-    description:
-      'Injects structured data markup that helps AI search engines understand and rank your business.',
-    gradient: 'from-blue-50 to-indigo-50',
-    iconColor: '#3B82F6',
-    accent: '#EFF6FF',
+    description: 'JSON-LD structured data — generated in 2 minutes, ready to install.',
   },
   {
-    icon: Link2,
-    title: 'Citation Builder',
-    description:
-      'Identifies and builds the citation sources AI engines trust most to verify and recommend your business.',
-    gradient: 'from-purple-50 to-violet-50',
-    iconColor: '#8B5CF6',
-    accent: '#F5F3FF',
+    icon: Search,
+    title: 'Competitor Intelligence',
+    description: 'Why they outrank you. Specific. Actionable.',
+  },
+  {
+    icon: Star,
+    title: 'Review Analyzer',
+    description: 'What your reviews signal to AI — and how to improve it.',
   },
 ]
 
@@ -47,56 +41,62 @@ export function HpFeatureCards() {
   const inView = useInView(ref, { once: true, amount: 0.2 })
 
   return (
-    <section ref={ref} className="py-20 px-6">
+    <section ref={ref} className="pt-[120px] pb-[120px] xl:pt-[200px] xl:pb-[200px] px-6">
       <div className="max-w-6xl mx-auto">
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={inView ? { opacity: 1 } : {}}
+          className="text-[#023c65] text-sm font-medium tracking-widest uppercase mb-4 text-center"
+          style={{ fontFamily: 'var(--font-inter)' }}
+        >
+          THE AGENTS
+        </motion.p>
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-4xl font-semibold text-[#1A1A17] text-center mb-14 leading-tight"
+          className="text-4xl font-normal text-[#141310] text-center mb-14 leading-tight max-w-2xl mx-auto"
           style={{ fontFamily: 'var(--font-serif)' }}
         >
-          Scan. Diagnose. Fix.
-          <br />
-          In that order.
+          Other platforms show you where you&apos;re invisible.
+          Beamix deploys agents that fix it.
         </motion.h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {cards.map(({ icon: Icon, title, description, gradient, iconColor, accent }, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {cards.map(({ icon: Icon, title, description }, i) => (
             <motion.div
               key={title}
               initial={{ opacity: 0, y: 30 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="bg-white rounded-2xl shadow-sm border border-[#E8E6E1] overflow-hidden hover:shadow-md transition-shadow"
+              transition={{ duration: 0.5, delay: i * 0.08 }}
+              className="bg-white border border-[#F9FAFB] rounded-2xl p-6 hover:shadow-sm transition-shadow"
             >
-              {/* Card illustration header */}
-              <div
-                className={`h-40 bg-gradient-to-br ${gradient} flex items-center justify-center`}
+              <div className="w-10 h-10 rounded-xl bg-[#f0f5fa] flex items-center justify-center mb-4">
+                <Icon size={20} color="#023c65" />
+              </div>
+              <h3
+                className="text-base font-semibold text-[#141310] mb-2"
+                style={{ fontFamily: 'var(--font-serif)' }}
               >
-                <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                  style={{ background: accent }}
-                >
-                  <Icon size={28} color={iconColor} />
-                </div>
-              </div>
-              <div className="p-5">
-                <h3
-                  className="text-base font-semibold text-[#1A1A17] mb-2"
-                  style={{ fontFamily: 'var(--font-serif)' }}
-                >
-                  {title}
-                </h3>
-                <p
-                  className="text-sm text-[#6B6B63] leading-relaxed"
-                  style={{ fontFamily: 'var(--font-inter)' }}
-                >
-                  {description}
-                </p>
-              </div>
+                {title}
+              </h3>
+              <p
+                className="text-sm text-[#78716C] leading-relaxed"
+                style={{ fontFamily: 'var(--font-inter)' }}
+              >
+                {description}
+              </p>
             </motion.div>
           ))}
         </div>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={inView ? { opacity: 1 } : {}}
+          transition={{ delay: 0.6 }}
+          className="text-center text-sm text-[#78716C] mt-8"
+          style={{ fontFamily: 'var(--font-inter)' }}
+        >
+          + 10 more agents
+        </motion.p>
       </div>
     </section>
   )

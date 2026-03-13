@@ -1,0 +1,403 @@
+{
+  "version": "2.8",
+  "children": [
+    {
+      "type": "frame",
+      "id": "KCFif",
+      "x": 0,
+      "y": 0,
+      "name": "Frame",
+      "width": 1439,
+      "height": 12001,
+      "layout": "none",
+      "children": [
+        {
+          "type": "group",
+          "id": "gcEko",
+          "x": 0,
+          "y": 0,
+          "children": [
+            {
+              "type": "path",
+              "id": "A6OoE",
+              "x": 0,
+              "y": 0,
+              "geometry": "M0 0l1440 0 0 12001-1440 0 0-12001z",
+              "fill": "#F9F9F8",
+              "width": 1440,
+              "height": 12001
+            },
+            {
+              "type": "path",
+              "id": "idKRZ",
+              "x": 397,
+              "y": 3123,
+              "geometry": "M0 0l646 0 0 68-646 0 0-68z",
+              "fill": "#9E9E9E",
+              "width": 646,
+              "height": 68
+            },
+            {
+              "type": "path",
+              "id": "O2kqG",
+              "x": 0,
+              "y": 630,
+              "geometry": "M0 0l1440 0 0 899-1440 0 0-899z",
+              "fill": "#D9D9D9",
+              "width": 1440,
+              "height": 899
+            },
+            {
+              "type": "path",
+              "id": "fwyqK",
+              "x": 0,
+              "y": 3507,
+              "geometry": "M0 0l1440 0 0 1658-1440 0 0-1658z m2 4344l1438 0 0 1048-1438 0 0-1048z",
+              "fill": "#E4E5E0",
+              "width": 1440,
+              "height": 5392
+            },
+            {
+              "type": "path",
+              "id": "eYu0O",
+              "x": 99,
+              "y": 409,
+              "geometry": "M0 0l625 0 0 54-625 0 0-54z",
+              "fill": "#D9D9D9",
+              "width": 625,
+              "height": 54
+            },
+            {
+              "type": "path",
+              "id": "dnffl",
+              "x": 99,
+              "y": 506,
+              "geometry": "M0 0l524 0 0 54-524 0 0-54z",
+              "fill": "#9E9E9E",
+              "width": 524,
+              "height": 54
+            },
+            {
+              "type": "path",
+              "id": "iM2aA",
+              "x": 98,
+              "y": 29,
+              "geometry": "M0 151l954 0 0 207-954 0 0-207z m1024 297l259 0 0 83-259 0 0-83z m118-68l141 0 0 54-141 0 0-54z m-1141-380l1219 0 0 67-1219 0 0-67z m246 9773l760 0 0 68-760 0 0-68z",
+              "fill": "#D9D9D9",
+              "width": 1283,
+              "height": 9841
+            },
+            {
+              "type": "path",
+              "id": "CJMMP",
+              "x": 834,
+              "y": 5257,
+              "geometry": "M0 0l458 0 0 335-458 0 0-335z",
+              "width": 458,
+              "height": 335
+            },
+            {
+              "type": "path",
+              "id": "QcIV8",
+              "x": 107,
+              "y": 5913,
+              "geometry": "M0 0l406 0 0 1658-406 0 0-1658z",
+              "width": 406,
+              "height": 1658
+            },
+            {
+              "type": "path",
+              "id": "fmpY0",
+              "x": 517,
+              "y": 6083,
+              "geometry": "M0 0l406 0 0 1658-406 0 0-1658z",
+              "width": 406,
+              "height": 1658
+            },
+            {
+              "type": "path",
+              "id": "a2Qkp",
+              "x": 0,
+              "y": 11224,
+              "geometry": "M0 0l1440 0 0 777-1440 0 0-777z",
+              "fill": "#D9D9D9",
+              "width": 1440,
+              "height": 777
+            },
+            {
+              "type": "path",
+              "id": "teQKV",
+              "x": 927,
+              "y": 5913,
+              "geometry": "M0 0l406 0 0 1658-406 0 0-1658z",
+              "width": 406,
+              "height": 1658
+            },
+            {
+              "type": "path",
+              "id": "b9QWf",
+              "x": 674,
+              "y": 9034,
+              "geometry": "M0 0l371 0 0 158-371 0 0-158z",
+              "fill": "#D9D9D9",
+              "width": 371,
+              "height": 158
+            },
+            {
+              "type": "path",
+              "id": "KKSmb",
+              "x": 80,
+              "y": 9936,
+              "geometry": "M0 0l400 0 0 678-400 0 0-678z m440 0l400 0 0 678-400 0 0-678z",
+              "fill": "#B7B7B7",
+              "width": 840,
+              "height": 678
+            },
+            {
+              "type": "path",
+              "id": "nR5Ch",
+              "x": 189,
+              "y": 3738,
+              "geometry": "M612 0l475 0 0 68-475 0 0-68z m0 1067l475 0 0 68-475 0 0-68z m-612 543l475 0 0 68-475 0 0-68z m151 371l760 0 0 68-760 0 0-68z m-151-1417l475 0 0 68-475 0 0-68z",
+              "fill": "#D9D9D9",
+              "width": 1087,
+              "height": 2049
+            },
+            {
+              "type": "path",
+              "id": "lhzt0",
+              "x": 960,
+              "y": 9936,
+              "geometry": "M0 0l400 0 0 678-400 0 0-678z",
+              "fill": "#B7B7B7",
+              "width": 400,
+              "height": 678
+            },
+            {
+              "type": "path",
+              "id": "2Gdh8",
+              "x": 116,
+              "y": 746,
+              "geometry": "M0 0l1209 0 0 667-1209 0 0-667z",
+              "fill": "#9E9E9E",
+              "width": 1209,
+              "height": 667
+            },
+            {
+              "type": "path",
+              "id": "a3rEs",
+              "x": 211,
+              "y": 1620,
+              "geometry": "M0 0l1018 0 0 188-1018 0 0-188z",
+              "fill": "#D9D9D9",
+              "width": 1018,
+              "height": 188
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 12,
+              "id": "F0ciH",
+              "x": 275,
+              "y": 247,
+              "fill": "#9E9E9E",
+              "width": 63,
+              "height": 61
+            },
+            {
+              "type": "path",
+              "id": "EqtWa",
+              "x": 343,
+              "y": 2269,
+              "geometry": "M0 0l754 0 0 79-754 0 0-79z",
+              "fill": "#D9D9D9",
+              "width": 754,
+              "height": 79
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 5,
+              "id": "MjSCC",
+              "x": 963,
+              "y": 3891,
+              "rotation": 90,
+              "fill": "#9E9E9E",
+              "width": 51,
+              "height": 151
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 5,
+              "id": "7sv6h",
+              "x": 189,
+              "y": 5493,
+              "rotation": 90,
+              "fill": "#9E9E9E",
+              "width": 51,
+              "height": 151
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 8,
+              "id": "SN5tr",
+              "x": 295,
+              "y": 10755,
+              "fill": "#B7B7B7",
+              "width": 317,
+              "height": 193
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 8,
+              "id": "CrulA",
+              "x": 0,
+              "y": 10755,
+              "fill": "#B7B7B7",
+              "width": 272,
+              "height": 193
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 8,
+              "id": "7IrRJ",
+              "x": 137,
+              "y": 10960,
+              "fill": "#B7B7B7",
+              "width": 317,
+              "height": 193
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 8,
+              "id": "9PVeE",
+              "x": 0,
+              "y": 10960,
+              "fill": "#B7B7B7",
+              "width": 114,
+              "height": 193
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 8,
+              "id": "XocjA",
+              "x": 633,
+              "y": 10755,
+              "fill": "#B7B7B7",
+              "width": 317,
+              "height": 193
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 8,
+              "id": "skI6F",
+              "x": 475,
+              "y": 10960,
+              "fill": "#B7B7B7",
+              "width": 317,
+              "height": 193
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 8,
+              "id": "L4jW3",
+              "x": 48,
+              "y": 11731,
+              "fill": "#B7B7B7",
+              "width": 902,
+              "height": 270
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 8,
+              "id": "ZG5rr",
+              "x": 971,
+              "y": 10755,
+              "fill": "#B7B7B7",
+              "width": 317,
+              "height": 193
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 8,
+              "id": "ag4ag",
+              "x": 1316,
+              "y": 10755,
+              "fill": "#B7B7B7",
+              "width": 124,
+              "height": 193
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 8,
+              "id": "qnzkB",
+              "x": 813,
+              "y": 10960,
+              "fill": "#B7B7B7",
+              "width": 317,
+              "height": 193
+            },
+            {
+              "type": "rectangle",
+              "cornerRadius": 8,
+              "id": "Fiy2g",
+              "x": 1160,
+              "y": 10960,
+              "fill": "#B7B7B7",
+              "width": 280,
+              "height": 193
+            },
+            {
+              "type": "path",
+              "id": "W2pZy",
+              "x": 343,
+              "y": 2951,
+              "geometry": "M0 0l754 0 0 79-754 0 0-79z",
+              "fill": "#D9D9D9",
+              "width": 754,
+              "height": 79
+            },
+            {
+              "type": "path",
+              "id": "xHnta",
+              "x": 107,
+              "y": 1900,
+              "geometry": "M240 541l745 0 0 441-745 0 0-441z m-158 1198l505 0 0 376-505 0 0-376z m597 509l505 0 0 376-505 0 0-376z m-597 503l505 0 0 376-505 0 0-376z m622 577l505 0 0 376-505 0 0-376z m124 685l395 0 0 534-395 0 0-534z m-828 0l395 0 0 534-395 0 0-534z m414 170l395 0 0 534-395 0 0-534z m414 392l395 0 0 534-395 0 0-534z m-828 0l395 0 0 534-395 0 0-534z m414 170l395 0 0 534-395 0 0-534z m414 392l395 0 0 534-395 0 0-534z m-828 0l395 0 0 534-395 0 0-534z m414 170l395 0 0 534-395 0 0-534z m-174 787l745 0 0 592-745 0 0-592z m347-4723l51 0 0 236-51 0 0-236z m-347-1371l745 0 0 273-745 0 0-273z",
+              "fill": "#9E9E9E",
+              "width": 1223,
+              "height": 6686
+            },
+            {
+              "type": "path",
+              "id": "d3kLs",
+              "x": 347,
+              "y": 8684,
+              "geometry": "M0 0l745 0 0 68-745 0 0-68z",
+              "fill": "#F3F3F3",
+              "width": 745,
+              "height": 68
+            },
+            {
+              "type": "path",
+              "id": "C30ah",
+              "x": 6,
+              "y": 8984,
+              "geometry": "M0 0l1438 0 0 751-1438 0 0-751z",
+              "fill": "#D9D9D9",
+              "width": 1438,
+              "height": 751
+            },
+            {
+              "type": "path",
+              "id": "50rp2",
+              "x": 108,
+              "y": 9088,
+              "geometry": "M4 445l278 0 0 100-278 0 0-100z m952-3l278 0 0 100-278 0 0-100z m-956-442l449 0 0 176-449 0 0-176z",
+              "fill": "#9E9E9E",
+              "width": 1234,
+              "height": 545
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
