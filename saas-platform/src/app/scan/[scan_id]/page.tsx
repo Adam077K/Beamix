@@ -24,10 +24,10 @@ export default async function ScanResultsPage({ params }: ScanResultsPageProps) 
 
 function ScanResultsLoading() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)]">
+    <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="text-center">
-        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[var(--color-accent)] border-t-transparent" />
-        <p className="mt-4 text-[var(--color-muted)]">Loading scan...</p>
+        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <p className="mt-4 text-muted-foreground">Loading scan...</p>
       </div>
     </div>
   )
