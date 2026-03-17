@@ -21,9 +21,11 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/ui/page-header'
 import { formatDistanceToNow } from 'date-fns'
 import { AgentModal, type AgentExecuteParams } from './agent-modal'
 import { agentTypeToSlug } from '@/lib/agents/config'
+import { cn } from '@/lib/utils'
 
 interface AgentDef {
   type: string
@@ -41,7 +43,7 @@ const AGENTS: AgentDef[] = [
     description: 'Generate AI-optimized website content, landing pages, and product descriptions that rank in AI search.',
     icon: FileText,
     credits: 3,
-    color: 'bg-orange-100 text-orange-700',
+    color: 'bg-[#FFF5F2] text-[#FF3C00]',
   },
   {
     type: 'blog_writer',
@@ -49,7 +51,7 @@ const AGENTS: AgentDef[] = [
     description: 'Write SEO and AI-optimized blog posts that establish your expertise and improve citations.',
     icon: BookOpen,
     credits: 5,
-    color: 'bg-blue-100 text-blue-700',
+    color: 'bg-blue-50 text-blue-600',
   },
   {
     type: 'review_analyzer',
@@ -57,7 +59,7 @@ const AGENTS: AgentDef[] = [
     description: 'Analyze your online reviews across platforms and generate response templates to boost sentiment.',
     icon: Star,
     credits: 2,
-    color: 'bg-amber-100 text-amber-700',
+    color: 'bg-amber-50 text-amber-600',
   },
   {
     type: 'schema_optimizer',
@@ -65,7 +67,7 @@ const AGENTS: AgentDef[] = [
     description: 'Generate JSON-LD structured data markup for your website to help AI engines understand your business.',
     icon: Code2,
     credits: 2,
-    color: 'bg-purple-100 text-purple-700',
+    color: 'bg-purple-50 text-purple-600',
   },
   {
     type: 'social_strategy',
@@ -73,7 +75,7 @@ const AGENTS: AgentDef[] = [
     description: 'Create a social media strategy designed to build the authority signals AI engines look for.',
     icon: Share2,
     credits: 3,
-    color: 'bg-pink-100 text-pink-700',
+    color: 'bg-pink-50 text-pink-600',
   },
   {
     type: 'competitor_intelligence',
@@ -81,7 +83,7 @@ const AGENTS: AgentDef[] = [
     description: 'Deep-dive analysis of how your competitors rank in AI search and what strategies they use.',
     icon: Search,
     credits: 4,
-    color: 'bg-orange-100 text-orange-700',
+    color: 'bg-[#FFF5F2] text-[#FF3C00]',
   },
   {
     type: 'faq_agent',
@@ -89,7 +91,7 @@ const AGENTS: AgentDef[] = [
     description: 'Discover what questions potential customers ask AI engines about your industry and location.',
     icon: MessageSquare,
     credits: 2,
-    color: 'bg-green-100 text-green-700',
+    color: 'bg-green-50 text-green-600',
   },
 ]
 
@@ -139,31 +141,26 @@ export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-[var(--color-text)]">
-            AI Agents
-          </h1>
-          <p className="text-sm text-[var(--color-muted)]">
-            Run AI-powered agents to improve your visibility
-          </p>
+      <PageHeader
+        title="AI Agents"
+        description="Your team of AI agents ready to improve your visibility"
+      >
+        <div className="flex items-center gap-2 rounded-xl bg-background px-4 py-2 border border-border">
+          <Zap className="h-4 w-4 text-primary" />
+          <span className="text-sm font-semibold text-foreground">{totalCredits}</span>
+          <span className="text-xs text-muted-foreground">credits</span>
         </div>
-        <div className="flex items-center gap-2 rounded-xl bg-[var(--color-bg)] px-4 py-2 border border-[var(--color-card-border)]">
-          <Zap className="h-4 w-4 text-[var(--color-accent-warm)]" />
-          <span className="text-sm font-semibold text-[var(--color-text)]">{totalCredits}</span>
-          <span className="text-xs text-[var(--color-muted)]">credits</span>
-        </div>
-      </div>
+      </PageHeader>
 
       {/* Agent cards grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {AGENTS.map((agent) => {
           const Icon = agent.icon
           const canAfford = totalCredits >= agent.credits
           return (
             <Card
               key={agent.type}
-              className="card-interactive"
+              className="relative bg-card rounded-[20px] border border-border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
             >
               <CardContent className="relative p-5">
                 {/* Credits badge in top right */}
@@ -171,26 +168,27 @@ export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) 
                   {agent.credits} credits
                 </Badge>
                 <div className="flex items-start gap-3">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${agent.color}`}>
+                  <div className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl', agent.color)}>
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0 pr-16">
-                    <h3 className="font-display text-base font-semibold text-[var(--color-text)]">
+                    <h3 className="text-base font-medium text-foreground">
                       {agent.name}
                     </h3>
                   </div>
                 </div>
-                <p className="mt-3 text-sm text-[var(--color-muted)] line-clamp-3">
+                <p className="mt-3 text-sm text-muted-foreground line-clamp-3">
                   {agent.description}
                 </p>
                 <div className="mt-4 flex gap-2">
                   <Button
                     size="sm"
-                    className={`w-full ${
+                    className={cn(
+                      'w-full',
                       canAfford
-                        ? 'bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90'
-                        : 'bg-[var(--color-card-border)] text-[var(--color-muted)] cursor-not-allowed'
-                    }`}
+                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                        : 'bg-muted text-muted-foreground cursor-not-allowed'
+                    )}
                     disabled={!canAfford}
                     onClick={(e) => {
                       e.stopPropagation()
@@ -217,28 +215,36 @@ export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) 
 
       {/* Recent executions */}
       {recentExecutions.length > 0 && (
-        <Card>
+        <Card className="bg-card rounded-[20px] border border-border shadow-sm">
           <CardContent className="p-6">
-            <h2 className="mb-4 font-display text-lg font-semibold text-[var(--color-text)]">
+            <h2 className="mb-4 text-lg font-medium text-foreground">
               Recent Runs
             </h2>
             <div className="space-y-3">
               {recentExecutions.map((exec) => {
                 const agentDef = AGENTS.find((a) => a.type === exec.agent_type)
                 return (
-                  <div key={exec.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3 transition-colors duration-150 hover:bg-[var(--color-card-border)]/30">
-                    {exec.status === 'completed' && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />}
-                    {exec.status === 'running' && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[var(--color-accent)]" />}
-                    {exec.status === 'failed' && <XCircle className="h-4 w-4 shrink-0 text-red-500" />}
-                    {exec.status === 'pending' && <Clock className="h-4 w-4 shrink-0 text-[var(--color-muted)]" />}
-                    {!['completed', 'running', 'failed', 'pending'].includes(exec.status) && (
-                      <Clock className="h-4 w-4 shrink-0 text-[var(--color-muted)]" />
+                  <div
+                    key={exec.id}
+                    className="flex items-center gap-3 rounded-xl bg-muted/50 p-3 transition-colors duration-150 hover:bg-muted"
+                  >
+                    {exec.status === 'completed' && (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-[#10B981]" />
+                    )}
+                    {exec.status === 'running' && (
+                      <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
+                    )}
+                    {exec.status === 'failed' && (
+                      <XCircle className="h-4 w-4 shrink-0 text-destructive" />
+                    )}
+                    {!['completed', 'running', 'failed'].includes(exec.status) && (
+                      <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[var(--color-text)] truncate">
+                      <p className="text-sm font-medium text-foreground truncate">
                         {agentDef?.name ?? exec.agent_type}
                       </p>
-                      <p className="text-xs text-[var(--color-muted)]">
+                      <p className="text-xs text-muted-foreground">
                         {exec.credits_cost} credits · {formatDistanceToNow(new Date(exec.created_at), { addSuffix: true })}
                       </p>
                     </div>

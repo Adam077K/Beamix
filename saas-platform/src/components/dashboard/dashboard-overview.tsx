@@ -18,21 +18,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { PageHeader } from '@/components/ui/page-header'
+import { ScoreBadge, getScoreLevel } from '@/components/ui/score-badge'
+import { EmptyState } from '@/components/ui/empty-state'
 import { formatDistanceToNow } from 'date-fns'
-
-function getScoreColor(score: number): string {
-  if (score >= 75) return 'var(--score-excellent)'
-  if (score >= 50) return 'var(--score-good)'
-  if (score >= 25) return 'var(--score-fair)'
-  return 'var(--score-critical)'
-}
-
-function getScoreLabel(score: number): string {
-  if (score >= 75) return 'Excellent'
-  if (score >= 50) return 'Good'
-  if (score >= 25) return 'Fair'
-  return 'Critical'
-}
+import { cn } from '@/lib/utils'
 
 const AGENT_LABELS: Record<string, string> = {
   content_writer: 'Content Writer',
@@ -102,138 +93,155 @@ export function DashboardOverview({
   recentScans,
 }: DashboardOverviewProps) {
   const hasData = score !== null
+  const creditsUsed = monthlyCredits - totalCredits
+  const creditsPercent = monthlyCredits > 0 ? Math.round((creditsUsed / monthlyCredits) * 100) : 0
+  const scoreInfo = hasData && score !== null ? getScoreLevel(score) : null
 
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div>
-        <h1 className="font-display text-2xl font-bold text-[var(--color-text)]">
-          {businessName}
-        </h1>
-        <p className="text-sm text-[var(--color-muted)]">
-          {hasData ? 'Your AI visibility dashboard' : 'Complete your first scan to see insights'}
-        </p>
-      </div>
+      <PageHeader
+        title="Overview"
+        description={hasData ? 'Your AI search visibility at a glance' : 'Complete your first scan to see insights'}
+      />
 
       {/* Zone 1: Hero metrics */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Visibility Score — spans 2 columns on lg */}
-        <Card className="lg:col-span-2 overflow-hidden">
-          <div className="h-1 rounded-t-[20px] bg-gradient-to-r from-orange-400 to-[#FF3C00]" />
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[var(--color-muted)]">Visibility Score</span>
-              <BarChart3 className="h-4 w-4 text-[var(--color-accent)]" />
-            </div>
-            <div className="mt-2 flex items-end gap-2">
-              <span
-                className="font-display text-3xl font-bold"
-                style={{ color: hasData ? getScoreColor(score) : 'var(--color-muted)' }}
-              >
-                {hasData ? score : '--'}
-              </span>
-              <span className="mb-1 text-sm text-[var(--color-muted)]">/ 100</span>
-            </div>
-            {hasData && (
-              <div className="mt-1 flex items-center gap-1 text-xs">
-                {scoreDelta !== null && scoreDelta > 0 && (
-                  <>
-                    <TrendingUp className="h-3 w-3 text-emerald-500" />
-                    <span className="text-emerald-600">+{scoreDelta} from last scan</span>
-                  </>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+
+        {/* Visibility Score — spans full width on md, 1 col on lg */}
+        <Card className="bg-card rounded-[20px] border border-border shadow-sm p-6 lg:col-span-1">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">Visibility Score</span>
+            <BarChart3 className="h-4 w-4 text-primary" aria-hidden="true" />
+          </div>
+          <div className="mt-4">
+            {hasData && score !== null ? (
+              <>
+                <ScoreBadge score={score} size="lg" />
+                {scoreDelta !== null && (
+                  <div className="mt-2 flex items-center gap-1 text-xs">
+                    {scoreDelta > 0 && (
+                      <>
+                        <TrendingUp className="h-3 w-3 text-emerald-500" aria-hidden="true" />
+                        <span className="text-emerald-600">+{scoreDelta} from last scan</span>
+                      </>
+                    )}
+                    {scoreDelta < 0 && (
+                      <>
+                        <TrendingDown className="h-3 w-3 text-red-500" aria-hidden="true" />
+                        <span className="text-red-600">{scoreDelta} from last scan</span>
+                      </>
+                    )}
+                    {scoreDelta === 0 && (
+                      <>
+                        <Minus className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
+                        <span className="text-muted-foreground">No change</span>
+                      </>
+                    )}
+                  </div>
                 )}
-                {scoreDelta !== null && scoreDelta < 0 && (
-                  <>
-                    <TrendingDown className="h-3 w-3 text-red-500" />
-                    <span className="text-red-600">{scoreDelta} from last scan</span>
-                  </>
+                {lastScanned && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Scanned {formatDistanceToNow(new Date(lastScanned), { addSuffix: true })}
+                  </p>
                 )}
-                {scoreDelta !== null && scoreDelta === 0 && (
-                  <>
-                    <Minus className="h-3 w-3 text-[var(--color-muted)]" />
-                    <span className="text-[var(--color-muted)]">No change</span>
-                  </>
-                )}
-                {scoreDelta === null && (
-                  <Badge className="text-xs" style={{ backgroundColor: getScoreColor(score), color: '#fff' }}>
-                    {getScoreLabel(score)}
-                  </Badge>
-                )}
+              </>
+            ) : (
+              <div className="space-y-2">
+                <span className="text-3xl font-semibold text-muted-foreground">--</span>
+                <p className="text-xs text-muted-foreground">Run a scan to get your score</p>
               </div>
             )}
-          </CardContent>
+          </div>
         </Card>
 
-        {/* Mentions */}
-        <Card className="overflow-hidden">
-          <div className="h-1 rounded-t-[20px] bg-gradient-to-r from-orange-400 to-orange-500" />
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[var(--color-muted)]">AI Mentions</span>
-              <Zap className="h-4 w-4 text-[var(--color-accent-warm)]" />
-            </div>
-            <div className="mt-2">
-              <span className="font-display text-3xl font-bold text-[var(--color-text)]">
-                {hasData ? mentionCount : '--'}
-              </span>
-              <span className="ml-1 text-sm text-[var(--color-muted)]">/ 4 engines</span>
-            </div>
-          </CardContent>
+        {/* AI Mentions */}
+        <Card className="bg-card rounded-[20px] border border-border shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">AI Mentions</span>
+            <Zap className="h-4 w-4 text-primary" aria-hidden="true" />
+          </div>
+          <div className="mt-4">
+            <span className="text-3xl font-semibold text-foreground">
+              {hasData ? mentionCount : '--'}
+            </span>
+            <span className="ml-1 text-sm text-muted-foreground">/ 4 engines</span>
+          </div>
+          {hasData && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {mentionCount === 0
+                ? 'Not appearing in any AI engine'
+                : mentionCount === 1
+                ? 'Appearing in 1 AI engine'
+                : `Appearing in ${mentionCount} AI engines`}
+            </p>
+          )}
         </Card>
 
-        {/* Credits */}
-        <Card className="overflow-hidden">
-          <div className="h-1 rounded-t-[20px] bg-gradient-to-r from-emerald-400 to-emerald-500" />
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[var(--color-muted)]">Credits</span>
-              <Bot className="h-4 w-4 text-emerald-500" />
+        {/* Agent Credits */}
+        <Card className="bg-card rounded-[20px] border border-border shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">Agent Credits</span>
+            <Bot className="h-4 w-4 text-emerald-500" aria-hidden="true" />
+          </div>
+          <div className="mt-4">
+            <span className="text-3xl font-semibold text-foreground">{totalCredits}</span>
+            <span className="ml-1 text-sm text-muted-foreground">/ {monthlyCredits} monthly</span>
+          </div>
+          {monthlyCredits > 0 && (
+            <div className="mt-3 space-y-1">
+              <Progress
+                value={creditsPercent}
+                className="h-1.5"
+                aria-label={`${creditsUsed} of ${monthlyCredits} agent credits used`}
+              />
+              <p className="text-xs text-muted-foreground">
+                {creditsUsed} of {monthlyCredits} used
+              </p>
             </div>
-            <div className="mt-2">
-              <span className="font-display text-3xl font-bold text-[var(--color-text)]">
-                {totalCredits}
-              </span>
-              <span className="ml-1 text-sm text-[var(--color-muted)]">/ {monthlyCredits} monthly</span>
-            </div>
-          </CardContent>
+          )}
         </Card>
       </div>
 
-      {/* Zone 2 + 3: Action Queue + Engine Status */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Action Queue (recommendations) */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-display text-lg">
-              <AlertTriangle className="h-5 w-5 text-[var(--color-accent-warm)]" />
+      {/* Zone 2: Action Queue + Engine Status */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+
+        {/* Action Queue */}
+        <Card className="bg-card rounded-[20px] border border-border shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-medium">
+              <AlertTriangle className="h-4 w-4 text-primary" aria-hidden="true" />
               Action Queue
             </CardTitle>
           </CardHeader>
           <CardContent>
             {recommendations.length === 0 ? (
-              <p className="text-sm text-[var(--color-muted)]">
+              <p className="text-sm text-muted-foreground">
                 No pending actions. Run a scan to get personalized recommendations.
               </p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {recommendations.slice(0, 5).map((rec) => {
                   const style = PRIORITY_STYLES[rec.priority] ?? PRIORITY_STYLES.medium
                   return (
-                    <div key={rec.id} className="card-hover flex items-start gap-3 rounded-xl bg-[var(--color-bg)] p-3">
-                      <Badge className={`shrink-0 text-xs ${style.bg} ${style.text}`}>
+                    <div
+                      key={rec.id}
+                      className="flex items-start gap-3 rounded-xl bg-muted/50 p-3 transition-colors duration-150 hover:bg-muted"
+                    >
+                      <Badge className={cn('shrink-0 text-xs', style.bg, style.text)}>
                         {rec.priority}
                       </Badge>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[var(--color-text)] truncate">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">
                           {rec.title}
                         </p>
-                        <p className="text-xs text-[var(--color-muted)] line-clamp-1">
+                        <p className="line-clamp-1 text-xs text-muted-foreground">
                           {rec.description}
                         </p>
                       </div>
                       {rec.suggested_agent && (
                         <Badge variant="outline" className="shrink-0 text-xs">
-                          <Bot className="mr-1 h-3 w-3" />
+                          <Bot className="mr-1 h-3 w-3" aria-hidden="true" />
                           Auto-fix
                         </Badge>
                       )}
@@ -246,7 +254,7 @@ export function DashboardOverview({
               <Link href="/dashboard/rankings" className="mt-4 block">
                 <Button variant="outline" size="sm" className="w-full">
                   View all recommendations
-                  <ArrowRight className="ml-1 h-3 w-3" />
+                  <ArrowRight className="ml-1 h-3 w-3" aria-hidden="true" />
                 </Button>
               </Link>
             )}
@@ -254,20 +262,20 @@ export function DashboardOverview({
         </Card>
 
         {/* Engine Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-display text-lg">
-              <BarChart3 className="h-5 w-5 text-[var(--color-accent)]" />
+        <Card className="bg-card rounded-[20px] border border-border shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-medium">
+              <BarChart3 className="h-4 w-4 text-primary" aria-hidden="true" />
               Engine Status
             </CardTitle>
           </CardHeader>
           <CardContent>
             {!hasData ? (
-              <p className="text-sm text-[var(--color-muted)]">
+              <p className="text-sm text-muted-foreground">
                 Run a scan to see per-engine results.
               </p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {(['chatgpt', 'gemini', 'perplexity', 'claude'] as const).map((engine) => {
                   const labels: Record<string, string> = {
                     chatgpt: 'ChatGPT',
@@ -282,12 +290,18 @@ export function DashboardOverview({
                     claude: 'bg-orange-100 text-orange-700',
                   }
                   return (
-                    <div key={engine} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3 transition-colors duration-150 hover:bg-[var(--color-card-border)]/30">
-                      <Badge className={`text-xs ${colors[engine]}`}>
+                    <div
+                      key={engine}
+                      className="flex items-center gap-3 rounded-xl bg-muted/50 p-3 transition-colors duration-150 hover:bg-muted"
+                    >
+                      <Badge className={cn('text-xs', colors[engine])}>
                         {labels[engine]}
                       </Badge>
                       <div className="flex-1" />
-                      <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-200 bg-emerald-50">
+                      <Badge
+                        variant="outline"
+                        className="text-xs text-emerald-600 border-emerald-200 bg-emerald-50"
+                      >
                         Active
                       </Badge>
                     </div>
@@ -298,51 +312,59 @@ export function DashboardOverview({
             <Link href="/dashboard/rankings" className="mt-4 block">
               <Button variant="outline" size="sm" className="w-full">
                 View detailed rankings
-                <ArrowRight className="ml-1 h-3 w-3" />
+                <ArrowRight className="ml-1 h-3 w-3" aria-hidden="true" />
               </Button>
             </Link>
           </CardContent>
         </Card>
       </div>
 
-      {/* Zone 4 + 5: Recent Activity + Scan History */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Zone 3: Recent Activity + Scan History */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+
         {/* Recent Agent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-display text-lg">
-              <Bot className="h-5 w-5 text-[var(--color-accent)]" />
+        <Card className="bg-card rounded-[20px] border border-border shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-medium">
+              <Bot className="h-4 w-4 text-primary" aria-hidden="true" />
               Recent Activity
             </CardTitle>
           </CardHeader>
           <CardContent>
             {recentAgents.length === 0 ? (
-              <div className="rounded-xl border-2 border-dashed border-[var(--color-card-border)] bg-[var(--color-bg)] py-6 text-center">
-                <Bot className="mx-auto h-8 w-8 text-[var(--color-card-border)]" />
-                <p className="mt-2 text-sm text-[var(--color-muted)]">
-                  No agent activity yet
-                </p>
-                <Link href="/dashboard/agents" className="mt-3 inline-block">
-                  <Button size="sm" className="bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90">
-                    Run your first agent
-                  </Button>
-                </Link>
-              </div>
+              <EmptyState
+                icon={Bot}
+                title="No agent activity yet"
+                description="Run an agent to start fixing your AI visibility gaps."
+                action={{
+                  label: 'Run your first agent',
+                  onClick: () => { window.location.href = '/dashboard/agents' },
+                }}
+              />
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {recentAgents.map((agent) => (
-                  <div key={agent.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3 transition-colors duration-150 hover:bg-[var(--color-card-border)]/30">
-                    {agent.status === 'completed' && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />}
-                    {agent.status === 'running' && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[var(--color-accent)]" />}
-                    {agent.status === 'failed' && <XCircle className="h-4 w-4 shrink-0 text-red-500" />}
-                    {!['completed', 'running', 'failed'].includes(agent.status) && (
-                      <Clock className="h-4 w-4 shrink-0 text-[var(--color-muted)]" />
+                  <div
+                    key={agent.id}
+                    className="flex items-center gap-3 rounded-xl bg-muted/50 p-3 transition-colors duration-150 hover:bg-muted"
+                  >
+                    {agent.status === 'completed' && (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" aria-hidden="true" />
                     )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[var(--color-text)] truncate">
+                    {agent.status === 'running' && (
+                      <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" aria-hidden="true" />
+                    )}
+                    {agent.status === 'failed' && (
+                      <XCircle className="h-4 w-4 shrink-0 text-destructive" aria-hidden="true" />
+                    )}
+                    {!['completed', 'running', 'failed'].includes(agent.status) && (
+                      <Clock className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">
                         {AGENT_LABELS[agent.agent_type] ?? agent.agent_type}
                       </p>
-                      <p className="text-xs text-[var(--color-muted)]">
+                      <p className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(agent.created_at), { addSuffix: true })}
                       </p>
                     </div>
@@ -357,7 +379,7 @@ export function DashboardOverview({
               <Link href="/dashboard/agents" className="mt-4 block">
                 <Button variant="outline" size="sm" className="w-full">
                   View all agents
-                  <ArrowRight className="ml-1 h-3 w-3" />
+                  <ArrowRight className="ml-1 h-3 w-3" aria-hidden="true" />
                 </Button>
               </Link>
             )}
@@ -365,44 +387,54 @@ export function DashboardOverview({
         </Card>
 
         {/* Scan History */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-display text-lg">
-              <BarChart3 className="h-5 w-5 text-[var(--color-accent-warm)]" />
+        <Card className="bg-card rounded-[20px] border border-border shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-medium">
+              <BarChart3 className="h-4 w-4 text-primary" aria-hidden="true" />
               Scan History
             </CardTitle>
           </CardHeader>
           <CardContent>
             {recentScans.length === 0 ? (
-              <div className="rounded-xl border-2 border-dashed border-[var(--color-card-border)] bg-[var(--color-bg)] py-6 text-center">
-                <BarChart3 className="mx-auto h-8 w-8 text-[var(--color-card-border)]" />
-                <p className="mt-2 text-sm text-[var(--color-muted)]">
-                  No scans yet
-                </p>
-              </div>
+              <EmptyState
+                icon={BarChart3}
+                title="No scans yet"
+                description="Your scan history will appear here after your first scan."
+              />
             ) : (
-              <div className="space-y-3">
-                {recentScans.map((scan) => (
-                  <div key={scan.id} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] p-3 transition-colors duration-150 hover:bg-[var(--color-card-border)]/30">
+              <div className="space-y-2">
+                {recentScans.map((scan) => {
+                  const scanScore = scan.overall_score
+                  const scanInfo = scanScore !== null ? getScoreLevel(scanScore) : null
+                  return (
                     <div
-                      className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white"
-                      style={{ backgroundColor: scan.overall_score !== null ? getScoreColor(scan.overall_score) : 'var(--color-card-border)' }}
+                      key={scan.id}
+                      className="flex items-center gap-3 rounded-xl bg-muted/50 p-3 transition-colors duration-150 hover:bg-muted"
                     >
-                      {scan.overall_score ?? '?'}
+                      <div
+                        className={cn(
+                          'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white',
+                          scanInfo ? scanInfo.bg : 'bg-muted',
+                          scanInfo ? scanInfo.color : 'text-muted-foreground',
+                        )}
+                        aria-hidden="true"
+                      >
+                        {scanScore ?? '?'}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground">
+                          Score: {scanScore ?? 'N/A'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {scan.mentions_count} mention{scan.mentions_count !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(scan.created_at), { addSuffix: true })}
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[var(--color-text)]">
-                        Score: {scan.overall_score ?? 'N/A'}
-                      </p>
-                      <p className="text-xs text-[var(--color-muted)]">
-                        {scan.mentions_count} mentions
-                      </p>
-                    </div>
-                    <span className="text-xs text-[var(--color-muted)]">
-                      {formatDistanceToNow(new Date(scan.created_at), { addSuffix: true })}
-                    </span>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </CardContent>

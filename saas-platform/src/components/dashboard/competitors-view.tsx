@@ -2,6 +2,13 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { Globe, Trash2, Users } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/ui/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
+import { cn } from '@/lib/utils'
 
 interface Competitor {
   id: string
@@ -24,6 +31,7 @@ export function CompetitorsView({ competitors, businessId }: CompetitorsViewProp
   const [domain, setDomain] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isAdding, setIsAdding] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
@@ -60,6 +68,7 @@ export function CompetitorsView({ competitors, businessId }: CompetitorsViewProp
   }
 
   async function handleDelete(id: string) {
+    setDeletingId(id)
     try {
       const res = await fetch(`/api/competitors/${id}`, { method: 'DELETE' })
       if (res.ok) {
@@ -67,91 +76,128 @@ export function CompetitorsView({ competitors, businessId }: CompetitorsViewProp
       }
     } catch {
       // Silently fail — user can retry
+    } finally {
+      setDeletingId(null)
     }
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold text-[#141310] mb-6">Competitors</h1>
+    <div className="space-y-6">
+      <PageHeader
+        title="Competitors"
+        description="Track how you compare in AI search"
+      />
 
-      <form
-        onSubmit={handleAdd}
-        className="bg-white rounded-2xl border border-stone-200 p-5 mb-6"
-      >
-        <h2 className="font-semibold text-[#141310] mb-3">Add Competitor</h2>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="Company name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="flex-1 px-3 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
-            required
-          />
-          <input
-            type="text"
-            placeholder="domain.com"
-            value={domain}
-            onChange={(e) => setDomain(e.target.value)}
-            className="flex-1 px-3 py-2 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
-            required
-          />
-          <button
-            type="submit"
-            disabled={isAdding || isPending}
-            className="px-4 py-2 bg-[#141310] text-white text-sm rounded-lg hover:bg-stone-800 disabled:opacity-50 whitespace-nowrap"
-          >
-            {isAdding ? 'Adding...' : 'Add Competitor'}
-          </button>
-        </div>
-        {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
-      </form>
+      {/* Add competitor form */}
+      <Card className="bg-card rounded-[20px] border border-border shadow-sm">
+        <CardContent className="p-6">
+          <h2 className="mb-4 text-base font-medium text-foreground">Add Competitor</h2>
+          <form onSubmit={handleAdd}>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <input
+                type="text"
+                placeholder="Company name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={cn(
+                  'flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground',
+                  'placeholder:text-muted-foreground',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF3C00] focus-visible:ring-offset-2'
+                )}
+                required
+                aria-label="Competitor company name"
+              />
+              <input
+                type="text"
+                placeholder="domain.com"
+                value={domain}
+                onChange={(e) => setDomain(e.target.value)}
+                className={cn(
+                  'flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground',
+                  'placeholder:text-muted-foreground',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF3C00] focus-visible:ring-offset-2'
+                )}
+                required
+                aria-label="Competitor domain"
+              />
+              <Button
+                type="submit"
+                disabled={isAdding || isPending}
+                className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                {isAdding ? 'Adding...' : 'Add Competitor'}
+              </Button>
+            </div>
+            {error && (
+              <p className="mt-2 text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            )}
+          </form>
+        </CardContent>
+      </Card>
 
+      {/* Competitor list or empty state */}
       {competitors.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center">
-          <p className="text-stone-500 text-lg">No competitors tracked yet.</p>
-          <p className="text-stone-400 mt-2">
-            Add your first competitor to start tracking their AI visibility.
-          </p>
-        </div>
+        <Card className="bg-card rounded-[20px] border border-border shadow-sm">
+          <CardContent className="p-0">
+            <EmptyState
+              icon={Users}
+              title="No competitors tracked yet"
+              description="Add your first competitor to start tracking their AI visibility and see how you compare."
+            />
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-3">
           {competitors.map((comp) => (
-            <div
+            <Card
               key={comp.id}
-              className="bg-white rounded-xl border border-stone-200 p-4 flex items-center justify-between"
+              className="bg-card rounded-[20px] border border-border shadow-sm hover:shadow-md transition-shadow duration-200"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-stone-100 rounded-lg flex items-center justify-center text-stone-500 font-semibold text-sm">
-                  {comp.name.charAt(0).toUpperCase()}
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground font-semibold text-sm">
+                      {comp.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-medium text-foreground truncate">{comp.name}</h3>
+                      {comp.domain && (
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
+                          <p className="text-sm text-muted-foreground truncate">{comp.domain}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {comp.source && (
+                      <Badge variant="secondary" className="text-xs capitalize">
+                        {comp.source}
+                      </Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground hidden sm:block">
+                      {new Date(comp.created_at).toLocaleDateString()}
+                    </span>
+                    <button
+                      onClick={() => handleDelete(comp.id)}
+                      disabled={deletingId === comp.id || isPending}
+                      className={cn(
+                        'rounded-lg p-1.5 text-muted-foreground transition-colors duration-150',
+                        'hover:bg-red-50 hover:text-destructive',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF3C00] focus-visible:ring-offset-2',
+                        'disabled:opacity-50 disabled:pointer-events-none'
+                      )}
+                      aria-label={`Remove ${comp.name}`}
+                      title={`Remove ${comp.name}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-[#141310]">{comp.name}</h3>
-                  <p className="text-stone-400 text-sm">{comp.domain}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                {comp.source && (
-                  <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-stone-100 text-stone-500">
-                    {comp.source}
-                  </span>
-                )}
-                <span className="text-stone-400 text-xs">
-                  {new Date(comp.created_at).toLocaleDateString()}
-                </span>
-                <button
-                  onClick={() => handleDelete(comp.id)}
-                  className="text-stone-400 hover:text-red-500 text-sm p-1"
-                  title="Remove competitor"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 6h18" />
-                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                  </svg>
-                </button>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
