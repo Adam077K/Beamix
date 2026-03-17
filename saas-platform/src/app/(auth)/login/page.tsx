@@ -4,7 +4,7 @@ import { LoginForm } from './login-form'
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-[500px] w-full rounded-[var(--card-radius)]" />}>
+    <Suspense fallback={<Skeleton className="h-[500px] w-full rounded-xl" />}>
       <LoginForm />
     </Suspense>
   )
