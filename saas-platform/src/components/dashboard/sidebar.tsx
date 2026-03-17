@@ -67,7 +67,10 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
   return (
     <aside
       className={cn(
-        'flex h-screen flex-col bg-card border-e border-border transition-all duration-200',
+        'flex h-screen flex-col transition-all duration-300 ease-in-out',
+        'bg-white/95 dark:bg-[#111111]/95',
+        'border-e border-[#E5E7EB] dark:border-white/8',
+        'shadow-[2px_0_16px_rgba(0,0,0,0.04)]',
         effectiveCollapsed ? 'w-16' : 'w-60',
         className
       )}
@@ -75,8 +78,20 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
       {/* Logo */}
       <div className="flex h-14 items-center justify-between border-b border-border px-4">
         {!effectiveCollapsed && (
-          <Link href="/dashboard" className="font-sans text-xl font-bold text-foreground">
-            Beam<span className="text-primary tracking-wide">ix</span>
+          <Link href="/dashboard" className="group flex items-center gap-1.5">
+            {/* Orange square mark — placeholder until real logo files arrive */}
+            <span
+              className={cn(
+                'flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-[4px] bg-primary',
+                'shadow-[0_0_0_3px_rgba(255,60,0,0.15)]',
+                'group-hover:shadow-[0_0_0_4px_rgba(255,60,0,0.20)]',
+                'transition-shadow duration-200',
+              )}
+              aria-hidden="true"
+            />
+            <span className="font-sans text-[17px] font-semibold tracking-[-0.02em] text-foreground">
+              Beam<span className="text-primary">ix</span>
+            </span>
           </Link>
         )}
         {onClose ? (
@@ -90,28 +105,49 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
         ) : null}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors md:block"
+          className="hidden rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-150 md:flex items-center justify-center"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {collapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
+          {collapsed ? <ChevronsRight className="h-3.5 w-3.5" /> : <ChevronsLeft className="h-3.5 w-3.5" />}
         </button>
       </div>
 
       {/* Trial banner */}
       {trialDaysLeft !== null && trialDaysLeft > 0 && !effectiveCollapsed && (
-        <div className="mx-3 mt-3 rounded-xl bg-gradient-to-r from-[#FFF5F2] to-[#FFF0EB] p-3 dark:from-[#FF3C00]/10 dark:to-[#FF3C00]/5">
-          <div className="flex items-center gap-2">
-            <Crown className="h-4 w-4 text-primary [animation:pulse-slow_2.5s_ease-in-out_infinite]" />
-            <span className="text-xs font-semibold text-foreground">
-              {trialDaysLeft} days left in trial
-            </span>
+        <div
+          className={cn(
+            'mx-3 mt-3 rounded-xl p-3',
+            'gradient-upgrade-card',
+            'border border-[#FFCFC4] dark:border-[#FF3C00]/20',
+            'shadow-[0_2px_8px_rgba(255,60,0,0.06)]',
+          )}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Crown className="h-3.5 w-3.5 flex-shrink-0 text-primary" aria-hidden="true" />
+              <span className="text-xs font-semibold text-foreground">
+                {trialDaysLeft}d left
+              </span>
+            </div>
+            <Link
+              href="/dashboard/settings"
+              className={cn(
+                'rounded-full bg-primary/10 px-2 py-0.5',
+                'text-[10px] font-semibold text-primary',
+                'hover:bg-primary/15 transition-colors duration-150',
+              )}
+            >
+              Upgrade
+            </Link>
           </div>
-          <Link
-            href="/dashboard/settings"
-            className="mt-1 block text-xs font-medium text-primary hover:underline"
-          >
-            Upgrade now
-          </Link>
+          {/* Progress bar for trial days */}
+          <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-border">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-500"
+              style={{ width: `${Math.min(100, (trialDaysLeft / 7) * 100)}%` }}
+              aria-label={`${trialDaysLeft} of 7 trial days remaining`}
+            />
+          </div>
         </div>
       )}
 
@@ -129,10 +165,13 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
               title={effectiveCollapsed ? item.label : undefined}
               onClick={onClose}
               className={cn(
-                'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200',
                 isActive
-                  ? 'bg-[#FFF5F2] text-primary font-semibold border-s-2 border-primary dark:bg-[#FF3C00]/10'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  ? [
+                      'bg-primary/8 dark:bg-primary/12 text-primary',
+                      'shadow-[inset_0_0_0_1px_rgba(255,60,0,0.15)]',
+                    ]
+                  : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground hover:rounded-xl',
               )}
             >
               <Icon
@@ -148,18 +187,33 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-border p-3">
+      <div className="space-y-1 border-t border-border p-3">
         {!effectiveCollapsed && (
-          <div className="mb-2 truncate text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">{businessName}</span>
-            <br />
-            <span className="capitalize">{planTier} plan</span>
+          <div className="mb-2 flex items-center gap-2.5 px-1">
+            {/* Avatar placeholder */}
+            <div
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary/15"
+              aria-hidden="true"
+            >
+              <span className="text-[10px] font-semibold uppercase text-primary">
+                {businessName.charAt(0)}
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-medium text-foreground">{businessName}</p>
+              <p className="text-[10px] capitalize text-muted-foreground">{planTier} plan</p>
+            </div>
           </div>
         )}
         <button
           onClick={handleSignOut}
           title={effectiveCollapsed ? 'Sign out' : undefined}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-red-50/70 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
+          className={cn(
+            'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm',
+            'text-muted-foreground transition-colors duration-150',
+            'hover:bg-red-50 hover:text-red-600',
+            'dark:hover:bg-red-950/50 dark:hover:text-red-400',
+          )}
         >
           <LogOut className="h-4 w-4 shrink-0" />
           {!effectiveCollapsed && <span>Sign out</span>}

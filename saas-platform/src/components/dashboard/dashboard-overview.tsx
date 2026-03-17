@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { getScoreLevel } from '@/components/ui/score-badge'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ScoreRing } from '@/components/ui/score-ring'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
 import {
@@ -237,16 +238,18 @@ export function DashboardOverview({
         {/* Visibility Score — hero card spanning 2 of 3 cols */}
         <Card
           className={cn(
-            'relative overflow-hidden bg-card rounded-[20px] border border-border shadow-sm md:col-span-2',
+            'relative overflow-hidden rounded-[20px] border border-border md:col-span-2',
+            'shadow-[0_1px_3px_rgba(0,0,0,0.06),_0_8px_24px_rgba(0,0,0,0.05)]',
+            'gradient-score-hero',
             hasData && score !== null ? getScoreGlow(score) : '',
           )}
         >
           <CardContent className="p-6">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-6">
 
-              {/* Left: big score number + context */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
+              {/* Left: score ring + context */}
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex items-center gap-2 self-start">
                   <BarChart3 className="h-4 w-4 text-primary" aria-hidden="true" />
                   <span className="text-sm font-medium text-muted-foreground">
                     Visibility Score
@@ -255,60 +258,50 @@ export function DashboardOverview({
 
                 {hasData && score !== null ? (
                   <>
-                    <div className="flex items-end gap-2">
-                      <span
-                        className={cn(
-                          'font-mono text-6xl font-bold leading-none tabular-nums',
-                          getScoreTextColor(score),
-                        )}
-                      >
-                        {score}
-                      </span>
-                      <span className="mb-2 text-xl text-muted-foreground">/100</span>
+                    {/* Score ring — animated fill */}
+                    <ScoreRing score={score} size="lg" animate={true} />
+
+                    {/* Delta badge — positioned below the ring */}
+                    <div aria-live="polite">
+                      {scoreDelta !== null && scoreDelta !== 0 && (
+                        <div
+                          className={cn(
+                            'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium',
+                            scoreDelta > 0
+                              ? 'bg-green-50 text-[#10B981] dark:bg-green-950'
+                              : 'bg-red-50 text-[#EF4444] dark:bg-red-950',
+                          )}
+                        >
+                          {scoreDelta > 0 ? (
+                            <TrendingUp className="h-3 w-3" aria-hidden="true" />
+                          ) : (
+                            <TrendingDown className="h-3 w-3" aria-hidden="true" />
+                          )}
+                          {scoreDelta > 0 ? '+' : ''}{scoreDelta} since last scan
+                        </div>
+                      )}
+                      {scoreDelta === 0 && (
+                        <div className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                          <Minus className="h-3 w-3" aria-hidden="true" />
+                          No change since last scan
+                        </div>
+                      )}
                     </div>
 
-                    {/* Delta badge */}
-                    {scoreDelta !== null && scoreDelta !== 0 && (
-                      <div
-                        className={cn(
-                          'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium',
-                          scoreDelta > 0
-                            ? 'bg-green-50 text-[#10B981] dark:bg-green-950'
-                            : 'bg-red-50 text-[#EF4444] dark:bg-red-950',
-                        )}
-                        aria-live="polite"
-                      >
-                        {scoreDelta > 0 ? (
-                          <TrendingUp className="h-3 w-3" aria-hidden="true" />
-                        ) : (
-                          <TrendingDown className="h-3 w-3" aria-hidden="true" />
-                        )}
-                        {scoreDelta > 0 ? '+' : ''}{scoreDelta} since last scan
-                      </div>
-                    )}
-                    {scoreDelta === 0 && (
-                      <div className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                        <Minus className="h-3 w-3" aria-hidden="true" />
-                        No change since last scan
-                      </div>
-                    )}
-
-                    {/* Warm contextual copy */}
-                    {scoreInfo && (
-                      <p className={cn('text-sm font-medium', scoreInfo.color)}>
-                        {scoreInfo.label} — {warmMessage}
-                      </p>
-                    )}
+                    {/* Warm contextual copy — Fraunces italic */}
+                    <p className="score-insight text-center max-w-[200px]">
+                      {warmMessage}
+                    </p>
                   </>
                 ) : (
                   /* No-data state */
-                  <div className="space-y-3">
-                    <span className="font-mono text-6xl font-bold leading-none text-muted-foreground">
-                      --
-                    </span>
-                    <p className="text-sm text-muted-foreground">{warmMessage}</p>
+                  <div className="flex flex-col items-center gap-3">
+                    <ScoreRing score={null} size="lg" animate={false} />
+                    <p className="text-sm text-muted-foreground text-center max-w-[180px]">
+                      {warmMessage}
+                    </p>
                     <Link href="/dashboard/rankings">
-                      <Button size="sm" className="mt-1">
+                      <Button size="sm">
                         Start your first scan
                         <ArrowRight className="ms-1.5 h-3.5 w-3.5" aria-hidden="true" />
                       </Button>
@@ -319,12 +312,12 @@ export function DashboardOverview({
 
               {/* Right: mini sparkline trend */}
               {hasSparkline && (
-                <div className="shrink-0">
-                  <p className="mb-1 text-right text-xs text-muted-foreground">
+                <div className="shrink-0 flex flex-col gap-1 pt-7">
+                  <p className="text-right text-xs text-muted-foreground">
                     {sparklineData.length} scans
                   </p>
                   <div
-                    className="h-16 w-28"
+                    className="h-20 w-32"
                     role="img"
                     aria-label="Score trend over recent scans"
                   >
@@ -334,7 +327,7 @@ export function DashboardOverview({
                           type="monotone"
                           dataKey="score"
                           stroke="#FF3C00"
-                          strokeWidth={2}
+                          strokeWidth={2.5}
                           dot={false}
                           isAnimationActive={false}
                         />
@@ -345,6 +338,12 @@ export function DashboardOverview({
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
+                  {lastScanned && (
+                    <p className="text-right text-[10px] text-muted-foreground">
+                      Last:{' '}
+                      {formatDistanceToNow(new Date(lastScanned), { addSuffix: false })} ago
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -355,7 +354,7 @@ export function DashboardOverview({
         <div className="flex flex-col gap-4">
 
           {/* AI Mentions */}
-          <Card className="flex-1 bg-card rounded-[20px] border border-border shadow-sm">
+          <Card className="flex-1 glass-subtle rounded-[20px] shadow-sm">
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">AI Mentions</span>
@@ -380,7 +379,7 @@ export function DashboardOverview({
           </Card>
 
           {/* Agent Credits */}
-          <Card className="flex-1 bg-card rounded-[20px] border border-border shadow-sm">
+          <Card className="flex-1 glass-subtle rounded-[20px] shadow-sm">
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">Agent Credits</span>
@@ -444,7 +443,7 @@ export function DashboardOverview({
           ) : (
             <div className="space-y-3">
 
-              {/* Hero recommendation */}
+              {/* Hero recommendation — orange accent bar + gradient-action-cta */}
               {topRec && (() => {
                 const style = PRIORITY_STYLES[topRec.priority] ?? PRIORITY_STYLES.medium
                 const agentLabel = topRec.suggested_agent
@@ -452,53 +451,81 @@ export function DashboardOverview({
                   : null
                 const isUrgent = topRec.priority === 'critical' || topRec.priority === 'high'
                 return (
-                  <div
-                    className={cn(
-                      'rounded-[16px] border p-4',
-                      style.bg,
-                      style.ring,
-                    )}
-                  >
-                    <div className="space-y-2">
-                      <Badge
+                  <div className="relative overflow-hidden rounded-[20px] gradient-action-cta ps-6 pe-5 py-5 shadow-[inset_4px_0_12px_rgba(255,60,0,0.04),_0_4px_16px_rgba(0,0,0,0.06)]">
+                    {/* Left orange accent bar */}
+                    <span
+                      className="absolute inset-y-0 start-0 w-1 rounded-s-[20px] bg-gradient-to-b from-[#FF3C00] to-[#FF3C00]/50"
+                      aria-hidden="true"
+                    />
+
+                    {/* Priority badge + agent label */}
+                    <div className="mb-3 flex items-center gap-2">
+                      <span
                         className={cn(
-                          'rounded-full border text-xs font-semibold uppercase tracking-wide',
+                          'inline-flex items-center gap-1 rounded-full px-2 py-0.5',
+                          'text-[10px] font-bold uppercase tracking-wider',
                           style.bg,
                           style.text,
-                          style.ring,
                         )}
                       >
-                        {isUrgent ? 'Your #1 action' : topRec.priority}
-                      </Badge>
-                      <p className="text-sm font-semibold text-foreground leading-snug">
-                        {topRec.title}
-                      </p>
-                      <p className="text-xs leading-relaxed text-muted-foreground">
-                        {topRec.description}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2 pt-1">
-                        {agentLabel ? (
-                          <Link href="/dashboard/agents">
-                            <Button size="sm" className="h-7 rounded-lg px-3 text-xs">
-                              <Sparkles className="me-1.5 h-3 w-3" aria-hidden="true" />
-                              Fix with {agentLabel}
-                            </Button>
-                          </Link>
-                        ) : (
-                          <Link href="/dashboard/rankings">
-                            <Button size="sm" className="h-7 rounded-lg px-3 text-xs">
-                              Fix this now
-                              <ArrowRight className="ms-1.5 h-3 w-3" aria-hidden="true" />
-                            </Button>
-                          </Link>
-                        )}
-                        {topRec.credits_cost != null && (
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Bot className="h-3 w-3" aria-hidden="true" />
-                            {topRec.credits_cost} credit{topRec.credits_cost !== 1 ? 's' : ''}
-                          </span>
-                        )}
-                      </div>
+                        <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+                        {isUrgent ? 'Top action' : topRec.priority}
+                      </span>
+                      {agentLabel && (
+                        <span className="text-xs text-muted-foreground">
+                          — {agentLabel}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Title + description */}
+                    <h3 className="mb-1.5 text-base font-semibold text-foreground leading-snug">
+                      {topRec.title}
+                    </h3>
+                    <p className="mb-4 text-sm text-muted-foreground leading-relaxed">
+                      {topRec.description}
+                    </p>
+
+                    {/* CTA row */}
+                    <div className="flex flex-wrap items-center gap-3">
+                      {agentLabel ? (
+                        <Link href="/dashboard/agents">
+                          <Button
+                            size="sm"
+                            className={cn(
+                              'rounded-lg bg-primary text-white',
+                              'shadow-[0_2px_8px_rgba(255,60,0,0.25)]',
+                              'hover:bg-[#e63600] hover:shadow-[0_4px_16px_rgba(255,60,0,0.35)]',
+                              'active:scale-[0.98] transition-all duration-150',
+                            )}
+                          >
+                            <Sparkles className="me-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                            Run Agent
+                            <ArrowRight className="ms-1 h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Link href="/dashboard/rankings">
+                          <Button
+                            size="sm"
+                            className={cn(
+                              'rounded-lg bg-primary text-white',
+                              'shadow-[0_2px_8px_rgba(255,60,0,0.25)]',
+                              'hover:bg-[#e63600] hover:shadow-[0_4px_16px_rgba(255,60,0,0.35)]',
+                              'active:scale-[0.98] transition-all duration-150',
+                            )}
+                          >
+                            Fix this now
+                            <ArrowRight className="ms-1 h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+                          </Button>
+                        </Link>
+                      )}
+                      {topRec.credits_cost != null && (
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Bot className="h-3 w-3" aria-hidden="true" />
+                          {topRec.credits_cost} credit{topRec.credits_cost !== 1 ? 's' : ''}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )
