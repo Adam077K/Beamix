@@ -119,7 +119,7 @@ export function DashboardOverview({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Visibility Score — spans 2 columns on lg */}
         <Card className="lg:col-span-2 overflow-hidden">
-          <div className="h-1 rounded-t-[20px] bg-gradient-to-r from-cyan-400 to-cyan-500" />
+          <div className="h-1 rounded-t-[20px] bg-gradient-to-r from-orange-400 to-[#FF3C00]" />
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-sm text-[var(--color-muted)]">Visibility Score</span>

@@ -58,16 +58,16 @@ Skill categories available:
 ## Stack Defaults
 
 ```
-Frontend:   Next.js 14+ (App Router), TypeScript (strict), Tailwind CSS, Shadcn/UI
+Marketing:  Framer (separate project — NOT in this repo)
+Product:    Next.js 16 (App Router), TypeScript (strict), Tailwind CSS, Shadcn/UI
 Backend:    Next.js API Routes / Server Actions, Zod validation
 Database:   Supabase
-Auth:       Clerk
+Auth:       Supabase Auth
 Payments:   Paddle
 Email:      Resend
 Jobs:       Inngest
-Hosting:    Vercel
-AI:         Anthropic Claude API
-Vector DB:  Pinecone (prod) / pgvector (early)
+Hosting:    Vercel (product only)
+AI:         OpenAI, Claude, Gemini, Perplexity (direct API integration)
 ```
 
 *Override any of these per-project by editing this section.*
@@ -235,33 +235,57 @@ git worktree add .worktrees/[task-name] -b feat/[task-name]
 
 **Repository:** https://github.com/Adam077K/Beamix.git
 
-This is the Beamix GEO Platform project. All work happens in this repo.
+This repo is the **Beamix product (dashboard/app)** only. The marketing website is a separate Framer project.
 
 ## Project Overview
 
 Beamix scans SMBs for AI search visibility, diagnoses why they rank (or don't), and uses AI agents to fix it. Competitors show dashboards; Beamix does the work.
 
+## Architecture Split (IMPORTANT)
+
+| Surface | Platform | URL | What it covers |
+|---------|----------|-----|---------------|
+| **Marketing website** | **Framer** | average-product-525803.framer.app | Homepage, pricing, features, about, blog, contacts |
+| **Product (app)** | **Next.js on Vercel** | This repo (`saas-platform/`) | Dashboard, scan, onboarding, agents, settings, auth |
+
+**This repo = product only.** All marketing pages (homepage, landing, pricing page, about, features) are built and maintained in Framer — NOT in this codebase.
+
+**Landing components in `src/components/landing/` are DEPRECATED** — do not update or extend them. They will be removed in a follow-up cleanup. The marketing site lives in Framer now.
+
 ## Key Paths
 
 | `docs/` | PRD, architecture, specs, competitive research |
+| `saas-platform/` | Next.js product app (dashboard, API routes, agents) |
+| `docs/_archive/` | Archived old design docs (pre-2026-03-17) |
 
 ## Default References
 
-When discussing the project, repo, or deployments:
 - **Repo:** https://github.com/Adam077K/Beamix
-- **Clone:** `git clone https://github.com/Adam077K/Beamix.git`
+- **Framer site:** https://average-product-525803.framer.app
+- **Product hosting:** Vercel
 
-## Stack
+## Stack (Product)
 
 - Next.js 16, React 19, TypeScript
 - Supabase (auth, DB, RLS)
 - Paddle (billing)
 - LLMs: OpenAI, Claude, Gemini, Perplexity (direct integration via Next.js API routes)
+- Hosting: Vercel
 
 
 
+
+## Brand & Design
+
+- **Marketing site:** Framer (separate, live at average-product-525803.framer.app)
+- **Product:** Next.js dashboard in this repo
+- **Primary accent:** Orange #FF3C00 (NOT navy, NOT cyan)
+- **Fonts:** Inter + InterDisplay (headings), Fraunces (serif accent), Geist Mono (code)
+- **Guidelines:** `docs/BRAND_GUIDELINES.md` (v4.0) + `docs/PRODUCT_DESIGN_SYSTEM.md`
+- **Old docs:** archived in `docs/_archive/`
+- **Framer screenshots:** `docs/08-agents_work/framer-homepage-screenshots/`
 
 ## Conventions
 
 - Hebrew + English in planning/docs as needed
-- `.docs/` is the source of truth for product and architecture
+- `docs/` is the source of truth for product and architecture

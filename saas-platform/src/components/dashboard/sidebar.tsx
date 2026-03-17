@@ -99,7 +99,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
 
       {/* Trial banner */}
       {trialDaysLeft !== null && trialDaysLeft > 0 && !effectiveCollapsed && (
-        <div className="mx-3 mt-3 rounded-xl bg-gradient-to-r from-cyan-50 to-orange-50 p-3">
+        <div className="mx-3 mt-3 rounded-xl bg-gradient-to-r from-orange-50 to-orange-50/50 p-3">
           <div className="flex items-center gap-2">
             <Crown className="h-4 w-4 animate-pulse text-[var(--color-accent-warm)]" />
             <span className="text-xs font-semibold text-[var(--color-text)]">
@@ -131,7 +131,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
                 isActive
-                  ? 'bg-gradient-to-r from-cyan-50 to-cyan-50/50 text-[var(--color-accent)] font-semibold border-l-2 border-[var(--color-accent)]'
+                  ? 'bg-gradient-to-r from-orange-50 to-orange-50/50 text-[var(--color-accent)] font-semibold border-l-2 border-[var(--color-accent)]'
                   : 'text-[var(--color-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)]'
               )}
             >

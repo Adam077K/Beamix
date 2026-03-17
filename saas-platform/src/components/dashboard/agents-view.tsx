@@ -41,7 +41,7 @@ const AGENTS: AgentDef[] = [
     description: 'Generate AI-optimized website content, landing pages, and product descriptions that rank in AI search.',
     icon: FileText,
     credits: 3,
-    color: 'bg-cyan-100 text-cyan-700',
+    color: 'bg-orange-100 text-orange-700',
   },
   {
     type: 'blog_writer',

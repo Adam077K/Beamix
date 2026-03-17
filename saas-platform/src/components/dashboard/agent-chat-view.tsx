@@ -38,7 +38,7 @@ const AGENT_META: Record<
     description: 'Generate AI-optimized website content',
     icon: FileText,
     credits: 3,
-    color: 'bg-cyan-100 text-cyan-700',
+    color: 'bg-orange-100 text-orange-700',
     prompts: [
       'Write a homepage hero section',
       'Create an about page',

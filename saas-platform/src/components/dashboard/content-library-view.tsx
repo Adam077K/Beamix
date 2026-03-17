@@ -20,7 +20,7 @@ import { formatDistanceToNow } from 'date-fns'
 
 const CONTENT_TYPE_META: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
   blog_post: { label: 'Blog Post', icon: BookOpen, color: 'bg-blue-100 text-blue-700' },
-  article: { label: 'Article', icon: FileText, color: 'bg-cyan-100 text-cyan-700' },
+  article: { label: 'Article', icon: FileText, color: 'bg-orange-100 text-orange-700' },
   faq: { label: 'FAQ', icon: MessageSquare, color: 'bg-green-100 text-green-700' },
   product_description: { label: 'Product', icon: FileText, color: 'bg-amber-100 text-amber-700' },
   landing_page: { label: 'Landing Page', icon: FileText, color: 'bg-purple-100 text-purple-700' },

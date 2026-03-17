@@ -92,7 +92,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
 
       {/* Current score card */}
       {hasData && (
-        <Card className="bg-gradient-to-r from-white to-cyan-50/30">
+        <Card className="bg-gradient-to-r from-white to-orange-50/30">
           <CardContent className="p-6">
             <div className="flex items-center gap-6">
               <div
