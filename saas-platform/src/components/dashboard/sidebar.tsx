@@ -76,7 +76,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
       <div className="flex h-14 items-center justify-between border-b border-border px-4">
         {!effectiveCollapsed && (
           <Link href="/dashboard" className="font-sans text-xl font-bold text-foreground">
-            Beam<span className="text-primary">ix</span>
+            Beam<span className="text-primary tracking-wide">ix</span>
           </Link>
         )}
         {onClose ? (
@@ -101,7 +101,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
       {trialDaysLeft !== null && trialDaysLeft > 0 && !effectiveCollapsed && (
         <div className="mx-3 mt-3 rounded-xl bg-gradient-to-r from-[#FFF5F2] to-[#FFF0EB] p-3 dark:from-[#FF3C00]/10 dark:to-[#FF3C00]/5">
           <div className="flex items-center gap-2">
-            <Crown className="h-4 w-4 animate-pulse text-primary" />
+            <Crown className="h-4 w-4 text-primary [animation:pulse-slow_2.5s_ease-in-out_infinite]" />
             <span className="text-xs font-semibold text-foreground">
               {trialDaysLeft} days left in trial
             </span>
@@ -129,7 +129,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
               title={effectiveCollapsed ? item.label : undefined}
               onClick={onClose}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
+                'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                 isActive
                   ? 'bg-[#FFF5F2] text-primary font-semibold border-s-2 border-primary dark:bg-[#FF3C00]/10'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -137,8 +137,8 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
             >
               <Icon
                 className={cn(
-                  'h-4 w-4 shrink-0',
-                  isActive ? 'text-primary' : ''
+                  'h-4 w-4 shrink-0 transition-colors duration-200',
+                  isActive ? 'text-primary' : 'group-hover:text-foreground'
                 )}
               />
               {!effectiveCollapsed && <span>{item.label}</span>}
@@ -159,7 +159,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, onClose, classN
         <button
           onClick={handleSignOut}
           title={effectiveCollapsed ? 'Sign out' : undefined}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-red-50/70 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors duration-200 hover:bg-red-50/70 hover:text-red-600 dark:hover:bg-red-950 dark:hover:text-red-400"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           {!effectiveCollapsed && <span>Sign out</span>}
