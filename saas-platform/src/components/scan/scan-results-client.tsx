@@ -2,14 +2,16 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import type { ScanResults, LLMEngine } from '@/lib/types'
-import { ENGINE_LABELS } from '@/constants/engines'
+import { ENGINE_LABELS, PROVIDER_COLORS } from '@/constants/engines'
+import type { LlmProvider } from '@/constants/engines'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
+import { cn } from '@/lib/utils'
 import {
   Loader2,
   CheckCircle2,
@@ -40,11 +42,11 @@ interface ScanData {
 
 // --- Utility functions ---
 
-function getScoreColor(score: number): string {
-  if (score >= 75) return 'var(--score-excellent)'
-  if (score >= 50) return 'var(--score-good)'
-  if (score >= 25) return 'var(--score-fair)'
-  return 'var(--score-critical)'
+function getScoreColorHex(score: number): string {
+  if (score >= 75) return '#06B6D4'  // score-excellent (cyan — data viz exception)
+  if (score >= 50) return '#10B981'  // score-good
+  if (score >= 25) return '#F59E0B'  // score-fair
+  return '#EF4444'                   // score-critical
 }
 
 function getScoreLabel(score: number): string {
@@ -52,6 +54,13 @@ function getScoreLabel(score: number): string {
   if (score >= 50) return 'Good'
   if (score >= 25) return 'Fair'
   return 'Critical'
+}
+
+function getScoreBadgeClasses(score: number): string {
+  if (score >= 75) return 'bg-cyan-50 text-[#06B6D4]'
+  if (score >= 50) return 'bg-green-50 text-[#10B981]'
+  if (score >= 25) return 'bg-amber-50 text-[#F59E0B]'
+  return 'bg-red-50 text-[#EF4444]'
 }
 
 // --- Animation variants ---
@@ -89,9 +98,7 @@ function ProcessingState() {
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
 
-    // Stagger engine checks
     engineStatuses.forEach((_, i) => {
-      // Start checking
       timers.push(
         setTimeout(() => {
           setEngineStatuses((prev) =>
@@ -99,7 +106,6 @@ function ProcessingState() {
           )
         }, i * 1200)
       )
-      // Mark done
       timers.push(
         setTimeout(() => {
           setEngineStatuses((prev) =>
@@ -109,7 +115,6 @@ function ProcessingState() {
       )
     })
 
-    // Switch to analyzing phase
     timers.push(
       setTimeout(() => {
         setPhase('analyzing')
@@ -128,14 +133,14 @@ function ProcessingState() {
       : (completedCount / engineStatuses.length) * 80
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-bg)] px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md text-center"
       >
-        <Loader2 className="mx-auto h-12 w-12 animate-spin text-[var(--color-accent)]" />
-        <h2 className="mt-6 font-display text-2xl font-bold text-[var(--color-text)]">
+        <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
+        <h2 className="mt-6 font-sans font-medium text-2xl text-foreground">
           Scanning your business
         </h2>
 
@@ -144,25 +149,24 @@ function ProcessingState() {
           {engineStatuses.map((engine) => (
             <div
               key={engine.engine}
-              className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm"
+              className="flex items-center gap-3 rounded-xl bg-card p-3 shadow-sm border border-border"
             >
               {engine.status === 'waiting' && (
-                <div className="h-5 w-5 rounded-full border-2 border-[var(--color-card-border)]" />
+                <div className="h-5 w-5 rounded-full border-2 border-border" />
               )}
               {engine.status === 'checking' && (
-                <Loader2 className="h-5 w-5 animate-spin text-[var(--color-accent)]" />
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
               )}
               {engine.status === 'done' && (
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                <CheckCircle2 className="h-5 w-5 text-[#10B981]" />
               )}
               <span
-                className={`text-sm font-medium ${
-                  engine.status === 'checking'
-                    ? 'text-[var(--color-accent)]'
-                    : engine.status === 'done'
-                      ? 'text-emerald-600'
-                      : 'text-[var(--color-muted)]'
-                }`}
+                className={cn(
+                  'text-sm font-medium',
+                  engine.status === 'checking' && 'text-primary',
+                  engine.status === 'done' && 'text-[#10B981]',
+                  engine.status === 'waiting' && 'text-muted-foreground'
+                )}
               >
                 {engine.status === 'checking'
                   ? `Asking ${engine.label}...`
@@ -178,7 +182,7 @@ function ProcessingState() {
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mt-4 text-sm text-[var(--color-muted)]"
+            className="mt-4 text-sm text-muted-foreground"
           >
             Analyzing results and calculating your score...
           </motion.p>
@@ -201,10 +205,8 @@ function DotsIndicator({ score, size = 'md' }: { score: number; size?: 'sm' | 'm
       {Array.from({ length: 10 }, (_, i) => (
         <div
           key={i}
-          className={`rounded-full ${dotSize} transition-colors`}
-          style={{
-            backgroundColor: i < filledDots ? getScoreColor(score) : 'var(--color-card-border)',
-          }}
+          className={cn(`rounded-full ${dotSize} transition-colors`, i >= filledDots && 'bg-border')}
+          style={i < filledDots ? { backgroundColor: getScoreColorHex(score) } : undefined}
         />
       ))}
     </div>
@@ -242,24 +244,23 @@ function ScoreReveal({ score }: { score: number }) {
     >
       <div
         className="relative flex h-40 w-40 items-center justify-center rounded-full border-4"
-        style={{ borderColor: getScoreColor(score) }}
+        style={{ borderColor: getScoreColorHex(score) }}
       >
         <span
-          className="font-display text-5xl font-bold"
-          style={{ color: getScoreColor(score) }}
+          className="font-sans font-bold text-5xl"
+          style={{ color: getScoreColorHex(score) }}
         >
           {displayScore}
         </span>
       </div>
-      <Badge
-        className="mt-3 text-sm"
-        style={{
-          backgroundColor: getScoreColor(score),
-          color: '#fff',
-        }}
+      <span
+        className={cn(
+          'mt-3 inline-flex items-center rounded-full px-3 py-1 text-sm font-medium',
+          getScoreBadgeClasses(score)
+        )}
       >
         {getScoreLabel(score)}
-      </Badge>
+      </span>
       <div className="mt-4">
         <DotsIndicator score={score} />
       </div>
@@ -272,7 +273,7 @@ function ScoreReveal({ score }: { score: number }) {
 function ScoreBreakdownBar({ score }: { score: number }) {
   return (
     <div className="space-y-2">
-      <div className="flex justify-between text-xs text-[var(--color-muted)]">
+      <div className="flex justify-between text-xs text-muted-foreground">
         <span>Critical</span>
         <span>Fair</span>
         <span>Good</span>
@@ -287,11 +288,11 @@ function ScoreBreakdownBar({ score }: { score: number }) {
         >
           <div
             className="h-5 w-5 rounded-full border-2 border-white shadow-md"
-            style={{ backgroundColor: getScoreColor(score) }}
+            style={{ backgroundColor: getScoreColorHex(score) }}
           />
         </motion.div>
       </div>
-      <div className="flex justify-between text-xs font-medium text-[var(--color-muted)]">
+      <div className="flex justify-between text-xs font-medium text-muted-foreground">
         <span>0</span>
         <span>25</span>
         <span>50</span>
@@ -311,61 +312,62 @@ function EngineCard({
   engine: LLMEngine
   result: ScanResults['engines'][number]
 }) {
+  const providerColor =
+    engine in PROVIDER_COLORS
+      ? PROVIDER_COLORS[engine as LlmProvider]
+      : 'bg-muted text-muted-foreground'
+
   return (
-    <Card
-      className="border-[var(--color-card-border)]"
-      style={{ borderRadius: 'var(--card-radius)' }}
-    >
+    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
-          <h4 className="font-display text-lg font-semibold">
-            {ENGINE_LABELS[engine]}
-          </h4>
+          <div className="flex items-center gap-2">
+            <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', providerColor)}>
+              {ENGINE_LABELS[engine]}
+            </span>
+          </div>
           {result.is_mentioned ? (
-            <Badge className="bg-emerald-100 text-emerald-700">
-              <CheckCircle2 className="mr-1 h-3 w-3" />
+            <Badge className="bg-green-100 text-green-700">
+              <CheckCircle2 className="me-1 h-3 w-3" />
               Mentioned
             </Badge>
           ) : (
             <Badge variant="secondary" className="bg-red-50 text-red-600">
-              <XCircle className="mr-1 h-3 w-3" />
+              <XCircle className="me-1 h-3 w-3" />
               Not found
             </Badge>
           )}
         </div>
 
         {result.is_mentioned && (
-          <div className="mt-3 flex items-center gap-4 text-sm text-[var(--color-muted)]">
+          <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
             <span>
-              Position: <strong className="text-[var(--color-text)]">#{result.mention_position}</strong>
+              Position:{' '}
+              <strong className="text-foreground">#{result.mention_position}</strong>
             </span>
             <span className="flex items-center gap-1">
               Sentiment:{' '}
               {result.sentiment === 'positive' && (
-                <ThumbsUp className="h-3.5 w-3.5 text-emerald-500" />
+                <ThumbsUp className="h-3.5 w-3.5 text-[#10B981]" />
               )}
               {result.sentiment === 'neutral' && (
-                <Minus className="h-3.5 w-3.5 text-amber-500" />
+                <Minus className="h-3.5 w-3.5 text-[#F59E0B]" />
               )}
               {result.sentiment === 'negative' && (
-                <ThumbsDown className="h-3.5 w-3.5 text-red-500" />
+                <ThumbsDown className="h-3.5 w-3.5 text-[#EF4444]" />
               )}
-              <strong className="capitalize text-[var(--color-text)]">
-                {result.sentiment}
-              </strong>
+              <strong className="capitalize text-foreground">{result.sentiment}</strong>
             </span>
           </div>
         )}
 
-        <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           &ldquo;{result.response_snippet}&rdquo;
         </p>
 
         {result.competitors_mentioned.length > 0 && (
           <div className="mt-3">
-            <span className="text-xs text-[var(--color-muted)]">
-              Also mentioned:
-            </span>
+            <span className="text-xs text-muted-foreground">Also mentioned:</span>
             <div className="mt-1 flex flex-wrap gap-1">
               {result.competitors_mentioned.map((comp) => (
                 <Badge key={comp} variant="outline" className="text-xs">
@@ -394,15 +396,12 @@ function TopCompetitorCallout({
   const gap = Math.round(competitorScore - userScore)
 
   return (
-    <Card
-      className="border-amber-200 bg-amber-50"
-      style={{ borderRadius: 'var(--card-radius)' }}
-    >
+    <Card className="rounded-[20px] border border-amber-200 bg-amber-50">
       <CardContent className="p-6">
         <div className="flex items-start gap-3">
           <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0 text-amber-600" />
           <div className="flex-1">
-            <h3 className="font-display text-lg font-bold text-amber-900">
+            <h3 className="font-sans font-bold text-lg text-amber-900">
               Top Competitor Threat
             </h3>
             <p className="mt-2 text-sm text-amber-800">
@@ -412,9 +411,9 @@ function TopCompetitorCallout({
               <strong>{userScore}</strong>.
             </p>
             <p className="mt-2 text-sm text-amber-700">
-              When potential customers ask AI about your industry, {competitor} is
-              more likely to be recommended. Every day without optimization is a
-              day they capture leads that should be yours.
+              When potential customers ask AI about your industry, {competitor} is more likely to
+              be recommended. Every day without optimization is a day they capture leads that
+              should be yours.
             </p>
             <div className="mt-4 flex items-center gap-4">
               <div className="text-center">
@@ -424,7 +423,7 @@ function TopCompetitorCallout({
               <div className="flex-1">
                 <div className="relative h-2 rounded-full bg-amber-200">
                   <div
-                    className="absolute left-0 top-0 h-full rounded-full bg-amber-400"
+                    className="absolute start-0 top-0 h-full rounded-full bg-amber-400"
                     style={{ width: `${userScore}%` }}
                   />
                 </div>
@@ -449,13 +448,10 @@ function LeaderboardSection({
   leaderboard: ScanResults['leaderboard']
 }) {
   return (
-    <Card
-      className="border-[var(--color-card-border)]"
-      style={{ borderRadius: 'var(--card-radius)' }}
-    >
+    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-display text-lg">
-          <Trophy className="h-5 w-5 text-[var(--color-accent-warm)]" />
+        <CardTitle className="flex items-center gap-2 font-sans text-lg">
+          <Trophy className="h-5 w-5 text-primary" />
           AI Visibility Leaderboard
         </CardTitle>
       </CardHeader>
@@ -463,36 +459,37 @@ function LeaderboardSection({
         {leaderboard.map((entry) => (
           <div
             key={entry.name}
-            className={`flex items-center gap-3 rounded-xl p-3 ${
+            className={cn(
+              'flex items-center gap-3 rounded-xl p-3',
               entry.is_user
-                ? 'bg-cyan-50 ring-1 ring-[var(--color-accent)]'
-                : 'bg-[var(--color-bg)]'
-            }`}
+                ? 'bg-[#FFF5F2] ring-1 ring-primary'
+                : 'bg-background'
+            )}
           >
             <span
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+              className={cn(
+                'flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold',
                 entry.rank <= 3
-                  ? 'bg-[var(--color-accent-warm)] text-white'
-                  : 'bg-[var(--color-card-border)] text-[var(--color-muted)]'
-              }`}
+                  ? 'bg-primary text-white'
+                  : 'bg-border text-muted-foreground'
+              )}
             >
               {entry.rank}
             </span>
             <span
-              className={`flex-1 text-sm font-medium ${
-                entry.is_user ? 'text-[var(--color-accent)]' : ''
-              }`}
+              className={cn(
+                'flex-1 text-sm font-medium',
+                entry.is_user && 'text-primary'
+              )}
             >
               {entry.name}
               {entry.is_user && (
-                <span className="ml-2 text-xs text-[var(--color-muted)]">
-                  (You)
-                </span>
+                <span className="ms-2 text-xs text-muted-foreground">(You)</span>
               )}
             </span>
             <div className="flex items-center gap-2">
               <DotsIndicator score={entry.score} size="sm" />
-              <span className="w-10 text-right text-sm font-semibold">
+              <span className="w-10 text-end text-sm font-semibold">
                 {Math.round(entry.score)}
               </span>
             </div>
@@ -503,7 +500,7 @@ function LeaderboardSection({
   )
 }
 
-// --- Quick Wins (show first 3 free, blur the rest) ---
+// --- Quick Wins (show first 3 free) ---
 
 function QuickWinsSection({
   quickWins,
@@ -519,13 +516,10 @@ function QuickWinsSection({
   const freeWins = quickWins.slice(0, 3)
 
   return (
-    <Card
-      className="border-[var(--color-card-border)]"
-      style={{ borderRadius: 'var(--card-radius)' }}
-    >
+    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-display text-lg">
-          <Zap className="h-5 w-5 text-[var(--color-accent-warm)]" />
+        <CardTitle className="flex items-center gap-2 font-sans text-lg">
+          <Zap className="h-5 w-5 text-primary" />
           Quick Wins to Improve Your Score
         </CardTitle>
       </CardHeader>
@@ -534,25 +528,19 @@ function QuickWinsSection({
           const style = impactColors[win.impact]
           const ImpactIcon = style.icon
           return (
-            <div key={i} className={`rounded-xl ${style.bg} p-4`}>
+            <div key={i} className={cn('rounded-xl p-4', style.bg)}>
               <div className="flex items-start gap-3">
-                <ImpactIcon className={`mt-0.5 h-5 w-5 shrink-0 ${style.text}`} />
+                <ImpactIcon className={cn('mt-0.5 h-5 w-5 shrink-0', style.text)} />
                 <div className="flex-1">
-                  <h4 className="font-semibold text-[var(--color-text)]">
-                    {win.title}
-                  </h4>
-                  <p className="mt-1 text-sm text-[var(--color-muted)]">
-                    {win.description}
-                  </p>
+                  <h4 className="font-semibold text-foreground">{win.title}</h4>
+                  <p className="mt-1 text-sm text-muted-foreground">{win.description}</p>
                   {win.engine_benefit && (
-                    <p className="mt-2 text-xs font-medium text-[var(--color-accent)]">
-                      {win.engine_benefit}
-                    </p>
+                    <p className="mt-2 text-xs font-medium text-primary">{win.engine_benefit}</p>
                   )}
                 </div>
                 <Badge
                   variant="outline"
-                  className={`shrink-0 capitalize ${style.text}`}
+                  className={cn('shrink-0 capitalize', style.text)}
                 >
                   {win.impact} impact
                 </Badge>
@@ -571,25 +559,22 @@ function GatedCTA({ scanId }: { scanId: string }) {
   return (
     <div className="relative">
       {/* Blurred placeholder content */}
-      <Card
-        className="border-[var(--color-card-border)] select-none"
-        style={{ borderRadius: 'var(--card-radius)' }}
-      >
+      <Card className="select-none rounded-[20px] border border-border bg-card shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 font-display text-lg">
-            <Zap className="h-5 w-5 text-[var(--color-accent-warm)]" />
+          <CardTitle className="flex items-center gap-2 font-sans text-lg">
+            <Zap className="h-5 w-5 text-primary" />
             5 More Personalized Fixes
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="rounded-xl bg-gray-50 p-4 blur-sm">
+            <div key={i} className="rounded-xl bg-muted p-4 blur-sm">
               <div className="flex items-start gap-3">
-                <div className="h-5 w-5 rounded bg-gray-200" />
+                <div className="h-5 w-5 rounded bg-border" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 w-3/4 rounded bg-gray-200" />
-                  <div className="h-3 w-full rounded bg-gray-200" />
-                  <div className="h-3 w-2/3 rounded bg-gray-200" />
+                  <div className="h-4 w-3/4 rounded bg-border" />
+                  <div className="h-3 w-full rounded bg-border" />
+                  <div className="h-3 w-2/3 rounded bg-border" />
                 </div>
               </div>
             </div>
@@ -598,23 +583,23 @@ function GatedCTA({ scanId }: { scanId: string }) {
       </Card>
 
       {/* Overlay CTA */}
-      <div className="absolute inset-0 flex items-center justify-center rounded-[var(--card-radius)] bg-white/80 backdrop-blur-sm">
-        <div className="text-center px-6">
-          <Lock className="mx-auto h-10 w-10 text-[var(--color-accent)]" />
-          <h3 className="mt-4 font-display text-xl font-bold text-[var(--color-text)]">
+      <div className="absolute inset-0 flex items-center justify-center rounded-[20px] bg-card/80 backdrop-blur-sm">
+        <div className="px-6 text-center">
+          <Lock className="mx-auto h-10 w-10 text-primary" />
+          <h3 className="mt-4 font-sans font-bold text-xl text-foreground">
             Unlock 5 More Personalized Fixes
           </h3>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-[var(--color-muted)]">
-            Sign up for a free 7-day trial to get detailed, AI-generated action
-            items tailored to your business.
+          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+            Sign up for a free 7-day trial to get detailed, AI-generated action items tailored to
+            your business.
           </p>
           <Link href={`/signup?scan_id=${scanId}`}>
             <Button
               size="lg"
-              className="mt-4 bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+              className="mt-4 rounded-full bg-primary text-white hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               Start free trial
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="ms-2 h-4 w-4" />
             </Button>
           </Link>
         </div>
@@ -635,7 +620,6 @@ function ShareSection({ scanId }: { scanId: string }) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      // Fallback for older browsers
       const textArea = document.createElement('textarea')
       textArea.value = url
       document.body.appendChild(textArea)
@@ -647,28 +631,22 @@ function ShareSection({ scanId }: { scanId: string }) {
     }
   }
 
-  const shareUrl = encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/scan/${scanId}`)
+  const shareUrl = encodeURIComponent(
+    `${typeof window !== 'undefined' ? window.location.origin : ''}/scan/${scanId}`
+  )
   const shareText = encodeURIComponent('Check out my AI visibility score from Beamix!')
 
   return (
-    <Card
-      className="border-[var(--color-card-border)]"
-      style={{ borderRadius: 'var(--card-radius)' }}
-    >
+    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
       <CardContent className="p-6">
         <div className="flex items-center gap-3">
-          <Share2 className="h-5 w-5 text-[var(--color-accent)]" />
-          <h3 className="font-display text-lg font-semibold text-[var(--color-text)]">
+          <Share2 className="h-5 w-5 text-primary" />
+          <h3 className="font-sans font-semibold text-lg text-foreground">
             Share your results
           </h3>
         </div>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={copyLink}
-            className="gap-2"
-          >
+          <Button variant="outline" size="sm" onClick={copyLink} className="gap-2">
             <Link2 className="h-4 w-4" />
             {copied ? 'Copied!' : 'Copy link'}
           </Button>
@@ -706,26 +684,23 @@ function ShareSection({ scanId }: { scanId: string }) {
 
 function ConversionCTA({ scanId }: { scanId: string }) {
   return (
-    <Card
-      className="border-2 border-[var(--color-accent)] bg-gradient-to-br from-cyan-50 to-white"
-      style={{ borderRadius: 'var(--card-radius)' }}
-    >
+    <Card className="rounded-[20px] border-2 border-primary bg-gradient-to-br from-[#FFF5F2] to-card">
       <CardContent className="p-8 text-center">
-        <h3 className="font-display text-2xl font-bold text-[var(--color-text)]">
+        <h3 className="font-sans font-bold text-2xl text-foreground">
           Ready to fix your AI visibility?
         </h3>
-        <p className="mx-auto mt-3 max-w-md text-[var(--color-muted)]">
-          Beamix AI agents can implement these fixes automatically.
-          Start your 7-day free trial — no credit card required.
+        <p className="mx-auto mt-3 max-w-md text-muted-foreground">
+          Beamix AI agents can implement these fixes automatically. Start your 7-day free trial —
+          no credit card required.
         </p>
         <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Link href={`/signup?scan_id=${scanId}`}>
             <Button
               size="lg"
-              className="bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+              className="rounded-full bg-primary text-white hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               Start fixing now
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="ms-2 h-4 w-4" />
             </Button>
           </Link>
           <Link href="/pricing">
@@ -733,6 +708,22 @@ function ConversionCTA({ scanId }: { scanId: string }) {
               See pricing
             </Button>
           </Link>
+        </div>
+
+        {/* Value props */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 text-[#10B981]" />
+            7-day free trial
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 text-[#10B981]" />
+            No credit card
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CheckCircle2 className="h-4 w-4 text-[#10B981]" />
+            Cancel anytime
+          </span>
         </div>
       </CardContent>
     </Card>
@@ -794,12 +785,12 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
 
   if (status === 'error') {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-bg)] px-4">
-        <XCircle className="h-12 w-12 text-[var(--score-critical)]" />
-        <h2 className="mt-4 font-display text-2xl font-bold">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
+        <XCircle className="h-12 w-12 text-destructive" />
+        <h2 className="mt-4 font-sans font-bold text-2xl text-foreground">
           Something went wrong
         </h2>
-        <p className="mt-2 text-[var(--color-muted)]">{errorMsg}</p>
+        <p className="mt-2 text-muted-foreground">{errorMsg}</p>
         <Link href="/scan" className="mt-6">
           <Button>Try again</Button>
         </Link>
@@ -813,13 +804,13 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
   const mentionedCount = results.engines.filter((e) => e.is_mentioned).length
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)]">
-      {/* Header */}
-      <div className="border-b border-[var(--color-card-border)] bg-white">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
+    <div className="min-h-screen bg-background">
+      {/* Nav */}
+      <div className="border-b border-border bg-card">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4 h-14">
           <Link href="/">
-            <span className="font-display text-xl font-bold text-[var(--color-text)]">
-              Beam<span className="text-[var(--color-accent)]">ix</span>
+            <span className="font-sans font-bold text-xl text-foreground">
+              Beam<span className="text-primary">ix</span>
             </span>
           </Link>
           <div className="flex items-center gap-3">
@@ -829,7 +820,10 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
               </Button>
             </Link>
             <Link href={`/signup?scan_id=${scanId}`}>
-              <Button size="sm" className="bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90">
+              <Button
+                size="sm"
+                className="bg-primary text-white hover:bg-primary/90"
+              >
                 Sign up free
               </Button>
             </Link>
@@ -846,12 +840,10 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
       >
         {/* Hero: Score */}
         <motion.div variants={itemVariants} className="text-center">
-          <h1 className="font-display text-3xl font-bold text-[var(--color-text)]">
+          <h1 className="font-sans font-medium text-3xl text-foreground">
             AI Visibility Report
           </h1>
-          <p className="mt-2 text-lg text-[var(--color-muted)]">
-            {business_name}
-          </p>
+          <p className="mt-2 text-lg text-muted-foreground">{business_name}</p>
         </motion.div>
 
         <motion.div
@@ -859,9 +851,9 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
           className="mt-8 flex flex-col items-center"
         >
           <ScoreReveal score={results.visibility_score} />
-          <p className="mt-4 text-center text-[var(--color-muted)]">
+          <p className="mt-4 text-center text-muted-foreground">
             Your business is mentioned in{' '}
-            <strong className="text-[var(--color-text)]">
+            <strong className="text-foreground">
               {mentionedCount} of {results.engines.length}
             </strong>{' '}
             AI engines
@@ -888,7 +880,7 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
 
         {/* Engine Breakdown */}
         <motion.div variants={itemVariants}>
-          <h2 className="font-display text-xl font-bold text-[var(--color-text)]">
+          <h2 className="font-sans font-bold text-xl text-foreground">
             Per-Engine Breakdown
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">

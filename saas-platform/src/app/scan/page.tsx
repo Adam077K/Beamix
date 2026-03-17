@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { scanStartSchema, type ScanStartInput } from '@/lib/scan/validation'
@@ -16,13 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { ProductNav } from '@/components/shared/product-nav'
+import { ProductFooter } from '@/components/shared/product-footer'
 import { Loader2, Globe, Building2, MapPin, Layers, Shield, Clock, Sparkles } from 'lucide-react'
 
 export default function ScanPage() {
@@ -76,45 +70,25 @@ export default function ScanPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top Bar */}
-      <div className="border-b border-border bg-card">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
-          <Link href="/">
-            <span className="font-sans font-medium text-xl font-bold text-foreground">
-              Beam<span className="text-primary">ix</span>
-            </span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">
-                Log in
-              </Button>
-            </Link>
-            <Link href="/signup">
-              <Button size="sm" className="bg-primary text-white hover:bg-primary/90">
-                Sign up
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+    <div className="flex min-h-screen flex-col bg-background">
+      <ProductNav />
 
       {/* Main Content */}
-      <div className="flex flex-col items-center justify-center px-4 py-16">
+      <main className="flex flex-1 flex-col items-center justify-center px-4 py-16">
+        {/* Heading */}
         <div className="mb-8 text-center">
-          <h1 className="font-sans font-medium text-3xl font-bold text-foreground sm:text-4xl">
+          <h1 className="font-sans font-medium text-3xl text-foreground sm:text-4xl">
             Free AI Visibility Scan
           </h1>
-          <p className="mt-3 max-w-md text-lg text-muted-foreground">
+          <p className="mt-3 max-w-md text-base text-muted-foreground sm:text-lg">
             See how ChatGPT, Gemini, Perplexity, and Claude talk about your business
           </p>
         </div>
 
-        {/* Trust Pills */}
+        {/* Trust signals */}
         <div className="mb-8 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <Shield className="h-4 w-4 text-emerald-500" />
+            <Shield className="h-4 w-4 text-[#10B981]" />
             No credit card required
           </span>
           <span className="flex items-center gap-1.5">
@@ -127,138 +101,140 @@ export default function ScanPage() {
           </span>
         </div>
 
-        <Card
-          className="w-full max-w-lg border-border shadow-sm"
-        >
-          <CardHeader>
-            <CardTitle className="font-display text-2xl">
-              Scan your business
-            </CardTitle>
-            <CardDescription>
-              We&apos;ll check how AI search engines see your business and show
-              you exactly where you stand vs. competitors.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-              {error && (
-                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-                  {error}
-                </div>
+        {/* Scan Form Card */}
+        <div className="w-full max-w-lg rounded-[20px] border border-border bg-card p-8 shadow-sm">
+          <h2 className="font-sans font-medium text-2xl text-foreground">
+            Scan your business
+          </h2>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            We&apos;ll check how AI search engines see your business and show you exactly where you stand vs. competitors.
+          </p>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5">
+            {error && (
+              <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
+            {/* Website URL */}
+            <div className="space-y-2">
+              <label htmlFor="url" className="text-sm font-medium text-foreground">
+                Website URL
+              </label>
+              <div className="relative">
+                <Globe className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="url"
+                  type="url"
+                  placeholder="https://yourbusiness.com"
+                  className="ps-10"
+                  {...register('url')}
+                />
+              </div>
+              {errors.url && (
+                <p className="text-xs text-destructive">{errors.url.message}</p>
               )}
+            </div>
 
-              <div className="space-y-2">
-                <label htmlFor="url" className="text-sm font-medium">
-                  Website URL
-                </label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="url"
-                    type="url"
-                    placeholder="https://yourbusiness.com"
-                    className="pl-10"
-                    {...register('url')}
-                  />
-                </div>
-                {errors.url && (
-                  <p className="text-xs text-red-500">
-                    {errors.url.message}
-                  </p>
-                )}
+            {/* Business Name */}
+            <div className="space-y-2">
+              <label htmlFor="business_name" className="text-sm font-medium text-foreground">
+                Business name
+              </label>
+              <div className="relative">
+                <Building2 className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="business_name"
+                  type="text"
+                  placeholder="Your Business Name"
+                  className="ps-10"
+                  {...register('business_name')}
+                />
               </div>
+              {errors.business_name && (
+                <p className="text-xs text-destructive">
+                  {errors.business_name.message}
+                </p>
+              )}
+            </div>
 
-              <div className="space-y-2">
-                <label htmlFor="business_name" className="text-sm font-medium">
-                  Business name
-                </label>
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="business_name"
-                    type="text"
-                    placeholder="Your Business Name"
-                    className="pl-10"
-                    {...register('business_name')}
-                  />
-                </div>
-                {errors.business_name && (
-                  <p className="text-xs text-red-500">
-                    {errors.business_name.message}
-                  </p>
-                )}
+            {/* Industry */}
+            <div className="space-y-2">
+              <label htmlFor="sector" className="text-sm font-medium text-foreground">
+                Industry
+              </label>
+              <div className="relative">
+                <Layers className="absolute start-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Select
+                  onValueChange={(value) =>
+                    setValue('sector', value, { shouldValidate: true })
+                  }
+                >
+                  <SelectTrigger className="ps-10">
+                    <SelectValue placeholder="Select your industry" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INDUSTRIES.map((industry) => (
+                      <SelectItem key={industry.value} value={industry.value}>
+                        {industry.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+              {errors.sector && (
+                <p className="text-xs text-destructive">{errors.sector.message}</p>
+              )}
+            </div>
 
-              <div className="space-y-2">
-                <label htmlFor="sector" className="text-sm font-medium">
-                  Industry
-                </label>
-                <div className="relative">
-                  <Layers className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Select
-                    onValueChange={(value) => setValue('sector', value, { shouldValidate: true })}
-                  >
-                    <SelectTrigger className="pl-10">
-                      <SelectValue placeholder="Select your industry" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {INDUSTRIES.map((industry) => (
-                        <SelectItem key={industry.value} value={industry.value}>
-                          {industry.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {errors.sector && (
-                  <p className="text-xs text-red-500">{errors.sector.message}</p>
-                )}
+            {/* Location */}
+            <div className="space-y-2">
+              <label htmlFor="location" className="text-sm font-medium text-foreground">
+                Location
+              </label>
+              <div className="relative">
+                <MapPin className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="location"
+                  type="text"
+                  placeholder="Tel Aviv, Israel"
+                  className="ps-10"
+                  {...register('location')}
+                />
               </div>
+              {errors.location && (
+                <p className="text-xs text-destructive">
+                  {errors.location.message}
+                </p>
+              )}
+            </div>
 
-              <div className="space-y-2">
-                <label htmlFor="location" className="text-sm font-medium">
-                  Location
-                </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="location"
-                    type="text"
-                    placeholder="Tel Aviv, Israel"
-                    className="pl-10"
-                    {...register('location')}
-                  />
-                </div>
-                {errors.location && (
-                  <p className="text-xs text-red-500">
-                    {errors.location.message}
-                  </p>
-                )}
-              </div>
+            {/* CTA */}
+            <Button
+              type="submit"
+              className="w-full rounded-full bg-primary text-white hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              disabled={isSubmitting}
+              size="lg"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  Starting scan...
+                </>
+              ) : (
+                'Scan your site \u2192'
+              )}
+            </Button>
 
-              <Button
-                type="submit"
-                className="w-full bg-primary text-white hover:bg-primary/90"
-                disabled={isSubmitting}
-                size="lg"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Starting scan...
-                  </>
-                ) : (
-                  'Start free scan'
-                )}
-              </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              Free &bull; 60 seconds &bull; No account needed
+            </p>
+          </form>
+        </div>
+      </main>
 
-              <p className="text-center text-xs text-muted-foreground">
-                100% free. No signup needed. Your data stays private.
-              </p>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+      <ProductFooter />
     </div>
   )
 }
