@@ -87,12 +87,9 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <Card
-        className="border-[var(--color-card-border)] shadow-[var(--shadow-card)]"
-        style={{ borderRadius: 'var(--card-radius)' }}
-      >
+      <Card className="rounded-[20px] border border-border bg-card shadow-sm">
         <CardHeader className="text-center">
-          <CardTitle className="font-display text-2xl">Password updated</CardTitle>
+          <CardTitle className="font-sans text-2xl font-medium">Password updated</CardTitle>
           <CardDescription>
             Your password has been changed. Redirecting you to the dashboard...
           </CardDescription>
@@ -102,12 +99,9 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <Card
-      className="border-[var(--color-card-border)] shadow-[var(--shadow-card)]"
-      style={{ borderRadius: 'var(--card-radius)' }}
-    >
+    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
       <CardHeader className="text-center">
-        <CardTitle className="font-display text-2xl">Set new password</CardTitle>
+        <CardTitle className="font-sans text-2xl font-medium">Set new password</CardTitle>
         <CardDescription>
           Choose a strong password for your Beamix account.
         </CardDescription>
@@ -115,7 +109,7 @@ export default function ResetPasswordPage() {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
@@ -125,18 +119,19 @@ export default function ResetPasswordPage() {
               New password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+              <Lock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="At least 8 characters"
-                className="pl-10 pr-10"
+                className="ps-10 pe-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 {...register('password')}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)] hover:text-[var(--color-text)]"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -146,7 +141,7 @@ export default function ResetPasswordPage() {
               </button>
             </div>
             {errors.password && (
-              <p className="text-xs text-red-500">{errors.password.message}</p>
+              <p className="text-xs text-destructive">{errors.password.message}</p>
             )}
           </div>
 
@@ -155,18 +150,19 @@ export default function ResetPasswordPage() {
               Confirm new password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+              <Lock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="confirmPassword"
                 type={showConfirm ? 'text' : 'password'}
                 placeholder="Confirm your new password"
-                className="pl-10 pr-10"
+                className="ps-10 pe-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 {...register('confirmPassword')}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)] hover:text-[var(--color-text)]"
+                aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
               >
                 {showConfirm ? (
                   <EyeOff className="h-4 w-4" />
@@ -176,7 +172,7 @@ export default function ResetPasswordPage() {
               </button>
             </div>
             {errors.confirmPassword && (
-              <p className="text-xs text-red-500">
+              <p className="text-xs text-destructive">
                 {errors.confirmPassword.message}
               </p>
             )}
@@ -184,12 +180,12 @@ export default function ResetPasswordPage() {
 
           <Button
             type="submit"
-            className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+            className="w-full rounded-lg"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
                 Updating password...
               </>
             ) : (
@@ -198,12 +194,12 @@ export default function ResetPasswordPage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-[var(--color-muted)]">
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           <Link
             href="/login"
-            className="font-medium text-[var(--color-accent)] hover:underline"
+            className="font-medium text-primary hover:underline"
           >
-            <ArrowLeft className="mr-1 inline h-3 w-3" />
+            <ArrowLeft className="me-1 inline h-3 w-3" />
             Back to sign in
           </Link>
         </p>

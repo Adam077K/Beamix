@@ -56,17 +56,17 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <Card className="border-[var(--color-card-border)] shadow-[var(--shadow-card)]" style={{ borderRadius: 'var(--card-radius)' }}>
+      <Card className="rounded-[20px] border border-border bg-card shadow-sm">
         <CardHeader className="text-center">
-          <CardTitle className="font-display text-2xl">Check your email</CardTitle>
+          <CardTitle className="font-sans text-2xl font-medium">Check your email</CardTitle>
           <CardDescription>
             If an account exists with that email, we sent a password reset link.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Link href="/login">
-            <Button variant="outline" className="w-full">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+            <Button variant="outline" className="w-full rounded-lg">
+              <ArrowLeft className="me-2 h-4 w-4" />
               Back to sign in
             </Button>
           </Link>
@@ -76,9 +76,9 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <Card className="border-[var(--color-card-border)] shadow-[var(--shadow-card)]" style={{ borderRadius: 'var(--card-radius)' }}>
+    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
       <CardHeader className="text-center">
-        <CardTitle className="font-display text-2xl">Reset password</CardTitle>
+        <CardTitle className="font-sans text-2xl font-medium">Reset password</CardTitle>
         <CardDescription>
           Enter your email and we&apos;ll send you a reset link.
         </CardDescription>
@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
@@ -96,28 +96,28 @@ export default function ForgotPasswordPage() {
               Email
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+              <Mail className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="email"
                 type="email"
                 placeholder="you@company.com"
-                className="pl-10"
+                className="ps-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 {...register('email')}
               />
             </div>
             {errors.email && (
-              <p className="text-xs text-red-500">{errors.email.message}</p>
+              <p className="text-xs text-destructive">{errors.email.message}</p>
             )}
           </div>
 
           <Button
             type="submit"
-            className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+            className="w-full rounded-lg"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
                 Sending reset link...
               </>
             ) : (
@@ -126,12 +126,12 @@ export default function ForgotPasswordPage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-[var(--color-muted)]">
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           <Link
             href="/login"
-            className="font-medium text-[var(--color-accent)] hover:underline"
+            className="font-medium text-primary hover:underline"
           >
-            <ArrowLeft className="mr-1 inline h-3 w-3" />
+            <ArrowLeft className="me-1 inline h-3 w-3" />
             Back to sign in
           </Link>
         </p>

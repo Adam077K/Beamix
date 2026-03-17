@@ -86,19 +86,19 @@ export function SignupForm() {
 
   if (success) {
     return (
-      <Card className="border-[var(--color-card-border)] shadow-[var(--shadow-card)]" style={{ borderRadius: 'var(--card-radius)' }}>
+      <Card className="rounded-[20px] border border-border bg-card shadow-sm">
         <CardHeader className="text-center">
-          <CardTitle className="font-display text-2xl">Check your email</CardTitle>
+          <CardTitle className="font-sans text-2xl font-medium">Check your email</CardTitle>
           <CardDescription>
             We sent you a confirmation link. Click it to activate your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-sm text-[var(--color-muted)]">
+          <p className="text-center text-sm text-muted-foreground">
             Didn&apos;t receive the email?{' '}
             <button
               onClick={() => setSuccess(false)}
-              className="font-medium text-[var(--color-accent)] hover:underline"
+              className="font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
             >
               Try again
             </button>
@@ -109,9 +109,9 @@ export function SignupForm() {
   }
 
   return (
-    <Card className="border-[var(--color-card-border)] shadow-[var(--shadow-card)]" style={{ borderRadius: 'var(--card-radius)' }}>
+    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
       <CardHeader className="text-center">
-        <CardTitle className="font-display text-2xl">Create your account</CardTitle>
+        <CardTitle className="font-sans text-2xl font-medium">Create your account</CardTitle>
         <CardDescription>
           Start your 7-day free trial. No credit card required.
         </CardDescription>
@@ -119,7 +119,7 @@ export function SignupForm() {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
@@ -129,17 +129,17 @@ export function SignupForm() {
               Full name
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+              <User className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="fullName"
                 type="text"
                 placeholder="Your full name"
-                className="pl-10"
+                className="ps-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 {...register('fullName')}
               />
             </div>
             {errors.fullName && (
-              <p className="text-xs text-red-500">{errors.fullName.message}</p>
+              <p className="text-xs text-destructive">{errors.fullName.message}</p>
             )}
           </div>
 
@@ -148,17 +148,17 @@ export function SignupForm() {
               Email
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+              <Mail className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="email"
                 type="email"
                 placeholder="you@company.com"
-                className="pl-10"
+                className="ps-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 {...register('email')}
               />
             </div>
             {errors.email && (
-              <p className="text-xs text-red-500">{errors.email.message}</p>
+              <p className="text-xs text-destructive">{errors.email.message}</p>
             )}
           </div>
 
@@ -167,18 +167,19 @@ export function SignupForm() {
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+              <Lock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="At least 8 characters"
-                className="pl-10 pr-10"
+                className="ps-10 pe-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 {...register('password')}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-muted)] hover:text-[var(--color-text)]"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -188,7 +189,7 @@ export function SignupForm() {
               </button>
             </div>
             {errors.password && (
-              <p className="text-xs text-red-500">{errors.password.message}</p>
+              <p className="text-xs text-destructive">{errors.password.message}</p>
             )}
           </div>
 
@@ -197,17 +198,17 @@ export function SignupForm() {
               Confirm password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
+              <Lock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="confirmPassword"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Confirm your password"
-                className="pl-10"
+                className="ps-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 {...register('confirmPassword')}
               />
             </div>
             {errors.confirmPassword && (
-              <p className="text-xs text-red-500">
+              <p className="text-xs text-destructive">
                 {errors.confirmPassword.message}
               </p>
             )}
@@ -215,12 +216,12 @@ export function SignupForm() {
 
           <Button
             type="submit"
-            className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+            className="w-full rounded-lg"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
                 Creating account...
               </>
             ) : (
@@ -231,10 +232,10 @@ export function SignupForm() {
 
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-[var(--color-card-border)]" />
+            <span className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[var(--color-card)] px-2 text-[var(--color-muted)]">
+            <span className="bg-card px-2 text-muted-foreground">
               Or continue with
             </span>
           </div>
@@ -243,10 +244,10 @@ export function SignupForm() {
         <Button
           type="button"
           variant="outline"
-          className="w-full"
+          className="w-full rounded-lg"
           onClick={handleGoogleSignIn}
         >
-          <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+          <svg className="me-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
               fill="#4285F4"
@@ -264,14 +265,14 @@ export function SignupForm() {
               fill="#EA4335"
             />
           </svg>
-          Google
+          Continue with Google
         </Button>
 
-        <p className="mt-6 text-center text-sm text-[var(--color-muted)]">
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{' '}
           <Link
             href="/login"
-            className="font-medium text-[var(--color-accent)] hover:underline"
+            className="font-medium text-primary hover:underline"
           >
             Sign in
           </Link>
