@@ -1,5 +1,4 @@
-import { BeamixNav } from '@/components/landing/beamix-nav'
-import { BeamixFooter } from '@/components/landing/beamix-footer'
+import Link from 'next/link'
 
 export const metadata = {
   title: 'Terms of Service | Beamix',
@@ -71,28 +70,44 @@ const sections = [
 
 export default function TermsPage() {
   return (
-    <>
-      <BeamixNav />
-      <main className="min-h-screen pt-24 pb-16 px-6">
+    <div className="min-h-screen bg-white">
+      <header className="border-b border-gray-200 px-6 py-4">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <span className="text-lg font-semibold text-[#0A0A0A]">Beamix</span>
+          <Link href="/login" className="text-sm text-[#FF3C00] hover:underline">
+            Go to app
+          </Link>
+        </div>
+      </header>
+
+      <main className="pb-16 px-6 pt-12">
         <div className="max-w-3xl mx-auto">
-          <h1 className="font-[family-name:var(--font-outfit)] text-3xl font-bold text-[#141310] mb-2">
+          <h1 className="text-3xl font-semibold text-[#0A0A0A] mb-2">
             Terms of Service
           </h1>
-          <p className="text-stone-500 text-sm mb-10">Last updated: March 2026</p>
+          <p className="text-gray-500 text-sm mb-10">Last updated: March 2026</p>
 
           <div className="space-y-8">
             {sections.map((section) => (
               <section key={section.title}>
-                <h2 className="font-[family-name:var(--font-outfit)] text-lg font-semibold text-[#141310] mb-2">
+                <h2 className="text-lg font-semibold text-[#0A0A0A] mb-2">
                   {section.title}
                 </h2>
-                <p className="text-stone-600 leading-relaxed">{section.content}</p>
+                <p className="text-gray-600 leading-relaxed">{section.content}</p>
               </section>
             ))}
           </div>
         </div>
       </main>
-      <BeamixFooter />
-    </>
+
+      <footer className="border-t border-gray-200 px-6 py-6">
+        <div className="max-w-3xl mx-auto flex items-center justify-between text-sm text-gray-500">
+          <span>&copy; 2026 Beamix. All rights reserved.</span>
+          <Link href="/privacy" className="hover:text-[#0A0A0A]">
+            Privacy Policy
+          </Link>
+        </div>
+      </footer>
+    </div>
   )
 }
