@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, Fraunces } from 'next/font/google'
+import { GeistMono } from 'geist/font/mono'
 import { Providers } from '@/components/providers'
 import './globals.css'
 
@@ -29,8 +30,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${fraunces.variable} antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} ${fraunces.variable} ${GeistMono.variable} antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>
