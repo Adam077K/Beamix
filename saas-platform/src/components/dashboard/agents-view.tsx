@@ -11,7 +11,7 @@ import {
   Share2,
   Search,
   MessageSquare,
-  Bot,
+  Sparkles,
   Zap,
   CheckCircle2,
   XCircle,
@@ -158,57 +158,78 @@ export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) 
           const Icon = agent.icon
           const canAfford = totalCredits >= agent.credits
           return (
-            <Card
+            <div
               key={agent.type}
-              className="relative bg-card rounded-[20px] border border-border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+              className={cn(
+                'group relative rounded-[20px] border border-border bg-card p-5',
+                'shadow-sm',
+                'hover:shadow-md hover:-translate-y-1',
+                'transition-all duration-200 ease-out cursor-pointer',
+                'overflow-hidden',
+              )}
             >
-              <CardContent className="relative p-5">
-                {/* Credits badge in top right */}
-                <Badge variant="outline" className="absolute top-3 right-3 text-xs">
-                  {agent.credits} credits
+              {/* Agent icon + status row */}
+              <div className="flex items-start justify-between mb-3">
+                <div className={cn(
+                  'h-10 w-10 rounded-xl flex items-center justify-center shrink-0',
+                  agent.color,
+                  'transition-all duration-200',
+                  'group-hover:scale-105',
+                )}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <Badge variant="outline" className="text-[10px] font-medium">
+                  {agent.credits} credit{agent.credits !== 1 ? 's' : ''}
                 </Badge>
-                <div className="flex items-start gap-3">
-                  <div className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl', agent.color)}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0 pr-16">
-                    <h3 className="text-base font-medium text-foreground">
-                      {agent.name}
-                    </h3>
-                  </div>
-                </div>
-                <p className="mt-3 text-sm text-muted-foreground line-clamp-3">
-                  {agent.description}
-                </p>
-                <div className="mt-4 flex gap-2">
-                  <Button
-                    size="sm"
-                    className={cn(
-                      'w-full',
-                      canAfford
-                        ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                        : 'bg-muted text-muted-foreground cursor-not-allowed'
-                    )}
-                    disabled={!canAfford}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      openModal(agent)
-                    }}
-                  >
-                    <Bot className="mr-1 h-3 w-3" />
-                    {canAfford ? 'Launch Agent' : 'Not enough credits'}
-                  </Button>
-                </div>
-              </CardContent>
-              {/* Make the card itself clickable to navigate to chat */}
+              </div>
+
+              {/* Agent name + description */}
+              <h3 className="text-sm font-semibold text-foreground mb-1">{agent.name}</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                {agent.description}
+              </p>
+
+              {/* Spacer to ensure run button doesn't overlap content */}
+              <div className="h-8" aria-hidden="true" />
+
+              {/* Hover-reveal run button — slides up from bottom */}
+              <div className={cn(
+                'absolute bottom-0 inset-x-0 px-5 py-4',
+                'bg-gradient-to-t from-card via-card/95 to-transparent',
+                'translate-y-full group-hover:translate-y-0 group-focus-within:translate-y-0',
+                'transition-transform duration-200 ease-out',
+              )}>
+                <Button
+                  size="sm"
+                  className={cn(
+                    'w-full rounded-lg text-xs',
+                    canAfford
+                      ? 'bg-primary text-primary-foreground hover:bg-[#e63600]'
+                      : 'bg-muted text-muted-foreground cursor-not-allowed',
+                  )}
+                  disabled={!canAfford}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    openModal(agent)
+                  }}
+                  aria-label={canAfford ? `Run ${agent.name}` : `Not enough credits for ${agent.name}`}
+                >
+                  <Sparkles className="me-1.5 h-3 w-3 rtl:order-last" />
+                  {canAfford ? 'Run Agent' : 'Not enough credits'}
+                </Button>
+              </div>
+
+              {/* Card-level link for navigation — behind the button */}
               <Link
                 href={`/dashboard/agents/${agent.type}`}
                 className="absolute inset-0 z-0"
                 aria-label={`Open ${agent.name} chat`}
+                tabIndex={-1}
               >
                 <span className="sr-only">Open {agent.name}</span>
               </Link>
-            </Card>
+            </div>
           )
         })}
       </div>

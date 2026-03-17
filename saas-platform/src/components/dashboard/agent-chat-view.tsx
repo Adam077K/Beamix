@@ -12,17 +12,18 @@ import {
   MessageSquare,
   Bot,
   ArrowLeft,
+  ArrowRight,
   Zap,
-  SendHorizontal,
   Copy,
   Check,
   AlertCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { agentTypeToSlug } from '@/lib/agents/config'
+
+// ─── Agent metadata ────────────────────────────────────────────────────────
 
 const AGENT_META: Record<
   string,
@@ -31,6 +32,7 @@ const AGENT_META: Record<
     description: string
     icon: React.ComponentType<{ className?: string }>
     credits: number
+    color: string
     prompts: string[]
   }
 > = {
@@ -39,6 +41,7 @@ const AGENT_META: Record<
     description: 'Generate AI-optimized website content',
     icon: FileText,
     credits: 3,
+    color: 'bg-[#FFF5F2] text-[#FF3C00]',
     prompts: [
       'Write a homepage hero section',
       'Create an about page',
@@ -50,6 +53,7 @@ const AGENT_META: Record<
     description: 'Write AI-optimized blog posts',
     icon: BookOpen,
     credits: 5,
+    color: 'bg-blue-50 text-blue-600',
     prompts: [
       'Write a how-to guide for my industry',
       'Create a comparison article',
@@ -61,6 +65,7 @@ const AGENT_META: Record<
     description: 'Analyze reviews and generate responses',
     icon: Star,
     credits: 2,
+    color: 'bg-amber-50 text-amber-600',
     prompts: [
       'Analyze my Google reviews',
       'Generate review response templates',
@@ -72,6 +77,7 @@ const AGENT_META: Record<
     description: 'Generate JSON-LD structured data',
     icon: Code2,
     credits: 2,
+    color: 'bg-purple-50 text-purple-600',
     prompts: [
       'Generate LocalBusiness schema',
       'Create FAQ schema markup',
@@ -83,6 +89,7 @@ const AGENT_META: Record<
     description: 'Build authority-building social strategy',
     icon: Share2,
     credits: 3,
+    color: 'bg-pink-50 text-pink-600',
     prompts: [
       'Create a content calendar',
       'Write LinkedIn posts',
@@ -94,6 +101,7 @@ const AGENT_META: Record<
     description: 'Analyze competitor AI visibility',
     icon: Search,
     credits: 4,
+    color: 'bg-[#FFF5F2] text-[#FF3C00]',
     prompts: [
       'Analyze my top 3 competitors',
       'Find their content strategy',
@@ -105,6 +113,7 @@ const AGENT_META: Record<
     description: 'Discover customer AI search queries',
     icon: MessageSquare,
     credits: 2,
+    color: 'bg-green-50 text-green-600',
     prompts: [
       'Find popular queries in my industry',
       'Discover local search patterns',
@@ -112,6 +121,27 @@ const AGENT_META: Record<
     ],
   },
 }
+
+// ─── Typing indicator ──────────────────────────────────────────────────────
+
+function TypingIndicator() {
+  return (
+    <div className="flex items-center gap-2 text-muted-foreground px-4 py-3">
+      <div className="flex gap-1">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-bounce"
+            style={{ animationDelay: `${i * 150}ms`, animationDuration: '1s' }}
+          />
+        ))}
+      </div>
+      <span className="text-xs">Agent is thinking...</span>
+    </div>
+  )
+}
+
+// ─── Types ─────────────────────────────────────────────────────────────────
 
 interface ChatMessage {
   role: 'user' | 'agent'
@@ -130,6 +160,8 @@ interface AgentChatViewProps {
   totalCredits: number
 }
 
+// ─── Component ────────────────────────────────────────────────────────────
+
 export function AgentChatView({
   agentType,
   businessName,
@@ -143,6 +175,7 @@ export function AgentChatView({
   const [remainingCredits, setRemainingCredits] = useState(initialCredits)
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -249,6 +282,13 @@ export function AgentChatView({
     setTimeout(() => setCopiedIndex(null), 2000)
   }
 
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      void handleSend()
+    }
+  }
+
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       {/* Agent header */}
@@ -260,12 +300,12 @@ export function AgentChatView({
             aria-label="Back to agents"
             className="h-8 w-8 p-0"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
           </Button>
         </Link>
 
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-          <Icon className="h-5 w-5 text-primary" />
+        <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl shrink-0', meta.color)}>
+          <Icon className="h-5 w-5" />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -306,8 +346,8 @@ export function AgentChatView({
         {messages.length === 0 ? (
           /* Empty state */
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4">
-              <Icon className="h-8 w-8 text-primary" />
+            <div className={cn('flex h-16 w-16 items-center justify-center rounded-2xl mb-4', meta.color)}>
+              <Icon className="h-8 w-8" />
             </div>
             <h2 className="font-sans font-medium text-xl text-foreground">
               {meta.name}
@@ -321,7 +361,10 @@ export function AgentChatView({
               {meta.prompts.map((prompt) => (
                 <button
                   key={prompt}
-                  onClick={() => setInput(prompt)}
+                  onClick={() => {
+                    setInput(prompt)
+                    inputRef.current?.focus()
+                  }}
                   className="rounded-full bg-muted text-foreground text-sm px-4 py-1.5 hover:bg-muted/80 transition-colors border border-border"
                 >
                   {prompt}
@@ -343,10 +386,26 @@ export function AgentChatView({
                   className={cn(
                     'relative group text-sm',
                     msg.role === 'user'
-                      ? 'bg-primary/10 rounded-[20px] rounded-br-sm ms-auto max-w-[80%] p-4'
+                      ? [
+                          'max-w-[75%] ms-auto',
+                          'rounded-[16px] rounded-te-[4px]',
+                          'bg-primary text-primary-foreground px-4 py-3',
+                          'leading-relaxed',
+                        ]
                       : msg.error
-                        ? 'bg-red-50 border border-red-200 text-destructive rounded-[20px] rounded-bl-sm me-auto max-w-[80%] p-4'
-                        : 'bg-muted rounded-[20px] rounded-bl-sm me-auto max-w-[80%] p-4'
+                        ? [
+                            'max-w-[85%]',
+                            'rounded-[16px] rounded-ts-[4px]',
+                            'bg-red-50 border border-red-200 text-destructive px-4 py-3',
+                            'leading-relaxed',
+                          ]
+                        : [
+                            'max-w-[85%]',
+                            'rounded-[16px] rounded-ts-[4px]',
+                            'bg-muted/60 text-foreground px-4 py-3',
+                            'border border-border/50',
+                            'leading-relaxed',
+                          ]
                   )}
                 >
                   {/* Agent message header */}
@@ -364,7 +423,7 @@ export function AgentChatView({
                         )}
                       </div>
                       <button
-                        onClick={() => handleCopy(msg.content, i)}
+                        onClick={() => void handleCopy(msg.content, i)}
                         aria-label="Copy message"
                         className="opacity-0 group-hover:opacity-100 transition-opacity"
                       >
@@ -404,7 +463,7 @@ export function AgentChatView({
 
                   {/* Credits used footer */}
                   {msg.creditsCharged !== undefined && (
-                    <div className="mt-2 pt-2 border-t border-border flex items-center gap-1 text-xs text-muted-foreground">
+                    <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-1 text-xs text-muted-foreground">
                       <Zap className="h-3 w-3 text-primary" />
                       {msg.creditsCharged} credits used
                     </div>
@@ -413,22 +472,11 @@ export function AgentChatView({
               </div>
             ))}
 
-            {/* Streaming / typing indicator */}
+            {/* Typing indicator */}
             {isRunning && (
               <div className="flex justify-start">
-                <div className="bg-muted rounded-[20px] rounded-bl-sm px-4 py-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="flex gap-1">
-                      {[0, 1, 2].map((dot) => (
-                        <div
-                          key={dot}
-                          className="h-2 w-2 rounded-full bg-primary animate-pulse"
-                          style={{ animationDelay: `${dot * 0.2}s` }}
-                        />
-                      ))}
-                    </div>
-                    <span>{meta.name} is working...</span>
-                  </div>
+                <div className="rounded-[16px] rounded-ts-[4px] bg-muted/60 border border-border/50">
+                  <TypingIndicator />
                 </div>
               </div>
             )}
@@ -447,13 +495,16 @@ export function AgentChatView({
           </p>
         )}
 
-        {/* Quick prompts (visible when no messages yet, but shown above input too for convenience) */}
+        {/* Quick prompts (shown above input when conversation is in progress) */}
         {messages.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3 max-w-3xl mx-auto">
             {meta.prompts.map((prompt) => (
               <button
                 key={prompt}
-                onClick={() => setInput(prompt)}
+                onClick={() => {
+                  setInput(prompt)
+                  inputRef.current?.focus()
+                }}
                 className="rounded-full bg-muted text-foreground text-sm px-4 py-1.5 hover:bg-muted/80 transition-colors"
               >
                 {prompt}
@@ -467,22 +518,32 @@ export function AgentChatView({
             e.preventDefault()
             void handleSend()
           }}
-          className="flex gap-2 max-w-3xl mx-auto"
+          className="flex gap-3 items-end max-w-3xl mx-auto"
         >
-          <Input
+          <textarea
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={`Ask ${meta.name} anything...`}
+            onKeyDown={handleKeyDown}
+            placeholder={`Ask ${meta.name} anything... (Enter to send, Shift+Enter for new line)`}
             disabled={isRunning || !canAfford}
-            className="flex-1 bg-background rounded-lg border border-border"
+            rows={1}
+            aria-label={`Message ${meta.name}`}
+            className={cn(
+              'input-enhanced',
+              'flex-1 resize-none min-h-[44px] max-h-[120px]',
+              'rounded-xl px-4 py-3',
+              (isRunning || !canAfford) && 'opacity-50 cursor-not-allowed',
+            )}
           />
           <Button
             type="submit"
             size="icon"
             disabled={!input.trim() || isRunning || !canAfford}
             aria-label="Send message"
+            className="h-11 w-11 rounded-xl bg-primary text-primary-foreground flex-shrink-0 hover:bg-[#e63600] hover:scale-105 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            <SendHorizontal className="h-4 w-4 text-primary-foreground" />
+            <ArrowRight className="h-4 w-4 rtl:rotate-180" />
           </Button>
         </form>
       </div>
