@@ -13,13 +13,15 @@ import {
   Bot,
   ArrowLeft,
   Zap,
-  Send,
+  SendHorizontal,
   Copy,
   Check,
   AlertCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { agentTypeToSlug } from '@/lib/agents/config'
 
 const AGENT_META: Record<
@@ -29,7 +31,6 @@ const AGENT_META: Record<
     description: string
     icon: React.ComponentType<{ className?: string }>
     credits: number
-    color: string
     prompts: string[]
   }
 > = {
@@ -38,7 +39,6 @@ const AGENT_META: Record<
     description: 'Generate AI-optimized website content',
     icon: FileText,
     credits: 3,
-    color: 'bg-orange-100 text-orange-700',
     prompts: [
       'Write a homepage hero section',
       'Create an about page',
@@ -50,7 +50,6 @@ const AGENT_META: Record<
     description: 'Write AI-optimized blog posts',
     icon: BookOpen,
     credits: 5,
-    color: 'bg-blue-100 text-blue-700',
     prompts: [
       'Write a how-to guide for my industry',
       'Create a comparison article',
@@ -62,7 +61,6 @@ const AGENT_META: Record<
     description: 'Analyze reviews and generate responses',
     icon: Star,
     credits: 2,
-    color: 'bg-amber-100 text-amber-700',
     prompts: [
       'Analyze my Google reviews',
       'Generate review response templates',
@@ -74,7 +72,6 @@ const AGENT_META: Record<
     description: 'Generate JSON-LD structured data',
     icon: Code2,
     credits: 2,
-    color: 'bg-purple-100 text-purple-700',
     prompts: [
       'Generate LocalBusiness schema',
       'Create FAQ schema markup',
@@ -86,7 +83,6 @@ const AGENT_META: Record<
     description: 'Build authority-building social strategy',
     icon: Share2,
     credits: 3,
-    color: 'bg-pink-100 text-pink-700',
     prompts: [
       'Create a content calendar',
       'Write LinkedIn posts',
@@ -98,7 +94,6 @@ const AGENT_META: Record<
     description: 'Analyze competitor AI visibility',
     icon: Search,
     credits: 4,
-    color: 'bg-orange-100 text-orange-700',
     prompts: [
       'Analyze my top 3 competitors',
       'Find their content strategy',
@@ -110,7 +105,6 @@ const AGENT_META: Record<
     description: 'Discover customer AI search queries',
     icon: MessageSquare,
     credits: 2,
-    color: 'bg-green-100 text-green-700',
     prompts: [
       'Find popular queries in my industry',
       'Discover local search patterns',
@@ -139,7 +133,7 @@ interface AgentChatViewProps {
 export function AgentChatView({
   agentType,
   businessName,
-  businessId,
+  businessId: _businessId,
   totalCredits: initialCredits,
 }: AgentChatViewProps) {
   const meta = AGENT_META[agentType]
@@ -258,35 +252,49 @@ export function AgentChatView({
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       {/* Agent header */}
-      <div className="flex items-center gap-4 border-b border-[var(--color-card-border)] pb-4">
+      <div className="bg-card border-b border-border p-4 flex items-center gap-4">
         <Link href="/dashboard/agents">
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label="Back to agents"
+            className="h-8 w-8 p-0"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div
-          className={`flex h-10 w-10 items-center justify-center rounded-xl ${meta.color}`}
-        >
-          <Icon className="h-5 w-5" />
+
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+          <Icon className="h-5 w-5 text-primary" />
         </div>
-        <div className="flex-1">
-          <h1 className="font-display text-lg font-bold text-[var(--color-text)]">
+
+        <div className="flex-1 min-w-0">
+          <h1 className="font-sans font-medium text-foreground truncate">
             {meta.name}
           </h1>
-          <p className="text-xs text-[var(--color-muted)]">
+          <p className="text-xs text-muted-foreground truncate">
             {meta.description}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-lg bg-[var(--color-bg)] px-3 py-1.5 border border-[var(--color-card-border)]">
-            <Zap className="h-3 w-3 text-[var(--color-accent-warm)]" />
-            <span className="text-xs font-semibold">
-              {meta.credits} credits/run
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 rounded-lg bg-[var(--color-bg)] px-3 py-1.5 border border-[var(--color-card-border)]">
-            <span className="text-xs text-[var(--color-muted)]">Balance:</span>
-            <span className="text-xs font-semibold text-[var(--color-text)]">
+
+        <div className="flex items-center gap-2 shrink-0">
+          <Badge variant="secondary" className="gap-1 text-xs">
+            <Zap className="h-3 w-3 text-primary" />
+            {meta.credits} credit{meta.credits !== 1 ? 's' : ''}
+          </Badge>
+          {isRunning && (
+            <Badge className="bg-primary/10 text-primary border-0 text-xs">
+              Running
+            </Badge>
+          )}
+          {!isRunning && messages.some((m) => m.role === 'agent' && !m.error) && (
+            <Badge className="bg-green-50 text-green-700 border-0 text-xs">
+              Completed
+            </Badge>
+          )}
+          <div className="flex items-center gap-1.5 rounded-lg bg-background px-3 py-1.5 border border-border">
+            <span className="text-xs text-muted-foreground">Balance:</span>
+            <span className="text-xs font-semibold text-foreground">
               {remainingCredits}
             </span>
           </div>
@@ -296,26 +304,25 @@ export function AgentChatView({
       {/* Chat area */}
       <div className="flex-1 overflow-y-auto py-6">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div
-              className={`flex h-16 w-16 items-center justify-center rounded-2xl ${meta.color} mb-4`}
-            >
-              <Icon className="h-8 w-8" />
+          /* Empty state */
+          <div className="flex flex-col items-center justify-center h-full text-center px-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4">
+              <Icon className="h-8 w-8 text-primary" />
             </div>
-            <h2 className="font-display text-xl font-semibold text-[var(--color-text)]">
+            <h2 className="font-sans font-medium text-xl text-foreground">
               {meta.name}
             </h2>
-            <p className="mt-1 text-sm text-[var(--color-muted)] max-w-sm">
+            <p className="mt-1 text-sm text-muted-foreground max-w-sm">
               {meta.description}. Tell me what you need for {businessName} and
               I&apos;ll get to work.
             </p>
-            {/* Suggested prompts */}
+            {/* Quick prompts */}
             <div className="mt-6 flex flex-wrap justify-center gap-2">
               {meta.prompts.map((prompt) => (
                 <button
                   key={prompt}
                   onClick={() => setInput(prompt)}
-                  className="rounded-full border border-[var(--color-card-border)] bg-white px-4 py-2 text-xs text-[var(--color-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)] transition-colors"
+                  className="rounded-full bg-muted text-foreground text-sm px-4 py-1.5 hover:bg-muted/80 transition-colors border border-border"
                 >
                   {prompt}
                 </button>
@@ -327,82 +334,95 @@ export function AgentChatView({
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={cn(
+                  'flex',
+                  msg.role === 'user' ? 'justify-end' : 'justify-start'
+                )}
               >
                 <div
-                  className={`relative group rounded-2xl px-4 py-3 text-sm ${
+                  className={cn(
+                    'relative group text-sm',
                     msg.role === 'user'
-                      ? 'max-w-[70%] bg-[var(--color-accent)] text-white'
+                      ? 'bg-primary/10 rounded-[20px] rounded-br-sm ms-auto max-w-[80%] p-4'
                       : msg.error
-                        ? 'max-w-[85%] bg-red-50 border border-red-200 text-red-700'
-                        : 'max-w-[85%] bg-[var(--color-bg)] border border-[var(--color-card-border)] text-[var(--color-text)]'
-                  }`}
+                        ? 'bg-red-50 border border-red-200 text-destructive rounded-[20px] rounded-bl-sm me-auto max-w-[80%] p-4'
+                        : 'bg-muted rounded-[20px] rounded-bl-sm me-auto max-w-[80%] p-4'
+                  )}
                 >
+                  {/* Agent message header */}
                   {msg.role === 'agent' && !msg.error && (
-                    <div className="mb-2 flex items-center justify-between">
+                    <div className="mb-2 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">
-                        <Bot className="h-3 w-3" />
-                        <span className="text-xs font-semibold">
+                        <Bot className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground font-medium">
                           {meta.name}
                         </span>
                         {msg.title && (
-                          <span className="text-xs text-[var(--color-muted)]">
+                          <span className="text-xs text-muted-foreground">
                             — {msg.title}
                           </span>
                         )}
                       </div>
                       <button
                         onClick={() => handleCopy(msg.content, i)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity ml-2"
-                        title="Copy to clipboard"
+                        aria-label="Copy message"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         {copiedIndex === i ? (
-                          <Check className="h-3.5 w-3.5 text-emerald-500" />
+                          <Check className="h-3.5 w-3.5 text-green-600" />
                         ) : (
-                          <Copy className="h-3.5 w-3.5 text-[var(--color-muted)]" />
+                          <Copy className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
                         )}
                       </button>
                     </div>
                   )}
+
+                  {/* Error message header */}
                   {msg.error && (
                     <div className="mb-1 flex items-center gap-1.5">
-                      <AlertCircle className="h-3 w-3" />
-                      <span className="text-xs font-semibold">Error</span>
+                      <AlertCircle className="h-3 w-3 text-destructive" />
+                      <span className="text-xs font-semibold text-destructive">Error</span>
                     </div>
                   )}
+
+                  {/* Message content */}
                   <div
-                    className={
+                    className={cn(
                       msg.role === 'agent' && !msg.error
-                        ? 'prose prose-sm max-w-none prose-headings:font-display prose-headings:text-[var(--color-text)] prose-p:text-[var(--color-text)] prose-code:text-xs'
+                        ? 'prose prose-sm max-w-none prose-headings:font-sans prose-headings:text-foreground prose-p:text-foreground prose-code:text-xs'
                         : ''
-                    }
+                    )}
                   >
                     {msg.format === 'json-ld' ? (
-                      <pre className="overflow-x-auto rounded-lg bg-gray-900 p-3 text-xs text-gray-100">
+                      <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-sm">
                         <code>{msg.content}</code>
                       </pre>
                     ) : (
                       <div className="whitespace-pre-wrap">{msg.content}</div>
                     )}
                   </div>
+
+                  {/* Credits used footer */}
                   {msg.creditsCharged !== undefined && (
-                    <div className="mt-2 pt-2 border-t border-[var(--color-card-border)] flex items-center gap-1 text-xs text-[var(--color-muted)]">
-                      <Zap className="h-3 w-3 text-[var(--color-accent-warm)]" />
+                    <div className="mt-2 pt-2 border-t border-border flex items-center gap-1 text-xs text-muted-foreground">
+                      <Zap className="h-3 w-3 text-primary" />
                       {msg.creditsCharged} credits used
                     </div>
                   )}
                 </div>
               </div>
             ))}
+
+            {/* Streaming / typing indicator */}
             {isRunning && (
               <div className="flex justify-start">
-                <div className="rounded-2xl bg-[var(--color-bg)] border border-[var(--color-card-border)] px-4 py-3">
-                  <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
+                <div className="bg-muted rounded-[20px] rounded-bl-sm px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <div className="flex gap-1">
                       {[0, 1, 2].map((dot) => (
                         <div
                           key={dot}
-                          className="h-2 w-2 rounded-full bg-[var(--color-accent)] animate-pulse"
+                          className="h-2 w-2 rounded-full bg-primary animate-pulse"
                           style={{ animationDelay: `${dot * 0.2}s` }}
                         />
                       ))}
@@ -412,23 +432,40 @@ export function AgentChatView({
                 </div>
               </div>
             )}
+
             <div ref={messagesEndRef} />
           </div>
         )}
       </div>
 
-      {/* Input */}
-      <div className="border-t border-[var(--color-card-border)] pt-4 px-4 pb-4">
+      {/* Input bar */}
+      <div className="bg-card border-t border-border p-4">
         {!canAfford && (
-          <p className="mb-2 text-xs text-red-500 text-center">
+          <p className="mb-2 text-xs text-destructive text-center">
             Not enough credits. You need {meta.credits} credits to run this
             agent.
           </p>
         )}
+
+        {/* Quick prompts (visible when no messages yet, but shown above input too for convenience) */}
+        {messages.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3 max-w-3xl mx-auto">
+            {meta.prompts.map((prompt) => (
+              <button
+                key={prompt}
+                onClick={() => setInput(prompt)}
+                className="rounded-full bg-muted text-foreground text-sm px-4 py-1.5 hover:bg-muted/80 transition-colors"
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        )}
+
         <form
           onSubmit={(e) => {
             e.preventDefault()
-            handleSend()
+            void handleSend()
           }}
           className="flex gap-2 max-w-3xl mx-auto"
         >
@@ -437,14 +474,15 @@ export function AgentChatView({
             onChange={(e) => setInput(e.target.value)}
             placeholder={`Ask ${meta.name} anything...`}
             disabled={isRunning || !canAfford}
-            className="flex-1"
+            className="flex-1 bg-background rounded-lg border border-border"
           />
           <Button
             type="submit"
+            size="icon"
             disabled={!input.trim() || isRunning || !canAfford}
-            className="bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+            aria-label="Send message"
           >
-            <Send className="h-4 w-4" />
+            <SendHorizontal className="h-4 w-4 text-primary-foreground" />
           </Button>
         </form>
       </div>
