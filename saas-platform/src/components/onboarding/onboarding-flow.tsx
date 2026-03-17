@@ -57,12 +57,18 @@ function DotIndicator({ activeIndex }: { activeIndex: number }) {
   return (
     <div className="flex items-center gap-2">
       {[0, 1, 2].map((i) => (
-        <div
+        <motion.div
           key={i}
-          className={`h-2 w-2 rounded-full transition-colors duration-300 ${
+          animate={{
+            scale: i === activeIndex ? 1.25 : 1,
+          }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className={`rounded-full transition-colors duration-300 ${
             i === activeIndex
-              ? 'bg-[var(--color-accent)]'
-              : 'bg-[var(--color-card-border)]'
+              ? 'h-2.5 w-2.5 bg-primary'
+              : i < activeIndex
+              ? 'h-2 w-2 bg-primary/40'
+              : 'h-2 w-2 bg-muted-foreground/25'
           }`}
         />
       ))}
@@ -246,7 +252,7 @@ export function OnboardingFlow() {
   if (step === null) {
     return (
       <div className="flex h-48 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-[var(--color-accent)]" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     )
   }
@@ -259,11 +265,13 @@ export function OnboardingFlow() {
   }
 
   return (
-    <div
-      className="w-full max-w-lg rounded-[var(--card-radius)] border border-[var(--color-card-border)] bg-[var(--color-card)] p-8 shadow-[var(--shadow-card)]"
-    >
-      <div className="mb-8 flex justify-center">
+    <div className="w-full max-w-lg rounded-[20px] border border-border bg-card p-8 shadow-sm">
+      {/* Step indicator */}
+      <div className="mb-8 flex flex-col items-center gap-2">
         <DotIndicator activeIndex={getDotIndex()} />
+        <p className="text-xs text-muted-foreground">
+          Step {getDotIndex() + 1} of 3
+        </p>
       </div>
 
       <AnimatePresence mode="wait">
@@ -278,13 +286,13 @@ export function OnboardingFlow() {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
           >
             <div className="mb-6 flex flex-col items-center text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-accent)]/10">
-                <Globe className="h-6 w-6 text-[var(--color-accent)]" />
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <Globe className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="font-display text-xl font-semibold text-[var(--color-text)]">
+              <h2 className="font-sans text-xl font-medium text-foreground">
                 What&apos;s your business website?
               </h2>
-              <p className="mt-2 text-sm text-[var(--color-muted)]">
+              <p className="mt-2 text-sm text-muted-foreground">
                 We&apos;ll scan it across every major AI engine.
               </p>
             </div>
@@ -296,17 +304,17 @@ export function OnboardingFlow() {
                   {...urlForm.register('url')}
                 />
                 {urlForm.formState.errors.url && (
-                  <p className="text-xs text-red-500">{urlForm.formState.errors.url.message}</p>
+                  <p className="text-xs text-destructive">{urlForm.formState.errors.url.message}</p>
                 )}
               </div>
 
               <Button
                 type="submit"
-                className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+                className="w-full"
                 size="lg"
               >
                 Continue
-                <ArrowRight className="ml-1 h-4 w-4" />
+                <ArrowRight className="ms-1 h-4 w-4" />
               </Button>
             </form>
           </motion.div>
@@ -323,20 +331,20 @@ export function OnboardingFlow() {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
           >
             <div className="mb-6 flex flex-col items-center text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-accent)]/10">
-                <Building className="h-6 w-6 text-[var(--color-accent)]" />
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <Building className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="font-display text-xl font-semibold text-[var(--color-text)]">
+              <h2 className="font-sans text-xl font-medium text-foreground">
                 What&apos;s the name of your business?
               </h2>
-              <p className="mt-2 text-sm text-[var(--color-muted)]">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Exactly as customers search for it.
               </p>
             </div>
 
             {displayedUrl && (
               <div className="mb-4 flex justify-center">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-accent)]/10 px-3 py-1 text-xs font-medium text-[var(--color-accent)]">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                   <Globe className="h-3 w-3" />
                   We&apos;re scanning: {displayedUrl}
                 </span>
@@ -351,17 +359,17 @@ export function OnboardingFlow() {
                   {...nameForm.register('business_name')}
                 />
                 {nameForm.formState.errors.business_name && (
-                  <p className="text-xs text-red-500">{nameForm.formState.errors.business_name.message}</p>
+                  <p className="text-xs text-destructive">{nameForm.formState.errors.business_name.message}</p>
                 )}
               </div>
 
               <Button
                 type="submit"
-                className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+                className="w-full"
                 size="lg"
               >
                 Continue
-                <ArrowRight className="ml-1 h-4 w-4" />
+                <ArrowRight className="ms-1 h-4 w-4" />
               </Button>
             </form>
           </motion.div>
@@ -378,10 +386,10 @@ export function OnboardingFlow() {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
           >
             <div className="mb-6 flex flex-col items-center text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-accent)]/10">
-                <Briefcase className="h-6 w-6 text-[var(--color-accent)]" />
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <Briefcase className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="font-display text-xl font-semibold text-[var(--color-text)]">
+              <h2 className="font-sans text-xl font-medium text-foreground">
                 What industry are you in?
               </h2>
             </div>
@@ -409,16 +417,16 @@ export function OnboardingFlow() {
                 </SelectContent>
               </Select>
               {industryForm.formState.errors.industry && (
-                <p className="text-xs text-red-500">{industryForm.formState.errors.industry.message}</p>
+                <p className="text-xs text-destructive">{industryForm.formState.errors.industry.message}</p>
               )}
 
               <Button
                 type="submit"
-                className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+                className="w-full"
                 size="lg"
               >
                 Continue
-                <ArrowRight className="ml-1 h-4 w-4" />
+                <ArrowRight className="ms-1 h-4 w-4" />
               </Button>
             </form>
           </motion.div>
@@ -435,19 +443,19 @@ export function OnboardingFlow() {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
           >
             <div className="mb-6 flex flex-col items-center text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-accent)]/10">
-                <MapPin className="h-6 w-6 text-[var(--color-accent)]" />
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <MapPin className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="font-display text-xl font-semibold text-[var(--color-text)]">
+              <h2 className="font-sans text-xl font-medium text-foreground">
                 Where is your main market?
               </h2>
-              <p className="mt-2 text-sm text-[var(--color-muted)]">
+              <p className="mt-2 text-sm text-muted-foreground">
                 AI searches are highly local. This shapes every result.
               </p>
             </div>
 
             {error && (
-              <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+              <div className="mb-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -459,25 +467,25 @@ export function OnboardingFlow() {
                   {...locationForm.register('location')}
                 />
                 {locationForm.formState.errors.location && (
-                  <p className="text-xs text-red-500">{locationForm.formState.errors.location.message}</p>
+                  <p className="text-xs text-destructive">{locationForm.formState.errors.location.message}</p>
                 )}
               </div>
 
               <Button
                 type="submit"
-                className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]/90"
+                className="w-full"
                 size="lg"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
                     Setting up...
                   </>
                 ) : (
                   <>
                     Start My Scan
-                    <ArrowRight className="ml-1 h-4 w-4" />
+                    <ArrowRight className="ms-1 h-4 w-4" />
                   </>
                 )}
               </Button>

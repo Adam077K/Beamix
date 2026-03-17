@@ -8,10 +8,10 @@ export const metadata: Metadata = {
 
 export default function OnboardingPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-bg)] px-4 py-12">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12">
       <div className="mb-8">
-        <span className="font-display text-2xl font-bold text-[var(--color-text)]">
-          Beam<span className="text-[var(--color-accent)]">ix</span>
+        <span className="font-sans text-2xl font-medium text-foreground">
+          Beam<span className="text-primary">ix</span>
         </span>
       </div>
       <OnboardingFlow />
