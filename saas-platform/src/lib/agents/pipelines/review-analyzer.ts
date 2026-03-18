@@ -34,11 +34,10 @@ interface ResponseTemplate {
 }
 
 export async function run(
-  input: PipelineInput,
+  _input: PipelineInput,
   _context: { userId: string }
 ): Promise<PipelineOutput> {
   // TODO: Replace with real pipeline (scrape reviews -> Sonnet sentiment analysis -> Sonnet template generation -> QA)
-  const sources = input.reviewSources || ['Google', 'Yelp']
   return {
     analysis: {
       totalReviewed: 47,

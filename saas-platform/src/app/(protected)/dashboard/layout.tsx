@@ -56,6 +56,8 @@ export default async function DashboardLayout({
 
   let trialDaysLeft: number | null = null
   if (isTrialing && trialEnd) {
+    // Server component — Date.now() is safe here (runs once per request)
+    // eslint-disable-next-line react-hooks/purity
     const diff = new Date(trialEnd).getTime() - Date.now()
     trialDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
   }

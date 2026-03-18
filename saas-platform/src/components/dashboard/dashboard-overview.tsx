@@ -182,7 +182,7 @@ function EngineBar({ engine, isMentioned, rankPosition, color, index }: EngineBa
   useEffect(() => {
     const t = setTimeout(() => setBarWidth(fillPercent), index * 80 + 150)
     return () => clearTimeout(t)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [fillPercent, index])
 
   return (
@@ -222,15 +222,12 @@ export function DashboardOverview({
   scoreDelta,
   mentionCount,
   mentionDelta,
-  lastScanned,
   totalCredits,
   monthlyCredits,
   enginesMentioning,
   totalEngines,
-  trendData,
   recommendations,
   recentAgents,
-  recentScans,
   engineResults,
   sentimentSummary,
   contentStats,
@@ -247,20 +244,6 @@ export function DashboardOverview({
   const negative = sentimentSummary?.negative ?? 0
   const sentimentTotal = positive + neutral + negative
   const positivePct = sentimentTotal > 0 ? Math.round((positive / sentimentTotal) * 100) : 0
-  const neutralPct = sentimentTotal > 0 ? Math.round((neutral / sentimentTotal) * 100) : 0
-  const negativePct = sentimentTotal > 0 ? Math.round((negative / sentimentTotal) * 100) : 0
-
-  // Chart data (oldest → newest for L→R trend)
-  const chartData = recentScans
-    .filter((s) => s.overall_score !== null)
-    .map((s) => ({
-      date: new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      score: s.overall_score as number,
-    }))
-    .reverse()
-
-  // Top recommendation
-  const [topRec, ...restRecs] = recommendations
 
   // Market position
   const userScore = score ?? 0
@@ -353,7 +336,7 @@ export function DashboardOverview({
     {
       header: 'Type',
       accessorKey: 'agent_type',
-      cell: ({ row }) => (
+      cell: ({ row: _row }) => (
         <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted/60">
           <Bot className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
         </span>
@@ -417,10 +400,6 @@ export function DashboardOverview({
 
   // Engines active in plan (free plan shows first 3)
   const activeEngines = ENGINE_LIST.slice(0, totalEngines ?? 3)
-
-  // Sparkline
-  const sparklineData =
-    trendData?.map((d) => d.score) ?? chartData.map((d) => d.score)
 
   return (
     <div className="space-y-5">
@@ -835,7 +814,7 @@ export function DashboardOverview({
             {recommendations.length === 0 ? (
               <div className="py-8 text-center flex flex-col items-center gap-2">
                 <CheckCircle2 className="h-8 w-8 text-emerald-500/60" aria-hidden="true" />
-                <p className="text-sm text-muted-foreground">No pending actions — you're all caught up.</p>
+                <p className="text-sm text-muted-foreground">No pending actions — you&apos;re all caught up.</p>
               </div>
             ) : (
               [...recommendations].slice(0, 5).map((rec, i) => {

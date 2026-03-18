@@ -3,7 +3,7 @@ export const PIPELINE_STEPS = ['Extract Citation Targets', 'Find Contact Informa
 export interface PipelineInput { businessId: string; targetUrls?: string[]; [key: string]: unknown }
 export interface PipelineOutput { title: string; content: string; contentType: string; format: string; wordCount: number }
 
-export async function run(input: PipelineInput, _context: { userId: string }): Promise<PipelineOutput> {
+export async function run(_input: PipelineInput, _context: { userId: string }): Promise<PipelineOutput> {
   // TODO: Replace with real pipeline (Haiku extract → Perplexity find contacts → Sonnet outreach)
   return {
     title: 'Citation Outreach Templates',

@@ -226,7 +226,7 @@ interface FreeScanEngineResult {
   response_snippet: string
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 type SupabaseClient = Awaited<ReturnType<typeof createServiceClient>>
 
 async function convertFreeScanResults(
@@ -266,14 +266,6 @@ async function convertFreeScanResults(
     const rawEngines = resultsData.engines
     const engines = (Array.isArray(rawEngines) ? rawEngines : []) as unknown as FreeScanEngineResult[]
     const mentionCount = engines.filter((e) => e.is_mentioned).length
-    const mentionedPositions = engines
-      .filter((e) => e.mention_position !== null)
-      .map((e) => e.mention_position as number)
-    const avgPosition =
-      mentionedPositions.length > 0
-        ? mentionedPositions.reduce((a, b) => a + b, 0) / mentionedPositions.length
-        : null
-
     const { data: scanResult, error: scanError } = await supabase
       .from('scans')
       .insert({

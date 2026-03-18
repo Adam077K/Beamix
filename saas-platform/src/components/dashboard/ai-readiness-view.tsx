@@ -19,7 +19,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ScoreRing } from '@/components/ui/score-ring'
-import { TrendBadge } from '@/components/ui/trend-badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { getScoreLevel } from '@/components/ui/score-badge'
 import { cn } from '@/lib/utils'
@@ -463,7 +462,7 @@ export function AiReadinessView({ readiness, websiteUrl }: AiReadinessViewProps)
             <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:480ms]">
               <CardContent className="p-8 flex flex-col items-center gap-3 text-center">
                 <CheckCircle2 className="h-10 w-10 text-emerald-500" aria-hidden="true" />
-                <h3 className="text-sm font-semibold text-foreground">You're fully optimized!</h3>
+                <h3 className="text-sm font-semibold text-foreground">You&apos;re fully optimized!</h3>
                 <p className="text-xs text-muted-foreground max-w-xs">
                   All readiness factors are passing. Keep running periodic audits to maintain your AI search visibility.
                 </p>

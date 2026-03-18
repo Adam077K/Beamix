@@ -161,7 +161,6 @@ interface AgentChatViewProps {
 export function AgentChatView({
   agentType,
   businessName,
-  businessId: _businessId,
   totalCredits: initialCredits,
 }: AgentChatViewProps) {
   const meta = AGENT_META[agentType]

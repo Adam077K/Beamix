@@ -3,7 +3,7 @@ export const PIPELINE_STEPS = ['Crawl Website', 'Analyze Crawlability', 'Check S
 export interface PipelineInput { businessId: string; websiteUrl?: string; [key: string]: unknown }
 export interface PipelineOutput { title: string; content: string; contentType: string; format: string; wordCount: number; scores?: Record<string, number> }
 
-export async function run(input: PipelineInput, _context: { userId: string }): Promise<PipelineOutput> {
+export async function run(_input: PipelineInput, _context: { userId: string }): Promise<PipelineOutput> {
   // TODO: Replace with real pipeline (cheerio → algorithmic scoring → Sonnet narrative)
   const scores = {
     crawlability: Math.floor(Math.random() * 30) + 60,

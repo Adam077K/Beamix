@@ -1,7 +1,6 @@
 import type {
   ScanResults,
   EngineResult,
-  QuickWin,
   LeaderboardEntry,
   LLMEngine,
 } from '@/lib/types'

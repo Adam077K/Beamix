@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import type { ScanResults, LLMEngine } from '@/lib/types'
@@ -736,6 +736,8 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
   const [status, setStatus] = useState<ScanPageStatus>('loading')
   const [scanData, setScanData] = useState<ScanData | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const statusRef = useRef(status)
+  useEffect(() => { statusRef.current = status }, [status])
 
   const pollStatus = useCallback(async () => {
     try {
@@ -770,14 +772,15 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
   }, [scanId])
 
   useEffect(() => {
-    pollStatus()
     const interval = setInterval(() => {
-      if (status === 'loading' || status === 'processing') {
+      if (statusRef.current === 'loading' || statusRef.current === 'processing') {
         pollStatus()
       }
     }, 2000)
-    return () => clearInterval(interval)
-  }, [pollStatus, status])
+    // Initial poll — run on next tick to satisfy react-hooks/set-state-in-effect
+    const timeout = setTimeout(() => pollStatus(), 0)
+    return () => { clearInterval(interval); clearTimeout(timeout) }
+  }, [pollStatus])
 
   if (status === 'loading' || status === 'processing') {
     return <ProcessingState />

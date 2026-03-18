@@ -63,7 +63,7 @@ function VisBar({ label, score, maxScore, isUser, index }: VisBarProps) {
   useEffect(() => {
     const t = setTimeout(() => setWidth(pct), index * 80 + 200)
     return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [pct, index])
 
   return (
@@ -250,7 +250,7 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
     {
       header: 'Status',
       accessorKey: 'source',
-      cell: ({ row }) => (
+      cell: ({ row: _ }) => (
         <span className="flex items-center gap-1.5">
           <StatusDot status="completed" size="sm" />
           <span className="text-xs text-muted-foreground">Tracking</span>

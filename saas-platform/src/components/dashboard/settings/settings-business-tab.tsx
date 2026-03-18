@@ -17,7 +17,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { INDUSTRIES } from '@/constants/industries'
-import { cn } from '@/lib/utils'
 
 // ── Tag Input ──────────────────────────────────────────────
 

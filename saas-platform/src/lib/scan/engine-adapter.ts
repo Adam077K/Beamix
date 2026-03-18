@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { getScanClient, isOpenRouterConfigured, MODELS } from '@/lib/openrouter'
+import { getScanClient, MODELS } from '@/lib/openrouter'
 
 // ---------------------------------------------------------------------------
 // Types

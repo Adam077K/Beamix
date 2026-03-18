@@ -1,4 +1,4 @@
-import { Section, Text, Button, Link } from '@react-email/components'
+import { Section, Text, Link } from '@react-email/components'
 import { EmailLayout, styles } from './layout'
 import type { InvoiceReceiptEmailProps } from '@/lib/email/types'
 

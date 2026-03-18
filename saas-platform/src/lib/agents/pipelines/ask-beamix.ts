@@ -3,8 +3,7 @@ export const PIPELINE_STEPS = ['Process Query', 'Generate Response']
 export interface PipelineInput { businessId: string; message: string; conversationHistory?: Array<{ role: string; content: string }>; [key: string]: unknown }
 export interface PipelineOutput { title: string; content: string; contentType: string; format: string; wordCount: number }
 
-export async function run(input: PipelineInput, _context: { userId: string }): Promise<PipelineOutput> {
-  const message = input.message || 'How can I improve my AI visibility?'
+export async function run(_input: PipelineInput, _context: { userId: string }): Promise<PipelineOutput> {
   // TODO: Replace with real Sonnet streaming SSE
   return {
     title: 'Ask Beamix Response',

@@ -77,7 +77,7 @@ interface GeneratedRecommendation {
   evidence: string
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   const supabase = await createClient()
 
   const {

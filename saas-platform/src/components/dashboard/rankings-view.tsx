@@ -7,7 +7,6 @@ import {
   BarChart3,
   ScanSearch,
   Search,
-  TrendingUp,
   Activity,
   ChevronRight,
   Clock,
@@ -16,7 +15,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
-import { StatCard } from '@/components/ui/stat-card'
 import { DataTable } from '@/components/ui/data-table'
 import { ChartCard } from '@/components/ui/chart-card'
 import { ChartTooltip } from '@/components/ui/chart-tooltip'
@@ -136,7 +134,7 @@ interface EnginePerformanceBarProps {
 }
 
 function EnginePerformanceBar({
-  engine,
+  engine: _engine,
   label,
   isMentioned,
   rankPosition,
@@ -154,7 +152,7 @@ function EnginePerformanceBar({
   useEffect(() => {
     const t = setTimeout(() => setBarWidth(fillPercent), index * 80 + 200)
     return () => clearTimeout(t)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [fillPercent, index])
 
   return (
@@ -370,8 +368,6 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
   )
 
   const scoreVal = latestScan?.overall_score ?? null
-  const scoreColor = getScoreColor(scoreVal)
-
   const scoreTrend =
     scans.length >= 2 && scans[0].overall_score !== null && scans[1].overall_score !== null
       ? scans[0].overall_score - scans[1].overall_score
