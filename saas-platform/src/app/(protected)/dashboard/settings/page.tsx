@@ -14,51 +14,52 @@ import { SettingsIntegrationsTab } from '@/components/dashboard/settings/setting
 
 export default function SettingsPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-up">
+
       {/* Page header */}
       <div>
-        <h1 className="font-sans font-medium text-2xl text-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Settings
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="mt-0.5 text-sm text-muted-foreground">
           Manage your account, billing, and preferences
         </p>
       </div>
 
       <Tabs defaultValue="business" className="space-y-6">
-        <TabsList
-          className="w-full justify-start border-b border-border bg-transparent p-0"
-          variant="line"
-        >
-          <TabsTrigger
-            value="business"
-            className="gap-1.5 data-[state=active]:text-primary"
-          >
-            <Building2 className="h-4 w-4" />
-            Business Profile
-          </TabsTrigger>
-          <TabsTrigger
-            value="billing"
-            className="gap-1.5 data-[state=active]:text-primary"
-          >
-            <CreditCard className="h-4 w-4" />
-            Billing
-          </TabsTrigger>
-          <TabsTrigger
-            value="preferences"
-            className="gap-1.5 data-[state=active]:text-primary"
-          >
-            <Settings2 className="h-4 w-4" />
-            Preferences
-          </TabsTrigger>
-          <TabsTrigger
-            value="integrations"
-            className="gap-1.5 data-[state=active]:text-primary"
-          >
-            <Puzzle className="h-4 w-4" />
-            Integrations
-          </TabsTrigger>
-        </TabsList>
+        {/* Pill-style tab navigation */}
+        <div className="flex gap-1 bg-muted rounded-xl p-1 w-fit">
+          <TabsList className="bg-transparent p-0 gap-1 h-auto">
+            <TabsTrigger
+              value="business"
+              className="gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all duration-150 h-auto"
+            >
+              <Building2 className="h-3.5 w-3.5" />
+              Business
+            </TabsTrigger>
+            <TabsTrigger
+              value="billing"
+              className="gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all duration-150 h-auto"
+            >
+              <CreditCard className="h-3.5 w-3.5" />
+              Billing
+            </TabsTrigger>
+            <TabsTrigger
+              value="preferences"
+              className="gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all duration-150 h-auto"
+            >
+              <Settings2 className="h-3.5 w-3.5" />
+              Preferences
+            </TabsTrigger>
+            <TabsTrigger
+              value="integrations"
+              className="gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all duration-150 h-auto"
+            >
+              <Puzzle className="h-3.5 w-3.5" />
+              Integrations
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="business">
           <SettingsBusinessTab />

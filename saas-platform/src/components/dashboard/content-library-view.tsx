@@ -1,70 +1,88 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import {
   FileText,
   BookOpen,
   Code2,
   Star,
-  Heart,
   Search,
   BarChart3,
   MessageSquare,
   Share2,
+  Pencil,
+  Eye,
 } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
+import { type ColumnDef } from '@tanstack/react-table'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { StatCard } from '@/components/ui/stat-card'
+import { DataTable } from '@/components/ui/data-table'
 import { EmptyState } from '@/components/ui/empty-state'
-import { PageHeader } from '@/components/ui/page-header'
+import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
-import { formatDistanceToNow } from 'date-fns'
+
+// ─── Content type meta ────────────────────────────────────────────────────────
 
 const CONTENT_TYPE_META: Record<
   string,
-  { label: string; icon: React.ComponentType<{ className?: string }>; color: string }
+  { label: string; icon: React.ComponentType<{ className?: string }>; colorIcon: string; colorBg: string }
 > = {
-  blog_post: { label: 'Blog Post', icon: BookOpen, color: 'bg-blue-100 text-blue-700' },
-  article: { label: 'Article', icon: FileText, color: 'bg-orange-100 text-orange-700' },
-  faq: { label: 'FAQ', icon: MessageSquare, color: 'bg-green-100 text-green-700' },
-  product_description: { label: 'Product', icon: FileText, color: 'bg-amber-100 text-amber-700' },
-  landing_page: { label: 'Landing Page', icon: FileText, color: 'bg-purple-100 text-purple-700' },
-  schema_markup: { label: 'Schema', icon: Code2, color: 'bg-orange-100 text-orange-700' },
-  social_post: { label: 'Social', icon: Share2, color: 'bg-pink-100 text-pink-700' },
-  review_response: { label: 'Review', icon: Star, color: 'bg-yellow-100 text-yellow-700' },
+  blog_post:           { label: 'Blog',    icon: BookOpen,     colorIcon: 'text-violet-600',  colorBg: 'bg-violet-50'  },
+  article:             { label: 'Article', icon: FileText,     colorIcon: 'text-[#FF3C00]',   colorBg: 'bg-[#FF3C00]/10' },
+  faq:                 { label: 'FAQ',     icon: MessageSquare, colorIcon: 'text-emerald-600', colorBg: 'bg-emerald-50' },
+  product_description: { label: 'Product', icon: FileText,     colorIcon: 'text-amber-600',   colorBg: 'bg-amber-50'   },
+  landing_page:        { label: 'Landing', icon: FileText,     colorIcon: 'text-purple-600',  colorBg: 'bg-purple-50'  },
+  schema_markup:       { label: 'Schema',  icon: Code2,        colorIcon: 'text-[#FF3C00]',   colorBg: 'bg-[#FF3C00]/10' },
+  social_post:         { label: 'Social',  icon: Share2,       colorIcon: 'text-pink-600',    colorBg: 'bg-pink-50'    },
+  review_response:     { label: 'Review',  icon: Star,         colorIcon: 'text-amber-600',   colorBg: 'bg-amber-50'   },
+  competitor_report:   { label: 'Report',  icon: BarChart3,    colorIcon: 'text-[#FF3C00]',   colorBg: 'bg-[#FF3C00]/10' },
+  query_suggestions:   { label: 'Queries', icon: Search,       colorIcon: 'text-emerald-600', colorBg: 'bg-emerald-50' },
+  review_analysis:     { label: 'Analysis', icon: Star,        colorIcon: 'text-amber-600',   colorBg: 'bg-amber-50'   },
+  social_strategy:     { label: 'Social',  icon: Share2,       colorIcon: 'text-pink-600',    colorBg: 'bg-pink-50'    },
+  schema_recommendations: { label: 'Schema', icon: Code2,      colorIcon: 'text-purple-600',  colorBg: 'bg-purple-50'  },
 }
 
-const OUTPUT_TYPE_META: Record<
-  string,
-  { label: string; icon: React.ComponentType<{ className?: string }>; color: string }
-> = {
-  competitor_report: {
-    label: 'Competitor Report',
-    icon: BarChart3,
-    color: 'bg-orange-100 text-orange-700',
-  },
-  query_suggestions: {
-    label: 'Query Suggestions',
-    icon: Search,
-    color: 'bg-green-100 text-green-700',
-  },
-  review_analysis: {
-    label: 'Review Analysis',
-    icon: Star,
-    color: 'bg-amber-100 text-amber-700',
-  },
-  social_strategy: {
-    label: 'Social Strategy',
-    icon: Share2,
-    color: 'bg-pink-100 text-pink-700',
-  },
-  schema_recommendations: {
-    label: 'Schema Recs',
-    icon: Code2,
-    color: 'bg-purple-100 text-purple-700',
-  },
+// ─── Status badge config ──────────────────────────────────────────────────────
+
+const STATUS_BADGE: Record<string, { label: string; className: string }> = {
+  draft:     { label: 'Draft',     className: 'bg-muted text-muted-foreground border-0' },
+  ready:     { label: 'Ready',     className: 'bg-amber-100 text-amber-700 border-0' },
+  published: { label: 'Published', className: 'bg-emerald-100 text-emerald-700 border-0' },
+  completed: { label: 'Completed', className: 'bg-emerald-100 text-emerald-700 border-0' },
+  failed:    { label: 'Failed',    className: 'bg-red-100 text-red-700 border-0' },
+  running:   { label: 'Running',   className: 'bg-amber-100 text-amber-700 border-0' },
+  archived:  { label: 'Archived',  className: 'bg-gray-100 text-gray-500 border-0' },
 }
+
+// ─── Filter tabs ──────────────────────────────────────────────────────────────
+
+type ContentFilter = 'all' | 'blog' | 'faq' | 'schema' | 'social' | 'reports'
+
+const FILTER_TABS: { value: ContentFilter; label: string }[] = [
+  { value: 'all',     label: 'All' },
+  { value: 'blog',    label: 'Blog' },
+  { value: 'faq',     label: 'FAQ' },
+  { value: 'schema',  label: 'Schema' },
+  { value: 'social',  label: 'Social' },
+  { value: 'reports', label: 'Reports' },
+]
+
+// ─── Normalised table row ─────────────────────────────────────────────────────
+
+interface LibraryRow {
+  id: string
+  title: string
+  agent_type: string
+  status: string
+  created_at: string
+  is_content: boolean
+  word_count?: number | null
+  quality_score?: number | null
+}
+
+// ─── Props ────────────────────────────────────────────────────────────────────
 
 interface ContentLibraryViewProps {
   content: Array<{
@@ -86,186 +104,286 @@ interface ContentLibraryViewProps {
   }>
 }
 
-type Tab = 'all' | 'content' | 'reports'
+// ─── Type filter helper ───────────────────────────────────────────────────────
 
-const STATUS_META: Record<string, { label: string; class: string }> = {
-  draft: { label: 'Draft', class: 'bg-muted text-muted-foreground' },
-  ready: { label: 'Ready', class: 'bg-amber-100 text-amber-700' },
-  published: { label: 'Published', class: 'bg-green-100 text-green-700' },
-  completed: { label: 'Completed', class: 'bg-green-100 text-green-700' },
-  failed: { label: 'Failed', class: 'bg-red-100 text-red-700' },
-  running: { label: 'Running', class: 'bg-blue-100 text-blue-700' },
+const BLOG_TYPES    = new Set(['blog_post', 'article'])
+const FAQ_TYPES     = new Set(['faq'])
+const SCHEMA_TYPES  = new Set(['schema_markup', 'schema_recommendations'])
+const SOCIAL_TYPES  = new Set(['social_post', 'social_strategy'])
+const REPORT_TYPES  = new Set(['competitor_report', 'query_suggestions', 'review_analysis', 'review_analyzer'])
+
+function matchesFilter(type: string, filter: ContentFilter): boolean {
+  if (filter === 'all') return true
+  if (filter === 'blog')    return BLOG_TYPES.has(type)
+  if (filter === 'faq')     return FAQ_TYPES.has(type)
+  if (filter === 'schema')  return SCHEMA_TYPES.has(type)
+  if (filter === 'social')  return SOCIAL_TYPES.has(type)
+  if (filter === 'reports') return REPORT_TYPES.has(type)
+  return true
 }
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps) {
-  const [tab, setTab] = useState<Tab>('all')
+  const [filter, setFilter] = useState<ContentFilter>('all')
   const [searchQuery, setSearchQuery] = useState('')
 
-  const filteredContent = content.filter(
-    (c) => !searchQuery || c.title.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
-  const filteredOutputs = outputs.filter(
-    (o) => !searchQuery || o.agent_type.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  // Merge content + outputs into a single normalised array
+  const allRows: LibraryRow[] = [
+    ...content.map((c) => ({
+      id: c.id,
+      title: c.title,
+      agent_type: c.agent_type,
+      status: c.quality_score !== null ? 'published' : 'draft',
+      created_at: c.created_at,
+      is_content: true,
+      word_count: c.word_count,
+      quality_score: c.quality_score,
+    })),
+    ...outputs.map((o) => ({
+      id: o.id,
+      title: CONTENT_TYPE_META[o.agent_type]?.label ?? o.agent_type,
+      agent_type: o.agent_type,
+      status: o.status,
+      created_at: o.created_at,
+      is_content: false,
+    })),
+  ]
 
-  const showContent = tab === 'all' || tab === 'content'
-  const showOutputs = tab === 'all' || tab === 'reports'
-  const totalItems = content.length + outputs.length
+  // ── KPI counts ──────────────────────────────────────────────────────────────
+  const totalItems    = allRows.length
+  const publishedCount = allRows.filter((r) => r.status === 'published' || r.status === 'completed').length
+  const draftCount    = allRows.filter((r) => r.status === 'draft').length
 
-  const visibleCount =
-    (showContent ? filteredContent.length : 0) + (showOutputs ? filteredOutputs.length : 0)
+  // ── Filtered rows ───────────────────────────────────────────────────────────
+  const filteredRows = allRows.filter((row) => {
+    const matchesType   = matchesFilter(row.agent_type, filter)
+    const matchesSearch = !searchQuery || row.title.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesType && matchesSearch
+  })
+
+  // ── Table columns ───────────────────────────────────────────────────────────
+  const columns: ColumnDef<LibraryRow>[] = [
+    {
+      header: 'Title',
+      accessorKey: 'title',
+      cell: ({ row }) => {
+        const meta = CONTENT_TYPE_META[row.original.agent_type] ?? {
+          label: row.original.agent_type,
+          icon: FileText,
+          colorIcon: 'text-muted-foreground',
+          colorBg: 'bg-muted',
+        }
+        const Icon = meta.icon
+        return (
+          <span className="flex items-center gap-2.5 min-w-0">
+            <span
+              className={cn(
+                'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
+                meta.colorBg,
+                meta.colorIcon,
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+            </span>
+            <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
+              {row.original.title}
+            </span>
+          </span>
+        )
+      },
+    },
+    {
+      header: 'Type',
+      accessorKey: 'agent_type',
+      cell: ({ row }) => {
+        const meta = CONTENT_TYPE_META[row.original.agent_type]
+        return (
+          <span className="text-xs text-muted-foreground">
+            {meta?.label ?? row.original.agent_type}
+          </span>
+        )
+      },
+    },
+    {
+      header: 'Agent',
+      accessorKey: 'is_content',
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground capitalize">
+          {row.original.agent_type.replace(/_/g, ' ')}
+        </span>
+      ),
+    },
+    {
+      header: 'Status',
+      accessorKey: 'status',
+      cell: ({ row }) => {
+        const badge = STATUS_BADGE[row.original.status] ?? {
+          label: row.original.status,
+          className: 'bg-muted text-muted-foreground border-0',
+        }
+        return (
+          <Badge className={cn('text-xs', badge.className)}>
+            {badge.label}
+          </Badge>
+        )
+      },
+    },
+    {
+      header: 'Created',
+      accessorKey: 'created_at',
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+          {format(new Date(row.original.created_at), 'MMM d, yyyy')}
+        </span>
+      ),
+    },
+    {
+      header: 'Actions',
+      id: 'actions',
+      meta: { align: 'right' },
+      cell: ({ row }) => (
+        <span className="flex items-center justify-end gap-3">
+          <Link
+            href={`/dashboard/content/${row.original.id}/edit`}
+            className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={`Edit ${row.original.title}`}
+          >
+            <Pencil className="h-3 w-3" aria-hidden="true" />
+            Edit
+          </Link>
+          <Link
+            href={`/dashboard/content/${row.original.id}`}
+            className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+            aria-label={`View ${row.original.title}`}
+          >
+            <Eye className="h-3 w-3" aria-hidden="true" />
+            View
+          </Link>
+        </span>
+      ),
+    },
+  ]
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Content Library"
-        description={`${totalItems} item${totalItems !== 1 ? 's' : ''} generated by your AI agents`}
-      />
 
-      {/* Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search content..."
-            className="pl-10"
-            aria-label="Search content"
-          />
-        </div>
-        <div className="flex gap-1 rounded-lg border border-border bg-background p-1 w-fit">
-          {(['all', 'content', 'reports'] as Tab[]).map((t) => (
-            <Button
-              key={t}
-              variant={tab === t ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setTab(t)}
-              className={cn(
-                tab === t && 'bg-primary text-primary-foreground hover:bg-primary/90',
-              )}
-            >
-              {t === 'all' ? 'All' : t === 'content' ? 'Content' : 'Reports'}
-            </Button>
-          ))}
-        </div>
+      {/* ── Row 1: Page header ─────────────────────────────────────────────── */}
+      <div className="animate-fade-up">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Content Library</h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          AI-generated content for your business.
+        </p>
       </div>
 
-      {/* Items */}
-      {totalItems === 0 ? (
-        <div className="rounded-[20px] border-2 border-dashed border-border">
-          <EmptyState
-            icon={FileText}
-            title="No content yet"
-            description="Run an AI agent to generate your first piece of content."
-          />
-        </div>
-      ) : visibleCount === 0 ? (
-        <div className="rounded-[20px] border-2 border-dashed border-border">
-          <EmptyState
-            icon={Search}
-            title="No results found"
-            description="Try a different search term or switch tabs."
-          />
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {showContent &&
-            filteredContent.map((item) => {
-              const meta = CONTENT_TYPE_META[item.agent_type] ?? {
-                label: item.agent_type,
-                icon: FileText,
-                color: 'bg-muted text-muted-foreground',
-              }
-              const Icon = meta.icon
-              return (
-                <Card
-                  key={item.id}
-                  className="bg-card rounded-[20px] border border-border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
-                >
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div
-                      className={cn(
-                        'flex h-10 w-10 items-center justify-center rounded-xl shrink-0',
-                        meta.color,
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
-                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        <Badge className={cn('text-xs border-0', meta.color)}>{meta.label}</Badge>
-                        {item.word_count && (
-                          <span className="text-xs text-muted-foreground">
-                            {item.word_count} words
-                          </span>
-                        )}
-                        {item.quality_score !== null && (
-                          <span className="text-xs text-muted-foreground">
-                            Quality: {item.quality_score}%
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {item.is_favorited && (
-                        <Heart className="h-4 w-4 text-red-500 fill-red-500" aria-label="Favorited" />
-                      )}
-                      <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
+      {/* ── Row 2: KPI strip ───────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 animate-fade-up [animation-delay:80ms]">
+        <StatCard
+          label="Total Items"
+          value={totalItems}
+          subtitle="content pieces generated"
+          icon={<FileText />}
+        />
+        <StatCard
+          label="Published"
+          value={publishedCount}
+          subtitle="ready to use"
+          scoreColor="#10B981"
+          icon={<Eye />}
+        />
+        <StatCard
+          label="Drafts"
+          value={draftCount}
+          subtitle="awaiting review"
+          scoreColor="#F59E0B"
+          icon={<Pencil />}
+        />
+      </div>
 
-          {showOutputs &&
-            filteredOutputs.map((item) => {
-              const meta = OUTPUT_TYPE_META[item.agent_type] ?? {
-                label: item.agent_type,
-                icon: BarChart3,
-                color: 'bg-muted text-muted-foreground',
-              }
-              const statusMeta = STATUS_META[item.status] ?? {
-                label: item.status,
-                class: 'bg-muted text-muted-foreground',
-              }
-              const Icon = meta.icon
-              return (
-                <Card
-                  key={item.id}
-                  className="bg-card rounded-[20px] border border-border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
+      {/* ── Row 3: Filter bar ──────────────────────────────────────────────── */}
+      <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:160ms]">
+        <CardContent className="p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Pill toggle buttons */}
+            <div
+              className="flex gap-1 bg-muted rounded-lg p-1 w-fit flex-wrap"
+              role="group"
+              aria-label="Filter content by type"
+            >
+              {FILTER_TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => setFilter(tab.value)}
+                  className={cn(
+                    'px-3 py-1.5 text-xs rounded-md transition-colors font-medium',
+                    filter === tab.value
+                      ? 'bg-card text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                  aria-pressed={filter === tab.value}
                 >
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div
-                      className={cn(
-                        'flex h-10 w-10 items-center justify-center rounded-xl shrink-0',
-                        meta.color,
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{meta.label}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <Badge className={cn('text-xs border-0', statusMeta.class)}>
-                          {statusMeta.label}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-        </div>
-      )}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Search input */}
+            <div className="relative max-w-xs w-full sm:w-auto">
+              <Search
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                placeholder="Search content…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-8 w-full rounded-lg border border-border bg-background pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/60"
+                aria-label="Search content"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Row 4: Content table ───────────────────────────────────────────── */}
+      <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:240ms]">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold">
+              {filter === 'all' ? 'All Content' : `${FILTER_TABS.find((t) => t.value === filter)?.label} Content`}
+            </CardTitle>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {filteredRows.length} item{filteredRows.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="px-0 pb-0 pt-0">
+          {totalItems === 0 ? (
+            <div className="py-6">
+              <EmptyState
+                icon={FileText}
+                title="No content yet"
+                description="Run an AI agent to generate your first piece of content."
+              />
+            </div>
+          ) : filteredRows.length === 0 ? (
+            <div className="py-6">
+              <EmptyState
+                icon={Search}
+                title="No results found"
+                description="Try a different filter or search term."
+              />
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={filteredRows}
+              emptyMessage="No content matches this filter."
+            />
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

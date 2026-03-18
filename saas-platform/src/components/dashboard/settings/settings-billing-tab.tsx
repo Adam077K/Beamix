@@ -1,6 +1,14 @@
 'use client'
 
-import { CreditCard, ExternalLink, FileText, Plus } from 'lucide-react'
+import {
+  CreditCard,
+  ExternalLink,
+  FileText,
+  Plus,
+  Zap,
+  TrendingUp,
+  BarChart3,
+} from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -10,37 +18,49 @@ import { Separator } from '@/components/ui/separator'
 // ── Mock data ──────────────────────────────────────────────
 
 const BILLING_HISTORY = [
-  { date: 'March 1, 2026', amount: '$149.00' },
-  { date: 'February 1, 2026', amount: '$149.00' },
+  { date: 'March 1, 2026', amount: '$149.00', status: 'Paid' },
+  { date: 'February 1, 2026', amount: '$149.00', status: 'Paid' },
 ]
 
 const TOP_UPS = [
-  { uses: 5, price: '$15', label: 'Add 5 Uses' },
-  { uses: 15, price: '$35', label: 'Add 15 Uses' },
+  { uses: 5, price: '$15', label: 'Add 5 Uses', icon: Zap },
+  { uses: 15, price: '$35', label: 'Add 15 Uses', icon: TrendingUp },
+]
+
+const USAGE_ITEMS = [
+  { label: 'Tracked Queries', used: 18, total: 25, icon: BarChart3 },
+  { label: 'Agent Uses', used: 8, total: 15, icon: Zap },
+  { label: 'Scans', used: 12, total: null, icon: BarChart3 },
 ]
 
 // ── Billing Tab ────────────────────────────────────────────
 
 export function SettingsBillingTab() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+
       {/* Current Plan */}
-      <Card className="bg-card rounded-[20px] border border-border shadow-sm">
-        <CardHeader>
-          <CardTitle className="font-sans font-medium text-lg text-foreground">
+      <Card className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base font-semibold text-foreground">
             Current Plan
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-baseline gap-3 flex-wrap">
-            <Badge className="bg-primary text-primary-foreground text-sm px-3 py-1">
-              Pro
-            </Badge>
-            <span className="font-sans font-medium text-2xl text-foreground">
-              $149
-            </span>
-            <span className="text-muted-foreground">/ month</span>
-            <span className="text-muted-foreground text-sm">
+        <CardContent className="space-y-5">
+          {/* Plan info */}
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* Plan badge + price */}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20">
+                <span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
+                <span className="text-sm font-semibold text-primary">Pro</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-foreground metric-value">$149</span>
+                <span className="text-sm text-muted-foreground">/ month</span>
+              </div>
+            </div>
+            <span className="text-xs text-muted-foreground bg-muted px-3 py-1.5 rounded-lg shrink-0">
               Next billing: April 1, 2026
             </span>
           </div>
@@ -48,91 +68,133 @@ export function SettingsBillingTab() {
           <Separator />
 
           {/* Usage metrics */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-foreground">
-              Usage This Month
-            </h3>
+          <div className="space-y-3">
+            <p className="section-eyebrow">Usage This Month</p>
 
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-foreground">Tracked Queries</span>
-                <span className="font-medium text-foreground">18/25</span>
-              </div>
-              <Progress value={(18 / 25) * 100} className="h-2" />
-            </div>
+            <div className="space-y-3">
+              {USAGE_ITEMS.map((item) => {
+                const pct =
+                  item.total !== null
+                    ? Math.round((item.used / item.total) * 100)
+                    : 48
+                const isHighUsage = pct >= 80
 
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-foreground">Agent Uses</span>
-                <span className="font-medium text-foreground">8/15</span>
-              </div>
-              <Progress value={(8 / 15) * 100} className="h-2" />
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-foreground">Scans</span>
-                <span className="font-medium text-foreground">12 / unlimited</span>
-              </div>
-              <Progress value={100} className="h-2" />
+                return (
+                  <div
+                    key={item.label}
+                    className="rounded-xl border border-border bg-muted/20 px-4 py-3.5 space-y-2"
+                  >
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium text-foreground">{item.label}</span>
+                      <span
+                        className={
+                          isHighUsage
+                            ? 'font-semibold tabular-nums text-primary'
+                            : 'font-medium tabular-nums text-muted-foreground'
+                        }
+                      >
+                        {item.total !== null
+                          ? `${item.used} / ${item.total}`
+                          : `${item.used} / unlimited`}
+                      </span>
+                    </div>
+                    {item.total !== null && (
+                      <Progress
+                        value={pct}
+                        className="h-1.5 bg-primary/10 [&>div]:bg-primary"
+                        aria-label={`${item.label}: ${pct}% used`}
+                      />
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Agent Top-Ups */}
-      <Card className="bg-card rounded-[20px] border border-border shadow-sm">
-        <CardHeader>
-          <CardTitle className="font-sans font-medium text-lg text-foreground">
+      <Card className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base font-semibold text-foreground">
             Agent Top-Ups
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-2">
-            {TOP_UPS.map((topUp) => (
-              <div
-                key={topUp.uses}
-                className="flex items-center justify-between rounded-xl border border-border p-4"
-              >
-                <div>
-                  <p className="font-medium text-foreground">
-                    {topUp.uses} extra uses
-                  </p>
-                  <p className="text-sm text-muted-foreground">{topUp.price}</p>
+            {TOP_UPS.map((topUp) => {
+              const Icon = topUp.icon
+              return (
+                <div
+                  key={topUp.uses}
+                  className="flex items-center justify-between rounded-[14px] border border-border bg-muted/20 p-4 transition-colors hover:bg-muted/40 hover:border-border/80"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+                      <Icon className="h-4 w-4 text-primary" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {topUp.uses} extra uses
+                      </p>
+                      <p className="text-sm font-medium text-primary">{topUp.price}</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 shrink-0 rounded-lg"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Add
+                  </Button>
                 </div>
-                <Button variant="outline" size="sm" className="gap-1">
-                  <Plus className="h-3 w-3" />
-                  {topUp.label}
-                </Button>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </CardContent>
       </Card>
 
       {/* Billing History */}
-      <Card className="bg-card rounded-[20px] border border-border shadow-sm">
-        <CardHeader>
-          <CardTitle className="font-sans font-medium text-lg text-foreground">
+      <Card className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base font-semibold text-foreground">
             Billing History
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
+          <div className="rounded-xl border border-border overflow-hidden divide-y divide-border/60">
             {BILLING_HISTORY.map((item) => (
               <div
                 key={item.date}
-                className="flex items-center justify-between rounded-xl bg-muted/50 p-3"
+                className="flex items-center justify-between px-4 py-3.5 hover:bg-muted/30 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-foreground">{item.date}</span>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-foreground">{item.date}</span>
+                    <div className="mt-0.5">
+                      <Badge
+                        variant="secondary"
+                        className="text-[10px] px-1.5 py-0 bg-emerald-100 text-emerald-700 border-0"
+                      >
+                        {item.status}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-sm font-semibold tabular-nums text-foreground">
                     {item.amount}
                   </span>
-                  <Button variant="ghost" size="sm" className="gap-1 text-xs">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1 text-xs text-muted-foreground hover:text-foreground h-8 px-2"
+                    aria-label={`Download invoice for ${item.date}`}
+                  >
                     Invoice
                     <ExternalLink className="h-3 w-3" />
                   </Button>
@@ -144,30 +206,43 @@ export function SettingsBillingTab() {
       </Card>
 
       {/* Payment Method + Actions */}
-      <Card className="bg-card rounded-[20px] border border-border shadow-sm">
-        <CardContent className="space-y-4 pt-6">
-          <div className="flex items-center gap-3">
-            <CreditCard className="h-5 w-5 text-muted-foreground" />
-            <div>
+      <Card className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base font-semibold text-foreground">
+            Payment Method
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4 rounded-xl border border-border bg-muted/20 px-4 py-3.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted">
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground">
-                Payment Method
-              </p>
-              <p className="text-sm text-muted-foreground">
                 Visa ending in 4242
               </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Expires 12/2027
+              </p>
             </div>
-            <Button variant="outline" size="sm" className="ms-auto">
-              Update Payment Method
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0 rounded-lg"
+            >
+              Update
             </Button>
           </div>
 
           <Separator />
 
           <div className="flex flex-wrap gap-3">
-            <Button variant="outline">Change Plan</Button>
+            <Button variant="outline" className="rounded-lg">
+              Change Plan
+            </Button>
             <Button
               variant="outline"
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
             >
               Cancel Subscription
             </Button>

@@ -1,13 +1,12 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { Save, Moon, Sun } from 'lucide-react'
+import { Save, Moon, Sun, Globe, Clock, Bell } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Separator } from '@/components/ui/separator'
 import {
   Select,
   SelectContent,
@@ -34,6 +33,83 @@ const TIMEZONES = [
   { value: 'Australia/Sydney', label: 'Sydney (GMT+11)' },
 ]
 
+// ── Notification items ─────────────────────────────────────
+
+type NotificationKey =
+  | 'weeklyDigest'
+  | 'rankingDrop'
+  | 'competitorMovement'
+  | 'agentComplete'
+
+interface NotificationPrefItem {
+  key: NotificationKey
+  label: string
+  description: string
+}
+
+const NOTIFICATION_PREFS: NotificationPrefItem[] = [
+  {
+    key: 'weeklyDigest',
+    label: 'Weekly Digest',
+    description: 'Summary every Monday',
+  },
+  {
+    key: 'rankingDrop',
+    label: 'Ranking Drop Alerts',
+    description: 'Get notified when your score drops',
+  },
+  {
+    key: 'competitorMovement',
+    label: 'Competitor Movement',
+    description: 'When competitors gain or lose visibility',
+  },
+  {
+    key: 'agentComplete',
+    label: 'Agent Complete',
+    description: 'When an AI agent finishes a task',
+  },
+]
+
+// ── Loading skeleton ───────────────────────────────────────
+
+function PreferencesSkeleton() {
+  return (
+    <div className="space-y-5 animate-pulse" aria-label="Loading preferences">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="h-36 rounded-[20px] bg-muted" />
+      ))}
+    </div>
+  )
+}
+
+// ── Section card wrapper ───────────────────────────────────
+
+function SectionCard({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <Card className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">
+      <CardHeader className="pb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted">
+            <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          </div>
+          <CardTitle className="text-base font-semibold text-foreground">
+            {title}
+          </CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  )
+}
+
 // ── Preferences Tab ────────────────────────────────────────
 
 export function SettingsPreferencesTab() {
@@ -41,7 +117,9 @@ export function SettingsPreferencesTab() {
   const [interfaceLanguage, setInterfaceLanguage] = useState<'en' | 'he'>('en')
   const [contentLanguage, setContentLanguage] = useState<'en' | 'he'>('en')
   const [timezone, setTimezone] = useState('Asia/Jerusalem')
-  const [notifications, setNotifications] = useState({
+  const [notifications, setNotifications] = useState<
+    Record<NotificationKey, boolean>
+  >({
     weeklyDigest: true,
     rankingDrop: true,
     competitorMovement: false,
@@ -56,7 +134,7 @@ export function SettingsPreferencesTab() {
       try {
         const res = await fetch('/api/preferences')
         if (res.ok) {
-          const data = await res.json() as {
+          const data = (await res.json()) as {
             interface_lang?: string
             content_lang?: string
             timezone?: string
@@ -84,7 +162,7 @@ export function SettingsPreferencesTab() {
     void loadPreferences()
   }, [])
 
-  function toggleNotification(key: keyof typeof notifications) {
+  function toggleNotification(key: NotificationKey) {
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
@@ -114,76 +192,58 @@ export function SettingsPreferencesTab() {
     }
   }, [interfaceLanguage, contentLanguage, timezone, notifications])
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="h-32 rounded-[20px] bg-muted animate-pulse"
-          />
-        ))}
-      </div>
-    )
-  }
+  if (loading) return <PreferencesSkeleton />
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+
       {/* Appearance */}
-      <Card className="bg-card rounded-[20px] border border-border shadow-sm">
-        <CardHeader>
-          <CardTitle className="font-sans font-medium text-lg text-foreground">
-            Appearance
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+      <SectionCard icon={Sun} title="Appearance">
+        <div className="flex items-center justify-between rounded-xl border border-border bg-muted/20 px-4 py-3.5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
               {theme === 'dark' ? (
-                <Moon className="h-4 w-4 text-muted-foreground" />
+                <Moon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
               ) : (
-                <Sun className="h-4 w-4 text-muted-foreground" />
+                <Sun className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
               )}
-              <div>
-                <p className="text-sm font-medium text-foreground">Dark Mode</p>
-                <p className="text-xs text-muted-foreground">
-                  Switch between light and dark theme
-                </p>
-              </div>
             </div>
-            <Switch
-              id="dark-mode"
-              checked={theme === 'dark'}
-              onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-              aria-label="Toggle dark mode"
-            />
+            <div>
+              <p className="text-sm font-medium text-foreground">Dark Mode</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Switch between light and dark theme
+              </p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+          <Switch
+            id="dark-mode"
+            checked={theme === 'dark'}
+            onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+            aria-label="Toggle dark mode"
+          />
+        </div>
+      </SectionCard>
 
       {/* Language */}
-      <Card className="bg-card rounded-[20px] border border-border shadow-sm">
-        <CardHeader>
-          <CardTitle className="font-sans font-medium text-lg text-foreground">
-            Language
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
+      <SectionCard icon={Globe} title="Language">
+        <div className="space-y-5">
           {/* Interface Language */}
           <div className="space-y-2">
-            <Label>Interface Language</Label>
-            <div className="flex gap-3">
+            <Label className="text-sm font-medium">Interface Language</Label>
+            <div className="flex gap-2">
               {(['en', 'he'] as const).map((lang) => (
                 <button
                   key={lang}
                   type="button"
                   onClick={() => setInterfaceLanguage(lang)}
                   className={cn(
-                    'rounded-xl border px-4 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                    'rounded-xl border px-5 py-2 text-sm font-medium transition-all duration-150',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     interfaceLanguage === lang
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-foreground hover:border-primary/50'
+                      ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                      : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
                   )}
+                  aria-pressed={interfaceLanguage === lang}
                 >
                   {lang === 'en' ? 'English' : 'Hebrew'}
                 </button>
@@ -193,136 +253,91 @@ export function SettingsPreferencesTab() {
 
           {/* Content Language */}
           <div className="space-y-2">
-            <Label>Content Language</Label>
-            <div className="flex gap-3">
+            <Label className="text-sm font-medium">Content Language</Label>
+            <p className="text-xs text-muted-foreground">
+              Language used when agents write content for you
+            </p>
+            <div className="flex gap-2">
               {(['en', 'he'] as const).map((lang) => (
                 <button
                   key={lang}
                   type="button"
                   onClick={() => setContentLanguage(lang)}
                   className={cn(
-                    'rounded-xl border px-4 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                    'rounded-xl border px-5 py-2 text-sm font-medium transition-all duration-150',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     contentLanguage === lang
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-foreground hover:border-primary/50'
+                      ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                      : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
                   )}
+                  aria-pressed={contentLanguage === lang}
                 >
                   {lang === 'en' ? 'English' : 'Hebrew'}
                 </button>
               ))}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </SectionCard>
 
       {/* Timezone */}
-      <Card className="bg-card rounded-[20px] border border-border shadow-sm">
-        <CardHeader>
-          <CardTitle className="font-sans font-medium text-lg text-foreground">
-            Timezone
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select value={timezone} onValueChange={setTimezone}>
-            <SelectTrigger className="w-full" aria-label="Select timezone">
-              <SelectValue placeholder="Select timezone" />
-            </SelectTrigger>
-            <SelectContent>
-              {TIMEZONES.map((tz) => (
-                <SelectItem key={tz.value} value={tz.value}>
-                  {tz.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      <SectionCard icon={Clock} title="Timezone">
+        <Select value={timezone} onValueChange={setTimezone}>
+          <SelectTrigger className="w-full" aria-label="Select timezone">
+            <SelectValue placeholder="Select timezone" />
+          </SelectTrigger>
+          <SelectContent>
+            {TIMEZONES.map((tz) => (
+              <SelectItem key={tz.value} value={tz.value}>
+                {tz.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </SectionCard>
 
       {/* Email Notifications */}
-      <Card className="bg-card rounded-[20px] border border-border shadow-sm">
-        <CardHeader>
-          <CardTitle className="font-sans font-medium text-lg text-foreground">
-            Email Notifications
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Weekly Digest
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Summary every Monday
-              </p>
+      <SectionCard icon={Bell} title="Email Notifications">
+        <div className="rounded-xl border border-border overflow-hidden divide-y divide-border/60">
+          {NOTIFICATION_PREFS.map((pref) => (
+            <div
+              key={pref.key}
+              className="flex items-center justify-between px-4 py-3.5 hover:bg-muted/20 transition-colors"
+            >
+              <div className="flex-1 min-w-0 pr-4">
+                <p className="text-sm font-medium text-foreground">
+                  {pref.label}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {pref.description}
+                </p>
+              </div>
+              <Switch
+                checked={notifications[pref.key]}
+                onCheckedChange={() => toggleNotification(pref.key)}
+                aria-label={`Toggle ${pref.label}`}
+              />
             </div>
-            <Switch
-              checked={notifications.weeklyDigest}
-              onCheckedChange={() => toggleNotification('weeklyDigest')}
-              aria-label="Toggle weekly digest"
-            />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Ranking Drop Alerts
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Get notified when your score drops
-              </p>
-            </div>
-            <Switch
-              checked={notifications.rankingDrop}
-              onCheckedChange={() => toggleNotification('rankingDrop')}
-              aria-label="Toggle ranking drop alerts"
-            />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Competitor Movement Alerts
-              </p>
-              <p className="text-xs text-muted-foreground">
-                When competitors gain or lose visibility
-              </p>
-            </div>
-            <Switch
-              checked={notifications.competitorMovement}
-              onCheckedChange={() => toggleNotification('competitorMovement')}
-              aria-label="Toggle competitor movement alerts"
-            />
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Agent Complete Notifications
-              </p>
-              <p className="text-xs text-muted-foreground">
-                When an AI agent finishes a task
-              </p>
-            </div>
-            <Switch
-              checked={notifications.agentComplete}
-              onCheckedChange={() => toggleNotification('agentComplete')}
-              aria-label="Toggle agent complete notifications"
-            />
-          </div>
-        </CardContent>
-      </Card>
+          ))}
+        </div>
+      </SectionCard>
 
       {/* Save */}
-      <div className="flex items-center gap-3">
-        <Button onClick={handleSave} disabled={saving}>
-          <Save className="h-4 w-4" />
-          {saving ? 'Saving...' : 'Save Preferences'}
-        </Button>
+      <div className="flex items-center justify-between gap-3 pt-1">
         {saved && (
-          <span className="text-sm text-green-600">
+          <span className="text-sm font-medium text-emerald-600">
             Preferences saved successfully
           </span>
         )}
+        {!saved && <span />}
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="gap-2 btn-primary-lift"
+        >
+          <Save className="h-4 w-4" />
+          {saving ? 'Saving...' : 'Save Preferences'}
+        </Button>
       </div>
     </div>
   )

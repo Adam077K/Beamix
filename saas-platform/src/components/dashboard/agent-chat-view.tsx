@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
 import {
   FileText,
   BookOpen,
@@ -22,6 +23,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { agentTypeToSlug } from '@/lib/agents/config'
+import { formatDistanceToNow } from 'date-fns'
 
 // ─── Agent metadata ────────────────────────────────────────────────────────
 
@@ -53,7 +55,7 @@ const AGENT_META: Record<
     description: 'Write AI-optimized blog posts',
     icon: BookOpen,
     credits: 5,
-    color: 'bg-blue-50 text-blue-600',
+    color: 'bg-violet-50 text-violet-600',
     prompts: [
       'Write a how-to guide for my industry',
       'Create a comparison article',
@@ -126,17 +128,10 @@ const AGENT_META: Record<
 
 function TypingIndicator() {
   return (
-    <div className="flex items-center gap-2 text-muted-foreground px-4 py-3">
-      <div className="flex gap-1">
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="h-2 w-2 rounded-full bg-muted-foreground/40 animate-bounce"
-            style={{ animationDelay: `${i * 150}ms`, animationDuration: '1s' }}
-          />
-        ))}
-      </div>
-      <span className="text-xs">Agent is thinking...</span>
+    <div className="px-4 py-3 space-y-2" aria-label="Agent is thinking" role="status">
+      <div className="h-2.5 w-40 rounded-full skeleton-shimmer" />
+      <div className="h-2.5 w-56 rounded-full skeleton-shimmer" />
+      <div className="h-2.5 w-32 rounded-full skeleton-shimmer" />
     </div>
   )
 }
@@ -151,6 +146,7 @@ interface ChatMessage {
   title?: string
   creditsCharged?: number
   error?: boolean
+  timestamp: Date
 }
 
 interface AgentChatViewProps {
@@ -191,7 +187,7 @@ export function AgentChatView({
 
     const userMessage = input.trim()
     setInput('')
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }])
+    setMessages((prev) => [...prev, { role: 'user', content: userMessage, timestamp: new Date() }])
     setIsRunning(true)
 
     try {
@@ -216,6 +212,7 @@ export function AgentChatView({
             role: 'agent',
             content: data.error ?? 'Something went wrong. Please try again.',
             error: true,
+            timestamp: new Date(),
           },
         ])
         setIsRunning(false)
@@ -235,6 +232,7 @@ export function AgentChatView({
             format: output.format,
             title: output.title,
             creditsCharged: data.credits_cost,
+            timestamp: new Date(),
           },
         ])
       } else if (output.type === 'structured') {
@@ -251,6 +249,7 @@ export function AgentChatView({
             outputType: 'structured',
             title: output.title,
             creditsCharged: data.credits_cost,
+            timestamp: new Date(),
           },
         ])
       }
@@ -261,6 +260,7 @@ export function AgentChatView({
           role: 'agent',
           content: 'Network error. Please check your connection and try again.',
           error: true,
+          timestamp: new Date(),
         },
       ])
     } finally {
@@ -318,7 +318,7 @@ export function AgentChatView({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <Badge variant="secondary" className="gap-1 text-xs">
+          <Badge variant="secondary" className="gap-1 text-xs hidden sm:inline-flex">
             <Zap className="h-3 w-3 text-primary" />
             {meta.credits} credit{meta.credits !== 1 ? 's' : ''}
           </Badge>
@@ -332,8 +332,9 @@ export function AgentChatView({
               Completed
             </Badge>
           )}
-          <div className="flex items-center gap-1.5 rounded-lg bg-background px-3 py-1.5 border border-border">
-            <span className="text-xs text-muted-foreground">Balance:</span>
+          <div className="flex items-center gap-1.5 rounded-lg bg-background px-2 py-1.5 sm:px-3 border border-border">
+            <span className="text-xs text-muted-foreground hidden sm:inline">Balance:</span>
+            <Zap className="h-3 w-3 text-primary sm:hidden" aria-hidden="true" />
             <span className="text-xs font-semibold text-foreground">
               {remainingCredits}
             </span>
@@ -387,9 +388,9 @@ export function AgentChatView({
                     'relative group text-sm',
                     msg.role === 'user'
                       ? [
-                          'max-w-[75%] ms-auto',
+                          'max-w-[88%] sm:max-w-[75%] ms-auto',
                           'rounded-[16px] rounded-te-[4px]',
-                          'bg-primary text-primary-foreground px-4 py-3',
+                          'bg-foreground text-background px-4 py-3',
                           'leading-relaxed',
                         ]
                       : msg.error
@@ -400,10 +401,9 @@ export function AgentChatView({
                             'leading-relaxed',
                           ]
                         : [
-                            'max-w-[85%]',
-                            'rounded-[16px] rounded-ts-[4px]',
-                            'bg-muted/60 text-foreground px-4 py-3',
-                            'border border-border/50',
+                            'max-w-[85%] w-full',
+                            'border-l-2 border-primary/30',
+                            'bg-transparent text-foreground pl-4 pr-2 py-1',
                             'leading-relaxed',
                           ]
                   )}
@@ -422,17 +422,22 @@ export function AgentChatView({
                           </span>
                         )}
                       </div>
-                      <button
-                        onClick={() => void handleCopy(msg.content, i)}
-                        aria-label="Copy message"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        {copiedIndex === i ? (
-                          <Check className="h-3.5 w-3.5 text-green-600" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
-                        )}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {formatDistanceToNow(msg.timestamp, { addSuffix: true })}
+                        </span>
+                        <button
+                          onClick={() => void handleCopy(msg.content, i)}
+                          aria-label="Copy message"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          {copiedIndex === i ? (
+                            <Check className="h-3.5 w-3.5 text-green-600" />
+                          ) : (
+                            <Copy className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -445,27 +450,32 @@ export function AgentChatView({
                   )}
 
                   {/* Message content */}
-                  <div
-                    className={cn(
-                      msg.role === 'agent' && !msg.error
-                        ? 'prose prose-sm max-w-none prose-headings:font-sans prose-headings:text-foreground prose-p:text-foreground prose-code:text-xs'
-                        : ''
-                    )}
-                  >
-                    {msg.format === 'json-ld' ? (
+                  {msg.role === 'agent' && !msg.error ? (
+                    msg.format === 'json-ld' ? (
                       <pre className="overflow-x-auto rounded-lg bg-muted p-4 font-mono text-sm">
                         <code>{msg.content}</code>
                       </pre>
                     ) : (
-                      <div className="whitespace-pre-wrap">{msg.content}</div>
-                    )}
-                  </div>
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-sans prose-headings:text-foreground prose-p:text-foreground prose-code:text-xs prose-pre:bg-muted prose-pre:rounded-lg">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    )
+                  ) : (
+                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                  )}
 
                   {/* Credits used footer */}
                   {msg.creditsCharged !== undefined && (
                     <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-1 text-xs text-muted-foreground">
                       <Zap className="h-3 w-3 text-primary" />
                       {msg.creditsCharged} credits used
+                    </div>
+                  )}
+
+                  {/* User message timestamp */}
+                  {msg.role === 'user' && (
+                    <div className="mt-1 text-[10px] text-background/50 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                      {formatDistanceToNow(msg.timestamp, { addSuffix: true })}
                     </div>
                   )}
                 </div>
@@ -487,7 +497,7 @@ export function AgentChatView({
       </div>
 
       {/* Input bar */}
-      <div className="bg-card border-t border-border p-4">
+      <div className="bg-card border-t border-border p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         {!canAfford && (
           <p className="mb-2 text-xs text-destructive text-center">
             Not enough credits. You need {meta.credits} credits to run this
@@ -541,7 +551,7 @@ export function AgentChatView({
             size="icon"
             disabled={!input.trim() || isRunning || !canAfford}
             aria-label="Send message"
-            className="h-11 w-11 rounded-xl bg-primary text-primary-foreground flex-shrink-0 hover:bg-[#e63600] hover:scale-105 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="h-11 w-11 rounded-xl bg-primary text-primary-foreground flex-shrink-0 hover:bg-primary/90 hover:scale-105 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
             <ArrowRight className="h-4 w-4 rtl:rotate-180" />
           </Button>

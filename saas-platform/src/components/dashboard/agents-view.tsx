@@ -13,19 +13,23 @@ import {
   MessageSquare,
   Sparkles,
   Zap,
-  CheckCircle2,
-  XCircle,
-  Loader2,
+  Bot,
   Clock,
 } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
+import { type ColumnDef } from '@tanstack/react-table'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { PageHeader } from '@/components/ui/page-header'
-import { formatDistanceToNow } from 'date-fns'
+import { StatCard } from '@/components/ui/stat-card'
+import { DataTable } from '@/components/ui/data-table'
+import { StatusDot, type StatusDotStatus } from '@/components/ui/status-dot'
+import { Progress } from '@/components/ui/progress'
+import { format, formatDistanceToNow } from 'date-fns'
 import { AgentModal, type AgentExecuteParams } from './agent-modal'
 import { agentTypeToSlug } from '@/lib/agents/config'
 import { cn } from '@/lib/utils'
+
+// ─── Agent definitions ────────────────────────────────────────────────────────
 
 interface AgentDef {
   type: string
@@ -33,7 +37,8 @@ interface AgentDef {
   description: string
   icon: React.ComponentType<{ className?: string }>
   credits: number
-  color: string
+  colorIcon: string
+  colorBg: string
 }
 
 const AGENTS: AgentDef[] = [
@@ -43,7 +48,8 @@ const AGENTS: AgentDef[] = [
     description: 'Generate AI-optimized website content, landing pages, and product descriptions that rank in AI search.',
     icon: FileText,
     credits: 3,
-    color: 'bg-[#FFF5F2] text-[#FF3C00]',
+    colorIcon: 'text-[#FF3C00]',
+    colorBg: 'bg-[#FF3C00]/10',
   },
   {
     type: 'blog_writer',
@@ -51,7 +57,8 @@ const AGENTS: AgentDef[] = [
     description: 'Write SEO and AI-optimized blog posts that establish your expertise and improve citations.',
     icon: BookOpen,
     credits: 5,
-    color: 'bg-blue-50 text-blue-600',
+    colorIcon: 'text-violet-600',
+    colorBg: 'bg-violet-50',
   },
   {
     type: 'review_analyzer',
@@ -59,7 +66,8 @@ const AGENTS: AgentDef[] = [
     description: 'Analyze your online reviews across platforms and generate response templates to boost sentiment.',
     icon: Star,
     credits: 2,
-    color: 'bg-amber-50 text-amber-600',
+    colorIcon: 'text-amber-600',
+    colorBg: 'bg-amber-50',
   },
   {
     type: 'schema_optimizer',
@@ -67,7 +75,8 @@ const AGENTS: AgentDef[] = [
     description: 'Generate JSON-LD structured data markup for your website to help AI engines understand your business.',
     icon: Code2,
     credits: 2,
-    color: 'bg-purple-50 text-purple-600',
+    colorIcon: 'text-emerald-600',
+    colorBg: 'bg-emerald-50',
   },
   {
     type: 'social_strategy',
@@ -75,7 +84,8 @@ const AGENTS: AgentDef[] = [
     description: 'Create a social media strategy designed to build the authority signals AI engines look for.',
     icon: Share2,
     credits: 3,
-    color: 'bg-pink-50 text-pink-600',
+    colorIcon: 'text-pink-600',
+    colorBg: 'bg-pink-50',
   },
   {
     type: 'competitor_intelligence',
@@ -83,7 +93,8 @@ const AGENTS: AgentDef[] = [
     description: 'Deep-dive analysis of how your competitors rank in AI search and what strategies they use.',
     icon: Search,
     credits: 4,
-    color: 'bg-[#FFF5F2] text-[#FF3C00]',
+    colorIcon: 'text-[#FF3C00]',
+    colorBg: 'bg-[#FF3C00]/10',
   },
   {
     type: 'faq_agent',
@@ -91,28 +102,74 @@ const AGENTS: AgentDef[] = [
     description: 'Discover what questions potential customers ask AI engines about your industry and location.',
     icon: MessageSquare,
     credits: 2,
-    color: 'bg-green-50 text-green-600',
+    colorIcon: 'text-sky-600',
+    colorBg: 'bg-sky-50',
   },
 ]
 
-interface AgentsViewProps {
-  totalCredits: number
-  recentExecutions: Array<{
-    id: string
-    agent_type: string
-    status: string
-    credits_cost: number
-    created_at: string
-    completed_at: string | null
-  }>
+// ─── Execution row type ───────────────────────────────────────────────────────
+
+interface ExecutionRow {
+  id: string
+  agent_type: string
+  status: string
+  credits_cost: number
+  created_at: string
+  completed_at: string | null
 }
 
-export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) {
+// ─── Props ────────────────────────────────────────────────────────────────────
+
+interface AgentsViewProps {
+  totalCredits: number
+  recentExecutions: ExecutionRow[]
+  monthlyCredits?: number
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function mapStatus(raw: string): StatusDotStatus {
+  if (raw === 'completed') return 'completed'
+  if (raw === 'running') return 'running'
+  if (raw === 'failed') return 'failed'
+  if (raw === 'pending') return 'pending'
+  return 'idle'
+}
+
+function getDuration(exec: ExecutionRow): string {
+  if (!exec.completed_at) return '—'
+  const ms = new Date(exec.completed_at).getTime() - new Date(exec.created_at).getTime()
+  const s = Math.round(ms / 1000)
+  if (s < 60) return `${s}s`
+  return `${Math.round(s / 60)}m`
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50 }: AgentsViewProps) {
   const router = useRouter()
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<AgentDef | null>(null)
   const [isExecuting, setIsExecuting] = useState(false)
+  const [execSearch, setExecSearch] = useState('')
 
+  // ── KPI calculations ────────────────────────────────────────────────────────
+  const totalRuns = recentExecutions.length
+  const creditsUsed = monthlyCredits - totalCredits
+  const creditsPercent = monthlyCredits > 0 ? Math.round((creditsUsed / monthlyCredits) * 100) : 0
+  const completedCount = recentExecutions.filter((e) => e.status === 'completed').length
+  const successRate = totalRuns > 0 ? Math.round((completedCount / totalRuns) * 100) : 0
+  const activeAgentTypes = new Set(recentExecutions.map((e) => e.agent_type)).size
+
+  // ── Last status per agent type ──────────────────────────────────────────────
+  const lastStatusByType = recentExecutions.reduce<Record<string, StatusDotStatus>>((acc, exec) => {
+    if (!acc[exec.agent_type]) {
+      acc[exec.agent_type] = mapStatus(exec.status)
+    }
+    return acc
+  }, {})
+
+  // ── Modal handlers ──────────────────────────────────────────────────────────
   function openModal(agent: AgentDef) {
     setSelectedAgent(agent)
     setModalOpen(true)
@@ -128,7 +185,6 @@ export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(params),
       })
-
       if (res.ok) {
         const data = await res.json()
         setModalOpen(false)
@@ -139,88 +195,231 @@ export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) 
     }
   }
 
+  // ── Execution table ─────────────────────────────────────────────────────────
+  const filteredExecutions = execSearch
+    ? recentExecutions.filter((e) => {
+        const label = AGENTS.find((a) => a.type === e.agent_type)?.name ?? e.agent_type
+        return label.toLowerCase().includes(execSearch.toLowerCase())
+      })
+    : recentExecutions.slice(0, 10)
+
+  const STATUS_LABELS: Record<StatusDotStatus, string> = {
+    completed: 'Completed',
+    running: 'Running',
+    failed: 'Failed',
+    pending: 'Pending',
+    idle: 'Idle',
+  }
+
+  const executionColumns: ColumnDef<ExecutionRow>[] = [
+    {
+      header: 'Agent',
+      accessorKey: 'agent_type',
+      cell: ({ row }) => {
+        const agentDef = AGENTS.find((a) => a.type === row.original.agent_type)
+        const Icon = agentDef?.icon ?? Bot
+        return (
+          <span className="flex items-center gap-2.5">
+            <span
+              className={cn(
+                'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
+                agentDef?.colorBg ?? 'bg-muted',
+                agentDef?.colorIcon ?? 'text-muted-foreground',
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+            </span>
+            <span className="text-sm font-medium text-foreground">
+              {agentDef?.name ?? row.original.agent_type}
+            </span>
+          </span>
+        )
+      },
+    },
+    {
+      header: 'Status',
+      accessorKey: 'status',
+      cell: ({ row }) => {
+        const s = mapStatus(row.original.status)
+        return (
+          <span className="flex items-center gap-1.5">
+            <StatusDot status={s} size="sm" />
+            <span className="text-xs text-muted-foreground">{STATUS_LABELS[s]}</span>
+          </span>
+        )
+      },
+    },
+    {
+      header: 'Credits',
+      accessorKey: 'credits_cost',
+      meta: { align: 'right' },
+      cell: ({ row }) => (
+        <span className="flex items-center justify-end gap-1 text-xs text-muted-foreground tabular-nums">
+          <Zap className="h-3 w-3 text-[#FF3C00]" aria-hidden="true" />
+          {row.original.credits_cost}
+        </span>
+      ),
+    },
+    {
+      header: 'Started',
+      accessorKey: 'created_at',
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+          {format(new Date(row.original.created_at), 'MMM d, HH:mm')}
+        </span>
+      ),
+    },
+    {
+      header: 'Duration',
+      accessorKey: 'completed_at',
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {getDuration(row.original)}
+        </span>
+      ),
+    },
+    {
+      header: 'Actions',
+      id: 'actions',
+      meta: { align: 'right' },
+      cell: ({ row }) => (
+        <Link
+          href={`/dashboard/agents/${row.original.agent_type}`}
+          className="text-xs font-semibold text-primary hover:underline whitespace-nowrap"
+        >
+          View
+        </Link>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="AI Agents"
-        description="Your team of AI agents ready to improve your visibility"
-      >
-        <div className="flex items-center gap-2 rounded-xl bg-background px-4 py-2 border border-border">
-          <Zap className="h-4 w-4 text-primary" />
-          <span className="text-sm font-semibold text-foreground">{totalCredits}</span>
-          <span className="text-xs text-muted-foreground">credits</span>
-        </div>
-      </PageHeader>
 
-      {/* Agent cards grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {AGENTS.map((agent) => {
+      {/* ── Row 1: Page header ─────────────────────────────────────────────── */}
+      <div className="animate-fade-up">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">AI Agents</h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          Your team of AI specialists ready to optimize your visibility.
+        </p>
+      </div>
+
+      {/* ── Row 2: KPI strip ───────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 animate-fade-up [animation-delay:80ms]">
+        <StatCard
+          label="Total Runs"
+          value={totalRuns}
+          subtitle="all time executions"
+          icon={<Bot />}
+        />
+        <Card className="card-hover gap-0 py-0">
+          <div className="flex flex-col gap-3 p-5">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="shrink-0 text-muted-foreground [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
+                <Zap />
+              </span>
+              <span className="section-eyebrow truncate">Credits Used</span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="metric-value text-3xl">
+                {creditsUsed}
+                <span className="text-lg font-medium text-muted-foreground ml-1">/ {monthlyCredits}</span>
+              </span>
+              <div className="mt-2">
+                <Progress
+                  value={creditsPercent}
+                  className="h-1.5 bg-primary/15 [&>div]:bg-primary"
+                  aria-label={`${creditsPercent}% credits used`}
+                />
+              </div>
+              <span className="text-sm text-muted-foreground leading-snug mt-1">{creditsPercent}% used</span>
+            </div>
+          </div>
+        </Card>
+        <StatCard
+          label="Success Rate"
+          value={totalRuns > 0 ? `${successRate}%` : '—'}
+          subtitle={`${completedCount} of ${totalRuns} runs completed`}
+          icon={<Sparkles />}
+        />
+        <StatCard
+          label="Active Agents"
+          value={activeAgentTypes}
+          subtitle="unique agent types run"
+          icon={<Clock />}
+        />
+      </div>
+
+      {/* ── Row 3: Agent grid ──────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-up [animation-delay:160ms]">
+        {AGENTS.map((agent, i) => {
           const Icon = agent.icon
           const canAfford = totalCredits >= agent.credits
+          const lastStatus = lastStatusByType[agent.type]
           return (
             <div
               key={agent.type}
               className={cn(
                 'group relative rounded-[20px] border border-border bg-card p-5',
-                'shadow-sm',
-                'hover:shadow-md hover:-translate-y-1',
-                'transition-all duration-200 ease-out cursor-pointer',
-                'overflow-hidden',
+                'shadow-[var(--shadow-card)] card-hover',
+                'transition-all duration-200 ease-out cursor-pointer overflow-hidden',
               )}
+              style={{ animationDelay: `${160 + i * 40}ms` }}
             >
-              {/* Agent icon + status row */}
+              {/* Icon + status row */}
               <div className="flex items-start justify-between mb-3">
-                <div className={cn(
-                  'h-10 w-10 rounded-xl flex items-center justify-center shrink-0',
-                  agent.color,
-                  'transition-all duration-200',
-                  'group-hover:scale-105',
-                )}>
-                  <Icon className="h-5 w-5" />
+                <div
+                  className={cn(
+                    'h-10 w-10 rounded-xl flex items-center justify-center shrink-0',
+                    agent.colorBg,
+                    agent.colorIcon,
+                    'group-hover:scale-105 transition-transform duration-200',
+                  )}
+                >
+                  <Icon className="h-5 w-5" aria-hidden="true" />
                 </div>
-                <Badge variant="outline" className="text-[10px] font-medium">
-                  {agent.credits} credit{agent.credits !== 1 ? 's' : ''}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {lastStatus && lastStatus !== 'idle' && (
+                    <StatusDot status={lastStatus} size="sm" />
+                  )}
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] font-medium border-border text-muted-foreground"
+                  >
+                    <Zap className="h-2.5 w-2.5 mr-0.5 text-[#FF3C00]" aria-hidden="true" />
+                    {agent.credits} cr
+                  </Badge>
+                </div>
               </div>
 
-              {/* Agent name + description */}
+              {/* Name + description */}
               <h3 className="text-sm font-semibold text-foreground mb-1">{agent.name}</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+              <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-4">
                 {agent.description}
               </p>
 
-              {/* Spacer to ensure run button doesn't overlap content */}
-              <div className="h-8" aria-hidden="true" />
+              {/* Run button */}
+              <Button
+                size="sm"
+                className={cn(
+                  'relative z-10 w-full rounded-lg text-xs',
+                  canAfford
+                    ? 'bg-foreground text-background hover:bg-foreground/90 btn-primary-lift'
+                    : 'bg-muted text-muted-foreground cursor-not-allowed',
+                )}
+                disabled={!canAfford}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  openModal(agent)
+                }}
+                aria-label={canAfford ? `Run ${agent.name}` : `Not enough credits for ${agent.name}`}
+              >
+                <Sparkles className="me-1.5 h-3 w-3 rtl:order-last" aria-hidden="true" />
+                {canAfford ? 'Run Agent' : 'Not enough credits'}
+              </Button>
 
-              {/* Hover-reveal run button — slides up from bottom */}
-              <div className={cn(
-                'absolute bottom-0 inset-x-0 px-5 py-4',
-                'bg-gradient-to-t from-card via-card/95 to-transparent',
-                'translate-y-full group-hover:translate-y-0 group-focus-within:translate-y-0',
-                'transition-transform duration-200 ease-out',
-              )}>
-                <Button
-                  size="sm"
-                  className={cn(
-                    'w-full rounded-lg text-xs',
-                    canAfford
-                      ? 'bg-primary text-primary-foreground hover:bg-[#e63600]'
-                      : 'bg-muted text-muted-foreground cursor-not-allowed',
-                  )}
-                  disabled={!canAfford}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    openModal(agent)
-                  }}
-                  aria-label={canAfford ? `Run ${agent.name}` : `Not enough credits for ${agent.name}`}
-                >
-                  <Sparkles className="me-1.5 h-3 w-3 rtl:order-last" />
-                  {canAfford ? 'Run Agent' : 'Not enough credits'}
-                </Button>
-              </div>
-
-              {/* Card-level link for navigation — behind the button */}
+              {/* Card-level link behind the button */}
               <Link
                 href={`/dashboard/agents/${agent.type}`}
                 className="absolute inset-0 z-0"
@@ -234,53 +433,47 @@ export function AgentsView({ totalCredits, recentExecutions }: AgentsViewProps) 
         })}
       </div>
 
-      {/* Recent executions */}
-      {recentExecutions.length > 0 && (
-        <Card className="bg-card rounded-[20px] border border-border shadow-sm">
-          <CardContent className="p-6">
-            <h2 className="mb-4 text-lg font-medium text-foreground">
-              Recent Runs
-            </h2>
-            <div className="space-y-3">
-              {recentExecutions.map((exec) => {
-                const agentDef = AGENTS.find((a) => a.type === exec.agent_type)
-                return (
-                  <div
-                    key={exec.id}
-                    className="flex items-center gap-3 rounded-xl bg-muted/50 p-3 transition-colors duration-150 hover:bg-muted"
-                  >
-                    {exec.status === 'completed' && (
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-[#10B981]" />
-                    )}
-                    {exec.status === 'running' && (
-                      <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />
-                    )}
-                    {exec.status === 'failed' && (
-                      <XCircle className="h-4 w-4 shrink-0 text-destructive" />
-                    )}
-                    {!['completed', 'running', 'failed'].includes(exec.status) && (
-                      <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {agentDef?.name ?? exec.agent_type}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {exec.credits_cost} credits · {formatDistanceToNow(new Date(exec.created_at), { addSuffix: true })}
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="shrink-0 text-xs capitalize">
-                      {exec.status}
-                    </Badge>
-                  </div>
-                )
-              })}
+      {/* ── Row 4: Execution history ───────────────────────────────────────── */}
+      <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:320ms]">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <CardTitle className="text-base font-semibold">Execution History</CardTitle>
+            <div className="relative">
+              <Search
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                placeholder="Search agents…"
+                value={execSearch}
+                onChange={(e) => setExecSearch(e.target.value)}
+                className="h-8 rounded-lg border border-border bg-muted/40 pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/60 w-36"
+                aria-label="Search executions"
+              />
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </CardHeader>
+        <CardContent className="px-0 pb-0 pt-0">
+          {recentExecutions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-14 text-center px-6">
+              <Bot className="h-9 w-9 text-muted-foreground/30 mb-3" aria-hidden="true" />
+              <p className="text-sm font-medium text-foreground">No executions yet</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Run your first agent to see execution history here.
+              </p>
+            </div>
+          ) : (
+            <DataTable
+              columns={executionColumns}
+              data={filteredExecutions}
+              emptyMessage="No matching executions."
+            />
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Agent launch modal */}
+      {/* ── Agent launch modal ─────────────────────────────────────────────── */}
       {selectedAgent && (
         <AgentModal
           open={modalOpen}

@@ -19,6 +19,7 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-chart-6: var(--chart-6);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -77,7 +78,7 @@
 
 :root {
   --radius: 0.625rem;
-  --background: #F7F7F7;
+  --background: #FAFAF9;
   --foreground: #0A0A0A;
   --card: #FFFFFF;
   --card-foreground: #0A0A0A;
@@ -96,10 +97,11 @@
   --input: #E5E7EB;
   --ring: #FF3C00;
   --chart-1: #FF3C00;
-  --chart-2: #10B981;
-  --chart-3: #06B6D4;
-  --chart-4: #F59E0B;
-  --chart-5: #8B5CF6;
+  --chart-2: #0EA5E9;
+  --chart-3: #8B5CF6;
+  --chart-4: #10B981;
+  --chart-5: #F59E0B;
+  --chart-6: #EC4899;
   --sidebar: #F7F7F7;
   --sidebar-foreground: #0A0A0A;
   --sidebar-primary: #FF3C00;
@@ -130,8 +132,27 @@
   --glow-fair: rgba(245, 158, 11, 0.12);
   --glow-critical: rgba(239, 68, 68, 0.12);
 
-  /* Warm gradient system */
-  --gradient-warm-card: linear-gradient(135deg, #FFF5F2 0%, #FFFAF8 100%);
+  /* Chart gradient fills (for area/bar fills) */
+  --chart-fill-1: rgba(255, 60, 0, 0.15);
+  --chart-fill-2: rgba(14, 165, 233, 0.15);
+  --chart-fill-3: rgba(139, 92, 246, 0.15);
+  --chart-fill-4: rgba(16, 185, 129, 0.15);
+  --chart-fill-5: rgba(245, 158, 11, 0.15);
+  --chart-fill-6: rgba(236, 72, 153, 0.15);
+
+  /* Spacing scale */
+  --spacing-page: 2rem;
+  --spacing-section: 1.5rem;
+  --spacing-card: 1.25rem;
+
+  /* Transition tokens */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 400ms;
+
+  /* Table tokens */
+  --row-hover: rgba(0, 0, 0, 0.02);
 }
 
 .dark {
@@ -153,11 +174,12 @@
   --border: rgba(255,255,255,0.1);
   --input: rgba(255,255,255,0.15);
   --ring: #FF3C00;
-  --chart-1: #FF3C00;
-  --chart-2: #FB923C;
-  --chart-3: #34D399;
-  --chart-4: #FBBF24;
-  --chart-5: #A78BFA;
+  --chart-1: #FF6B3D;
+  --chart-2: #38BDF8;
+  --chart-3: #A78BFA;
+  --chart-4: #34D399;
+  --chart-5: #FBBF24;
+  --chart-6: #F472B6;
   --sidebar: #171717;
   --sidebar-foreground: #F7F7F7;
   --sidebar-primary: #FF3C00;
@@ -343,7 +365,7 @@
 
   /* ─── Dashboard page background ──────────────────────────────────── */
   .dashboard-bg {
-    background-color: #F7F7F7;
+    background-color: #FAFAF9;
     background-image:
       radial-gradient(ellipse 120% 40% at 60% -5%, rgba(255,60,0,0.025) 0%, transparent 60%);
   }

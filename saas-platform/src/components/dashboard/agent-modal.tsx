@@ -81,10 +81,10 @@ export function AgentModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="space-y-5 py-2">
           {/* Topic */}
-          <div className="space-y-1.5">
-            <Label htmlFor="agent-topic">
+          <div className="space-y-2">
+            <Label htmlFor="agent-topic" className="text-sm font-medium text-foreground">
               Topic / Prompt
             </Label>
             <Textarea
@@ -92,15 +92,17 @@ export function AgentModal({
               placeholder={`Tell ${agentName} what to work on...`}
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              className="min-h-[80px]"
+              className="min-h-[88px] resize-none"
               disabled={isLoading}
             />
           </div>
 
           {/* Tone + Length row */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="agent-tone">Tone</Label>
+            <div className="space-y-2">
+              <Label htmlFor="agent-tone" className="text-sm font-medium text-foreground">
+                Tone
+              </Label>
               <Select
                 value={tone}
                 onValueChange={(v) => setTone(v as AgentExecuteParams['tone'])}
@@ -117,8 +119,10 @@ export function AgentModal({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="agent-length">Target Length</Label>
+            <div className="space-y-2">
+              <Label htmlFor="agent-length" className="text-sm font-medium text-foreground">
+                Target Length
+              </Label>
               <Select
                 value={targetLength}
                 onValueChange={(v) => setTargetLength(v as AgentExecuteParams['targetLength'])}
@@ -136,51 +140,62 @@ export function AgentModal({
             </div>
           </div>
 
-          {/* Language */}
-          <div className="space-y-1.5">
-            <Label htmlFor="agent-language">Language</Label>
-            <Select
-              value={language}
-              onValueChange={(v) => setLanguage(v as AgentExecuteParams['language'])}
-              disabled={isLoading}
-            >
-              <SelectTrigger id="agent-language" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="he">Hebrew</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Target Keyword */}
-          <div className="space-y-1.5">
-            <Label htmlFor="target-keyword">
-              Target Keyword{' '}
-              <span className="text-muted-foreground font-normal">(optional)</span>
-            </Label>
-            <Input
-              id="target-keyword"
-              placeholder="e.g., best dentist in Tel Aviv"
-              value={targetKeyword}
-              onChange={(e) => setTargetKeyword(e.target.value)}
-              disabled={isLoading}
-            />
+          {/* Language + Target Keyword row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="agent-language" className="text-sm font-medium text-foreground">
+                Language
+              </Label>
+              <Select
+                value={language}
+                onValueChange={(v) => setLanguage(v as AgentExecuteParams['language'])}
+                disabled={isLoading}
+              >
+                <SelectTrigger id="agent-language" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="he">Hebrew</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="target-keyword" className="text-sm font-medium text-foreground">
+                Keyword{' '}
+                <span className="text-muted-foreground font-normal text-xs">(optional)</span>
+              </Label>
+              <Input
+                id="target-keyword"
+                placeholder="e.g., best dentist in Tel Aviv"
+                value={targetKeyword}
+                onChange={(e) => setTargetKeyword(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
           </div>
 
           {/* Credit cost display */}
-          <div className="flex items-center justify-between rounded-xl border border-border bg-muted/50 px-4 py-3">
+          <div
+            className={cn(
+              'flex items-center justify-between rounded-xl border px-4 py-3',
+              canAfford
+                ? 'border-border bg-muted/40'
+                : 'border-destructive/30 bg-destructive/5',
+            )}
+          >
             <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-primary" />
+              <Zap className="h-4 w-4 text-primary shrink-0" />
               <span className="text-sm text-foreground">
-                This will use <strong>{creditCost}</strong> credit{creditCost !== 1 ? 's' : ''}.
+                This will use{' '}
+                <strong className="font-semibold">{creditCost}</strong>{' '}
+                credit{creditCost !== 1 ? 's' : ''}
               </span>
             </div>
             <span
               className={cn(
-                'text-sm font-semibold',
-                canAfford ? 'text-green-600' : 'text-destructive'
+                'text-sm font-semibold tabular-nums',
+                canAfford ? 'text-muted-foreground' : 'text-destructive'
               )}
             >
               {totalCredits} available
@@ -188,8 +203,8 @@ export function AgentModal({
           </div>
 
           {!canAfford && (
-            <p className="text-xs text-destructive">
-              Not enough credits. You need {creditCost} credits but only have {totalCredits}.
+            <p className="text-xs text-destructive -mt-2">
+              Not enough credits. You need {creditCost} but only have {totalCredits}.
             </p>
           )}
         </div>
@@ -205,6 +220,7 @@ export function AgentModal({
           <Button
             onClick={handleSubmit}
             disabled={!canSubmit}
+            className="bg-foreground text-background hover:bg-foreground/90"
           >
             {isLoading ? (
               <>

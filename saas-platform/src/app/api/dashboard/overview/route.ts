@@ -21,6 +21,7 @@ export async function GET() {
     recommendationsResult,
     recentAgentsResult,
     queriesResult,
+    contentStatsResult,
   ] = await Promise.all([
     supabase
       .from('businesses')
@@ -43,7 +44,7 @@ export async function GET() {
       .select('id, overall_score, mentions_count, created_at, scan_type')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(5),
+      .limit(20),
     supabase
       .from('recommendations')
       .select('id, title, description, priority, recommendation_type, status, suggested_agent, credits_cost')
@@ -64,6 +65,10 @@ export async function GET() {
       .eq('is_active', true)
       .order('priority', { ascending: true })
       .limit(20),
+    supabase
+      .from('content_items')
+      .select('id, status')
+      .eq('user_id', user.id),
   ])
 
   const business = businessResult.data
@@ -73,6 +78,7 @@ export async function GET() {
   const recommendations = recommendationsResult.data ?? []
   const recentAgents = recentAgentsResult.data ?? []
   const queries = queriesResult.data ?? []
+  const contentItems = contentStatsResult.data ?? []
 
   // Compute hero metric
   const latestScan = scans[0] ?? null
@@ -80,6 +86,46 @@ export async function GET() {
   const scoreDelta = latestScan && previousScan && latestScan.overall_score !== null && previousScan.overall_score !== null
     ? latestScan.overall_score - previousScan.overall_score
     : null
+  const mentionDelta = latestScan && previousScan
+    ? latestScan.mentions_count - previousScan.mentions_count
+    : null
+
+  // Content stats
+  const contentStats = {
+    total: contentItems.length,
+    published: contentItems.filter((c) => c.status === 'published').length,
+  }
+
+  // Fetch engine results for the latest scan (requires knowing latest scan id)
+  let latestEngineResults: Array<{
+    engine: string
+    is_mentioned: boolean
+    rank_position: number | null
+    sentiment: string | null
+  }> = []
+
+  if (latestScan?.id) {
+    const { data: engineData } = await supabase
+      .from('scan_engine_results')
+      .select('engine, is_mentioned, rank_position, sentiment')
+      .eq('scan_id', latestScan.id)
+
+    latestEngineResults = engineData ?? []
+  }
+
+  // Sentiment summary from engine results
+  const sentimentSummary = latestEngineResults.reduce(
+    (acc, r) => {
+      if (r.sentiment === 'positive') acc.positive++
+      else if (r.sentiment === 'negative') acc.negative++
+      else acc.neutral++
+      return acc
+    },
+    { positive: 0, neutral: 0, negative: 0 },
+  )
+
+  const enginesMentioning = latestEngineResults.filter((r) => r.is_mentioned).length
+  const totalEngines = latestEngineResults.length
 
   // Trial days
   let trialDaysLeft: number | null = null
@@ -105,8 +151,14 @@ export async function GET() {
       score: latestScan?.overall_score ?? null,
       delta: scoreDelta,
       mention_count: latestScan?.mentions_count ?? 0,
+      mention_delta: mentionDelta,
       last_scanned: latestScan?.created_at ?? null,
     },
+    latestEngineResults,
+    sentimentSummary,
+    enginesMentioning,
+    totalEngines,
+    contentStats,
     recommendations,
     recent_agents: recentAgents,
     queries,
