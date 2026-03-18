@@ -39,6 +39,14 @@ export function SettingsBillingTab() {
   return (
     <div className="space-y-5">
 
+      {/* Placeholder notice */}
+      <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
+        <p className="font-medium">Billing integration in progress</p>
+        <p className="mt-1 text-orange-600">
+          Subscription details and payment history will appear here once your plan is active.
+        </p>
+      </div>
+
       {/* Current Plan */}
       <Card className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">
         <CardHeader className="pb-4">
