@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import Anthropic from '@anthropic-ai/sdk'
+import { getOpenRouterClient, MODELS } from '@/lib/openrouter'
 
 // ---------------------------------------------------------------------------
 // GET — fetch existing recommendations
@@ -144,13 +144,12 @@ Engine results:
 ${(engineResults ?? []).map((r) => `- ${r.engine}: ${r.is_mentioned ? `mentioned (rank ${r.rank_position ?? '?'}, sentiment ${r.sentiment_score ?? '?'}/100)` : 'NOT mentioned'}`).join('\n')}`
     : 'No scan data available yet.'
 
-  // Generate recommendations using Claude Haiku
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
+  // Generate recommendations using Claude Haiku via OpenRouter
+  if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json({ error: 'AI service not configured' }, { status: 503 })
   }
 
-  const anthropic = new Anthropic({ apiKey })
+  const client = getOpenRouterClient()
   const location = business.location ? ` in ${business.location}` : ''
   const industry = business.industry ?? 'local business'
 
@@ -182,14 +181,13 @@ Prioritize recommendations with the highest AI visibility impact. Focus on actio
   let recommendations: GeneratedRecommendation[]
 
   try {
-    const message = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const response = await client.chat.completions.create({
+      model: MODELS.haiku,
       max_tokens: 1500,
       messages: [{ role: 'user', content: prompt }],
     })
 
-    const textBlock = message.content.find((b) => b.type === 'text')
-    const text = textBlock && textBlock.type === 'text' ? textBlock.text : ''
+    const text = response.choices[0]?.message?.content ?? ''
 
     const jsonMatch = text.match(/\[[\s\S]*\]/)
     if (!jsonMatch) {

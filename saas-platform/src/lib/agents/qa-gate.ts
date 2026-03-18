@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk'
+import { getOpenRouterClient, MODELS } from '@/lib/openrouter'
 
 export interface QAResult {
   passed: boolean
@@ -16,19 +16,18 @@ const MIN_SCORE = 70
 
 /**
  * QA gate for agent-generated content.
- * Uses Claude Haiku to evaluate content quality across 5 dimensions.
+ * Uses Claude Haiku via OpenRouter to evaluate content quality across 5 dimensions.
  * Falls back to a passing score if the API key is not configured.
  */
 export async function runQAGate(
   content: string,
   context?: { businessName?: string },
 ): Promise<QAResult> {
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return fallbackScore()
   }
 
-  const anthropic = new Anthropic({ apiKey })
+  const client = getOpenRouterClient()
   const businessContext = context?.businessName
     ? `Business: ${context.businessName}`
     : 'Business context not provided'
@@ -60,14 +59,13 @@ Scoring criteria:
 - voiceAdherence (0-100): Consistent tone throughout, matches business communication style`
 
   try {
-    const message = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const response = await client.chat.completions.create({
+      model: MODELS.haiku,
       max_tokens: 300,
       messages: [{ role: 'user', content: prompt }],
     })
 
-    const textBlock = message.content.find((b) => b.type === 'text')
-    const text = textBlock && textBlock.type === 'text' ? textBlock.text : ''
+    const text = response.choices[0]?.message?.content ?? ''
 
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {

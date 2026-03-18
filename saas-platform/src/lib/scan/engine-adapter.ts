@@ -1,7 +1,5 @@
-import OpenAI from 'openai'
-import Anthropic from '@anthropic-ai/sdk'
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import { z } from 'zod'
+import { getOpenRouterClient, MODELS } from '@/lib/openrouter'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -80,16 +78,15 @@ function buildPrompt(query: EngineQuery): string {
 
 async function queryChatGPT(query: EngineQuery): Promise<EngineResponse> {
   const start = Date.now()
-  const apiKey = process.env.OPENAI_API_KEY
 
-  if (!apiKey) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return buildMockResponse('chatgpt', query, start)
   }
 
   try {
-    const openai = new OpenAI({ apiKey })
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+    const client = getOpenRouterClient()
+    const response = await client.chat.completions.create({
+      model: MODELS.chatgpt,
       messages: [{ role: 'user', content: buildPrompt(query) }],
       max_tokens: 2000,
       temperature: 0.7,
@@ -110,21 +107,23 @@ async function queryChatGPT(query: EngineQuery): Promise<EngineResponse> {
 
 async function queryGemini(query: EngineQuery): Promise<EngineResponse> {
   const start = Date.now()
-  const apiKey = process.env.GOOGLE_AI_API_KEY
 
-  if (!apiKey) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return buildMockResponse('gemini', query, start)
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-    const result = await model.generateContent(buildPrompt(query))
-    const text = result.response.text()
+    const client = getOpenRouterClient()
+    const response = await client.chat.completions.create({
+      model: MODELS.gemini,
+      messages: [{ role: 'user', content: buildPrompt(query) }],
+      max_tokens: 2000,
+      temperature: 0.7,
+    })
 
     return {
       engine: 'gemini',
-      rawResponse: text,
+      rawResponse: response.choices[0]?.message?.content ?? '',
       timestamp: new Date(),
       latencyMs: Date.now() - start,
       isMock: false,
@@ -137,37 +136,23 @@ async function queryGemini(query: EngineQuery): Promise<EngineResponse> {
 
 async function queryPerplexity(query: EngineQuery): Promise<EngineResponse> {
   const start = Date.now()
-  const apiKey = process.env.PERPLEXITY_API_KEY
 
-  if (!apiKey) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return buildMockResponse('perplexity', query, start)
   }
 
   try {
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
-        messages: [{ role: 'user', content: buildPrompt(query) }],
-        max_tokens: 2000,
-        temperature: 0.7,
-      }),
+    const client = getOpenRouterClient()
+    const response = await client.chat.completions.create({
+      model: MODELS.perplexity,
+      messages: [{ role: 'user', content: buildPrompt(query) }],
+      max_tokens: 2000,
+      temperature: 0.7,
     })
-
-    if (!response.ok) {
-      throw new Error(`Perplexity API returned ${response.status}: ${response.statusText}`)
-    }
-
-    const data: { choices: Array<{ message: { content: string } }> } = await response.json()
-    const content = data.choices?.[0]?.message?.content ?? ''
 
     return {
       engine: 'perplexity',
-      rawResponse: content,
+      rawResponse: response.choices[0]?.message?.content ?? '',
       timestamp: new Date(),
       latencyMs: Date.now() - start,
       isMock: false,
@@ -180,26 +165,23 @@ async function queryPerplexity(query: EngineQuery): Promise<EngineResponse> {
 
 async function queryClaude(query: EngineQuery): Promise<EngineResponse> {
   const start = Date.now()
-  const apiKey = process.env.ANTHROPIC_API_KEY
 
-  if (!apiKey) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return buildMockResponse('claude', query, start)
   }
 
   try {
-    const anthropic = new Anthropic({ apiKey })
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
+    const client = getOpenRouterClient()
+    const response = await client.chat.completions.create({
+      model: MODELS.claude,
       messages: [{ role: 'user', content: buildPrompt(query) }],
+      max_tokens: 2000,
+      temperature: 0.7,
     })
-
-    const textBlock = message.content.find((block) => block.type === 'text')
-    const text = textBlock && textBlock.type === 'text' ? textBlock.text : ''
 
     return {
       engine: 'claude',
-      rawResponse: text,
+      rawResponse: response.choices[0]?.message?.content ?? '',
       timestamp: new Date(),
       latencyMs: Date.now() - start,
       isMock: false,

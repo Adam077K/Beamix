@@ -1,10 +1,10 @@
 /**
  * Real LLM execution for each agent type.
- * Uses Claude Sonnet for content agents.
+ * Uses Claude Sonnet via OpenRouter for content agents.
  * Replaces generateMockOutput in execute.ts.
  */
 
-import Anthropic from '@anthropic-ai/sdk'
+import { getOpenRouterClient, MODELS } from '@/lib/openrouter'
 import type { AgentConfig } from './config'
 import type { AgentOutput } from './mock-outputs'
 
@@ -41,10 +41,9 @@ export async function runAgentLLM(
   business: BusinessContext,
   input: RunInput,
 ): Promise<AgentOutput> {
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured')
+  if (!process.env.OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY not configured')
 
-  const anthropic = new Anthropic({ apiKey })
+  const client = getOpenRouterClient()
   const maxTokens = LENGTH_TO_TOKENS[input.targetLength] ?? 1600
   const tone = TONE_LABELS[input.tone] ?? 'professional and authoritative'
   const location = business.location ? ` in ${business.location}` : ''
@@ -62,20 +61,21 @@ export async function runAgentLLM(
   )
   const userPrompt = buildUserPrompt(config.dbType, input.topic, input.targetLength)
 
-  const message = await Promise.race([
-    anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+  const response = await Promise.race([
+    client.chat.completions.create({
+      model: MODELS.agentExecution,
       max_tokens: maxTokens,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }],
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
     }),
     new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('LLM request timed out after 25s')), 25000)
     ),
   ])
 
-  const textBlock = message.content.find((b) => b.type === 'text')
-  const text = textBlock && textBlock.type === 'text' ? textBlock.text : ''
+  const text = response.choices[0]?.message?.content ?? ''
 
   return buildOutput(config.dbType, text, input)
 }
