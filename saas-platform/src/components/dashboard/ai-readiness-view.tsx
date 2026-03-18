@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import {
   Globe,
@@ -191,22 +190,6 @@ function PriorityBadge({ priority }: { priority: RecommendationItem['priority'] 
 // ─── AiReadinessView ──────────────────────────────────────────────────────────
 
 export function AiReadinessView({ readiness, websiteUrl }: AiReadinessViewProps) {
-  const [isRunning, setIsRunning] = useState(false)
-
-  async function handleRunAudit() {
-    setIsRunning(true)
-    try {
-      const res = await fetch('/api/ai-readiness', { method: 'POST' })
-      if (res.ok) {
-        window.location.reload()
-      }
-    } catch {
-      // Silently fail
-    } finally {
-      setIsRunning(false)
-    }
-  }
-
   // Derived data
   const assessmentItems = readiness ? buildAssessmentItems(readiness) : []
   const recommendations = readiness ? buildRecommendations(readiness) : []
@@ -235,12 +218,11 @@ export function AiReadinessView({ readiness, websiteUrl }: AiReadinessViewProps)
           </p>
         </div>
         <Button
-          onClick={handleRunAudit}
-          disabled={isRunning}
-          className="shrink-0 rounded-lg bg-primary text-white hover:bg-primary/90 btn-primary-lift focus-visible:ring-2 focus-visible:ring-[#FF3C00] focus-visible:ring-offset-2"
+          disabled
+          className="shrink-0 rounded-lg bg-primary/50 text-white cursor-not-allowed"
         >
           <Zap className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
-          {isRunning ? 'Running audit...' : 'Run AI Readiness Audit'}
+          Coming Soon
         </Button>
       </div>
 
@@ -251,12 +233,8 @@ export function AiReadinessView({ readiness, websiteUrl }: AiReadinessViewProps)
             <CardContent className="p-0">
               <EmptyState
                 icon={ShieldCheck}
-                title="No AI readiness audit yet"
-                description="Run an audit to see how ready your website is for AI search engines and where to improve."
-                action={{
-                  label: 'Run Audit Now',
-                  onClick: handleRunAudit,
-                }}
+                title="AI Readiness Audit — Coming Soon"
+                description="This feature is currently in development. Check back soon to see how ready your website is for AI search engines."
               />
             </CardContent>
           </Card>
@@ -490,13 +468,12 @@ export function AiReadinessView({ readiness, websiteUrl }: AiReadinessViewProps)
                   All readiness factors are passing. Keep running periodic audits to maintain your AI search visibility.
                 </p>
                 <Button
-                  onClick={handleRunAudit}
-                  disabled={isRunning}
+                  disabled
                   variant="outline"
                   size="sm"
-                  className="rounded-lg mt-2"
+                  className="rounded-lg mt-2 cursor-not-allowed"
                 >
-                  {isRunning ? 'Running...' : 'Re-run Audit'}
+                  Coming Soon
                 </Button>
               </CardContent>
             </Card>
