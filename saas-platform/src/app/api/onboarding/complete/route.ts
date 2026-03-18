@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sendWelcomeEmail, sendTrialStartEmail } from '@/lib/email/events'
+import { getAgentClient, MODELS } from '@/lib/openrouter'
 import type { Json } from '@/lib/types/database.types'
 
 const onboardingSchema = z.object({
@@ -86,6 +87,7 @@ export async function POST(request: Request) {
   }
 
   // 2. If scan_id provided, link the free scan and convert results
+  let convertedScanId: string | null = null
   if (scan_id) {
     // Link free scan to this user — must use service client because free_scans
     // has no RLS UPDATE policy (rows are owned by the service role, not the user)
@@ -103,7 +105,7 @@ export async function POST(request: Request) {
       console.error('Failed to link free scan:', scanLinkError.message)
     } else if (freeScan?.results_data && freeScan.status === 'completed') {
       // Convert free scan results to scan_results + scan_result_details
-      await convertFreeScanResults(serviceSupa, freeScan, user.id, business.id)
+      convertedScanId = await convertFreeScanResults(serviceSupa, freeScan, user.id, business.id)
     }
   }
 
@@ -196,6 +198,13 @@ export async function POST(request: Request) {
     }
   }
 
+  // Fire-and-forget: generate recommendations from scan data (non-blocking)
+  if (convertedScanId) {
+    generateRecommendationsAsync(user.id, business.id, convertedScanId, supabase).catch((err) =>
+      console.error('[ONBOARDING] Recommendation generation failed (non-blocking):', err)
+    )
+  }
+
   const response = NextResponse.json({ success: true, business_id: business.id })
   response.cookies.set('beamix-onboarding-complete', '1', {
     path: '/',
@@ -234,8 +243,8 @@ async function convertFreeScanResults(
   freeScan: FreeScanRow,
   userId: string,
   businessId: string
-) {
-  if (!freeScan.results_data || typeof freeScan.results_data !== 'object' || Array.isArray(freeScan.results_data)) return
+): Promise<string | null> {
+  if (!freeScan.results_data || typeof freeScan.results_data !== 'object' || Array.isArray(freeScan.results_data)) return null
   const resultsData = freeScan.results_data as Record<string, Json | undefined>
 
   let queryId: string | null = null
@@ -258,7 +267,7 @@ async function convertFreeScanResults(
 
     if (queryError || !query) {
       console.error('Failed to create tracked query:', queryError?.message)
-      return
+      return null
     }
     queryId = query.id
 
@@ -281,7 +290,7 @@ async function convertFreeScanResults(
 
     if (scanError || !scanResult) {
       console.error('Failed to create scan result:', scanError?.message)
-      return
+      return null
     }
     scanResultId = scanResult.id
 
@@ -336,5 +345,96 @@ async function convertFreeScanResults(
         console.error('Cleanup: failed to delete tracked_query:', cleanupQueryErr.message)
       }
     }
+    return null
+  }
+
+  return scanResultId
+}
+
+/**
+ * Generate AI recommendations from scan results (non-blocking).
+ * Called after free scan conversion during onboarding.
+ */
+async function generateRecommendationsAsync(
+  userId: string,
+  businessId: string,
+  scanId: string,
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  const apiKey = process.env.OPENROUTER_AGENT_KEY ?? process.env.OPENROUTER_API_KEY
+  if (!apiKey) return
+
+  // Fetch business + scan + engine results
+  const [{ data: business }, { data: scan }, { data: engineResults }] = await Promise.all([
+    supabase.from('businesses').select('name, website_url, industry, location').eq('id', businessId).single(),
+    supabase.from('scans').select('id, overall_score').eq('id', scanId).single(),
+    supabase.from('scan_engine_results').select('engine, is_mentioned, rank_position, sentiment_score').eq('scan_id', scanId),
+  ])
+
+  if (!business || !scan) return
+
+  // Check deduplication
+  const { data: existing } = await supabase
+    .from('recommendations')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('scan_id', scanId)
+    .limit(1)
+  if (existing && existing.length > 0) return
+
+  const scanContext = `Overall visibility score: ${scan.overall_score ?? 'N/A'}/100
+Engine results:
+${(engineResults ?? []).map((r) => `- ${r.engine}: ${r.is_mentioned ? `mentioned (rank ${r.rank_position ?? '?'})` : 'NOT mentioned'}`).join('\n')}`
+
+  const location = business.location ? ` in ${business.location}` : ''
+  const industry = business.industry ?? 'local business'
+
+  const client = getAgentClient()
+  const response = await client.chat.completions.create({
+    model: MODELS.haiku,
+    max_tokens: 1500,
+    messages: [{
+      role: 'user',
+      content: `You are an AI search optimization strategist. Based on the scan data below, generate 4-5 prioritized recommendations for improving ${business.name}'s visibility in AI search engines.
+
+Business: ${business.name} — ${industry}${location}
+Website: ${business.website_url ?? 'N/A'}
+
+Current AI Visibility Scan:
+${scanContext}
+
+Return ONLY a JSON array with this exact structure (no other text):
+[{"title":"Short action title","description":"2-3 sentence explanation","priority":"high|medium|low","recommendation_type":"content|technical|citation|profile|schema","suggested_agent":"content_writer|blog_writer|faq_agent|schema_optimizer|null","credits_cost":1,"effort":"low|medium|high","impact":"low|medium|high","evidence":"One sentence citing scan evidence"}]`
+    }],
+  })
+
+  const text = response.choices[0]?.message?.content ?? ''
+  const jsonMatch = text.match(/\[[\s\S]*\]/)
+  if (!jsonMatch) return
+
+  const recs = JSON.parse(jsonMatch[0]) as Array<{
+    title: string; description: string; priority: string
+    recommendation_type: string; suggested_agent: string | null
+    credits_cost: number; effort: string; impact: string; evidence: string
+  }>
+
+  const toInsert = recs.map((rec) => ({
+    user_id: userId,
+    business_id: businessId,
+    scan_id: scanId,
+    title: rec.title,
+    description: rec.description,
+    priority: rec.priority as 'high' | 'medium' | 'low',
+    recommendation_type: rec.recommendation_type as 'content' | 'technical' | 'citation' | 'profile' | 'schema',
+    suggested_agent: rec.suggested_agent as 'content_writer' | 'blog_writer' | 'faq_agent' | 'schema_optimizer' | null,
+    credits_cost: rec.credits_cost,
+    effort: rec.effort as 'low' | 'medium' | 'high',
+    impact: rec.impact as 'low' | 'medium' | 'high',
+    evidence: rec.evidence,
+    status: 'new' as const,
+  }))
+
+  if (toInsert.length > 0) {
+    await supabase.from('recommendations').insert(toInsert)
   }
 }
