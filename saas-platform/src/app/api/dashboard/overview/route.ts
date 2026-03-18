@@ -49,7 +49,7 @@ export async function GET() {
       .from('recommendations')
       .select('id, title, description, priority, recommendation_type, status, suggested_agent, credits_cost')
       .eq('user_id', user.id)
-      .in('status', ['pending', 'in_progress'])
+      .in('status', ['new', 'in_progress'])
       .order('priority', { ascending: true })
       .limit(10),
     supabase

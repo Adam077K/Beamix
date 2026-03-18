@@ -28,7 +28,7 @@ export default async function DashboardPage() {
       .from('credit_pools')
       .select('base_allocation, rollover_amount, topup_amount, used_amount')
       .eq('user_id', user.id)
-      .eq('pool_type', 'agent')
+      .eq('pool_type', 'monthly')
       .single(),
     supabase
       .from('scans')
@@ -40,7 +40,7 @@ export default async function DashboardPage() {
       .from('recommendations')
       .select('id, title, description, priority, recommendation_type, status, suggested_agent, credits_cost')
       .eq('user_id', user.id)
-      .in('status', ['pending', 'in_progress'])
+      .in('status', ['new', 'in_progress'])
       .order('priority', { ascending: true })
       .limit(5),
     supabase

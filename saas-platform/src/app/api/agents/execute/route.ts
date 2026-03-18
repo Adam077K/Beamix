@@ -115,7 +115,7 @@ export async function POST(request: Request) {
     p_user_id: user.id,
     p_amount: creditCost,
     p_agent_job_id: execution.id,
-    p_pool_type: 'agent',
+    p_pool_type: 'monthly',
     p_description: `${agentType} agent execution`,
   })
 

@@ -12,7 +12,7 @@ const AGENT_TYPES = [
   'competitor_intelligence',
 ] as const
 
-const CONTENT_STATUSES = ['draft', 'ready', 'published', 'archived'] as const
+const CONTENT_STATUSES = ['draft', 'in_review', 'approved', 'published', 'archived'] as const
 
 const CONTENT_FORMATS = [
   'markdown',

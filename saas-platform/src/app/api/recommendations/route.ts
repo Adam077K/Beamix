@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false })
 
   if (status) {
-    const validStatuses = ['pending', 'in_progress', 'done', 'dismissed'] as const
+    const validStatuses = ['new', 'in_progress', 'completed', 'dismissed'] as const
     const statusList = status.split(',').filter((s): s is typeof validStatuses[number] =>
       (validStatuses as readonly string[]).includes(s)
     )
@@ -214,7 +214,7 @@ Prioritize recommendations with the highest AI visibility impact. Focus on actio
     effort: rec.effort,
     impact: rec.impact,
     evidence: rec.evidence,
-    status: 'pending' as const,
+    status: 'new' as const,
   }))
 
   const { data: inserted, error: insertError } = await supabase

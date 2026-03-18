@@ -2440,7 +2440,7 @@ export type Database = {
               p_plan_id: string
               p_user_id: string
             }
-            Returns: undefined
+            Returns: Json
           }
       confirm_credits: { Args: { p_job_id: string }; Returns: Json }
       deduct_credits: {
@@ -2474,6 +2474,14 @@ export type Database = {
         | "review_analyzer"
         | "social_strategy"
         | "competitor_intelligence"
+        | "recommendations"
+        | "citation_builder"
+        | "llms_txt"
+        | "ai_readiness"
+        | "content_voice_trainer"
+        | "content_pattern_analyzer"
+        | "content_refresh"
+        | "brand_narrative_analyst"
       blog_post_status: "draft" | "scheduled" | "published" | "archived"
       content_format:
         | "markdown"
@@ -2481,25 +2489,27 @@ export type Database = {
         | "json_ld"
         | "plain_text"
         | "structured_report"
-      content_item_status: "draft" | "ready" | "published" | "archived"
-      credit_pool_type: "agent" | "scan" | "report"
+      content_item_status: "draft" | "in_review" | "approved" | "published" | "archived"
+      credit_pool_type: "monthly" | "topup" | "trial"
       credit_transaction_type:
         | "allocation"
-        | "usage"
+        | "hold"
+        | "confirm"
+        | "release"
         | "topup"
         | "rollover"
-        | "refund"
-        | "adjustment"
+        | "expire"
+        | "system_grant"
       plan_tier: "starter" | "pro" | "business"
       recommendation_priority: "high" | "medium" | "low"
-      recommendation_status: "pending" | "in_progress" | "done" | "dismissed"
+      recommendation_status: "new" | "in_progress" | "completed" | "dismissed"
       scan_status: "pending" | "processing" | "completed" | "failed" | "expired"
       subscription_status:
         | "trialing"
         | "active"
         | "past_due"
         | "cancelled"
-        | "expired"
+        | "paused"
     }
     CompositeTypes: {
       [_ in never]: never

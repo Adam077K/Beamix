@@ -149,7 +149,7 @@ export async function addTopupCredits(userId: string, amount: number): Promise<v
   await supabase.from('credit_transactions').insert({
     user_id: userId,
     pool_id: credits!.id,
-    pool_type: 'agent' as const,
+    pool_type: 'topup' as const,
     transaction_type: 'topup' as const,
     amount,
     balance_after: newTotal,
