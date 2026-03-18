@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { nanoid } from 'nanoid'
 import { scanStartSchema } from '@/lib/scan/validation'
 import { createServiceClient } from '@/lib/supabase/server'
 import { inngest } from '@/inngest/client'
@@ -41,6 +42,10 @@ export async function POST(request: Request) {
       )
     }
 
+    // Generate a short, URL-safe scan_id for the free→paid import flow.
+    // This is stored in the scan_id column (separate from the UUID primary key).
+    const scanIdToken = nanoid(12)
+
     // Insert into free_scans — id is auto-generated, sector maps to industry column
     const { data: insertedScan, error: insertError } = await supabase
       .from('free_scans')
@@ -51,9 +56,10 @@ export async function POST(request: Request) {
         location,
         ip_address: ip,
         status: 'pending',
+        scan_id: scanIdToken,
         expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       })
-      .select('id')
+      .select('id, scan_id')
       .single()
 
     if (insertError || !insertedScan) {
