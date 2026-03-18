@@ -1,22 +1,18 @@
 /**
  * OpenRouter unified LLM client.
- * Single API key → access to OpenAI, Anthropic, Google, Perplexity models.
- * Uses the OpenAI SDK with OpenRouter's base URL.
+ * Two API keys for cost tracking:
+ *   OPENROUTER_SCAN_KEY  — engine scans (frequent, cheap)
+ *   OPENROUTER_AGENT_KEY — agent execution, QA, recommendations (fewer, pricier)
+ *
+ * Falls back to OPENROUTER_API_KEY if split keys aren't set.
  */
 
 import OpenAI from 'openai'
 
-let _client: OpenAI | null = null
+const _clients: Record<string, OpenAI> = {}
 
-export function getOpenRouterClient(): OpenAI {
-  if (_client) return _client
-
-  const apiKey = process.env.OPENROUTER_API_KEY
-  if (!apiKey) {
-    throw new Error('OPENROUTER_API_KEY is not configured')
-  }
-
-  _client = new OpenAI({
+function buildClient(apiKey: string): OpenAI {
+  return new OpenAI({
     baseURL: 'https://openrouter.ai/api/v1',
     apiKey,
     defaultHeaders: {
@@ -24,16 +20,46 @@ export function getOpenRouterClient(): OpenAI {
       'X-Title': 'Beamix',
     },
   })
+}
 
-  return _client
+function getClient(envKey: string): OpenAI {
+  if (_clients[envKey]) return _clients[envKey]
+
+  // Try the specific key first, fall back to the shared key
+  const apiKey = process.env[envKey] ?? process.env.OPENROUTER_API_KEY
+  if (!apiKey) {
+    throw new Error(`${envKey} (or OPENROUTER_API_KEY fallback) is not configured`)
+  }
+
+  _clients[envKey] = buildClient(apiKey)
+  return _clients[envKey]
+}
+
+/** Client for AI engine scans (ChatGPT, Gemini, Perplexity, Claude queries) */
+export function getScanClient(): OpenAI {
+  return getClient('OPENROUTER_SCAN_KEY')
+}
+
+/** Client for agent work (content generation, QA gate, recommendations) */
+export function getAgentClient(): OpenAI {
+  return getClient('OPENROUTER_AGENT_KEY')
+}
+
+/** Check if OpenRouter is configured (for mock fallback decisions) */
+export function isOpenRouterConfigured(): boolean {
+  return !!(
+    process.env.OPENROUTER_SCAN_KEY ??
+    process.env.OPENROUTER_AGENT_KEY ??
+    process.env.OPENROUTER_API_KEY
+  )
 }
 
 /**
  * Model mapping — OpenRouter model IDs.
- * Update these when switching models or providers.
+ * Change models here, nowhere else.
  */
 export const MODELS = {
-  // Scan engines — fast, cheap models for querying
+  // Scan engines
   chatgpt: 'openai/gpt-4o',
   gemini: 'google/gemini-2.0-flash-001',
   perplexity: 'perplexity/sonar-pro',

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getOpenRouterClient, MODELS } from '@/lib/openrouter'
+import { getAgentClient, MODELS } from '@/lib/openrouter'
 
 // ---------------------------------------------------------------------------
 // GET — fetch existing recommendations
@@ -145,11 +145,11 @@ ${(engineResults ?? []).map((r) => `- ${r.engine}: ${r.is_mentioned ? `mentioned
     : 'No scan data available yet.'
 
   // Generate recommendations using Claude Haiku via OpenRouter
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!(process.env.OPENROUTER_AGENT_KEY ?? process.env.OPENROUTER_API_KEY)) {
     return NextResponse.json({ error: 'AI service not configured' }, { status: 503 })
   }
 
-  const client = getOpenRouterClient()
+  const client = getAgentClient()
   const location = business.location ? ` in ${business.location}` : ''
   const industry = business.industry ?? 'local business'
 

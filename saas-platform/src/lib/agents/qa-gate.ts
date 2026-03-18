@@ -1,4 +1,4 @@
-import { getOpenRouterClient, MODELS } from '@/lib/openrouter'
+import { getAgentClient, MODELS } from '@/lib/openrouter'
 
 export interface QAResult {
   passed: boolean
@@ -23,11 +23,11 @@ export async function runQAGate(
   content: string,
   context?: { businessName?: string },
 ): Promise<QAResult> {
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!(process.env.OPENROUTER_AGENT_KEY ?? process.env.OPENROUTER_API_KEY)) {
     return fallbackScore()
   }
 
-  const client = getOpenRouterClient()
+  const client = getAgentClient()
   const businessContext = context?.businessName
     ? `Business: ${context.businessName}`
     : 'Business context not provided'

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { getOpenRouterClient, MODELS } from '@/lib/openrouter'
+import { getScanClient, isOpenRouterConfigured, MODELS } from '@/lib/openrouter'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -79,12 +79,12 @@ function buildPrompt(query: EngineQuery): string {
 async function queryChatGPT(query: EngineQuery): Promise<EngineResponse> {
   const start = Date.now()
 
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!(process.env.OPENROUTER_SCAN_KEY ?? process.env.OPENROUTER_API_KEY)) {
     return buildMockResponse('chatgpt', query, start)
   }
 
   try {
-    const client = getOpenRouterClient()
+    const client = getScanClient()
     const response = await client.chat.completions.create({
       model: MODELS.chatgpt,
       messages: [{ role: 'user', content: buildPrompt(query) }],
@@ -108,12 +108,12 @@ async function queryChatGPT(query: EngineQuery): Promise<EngineResponse> {
 async function queryGemini(query: EngineQuery): Promise<EngineResponse> {
   const start = Date.now()
 
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!(process.env.OPENROUTER_SCAN_KEY ?? process.env.OPENROUTER_API_KEY)) {
     return buildMockResponse('gemini', query, start)
   }
 
   try {
-    const client = getOpenRouterClient()
+    const client = getScanClient()
     const response = await client.chat.completions.create({
       model: MODELS.gemini,
       messages: [{ role: 'user', content: buildPrompt(query) }],
@@ -137,12 +137,12 @@ async function queryGemini(query: EngineQuery): Promise<EngineResponse> {
 async function queryPerplexity(query: EngineQuery): Promise<EngineResponse> {
   const start = Date.now()
 
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!(process.env.OPENROUTER_SCAN_KEY ?? process.env.OPENROUTER_API_KEY)) {
     return buildMockResponse('perplexity', query, start)
   }
 
   try {
-    const client = getOpenRouterClient()
+    const client = getScanClient()
     const response = await client.chat.completions.create({
       model: MODELS.perplexity,
       messages: [{ role: 'user', content: buildPrompt(query) }],
@@ -166,12 +166,12 @@ async function queryPerplexity(query: EngineQuery): Promise<EngineResponse> {
 async function queryClaude(query: EngineQuery): Promise<EngineResponse> {
   const start = Date.now()
 
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!(process.env.OPENROUTER_SCAN_KEY ?? process.env.OPENROUTER_API_KEY)) {
     return buildMockResponse('claude', query, start)
   }
 
   try {
-    const client = getOpenRouterClient()
+    const client = getScanClient()
     const response = await client.chat.completions.create({
       model: MODELS.claude,
       messages: [{ role: 'user', content: buildPrompt(query) }],

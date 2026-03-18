@@ -4,7 +4,7 @@
  * Replaces generateMockOutput in execute.ts.
  */
 
-import { getOpenRouterClient, MODELS } from '@/lib/openrouter'
+import { getAgentClient, MODELS } from '@/lib/openrouter'
 import type { AgentConfig } from './config'
 import type { AgentOutput } from './mock-outputs'
 
@@ -41,9 +41,9 @@ export async function runAgentLLM(
   business: BusinessContext,
   input: RunInput,
 ): Promise<AgentOutput> {
-  if (!process.env.OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY not configured')
+  if (!(process.env.OPENROUTER_AGENT_KEY ?? process.env.OPENROUTER_API_KEY)) throw new Error('OPENROUTER_AGENT_KEY (or OPENROUTER_API_KEY) not configured')
 
-  const client = getOpenRouterClient()
+  const client = getAgentClient()
   const maxTokens = LENGTH_TO_TOKENS[input.targetLength] ?? 1600
   const tone = TONE_LABELS[input.tone] ?? 'professional and authoritative'
   const location = business.location ? ` in ${business.location}` : ''
