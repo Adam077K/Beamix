@@ -167,6 +167,10 @@ function ScanWizard() {
 
   // Handlers
 
+  function goBack() {
+    setStepIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : prev))
+  }
+
   function handleUrlSubmit(data: UrlFormData) {
     const normalised = /^https?:\/\//i.test(data.url) ? data.url : `https://${data.url}`
     setUrl(normalised)
@@ -351,6 +355,12 @@ function ScanWizard() {
                 {emailForm.formState.errors.email && (
                   <p className="text-xs text-red-500">{emailForm.formState.errors.email.message}</p>
                 )}
+                <div className="flex gap-3">
+                  {stepIndex > 0 && (
+                    <Button type="button" variant="outline" onClick={goBack} className="h-12 rounded-full border-black/15 text-black/60 hover:text-black">
+                      Back
+                    </Button>
+                  )}
                 <Button
                   type="submit"
                   className="h-12 w-full rounded-full bg-[#FF3C00] text-white hover:bg-[#FF3C00]/90 text-base font-medium"
@@ -358,6 +368,7 @@ function ScanWizard() {
                   Continue
                   <ArrowRight className="ms-1.5 h-4 w-4" />
                 </Button>
+                </div>
               </form>
             </motion.div>
           )}
@@ -397,13 +408,18 @@ function ScanWizard() {
                     {businessNameForm.formState.errors.business_name.message}
                   </p>
                 )}
-                <Button
-                  type="submit"
-                  className="h-12 w-full rounded-full bg-[#FF3C00] text-white hover:bg-[#FF3C00]/90 text-base font-medium"
-                >
-                  Continue
-                  <ArrowRight className="ms-1.5 h-4 w-4" />
-                </Button>
+                <div className="flex gap-3">
+                  <Button type="button" variant="outline" onClick={goBack} className="h-12 rounded-full border-black/15 text-black/60 hover:text-black">
+                    Back
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="h-12 w-full rounded-full bg-[#FF3C00] text-white hover:bg-[#FF3C00]/90 text-base font-medium"
+                  >
+                    Continue
+                    <ArrowRight className="ms-1.5 h-4 w-4" />
+                  </Button>
+                </div>
               </form>
             </motion.div>
           )}
@@ -460,23 +476,28 @@ function ScanWizard() {
                   I serve customers globally
                 </button>
 
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="h-12 w-full rounded-full bg-[#FF3C00] text-white hover:bg-[#FF3C00]/90 text-base font-medium disabled:opacity-60"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                      Starting scan...
-                    </>
-                  ) : (
-                    <>
-                      Scan my business
-                      <ArrowRight className="ms-1.5 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-3">
+                  <Button type="button" variant="outline" onClick={goBack} className="h-12 rounded-full border-black/15 text-black/60 hover:text-black">
+                    Back
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="h-12 w-full rounded-full bg-[#FF3C00] text-white hover:bg-[#FF3C00]/90 text-base font-medium disabled:opacity-60"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                        Starting scan...
+                      </>
+                    ) : (
+                      <>
+                        Scan my business
+                        <ArrowRight className="ms-1.5 h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                </div>
               </form>
 
               <p className="mt-4 text-center text-xs text-black/35">

@@ -109,10 +109,11 @@ export async function POST(request: Request) {
         convertedScanId = await convertFreeScanResults(serviceSupa, freeScan, user.id, business.id)
       }
     } else if (user.email) {
-      // Email match path: find the most recent completed scan with this email
-      const { data: freeScan, error: emailMatchError } = await serviceSupa
+      // Email match path: find + claim the most recent completed scan atomically
+      // First find the candidate, then atomically claim it with UPDATE...WHERE converted_user_id IS NULL
+      const { data: candidate } = await serviceSupa
         .from('free_scans')
-        .select('*')
+        .select('id')
         .eq('email', user.email)
         .is('converted_user_id', null)
         .eq('status', 'completed')
@@ -120,19 +121,19 @@ export async function POST(request: Request) {
         .limit(1)
         .maybeSingle()
 
-      if (emailMatchError) {
-        console.error('Failed to find free scan by email:', emailMatchError.message)
-      } else if (freeScan) {
-        // Link the matched scan to this user
-        const { error: linkError } = await serviceSupa
+      if (candidate) {
+        // Atomic claim: UPDATE with IS NULL guard prevents double-conversion
+        const { data: freeScan, error: claimError } = await serviceSupa
           .from('free_scans')
           .update({ converted_user_id: user.id })
-          .eq('id', freeScan.id)
+          .eq('id', candidate.id)
           .is('converted_user_id', null)
+          .select('*')
+          .single()
 
-        if (linkError) {
-          console.error('Failed to link email-matched free scan:', linkError.message)
-        } else if (freeScan.results_data) {
+        if (claimError) {
+          console.error('Failed to claim email-matched free scan:', claimError.message)
+        } else if (freeScan?.results_data && freeScan.status === 'completed') {
           convertedScanId = await convertFreeScanResults(serviceSupa, freeScan, user.id, business.id)
         }
       }
@@ -239,7 +240,7 @@ export async function POST(request: Request) {
   response.cookies.set('beamix-onboarding-complete', '1', {
     path: '/',
     maxAge: 60 * 60 * 24 * 365, // 1 year
-    httpOnly: false, // must be readable by middleware
+    httpOnly: true, // middleware reads via request.cookies (server-side)
     sameSite: 'lax',
   })
   return response
@@ -398,7 +399,7 @@ async function generateRecommendationsAsync(
   const [{ data: business }, { data: scan }, { data: engineResults }] = await Promise.all([
     supabase.from('businesses').select('name, website_url, industry, location').eq('id', businessId).single(),
     supabase.from('scans').select('id, overall_score').eq('id', scanId).single(),
-    supabase.from('scan_engine_results').select('engine, is_mentioned, rank_position, sentiment_score').eq('scan_id', scanId),
+    supabase.from('scan_engine_results').select('engine, is_mentioned, rank_position, sentiment').eq('scan_id', scanId),
   ])
 
   if (!business || !scan) return
