@@ -1285,6 +1285,7 @@ export type Database = {
           converted_to_scan_id: string | null
           converted_user_id: string | null
           created_at: string
+          email: string | null
           expires_at: string
           id: string
           industry: string
@@ -1305,6 +1306,7 @@ export type Database = {
           converted_to_scan_id?: string | null
           converted_user_id?: string | null
           created_at?: string
+          email?: string | null
           expires_at?: string
           id?: string
           industry: string
@@ -1325,6 +1327,7 @@ export type Database = {
           converted_to_scan_id?: string | null
           converted_user_id?: string | null
           created_at?: string
+          email?: string | null
           expires_at?: string
           id?: string
           industry?: string

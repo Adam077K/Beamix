@@ -1,240 +1,492 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState, useEffect, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { scanStartSchema, type ScanStartInput } from '@/lib/scan/validation'
-import { INDUSTRIES } from '@/constants/industries'
+import { z } from 'zod'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Globe, Mail, Building2, MapPin, Loader2, ArrowRight, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { ProductNav } from '@/components/shared/product-nav'
-import { ProductFooter } from '@/components/shared/product-footer'
-import { Loader2, Globe, Building2, MapPin, Layers, Shield, Clock, Sparkles } from 'lucide-react'
+
+// --- Per-step schemas ---
+
+const urlSchema = z.object({
+  url: z.string().min(1, 'Website URL is required').url('Please enter a valid URL'),
+})
+
+const emailSchema = z.object({
+  email: z.string().min(1, 'Email is required').email('Please enter a valid email'),
+})
+
+const businessNameSchema = z.object({
+  business_name: z
+    .string()
+    .min(2, 'Business name must be at least 2 characters')
+    .max(200, 'Business name is too long'),
+})
+
+const locationSchema = z.object({
+  location: z
+    .string()
+    .min(2, 'Please enter your location')
+    .max(200, 'Location is too long'),
+})
+
+type UrlFormData = z.infer<typeof urlSchema>
+type EmailFormData = z.infer<typeof emailSchema>
+type BusinessNameFormData = z.infer<typeof businessNameSchema>
+type LocationFormData = z.infer<typeof locationSchema>
+
+// --- Helpers ---
+
+function extractNameFromDomain(url: string): string {
+  try {
+    const hostname = new URL(url).hostname
+    const parts = hostname.replace('www.', '').split('.')
+    if (parts.length > 0) {
+      const name = parts[0]
+      return name.charAt(0).toUpperCase() + name.slice(1)
+    }
+  } catch {
+    // Invalid URL
+  }
+  return ''
+}
+
+// --- Animation variants ---
+
+const slideVariants = {
+  enter: { x: 60, opacity: 0 },
+  center: { x: 0, opacity: 1 },
+  exit: { x: -60, opacity: 0 },
+}
+
+// --- Progress dots ---
+
+function ProgressDots({
+  total,
+  active,
+}: {
+  total: number
+  active: number
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      {Array.from({ length: total }, (_, i) => (
+        <motion.div
+          key={i}
+          animate={{ scale: i === active ? 1.25 : 1 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className={`rounded-full transition-colors duration-300 ${
+            i === active
+              ? 'h-2.5 w-2.5 bg-[#FF3C00]'
+              : i < active
+              ? 'h-2 w-2 bg-[#FF3C00]/40'
+              : 'h-2 w-2 bg-black/15'
+          }`}
+        />
+      ))}
+    </div>
+  )
+}
+
+// --- Wizard step type ---
+// Steps: 'url' | 'email' | 'business_name' | 'location'
+// When URL is pre-filled from searchParams, we skip the url step.
+
+type WizardStep = 'url' | 'email' | 'business_name' | 'location'
+
+const STEPS_WITH_URL: WizardStep[] = ['url', 'email', 'business_name', 'location']
+const STEPS_WITHOUT_URL: WizardStep[] = ['email', 'business_name', 'location']
 
 export default function ScanPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+      <ScanWizard />
+    </Suspense>
+  )
+}
+
+function ScanWizard() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Form state
+  const [url, setUrl] = useState('')
+  const [email, setEmail] = useState('')
+  const [businessName, setBusinessName] = useState('')
+
+  // Wizard state
+  const [stepIndex, setStepIndex] = useState<number | null>(null)
+  const [steps, setSteps] = useState<WizardStep[]>(STEPS_WITH_URL)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<ScanStartInput>({
-    resolver: zodResolver(scanStartSchema),
-    defaultValues: {
-      url: '',
-      business_name: '',
-      sector: '',
-      location: '',
-    },
-  })
+  // React Hook Forms — one per step
+  const urlForm = useForm<UrlFormData>({ resolver: zodResolver(urlSchema) })
+  const emailForm = useForm<EmailFormData>({ resolver: zodResolver(emailSchema) })
+  const businessNameForm = useForm<BusinessNameFormData>({ resolver: zodResolver(businessNameSchema) })
+  const locationForm = useForm<LocationFormData>({ resolver: zodResolver(locationSchema) })
 
-  async function onSubmit(data: ScanStartInput) {
-    setError(null)
-
-    try {
-      const res = await fetch('/api/scan/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-
-      if (!res.ok) {
-        const errorData = await res.json()
-        setError(errorData.error ?? 'Something went wrong')
-        return
-      }
-
-      const { scan_id } = await res.json()
-
-      // Save scan_id to localStorage so results can be retrieved later
-      try {
-        localStorage.setItem('beamix_last_scan_id', scan_id)
-      } catch {
-        // localStorage not available — ignore
-      }
-
-      router.push(`/scan/${scan_id}`)
-    } catch {
-      setError('Network error. Please try again.')
+  // Initialise on mount — read ?url= from searchParams (Framer passes this)
+  useEffect(() => {
+    const paramUrl = searchParams.get('url')
+    if (paramUrl) {
+      // Normalize bare domain → https://
+      const normalised = /^https?:\/\//i.test(paramUrl) ? paramUrl : `https://${paramUrl}`
+      setUrl(normalised)
+      const extracted = extractNameFromDomain(normalised)
+      if (extracted) setBusinessName(extracted)
+      setSteps(STEPS_WITHOUT_URL)
+      setStepIndex(0)
+    } else {
+      setSteps(STEPS_WITH_URL)
+      setStepIndex(0)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // intentionally run once on mount
+
+  // Sync businessName into nameForm when it changes via URL extraction
+  useEffect(() => {
+    if (businessName) {
+      businessNameForm.setValue('business_name', businessName)
+    }
+  }, [businessName, businessNameForm])
+
+  const currentStep: WizardStep | null =
+    stepIndex !== null ? (steps[stepIndex] ?? null) : null
+
+  // Dot index: map stepIndex to visual dot position
+  // When URL is pre-filled, steps = ['email','business_name','location'] → 3 dots
+  // When URL is included, steps = ['url','email','business_name','location'] → 4 dots
+  // But we always show 4 visible dots; if URL is skipped, we skip dot 0 visually.
+  const totalDots = steps.length
+  const activeDot = stepIndex ?? 0
+
+  // Handlers
+
+  function handleUrlSubmit(data: UrlFormData) {
+    const normalised = /^https?:\/\//i.test(data.url) ? data.url : `https://${data.url}`
+    setUrl(normalised)
+    const extracted = extractNameFromDomain(normalised)
+    if (extracted) setBusinessName(extracted)
+    setStepIndex((prev) => (prev !== null ? prev + 1 : 1))
+  }
+
+  function handleEmailSubmit(data: EmailFormData) {
+    setEmail(data.email)
+    setStepIndex((prev) => (prev !== null ? prev + 1 : 1))
+  }
+
+  function handleBusinessNameSubmit(data: BusinessNameFormData) {
+    setBusinessName(data.business_name)
+    setStepIndex((prev) => (prev !== null ? prev + 1 : 1))
+  }
+
+  const handleLocationSubmit = useCallback(
+    async (data: LocationFormData) => {
+      setIsSubmitting(true)
+      setError(null)
+
+      try {
+        const res = await fetch('/api/scan/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url,
+            business_name: businessName,
+            // sector is required by the API schema; default to 'general' since we no
+            // longer collect industry in this wizard to keep the flow short.
+            sector: 'general',
+            location: data.location,
+            ...(email ? { email } : {}),
+          }),
+        })
+
+        if (!res.ok) {
+          const errorData = await res.json()
+          setError(errorData.error ?? 'Something went wrong')
+          return
+        }
+
+        const { scan_id } = await res.json()
+
+        try {
+          localStorage.setItem('beamix_last_scan_id', scan_id)
+        } catch {
+          // localStorage not available — ignore
+        }
+
+        router.push(`/scan/${scan_id}`)
+      } catch {
+        setError('Network error. Please try again.')
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    [url, businessName, email, router]
+  )
+
+  // Loading state while mount effect runs
+  if (stepIndex === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <Loader2 className="h-6 w-6 animate-spin text-[#FF3C00]" />
+      </div>
+    )
+  }
+
+  // Display hostname badge
+  let displayedUrl = ''
+  try {
+    if (url) displayedUrl = new URL(url).hostname.replace('www.', '')
+  } catch {
+    displayedUrl = url
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <ProductNav />
+    <div className="flex min-h-screen flex-col items-center justify-center bg-white px-4 py-12 font-sans">
+      {/* Logo */}
+      <div className="mb-10">
+        <span className="font-bold text-2xl text-black">
+          Beam<span className="text-[#FF3C00]">ix</span>
+        </span>
+      </div>
 
-      {/* Main Content */}
-      <main className="flex flex-1 flex-col items-center justify-center px-4 py-16">
-        {/* Heading */}
-        <div className="mb-8 text-center">
-          <h1 className="font-sans font-medium text-3xl text-foreground sm:text-4xl">
-            Free AI Visibility Scan
-          </h1>
-          <p className="mt-3 max-w-md text-base text-muted-foreground sm:text-lg">
-            See how ChatGPT, Gemini, Perplexity, and Claude talk about your business
+      {/* Card */}
+      <div className="w-full max-w-md">
+        {/* Progress */}
+        <div className="mb-8 flex flex-col items-center gap-2">
+          <ProgressDots total={totalDots} active={activeDot} />
+          <p className="text-xs text-black/40">
+            Step {activeDot + 1} of {totalDots}
           </p>
         </div>
 
-        {/* Trust signals */}
-        <div className="mb-8 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <Shield className="h-4 w-4 text-[#10B981]" />
-            No credit card required
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Clock className="h-4 w-4 text-primary" />
-            Results in ~60 seconds
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-primary" />
-            Powered by 4 AI engines
-          </span>
-        </div>
+        <AnimatePresence mode="wait">
 
-        {/* Scan Form Card */}
-        <div className="w-full max-w-lg rounded-[20px] border border-border bg-card p-8 shadow-sm">
-          <h2 className="font-sans font-medium text-2xl text-foreground">
-            Scan your business
-          </h2>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            We&apos;ll check how AI search engines see your business and show you exactly where you stand vs. competitors.
-          </p>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5">
-            {error && (
-              <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
-                {error}
+          {/* URL Step */}
+          {currentStep === 'url' && (
+            <motion.div
+              key="step-url"
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+            >
+              <div className="mb-8 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF3C00]/10">
+                  <Globe className="h-7 w-7 text-[#FF3C00]" />
+                </div>
+                <h1 className="text-2xl font-medium text-black">
+                  What&apos;s your website URL?
+                </h1>
+                <p className="mt-2 text-sm text-black/50">
+                  We&apos;ll check how AI engines see your business.
+                </p>
               </div>
-            )}
 
-            {/* Website URL */}
-            <div className="space-y-2">
-              <label htmlFor="url" className="text-sm font-medium text-foreground">
-                Website URL
-              </label>
-              <div className="relative">
-                <Globe className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <form onSubmit={urlForm.handleSubmit(handleUrlSubmit)} className="space-y-4">
                 <Input
-                  id="url"
                   type="url"
                   placeholder="https://yourbusiness.com"
-                  className="ps-10"
-                  {...register('url')}
+                  className="h-12 rounded-xl border-black/15 text-base placeholder:text-black/30 focus-visible:ring-[#FF3C00]"
+                  {...urlForm.register('url')}
                 />
-              </div>
-              {errors.url && (
-                <p className="text-xs text-destructive">{errors.url.message}</p>
-              )}
-            </div>
+                {urlForm.formState.errors.url && (
+                  <p className="text-xs text-red-500">{urlForm.formState.errors.url.message}</p>
+                )}
+                <Button
+                  type="submit"
+                  className="h-12 w-full rounded-full bg-[#FF3C00] text-white hover:bg-[#FF3C00]/90 text-base font-medium"
+                >
+                  Continue
+                  <ArrowRight className="ms-1.5 h-4 w-4" />
+                </Button>
+              </form>
+            </motion.div>
+          )}
 
-            {/* Business Name */}
-            <div className="space-y-2">
-              <label htmlFor="business_name" className="text-sm font-medium text-foreground">
-                Business name
-              </label>
-              <div className="relative">
-                <Building2 className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          {/* Email Step */}
+          {currentStep === 'email' && (
+            <motion.div
+              key="step-email"
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+            >
+              <div className="mb-8 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF3C00]/10">
+                  <Mail className="h-7 w-7 text-[#FF3C00]" />
+                </div>
+                <h1 className="text-2xl font-medium text-black">
+                  What&apos;s your email?
+                </h1>
+                <p className="mt-2 text-sm text-black/50">
+                  We&apos;ll send your results there and make signup seamless.
+                </p>
+              </div>
+
+              {displayedUrl && (
+                <div className="mb-6 flex justify-center">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FF3C00]/10 px-3 py-1 text-xs font-medium text-[#FF3C00]">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Scanning: {displayedUrl}
+                  </span>
+                </div>
+              )}
+
+              <form onSubmit={emailForm.handleSubmit(handleEmailSubmit)} className="space-y-4">
                 <Input
-                  id="business_name"
+                  type="email"
+                  placeholder="you@company.com"
+                  className="h-12 rounded-xl border-black/15 text-base placeholder:text-black/30 focus-visible:ring-[#FF3C00]"
+                  {...emailForm.register('email')}
+                />
+                {emailForm.formState.errors.email && (
+                  <p className="text-xs text-red-500">{emailForm.formState.errors.email.message}</p>
+                )}
+                <Button
+                  type="submit"
+                  className="h-12 w-full rounded-full bg-[#FF3C00] text-white hover:bg-[#FF3C00]/90 text-base font-medium"
+                >
+                  Continue
+                  <ArrowRight className="ms-1.5 h-4 w-4" />
+                </Button>
+              </form>
+            </motion.div>
+          )}
+
+          {/* Business Name Step */}
+          {currentStep === 'business_name' && (
+            <motion.div
+              key="step-business_name"
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+            >
+              <div className="mb-8 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF3C00]/10">
+                  <Building2 className="h-7 w-7 text-[#FF3C00]" />
+                </div>
+                <h1 className="text-2xl font-medium text-black">
+                  What&apos;s your business name?
+                </h1>
+                <p className="mt-2 text-sm text-black/50">
+                  Exactly as customers would search for it.
+                </p>
+              </div>
+
+              <form onSubmit={businessNameForm.handleSubmit(handleBusinessNameSubmit)} className="space-y-4">
+                <Input
                   type="text"
                   placeholder="Your Business Name"
-                  className="ps-10"
-                  {...register('business_name')}
+                  defaultValue={businessName}
+                  className="h-12 rounded-xl border-black/15 text-base placeholder:text-black/30 focus-visible:ring-[#FF3C00]"
+                  {...businessNameForm.register('business_name')}
                 />
-              </div>
-              {errors.business_name && (
-                <p className="text-xs text-destructive">
-                  {errors.business_name.message}
-                </p>
-              )}
-            </div>
-
-            {/* Industry */}
-            <div className="space-y-2">
-              <label htmlFor="sector" className="text-sm font-medium text-foreground">
-                Industry
-              </label>
-              <div className="relative">
-                <Layers className="absolute start-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Select
-                  onValueChange={(value) =>
-                    setValue('sector', value, { shouldValidate: true })
-                  }
+                {businessNameForm.formState.errors.business_name && (
+                  <p className="text-xs text-red-500">
+                    {businessNameForm.formState.errors.business_name.message}
+                  </p>
+                )}
+                <Button
+                  type="submit"
+                  className="h-12 w-full rounded-full bg-[#FF3C00] text-white hover:bg-[#FF3C00]/90 text-base font-medium"
                 >
-                  <SelectTrigger className="ps-10">
-                    <SelectValue placeholder="Select your industry" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {INDUSTRIES.map((industry) => (
-                      <SelectItem key={industry.value} value={industry.value}>
-                        {industry.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {errors.sector && (
-                <p className="text-xs text-destructive">{errors.sector.message}</p>
-              )}
-            </div>
+                  Continue
+                  <ArrowRight className="ms-1.5 h-4 w-4" />
+                </Button>
+              </form>
+            </motion.div>
+          )}
 
-            {/* Location */}
-            <div className="space-y-2">
-              <label htmlFor="location" className="text-sm font-medium text-foreground">
-                Location
-              </label>
-              <div className="relative">
-                <MapPin className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          {/* Location Step */}
+          {currentStep === 'location' && (
+            <motion.div
+              key="step-location"
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+            >
+              <div className="mb-8 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF3C00]/10">
+                  <MapPin className="h-7 w-7 text-[#FF3C00]" />
+                </div>
+                <h1 className="text-2xl font-medium text-black">
+                  Where are you located?
+                </h1>
+                <p className="mt-2 text-sm text-black/50">
+                  AI searches are highly local — this shapes your results.
+                </p>
+              </div>
+
+              {error && (
+                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={locationForm.handleSubmit(handleLocationSubmit)} className="space-y-4">
                 <Input
-                  id="location"
                   type="text"
                   placeholder="Tel Aviv, Israel"
-                  className="ps-10"
-                  {...register('location')}
+                  className="h-12 rounded-xl border-black/15 text-base placeholder:text-black/30 focus-visible:ring-[#FF3C00]"
+                  {...locationForm.register('location')}
                 />
-              </div>
-              {errors.location && (
-                <p className="text-xs text-destructive">
-                  {errors.location.message}
-                </p>
-              )}
-            </div>
+                {locationForm.formState.errors.location && (
+                  <p className="text-xs text-red-500">
+                    {locationForm.formState.errors.location.message}
+                  </p>
+                )}
 
-            {/* CTA */}
-            <Button
-              type="submit"
-              className="w-full rounded-full bg-primary text-white hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              disabled={isSubmitting}
-              size="lg"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                  Starting scan...
-                </>
-              ) : (
-                'Scan your site \u2192'
-              )}
-            </Button>
+                {/* Global shortcut */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    locationForm.setValue('location', 'Global', { shouldValidate: true })
+                  }}
+                  className="w-full rounded-xl border border-black/10 py-2.5 text-sm text-black/50 transition-colors hover:border-black/20 hover:text-black/70"
+                >
+                  I serve customers globally
+                </button>
 
-            <p className="text-center text-xs text-muted-foreground">
-              Free &bull; 60 seconds &bull; No account needed
-            </p>
-          </form>
-        </div>
-      </main>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="h-12 w-full rounded-full bg-[#FF3C00] text-white hover:bg-[#FF3C00]/90 text-base font-medium disabled:opacity-60"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                      Starting scan...
+                    </>
+                  ) : (
+                    <>
+                      Scan my business
+                      <ArrowRight className="ms-1.5 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
 
-      <ProductFooter />
+              <p className="mt-4 text-center text-xs text-black/35">
+                Free &bull; ~60 seconds &bull; No account needed
+              </p>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </div>
     </div>
   )
 }

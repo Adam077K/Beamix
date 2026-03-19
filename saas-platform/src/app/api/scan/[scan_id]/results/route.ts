@@ -15,7 +15,7 @@ export async function GET(
 
   const { data: scan, error } = await supabase
     .from('free_scans')
-    .select('id, status, business_name, website_url, industry, location, overall_score, results_data, created_at')
+    .select('id, status, business_name, website_url, industry, location, overall_score, results_data, created_at, email')
     .eq('id', scan_id)
     .single()
 
@@ -42,5 +42,6 @@ export async function GET(
     status: scan.status,
     results: scan.results_data,
     created_at: scan.created_at,
+    email: scan.email ?? null,
   })
 }

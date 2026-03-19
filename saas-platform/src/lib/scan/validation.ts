@@ -16,6 +16,7 @@ export const scanStartSchema = z.object({
     .string()
     .min(1, 'Location is required')
     .max(200, 'Location is too long'),
+  email: z.string().email('Please enter a valid email').optional(),
 })
 
 export type ScanStartInput = z.infer<typeof scanStartSchema>

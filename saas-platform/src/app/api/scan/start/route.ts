@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const { url, business_name, sector, location } = parsed.data
+    const { url, business_name, sector, location, email } = parsed.data
 
     const supabase = await createServiceClient()
 
@@ -58,6 +58,7 @@ export async function POST(request: Request) {
         status: 'pending',
         scan_id: scanIdToken,
         expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        ...(email ? { email } : {}),
       })
       .select('id, scan_id')
       .single()

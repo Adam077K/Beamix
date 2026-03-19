@@ -35,6 +35,7 @@ type SignupFormData = z.infer<typeof signupSchema>
 export function SignupForm() {
   const searchParams = useSearchParams()
   const scanId = searchParams.get('scan_id')
+  const emailParam = searchParams.get('email')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -46,6 +47,9 @@ export function SignupForm() {
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     mode: 'onTouched',
+    defaultValues: {
+      email: emailParam ?? '',
+    },
   })
 
   async function onSubmit(data: SignupFormData) {

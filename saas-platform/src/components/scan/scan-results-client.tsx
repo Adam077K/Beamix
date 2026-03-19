@@ -37,6 +37,7 @@ interface ScanData {
   website_url: string
   sector: string
   location: string
+  email?: string | null
   results: ScanResults
 }
 
@@ -555,7 +556,11 @@ function QuickWinsSection({
 
 // --- Gated/Blurred CTA ---
 
-function GatedCTA({ scanId }: { scanId: string }) {
+function GatedCTA({ scanId, email }: { scanId: string; email?: string | null }) {
+  const signupHref = email
+    ? `/signup?scan_id=${scanId}&email=${encodeURIComponent(email)}`
+    : `/signup?scan_id=${scanId}`
+
   return (
     <div className="relative">
       {/* Blurred placeholder content */}
@@ -593,7 +598,7 @@ function GatedCTA({ scanId }: { scanId: string }) {
             Sign up for a free 7-day trial to get detailed, AI-generated action items tailored to
             your business.
           </p>
-          <Link href={`/signup?scan_id=${scanId}`}>
+          <Link href={signupHref}>
             <Button
               size="lg"
               className="mt-4 rounded-full bg-primary text-white hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
@@ -682,7 +687,11 @@ function ShareSection({ scanId }: { scanId: string }) {
 
 // --- Conversion CTA ---
 
-function ConversionCTA({ scanId }: { scanId: string }) {
+function ConversionCTA({ scanId, email }: { scanId: string; email?: string | null }) {
+  const signupHref = email
+    ? `/signup?scan_id=${scanId}&email=${encodeURIComponent(email)}`
+    : `/signup?scan_id=${scanId}`
+
   return (
     <Card className="rounded-[20px] border-2 border-primary bg-gradient-to-br from-[#FFF5F2] to-card">
       <CardContent className="p-8 text-center">
@@ -694,7 +703,7 @@ function ConversionCTA({ scanId }: { scanId: string }) {
           no credit card required.
         </p>
         <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <Link href={`/signup?scan_id=${scanId}`}>
+          <Link href={signupHref}>
             <Button
               size="lg"
               className="rounded-full bg-primary text-white hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
@@ -736,6 +745,7 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
   const [status, setStatus] = useState<ScanPageStatus>('loading')
   const [scanData, setScanData] = useState<ScanData | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const scanEmail = scanData?.email ?? null
   const statusRef = useRef(status)
   useEffect(() => { statusRef.current = status }, [status])
 
@@ -822,7 +832,13 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
                 New scan
               </Button>
             </Link>
-            <Link href={`/signup?scan_id=${scanId}`}>
+            <Link
+              href={
+                scanEmail
+                  ? `/signup?scan_id=${scanId}&email=${encodeURIComponent(scanEmail)}`
+                  : `/signup?scan_id=${scanId}`
+              }
+            >
               <Button
                 size="sm"
                 className="bg-primary text-white hover:bg-primary/90"
@@ -915,7 +931,7 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
 
         {/* Gated CTA — blurred additional fixes */}
         <motion.div variants={itemVariants}>
-          <GatedCTA scanId={scanId} />
+          <GatedCTA scanId={scanId} email={scanEmail} />
         </motion.div>
 
         <Separator className="my-8" />
@@ -929,7 +945,7 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
 
         {/* Conversion CTA */}
         <motion.div variants={itemVariants}>
-          <ConversionCTA scanId={scanId} />
+          <ConversionCTA scanId={scanId} email={scanEmail} />
         </motion.div>
       </motion.div>
     </div>

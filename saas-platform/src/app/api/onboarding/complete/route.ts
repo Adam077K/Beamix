@@ -86,26 +86,56 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to resolve business record' }, { status: 500 })
   }
 
-  // 2. If scan_id provided, link the free scan and convert results
+  // 2. Link free scan and convert results.
+  //    Priority: scan_id (if provided) → email match → skip.
   let convertedScanId: string | null = null
-  if (scan_id) {
-    // Link free scan to this user — must use service client because free_scans
-    // has no RLS UPDATE policy (rows are owned by the service role, not the user)
+  {
     const serviceSupa = await createServiceClient()
-    const { data: freeScan, error: scanLinkError } = await serviceSupa
-      .from('free_scans')
-      .update({ converted_user_id: user.id })
-      .eq('id', scan_id)
-      .is('converted_user_id', null)
-      .select('*')
-      .single()
 
-    if (scanLinkError) {
-      // Non-fatal — business was created, scan just didn't link
-      console.error('Failed to link free scan:', scanLinkError.message)
-    } else if (freeScan?.results_data && freeScan.status === 'completed') {
-      // Convert free scan results to scan_results + scan_result_details
-      convertedScanId = await convertFreeScanResults(serviceSupa, freeScan, user.id, business.id)
+    if (scan_id) {
+      // scan_id path: link the specific free scan to this user
+      const { data: freeScan, error: scanLinkError } = await serviceSupa
+        .from('free_scans')
+        .update({ converted_user_id: user.id })
+        .eq('id', scan_id)
+        .is('converted_user_id', null)
+        .select('*')
+        .single()
+
+      if (scanLinkError) {
+        // Non-fatal — business was created, scan just didn't link
+        console.error('Failed to link free scan by scan_id:', scanLinkError.message)
+      } else if (freeScan?.results_data && freeScan.status === 'completed') {
+        convertedScanId = await convertFreeScanResults(serviceSupa, freeScan, user.id, business.id)
+      }
+    } else if (user.email) {
+      // Email match path: find the most recent completed scan with this email
+      const { data: freeScan, error: emailMatchError } = await serviceSupa
+        .from('free_scans')
+        .select('*')
+        .eq('email', user.email)
+        .is('converted_user_id', null)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (emailMatchError) {
+        console.error('Failed to find free scan by email:', emailMatchError.message)
+      } else if (freeScan) {
+        // Link the matched scan to this user
+        const { error: linkError } = await serviceSupa
+          .from('free_scans')
+          .update({ converted_user_id: user.id })
+          .eq('id', freeScan.id)
+          .is('converted_user_id', null)
+
+        if (linkError) {
+          console.error('Failed to link email-matched free scan:', linkError.message)
+        } else if (freeScan.results_data) {
+          convertedScanId = await convertFreeScanResults(serviceSupa, freeScan, user.id, business.id)
+        }
+      }
     }
   }
 
