@@ -59,10 +59,10 @@ export async function queryAllEngines(
 /**
  * Query an engine with a plain text query string (no EngineQuery wrapper).
  * Used by the new scan pipeline with natural, unbranded queries.
- * Temperature 0.3 for reproducible measurement results.
+ * Temperature 0.4 for reproducible measurement results.
  */
 export async function queryEngineRaw(
-  engine: 'chatgpt' | 'gemini' | 'perplexity',
+  engine: 'chatgpt' | 'gemini' | 'perplexity' | 'claude',
   query: string,
 ): Promise<EngineResponse> {
   const start = Date.now()
@@ -75,6 +75,7 @@ export async function queryEngineRaw(
     chatgpt: MODELS.chatgpt,
     gemini: MODELS.gemini,
     perplexity: MODELS.perplexity,
+    claude: MODELS.claude,
   }
 
   try {
