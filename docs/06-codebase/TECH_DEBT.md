@@ -1,7 +1,7 @@
 # Codebase Concerns
 
 > **Last synced:** March 2026 — aligned with 03-system-design/
-> **Note:** System Design v2.1 (March 2026) addresses many concerns below. Items marked RESOLVED were closed in that release. See `.planning/03-system-design/BEAMIX_SYSTEM_DESIGN.md`.
+> **Note:** System Design v2.1 (March 2026) addresses many concerns below. Items marked RESOLVED were closed in that release. See `docs/03-system-design/ARCHITECTURE.md`.
 
 ## Tech Debt
 
@@ -10,7 +10,7 @@
 - Remaining risk: Verify that NO agent logic remains in Next.js API route handlers — all agent execution must be in `src/inngest/` functions.
 
 **~~Incomplete Paddle Integration~~ — RESOLVED:**
-- Paddle webhooks implemented at `src/app/api/billing/webhooks/route.ts`
+- Paddle webhooks implemented at `src/app/api/paddle/webhooks/route.ts`
 - Paddle is the only payment provider (no Stripe)
 
 **LLM Cost at Scale (from System Design v2.1 section 5.4):**
@@ -100,6 +100,8 @@
 
 **Credit System (Transactional Integrity):**
 - Pattern: hold/confirm/release
+- RPCs: `hold_credits(p_user_id, p_amount, p_job_id)` → `confirm_credits(p_job_id)` → `release_credits(p_job_id)`
+- Credit RPCs (hold_credits, confirm_credits, release_credits) are defined in migration 20260308_002_billing.sql and recreated with correct enum types in 20260318_reconciliation.sql. Status: RESOLVED pending migration apply to production.
 - Users NEVER charged for failed agent executions
 - Inngest step retries must NOT re-hold credits — credit hold must be idempotent
 - No existing tests for concurrent credit scenarios — HIGH PRIORITY
@@ -156,4 +158,4 @@
 
 ---
 
-*Concerns audit: 2026-02-27 | Updated: March 2026 — synced with System Design v2.1*
+*Concerns audit: 2026-02-27 | Updated: 2026-03-19 — fixed Paddle webhook path, updated credit RPC status to RESOLVED*

@@ -16,16 +16,16 @@
 
 ## Project Stack (Override per-project by editing this section)
 
-- Frontend: Next.js 14+ App Router, TypeScript strict, Tailwind CSS, Shadcn/UI
+- Frontend: Next.js 16 App Router, TypeScript strict, Tailwind CSS, Shadcn/UI
 - Backend: Next.js API Routes / Server Actions, Zod validation on all inputs
 - Database: Supabase (use mcp__supabase__* tools when available)
-- Auth: Clerk
-- Payments: Paddle
+- Auth: Supabase Auth (NOT Clerk)
+- Payments: Paddle (NOT Stripe)
 - Email: Resend
 - Jobs: Inngest
 - Hosting: Vercel
-- AI: Anthropic Claude API (claude-sonnet-4-6 default)
-- Vector DB: Pinecone (prod) / pgvector (early)
+- LLM Gateway: OpenRouter (2 keys: OPENROUTER_SCAN_KEY for scans, OPENROUTER_AGENT_KEY for agents/QA)
+- Vector DB: None (not in use)
 
 ---
 

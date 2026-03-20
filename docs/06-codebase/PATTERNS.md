@@ -231,7 +231,7 @@ if (!user) return <RedirectToSignIn />
 ```
 
 **Middleware (route protection):**
-_[e.g. `middleware.ts` at root uses Clerk's `clerkMiddleware` to protect all routes under `(app)/` route group.]_
+_[e.g. `middleware.ts` at root uses Supabase Auth middleware to protect all routes under `(app)/` route group.]_
 
 ---
 
@@ -271,7 +271,7 @@ _Last updated: — | Updated by: —_
 # Codebase Concerns
 
 > **Last synced:** March 2026 — aligned with 03-system-design/
-> **Note:** System Design v2.1 (March 2026) addresses many concerns below. Items marked RESOLVED were closed in that release. See `.planning/03-system-design/BEAMIX_SYSTEM_DESIGN.md`.
+> **Note:** System Design v2.1 (March 2026) addresses many concerns below. Items marked RESOLVED were closed in that release. See `docs/03-system-design/ARCHITECTURE.md`.
 
 ## Tech Debt
 

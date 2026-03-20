@@ -4,7 +4,7 @@
 > **Date:** 2026-03-08
 > **Status:** Decision-ready — Strategy D approved
 > **Audience:** Engineers building the scheduled scan system. You should be able to implement this feature end-to-end without reading any other document.
-> **Source docs:** `PRICING-IMPACT-ANALYSIS.md §1`, `04-features/scan-engine-spec.md`, `.planning/PRD.md`
+> **Source docs:** `PRICING-IMPACT-ANALYSIS.md §1`, `04-features/scan-engine-spec.md`, `docs/PRD.md`
 
 ---
 
@@ -510,7 +510,7 @@ for (const batch of chunk(businesses, 50)) {
 
 Returns the current priority scan status for the authenticated user's business. Used by the dashboard to show "Last checked X minutes ago" per query.
 
-**Auth:** Required (Clerk session)
+**Auth:** Required (Supabase Auth session)
 
 **Query params:**
 - `business_id` (required)

@@ -2133,7 +2133,7 @@ STEP 5: QUALITY GATE (Inngest step: "qa")
   │ GPT-4o: Score 0.00-1.00 on: accuracy, relevance, completeness, GEO optimization
   │
   │ IF qa_score >= 0.70:
-  │   → Confirm credit hold via confirm_credit_hold RPC
+  │   → Confirm credit hold via confirm_credits RPC
   │     → credit_pools.used_amount += 1, held_amount -= 1
   │     → INSERT credit_transactions (type='confirm')
   │   → UPDATE agent_jobs (status='completed', qa_score, output_data)
@@ -2146,7 +2146,7 @@ STEP 5: QUALITY GATE (Inngest step: "qa")
   │   → Re-run QA
   │
   │ IF qa_score < 0.70 (second attempt):
-  │   → Release credit hold via release_credit_hold RPC
+  │   → Release credit hold via release_credits RPC
   │     → credit_pools.held_amount -= 1
   │     → INSERT credit_transactions (type='release')
   │   → UPDATE agent_jobs (status='failed', error_message="Quality below threshold")

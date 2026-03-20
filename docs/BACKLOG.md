@@ -15,13 +15,22 @@
 
 | # | Decision | Files Affected | Context |
 |---|----------|---------------|---------|
-| D1 | **Pro tier monthly price: $99 vs $149** | `PRODUCT_SPECIFICATION.md`, pricing page | Tier table = $99, Pricing Rationale = $149. Annual $79×12=$948 matches $99 monthly. Which is right? |
-| D2 | **Business tier monthly price: $199 vs $349** | `PRODUCT_SPECIFICATION.md`, pricing page | Tier table = $199, Pricing Rationale = $349. Annual $159×12=$1,908 matches neither. |
+| D1 | ~~**Pro tier monthly price: $99 vs $149**~~ | RESOLVED | **$149/mo** ($119 annual) — CEO confirmed 2026-03-06 |
+| D2 | ~~**Business tier monthly price: $199 vs $349**~~ | RESOLVED | **$349/mo** ($279 annual) — CEO confirmed 2026-03-06 |
 | D3 | **Free engine 4: | `_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md`, scan engine, landing | Copilot locked as free engine 4 in decisions but has no public API and is Phase 3 deferred. Options: (a) Claude as engine 4 + make Claude available for scanning at all tiers, (b) 3 free engines until Copilot ready, (c) swap Copilot for You.com. |
 | D4 | **MVP onboarding design: 3-step vs 4-step** | `onboarding-spec.md`, `_SYSTEM_DESIGN_PRODUCT_LAYER.md` | onboarding-spec = 3 steps (Business Name, Industry, Location). Product layer = 4 steps (+ Competitors). Which is MVP? |
 | D5 | **Free scan result expiry: 30 days vs 14 days** | `scan-page.md`, `settings-spec.md`, `_SYSTEM_DESIGN_PRODUCT_LAYER.md` | 2 of 3 docs say 30 days; product layer says 14. Recommend confirming 30 days. |
 | D6 | **Visibility score formula for 7+ engines** | `PRODUCT_SPECIFICATION.md`, scan engine | Current "25pts × 4 engines = 100" breaks at Pro/Business tiers. Must define normalization approach before building Pro scan. |
 | D7 | **Trial: manual re-scans locked or allowed?** | `settings-spec.md` | Locking manual re-scans during trial prevents users from seeing their improvement — reduces trial value. Allow 1 re-scan during trial, or keep fully locked? |
+
+---
+
+## 0. Production Infrastructure (URGENT — blocking)
+
+| # | Item | Status | Notes |
+|---|------|--------|-------|
+| P1 | **Apply `20260318_reconciliation.sql` to production** | ⚠️ PENDING | Fixes credit RPC enum types + agent_type enum alignment. Migration exists locally, NOT applied to Supabase production. Credit system is broken until this runs. |
+| P2 | **Verify credit RPCs in production** | ⚠️ BLOCKED by P1 | After migration: test `hold_credits → confirm_credits → release_credits` end-to-end. |
 
 ---
 
@@ -37,7 +46,7 @@ Must be built before first paying customer.
 | 4 | Free scan flow (viral acquisition) | Built | |
 | 5 | Dashboard overview with gauge, trends, rankings | Built | |
 | 6 | 12 original agents (A1-A12) | Built (mock) | Real LLM pipelines needed |
-| 7 | Credit system (hold/confirm/release) | Designed | **Credit RPCs SQL not defined** — engineers need exact function signatures |
+| 7 | Credit system (hold/confirm/release) | Built | RPCs: `hold_credits`, `confirm_credits`, `release_credits` — defined in `20260308_002_billing.sql`, fixed in `20260318_reconciliation.sql`. **⚠️ Migration not yet applied to production.** |
 | 8 | Onboarding 4-step flow | Built | |
 | 9 | Content library with editor | Built | |
 | 10 | WordPress integration (Pro tier) | Not started | CMS publish flow |

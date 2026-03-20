@@ -756,7 +756,7 @@ All gaps identified in the CTO Gap Analysis have been addressed:
 | **3/7 MISSING gaps** | INTENTIONALLY DEFERRED | White-label (enterprise), Looker Studio (agency), CDN optimization (Scrunch-only) |
 | **8 unique innovations** | DESIGNED | "Fix It" button, Agent Impact Scorecard, Hebrew Prompt Library, Competitor Weakness Alerts, AI Readiness Progress Tracker, Cross-Agent Memory, "What Changed" Weekly Diff, Agent Suggestion Engine |
 
-> Full gap closure details: `.planning/03-system-design/_SYSTEM_DESIGN_VALIDATION.md` §1
+> Full gap closure details: `docs/03-system-design/ARCHITECTURE.md` §1
 
 ---
 

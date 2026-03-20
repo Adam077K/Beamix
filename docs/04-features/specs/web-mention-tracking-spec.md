@@ -4,7 +4,7 @@
 > **Date:** 2026-03-08
 > **Status:** Ready for implementation
 > **Audience:** Engineers adding web mention tracking to the scan pipeline and dashboard. You should be able to implement this feature end-to-end without reading any other document.
-> **Source docs:** `.planning/04-features/scan-engine-spec.md`, `.planning/PRODUCT_SPECIFICATION.md`, `.planning/04-features/alert-workflow-spec.md`
+> **Source docs:** `docs/04-features/specs/scan-engine-spec.md`, `docs/01-foundation/PRODUCT_SPECIFICATION.md`, `docs/04-features/specs/alert-workflow-spec.md`
 
 ---
 

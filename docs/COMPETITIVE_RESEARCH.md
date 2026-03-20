@@ -1,4 +1,4 @@
-> ⚠️ **DUPLICATE** — This is a copy of `.planning/02-competitive/COMPETITIVE_RESEARCH_DEEP.md`.
+> ⚠️ **DUPLICATE** — This is a copy of `docs/02-competitive/LANDSCAPE.md`.
 > Refer to the `02-competitive/` folder for the maintained version.
 > *Noted: 2026-03-05*
 

@@ -2,7 +2,7 @@
 
 > **Last synced:** March 2026 — aligned with 03-system-design/
 
-**Source of truth:** `.planning/03-system-design/BEAMIX_SYSTEM_DESIGN.md` section 4.1
+**Source of truth:** `docs/03-system-design/ARCHITECTURE.md` section 4.1
 
 ## Languages
 
@@ -55,7 +55,8 @@
 - Inngest — Event-driven background job orchestration for scans, agents, crons, workflows
   - SDK: `inngest` (server-side)
   - Serve endpoint: `/api/inngest`
-  - 14 functions: scan.free, scan.scheduled, scan.manual, agent.execute, workflow.execute, alert.evaluate, 8 cron functions
+  - Implemented functions: scan-free (event: scan/free.started), scan-manual (event: scan/manual.started)
+  - Planned (not yet built): scan-scheduled (automated recurring scans for paid users)
   - NOT n8n — Inngest is the only background job system
 
 **Billing:**
@@ -70,22 +71,18 @@
   - Auth: `RESEND_API_KEY`
 - React Email — Email template components (15 templates)
 
-**LLM APIs:**
-- OpenAI GPT-4o — QA gate, fact checking, content generation
-  - Auth: `OPENAI_API_KEY`
-- Anthropic Claude (multi-model):
-  - Haiku 4.5 — Parsing, classification, extraction (~$0.001/call)
-  - Sonnet 4.6 — Content generation, analysis, reports (~$0.02-0.08/call)
-  - Opus 4.6 — Voice extraction, narrative analysis (~$0.10-0.30/call)
-  - Auth: `ANTHROPIC_API_KEY`
-- Google Gemini 2.0 Flash — Bulk classification, scan engine (~$0.0005/call)
-  - Auth: `GOOGLE_AI_API_KEY`
-- Perplexity Sonar Pro — Real-time web research (~$0.01-0.03/call)
-  - Auth: `PERPLEXITY_API_KEY`
-- xAI Grok — Scan engine Phase 2
-  - Auth: `XAI_API_KEY`
-- DeepSeek — Scan engine Phase 2
-  - Auth: `DEEPSEEK_API_KEY`
+**LLM Gateway: OpenRouter**
+- All LLM calls route through OpenRouter (`src/lib/openrouter.ts`) — no direct provider SDK imports
+- Two API keys for spend tracking:
+  - `OPENROUTER_SCAN_KEY` — scan engine queries (frequent, lower cost)
+  - `OPENROUTER_AGENT_KEY` — agent execution, QA gates, recommendations
+  - Fallback: `OPENROUTER_API_KEY` (shared key if per-purpose key not set)
+- Models routed via OpenRouter:
+  - `openai/gpt-4o` — ChatGPT scan engine
+  - `google/gemini-2.0-flash-001` — Gemini scan engine
+  - `perplexity/sonar-pro` — Perplexity scan engine
+  - `anthropic/claude-sonnet-4` — Claude scan engine + agent execution
+  - `anthropic/claude-haiku-4` — QA gate + recommendation generation
 
 **Testing:**
 - Not yet configured (Phase 2 — see TESTING.md for planned setup)
@@ -272,7 +269,7 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 | **Partial results** | Some engines complete, others still running | Completed engines show results immediately. Pending engines show skeleton cards with spinner. User can read completed results while waiting. |
 | **Timeout** | >90 seconds elapsed, some engines haven't responded | Show completed results. Failed engines show: "This engine timed out — results unavailable for this scan." Overall score calculated from available engines with note: "Score based on X of 4 engines." |
 | **Full error** | All engines failed or API error | Error illustration + "We couldn't complete your scan right now. This is usually temporary." + "Try Again" primary CTA button + "Contact support" secondary link. |
-| **Expired scan_id** | Scan older than 14 days or invalid ID | "This scan has expired. Free scan results are available for 14 days." + "Run a New Free Scan" CTA linking to `/scan`. |
+| **Expired scan_id** | Scan older than 30 days or invalid ID | "This scan has expired. Free scan results are available for 30 days." + "Run a New Free Scan" CTA linking to `/scan`. |
 | **Rate limited** | Same IP/fingerprint submitted too many scans | "You've reached the free scan limit. Create an account for unlimited scans and full AI visibility insights." + "Sign Up Free" CTA. |
 | **Page refresh** | User refreshes during scan | Polling resumes from current state. Already-completed engine results display immediately. No data loss. |
 
@@ -1621,7 +1618,7 @@ Every gap identified in the CTO's analysis is addressed above. The product layer
 
 ## Phase 2 & 3 Product Expansions (March 2026)
 
-> **Source:** Feature planning sprint March 8, 2026. Full engineering specs in `.planning/04-features/new-features-batch-[1-3]-spec.md`. 10 of 11 features approved to build.
+> **Source:** Feature planning sprint March 8, 2026. Full engineering specs in `docs/04-features/specs/new-features-batch-[1-3]-spec.md`. 10 of 11 features approved to build.
 
 ### Updated Feature Count (Post March 2026)
 

@@ -11,7 +11,7 @@
 **Date:** 2026-03-06
 **Status:** Updated — Aligned with System Design v2.1 (March 4, 2026)
 
-> **IMPORTANT:** The authoritative system design lives at `.planning/03-system-design/`. This PRD is the executive summary. For full technical/product detail, always defer to the system design documents.
+> **IMPORTANT:** The authoritative system design lives at `docs/03-system-design/`. This PRD is the executive summary. For full technical/product detail, always defer to the system design documents.
 
 ---
 
@@ -19,15 +19,15 @@
 
 | Document | Purpose | Location |
 |----------|---------|----------|
-| **Strategic Foundation** | Vision, customer, market, brand, differentiators | `.planning/01-foundation/STRATEGIC_FOUNDATION.md` |
-| **Product Specification** | User journeys, features, pricing, IA, i18n | `.planning/01-foundation/PRODUCT_SPECIFICATION.md` |
-| **System Design (Master)** | Complete technical and product architecture (v2.1) | `.planning/03-system-design/BEAMIX_SYSTEM_DESIGN.md` |
-| **Architecture Layer** | Database (32 tables), APIs, Inngest jobs, security | `.planning/03-system-design/_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md` |
-| **Product Layer** | 23 pages, 90+ features, user journeys, 16 agents UX | `.planning/03-system-design/_SYSTEM_DESIGN_PRODUCT_LAYER.md` |
-| **Intelligence Layer** | 16 agent pipelines, scan engine, LLM costs | `.planning/03-system-design/_SYSTEM_DESIGN_INTELLIGENCE_LAYER.md` |
-| **Validation** | Gap closure, competitive parity, priority classification | `.planning/03-system-design/_SYSTEM_DESIGN_VALIDATION.md` |
-| **Feature Specs (12 specs)** | Detailed engineering specs for all features (launch + Phase 2 & 3) | `.planning/04-features/` |
-| **Pricing Impact Analysis** | Cost analysis for 11 new features + pricing recommendations | `.planning/08-agents_work/PRICING-IMPACT-ANALYSIS.md` |
+| **Strategic Foundation** | Vision, customer, market, brand, differentiators | `docs/01-foundation/VISION.md` |
+| **Product Specification** | User journeys, features, pricing, IA, i18n | `docs/01-foundation/PRODUCT_SPECIFICATION.md` |
+| **System Design (Master)** | Complete technical and product architecture (v2.1) | `docs/03-system-design/ARCHITECTURE.md` |
+| **Architecture Layer** | Database (32 tables), APIs, Inngest jobs, security | `docs/03-system-design/ARCHITECTURE.md` |
+| **Product Layer** | 23 pages, 90+ features, user journeys, 16 agents UX | `docs/01-foundation/PRODUCT_SPECIFICATION.md` |
+| **Intelligence Layer** | 16 agent pipelines, scan engine, LLM costs | `docs/03-system-design/ARCHITECTURE.md` |
+| **Validation** | Gap closure, competitive parity, priority classification | `docs/03-system-design/ARCHITECTURE.md` |
+| **Feature Specs (12 specs)** | Detailed engineering specs for all features (launch + Phase 2 & 3) | `docs/04-features/specs/` |
+| **Pricing Impact Analysis** | Cost analysis for 11 new features + pricing recommendations | `docs/08-agents_work/AUDITS/PRICING-IMPACT-ANALYSIS.md` |
 
 ---
 
@@ -130,7 +130,7 @@ Every competitor builds dashboards. Beamix does the work.
 
 Landing, Free Scan, Scan Results, Login, Signup, Forgot Password, Onboarding, Dashboard Overview, Rankings, Recommendations, Content Library, Content Editor, Agent Hub, Agent Chat, Competitive Intelligence, AI Readiness, Settings, Pricing, Blog, About, Terms, Privacy, API Docs.
 
-> Full page specs: `.planning/03-system-design/_SYSTEM_DESIGN_PRODUCT_LAYER.md` §2
+> Full page specs: `docs/01-foundation/PRODUCT_SPECIFICATION.md` §2
 
 ---
 
@@ -185,7 +185,7 @@ Landing, Free Scan, Scan Results, Login, Signup, Forgot Password, Onboarding, Da
 | Moat Builders | 20 | Persona tracking, browser simulation, public REST API, Hebrew prompt library |
 | Intentionally Skipped | 14 | White-label, Looker Studio, CDN optimization, Shopify, multi-workspace |
 
-> Full classification with reasoning: `.planning/03-system-design/_SYSTEM_DESIGN_VALIDATION.md` §5
+> Full classification with reasoning: `docs/03-system-design/ARCHITECTURE.md` §5
 
 ---
 
@@ -193,8 +193,8 @@ Landing, Free Scan, Scan Results, Login, Signup, Forgot Password, Onboarding, Da
 
 For complete details, see the system design documents:
 
-- **System Design Master:** Overview, agents, architecture summary → `.planning/03-system-design/BEAMIX_SYSTEM_DESIGN.md`
-- **Product Layer:** 23 pages, user journeys, feature specs → `.planning/03-system-design/_SYSTEM_DESIGN_PRODUCT_LAYER.md`
-- **Architecture Layer:** 32 DB tables, all APIs, 14 Inngest jobs → `.planning/03-system-design/_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md`
-- **Intelligence Layer:** 16 agent pipelines, LLM selection, costs → `.planning/03-system-design/_SYSTEM_DESIGN_INTELLIGENCE_LAYER.md`
-- **Validation:** Gap closure, competitive parity → `.planning/03-system-design/_SYSTEM_DESIGN_VALIDATION.md`
+- **System Design Master:** Overview, agents, architecture summary → `docs/03-system-design/ARCHITECTURE.md`
+- **Product Layer:** 23 pages, user journeys, feature specs → `docs/01-foundation/PRODUCT_SPECIFICATION.md`
+- **Architecture Layer:** 32 DB tables, all APIs, 14 Inngest jobs → `docs/03-system-design/ARCHITECTURE.md`
+- **Intelligence Layer:** 16 agent pipelines, LLM selection, costs → `docs/03-system-design/ARCHITECTURE.md`
+- **Validation:** Gap closure, competitive parity → `docs/03-system-design/ARCHITECTURE.md`

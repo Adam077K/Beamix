@@ -4,7 +4,7 @@
 > **Date:** 2026-03-08
 > **Status:** Phase 3 — Moat Builder. Do not build until Phase 2 (Growth) is stable.
 > **Audience:** Engineers adding browser-based AI engine coverage to the scan pipeline. You should be able to implement this feature end-to-end without reading any other document.
-> **Source docs:** `.planning/04-features/scan-engine-spec.md`, `.planning/PRODUCT_SPECIFICATION.md`, `.planning/TECHNICAL_ARCHITECTURE.md`
+> **Source docs:** `docs/04-features/specs/scan-engine-spec.md`, `docs/01-foundation/PRODUCT_SPECIFICATION.md`, `docs/03-system-design/ARCHITECTURE.md`
 
 ---
 

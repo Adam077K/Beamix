@@ -2,7 +2,7 @@
 
 > **Last synced:** March 2026 — aligned with 03-system-design/
 
-> Strategic foundation for Beamix. For the complete system design (agents, DB, APIs, intelligence), see `.planning/03-system-design/BEAMIX_SYSTEM_DESIGN.md`.
+> Strategic foundation for Beamix. For the complete system design (agents, DB, APIs, intelligence), see `docs/03-system-design/ARCHITECTURE.md`.
 >
 > **Repository:** https://github.com/Adam077K/Beamix
 > **Last Updated:** 2026-03-06 — Aligned with System Design v2.1

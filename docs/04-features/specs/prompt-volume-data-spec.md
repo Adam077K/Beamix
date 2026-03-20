@@ -4,7 +4,7 @@
 > **Date:** 2026-03-08
 > **Status:** Decision-ready — GSC path only (Keyword Planner + third-party APIs deferred)
 > **Audience:** Engineers building the GSC integration and prompt volume pipeline. You should be able to implement this feature end-to-end without reading any other document.
-> **Source docs:** `PRICING-IMPACT-ANALYSIS.md §1`, `04-features/scan-engine-spec.md`, `.planning/PRD.md`
+> **Source docs:** `PRICING-IMPACT-ANALYSIS.md §1`, `04-features/scan-engine-spec.md`, `docs/PRD.md`
 
 ---
 

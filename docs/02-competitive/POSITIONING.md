@@ -9,7 +9,7 @@
 > **Sources:** 15 competitors analyzed across 3 research documents (COMPETITIVE_FEATURES_BLUEPRINT.md, COMPETITIVE_RESEARCH_DEEP.md, COMPETITIVE_RESEARCH.md), validated against STRATEGIC_FOUNDATION.md
 > **Source Quality:** All competitor data rated two-star to three-star (direct product research, G2/Trustpilot reviews, third-party analysis from Rankability, OMR Reviews, SearchInfluence, PitchBook)
 >
-> **Gap Closure Update (March 2026):** All 7 PARTIAL gaps are now UPGRADED in System Design v2.1. 4/7 MISSING gaps are CLOSED (prompt volumes, content patterns, content voice, brand narrative). 3/7 MISSING gaps intentionally DEFERRED with reasoning (white-label, Looker Studio, CDN optimization). See `.planning/03-system-design/_SYSTEM_DESIGN_VALIDATION.md` for full validation.
+> **Gap Closure Update (March 2026):** All 7 PARTIAL gaps are now UPGRADED in System Design v2.1. 4/7 MISSING gaps are CLOSED (prompt volumes, content patterns, content voice, brand narrative). 3/7 MISSING gaps intentionally DEFERRED with reasoning (white-label, Looker Studio, CDN optimization). See `docs/03-system-design/ARCHITECTURE.md` for full validation.
 
 ---
 

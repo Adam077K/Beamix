@@ -9,7 +9,7 @@
 ## What Was Done This Session
 
 ### 1. Feature Documentation — COMPLETED ✅
-A team of 5 Atlas agents was deployed to document every feature in the system in engineering-ready spec files. All docs are in `.planning/04-features/`:
+A team of 5 Atlas agents was deployed to document every feature in the system in engineering-ready spec files. All docs are in `docs/04-features/specs/`:
 
 | File | Lines | What It Covers |
 |------|-------|----------------|
@@ -24,18 +24,18 @@ A team of 5 Atlas agents was deployed to document every feature in the system in
 | `competitive-intelligence-spec.md` | 922 | Share of voice, A8 pipeline, competitor alerts |
 | `ai-readiness-spec.md` | 604 | 5 scoring categories, A11 pipeline |
 
-**Source of truth:** `.planning/03-system-design/` (4 files, ~6K lines total)
+**Source of truth:** `docs/03-system-design/` (4 files, ~6K lines total)
 
 ---
 
 ### 2. Competitive Gap Analysis — COMPLETED ✅
-We analyzed all 15 competitors in `.planning/02-competitive/` and identified features competitors have that Beamix doesn't. The owner reviewed the list and selected specific features to plan.
+We analyzed all 15 competitors in `docs/02-competitive/` and identified features competitors have that Beamix doesn't. The owner reviewed the list and selected specific features to plan.
 
 ---
 
 ## Your Mission: New Feature Planning
 
-The owner has selected **11 new features** to research, analyze, and plan as engineering specs in `.planning/04-features/`. These are competitive gaps identified from 15 competitor analyses.
+The owner has selected **11 new features** to research, analyze, and plan as engineering specs in `docs/04-features/specs/`. These are competitive gaps identified from 15 competitor analyses.
 
 ### The 11 Features to Plan
 
@@ -208,23 +208,23 @@ Deploy **3 parallel Atlas agents** + **1 Axiom (CFO/Analyst) agent**:
 
 ### Output Expected
 
-Each Atlas agent writes mini-specs to `.planning/04-features/`:
+Each Atlas agent writes mini-specs to `docs/04-features/specs/`:
 - `new-features-batch-1-spec.md` (Features 1-4)
 - `new-features-batch-2-spec.md` (Features 5-8)
 - `new-features-batch-3-spec.md` (Features 9-11)
 
 Axiom writes:
-- `.planning/PRICING-IMPACT-ANALYSIS.md`
+- `docs/08-agents_work/AUDITS/PRICING-IMPACT-ANALYSIS.md`
 
 ### What Agents MUST Read Before Starting
 
-1. `.planning/03-system-design/BEAMIX_SYSTEM_DESIGN.md` — master overview
-2. `.planning/02-competitive/COMPETITIVE_RESEARCH_DEEP.md` — full competitor profiles
-3. `.planning/02-competitive/COMPETITIVE_FEATURES_BLUEPRINT.md` — feature comparison matrix
-4. `.planning/02-competitive/_RESEARCH_SYNTHESIS.md` — Top 20 innovations + cost analysis
-5. `.planning/03-system-design/_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md` — current DB schema + APIs (read in chunks)
-6. `.planning/03-system-design/_SYSTEM_DESIGN_INTELLIGENCE_LAYER.md` — LLM pipelines + current cost model (read in chunks)
-7. The relevant existing feature spec in `.planning/04-features/` for context on what's already built
+1. `docs/03-system-design/ARCHITECTURE.md` — master overview
+2. `docs/02-competitive/LANDSCAPE.md` — full competitor profiles
+3. `docs/02-competitive/COMPETITIVE_FEATURES_BLUEPRINT.md` — feature comparison matrix
+4. `docs/02-competitive/_RESEARCH_SYNTHESIS.md` — Top 20 innovations + cost analysis
+5. `docs/03-system-design/ARCHITECTURE.md` — current DB schema + APIs (read in chunks)
+6. `docs/03-system-design/_SYSTEM_DESIGN_INTELLIGENCE_LAYER.md` — LLM pipelines + current cost model (read in chunks)
+7. The relevant existing feature spec in `docs/04-features/specs/` for context on what's already built
 
 ---
 
@@ -254,7 +254,7 @@ Axiom writes:
 
 ## Files Written This Session (For Reference)
 
-All in `.planning/04-features/`:
+All in `docs/04-features/specs/`:
 ```
 README.md                        ← Start here for navigation
 agent-system-spec.md             ← 16 agents + credit system

@@ -11,7 +11,7 @@
 **Author:**  (CPO Agent)
 **Status:** Updated
 
-> **Source of truth:** `.planning/03-system-design/_SYSTEM_DESIGN_PRODUCT_LAYER.md`
+> **Source of truth:** `docs/01-foundation/PRODUCT_SPECIFICATION.md`
 > This document covers user journeys and high-level feature summary. For full page specs, data flows, and agent UX, defer to the system design.
 >
 > **Key numbers:** 23 pages, 90+ features across 10 modules, 16 AI agents (A1-A16), 10 AI scan engines (3 phases), 4 user journeys, 32 DB tables.
@@ -687,7 +687,7 @@ interface SocialStrategyOutput {
 
 ---
 
-> **Note:** Agents A7 (Social Strategy), A8 (Competitor Intelligence), A9 (Citation Builder), A10 (LLMS.txt Generator), A11 (AI Readiness Auditor), A12 (Ask Beamix) are also part of the Launch Critical set. Full specs in `.planning/03-system-design/_SYSTEM_DESIGN_PRODUCT_LAYER.md` §5.
+> **Note:** Agents A7 (Social Strategy), A8 (Competitor Intelligence), A9 (Citation Builder), A10 (LLMS.txt Generator), A11 (AI Readiness Auditor), A12 (Ask Beamix) are also part of the Launch Critical set. Full specs in `docs/01-foundation/PRODUCT_SPECIFICATION.md` §5.
 >
 > **Growth Phase agents (A13-A16 — not at launch):**
 > - **A13 Content Voice Trainer** — learns the business's writing style from existing website content. Uses Opus for high-quality voice extraction. (1 credit)

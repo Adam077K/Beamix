@@ -65,7 +65,7 @@ Scan (find problems) → Diagnose (prioritize) → Fix (agents execute) → Meas
 | Content Library | `/dashboard/content` | All generated content, filterable, with performance tracking |
 | Content Editor | `/dashboard/content/[id]` | Markdown editor with preview, version history, publish-to-CMS |
 | Agent Hub | `/dashboard/agents` | All 16 agents, run history, workflow setup |
-| Agent Chat | `/dashboard/agents/[agentType]` | Agent execution UI with real-time step progress |
+| Agent Chat | `/dashboard/agents/[agent_id]` | Agent execution UI with real-time step progress |
 | Competitive Intelligence | `/dashboard/competitors` | Share of voice, gap analysis, competitor profiles |
 | AI Readiness | `/dashboard/ai-readiness` | Website audit score with improvement roadmap |
 | Settings | `/dashboard/settings` | Business profile, billing, preferences, integrations (4 tabs) |
@@ -115,7 +115,7 @@ Scan (find problems) → Diagnose (prioritize) → Fix (agents execute) → Meas
 | F11: Prompt Volume Data (GSC) | Pro+ | Medium | Spec complete |
 | F8: Social Monitoring | — | **REJECTED** | Out of scope |
 
-> Pricing review completed March 2026. Current pricing absorbs all new feature costs. Business tier increase to $449 under evaluation. → `.planning/08-agents_work/PRICING-IMPACT-ANALYSIS.md`
+> Pricing review completed March 2026. Current pricing absorbs all new feature costs. Business tier increase to $449 under evaluation. → `docs/08-agents_work/AUDITS/PRICING-IMPACT-ANALYSIS.md`
 
 ---
 
@@ -508,7 +508,7 @@ Six complete data flows are documented in the Architecture Layer:
 
 > **Last synced:** March 2026 — aligned with 03-system-design/
 
-**Source of truth:** `.planning/03-system-design/_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md`
+**Source of truth:** `docs/03-system-design/ARCHITECTURE.md`
 
 ## Pattern Overview
 
@@ -742,11 +742,11 @@ Trigger event -> evaluate conditions -> queue agents -> execute in sequence -> r
 
 ## Technical Architecture Snapshot
 
-> ⚠️ **ARCHIVED** — Historical reference. Current source of truth: `.planning/03-system-design/_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md` | Archived: 2026-03-05
+> ⚠️ **ARCHIVED** — Historical reference. Current source of truth: `docs/03-system-design/ARCHITECTURE.md` | Archived: 2026-03-05
 
 # Beamix — Technical Architecture
 
-> ~~Complete technical specification~~ — This is now superseded. See `.planning/03-system-design/`.
+> ~~Complete technical specification~~ — This is now superseded. See `docs/03-system-design/`.
 >
 > **Repository:** https://github.com/Adam077K/Beamix
 
@@ -2125,7 +2125,7 @@ The three agents (Morgan/Product, Atlas/Architecture, Sage/Intelligence) should 
 
 ## March 2026 Competitive Gap Closure (Feature Sprint)
 
-> **Date:** March 8, 2026. 11 competitor features analyzed; 10 approved to build; 1 rejected. Full specs in `.planning/04-features/new-features-batch-[1-3]-spec.md`.
+> **Date:** March 8, 2026. 11 competitor features analyzed; 10 approved to build; 1 rejected. Full specs in `docs/04-features/specs/new-features-batch-[1-3]-spec.md`.
 
 ### Gap Closure Status by Competitor
 
@@ -2153,7 +2153,7 @@ The three agents (Morgan/Product, Atlas/Architecture, Sage/Intelligence) should 
 
 ### Pricing Validation (March 2026)
 
-- Current pricing reviewed against new feature cost stack — see `.planning/08-agents_work/PRICING-IMPACT-ANALYSIS.md`
+- Current pricing reviewed against new feature cost stack — see `docs/08-agents_work/AUDITS/PRICING-IMPACT-ANALYSIS.md`
 - **Verdict:** Current tiers (Starter $49, Pro $149, Business $349) absorb all new feature costs
 - **Under evaluation:** Business tier price increase to $449 — decision needed before F6 ships
 - Starter/Pro margins remain healthy post all 10 features

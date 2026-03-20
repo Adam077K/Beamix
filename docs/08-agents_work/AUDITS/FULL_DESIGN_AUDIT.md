@@ -3,7 +3,7 @@
 > **Date:** March 5, 2026
 > **Team:** Atlas (CTO), Morgan (CPO), Sage (AI Engineer), Rex (Research Analyst), Guardian (QA/Security)
 > **Method:** 5-agent parallel audit of all system design documents vs competitive features blueprint
-> **Scope:** `.planning/03-system-design/` (5 documents) + `.planning/02-competitive/COMPETITIVE_FEATURES_BLUEPRINT.md`
+> **Scope:** `docs/03-system-design/` (5 documents) + `docs/02-competitive/COMPETITIVE_FEATURES_BLUEPRINT.md`
 > **Total issues found: 120**
 
 ---
@@ -685,10 +685,10 @@ Master doc says 6 stages + 5 Haiku calls. Stage 6 model is unspecified. **Fix:**
 §2.15 used twice, §2.16 used three times. Any external reference to these sections is ambiguous. **Fix:** Re-number to eliminate duplicates.
 
 #### [ISSUE-U2] Master Doc References `_GAP_ANALYSIS_CTO.md` at Wrong Path
-File moved to `.planning/08-agents_work/`. Master doc document index still points to old location. **Fix:** Update reference path.
+File moved to `docs/08-agents_work/`. Master doc document index still points to old location. **Fix:** Update reference path.
 
 #### [ISSUE-U3] Validation Layer Sources List "BEAMIX_PRODUCT_SYSTEM.md" — File Doesn't Exist
-No file by this name in `.planning/`. **Fix:** Remove from sources list or update to correct filename.
+No file by this name in `docs/`. **Fix:** Remove from sources list or update to correct filename.
 
 ---
 

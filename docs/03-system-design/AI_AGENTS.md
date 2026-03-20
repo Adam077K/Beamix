@@ -1382,7 +1382,7 @@ Every new LLM integration must be logged in the model registry with: task name, 
 
 ## Phase 2 & 3 Intelligence Expansions (March 2026)
 
-> **Source:** Feature planning sprint March 8, 2026. Full engineering specs in `.planning/04-features/new-features-batch-[1-3]-spec.md`. Cost analysis in `.planning/08-agents_work/PRICING-IMPACT-ANALYSIS.md`. 10 of 11 features approved (F8 Social Monitoring rejected).
+> **Source:** Feature planning sprint March 8, 2026. Full engineering specs in `docs/04-features/specs/new-features-batch-[1-3]-spec.md`. Cost analysis in `docs/08-agents_work/AUDITS/PRICING-IMPACT-ANALYSIS.md`. 10 of 11 features approved (F8 Social Monitoring rejected).
 
 ---
 

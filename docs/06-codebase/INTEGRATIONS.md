@@ -2,38 +2,48 @@
 
 > **Last synced:** March 2026 — aligned with 03-system-design/
 
-**Source of truth:** `.planning/03-system-design/_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md`
+**Source of truth:** `docs/03-system-design/ARCHITECTURE.md`
 
-## LLM APIs (called from Inngest functions, NOT API routes)
+## OpenRouter (LLM Gateway)
 
-**OpenAI GPT-4o** — QA gate, fact checking, content generation
-- SDK: OpenAI API (server-side)
-- Auth: `OPENAI_API_KEY`
-- Used in: Agent QA stages (cross-model review), content generation
+Primary interface for all LLM calls. Replaces direct provider SDKs.
 
-**Anthropic Claude (multi-model):**
-- Haiku 4.5 — Parsing, classification, extraction (~$0.001/call)
-- Sonnet 4.6 — Content generation, analysis, reports (~$0.02-0.08/call)
-- Opus 4.6 — Voice extraction, narrative analysis (~$0.10-0.30/call)
-- Auth: `ANTHROPIC_API_KEY`
-- Used in: Response parsing pipeline (Haiku), agent content stages (Sonnet), voice training A13 + brand narrative A16 (Opus)
+**Keys:**
+- `OPENROUTER_SCAN_KEY` — scan engine queries (ChatGPT, Gemini, Perplexity, Claude)
+- `OPENROUTER_AGENT_KEY` — agent execution, QA gates, recommendations
+
+**Models routed:**
+- `openai/gpt-4o` — ChatGPT scan engine
+- `google/gemini-2.0-flash-001` — Gemini scan engine
+- `perplexity/sonar-pro` — Perplexity scan engine
+- `anthropic/claude-sonnet-4` — Claude scan engine + agent execution
+- `anthropic/claude-haiku-4` — QA gate + recommendations
+
+**File:** `src/lib/openrouter.ts`
+
+## LLM APIs (called from Inngest functions via OpenRouter, NOT API routes directly)
+
+All LLM calls go through OpenRouter. Models below are accessed via the OpenRouter gateway — not through individual provider SDKs.
+
+**ChatGPT (openai/gpt-4o)** — Scan engine, QA gate, content generation
+- Gateway: OpenRouter (`OPENROUTER_SCAN_KEY` for scan, `OPENROUTER_AGENT_KEY` for agents)
+
+**Claude (multi-model):**
+- `anthropic/claude-haiku-4` — Parsing, classification, extraction (~$0.001/call)
+- `anthropic/claude-sonnet-4` — Content generation, analysis, reports (~$0.02-0.08/call)
+- Gateway: OpenRouter (`OPENROUTER_AGENT_KEY`)
+- Used in: Response parsing pipeline (Haiku), agent content stages (Sonnet)
 
 **Perplexity Sonar Pro** — Real-time web research
-- SDK: Perplexity HTTP API (server-side)
-- Auth: `PERPLEXITY_API_KEY`
+- Gateway: OpenRouter (`OPENROUTER_AGENT_KEY`)
 - Used in: Agent research stages, citation discovery
 
-**Google Gemini 2.0 Flash** — Bulk classification, scan engine
-- SDK: Google AI Studio API (server-side)
-- Auth: `GOOGLE_AI_API_KEY`
+**Google Gemini 2.0 Flash** — Scan engine, high-volume classification
+- Gateway: OpenRouter (`OPENROUTER_SCAN_KEY`)
 - Used in: Scan engine (Phase 1), high-volume low-reasoning tasks
 
 **xAI Grok** — Scan engine Phase 2
-- Auth: `XAI_API_KEY`
-- Used in: Scan engine query (Pro tier)
-
-**DeepSeek** — Scan engine Phase 2
-- Auth: `DEEPSEEK_API_KEY`
+- Gateway: OpenRouter (`OPENROUTER_SCAN_KEY`)
 - Used in: Scan engine query (Pro tier)
 
 ## Background Jobs
@@ -42,7 +52,7 @@
 - SDK: `inngest` (server-side)
 - Serve endpoint: `/api/inngest`
 - Auth: `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`
-- 14 functions: scan.free, scan.scheduled, scan.manual, agent.execute, workflow.execute, alert.evaluate, 8 cron functions
+- Functions: scan.free, scan.manual, agent.execute, 8 cron functions (scan-scheduled PLANNED)
 - Pattern: API route emits event -> Inngest executes with retry/concurrency -> result written to DB -> Supabase Realtime notifies frontend
 - NOT n8n — Inngest is the only background job system
 
@@ -54,7 +64,7 @@
 - Server: `PADDLE_API_KEY` (portal links, subscription management)
 - Webhook secret: `PADDLE_WEBHOOK_SECRET` (signature verification)
 - Price IDs: `PADDLE_PRICE_*` (starter/pro/business monthly/yearly)
-- Webhook endpoint: `/api/billing/webhooks/route.ts`
+- Webhook endpoint: `src/app/api/paddle/webhooks/route.ts`
 - Events handled: subscription.created, subscription.updated, subscription.cancelled, transaction.completed
 - NOT Stripe — Stripe was fully removed 2026-03-02
 
@@ -154,11 +164,11 @@
 ## Webhooks
 
 **Incoming:**
-- Paddle: `/api/billing/webhooks/route.ts` — subscription lifecycle events
+- Paddle: `src/app/api/paddle/webhooks/route.ts` — subscription lifecycle events
 - Inngest: `/api/inngest/route.ts` — Inngest serve endpoint
 
-**Outgoing (from Inngest functions):**
-- LLM API calls (OpenAI, Anthropic, Perplexity, Gemini, xAI, DeepSeek)
+**Outgoing (from Inngest functions via OpenRouter):**
+- LLM API calls (routed through OpenRouter: ChatGPT, Claude, Perplexity, Gemini, Grok)
 - Resend email delivery
 - WordPress REST API (content publishing)
 - Slack webhooks (alert notifications)
@@ -173,8 +183,7 @@
 | Supabase | `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL` | Server only |
 | Paddle | `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` | Public |
 | Paddle | `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`, `PADDLE_PRICE_*` | Server only |
-| LLMs | `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `PERPLEXITY_API_KEY`, `GOOGLE_AI_API_KEY` | Server only |
-| LLMs (Phase 2) | `XAI_API_KEY`, `DEEPSEEK_API_KEY` | Server only |
+| LLMs (OpenRouter) | `OPENROUTER_SCAN_KEY`, `OPENROUTER_AGENT_KEY` | Server only |
 | Email | `RESEND_API_KEY` | Server only |
 | Inngest | `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY` | Server only |
 | App | `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_APP_NAME` | Public |
@@ -185,4 +194,4 @@
 
 ---
 
-*Integration audit: 2026-02-27 | Updated: March 2026 — synced with System Design v2.1*
+*Integration audit: 2026-02-27 | Updated: 2026-03-19 — added OpenRouter gateway section, updated Paddle webhook path to api/paddle/webhooks, replaced direct LLM SDK refs with OpenRouter routing*

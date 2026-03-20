@@ -2,10 +2,12 @@
 
 > **Last synced:** March 2026 — aligned with 03-system-design/
 
-**Version:** 1.1
+**Version:** 1.2
 **Date:** 2026-02-28
-**Last Updated:** 2026-03-06 — synced with System Design v2.1
+**Last Updated:** 2026-03-19 — added auto-generate recommendations note
 **Status:** Updated
+
+> **Implementation note (2026-03-19):** After onboarding completes and the free scan import succeeds, recommendations are auto-generated immediately. Trigger: `POST /api/recommendations` called from `onboarding/complete` route after scan import. Engine: Claude Haiku 4 via OpenRouter. Output: up to 4 recommendations saved to DB. Commit: `df723d1`, implementation: `src/lib/recommendations.ts`
 
 > The onboarding is a bridge, not a destination. Its only job is to collect the minimum data required to start a scan — and get out of the way as fast as possible. Every extra field is a conversion killer.
 

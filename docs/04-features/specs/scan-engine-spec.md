@@ -3,7 +3,22 @@
 > **Author:** Atlas (CTO)
 > **Date:** 2026-03-08
 > **Audience:** Engineers building the scan engine. You should be able to implement this feature end-to-end without reading any other document.
-> **Source of truth:** `03-system-design/_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md`, `_SYSTEM_DESIGN_INTELLIGENCE_LAYER.md`, `04-features/scan-page.md`
+> **Source of truth:** `docs/03-system-design/ARCHITECTURE.md`, `docs/04-features/specs/scan-page.md`
+
+---
+
+## Scan Wizard (Implemented — 2026-03-19)
+
+Email-first step-by-step scan flow. Implemented in commit `92a5666`.
+
+The wizard guides anonymous users through:
+1. Enter email address
+2. Enter business name / website
+3. Select scan engines (or use defaults)
+4. View results
+
+This replaced the single-form scan approach. The wizard improves conversion by reducing upfront friction.
+**Implementation:** `saas-platform/src/app/scan/` — scan page + wizard step components
 
 ---
 
