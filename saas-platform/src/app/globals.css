@@ -78,7 +78,7 @@
 
 :root {
   --radius: 0.625rem;
-  --background: #FAFAF9;
+  --background: #F7F7F7;
   --foreground: #0A0A0A;
   --card: #FFFFFF;
   --card-foreground: #0A0A0A;
@@ -365,7 +365,7 @@
 
   /* ─── Dashboard page background ──────────────────────────────────── */
   .dashboard-bg {
-    background-color: #FAFAF9;
+    background-color: #F7F7F7;
     background-image:
       radial-gradient(ellipse 120% 40% at 60% -5%, rgba(255,60,0,0.025) 0%, transparent 60%);
   }

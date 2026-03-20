@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Search, Bell, Menu, X } from 'lucide-react'
+import { Bell, Menu, X } from 'lucide-react'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { UserMenu } from '@/components/dashboard/user-menu'
 import { LanguageToggle } from '@/components/ui/language-toggle'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 interface DashboardShellProps {
@@ -202,15 +203,9 @@ export function DashboardShell({
             </nav>
           </div>
 
-          {/* Right: Language toggle + Search + notifications + user menu */}
+          {/* Right: Language toggle + notifications + trial + user menu */}
           <div className="flex items-center gap-2">
             <LanguageToggle />
-            <button
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              aria-label="Search"
-            >
-              <Search className="h-4 w-4" />
-            </button>
             <Link
               href="/dashboard/notifications"
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -218,6 +213,18 @@ export function DashboardShell({
             >
               <Bell className="h-4 w-4" />
             </Link>
+            {trialDaysLeft !== null && trialDaysLeft > 0 && (
+              <Badge className="hidden sm:inline-flex bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100">
+                Trial: {trialDaysLeft}d left
+              </Badge>
+            )}
+            {trialDaysLeft !== null && trialDaysLeft <= 0 && (
+              <Link href="/pricing">
+                <Badge className="hidden sm:inline-flex bg-red-100 text-red-700 border-red-200 hover:bg-red-200 cursor-pointer">
+                  Trial expired · Upgrade
+                </Badge>
+              </Link>
+            )}
             <UserMenu businessName={businessName} planTier={planTier} />
           </div>
         </header>
