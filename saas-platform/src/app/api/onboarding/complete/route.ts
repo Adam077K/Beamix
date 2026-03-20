@@ -382,7 +382,6 @@ async function convertFreeScanResults(
         engine: engineMap[e.engine],
         is_mentioned: e.is_mentioned,
         rank_position: e.mention_position,
-        sentiment: e.sentiment,
         sentiment_score: sentimentToScore[e.sentiment ?? 'neutral'] ?? 50,
       }))
 

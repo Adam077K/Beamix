@@ -28,6 +28,7 @@ import {
   Link2,
   Lock,
   ChevronRight,
+  Download,
 } from 'lucide-react'
 
 type ScanPageStatus = 'loading' | 'processing' | 'completed' | 'error'
@@ -39,6 +40,7 @@ interface ScanData {
   sector: string
   location: string
   email?: string | null
+  created_at?: string | null
   results: ScanResults
 }
 
@@ -89,7 +91,6 @@ function ProcessingState() {
     { engine: 'chatgpt', label: 'ChatGPT', status: 'waiting' },
     { engine: 'gemini', label: 'Gemini', status: 'waiting' },
     { engine: 'perplexity', label: 'Perplexity', status: 'waiting' },
-    { engine: 'claude', label: 'Claude', status: 'waiting' },
   ])
   const [phase, setPhase] = useState<'engines' | 'analyzing'>('engines')
 
@@ -102,21 +103,21 @@ function ProcessingState() {
           setEngineStatuses((prev) =>
             prev.map((e, idx) => (idx === i ? { ...e, status: 'checking' } : e))
           )
-        }, i * 1200)
+        }, i * 3000)
       )
       timers.push(
         setTimeout(() => {
           setEngineStatuses((prev) =>
             prev.map((e, idx) => (idx === i ? { ...e, status: 'done' } : e))
           )
-        }, i * 1200 + 1000)
+        }, i * 3000 + 2000)
       )
     })
 
     timers.push(
       setTimeout(() => {
         setPhase('analyzing')
-      }, engineStatuses.length * 1200 + 500)
+      }, engineStatuses.length * 3000 + 1000)
     )
 
     return () => timers.forEach(clearTimeout)
@@ -241,7 +242,7 @@ function ScoreReveal({ score }: { score: number }) {
       className="flex flex-col items-center"
     >
       <div
-        className="relative flex h-40 w-40 items-center justify-center rounded-full border-4"
+        className="relative flex h-40 w-40 flex-col items-center justify-center rounded-full border-4"
         style={{ borderColor: getScoreColorHex(score) }}
       >
         <span
@@ -250,6 +251,7 @@ function ScoreReveal({ score }: { score: number }) {
         >
           {displayScore}
         </span>
+        <span className="text-sm text-muted-foreground font-normal">/100</span>
       </div>
       <span
         className={cn(
@@ -612,18 +614,19 @@ function GatedCTA({ scanId, email }: { scanId: string; email?: string | null }) 
 
 // --- Share Section ---
 
-function ShareSection({ scanId }: { scanId: string }) {
+function ShareSection({ scanId, businessName, score }: { scanId: string; businessName: string; score: number }) {
   const [copied, setCopied] = useState(false)
 
+  const rawShareUrl = typeof window !== 'undefined' ? `${window.location.origin}/scan/${scanId}` : `/scan/${scanId}`
+
   async function copyLink() {
-    const url = `${window.location.origin}/scan/${scanId}`
     try {
-      await navigator.clipboard.writeText(url)
+      await navigator.clipboard.writeText(rawShareUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
       const textArea = document.createElement('textarea')
-      textArea.value = url
+      textArea.value = rawShareUrl
       document.body.appendChild(textArea)
       textArea.select()
       document.execCommand('copy')
@@ -633,9 +636,7 @@ function ShareSection({ scanId }: { scanId: string }) {
     }
   }
 
-  const shareUrl = encodeURIComponent(
-    `${typeof window !== 'undefined' ? window.location.origin : ''}/scan/${scanId}`
-  )
+  const shareUrl = encodeURIComponent(rawShareUrl)
   const shareText = encodeURIComponent('Check out my AI visibility score from Beamix!')
 
   return (
@@ -648,6 +649,27 @@ function ShareSection({ scanId }: { scanId: string }) {
           </h3>
         </div>
         <div className="mt-4 flex flex-wrap gap-3">
+          {typeof navigator !== 'undefined' && 'share' in navigator && (
+            <Button
+              variant="default"
+              size="sm"
+              className="w-full sm:w-auto bg-primary text-white"
+              onClick={async () => {
+                try {
+                  await navigator.share({
+                    title: `AI Visibility Report — ${businessName}`,
+                    text: `${businessName} scored ${score}/100 in AI visibility. See the full report:`,
+                    url: rawShareUrl,
+                  })
+                } catch {
+                  // User cancelled or share failed — ignore
+                }
+              }}
+            >
+              <Share2 className="h-4 w-4 mr-1.5" />
+              Share Report
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={copyLink} className="gap-2">
             <Link2 className="h-4 w-4" />
             {copied ? 'Copied!' : 'Copy link'}
@@ -808,7 +830,22 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
     )
   }
 
-  if (!scanData?.results) return null
+  if (!scanData?.results) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
+        <AlertTriangle className="h-12 w-12 text-amber-500" />
+        <h2 className="mt-4 font-sans font-bold text-2xl text-foreground">
+          Results unavailable
+        </h2>
+        <p className="mt-2 text-muted-foreground">
+          This scan may still be processing or has expired.
+        </p>
+        <Link href="/scan" className="mt-6">
+          <Button>Run a new scan</Button>
+        </Link>
+      </div>
+    )
+  }
 
   const { results, business_name } = scanData
   const mentionedCount = results.engines.filter((e) => e.is_mentioned).length
@@ -816,7 +853,7 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
-      <div className="border-b border-border bg-card">
+      <div className="border-b border-border bg-card print:hidden">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4 h-14">
           <Link href="/">
             <span className="font-sans font-bold text-xl text-foreground">
@@ -824,6 +861,16 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
             </span>
           </Link>
           <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.print()}
+              className="hidden sm:inline-flex"
+              aria-label="Download report as PDF"
+            >
+              <Download className="h-4 w-4 mr-1.5" />
+              Download PDF
+            </Button>
             <Link href="/scan">
               <Button variant="outline" size="sm">
                 New scan
@@ -860,6 +907,13 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
             AI Visibility Report
           </h1>
           <p className="mt-2 text-lg text-muted-foreground">{business_name}</p>
+          {scanData.created_at && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Scanned on {new Date(scanData.created_at).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'long', day: 'numeric'
+              })}
+            </p>
+          )}
         </motion.div>
 
         <motion.div
@@ -925,7 +979,7 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
         {results.queries_used && results.queries_used.length > 0 && (
           <>
             <Separator className="my-8" />
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants} className="print:hidden">
               <details className="group">
                 <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                   <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" />
@@ -950,7 +1004,7 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
         {results.business_context && (
           <>
             <Separator className="my-8" />
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants} className="print:hidden">
               <details className="group">
                 <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                   <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" />
@@ -1008,21 +1062,21 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
         <Separator className="my-8" />
 
         {/* Gated CTA — blurred additional fixes */}
-        <motion.div variants={itemVariants}>
+        <motion.div variants={itemVariants} className="print:hidden">
           <GatedCTA scanId={scanId} email={scanEmail} />
         </motion.div>
 
-        <Separator className="my-8" />
+        <Separator className="my-8 print:hidden" />
 
         {/* Share Section */}
-        <motion.div variants={itemVariants}>
-          <ShareSection scanId={scanId} />
+        <motion.div variants={itemVariants} className="print:hidden">
+          <ShareSection scanId={scanId} businessName={business_name} score={results.visibility_score} />
         </motion.div>
 
-        <Separator className="my-8" />
+        <Separator className="my-8 print:hidden" />
 
         {/* Conversion CTA */}
-        <motion.div variants={itemVariants}>
+        <motion.div variants={itemVariants} className="print:hidden">
           <ConversionCTA scanId={scanId} email={scanEmail} />
         </motion.div>
       </motion.div>

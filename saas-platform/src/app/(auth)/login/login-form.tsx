@@ -28,7 +28,8 @@ type LoginFormData = z.infer<typeof loginSchema>
 export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const rawRedirect = searchParams.get('redirect') ?? '/dashboard'
+  const scanId = searchParams.get('scan_id')
+  const rawRedirect = searchParams.get('redirect') ?? (scanId ? `/onboarding?scan_id=${scanId}` : '/dashboard')
   // Validate redirect to prevent open-redirect attacks:
   // - Must start with exactly one forward slash (relative path)
   // - Reject protocol-relative URLs (//)
@@ -215,7 +216,7 @@ export function LoginForm() {
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{' '}
           <Link
-            href="/signup"
+            href={scanId ? `/signup?scan_id=${scanId}` : '/signup'}
             className="font-medium text-primary hover:underline"
           >
             Sign up free

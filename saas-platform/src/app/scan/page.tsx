@@ -13,7 +13,13 @@ import { Input } from '@/components/ui/input'
 // --- Per-step schemas ---
 
 const urlSchema = z.object({
-  url: z.string().min(1, 'Website URL is required').url('Please enter a valid URL'),
+  url: z.string().min(1, 'Website URL is required').transform((val) => {
+    // Add https:// if no protocol
+    if (!/^https?:\/\//i.test(val)) {
+      return `https://${val}`
+    }
+    return val
+  }).pipe(z.string().url('Please enter a valid URL')),
 })
 
 const emailSchema = z.object({
@@ -174,6 +180,7 @@ function ScanWizard() {
   function handleUrlSubmit(data: UrlFormData) {
     const normalised = /^https?:\/\//i.test(data.url) ? data.url : `https://${data.url}`
     setUrl(normalised)
+    try { localStorage.setItem('beamix_pending_url', normalised) } catch { /* ignore */ }
     const extracted = extractNameFromDomain(normalised)
     if (extracted) setBusinessName(extracted)
     setStepIndex((prev) => (prev !== null ? prev + 1 : 1))
@@ -186,6 +193,7 @@ function ScanWizard() {
 
   function handleBusinessNameSubmit(data: BusinessNameFormData) {
     setBusinessName(data.business_name)
+    try { localStorage.setItem('beamix_onboarding_name', data.business_name) } catch { /* ignore */ }
     setStepIndex((prev) => (prev !== null ? prev + 1 : 1))
   }
 
@@ -295,8 +303,8 @@ function ScanWizard() {
 
               <form onSubmit={urlForm.handleSubmit(handleUrlSubmit)} className="space-y-4">
                 <Input
-                  type="url"
-                  placeholder="https://yourbusiness.com"
+                  type="text"
+                  placeholder="yourbusiness.com"
                   className="h-12 rounded-xl border-black/15 text-base placeholder:text-black/30 focus-visible:ring-[#FF3C00]"
                   {...urlForm.register('url')}
                 />

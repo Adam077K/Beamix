@@ -36,9 +36,10 @@ export async function GET() {
       .single(),
     supabase
       .from('credit_pools')
-      .select('base_allocation, topup_amount, rollover_amount, used_amount')
+      .select('base_allocation, topup_amount, rollover_amount, used_amount, held_amount, pool_type')
       .eq('user_id', user.id)
-      .eq('pool_type', 'monthly')
+      .order('period_end', { ascending: false })
+      .limit(1)
       .single(),
     supabase
       .from('scans')
