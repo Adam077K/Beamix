@@ -1,15 +1,13 @@
 import { inngest } from '../client'
 import { createClient } from '@supabase/supabase-js'
-import { queryEngine, type EngineQuery } from '@/lib/scan/engine-adapter'
-import { parseEngineResponse } from '@/lib/scan/parser'
-import { calculateCompositeScore } from '@/lib/scan/scorer'
-
-// Pro tier and above get Claude in their scan engines
-const FREE_ENGINES = ['chatgpt', 'gemini', 'perplexity'] as const
-const PRO_ENGINES = ['chatgpt', 'gemini', 'perplexity', 'claude'] as const
+import { queryEngineRaw } from '@/lib/scan/engine-adapter'
+import { researchBusiness, generateScanQueries } from '@/lib/scan/query-templates'
+import { analyzeResponses, type RawEngineResponse } from '@/lib/scan/analyzer'
+import { buildScanResults } from '@/lib/scan/build-results'
+import { getTierConfig, type ScanEngine } from '@/lib/scan/tier-config'
 
 export const scanManual = inngest.createFunction(
-  { id: 'scan-manual', name: 'Process Manual Scan' },
+  { id: 'scan-manual', name: 'Process Manual Scan (v3 Pipeline)' },
   { event: 'scan/manual.started' },
   async ({ event, step }) => {
     const supabase = createClient(
@@ -26,6 +24,7 @@ export const scanManual = inngest.createFunction(
       await supabase.from('scans').update({ status: 'processing' }).eq('id', scanId)
     })
 
+    // Fetch business details
     const business = await step.run('fetch-business', async () => {
       const { data } = await supabase
         .from('businesses')
@@ -37,7 +36,7 @@ export const scanManual = inngest.createFunction(
 
     if (!business) throw new Error('Business not found')
 
-    // Determine engines based on user's plan
+    // Determine scan tier from user's plan
     const planData = await step.run('fetch-plan', async () => {
       const { data } = await supabase
         .from('subscriptions')
@@ -48,73 +47,128 @@ export const scanManual = inngest.createFunction(
     })
 
     const planTier = planData?.plan_tier ?? null
-    const engines: typeof FREE_ENGINES[number][] | typeof PRO_ENGINES[number][] =
-      planTier === 'pro' || planTier === 'business'
-        ? [...PRO_ENGINES]
-        : [...FREE_ENGINES]
+    const tierConfig = getTierConfig(planTier)
 
-    const engineQuery: EngineQuery = {
-      query: `Who are the top ${business.industry ?? 'local'} businesses${business.location ? ` in ${business.location}` : ''}? Is ${business.name} recommended?`,
-      businessName: business.name,
-      businessUrl: business.website_url ?? '',
-      industry: business.industry ?? 'local business',
-      location: business.location ?? undefined,
-    }
+    // Step 1: Research business via Perplexity + website scrape
+    const research = await step.run('research-business', async () => {
+      return researchBusiness(business.name, business.website_url ?? '')
+    })
 
-    // Query each engine as a separate retryable step
-    const engineResponses: Array<{ engine: string; rawResponse: string; latencyMs: number; isMock: boolean }> = []
+    // Step 2: Generate queries from research data
+    const queries = await step.run('generate-queries', async () => {
+      const baseQueries = generateScanQueries(
+        business.name,
+        business.website_url ?? '',
+        research,
+        business.location,
+      )
+      // For higher tiers, we still use the 3 base queries but send more per engine
+      return baseQueries
+    })
 
-    for (const engine of engines) {
-      const result = await step.run(`query-${engine}`, async () => {
-        const response = await queryEngine(engine as Parameters<typeof queryEngine>[0], engineQuery)
-        return {
-          engine: response.engine,
-          rawResponse: response.rawResponse,
-          latencyMs: response.latencyMs,
-          isMock: response.isMock,
+    // Step 3: Query each engine as separate retryable steps
+    // Each engine gets a subset of queries based on tier config
+    const rawResponses: RawEngineResponse[] = []
+
+    for (const engine of tierConfig.engines) {
+      const engineQueryCount = tierConfig.queriesPerEngine[engine] ?? 2
+      // Select which queries to send: first N from the query list
+      const engineQueries = queries.slice(0, Math.min(engineQueryCount, queries.length))
+
+      const results = await step.run(`query-${engine}`, async () => {
+        const responses: RawEngineResponse[] = []
+        // Run queries for this engine in parallel
+        const promises = engineQueries.map((query) =>
+          queryEngineRaw(engine as ScanEngine, query)
+            .then((r) => ({ ...r, query }) as RawEngineResponse)
+            .catch((err) => {
+              console.error(`[scan-manual] ${engine} query failed:`, err)
+              return null
+            })
+        )
+        const settled = await Promise.all(promises)
+        for (const r of settled) {
+          if (r) responses.push(r)
         }
+        return responses
       })
-      engineResponses.push(result)
+
+      rawResponses.push(...results)
     }
 
-    // Parse, score, and store results
-    await step.run('save-results', async () => {
-      const responses = engineResponses.map((r) => ({ ...r, timestamp: new Date() }))
-      const parsedResults = responses.map((r) => parseEngineResponse(r, business.name))
-      const compositeScore = calculateCompositeScore(parsedResults)
+    if (rawResponses.length === 0) {
+      await step.run('mark-failed-no-responses', async () => {
+        await supabase
+          .from('scans')
+          .update({ status: 'failed', completed_at: new Date().toISOString() })
+          .eq('id', scanId)
+      })
+      throw new Error('All engine queries failed')
+    }
 
-      // Insert per-engine results (include is_mock flag for transparency)
+    // Step 4: Analyze all responses with Gemini Flash
+    const analysis = await step.run('analyze-responses', async () => {
+      return analyzeResponses({
+        businessName: business.name,
+        websiteUrl: business.website_url ?? '',
+        industry: research.industry,
+        location: business.location,
+        queries,
+        responses: rawResponses,
+      })
+    })
+
+    // Step 5: Build results and save
+    await step.run('save-results', async () => {
+      const scanResults = buildScanResults({
+        businessName: business.name,
+        websiteUrl: business.website_url ?? '',
+        industry: research.industry,
+        location: business.location,
+        research,
+        queries,
+        analysis,
+      })
+
+      // Insert per-engine scan_engine_results rows
       const mockEngines: string[] = []
-      for (const parsed of parsedResults) {
-        if (parsed.isMock) mockEngines.push(parsed.engine)
+      for (const engineData of analysis.engines) {
+        const isMock = rawResponses.some(
+          (r) => r.engine === engineData.engine && r.isMock
+        )
+        if (isMock) mockEngines.push(engineData.engine)
+
         await supabase.from('scan_engine_results').insert({
           scan_id: scanId,
           business_id: businessId,
-          engine: parsed.engine,
-          is_mentioned: parsed.isMentioned,
-          rank_position: parsed.mentionPosition,
-          sentiment_score: parsed.sentiment,
+          engine: engineData.engine,
+          is_mentioned: engineData.mentioned,
+          rank_position: engineData.mention_position,
+          sentiment_score: engineData.sentiment === 'positive' ? 80 : engineData.sentiment === 'neutral' ? 50 : 20,
         })
       }
 
       if (mockEngines.length > 0) {
-        console.warn(
-          `[scan-manual] Scan ${scanId} used MOCK results for engines: ${mockEngines.join(', ')}`
-        )
+        console.warn(`[scan-manual] Scan ${scanId} used MOCK for: ${mockEngines.join(', ')}`)
       }
 
-      // Update scan with overall score and mock metadata
+      // Update scan with score + rich results_data JSONB
+      const mentionsCount = analysis.engines.filter((e) => e.mentioned).length
       await supabase
         .from('scans')
         .update({
           status: 'completed',
           completed_at: new Date().toISOString(),
-          overall_score: compositeScore.overallScore,
+          overall_score: scanResults.visibility_score,
+          mentions_count: mentionsCount,
+          results_data: JSON.parse(JSON.stringify(scanResults)),
           ...(mockEngines.length > 0 ? { metadata: { mock_engines: mockEngines } } : {}),
         })
         .eq('id', scanId)
 
-      return { overallScore: compositeScore.overallScore }
+      console.log(`[scan-manual] Scan ${scanId} completed — score: ${scanResults.visibility_score}, engines: ${tierConfig.engines.length}, responses: ${rawResponses.length}`)
+
+      return { overallScore: scanResults.visibility_score }
     })
 
     return { scanId }
