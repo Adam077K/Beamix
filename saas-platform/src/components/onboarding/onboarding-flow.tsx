@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Globe, Building, Briefcase, MapPin, Loader2, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { Globe, Building, Briefcase, MapPin, Loader2, ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -363,14 +363,25 @@ export function OnboardingFlow() {
                 )}
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-              >
-                Continue
-                <ArrowRight className="ms-1 h-4 w-4" />
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="flex-none"
+                  onClick={() => setStep(0)}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                >
+                  Continue
+                  <ArrowRight className="ms-1 h-4 w-4" />
+                </Button>
+              </div>
             </form>
           </motion.div>
         )}
@@ -420,14 +431,25 @@ export function OnboardingFlow() {
                 <p className="text-xs text-destructive">{industryForm.formState.errors.industry.message}</p>
               )}
 
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-              >
-                Continue
-                <ArrowRight className="ms-1 h-4 w-4" />
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="flex-none"
+                  onClick={() => setStep(1)}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                >
+                  Continue
+                  <ArrowRight className="ms-1 h-4 w-4" />
+                </Button>
+              </div>
             </form>
           </motion.div>
         )}
@@ -471,24 +493,36 @@ export function OnboardingFlow() {
                 )}
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                    Setting up...
-                  </>
-                ) : (
-                  <>
-                    Start My Scan
-                    <ArrowRight className="ms-1 h-4 w-4" />
-                  </>
-                )}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="flex-none"
+                  disabled={isSubmitting}
+                  onClick={() => setStep(2)}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                      Setting up...
+                    </>
+                  ) : (
+                    <>
+                      Start My Scan
+                      <ArrowRight className="ms-1 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </div>
             </form>
           </motion.div>
         )}

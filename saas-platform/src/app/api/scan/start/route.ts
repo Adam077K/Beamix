@@ -122,6 +122,22 @@ export async function POST(request: Request) {
 }
 
 /**
+ * Wraps a promise with a per-engine timeout. Resolves to null on timeout so
+ * the rest of the Promise.all can still complete with whatever succeeded.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, fallbackLabel: string): Promise<T | null> {
+  return Promise.race([
+    promise,
+    new Promise<null>((resolve) =>
+      setTimeout(() => {
+        console.warn(`[scan] ${fallbackLabel} timed out after ${ms}ms`)
+        resolve(null)
+      }, ms)
+    ),
+  ])
+}
+
+/**
  * Scan Pipeline v3 — Web-grounded:
  *
  * 0. Scrape website + Perplexity research (parallel, ~2s)
@@ -161,17 +177,35 @@ async function runScan(
   // Perplexity (native search, no extra cost) — all 3 queries
   const twoQueries = [categoryQuery, brandQuery]
 
-  const rawResponses = await Promise.all([
+  const rawResponses = (await Promise.all([
     ...twoQueries.map((query) =>
-      queryEngineRaw('chatgpt', query).then((r) => ({ ...r, query }) as RawEngineResponse)
+      withTimeout(
+        queryEngineRaw('chatgpt', query).then((r) => ({ ...r, query }) as RawEngineResponse),
+        15000,
+        `chatgpt: ${query.slice(0, 50)}`
+      )
     ),
     ...twoQueries.map((query) =>
-      queryEngineRaw('gemini', query).then((r) => ({ ...r, query }) as RawEngineResponse)
+      withTimeout(
+        queryEngineRaw('gemini', query).then((r) => ({ ...r, query }) as RawEngineResponse),
+        15000,
+        `gemini: ${query.slice(0, 50)}`
+      )
     ),
     ...queries.map((query) =>
-      queryEngineRaw('perplexity', query).then((r) => ({ ...r, query }) as RawEngineResponse)
+      withTimeout(
+        queryEngineRaw('perplexity', query).then((r) => ({ ...r, query }) as RawEngineResponse),
+        15000,
+        `perplexity: ${query.slice(0, 50)}`
+      )
     ),
-  ])
+  ])).filter((r): r is RawEngineResponse => r !== null)
+
+  // If every engine timed out, fall back to mock scan
+  if (rawResponses.length === 0) {
+    console.warn('[scan] All engines timed out — falling back to mock scan')
+    return runMockScan(businessName, businessName, research.industry)
+  }
 
   const mockCount = rawResponses.filter((r) => r.isMock).length
   console.log(`[scan] ${rawResponses.length} responses (${mockCount} mock)`)
