@@ -1,26 +1,8 @@
 import { NextResponse } from 'next/server'
-import { after } from 'next/server'
 import { nanoid } from 'nanoid'
 import { scanStartSchema } from '@/lib/scan/validation'
 import { createServiceClient } from '@/lib/supabase/server'
-import { createClient } from '@supabase/supabase-js'
 import { inngest } from '@/inngest/client'
-import { runMockScan } from '@/lib/scan/mock-engine'
-import { queryEngine, type EngineQuery } from '@/lib/scan/engine-adapter'
-import { parseEngineResponse } from '@/lib/scan/parser'
-import { calculateCompositeScore } from '@/lib/scan/scorer'
-import { INDUSTRY_COMPETITORS } from '@/constants/industries'
-import type { ScanResults, EngineResult, LeaderboardEntry, LLMEngine, QuickWin } from '@/lib/types'
-
-const QUICK_WIN_TEMPLATES: QuickWin[] = [
-  { title: 'Add FAQ Schema Markup', description: 'Structured FAQ data helps AI engines understand and cite your expertise.', impact: 'high' },
-  { title: 'Create an About Page with Entity Data', description: 'AI engines look for structured entity information — founding year, team, services.', impact: 'high' },
-  { title: 'Publish Expert Blog Content', description: 'Regular in-depth content establishes topical authority for AI citation.', impact: 'medium' },
-  { title: 'Optimize Google Business Profile', description: 'Complete GBP listings are a key signal for AI engines on local queries.', impact: 'high' },
-  { title: 'Add LocalBusiness Structured Data', description: 'JSON-LD LocalBusiness schema helps AI engines identify your business.', impact: 'medium' },
-  { title: 'Build Citation Consistency', description: 'Ensure NAP (name, address, phone) is consistent across all directories.', impact: 'medium' },
-  { title: 'Get More Customer Reviews', description: 'AI engines reference review sentiment when recommending businesses.', impact: 'high' },
-]
 
 export async function POST(request: Request) {
   try {
@@ -86,7 +68,7 @@ export async function POST(request: Request) {
 
     const scanId = insertedScan.id
 
-    // Try Inngest first, fall back to inline processing via after()
+    // Try Inngest first
     const useInngest = !!(process.env.INNGEST_EVENT_KEY || process.env.INNGEST_SIGNING_KEY)
 
     if (useInngest) {
@@ -107,44 +89,30 @@ export async function POST(request: Request) {
           { status: 202 }
         )
       } catch (inngestError) {
-        console.warn('[scan/start] Inngest send failed, falling back to inline processing:', inngestError)
-        // Fall through to after() processing
+        console.warn('[scan/start] Inngest send failed:', inngestError)
       }
     }
 
-    // Use next/server after() to process scan AFTER response is sent
-    // This prevents the POST from blocking and timing out on Vercel
-    after(async () => {
-      // Create a fresh Supabase client for the background task
-      // (the request-scoped one may not be available after response)
-      const bgSupabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      )
+    // No Inngest — fire-and-forget to the process endpoint
+    // This triggers a separate serverless invocation that processes the scan
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000'
 
-      await bgSupabase.from('free_scans').update({ status: 'processing' }).eq('id', scanId)
-
-      try {
-        const scanResults = await runScanInline(business_name, url, sector, location)
-
-        await bgSupabase
-          .from('free_scans')
-          .update({
-            status: 'completed',
-            overall_score: scanResults.visibility_score,
-            results_data: JSON.parse(JSON.stringify(scanResults)),
-            completed_at: new Date().toISOString(),
-          })
-          .eq('id', scanId)
-
-        console.log(`[scan/start] Scan ${scanId} completed inline with score ${scanResults.visibility_score}`)
-      } catch (scanError) {
-        console.error('[scan/start] Inline scan failed:', scanError)
-        await bgSupabase.from('free_scans').update({ status: 'failed' }).eq('id', scanId)
-      }
+    fetch(`${appUrl}/api/scan/${scanId}/process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        business_name,
+        url,
+        sector,
+        location,
+        secret: process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(0, 16),
+      }),
+    }).catch((err) => {
+      console.error('[scan/start] Failed to trigger process endpoint:', err)
     })
 
-    // Return immediately — client polls for results
     return NextResponse.json(
       { scan_id: scanId, status: 'processing' },
       { status: 202 }
@@ -154,86 +122,5 @@ export async function POST(request: Request) {
       { error: 'Internal server error' },
       { status: 500 }
     )
-  }
-}
-
-/**
- * Run scan inline (without Inngest) using real APIs or mock fallback.
- * Produces the ScanResults format expected by the client.
- */
-async function runScanInline(
-  businessName: string,
-  websiteUrl: string,
-  industry: string,
-  location?: string | null,
-): Promise<ScanResults> {
-  const hasApiKey = !!(process.env.OPENROUTER_SCAN_KEY ?? process.env.OPENROUTER_API_KEY)
-
-  if (!hasApiKey) {
-    // Use the mock engine which already produces correct ScanResults format
-    return runMockScan(businessName, businessName, industry)
-  }
-
-  // Real engine queries via OpenRouter
-  const engineQuery: EngineQuery = {
-    query: `Who are the best ${industry} businesses${location ? ` in ${location}` : ''}? Is ${businessName} (${websiteUrl}) recommended?`,
-    businessName,
-    businessUrl: websiteUrl,
-    industry,
-    location: location ?? undefined,
-  }
-
-  const [chatgpt, gemini, perplexity] = await Promise.all([
-    queryEngine('chatgpt', engineQuery),
-    queryEngine('gemini', engineQuery),
-    queryEngine('perplexity', engineQuery),
-  ])
-
-  const responses = [chatgpt, gemini, perplexity]
-  const parsedResults = responses.map((r) => parseEngineResponse(r, businessName))
-  const compositeScore = calculateCompositeScore(parsedResults)
-
-  // Transform to ScanResults format
-  const engines: EngineResult[] = parsedResults.map((p, i) => ({
-    engine: p.engine as LLMEngine,
-    is_mentioned: p.isMentioned,
-    mention_position: p.mentionPosition,
-    sentiment: p.sentiment >= 65 ? 'positive' as const : p.sentiment >= 40 ? 'neutral' as const : 'negative' as const,
-    competitors_mentioned: p.competitorNames,
-    response_snippet: responses[i]?.rawResponse?.slice(0, 300) ?? '',
-  }))
-
-  const competitors = INDUSTRY_COMPETITORS[industry] ?? ['Top Competitor', 'Industry Leader']
-  const topCompetitor = competitors[0] ?? 'Top Competitor'
-  const visibilityScore = compositeScore.overallScore
-  const topCompetitorScore = Math.min(95, visibilityScore + 10 + Math.round(Math.random() * 15))
-
-  const competitorScores = competitors.slice(0, 5).map((name, i) => ({
-    name,
-    score: Math.max(20, Math.min(95, topCompetitorScore - i * 8 + Math.round(Math.random() * 10 - 5))),
-  }))
-  competitorScores.push({ name: businessName, score: visibilityScore })
-  competitorScores.sort((a, b) => b.score - a.score)
-
-  const leaderboard: LeaderboardEntry[] = competitorScores.map((c, i) => ({
-    name: c.name,
-    score: c.score,
-    rank: i + 1,
-    is_user: c.name === businessName,
-  }))
-
-  const userEntry = leaderboard.find((e) => e.is_user)
-  const shuffled = [...QUICK_WIN_TEMPLATES].sort(() => Math.random() - 0.5)
-  const quickWins = shuffled.slice(0, 3 + Math.round(Math.random()))
-
-  return {
-    visibility_score: visibilityScore,
-    engines,
-    top_competitor: topCompetitor,
-    top_competitor_score: topCompetitorScore,
-    quick_wins: quickWins,
-    rank: userEntry?.rank ?? leaderboard.length,
-    total_businesses: leaderboard.length,
-    leaderboard,
   }
 }
