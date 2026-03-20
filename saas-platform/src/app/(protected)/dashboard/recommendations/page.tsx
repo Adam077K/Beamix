@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Lightbulb } from 'lucide-react'
+import { Lightbulb, Sparkles } from 'lucide-react'
 import { PageHeader } from '@/components/ui/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
@@ -14,15 +14,28 @@ export default async function RecommendationsPage() {
 
   if (!user) redirect('/login')
 
-  const { data: recommendations } = await supabase
-    .from('recommendations')
-    .select(
-      'id, title, description, priority, recommendation_type, status, suggested_agent, credits_cost, effort, impact, evidence, created_at',
-    )
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
+  const [{ data: recommendations }, { data: subscription }] = await Promise.all([
+    supabase
+      .from('recommendations')
+      .select(
+        'id, title, description, priority, recommendation_type, status, suggested_agent, credits_cost, effort, impact, evidence, created_at',
+      )
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('subscriptions')
+      .select('plan_tier, status')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+  ])
 
   const items = recommendations ?? []
+
+  // Show upsell for users who are on trial or have no paid plan
+  const isPaying =
+    subscription?.plan_tier != null &&
+    subscription.status !== 'trialing' &&
+    subscription.status !== 'cancelled'
 
   const impactClass = (impact: string | null) => {
     if (impact === 'high') return 'bg-red-100 text-red-700'
@@ -43,6 +56,24 @@ export default async function RecommendationsPage() {
         title="Recommendations"
         description="AI-powered suggestions to improve your search visibility"
       />
+
+      {!isPaying && (
+        <div className="flex items-center justify-between gap-4 rounded-[20px] border border-[#FF3C00]/20 bg-[#FF3C00]/5 px-5 py-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <Sparkles className="h-5 w-5 shrink-0 text-[#FF3C00]" aria-hidden="true" />
+            <p className="text-sm text-foreground">
+              <span className="font-medium">Unlock more recommendations and AI agents</span>
+              {' '}to improve your visibility — upgrade to a paid plan to run agents and get deeper insights.
+            </p>
+          </div>
+          <Link
+            href="/pricing"
+            className="shrink-0 px-4 py-1.5 rounded-lg bg-[#FF3C00] text-white text-sm font-medium hover:bg-[#e03500] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF3C00] focus-visible:ring-offset-2"
+          >
+            Upgrade
+          </Link>
+        </div>
+      )}
 
       {items.length === 0 ? (
         <div className="bg-card rounded-[20px] border border-border">
