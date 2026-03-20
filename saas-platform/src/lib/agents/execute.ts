@@ -75,47 +75,30 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     )
   }
 
-  // 3. Credits / rate-limit check
+  // 3. Rate-limit check for unlimited agents (credits checked atomically by holdCredits RPC)
   if (config.isUnlimited) {
     // Unlimited agents: check daily rate limit instead of credits
     const dailyLimit = UNLIMITED_DAILY_LIMITS[userPlan] ?? UNLIMITED_DAILY_LIMITS.starter ?? 10
-    const todayStart = new Date()
-    todayStart.setHours(0, 0, 0, 0)
+    // Use UTC midnight to avoid timezone-dependent rate limit resets
+    const todayStartUTC = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z')
 
     const { count: todayCount } = await supabase
       .from('agent_jobs')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .eq('agent_type', config.dbType)
-      .gte('created_at', todayStart.toISOString())
+      .gte('created_at', todayStartUTC.toISOString())
 
     if ((todayCount ?? 0) >= dailyLimit) {
       return NextResponse.json(
-        { error: `Daily limit reached for ${config.name}. You can run it up to ${dailyLimit} times per day. Resets at midnight.` },
+        { error: `Daily limit reached for ${config.name}. You can run it up to ${dailyLimit} times per day. Resets at midnight UTC.` },
         { status: 429 }
       )
     }
-  } else {
-    // Premium agents: check AI Runs balance
-    const { data: credits } = await supabase
-      .from('credit_pools')
-      .select('base_allocation, topup_amount, rollover_amount, used_amount, held_amount')
-      .eq('user_id', user.id)
-      .order('period_end', { ascending: false })
-      .limit(1)
-      .single()
-
-    const availableCredits = credits
-      ? (credits.base_allocation + credits.topup_amount + credits.rollover_amount - credits.used_amount - (credits.held_amount ?? 0))
-      : 0
-
-    if (availableCredits < config.cost) {
-      return NextResponse.json(
-        { error: `Not enough AI Runs. You need ${config.cost} but have ${availableCredits}. Upgrade your plan for more runs.` },
-        { status: 402 }
-      )
-    }
   }
+  // Premium agents: credit balance is checked atomically by holdCredits() RPC below.
+  // No pre-check here — avoids TOCTOU race condition where concurrent requests
+  // both pass a read-based check before either holds credits.
 
   // 4. Validate input
   let body: unknown
@@ -265,11 +248,11 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     if (!config.isUnlimited) {
       await releaseCredits(execution.id)
     }
+    console.error('[executeAgent] LLM execution failed:', err)
     await supabase
       .from('agent_jobs')
-      .update({ status: 'failed', error_message: String(err) })
+      .update({ status: 'failed', error_message: 'LLM execution failed' })
       .eq('id', execution.id)
-    console.error('[executeAgent] LLM execution failed:', err)
     return NextResponse.json(
       { error: config.isUnlimited ? 'Agent execution failed. Please try again.' : 'Agent execution failed. Your AI Run has been refunded.' },
       { status: 500 },
@@ -340,11 +323,11 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     if (!config.isUnlimited) {
       await releaseCredits(execution.id)
     }
+    console.error('[executeAgent] Post-LLM step failed, credits released:', postErr)
     await supabase
       .from('agent_jobs')
-      .update({ status: 'failed', error_message: String(postErr) })
+      .update({ status: 'failed', error_message: 'Failed to save agent output' })
       .eq('id', execution.id)
-    console.error('[executeAgent] Post-LLM step failed, credits released:', postErr)
     return NextResponse.json(
       { error: 'Failed to save agent output. Credits have been refunded.' },
       { status: 500 },

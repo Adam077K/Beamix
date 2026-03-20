@@ -106,20 +106,35 @@ export async function runAgentLLM(
  * Gives agents current, real-world data instead of relying only on training data.
  * Cost: ~$0.01-0.02 per call.
  */
+/** Sanitize a string for safe inclusion in an LLM prompt (strip control chars, newlines, role markers) */
+function sanitizeForPrompt(input: string, maxLength = 200): string {
+  return input
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '') // control chars
+    .replace(/\r?\n/g, ' ') // newlines → spaces
+    .replace(/```/g, '') // code fences
+    .replace(/<\|[^|]*\|>/g, '') // model role markers like <|system|>
+    .replace(/^(system|user|assistant|human):/gim, '') // role prefixes
+    .trim()
+    .slice(0, maxLength)
+}
+
 async function runPreResearch(
   agentType: string,
   business: BusinessContext,
   topic: string,
 ): Promise<string> {
   const scanClient = getScanClient()
-  const loc = business.location ? ` in ${business.location}` : ''
-  const industry = business.industry ?? 'their industry'
+  const safeName = sanitizeForPrompt(business.name, 100)
+  const safeUrl = sanitizeForPrompt(business.websiteUrl ?? '', 100)
+  const safeTopic = sanitizeForPrompt(topic, 200)
+  const loc = business.location ? ` in ${sanitizeForPrompt(business.location, 100)}` : ''
+  const industry = sanitizeForPrompt(business.industry ?? 'their industry', 100)
 
   const researchQueries: Record<string, string> = {
-    content_writer: `What content does the website ${business.websiteUrl ?? business.name} currently have? What topics are trending in ${industry}${loc} that ${business.name} should cover?`,
-    blog_writer: `What are the latest trends, news, and expert insights in ${industry}${loc}? What topics would establish ${business.name} as an authority? Topic focus: ${topic}`,
-    competitor_intelligence: `Who are the top competitors to ${business.name} in ${industry}${loc}? What are their content strategies and strengths in AI search visibility?`,
-    review_analyzer: `What are customers saying about ${business.name} online? What are the key review themes and sentiment patterns in ${industry}${loc}?`,
+    content_writer: `What content does the website ${safeUrl || safeName} currently have? What topics are trending in ${industry}${loc} that ${safeName} should cover?`,
+    blog_writer: `What are the latest trends, news, and expert insights in ${industry}${loc}? What topics would establish ${safeName} as an authority? Topic focus: ${safeTopic}`,
+    competitor_intelligence: `Who are the top competitors to ${safeName} in ${industry}${loc}? What are their content strategies and strengths in AI search visibility?`,
+    review_analyzer: `What are customers saying about ${safeName} online? What are the key review themes and sentiment patterns in ${industry}${loc}?`,
   }
 
   const query = researchQueries[agentType]

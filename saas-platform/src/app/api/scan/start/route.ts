@@ -29,9 +29,12 @@ export async function POST(request: Request) {
     const supabase = await createServiceClient()
 
     // IP-based rate limiting
+    // Vercel sets x-vercel-forwarded-for from the actual edge IP (not spoofable).
+    // Fallback: use last IP in x-forwarded-for chain (infrastructure-injected).
     const ip =
+      request.headers.get('x-vercel-forwarded-for')?.split(',').at(-1)?.trim() ||
       request.headers.get('x-real-ip') ||
-      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      request.headers.get('x-forwarded-for')?.split(',').at(-1)?.trim() ||
       'unknown'
 
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()

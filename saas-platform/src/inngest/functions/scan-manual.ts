@@ -36,6 +36,18 @@ export const scanManual = inngest.createFunction(
 
     if (!business) throw new Error('Business not found')
 
+    // Ownership verification: ensure the business belongs to the requesting user
+    const ownerCheck = await step.run('verify-ownership', async () => {
+      const { data } = await supabase
+        .from('businesses')
+        .select('user_id')
+        .eq('id', businessId)
+        .single()
+      return data?.user_id === userId
+    })
+
+    if (!ownerCheck) throw new Error('Business does not belong to user')
+
     // Determine scan tier from user's plan
     const planData = await step.run('fetch-plan', async () => {
       const { data } = await supabase
@@ -144,7 +156,7 @@ export const scanManual = inngest.createFunction(
           engine: engineData.engine,
           is_mentioned: engineData.mentioned,
           rank_position: engineData.mention_position,
-          sentiment_score: engineData.sentiment === 'positive' ? 80 : engineData.sentiment === 'neutral' ? 50 : 20,
+          sentiment: engineData.sentiment,
         })
       }
 
