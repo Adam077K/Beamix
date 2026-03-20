@@ -20,6 +20,8 @@ export interface BusinessResearch {
   services: string[]
   targetCustomers: string
   websiteContext: string
+  websiteTitle: string | null
+  websiteDescription: string | null
 }
 
 /**
@@ -49,8 +51,13 @@ export async function researchBusiness(
   const targetCustomers = perplexityResearch.targetCustomers || 'general customers'
 
   console.log(`[research] Industry: "${industry}", Services: [${services.join(', ')}]`)
+  console.log(`[research] Website title: "${websiteCtx.title}", scraped: ${websiteCtx.success}`)
 
-  return { industry, description, services, targetCustomers, websiteContext }
+  return {
+    industry, description, services, targetCustomers, websiteContext,
+    websiteTitle: websiteCtx.title,
+    websiteDescription: websiteCtx.metaDescription,
+  }
 }
 
 async function callPerplexityResearch(

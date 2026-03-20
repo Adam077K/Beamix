@@ -946,6 +946,51 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
           </>
         )}
 
+        {/* Business Context — how we understood the business */}
+        {results.business_context && (
+          <>
+            <Separator className="my-8" />
+            <motion.div variants={itemVariants}>
+              <details className="group">
+                <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                  <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" />
+                  How we understood your business
+                </summary>
+                <div className="mt-3 rounded-xl border border-border bg-muted/20 p-4 space-y-2 text-sm">
+                  <div>
+                    <span className="font-medium text-foreground">Industry: </span>
+                    <span className="text-muted-foreground">{results.business_context.detected_industry}</span>
+                  </div>
+                  {results.business_context.description && (
+                    <div>
+                      <span className="font-medium text-foreground">About: </span>
+                      <span className="text-muted-foreground">{results.business_context.description}</span>
+                    </div>
+                  )}
+                  {results.business_context.services.length > 0 && (
+                    <div>
+                      <span className="font-medium text-foreground">Services: </span>
+                      <span className="text-muted-foreground">{results.business_context.services.join(', ')}</span>
+                    </div>
+                  )}
+                  {results.business_context.website_title && (
+                    <div>
+                      <span className="font-medium text-foreground">Website title: </span>
+                      <span className="text-muted-foreground">{results.business_context.website_title}</span>
+                    </div>
+                  )}
+                  {results.business_context.website_description && (
+                    <div>
+                      <span className="font-medium text-foreground">Website description: </span>
+                      <span className="text-muted-foreground">{results.business_context.website_description}</span>
+                    </div>
+                  )}
+                </div>
+              </details>
+            </motion.div>
+          </>
+        )}
+
         <Separator className="my-8" />
 
         {/* Leaderboard */}

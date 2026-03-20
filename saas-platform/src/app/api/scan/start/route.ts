@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     const [research, insertResult] = await Promise.all([
       hasApiKey
         ? researchBusiness(business_name, url)
-        : Promise.resolve({ industry: sector || 'local business', description: '', services: [], targetCustomers: '', websiteContext: '' }),
+        : Promise.resolve({ industry: sector || 'local business', description: '', services: [] as string[], targetCustomers: '', websiteContext: '', websiteTitle: null, websiteDescription: null }),
       supabase
         .from('free_scans')
         .insert({
@@ -185,12 +185,12 @@ async function runScan(
   console.log(`[scan] ${analysis.visibility_summary}`)
 
   // Step 4: Build results
-  return buildScanResults(businessName, research.industry, queries, analysis)
+  return buildScanResults(businessName, research, queries, analysis)
 }
 
 function buildScanResults(
   businessName: string,
-  industry: string,
+  research: Awaited<ReturnType<typeof researchBusiness>>,
   queries: string[],
   analysis: AnalysisResult,
 ): ScanResults {
@@ -273,5 +273,12 @@ function buildScanResults(
     leaderboard,
     queries_used: queries,
     visibility_summary: analysis.visibility_summary,
+    business_context: {
+      detected_industry: research.industry,
+      description: research.description,
+      services: research.services,
+      website_title: research.websiteTitle ?? null,
+      website_description: research.websiteDescription ?? null,
+    },
   }
 }

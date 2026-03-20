@@ -42,6 +42,14 @@ export interface ScanResults {
   queries_used?: string[]
   /** One-sentence AI visibility summary from the analyzer */
   visibility_summary?: string
+  /** How we understood the business (from website scrape + Perplexity research) */
+  business_context?: {
+    detected_industry: string
+    description: string
+    services: string[]
+    website_title?: string | null
+    website_description?: string | null
+  }
 }
 
 export interface LeaderboardEntry {
