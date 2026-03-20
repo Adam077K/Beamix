@@ -27,7 +27,6 @@ interface AgentModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   agentName: string
-  agentSlug: string
   creditCost: number
   totalCredits: number
   onExecute: (params: AgentExecuteParams) => void

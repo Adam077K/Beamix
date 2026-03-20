@@ -518,7 +518,7 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
               if (!open) setExecuteError(null)
             }}
             agentName={selectedAgent.name}
-            agentSlug={agentTypeToSlug(selectedAgent.type) ?? selectedAgent.type.replace(/_/g, '-')}
+
             creditCost={selectedAgent.credits}
             totalCredits={totalCredits}
             onExecute={handleExecute}
