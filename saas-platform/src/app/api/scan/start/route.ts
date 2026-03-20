@@ -153,19 +153,18 @@ async function runScan(
   console.log(`[scan] Q3: "${authorityQuery}"`)
 
   // Step 2: Query engines in parallel
-  // ChatGPT (:online) is expensive — only 2 queries (category + brand)
-  // Gemini (:online) + Perplexity (native search) — all 3 queries (cheap)
-  const chatgptQueries = [categoryQuery, brandQuery] // 2 queries
-  const otherQueries = queries                        // 3 queries
+  // ChatGPT + Gemini (:online) — 2 queries each (category + brand), skip authority
+  // Perplexity (native search, no extra cost) — all 3 queries
+  const twoQueries = [categoryQuery, brandQuery]
 
   const rawResponses = await Promise.all([
-    ...chatgptQueries.map((query) =>
+    ...twoQueries.map((query) =>
       queryEngineRaw('chatgpt', query).then((r) => ({ ...r, query }) as RawEngineResponse)
     ),
-    ...otherQueries.map((query) =>
+    ...twoQueries.map((query) =>
       queryEngineRaw('gemini', query).then((r) => ({ ...r, query }) as RawEngineResponse)
     ),
-    ...otherQueries.map((query) =>
+    ...queries.map((query) =>
       queryEngineRaw('perplexity', query).then((r) => ({ ...r, query }) as RawEngineResponse)
     ),
   ])
