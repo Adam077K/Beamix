@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
+import { after } from 'next/server'
 import { nanoid } from 'nanoid'
 import { scanStartSchema } from '@/lib/scan/validation'
 import { createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { inngest } from '@/inngest/client'
 import { runMockScan } from '@/lib/scan/mock-engine'
 import { queryEngine, type EngineQuery } from '@/lib/scan/engine-adapter'
@@ -84,7 +86,7 @@ export async function POST(request: Request) {
 
     const scanId = insertedScan.id
 
-    // Try Inngest first, fall back to inline processing
+    // Try Inngest first, fall back to inline processing via after()
     const useInngest = !!(process.env.INNGEST_EVENT_KEY || process.env.INNGEST_SIGNING_KEY)
 
     if (useInngest) {
@@ -106,39 +108,47 @@ export async function POST(request: Request) {
         )
       } catch (inngestError) {
         console.warn('[scan/start] Inngest send failed, falling back to inline processing:', inngestError)
-        // Fall through to inline processing
+        // Fall through to after() processing
       }
     }
 
-    // Inline processing — run the scan directly without Inngest
-    // This works on Vercel without Inngest setup
-    await supabase.from('free_scans').update({ status: 'processing' }).eq('id', scanId)
-
-    try {
-      const scanResults = await runScanInline(business_name, url, sector, location)
-
-      await supabase
-        .from('free_scans')
-        .update({
-          status: 'completed',
-          overall_score: scanResults.visibility_score,
-          results_data: JSON.parse(JSON.stringify(scanResults)),
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', scanId)
-
-      return NextResponse.json(
-        { scan_id: scanId, status: 'processing' },
-        { status: 202 }
+    // Use next/server after() to process scan AFTER response is sent
+    // This prevents the POST from blocking and timing out on Vercel
+    after(async () => {
+      // Create a fresh Supabase client for the background task
+      // (the request-scoped one may not be available after response)
+      const bgSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
       )
-    } catch (scanError) {
-      console.error('[scan/start] Inline scan failed:', scanError)
-      await supabase.from('free_scans').update({ status: 'failed' }).eq('id', scanId)
-      return NextResponse.json(
-        { scan_id: scanId, status: 'processing' },
-        { status: 202 }
-      )
-    }
+
+      await bgSupabase.from('free_scans').update({ status: 'processing' }).eq('id', scanId)
+
+      try {
+        const scanResults = await runScanInline(business_name, url, sector, location)
+
+        await bgSupabase
+          .from('free_scans')
+          .update({
+            status: 'completed',
+            overall_score: scanResults.visibility_score,
+            results_data: JSON.parse(JSON.stringify(scanResults)),
+            completed_at: new Date().toISOString(),
+          })
+          .eq('id', scanId)
+
+        console.log(`[scan/start] Scan ${scanId} completed inline with score ${scanResults.visibility_score}`)
+      } catch (scanError) {
+        console.error('[scan/start] Inline scan failed:', scanError)
+        await bgSupabase.from('free_scans').update({ status: 'failed' }).eq('id', scanId)
+      }
+    })
+
+    // Return immediately — client polls for results
+    return NextResponse.json(
+      { scan_id: scanId, status: 'processing' },
+      { status: 202 }
+    )
   } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -164,7 +174,7 @@ async function runScanInline(
     return runMockScan(businessName, businessName, industry)
   }
 
-  // Real engine queries
+  // Real engine queries via OpenRouter
   const engineQuery: EngineQuery = {
     query: `Who are the best ${industry} businesses${location ? ` in ${location}` : ''}? Is ${businessName} (${websiteUrl}) recommended?`,
     businessName,
@@ -198,7 +208,6 @@ async function runScanInline(
   const visibilityScore = compositeScore.overallScore
   const topCompetitorScore = Math.min(95, visibilityScore + 10 + Math.round(Math.random() * 15))
 
-  // Generate leaderboard
   const competitorScores = competitors.slice(0, 5).map((name, i) => ({
     name,
     score: Math.max(20, Math.min(95, topCompetitorScore - i * 8 + Math.round(Math.random() * 10 - 5))),
