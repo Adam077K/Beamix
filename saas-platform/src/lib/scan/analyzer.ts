@@ -97,7 +97,7 @@ export async function analyzeResponses(params: {
   try {
     const client = getScanClient()
     const completion = await client.chat.completions.create({
-      model: MODELS.gemini,
+      model: MODELS.analyzer,
       messages: [
         {
           role: 'system',

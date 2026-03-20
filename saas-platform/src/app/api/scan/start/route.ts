@@ -4,7 +4,7 @@ import { scanStartSchema } from '@/lib/scan/validation'
 import { createServiceClient } from '@/lib/supabase/server'
 import { runMockScan } from '@/lib/scan/mock-engine'
 import { queryEngineRaw } from '@/lib/scan/engine-adapter'
-import { inferIndustry, generateScanQueries } from '@/lib/scan/query-templates'
+import { researchBusiness, generateScanQueries } from '@/lib/scan/query-templates'
 import { analyzeResponses, type RawEngineResponse, type AnalysisResult } from '@/lib/scan/analyzer'
 import type { ScanResults, EngineResult, LeaderboardEntry } from '@/lib/types'
 
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
     const supabase = await createServiceClient()
 
-    // IP-based rate limiting — max 5 scans per IP per hour
+    // IP-based rate limiting
     const ip =
       request.headers.get('x-real-ip') ||
       request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -49,37 +49,47 @@ export async function POST(request: Request) {
 
     const scanIdToken = nanoid(12)
 
-    // Infer industry if sector is generic
-    const industry = (sector && sector !== 'general')
-      ? sector
-      : await inferIndustry(business_name, url)
+    // Start research while creating DB record (parallel)
+    const hasApiKey = !!(process.env.OPENROUTER_SCAN_KEY ?? process.env.OPENROUTER_API_KEY)
 
-    const { data: insertedScan, error: insertError } = await supabase
-      .from('free_scans')
-      .insert({
-        website_url: url,
-        business_name,
-        industry,
-        location,
-        ip_address: ip,
-        status: 'processing',
-        scan_id: scanIdToken,
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        ...(email ? { email } : {}),
-      })
-      .select('id, scan_id')
-      .single()
+    const [research, insertResult] = await Promise.all([
+      hasApiKey
+        ? researchBusiness(business_name, url)
+        : Promise.resolve({ industry: sector || 'local business', description: '', services: [], targetCustomers: '', websiteContext: '' }),
+      supabase
+        .from('free_scans')
+        .insert({
+          website_url: url,
+          business_name,
+          industry: sector || 'general', // updated later with real industry
+          location,
+          ip_address: ip,
+          status: 'processing',
+          scan_id: scanIdToken,
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          ...(email ? { email } : {}),
+        })
+        .select('id, scan_id')
+        .single(),
+    ])
 
-    if (insertError || !insertedScan) {
-      console.error('[scan/start] Failed to insert free_scan:', insertError)
+    if (insertResult.error || !insertResult.data) {
+      console.error('[scan/start] Failed to insert free_scan:', insertResult.error)
       return NextResponse.json({ error: 'Failed to start scan' }, { status: 500 })
     }
 
-    const scanId = insertedScan.id
-    console.log(`[scan/start] Created scan ${scanId} for "${business_name}" (industry: ${industry})`)
+    const scanId = insertResult.data.id
 
+    // Update industry with researched value
+    if (research.industry && research.industry !== sector) {
+      await supabase.from('free_scans').update({ industry: research.industry }).eq('id', scanId)
+    }
+
+    console.log(`[scan/start] Scan ${scanId} | Business: "${business_name}" | Industry: "${research.industry}" | Services: [${research.services.join(', ')}]`)
+
+    // Process scan
     try {
-      const scanResults = await runScan(business_name, url, industry, location)
+      const scanResults = await runScan(business_name, url, research, location)
 
       await supabase
         .from('free_scans')
@@ -108,38 +118,38 @@ export async function POST(request: Request) {
 }
 
 /**
- * Smart Scan Pipeline v2:
+ * Scan Pipeline v3 — Web-grounded:
  *
- * 1. Generate 3 queries: category + brand + authority (0 API calls)
- * 2. Query 3 engines × 3 queries = 9 calls in parallel (~3-5s)
- * 3. Analyze all 9 responses with Gemini Flash (1 call, ~1-2s)
+ * 0. Scrape website + Perplexity research (parallel, ~2s)
+ * 1. Generate 3 queries from real business data
+ * 2. Query 3 engines × 3 queries with web search enabled (9 calls, parallel)
+ * 3. Analyze all 9 responses (1 call)
  * 4. Build results with real competitor scores + personalized recommendations
  *
- * Total: ~11 API calls, ~$0.10-0.18/scan, ~7-10s wall-clock
+ * All engines use web search: ChatGPT (:online), Gemini (:online), Perplexity (native)
  */
 async function runScan(
   businessName: string,
   websiteUrl: string,
-  industry: string,
+  research: Awaited<ReturnType<typeof researchBusiness>>,
   location?: string | null,
 ): Promise<ScanResults> {
   const hasApiKey = !!(process.env.OPENROUTER_SCAN_KEY ?? process.env.OPENROUTER_API_KEY)
 
   if (!hasApiKey) {
-    console.log('[scan] No OPENROUTER_SCAN_KEY — using mock engine')
-    return runMockScan(businessName, businessName, industry)
+    return runMockScan(businessName, businessName, research.industry)
   }
 
-  // Step 1: Generate 3 queries
+  // Step 1: Generate queries from research
   const [categoryQuery, brandQuery, authorityQuery] = generateScanQueries(
-    businessName, websiteUrl, industry, location
+    businessName, websiteUrl, research, location
   )
   const queries = [categoryQuery, brandQuery, authorityQuery]
-  console.log(`[scan] Q1 (category): "${categoryQuery}"`)
-  console.log(`[scan] Q2 (brand): "${brandQuery}"`)
-  console.log(`[scan] Q3 (authority): "${authorityQuery}"`)
+  console.log(`[scan] Q1: "${categoryQuery}"`)
+  console.log(`[scan] Q2: "${brandQuery}"`)
+  console.log(`[scan] Q3: "${authorityQuery}"`)
 
-  // Step 2: Query all 3 engines × 3 queries = 9 calls in parallel
+  // Step 2: Query all engines with web search (9 calls in parallel)
   const engines: Array<'chatgpt' | 'gemini' | 'perplexity'> = ['chatgpt', 'gemini', 'perplexity']
 
   const rawResponses = await Promise.all(
@@ -151,22 +161,22 @@ async function runScan(
   )
 
   const mockCount = rawResponses.filter((r) => r.isMock).length
-  console.log(`[scan] Got ${rawResponses.length} responses (${mockCount} mock)`)
+  console.log(`[scan] ${rawResponses.length} responses (${mockCount} mock)`)
 
-  // Step 3: Analyze with LLM
+  // Step 3: Analyze
   const analysis = await analyzeResponses({
     businessName,
     websiteUrl,
-    industry,
+    industry: research.industry,
     location,
     queries,
     responses: rawResponses,
   })
 
-  console.log(`[scan] Analysis: ${analysis.visibility_summary}`)
+  console.log(`[scan] ${analysis.visibility_summary}`)
 
-  // Step 4: Build results with real competitor scores
-  return buildScanResults(businessName, industry, queries, analysis)
+  // Step 4: Build results
+  return buildScanResults(businessName, research.industry, queries, analysis)
 }
 
 function buildScanResults(
@@ -175,7 +185,6 @@ function buildScanResults(
   queries: string[],
   analysis: AnalysisResult,
 ): ScanResults {
-  // Engine results from analyzer
   const engineResults: EngineResult[] = analysis.engines.map((e) => ({
     engine: e.engine as EngineResult['engine'],
     is_mentioned: e.mentioned,
@@ -185,25 +194,24 @@ function buildScanResults(
     response_snippet: e.context_quote ?? '',
   }))
 
-  // Calculate visibility score
+  // Visibility score
   const mentionedCount = engineResults.filter((e) => e.is_mentioned).length
   const totalEngines = engineResults.length
   let visibilityScore = 0
 
   if (totalEngines > 0) {
-    // Mention presence: 0-40 points
+    // Mention: 0-40 pts
     visibilityScore += Math.round((mentionedCount / totalEngines) * 40)
 
-    // Position quality: 0-30 points
+    // Position: 0-30 pts
     for (const e of engineResults) {
       if (e.is_mentioned && e.mention_position !== null) {
-        // Position 1 = 30pts, 2 = 25pts, 3 = 22pts, 5 = 15pts, 10 = 5pts
         const posScore = Math.max(5, 30 - (e.mention_position - 1) * 3)
         visibilityScore += Math.round(posScore / totalEngines)
       }
     }
 
-    // Sentiment: 0-30 points
+    // Sentiment: 0-30 pts
     for (const e of engineResults) {
       if (e.sentiment === 'positive') visibilityScore += Math.round(30 / totalEngines)
       else if (e.sentiment === 'neutral') visibilityScore += Math.round(15 / totalEngines)
@@ -212,33 +220,20 @@ function buildScanResults(
 
   visibilityScore = Math.max(0, Math.min(100, visibilityScore))
 
-  // Build leaderboard with REAL competitor scores based on engine data
-  const competitorScores = new Map<string, { mentions: number; bestPos: number | null }>()
-
-  for (const comp of analysis.top_competitors) {
-    competitorScores.set(comp.name, {
-      mentions: comp.mention_count,
-      bestPos: comp.best_position,
-    })
-  }
-
+  // Real competitor scores from analyzer data
   const leaderboardEntries: Array<{ name: string; score: number }> = []
 
-  // Score each competitor: (mentionRate * 60) + positionBonus
-  for (const [name, data] of competitorScores) {
-    if (name.toLowerCase() === businessName.toLowerCase()) continue
-    const mentionRate = data.mentions / 3
-    const posBonus = data.bestPos !== null
-      ? Math.max(5, 35 - (data.bestPos - 1) * 4)
+  for (const comp of analysis.top_competitors) {
+    if (comp.name.toLowerCase() === businessName.toLowerCase()) continue
+    const mentionRate = comp.mention_count / 3
+    const posBonus = comp.best_position !== null
+      ? Math.max(5, 35 - (comp.best_position - 1) * 4)
       : 10
     const score = Math.min(95, Math.round(mentionRate * 60 + posBonus))
-    leaderboardEntries.push({ name, score })
+    leaderboardEntries.push({ name: comp.name, score })
   }
 
-  // Add the user's business
   leaderboardEntries.push({ name: businessName, score: visibilityScore })
-
-  // Sort by score descending
   leaderboardEntries.sort((a, b) => b.score - a.score)
 
   const leaderboard: LeaderboardEntry[] = leaderboardEntries.slice(0, 8).map((entry, i) => ({
@@ -251,7 +246,7 @@ function buildScanResults(
   const userEntry = leaderboard.find((e) => e.is_user)
   const topCompetitor = leaderboardEntries.find((e) => e.name !== businessName)
 
-  // Use personalized recommendations from analyzer (not random templates)
+  // Personalized recommendations from analyzer
   const quickWins = analysis.recommendations.map((r) => ({
     title: r.title,
     description: r.description,

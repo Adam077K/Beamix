@@ -59,11 +59,17 @@ export function isOpenRouterConfigured(): boolean {
  * Change models here, nowhere else.
  */
 export const MODELS = {
-  // Scan engines
-  chatgpt: 'openai/gpt-4o',
-  gemini: 'google/gemini-2.0-flash-001',
-  perplexity: 'perplexity/sonar-pro',
+  // Scan engines — :online suffix adds real-time web search via OpenRouter plugin
+  chatgpt: 'openai/gpt-4o:online',
+  gemini: 'google/gemini-2.0-flash-001:online',
+  perplexity: 'perplexity/sonar-pro', // already has native web search
   claude: 'anthropic/claude-sonnet-4',
+
+  // Scan analysis — cheap model for structured extraction (no web search needed)
+  analyzer: 'google/gemini-2.0-flash-001',
+
+  // Perplexity researcher — for initial business research step
+  researcher: 'perplexity/sonar-pro',
 
   // Agent execution — capable model for content generation
   agentExecution: 'anthropic/claude-sonnet-4',
