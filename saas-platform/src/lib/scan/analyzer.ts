@@ -105,8 +105,8 @@ export async function analyzeResponses(params: {
         },
         { role: 'user', content: prompt },
       ],
-      max_tokens: 2000,
-      temperature: 0.1,
+      max_tokens: 3000,
+      temperature: 0.15,
     })
 
     const text = completion.choices[0]?.message?.content ?? ''
@@ -148,7 +148,7 @@ function buildAnalyzerPrompt(params: {
   // Group responses by query
   const queryBlocks = queries.map((query, qi) => {
     const qResponses = responses.filter((r) => r.query === query)
-    const formatted = qResponses.map((r) => `- ${r.engine} response:\n${r.rawResponse.slice(0, 1200)}`).join('\n\n')
+    const formatted = qResponses.map((r) => `- ${r.engine} response:\n${r.rawResponse.slice(0, 2500)}`).join('\n\n')
     return `QUERY ${qi + 1}: "${query}"\n${formatted}`
   }).join('\n\n---\n\n')
 

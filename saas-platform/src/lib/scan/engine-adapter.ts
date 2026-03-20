@@ -82,8 +82,8 @@ export async function queryEngineRaw(
     const response = await client.chat.completions.create({
       model: modelMap[engine] ?? MODELS.chatgpt,
       messages: [{ role: 'user', content: query }],
-      max_tokens: 1500,
-      temperature: 0.3,
+      max_tokens: 3000,
+      temperature: 0.4,
     })
 
     return {

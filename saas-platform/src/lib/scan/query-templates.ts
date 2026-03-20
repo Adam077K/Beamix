@@ -68,18 +68,26 @@ async function callPerplexityResearch(
       model: MODELS.researcher,
       messages: [{
         role: 'user',
-        content: `Research the business "${businessName}" at ${websiteUrl}. I need ACCURATE information.
+        content: `Search the web and research the business "${businessName}" at ${websiteUrl}. Visit their website and find out:
+- What exactly does this business do? What is their main product or service?
+- What industry are they in?
+- Who are their customers?
+- What specific services or products do they offer?
+- Who are their main competitors?
+
+Be thorough — I need ACCURATE, CURRENT information based on their actual website, not guesses.
 
 Return ONLY this JSON (no other text):
 {
-  "industry": "2-4 word industry description (e.g., 'AI visibility platform', 'plumbing services', 'Italian restaurant')",
-  "description": "One sentence describing what this business does",
-  "services": ["service 1", "service 2", "service 3"],
-  "target_customers": "Who their typical customers are (e.g., 'small businesses', 'homeowners in NYC', 'enterprise companies')"
+  "industry": "2-4 word industry (e.g., 'AI visibility platform', 'plumbing services', 'Italian restaurant')",
+  "description": "2-3 sentences describing what this business actually does",
+  "services": ["their main service/product", "second service", "third service"],
+  "target_customers": "Who their customers are (e.g., 'small businesses', 'homeowners in NYC')",
+  "competitors": ["competitor 1", "competitor 2", "competitor 3"]
 }`,
       }],
-      max_tokens: 300,
-      temperature: 0.1,
+      max_tokens: 600,
+      temperature: 0.2,
     })
 
     const text = response.choices[0]?.message?.content ?? ''
@@ -145,25 +153,25 @@ export function generateScanQueries(
   const locationClause = location && location !== 'Global' ? ` in ${location}` : ''
   const domain = extractDomain(websiteUrl)
 
-  // Use the researched industry (not a guess)
   const industry = research.industry
-
-  // Use a specific service for the category query if available
   const primaryService = research.services[0] ?? industry
+  const businessDesc = research.description
+    ? ` They ${research.description.toLowerCase().startsWith('they') ? research.description.slice(5) : research.description.toLowerCase()}`
+    : ''
 
   // Query 1: Category/organic visibility
-  // Uses the actual service the business offers
-  const categoryQuery = `What are the best ${primaryService} providers${locationClause}? List them as a numbered list: 1. 2. 3. etc. Include a one-line description of each.`
+  // Natural question a customer would ask. Numbered list for position extraction.
+  const categoryQuery = `What are the top ${primaryService} companies${locationClause}? Rank them 1-10 with a short description of each and why they're recommended.`
 
-  // Query 2: Direct brand recognition with domain disambiguation
-  const brandQuery = `Tell me about ${businessName} (${domain})${locationClause}. What do they do? Are they recommended? What do customers say about them?`
+  // Query 2: Direct brand recognition with full context
+  // Give the model enough context to find the RIGHT business
+  const brandQuery = `Search for "${businessName}" (website: ${domain}).${businessDesc} What do you know about them? Are they good? What are their strengths and weaknesses? Who are their competitors?`
 
-  // Query 3: Problem/solution authority
-  // Uses target customer context for more relevant results
+  // Query 3: Problem/solution authority (only sent to Perplexity)
   const customerContext = research.targetCustomers !== 'general customers'
     ? ` for ${research.targetCustomers}`
     : ''
-  const authorityQuery = `How can a ${industry}${customerContext} improve their online presence and attract more customers${locationClause}? Give examples of companies doing it well.`
+  const authorityQuery = `What are the best ${industry} solutions${customerContext}${locationClause}? Compare the top options and explain which is best for different needs.`
 
   return [categoryQuery, brandQuery, authorityQuery]
 }
