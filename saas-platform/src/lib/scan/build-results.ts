@@ -72,7 +72,7 @@ export function buildScanResults(params: {
 
   for (const comp of analysis.top_competitors) {
     if (comp.name.toLowerCase() === businessName.toLowerCase()) continue
-    const mentionRate = comp.mention_count / 3
+    const mentionRate = comp.mention_count / Math.max(1, analysis.engines.length)
     const posBonus = comp.best_position !== null
       ? Math.max(5, 35 - (comp.best_position - 1) * 4)
       : 10

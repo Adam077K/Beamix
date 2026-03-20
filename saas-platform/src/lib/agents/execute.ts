@@ -58,7 +58,7 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     .eq('user_id', user.id)
     .single()
 
-  const userPlan = subscription?.plan_tier ?? 'free'
+  const userPlan = subscription?.plan_tier ?? null
   const subStatus = subscription?.status ?? 'active'
 
   if (subStatus !== 'active' && subStatus !== 'trialing') {
@@ -70,7 +70,7 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
 
   if (!isPlanSufficient(userPlan, config.minPlan)) {
     return NextResponse.json(
-      { error: `This agent requires the ${config.minPlan} plan or higher. You are on the ${userPlan} plan.` },
+      { error: `This agent requires the ${config.minPlan} plan or higher. You are on the ${userPlan ?? 'free'} plan.` },
       { status: 403 }
     )
   }
@@ -78,7 +78,7 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
   // 3. Rate-limit check for unlimited agents (credits checked atomically by holdCredits RPC)
   if (config.isUnlimited) {
     // Unlimited agents: check daily rate limit instead of credits
-    const dailyLimit = UNLIMITED_DAILY_LIMITS[userPlan] ?? UNLIMITED_DAILY_LIMITS.starter ?? 10
+    const dailyLimit = UNLIMITED_DAILY_LIMITS[userPlan ?? 'starter'] ?? UNLIMITED_DAILY_LIMITS.starter ?? 10
     // Use UTC midnight to avoid timezone-dependent rate limit resets
     const todayStartUTC = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z')
 

@@ -123,8 +123,8 @@ const PLAN_ORDER: Record<string, number> = {
   business: 3,
 }
 
-export function isPlanSufficient(userPlan: string, requiredPlan: string): boolean {
-  return (PLAN_ORDER[userPlan] ?? 0) >= (PLAN_ORDER[requiredPlan] ?? 0)
+export function isPlanSufficient(userPlan: string | null, requiredPlan: string): boolean {
+  return (PLAN_ORDER[userPlan ?? ''] ?? 0) >= (PLAN_ORDER[requiredPlan] ?? 0)
 }
 
 /**

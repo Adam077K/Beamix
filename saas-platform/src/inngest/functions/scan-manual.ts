@@ -31,7 +31,14 @@ export const scanManual = inngest.createFunction(
     const { scanId, businessId, userId } = parsed.data
 
     await step.run('update-status', async () => {
-      await supabase.from('scans').update({ status: 'processing' }).eq('id', scanId)
+      const { data: lockResult } = await supabase
+        .from('scans')
+        .update({ status: 'processing' })
+        .eq('id', scanId)
+        .eq('status', 'pending')
+        .select('id')
+        .single()
+      if (!lockResult) throw new Error('Scan already processing or completed')
     })
 
     // Fetch business details + verify ownership in a single query
