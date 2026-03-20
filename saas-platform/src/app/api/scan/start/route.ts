@@ -4,9 +4,8 @@ import { scanStartSchema } from '@/lib/scan/validation'
 import { createServiceClient } from '@/lib/supabase/server'
 import { runMockScan } from '@/lib/scan/mock-engine'
 import { queryEngineRaw } from '@/lib/scan/engine-adapter'
-import { generateScanQueries } from '@/lib/scan/query-templates'
+import { inferIndustry, generateScanQueries } from '@/lib/scan/query-templates'
 import { analyzeResponses, type RawEngineResponse } from '@/lib/scan/analyzer'
-import { INDUSTRY_COMPETITORS } from '@/constants/industries'
 import type { ScanResults, EngineResult, LeaderboardEntry, QuickWin } from '@/lib/types'
 
 // Allow up to 60s for LLM API calls
@@ -60,12 +59,17 @@ export async function POST(request: Request) {
 
     const scanIdToken = nanoid(12)
 
+    // Infer industry from business name + URL (if sector is generic)
+    const industry = (sector && sector !== 'general')
+      ? sector
+      : await inferIndustry(business_name, url)
+
     const { data: insertedScan, error: insertError } = await supabase
       .from('free_scans')
       .insert({
         website_url: url,
         business_name,
-        industry: sector,
+        industry,
         location,
         ip_address: ip,
         status: 'processing',
@@ -82,11 +86,11 @@ export async function POST(request: Request) {
     }
 
     const scanId = insertedScan.id
-    console.log(`[scan/start] Created scan ${scanId} for "${business_name}"`)
+    console.log(`[scan/start] Created scan ${scanId} for "${business_name}" (industry: ${industry})`)
 
-    // Process scan synchronously — maxDuration=60 gives plenty of time
+    // Process scan synchronously
     try {
-      const scanResults = await runScan(business_name, url, sector, location)
+      const scanResults = await runScan(business_name, url, industry, location)
 
       await supabase
         .from('free_scans')
@@ -115,11 +119,13 @@ export async function POST(request: Request) {
 }
 
 /**
- * NEW PIPELINE: Smart query generation → parallel engine queries → LLM analysis
+ * Smart Scan Pipeline:
  *
- * Step 1: Generate 2 natural, unbranded queries (0 API calls)
- * Step 2: Query 3 engines × 2 queries = 6 calls in parallel (~3-5s)
- * Step 3: Analyze all responses with Gemini Flash (1 call, ~1-2s)
+ * 1. Infer industry (already done above, passed as param)
+ * 2. Generate 2 queries: category (organic visibility) + brand (recognition)
+ * 3. Query 3 engines × 2 queries = 6 calls in parallel
+ * 4. Analyze all 6 responses with Gemini Flash
+ * 5. Build ScanResults
  */
 async function runScan(
   businessName: string,
@@ -134,17 +140,18 @@ async function runScan(
     return runMockScan(businessName, businessName, industry)
   }
 
-  // Step 1: Generate natural search queries
-  const [broadQuery, specificQuery] = generateScanQueries(industry, location)
-  console.log(`[scan] Queries: "${broadQuery}" | "${specificQuery}"`)
+  // Step 1: Generate queries
+  const [categoryQuery, brandQuery] = generateScanQueries(businessName, industry, location)
+  console.log(`[scan] Category query: "${categoryQuery}"`)
+  console.log(`[scan] Brand query: "${brandQuery}"`)
 
   // Step 2: Query all 3 engines with both queries in parallel (6 calls)
   const engines: Array<'chatgpt' | 'gemini' | 'perplexity'> = ['chatgpt', 'gemini', 'perplexity']
 
   const rawResponses = await Promise.all(
     engines.flatMap((engine) => [
-      queryEngineRaw(engine, broadQuery).then((r) => ({ ...r, query: broadQuery } as RawEngineResponse)),
-      queryEngineRaw(engine, specificQuery).then((r) => ({ ...r, query: specificQuery } as RawEngineResponse)),
+      queryEngineRaw(engine, categoryQuery).then((r) => ({ ...r, query: categoryQuery }) as RawEngineResponse),
+      queryEngineRaw(engine, brandQuery).then((r) => ({ ...r, query: brandQuery }) as RawEngineResponse),
     ])
   )
 
@@ -157,66 +164,76 @@ async function runScan(
     websiteUrl,
     industry,
     location,
-    queries: [broadQuery, specificQuery],
+    queries: [categoryQuery, brandQuery],
     responses: rawResponses,
   })
 
   console.log(`[scan] Analysis: ${analysis.visibility_summary}`)
 
-  // Build ScanResults from analysis
-  return buildScanResults(businessName, industry, analysis, rawResponses)
+  // Step 4: Build results
+  return buildScanResults(businessName, analysis, rawResponses)
 }
 
 function buildScanResults(
   businessName: string,
-  industry: string,
   analysis: Awaited<ReturnType<typeof analyzeResponses>>,
   rawResponses: RawEngineResponse[],
 ): ScanResults {
-  // Build engine results
   const engineResults: EngineResult[] = analysis.engines.map((e) => {
-    const snippet = rawResponses.find((r) => r.engine === e.engine)?.rawResponse?.slice(0, 300) ?? ''
+    // Prefer context_quote from analyzer, fall back to raw response snippet
+    const rawSnippet = rawResponses.find((r) => r.engine === e.engine)?.rawResponse?.slice(0, 300) ?? ''
     return {
       engine: e.engine as EngineResult['engine'],
       is_mentioned: e.mentioned,
       mention_position: e.mention_position,
       sentiment: e.sentiment,
       competitors_mentioned: e.competitors_found,
-      response_snippet: e.context_quote ?? snippet,
+      response_snippet: e.context_quote ?? rawSnippet,
     }
   })
 
   // Calculate visibility score
   const mentionedCount = engineResults.filter((e) => e.is_mentioned).length
   const totalEngines = engineResults.length
-  const mentionRate = totalEngines > 0 ? mentionedCount / totalEngines : 0
 
-  // Score: 40% mention presence + 30% position quality + 30% sentiment
-  let visibilityScore = Math.round(mentionRate * 40)
+  // Score components:
+  // - Mention presence: 0-40 points (are you mentioned at all?)
+  // - Position quality: 0-30 points (where in the list?)
+  // - Sentiment: 0-30 points (positive/neutral/negative?)
+  let visibilityScore = 0
 
-  for (const e of engineResults) {
-    if (e.is_mentioned && e.mention_position !== null) {
-      // Position score: 1st = 30, 2nd = 25, 3rd = 20, 4th+ = 15
-      const posScore = Math.max(15, 30 - (e.mention_position - 1) * 5)
-      visibilityScore += Math.round(posScore * 0.3 / totalEngines)
+  if (totalEngines > 0) {
+    const mentionRate = mentionedCount / totalEngines
+    visibilityScore += Math.round(mentionRate * 40)
+
+    for (const e of engineResults) {
+      if (e.is_mentioned) {
+        // Position score
+        if (e.mention_position !== null) {
+          const posScore = Math.max(10, 30 - (e.mention_position - 1) * 5)
+          visibilityScore += Math.round(posScore / totalEngines)
+        } else {
+          visibilityScore += Math.round(15 / totalEngines)
+        }
+        // Sentiment score
+        if (e.sentiment === 'positive') visibilityScore += Math.round(30 / totalEngines)
+        else if (e.sentiment === 'neutral') visibilityScore += Math.round(15 / totalEngines)
+      }
     }
-    if (e.sentiment === 'positive') visibilityScore += Math.round(30 * 0.3 / totalEngines)
-    else if (e.sentiment === 'neutral') visibilityScore += Math.round(15 * 0.3 / totalEngines)
   }
 
   visibilityScore = Math.max(0, Math.min(100, visibilityScore))
 
-  // Build leaderboard from real competitors
-  const competitors = analysis.top_competitors.length > 0
-    ? analysis.top_competitors
-    : INDUSTRY_COMPETITORS[industry] ?? ['Top Competitor']
-
-  const topCompetitor = competitors[0] ?? 'Top Competitor'
-  const topCompetitorScore = Math.min(95, visibilityScore + 10 + Math.round(Math.random() * 15))
+  // Build leaderboard from REAL competitors found by the analyzer
+  const competitors = analysis.top_competitors.filter((c) =>
+    c.toLowerCase() !== businessName.toLowerCase()
+  )
+  const topCompetitor = competitors[0] ?? 'Industry Leader'
+  const topCompetitorScore = Math.min(95, visibilityScore + 8 + Math.round(Math.random() * 12))
 
   const competitorScores = competitors.slice(0, 5).map((name, i) => ({
     name,
-    score: Math.max(20, Math.min(95, topCompetitorScore - i * 5 + Math.round(Math.random() * 8 - 4))),
+    score: Math.max(25, Math.min(95, topCompetitorScore - i * 5 + Math.round(Math.random() * 8 - 4))),
   }))
   competitorScores.push({ name: businessName, score: visibilityScore })
   competitorScores.sort((a, b) => b.score - a.score)
