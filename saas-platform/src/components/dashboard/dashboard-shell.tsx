@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { Search, Bell, Menu, X } from 'lucide-react'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { UserMenu } from '@/components/dashboard/user-menu'
+import { LanguageToggle } from '@/components/ui/language-toggle'
 import { cn } from '@/lib/utils'
 
 interface DashboardShellProps {
@@ -98,7 +99,7 @@ export function DashboardShell({
             aria-hidden="true"
           />
           <div
-            className="fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col md:hidden"
+            className="fixed inset-y-0 ltr:left-0 rtl:right-0 z-50 w-64 bg-card ltr:border-r rtl:border-l border-border flex flex-col md:hidden"
             role="dialog"
             aria-modal="true"
           >
@@ -161,7 +162,7 @@ export function DashboardShell({
       )}
 
       {/* Main content area */}
-      <div className="flex flex-1 flex-col md:pl-[60px]">{/* Matches sidebar width */}
+      <div className="flex flex-1 flex-col ltr:md:pl-[60px] rtl:md:pr-[60px]">{/* Matches sidebar width */}
         {/* Top navigation bar */}
         <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-card/95 backdrop-blur-sm px-4 md:px-6">
           {/* Left: Logo + nav tabs */}
@@ -201,8 +202,9 @@ export function DashboardShell({
             </nav>
           </div>
 
-          {/* Right: Search + notifications + user menu */}
+          {/* Right: Language toggle + Search + notifications + user menu */}
           <div className="flex items-center gap-2">
+            <LanguageToggle />
             <button
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               aria-label="Search"

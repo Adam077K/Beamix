@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter, Fraunces } from 'next/font/google'
 import { GeistMono } from 'geist/font/mono'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getMessages } from 'next-intl/server'
 import { Providers } from '@/components/providers'
 import './globals.css'
 
@@ -24,15 +26,20 @@ export const metadata: Metadata = {
     'Beamix scans your business across ChatGPT, Gemini, and Perplexity — then AI agents write the content that gets you ranked. Free scan in 60 seconds.',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const locale = await getLocale()
+  const messages = await getMessages()
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} dir={locale === 'he' ? 'rtl' : 'ltr'} suppressHydrationWarning>
       <body className={`${inter.variable} ${fraunces.variable} ${GeistMono.variable} antialiased`}>
-        <Providers>{children}</Providers>
+        <NextIntlClientProvider messages={messages}>
+          <Providers>{children}</Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   )

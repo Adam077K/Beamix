@@ -426,6 +426,9 @@
   }
 }
 
+/* ─── RTL support ────────────────────────────────────────────────────── */
+[dir="rtl"] .sidebar-left { left: auto; right: 0; }
+
 /* ─── Keyframe definitions ───────────────────────────────────────────── */
 
 @keyframes marquee {

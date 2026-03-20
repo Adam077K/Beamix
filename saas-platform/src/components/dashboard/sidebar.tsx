@@ -96,8 +96,8 @@ export function Sidebar({ businessName, className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-30 flex h-screen w-[60px] flex-col items-center',
-        'border-r border-border bg-card py-3',
+        'fixed top-0 z-30 flex h-screen w-[60px] flex-col items-center',
+        'ltr:left-0 ltr:border-r rtl:right-0 rtl:border-l border-border bg-card py-3',
         className
       )}
     >
