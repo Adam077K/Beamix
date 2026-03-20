@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       .eq('ip_address', ip)
       .gte('created_at', oneHourAgo)
 
-    if ((count ?? 0) >= 20) {
+    if ((count ?? 0) >= 5) {
       return NextResponse.json(
         { error: 'Too many scans. Please try again in an hour.' },
         { status: 429 }
