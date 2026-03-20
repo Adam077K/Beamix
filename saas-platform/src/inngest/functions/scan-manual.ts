@@ -161,6 +161,8 @@ export const scanManual = inngest.createFunction(
           business_id: businessId,
           engine: engineData.engine,
           is_mentioned: engineData.mentioned,
+          is_cited: false,
+          mention_count: engineData.mentioned ? 1 : 0,
           rank_position: engineData.mention_position,
           sentiment: engineData.sentiment,
         })
@@ -179,8 +181,10 @@ export const scanManual = inngest.createFunction(
           completed_at: new Date().toISOString(),
           overall_score: scanResults.visibility_score,
           mentions_count: mentionsCount,
-          results_summary: JSON.parse(JSON.stringify(scanResults)),
-          ...(mockEngines.length > 0 ? { metadata: { mock_engines: mockEngines } } : {}),
+          results_summary: JSON.parse(JSON.stringify({
+            ...scanResults,
+            ...(mockEngines.length > 0 ? { _mock_engines: mockEngines } : {}),
+          })),
         })
         .eq('id', scanId)
 

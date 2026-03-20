@@ -184,7 +184,7 @@ export function DashboardShell({
                 <span className="text-xs font-bold text-white">B</span>
               </div>
               <span className="text-sm font-semibold tracking-tight">
-                Beam<span className="text-primary/80">ix</span>
+                Beam<span className="text-primary">ix</span>
               </span>
             </Link>
 

@@ -95,7 +95,7 @@ const AGENTS: AgentDef[] = [
   },
   {
     type: 'competitor_intelligence',
-    name: 'Competitor Research',
+    name: 'Competitor Intelligence',
     description: 'Deep-dive analysis of how your competitors rank in AI search and what strategies they use.',
     icon: Search,
     credits: 1,

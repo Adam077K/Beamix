@@ -44,14 +44,14 @@ export default async function RecommendationsPage() {
   }
 
   const statusClass = (status: string | null) => {
-    if (status === 'pending') return 'bg-blue-100 text-blue-700'
-    if (status === 'in_progress') return 'bg-purple-100 text-purple-700'
-    if (status === 'done') return 'bg-green-100 text-green-700'
+    if (status === 'pending' || status === 'new') return 'bg-muted text-muted-foreground'
+    if (status === 'in_progress') return 'bg-amber-50 text-amber-700'
+    if (status === 'done' || status === 'completed') return 'bg-green-50 text-[#10B981]'
     return 'bg-muted text-muted-foreground'
   }
 
   return (
-    <div className="space-y-6 p-6 max-w-6xl mx-auto">
+    <div className="space-y-6">
       <PageHeader
         title="Recommendations"
         description="AI-powered suggestions to improve your search visibility"
