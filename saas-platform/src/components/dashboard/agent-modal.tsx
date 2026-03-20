@@ -210,7 +210,7 @@ export function AgentModal({
 
           {!canAfford && (
             <p className="text-xs text-destructive -mt-2">
-              Not enough credits. You need {creditCost} but only have {totalCredits}.
+              Not enough AI Runs. You need {creditCost} but only have {totalCredits}.
             </p>
           )}
         </div>

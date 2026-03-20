@@ -647,7 +647,7 @@ export function DashboardOverview({
         {/* Credit Usage */}
         <Card className="rounded-[20px] shadow-[var(--shadow-card)]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">Agent Credit Usage</CardTitle>
+            <CardTitle className="text-base font-semibold">AI Run Usage</CardTitle>
           </CardHeader>
           <CardContent className="px-6 pb-6 pt-0 flex flex-col gap-4">
             <div className="flex flex-col gap-2">

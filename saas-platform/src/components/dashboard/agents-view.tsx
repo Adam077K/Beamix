@@ -448,7 +448,7 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
                   e.stopPropagation()
                   openModal(agent)
                 }}
-                aria-label={canAfford ? `Run ${agent.name}` : `Not enough credits for ${agent.name}`}
+                aria-label={canAfford ? `Run ${agent.name}` : `Not enough AI Runs for ${agent.name}`}
               >
                 <Sparkles className="me-1.5 h-3 w-3 rtl:order-last" aria-hidden="true" />
                 {canAfford ? 'Run Agent' : 'Not enough AI Runs'}
