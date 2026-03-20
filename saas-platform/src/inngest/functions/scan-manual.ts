@@ -161,7 +161,7 @@ export const scanManual = inngest.createFunction(
           completed_at: new Date().toISOString(),
           overall_score: scanResults.visibility_score,
           mentions_count: mentionsCount,
-          results_data: JSON.parse(JSON.stringify(scanResults)),
+          results_summary: JSON.parse(JSON.stringify(scanResults)),
           ...(mockEngines.length > 0 ? { metadata: { mock_engines: mockEngines } } : {}),
         })
         .eq('id', scanId)

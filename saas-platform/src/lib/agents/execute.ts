@@ -8,6 +8,15 @@ import { holdCredits, confirmCredits, releaseCredits, InsufficientCreditsError }
 import { runAgentLLM } from './llm-runner'
 import { runQAGate } from './qa-gate'
 
+/** Scan data context passed to agents for scan-aware content generation */
+export interface ScanContext {
+  visibilityScore?: number | null
+  engineMentions?: Array<{ engine: string; mentioned: boolean; position: number | null; sentiment: string | null }>
+  topCompetitors?: Array<{ name: string; score: number }>
+  brandAttributes?: { associated_qualities?: string[]; missing_qualities?: string[] }
+  quickWins?: Array<{ title: string; description: string }>
+}
+
 /**
  * Shared Zod schema for agent execution input.
  */
@@ -127,6 +136,47 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
   const businessId = business.id
   const businessName = business.name
 
+  // Fetch latest scan data for agent context (scan-aware agents)
+  let scanContext: ScanContext | undefined
+  {
+    const { data: latestScan } = await supabase
+      .from('scans')
+      .select('overall_score, results_summary')
+      .eq('business_id', businessId)
+      .eq('status', 'completed')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (latestScan?.results_summary && typeof latestScan.results_summary === 'object') {
+      const rd = latestScan.results_summary as Record<string, unknown>
+      scanContext = {
+        visibilityScore: latestScan.overall_score ?? (rd.visibility_score as number | undefined),
+        engineMentions: Array.isArray(rd.engines)
+          ? (rd.engines as Array<Record<string, unknown>>).map((e) => ({
+              engine: String(e.engine ?? ''),
+              mentioned: Boolean(e.is_mentioned),
+              position: (e.mention_position as number | null) ?? null,
+              sentiment: (e.sentiment as string | null) ?? null,
+            }))
+          : undefined,
+        topCompetitors: Array.isArray(rd.leaderboard)
+          ? (rd.leaderboard as Array<Record<string, unknown>>)
+              .filter((e) => !e.is_user)
+              .slice(0, 5)
+              .map((e) => ({ name: String(e.name ?? ''), score: Number(e.score ?? 0) }))
+          : undefined,
+        brandAttributes: rd.brand_attributes as { associated_qualities?: string[]; missing_qualities?: string[] } | undefined,
+        quickWins: Array.isArray(rd.quick_wins)
+          ? (rd.quick_wins as Array<Record<string, unknown>>).map((w) => ({
+              title: String(w.title ?? ''),
+              description: String(w.description ?? ''),
+            }))
+          : undefined,
+      }
+    }
+  }
+
   // 5. Insert agent_jobs record (status='pending')
   const startedAt = new Date().toISOString()
   const { data: execution, error: execError } = await supabase
@@ -182,6 +232,7 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
         websiteUrl: business.website_url ?? undefined,
         industry: business.industry ?? undefined,
         location: business.location ?? undefined,
+        scanData: scanContext,
       },
       input,
     )
