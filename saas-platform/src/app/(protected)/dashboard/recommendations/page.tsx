@@ -125,7 +125,7 @@ export default async function RecommendationsPage() {
                 </div>
                 {rec.suggested_agent && (
                   <Link
-                    href="/dashboard/agents"
+                    href={`/dashboard/agents/${rec.suggested_agent}?topic=${encodeURIComponent(rec.title)}`}
                     className="ml-4 px-3 py-1.5 bg-primary text-primary-foreground text-sm rounded-lg hover:bg-primary/90 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     Run Agent
