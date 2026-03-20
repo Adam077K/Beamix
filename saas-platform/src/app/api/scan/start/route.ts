@@ -122,11 +122,14 @@ export async function POST(request: Request) {
  *
  * 0. Scrape website + Perplexity research (parallel, ~2s)
  * 1. Generate 3 queries from real business data
- * 2. Query 3 engines × 3 queries with web search enabled (9 calls, parallel)
- * 3. Analyze all 9 responses (1 call)
+ * 2. Query engines with web search (8 calls, all parallel):
+ *    - ChatGPT (mini:online): 2 queries (category + brand) — expensive, skip authority
+ *    - Gemini (flash:online): 3 queries — cheap with :online
+ *    - Perplexity (sonar-pro): 3 queries — native search, no extra cost
+ * 3. Analyze all 8 responses (1 call)
  * 4. Build results with real competitor scores + personalized recommendations
  *
- * All engines use web search: ChatGPT (:online), Gemini (:online), Perplexity (native)
+ * Cost: ~$0.12/scan
  */
 async function runScan(
   businessName: string,
@@ -149,16 +152,23 @@ async function runScan(
   console.log(`[scan] Q2: "${brandQuery}"`)
   console.log(`[scan] Q3: "${authorityQuery}"`)
 
-  // Step 2: Query all engines with web search (9 calls in parallel)
-  const engines: Array<'chatgpt' | 'gemini' | 'perplexity'> = ['chatgpt', 'gemini', 'perplexity']
+  // Step 2: Query engines in parallel
+  // ChatGPT (:online) is expensive — only 2 queries (category + brand)
+  // Gemini (:online) + Perplexity (native search) — all 3 queries (cheap)
+  const chatgptQueries = [categoryQuery, brandQuery] // 2 queries
+  const otherQueries = queries                        // 3 queries
 
-  const rawResponses = await Promise.all(
-    engines.flatMap((engine) =>
-      queries.map((query) =>
-        queryEngineRaw(engine, query).then((r) => ({ ...r, query }) as RawEngineResponse)
-      )
-    )
-  )
+  const rawResponses = await Promise.all([
+    ...chatgptQueries.map((query) =>
+      queryEngineRaw('chatgpt', query).then((r) => ({ ...r, query }) as RawEngineResponse)
+    ),
+    ...otherQueries.map((query) =>
+      queryEngineRaw('gemini', query).then((r) => ({ ...r, query }) as RawEngineResponse)
+    ),
+    ...otherQueries.map((query) =>
+      queryEngineRaw('perplexity', query).then((r) => ({ ...r, query }) as RawEngineResponse)
+    ),
+  ])
 
   const mockCount = rawResponses.filter((r) => r.isMock).length
   console.log(`[scan] ${rawResponses.length} responses (${mockCount} mock)`)
