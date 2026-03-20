@@ -42,7 +42,7 @@ const AGENT_META: Record<
     name: 'Content Writer',
     description: 'Generate AI-optimized website content',
     icon: FileText,
-    credits: 3,
+    credits: 1,
     color: 'bg-[#FFF5F2] text-[#FF3C00]',
     prompts: [
       'Write a homepage hero section',
@@ -54,7 +54,7 @@ const AGENT_META: Record<
     name: 'Blog Writer',
     description: 'Write AI-optimized blog posts',
     icon: BookOpen,
-    credits: 5,
+    credits: 1,
     color: 'bg-violet-50 text-violet-600',
     prompts: [
       'Write a how-to guide for my industry',
@@ -66,7 +66,7 @@ const AGENT_META: Record<
     name: 'Review Analyzer',
     description: 'Analyze reviews and generate responses',
     icon: Star,
-    credits: 2,
+    credits: 0,
     color: 'bg-amber-50 text-amber-600',
     prompts: [
       'Analyze my Google reviews',
@@ -78,7 +78,7 @@ const AGENT_META: Record<
     name: 'Schema Optimizer',
     description: 'Generate JSON-LD structured data',
     icon: Code2,
-    credits: 2,
+    credits: 0,
     color: 'bg-purple-50 text-purple-600',
     prompts: [
       'Generate LocalBusiness schema',
@@ -90,7 +90,7 @@ const AGENT_META: Record<
     name: 'Social Strategist',
     description: 'Build authority-building social strategy',
     icon: Share2,
-    credits: 3,
+    credits: 1,
     color: 'bg-pink-50 text-pink-600',
     prompts: [
       'Create a content calendar',
@@ -99,10 +99,10 @@ const AGENT_META: Record<
     ],
   },
   competitor_intelligence: {
-    name: 'Competitor Research',
+    name: 'Competitor Intelligence',
     description: 'Analyze competitor AI visibility',
     icon: Search,
-    credits: 4,
+    credits: 1,
     color: 'bg-[#FFF5F2] text-[#FF3C00]',
     prompts: [
       'Analyze my top 3 competitors',
@@ -111,10 +111,10 @@ const AGENT_META: Record<
     ],
   },
   faq_agent: {
-    name: 'Query Researcher',
-    description: 'Discover customer AI search queries',
+    name: 'FAQ Agent',
+    description: 'Generate FAQ content that AI engines love to cite',
     icon: MessageSquare,
-    credits: 2,
+    credits: 0,
     color: 'bg-green-50 text-green-600',
     prompts: [
       'Find popular queries in my industry',
@@ -178,9 +178,9 @@ export function AgentChatView({
 
   if (!meta) return (
     <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
-      <h2 className="text-xl font-semibold text-gray-900">Agent not found</h2>
-      <p className="text-gray-500">This agent type is not available or has been removed.</p>
-      <a href="/dashboard/agents" className="text-sm text-[#FF3C00] hover:underline">← Back to Agents</a>
+      <h2 className="text-xl font-semibold text-foreground">Agent not found</h2>
+      <p className="text-muted-foreground">This agent type is not available or has been removed.</p>
+      <Link href="/dashboard/agents" className="text-sm text-primary hover:underline">← Back to Agents</Link>
     </div>
   )
 
@@ -329,7 +329,7 @@ export function AgentChatView({
         <div className="flex items-center gap-2 shrink-0">
           <Badge variant="secondary" className="gap-1 text-xs hidden sm:inline-flex">
             <Zap className="h-3 w-3 text-primary" />
-            {meta.credits} credit{meta.credits !== 1 ? 's' : ''}
+            {meta.credits === 0 ? 'Unlimited' : `${meta.credits} AI Run`}
           </Badge>
           {isRunning && (
             <Badge className="bg-primary/10 text-primary border-0 text-xs">
@@ -477,7 +477,7 @@ export function AgentChatView({
                   {msg.creditsCharged !== undefined && (
                     <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-1 text-xs text-muted-foreground">
                       <Zap className="h-3 w-3 text-primary" />
-                      {msg.creditsCharged} credits used
+                      {msg.creditsCharged} AI Runs used
                     </div>
                   )}
 
@@ -509,7 +509,7 @@ export function AgentChatView({
       <div className="bg-card border-t border-border p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
         {!canAfford && (
           <p className="mb-2 text-xs text-destructive text-center">
-            Not enough credits. You need {meta.credits} credits to run this
+            Not enough AI Runs. You need {meta.credits} AI Run{meta.credits !== 1 ? 's' : ''} to run this
             agent.
           </p>
         )}

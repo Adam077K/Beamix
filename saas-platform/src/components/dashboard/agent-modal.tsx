@@ -187,9 +187,15 @@ export function AgentModal({
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-primary shrink-0" />
               <span className="text-sm text-foreground">
-                This will use{' '}
-                <strong className="font-semibold">{creditCost}</strong>{' '}
-                credit{creditCost !== 1 ? 's' : ''}
+                {creditCost === 0 ? (
+                  <strong className="font-semibold">Free (Unlimited)</strong>
+                ) : (
+                  <>
+                    This will use{' '}
+                    <strong className="font-semibold">{creditCost}</strong>{' '}
+                    AI Run
+                  </>
+                )}
               </span>
             </div>
             <span
@@ -198,7 +204,7 @@ export function AgentModal({
                 canAfford ? 'text-muted-foreground' : 'text-destructive'
               )}
             >
-              {totalCredits} available
+              {totalCredits} AI Runs available
             </span>
           </div>
 
