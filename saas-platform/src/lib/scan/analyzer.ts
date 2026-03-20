@@ -1,16 +1,20 @@
 /**
  * LLM-based scan response analyzer.
  *
- * Replaces the regex parser (parser.ts) with a single Gemini Flash call
- * that extracts structured mention/position/sentiment/competitor data
- * from raw engine responses. Costs <$0.001 per analysis.
+ * Analyzes raw engine responses with Gemini Flash to extract:
+ * - Mention detection, position, and sentiment per engine
+ * - Real competitor names with their positions
+ * - Personalized quick win recommendations
+ * - Visibility summary
+ *
+ * Cost: <$0.002 per analysis call.
  */
 
 import { z } from 'zod'
 import { getScanClient, MODELS } from '@/lib/openrouter'
 
 // ---------------------------------------------------------------------------
-// Types
+// Schemas
 // ---------------------------------------------------------------------------
 
 const engineAnalysisSchema = z.object({
@@ -19,17 +23,32 @@ const engineAnalysisSchema = z.object({
   mention_position: z.number().nullable(),
   sentiment: z.enum(['positive', 'neutral', 'negative']).nullable(),
   context_quote: z.string().nullable(),
-  competitors_found: z.array(z.string()),
+  competitors_found: z.array(z.object({
+    name: z.string(),
+    position: z.number().nullable(),
+  })),
+})
+
+const recommendationSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  impact: z.enum(['high', 'medium', 'low']),
 })
 
 const analysisResultSchema = z.object({
   engines: z.array(engineAnalysisSchema),
-  top_competitors: z.array(z.string()),
+  top_competitors: z.array(z.object({
+    name: z.string(),
+    mention_count: z.number(),
+    best_position: z.number().nullable(),
+  })),
+  recommendations: z.array(recommendationSchema),
   visibility_summary: z.string(),
 })
 
 export type EngineAnalysis = z.infer<typeof engineAnalysisSchema>
 export type AnalysisResult = z.infer<typeof analysisResultSchema>
+export type AnalyzerRecommendation = z.infer<typeof recommendationSchema>
 
 // ---------------------------------------------------------------------------
 // Types for raw responses
@@ -48,15 +67,15 @@ export interface RawEngineResponse {
 // ---------------------------------------------------------------------------
 
 /**
- * Analyze 6 raw engine responses (3 engines × 2 queries) using Gemini Flash.
- * Returns structured data about business visibility across engines.
+ * Analyze raw engine responses using Gemini Flash.
+ * Now handles 3 queries × 3 engines = 9 responses.
  */
 export async function analyzeResponses(params: {
   businessName: string
   websiteUrl: string
   industry: string
   location?: string | null
-  queries: [string, string]
+  queries: string[]
   responses: RawEngineResponse[]
 }): Promise<AnalysisResult> {
   const { businessName, websiteUrl, industry, location, queries, responses } = params
@@ -66,24 +85,19 @@ export async function analyzeResponses(params: {
     return buildFallbackAnalysis(businessName, responses)
   }
 
-  // Group responses by query
-  const q1Responses = responses.filter((r) => r.query === queries[0])
-  const q2Responses = responses.filter((r) => r.query === queries[1])
-
   const prompt = buildAnalyzerPrompt({
     businessName,
     websiteUrl,
     industry,
     location,
     queries,
-    q1Responses,
-    q2Responses,
+    responses,
   })
 
   try {
     const client = getScanClient()
     const completion = await client.chat.completions.create({
-      model: MODELS.gemini, // Gemini Flash — cheapest, fastest for extraction
+      model: MODELS.gemini,
       messages: [
         {
           role: 'system',
@@ -91,13 +105,12 @@ export async function analyzeResponses(params: {
         },
         { role: 'user', content: prompt },
       ],
-      max_tokens: 1500,
-      temperature: 0.1, // Very low for consistent extraction
+      max_tokens: 2000,
+      temperature: 0.1,
     })
 
     const text = completion.choices[0]?.message?.content ?? ''
 
-    // Try to extract JSON from the response
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
       console.warn('[analyzer] No JSON found in LLM response, using fallback')
@@ -110,7 +123,7 @@ export async function analyzeResponses(params: {
       return buildFallbackAnalysis(businessName, responses)
     }
 
-    console.log(`[analyzer] LLM analysis complete — ${parsed.data.engines.filter((e) => e.mentioned).length}/3 engines mention business`)
+    console.log(`[analyzer] Analysis complete — ${parsed.data.engines.filter((e) => e.mentioned).length}/3 engines mention business, ${parsed.data.recommendations.length} recommendations`)
     return parsed.data
   } catch (error) {
     console.error('[analyzer] LLM analysis failed:', error instanceof Error ? error.message : error)
@@ -127,14 +140,17 @@ function buildAnalyzerPrompt(params: {
   websiteUrl: string
   industry: string
   location?: string | null
-  queries: [string, string]
-  q1Responses: RawEngineResponse[]
-  q2Responses: RawEngineResponse[]
+  queries: string[]
+  responses: RawEngineResponse[]
 }): string {
-  const { businessName, websiteUrl, industry, location, queries, q1Responses, q2Responses } = params
+  const { businessName, websiteUrl, industry, location, queries, responses } = params
 
-  const formatResponses = (resps: RawEngineResponse[]) =>
-    resps.map((r) => `- ${r.engine} response:\n${r.rawResponse.slice(0, 1500)}`).join('\n\n')
+  // Group responses by query
+  const queryBlocks = queries.map((query, qi) => {
+    const qResponses = responses.filter((r) => r.query === query)
+    const formatted = qResponses.map((r) => `- ${r.engine} response:\n${r.rawResponse.slice(0, 1200)}`).join('\n\n')
+    return `QUERY ${qi + 1}: "${query}"\n${formatted}`
+  }).join('\n\n---\n\n')
 
   return `Analyze these AI search engine responses to determine how visible "${businessName}" (${websiteUrl}) is.
 
@@ -143,37 +159,42 @@ Website: ${websiteUrl}
 Industry: ${industry}
 Location: ${location ?? 'not specified'}
 
-QUERY 1: "${queries[0]}"
-${formatResponses(q1Responses)}
+${queryBlocks}
 
-QUERY 2: "${queries[1]}"
-${formatResponses(q2Responses)}
+---
 
-For each engine (chatgpt, gemini, perplexity), extract:
-- "mentioned": Is "${businessName}" specifically mentioned by name in EITHER query response? (true/false)
-- "mention_position": If mentioned, what ordinal position? (1 = first business listed, 2 = second, etc. null if not mentioned)
-- "sentiment": If mentioned, what is the tone? ("positive" = recommended/praised, "neutral" = listed without opinion, "negative" = criticized/warned against, null if not mentioned)
-- "context_quote": The exact sentence or phrase where the business is mentioned (null if not mentioned). Max 200 chars.
-- "competitors_found": Names of OTHER businesses mentioned as alternatives or competitors (max 8 per engine)
+Extract the following data. Be precise and thorough.
+
+For each engine (chatgpt, gemini, perplexity):
+- "mentioned": Is "${businessName}" specifically mentioned BY NAME in ANY of the query responses for this engine? (true/false). Be case-insensitive. Check for partial name matches too.
+- "mention_position": IMPORTANT — look at numbered lists (1. 2. 3. etc). If "${businessName}" is item #3, position = 3. If mentioned in running text without a list, count how many OTHER businesses are named before it (position = that count + 1). Set null ONLY if not mentioned at all.
+- "sentiment": If mentioned — "positive" (recommended, praised, trusted), "neutral" (just listed), or "negative" (criticized, warned against). null if not mentioned.
+- "context_quote": The EXACT sentence or phrase where ${businessName} is mentioned. Max 200 chars. null if not mentioned.
+- "competitors_found": Other businesses mentioned alongside (not "${businessName}"). Include their list position if available. Max 6 per engine.
 
 Also extract:
-- "top_competitors": Deduplicated list of all competitor names across all engines (max 8)
-- "visibility_summary": One sentence summarizing the business's AI visibility (e.g., "Strong presence in ChatGPT and Perplexity, not found in Gemini")
+- "top_competitors": Deduplicated list across all engines. For each: name, how many engines mentioned them (1-3), and their best (lowest number) position. Max 8.
+- "recommendations": 3-4 SPECIFIC, PERSONALIZED recommendations for improving ${businessName}'s AI visibility. Base each recommendation on what you actually found in the scan data. Reference specific engines or findings. Examples:
+  - If not mentioned in Gemini: "Optimize Google Business Profile — Gemini draws heavily from Google's ecosystem and currently doesn't mention you."
+  - If mentioned but low position: "Improve topical authority — you appear at position #7 in ChatGPT. Publishing expert content on [industry topic] can push you higher."
+  - If competitors have better presence: "Study [competitor]'s content strategy — they rank #1 across all engines."
+- "visibility_summary": One sentence summarizing the business's AI visibility across all engines.
 
 Return ONLY this JSON (no other text):
 {
   "engines": [
-    {"engine": "chatgpt", "mentioned": bool, "mention_position": number|null, "sentiment": "positive"|"neutral"|"negative"|null, "context_quote": string|null, "competitors_found": [string]},
-    {"engine": "gemini", "mentioned": bool, "mention_position": number|null, "sentiment": "positive"|"neutral"|"negative"|null, "context_quote": string|null, "competitors_found": [string]},
-    {"engine": "perplexity", "mentioned": bool, "mention_position": number|null, "sentiment": "positive"|"neutral"|"negative"|null, "context_quote": string|null, "competitors_found": [string]}
+    {"engine": "chatgpt", "mentioned": bool, "mention_position": number|null, "sentiment": "positive"|"neutral"|"negative"|null, "context_quote": string|null, "competitors_found": [{"name": string, "position": number|null}]},
+    {"engine": "gemini", "mentioned": bool, "mention_position": number|null, "sentiment": "positive"|"neutral"|"negative"|null, "context_quote": string|null, "competitors_found": [{"name": string, "position": number|null}]},
+    {"engine": "perplexity", "mentioned": bool, "mention_position": number|null, "sentiment": "positive"|"neutral"|"negative"|null, "context_quote": string|null, "competitors_found": [{"name": string, "position": number|null}]}
   ],
-  "top_competitors": [string],
+  "top_competitors": [{"name": string, "mention_count": number, "best_position": number|null}],
+  "recommendations": [{"title": string, "description": string, "impact": "high"|"medium"|"low"}],
   "visibility_summary": string
 }`
 }
 
 // ---------------------------------------------------------------------------
-// Fallback (when LLM analysis fails or no API key)
+// Fallback
 // ---------------------------------------------------------------------------
 
 function buildFallbackAnalysis(
@@ -195,26 +216,41 @@ function buildFallbackAnalysis(
       mention_position: mentioned ? estimatePosition(lowerText, lowerName) : null,
       sentiment: mentioned ? 'neutral' as const : null,
       context_quote: mentioned ? extractQuote(allText, businessName) : null,
-      competitors_found: extractSimpleCompetitors(allText, businessName),
+      competitors_found: extractSimpleCompetitors(allText, businessName).map((name) => ({ name, position: null })),
     }
   })
 
-  const allCompetitors = engineResults.flatMap((e) => e.competitors_found)
-  const topCompetitors = [...new Set(allCompetitors)].slice(0, 8)
+  const allCompetitors = engineResults.flatMap((e) => e.competitors_found.map((c) => c.name))
+  const competitorCounts = new Map<string, number>()
+  for (const name of allCompetitors) {
+    competitorCounts.set(name, (competitorCounts.get(name) ?? 0) + 1)
+  }
+
+  const topCompetitors = [...competitorCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([name, count]) => ({ name, mention_count: count, best_position: null }))
 
   const mentionedCount = engineResults.filter((e) => e.mentioned).length
-  const visibilitySummary = mentionedCount === 0
-    ? `${businessName} was not found in any AI search engine for these queries.`
-    : `${businessName} appears in ${mentionedCount} of 3 AI engines.`
 
-  return { engines: engineResults, top_competitors: topCompetitors, visibility_summary: visibilitySummary }
+  return {
+    engines: engineResults,
+    top_competitors: topCompetitors,
+    recommendations: [
+      { title: 'Improve online presence', description: `Focus on building content authority in your industry to increase AI visibility.`, impact: 'high' as const },
+      { title: 'Add structured data', description: 'Schema markup helps AI engines understand your business type and services.', impact: 'medium' as const },
+      { title: 'Get more reviews', description: 'Customer reviews on Google and industry platforms signal trust to AI engines.', impact: 'high' as const },
+    ],
+    visibility_summary: mentionedCount === 0
+      ? `${businessName} was not found in any AI search engine.`
+      : `${businessName} appears in ${mentionedCount} of 3 AI engines.`,
+  }
 }
 
 function estimatePosition(text: string, name: string): number {
   const index = text.indexOf(name)
   if (index < 0) return 5
   const before = text.slice(0, index)
-  // Count numbered list items before the mention
   const numberedItems = (before.match(/\d+[\.\)]/g) ?? []).length
   return Math.max(1, numberedItems + 1)
 }

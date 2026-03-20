@@ -27,6 +27,7 @@ import {
   Share2,
   Link2,
   Lock,
+  ChevronRight,
 } from 'lucide-react'
 
 type ScanPageStatus = 'loading' | 'processing' | 'completed' | 'error'
@@ -893,6 +894,17 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
 
         <Separator className="my-8" />
 
+        {/* Visibility Summary */}
+        {results.visibility_summary && (
+          <motion.div variants={itemVariants}>
+            <div className="rounded-xl border border-border bg-muted/30 p-4 text-center">
+              <p className="text-sm text-muted-foreground">{results.visibility_summary}</p>
+            </div>
+          </motion.div>
+        )}
+
+        <Separator className="my-8" />
+
         {/* Engine Breakdown */}
         <motion.div variants={itemVariants}>
           <h2 className="font-sans font-bold text-xl text-foreground">
@@ -908,6 +920,31 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
             ))}
           </div>
         </motion.div>
+
+        {/* Queries Used */}
+        {results.queries_used && results.queries_used.length > 0 && (
+          <>
+            <Separator className="my-8" />
+            <motion.div variants={itemVariants}>
+              <details className="group">
+                <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                  <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" />
+                  What we searched for
+                </summary>
+                <div className="mt-3 space-y-2 pl-6">
+                  {results.queries_used.map((query, i) => (
+                    <div key={i} className="flex items-start gap-2 text-sm">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                        {i + 1}
+                      </span>
+                      <span className="text-muted-foreground italic">&quot;{query}&quot;</span>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            </motion.div>
+          </>
+        )}
 
         <Separator className="my-8" />
 

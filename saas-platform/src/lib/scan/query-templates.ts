@@ -1,18 +1,10 @@
 /**
  * Smart query generation for AI visibility scanning.
  *
- * Generates 2 queries per scan:
- *   Query 1 (category):  "What are the best [industry] in [location]?"
- *     → Tests organic visibility: does the engine mention the business
- *       when someone searches for the category?
- *
- *   Query 2 (brand):     "Tell me about [business name]. Are they good?"
- *     → Tests brand recognition: how does the engine describe
- *       the business when asked directly?
- *
- * Both signals together give a complete picture:
- *   - Category visibility = organic discoverability
- *   - Brand recognition = reputation & sentiment
+ * Generates 3 queries per scan:
+ *   Query 1 (category):  Organic visibility — numbered list of top businesses
+ *   Query 2 (brand):     Brand recognition — direct question with URL disambiguation
+ *   Query 3 (authority): Problem/solution — does the business appear as an expert example?
  */
 
 import { getScanClient, MODELS } from '@/lib/openrouter'
@@ -20,7 +12,6 @@ import { getScanClient, MODELS } from '@/lib/openrouter'
 /**
  * Infer the industry from a business name and URL using Gemini Flash.
  * Falls back to 'local business' if LLM is unavailable.
- * Cost: <$0.001, latency: ~0.5-1s
  */
 export async function inferIndustry(
   businessName: string,
@@ -51,26 +42,41 @@ export async function inferIndustry(
 }
 
 /**
- * Generate 2 smart search queries for a visibility scan.
+ * Extract domain from URL for disambiguation.
+ */
+function extractDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace('www.', '')
+  } catch {
+    return url
+  }
+}
+
+/**
+ * Generate 3 smart search queries for a visibility scan.
  *
- * @returns [categoryQuery, brandQuery]
- *   categoryQuery — tests organic visibility in the industry
- *   brandQuery — tests direct brand recognition
+ * @returns [categoryQuery, brandQuery, authorityQuery]
  */
 export function generateScanQueries(
   businessName: string,
+  websiteUrl: string,
   industry: string,
   location?: string | null,
-): [string, string] {
+): [string, string, string] {
   const locationClause = location && location !== 'Global' ? ` in ${location}` : ''
+  const domain = extractDomain(websiteUrl)
 
   // Query 1: Category/organic visibility
-  // Tests: does the engine mention this business when someone searches for the industry?
-  const categoryQuery = `What are the best ${industry}${locationClause}? Give me a top 10 list with brief descriptions.`
+  // Forces numbered list for clear position extraction
+  const categoryQuery = `What are the best ${industry}${locationClause}? List them as a numbered list: 1. 2. 3. etc. Include a one-line description of each.`
 
-  // Query 2: Direct brand recognition
-  // Tests: how does the engine describe this business? What's the sentiment?
-  const brandQuery = `Tell me about ${businessName}${locationClause}. What do they do? Are they recommended? What do customers say?`
+  // Query 2: Direct brand recognition with URL disambiguation
+  // Adding the domain prevents confusion with similarly-named businesses
+  const brandQuery = `Tell me about ${businessName} (${domain})${locationClause}. What do they do? Are they recommended? What do customers say about them?`
 
-  return [categoryQuery, brandQuery]
+  // Query 3: Problem/solution authority
+  // Tests if the business appears as an expert or case study
+  const authorityQuery = `How can a ${industry} improve their online presence and attract more customers${locationClause}? Give examples of companies doing it well.`
+
+  return [categoryQuery, brandQuery, authorityQuery]
 }

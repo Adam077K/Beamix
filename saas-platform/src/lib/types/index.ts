@@ -38,6 +38,10 @@ export interface ScanResults {
   rank: number
   total_businesses: number
   leaderboard: LeaderboardEntry[]
+  /** The actual queries sent to AI engines (shown on results page) */
+  queries_used?: string[]
+  /** One-sentence AI visibility summary from the analyzer */
+  visibility_summary?: string
 }
 
 export interface LeaderboardEntry {
