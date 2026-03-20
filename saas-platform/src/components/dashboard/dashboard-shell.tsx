@@ -21,7 +21,6 @@ const TOP_NAV_TABS = [
   { href: '/dashboard/agents',          label: 'Agents' },
   { href: '/dashboard/content',         label: 'Content' },
   { href: '/dashboard/competitors',     label: 'Competitors' },
-  { href: '/dashboard/ai-readiness',    label: 'AI Readiness' },
   { href: '/dashboard/notifications',   label: 'Notifications' },
   { href: '/dashboard/settings',        label: 'Settings' },
 ]
@@ -29,7 +28,6 @@ const TOP_NAV_TABS = [
 const MOBILE_NAV_ITEMS = [
   { href: '/dashboard',                    label: 'Overview' },
   { href: '/dashboard/rankings',           label: 'Rankings' },
-  { href: '/dashboard/ai-readiness',       label: 'AI Readiness' },
   { href: '/dashboard/competitors',        label: 'Competitors' },
   { href: '/dashboard/agents',             label: 'AI Agents' },
   { href: '/dashboard/content',            label: 'Content' },

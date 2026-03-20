@@ -9,7 +9,6 @@ import {
   FileText,
   Settings,
   LogOut,
-  Zap,
   Users,
   Bell,
   Lightbulb,
@@ -64,7 +63,6 @@ function NavIcon({ icon: Icon, href, label, onClick, isActive }: NavIconProps) {
 const MAIN_NAV = [
   { label: 'Overview',        href: '/dashboard',                    icon: LayoutDashboard },
   { label: 'Rankings',        href: '/dashboard/rankings',           icon: BarChart3 },
-  { label: 'AI Readiness',    href: '/dashboard/ai-readiness',       icon: Zap },
   { label: 'Competitors',     href: '/dashboard/competitors',        icon: Users },
   { label: 'AI Agents',       href: '/dashboard/agents',             icon: Bot },
   { label: 'Content',         href: '/dashboard/content',            icon: FileText },

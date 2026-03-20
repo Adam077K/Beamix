@@ -1,3 +1,4 @@
+// HIDDEN: Per founder decision 2026-03-20. AI Readiness Auditor disabled until real implementation built. Navigation links removed.
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AiReadinessView } from '@/components/dashboard/ai-readiness-view'
