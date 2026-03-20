@@ -80,7 +80,8 @@ export const scanManual = inngest.createFunction(
         research,
         business.location,
       )
-      // For higher tiers, we still use the 3 base queries but send more per engine
+      // All tiers use 3 base queries (category, brand, authority).
+      // Higher tiers send more queries per engine via tierConfig.queriesPerEngine.
       return baseQueries
     })
 
