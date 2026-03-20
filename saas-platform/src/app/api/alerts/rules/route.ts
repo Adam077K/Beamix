@@ -65,6 +65,18 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Verify the business belongs to the user
+  const { data: business, error: bizError } = await supabase
+    .from('businesses')
+    .select('id')
+    .eq('id', parsed.data.business_id)
+    .eq('user_id', user.id)
+    .single()
+
+  if (bizError || !business) {
+    return NextResponse.json({ error: 'Business not found' }, { status: 404 })
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const insertData: any = {
     user_id: user.id,

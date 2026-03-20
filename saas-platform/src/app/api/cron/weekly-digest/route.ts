@@ -26,7 +26,7 @@ export async function GET(request: Request) {
       id,
       email,
       full_name,
-      notification_preferences!inner(email_weekly_report)
+      notification_preferences!inner(weekly_digest)
     `)
     // NOTE: This embedded join relies on PostgREST detecting the implicit FK via
     // user_profiles.id <-> notification_preferences.user_id. If this query fails
@@ -39,8 +39,8 @@ export async function GET(request: Request) {
   }
 
   const eligibleUsers = (users ?? []).filter((u) => {
-    const prefs = u.notification_preferences as unknown as { email_weekly_report: boolean } | null
-    return prefs?.email_weekly_report !== false
+    const prefs = u.notification_preferences as unknown as { weekly_digest: boolean } | null
+    return prefs?.weekly_digest !== false
   })
 
   let sent = 0
@@ -85,13 +85,10 @@ export async function GET(request: Request) {
       .eq('user_id', user.id)
       .gte('created_at', oneWeekAgo.toISOString())
 
-    // Get top tracked query
+    // Get top tracked query (query_text only — no FK to scans table)
     const { data: topQuery } = await supabase
       .from('tracked_queries')
-      .select(`
-        query_text,
-        scans(overall_score)
-      `)
+      .select('query_text')
       .eq('user_id', user.id)
       .eq('is_active', true)
       .order('last_scanned_at', { ascending: false })
@@ -102,8 +99,8 @@ export async function GET(request: Request) {
     const previousScore = recentScans?.[recentScans.length - 1]?.overall_score ?? latestScore
     const rankChange = latestScore - previousScore
 
-    const topQueryScans = topQuery?.scans as unknown as Array<{ overall_score: number | null }> | undefined
-    const topQueryScore = topQueryScans?.[0]?.overall_score ?? 0
+    // Use the latest scan score as the top query score proxy (no FK join available)
+    const topQueryScore = latestScore
 
     if (!user.email) continue
 

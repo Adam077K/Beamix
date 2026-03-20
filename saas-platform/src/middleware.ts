@@ -16,12 +16,28 @@ export async function middleware(request: NextRequest) {
   try {
     ;({ supabaseResponse, user } = await updateSession(request))
   } catch (err) {
-    // Missing env vars — log and pass through. updateSession throws when env is absent.
     console.warn(
-      '[middleware] updateSession failed (likely missing Supabase env vars). ' +
-        'Auth session refresh is disabled — all requests pass through unauthenticated.',
+      '[middleware] updateSession failed (likely missing Supabase env vars). ',
       err
     )
+
+    // For protected paths, fail closed — do NOT pass through unauthenticated
+    const isProtected =
+      pathname.startsWith('/dashboard') ||
+      (pathname.startsWith('/api') &&
+        !pathname.startsWith('/api/scan/start') &&
+        !pathname.startsWith('/api/paddle/webhooks') &&
+        !pathname.startsWith('/api/inngest'))
+
+    if (isProtected) {
+      const loginUrl = request.nextUrl.clone()
+      loginUrl.pathname = '/login'
+      loginUrl.search = ''
+      loginUrl.searchParams.set('error', 'service_unavailable')
+      return NextResponse.redirect(loginUrl)
+    }
+
+    // Public paths can pass through
     return NextResponse.next({ request })
   }
 

@@ -105,6 +105,7 @@ export default async function DashboardPage() {
       lastScanned={latestScan?.created_at ?? null}
       totalCredits={credits ? (credits.base_allocation + credits.rollover_amount + credits.topup_amount - credits.used_amount) : 0}
       monthlyCredits={credits?.base_allocation ?? 0}
+      usedCredits={credits?.used_amount ?? 0}
       enginesMentioning={enginesMentioning}
       totalEngines={totalEngines}
       trendData={trendData}

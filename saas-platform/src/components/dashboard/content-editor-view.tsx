@@ -41,6 +41,7 @@ export function ContentEditorView({ item }: ContentEditorViewProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
+  const [publishError, setPublishError] = useState<string | null>(null)
 
   const wordCount = body.split(/\s+/).filter(Boolean).length
   const hasChanges =
@@ -84,13 +85,16 @@ export function ContentEditorView({ item }: ContentEditorViewProps) {
 
   async function handlePublish() {
     setIsPublishing(true)
+    setPublishError(null)
     try {
       const res = await fetch(`/api/content/${item.id}/publish`, { method: 'POST' })
       if (res.ok) {
         router.refresh()
+      } else {
+        setPublishError('Failed to publish. Please try again.')
       }
     } catch {
-      // Silently fail
+      setPublishError('Network error. Please check your connection.')
     } finally {
       setIsPublishing(false)
     }
@@ -158,6 +162,9 @@ export function ContentEditorView({ item }: ContentEditorViewProps) {
           )}
         </div>
       </div>
+      {publishError && (
+        <p className="text-sm text-red-500 mb-4">{publishError}</p>
+      )}
 
       {/* Editor card */}
       <div className="bg-card rounded-[20px] border border-border shadow-sm overflow-hidden">

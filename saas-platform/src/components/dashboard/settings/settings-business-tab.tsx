@@ -172,6 +172,7 @@ export function SettingsBusinessTab() {
           location,
           description,
           services,
+          competitors,
         }),
       })
       if (res.ok) {
@@ -181,7 +182,7 @@ export function SettingsBusinessTab() {
     } finally {
       setSaving(false)
     }
-  }, [businessName, websiteUrl, industry, location, description, services])
+  }, [businessName, websiteUrl, industry, location, description, services, competitors])
 
   return (
     <Card className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">

@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge'
 import { ScoreRing } from '@/components/ui/score-ring'
 import { EmptyState } from '@/components/ui/empty-state'
 import { getScoreLevel } from '@/components/ui/score-badge'
-import { cn } from '@/lib/utils'
+import { cn, getScoreColor } from '@/lib/utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -148,13 +148,6 @@ function buildRecommendations(readiness: AiReadinessData): RecommendationItem[] 
 }
 
 // ─── Score color helper ───────────────────────────────────────────────────────
-
-function getScoreColor(score: number): string {
-  if (score >= 75) return '#06B6D4'
-  if (score >= 50) return '#10B981'
-  if (score >= 25) return '#F59E0B'
-  return '#EF4444'
-}
 
 // ─── Status icon ──────────────────────────────────────────────────────────────
 

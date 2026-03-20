@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Search, Bell, Menu, X } from 'lucide-react'
@@ -69,6 +69,15 @@ export function DashboardShell({
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
 
+  useEffect(() => {
+    if (!mobileOpen) return
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [mobileOpen])
+
   // Agent chat pages need full-bleed layout (no padding/max-width wrapper)
   const isAgentChat = pathname?.includes('/dashboard/agents/') && pathname !== '/dashboard/agents'
 
@@ -91,7 +100,11 @@ export function DashboardShell({
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
-          <div className="fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col md:hidden">
+          <div
+            className="fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col md:hidden"
+            role="dialog"
+            aria-modal="true"
+          >
             <div className="flex h-14 items-center justify-between px-4 border-b border-border">
               <span className="text-sm font-semibold tracking-tight">
                 Beam<span className="text-primary">ix</span>
@@ -104,7 +117,7 @@ export function DashboardShell({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5" aria-label="Mobile navigation">
+            <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5" aria-label="Main navigation">
               {MOBILE_NAV_ITEMS.map((item) => {
                 const isActive =
                   item.href === '/dashboard'

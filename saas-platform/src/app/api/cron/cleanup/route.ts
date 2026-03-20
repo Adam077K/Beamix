@@ -2,8 +2,14 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 export async function GET(request: Request) {
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    console.error('[CRON:cleanup] CRON_SECRET not configured')
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+  }
+
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -48,6 +54,7 @@ export async function GET(request: Request) {
       .from('credit_pools')
       .delete({ count: 'exact' })
       .lt('period_end', now)
+      .eq('held_amount', 0)
     results.expired_credit_pools = expiredPools || 0
 
     return NextResponse.json({

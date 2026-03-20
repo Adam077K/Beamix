@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sendWelcomeEmail, sendTrialStartEmail } from '@/lib/email/events'
-import { getAgentClient, MODELS } from '@/lib/openrouter'
+import { generateAndStoreRecommendations } from '@/lib/recommendations'
 import type { Json } from '@/lib/types/database.types'
 
 const onboardingSchema = z.object({
@@ -192,6 +192,29 @@ export async function POST(request: Request) {
     console.error('Failed to upsert subscription trial:', subError.message)
   }
 
+  // 4b. Create trial credit pool with 5 credits
+  const { error: poolError } = await supabase
+    .from('credit_pools')
+    .upsert(
+      {
+        user_id: user.id,
+        pool_type: 'trial' as const,
+        base_allocation: 5,
+        used_amount: 0,
+        held_amount: 0,
+        rollover_amount: 0,
+        topup_amount: 0,
+        period_start: now,
+        period_end: trialEnd,
+      },
+      { onConflict: 'user_id,pool_type' }
+    )
+
+  if (poolError) {
+    // Non-fatal — user can still use the dashboard, credits just won't show
+    console.error('Failed to create trial credit pool:', poolError.message)
+  }
+
   // 5. Send welcome + trial-start emails (non-blocking, non-fatal)
   const userName = (user.user_metadata?.full_name as string | undefined) ?? business_name
   const userEmail = user.email
@@ -230,8 +253,24 @@ export async function POST(request: Request) {
   }
 
   // Fire-and-forget: generate recommendations from scan data (non-blocking)
+  // Uses shared generateAndStoreRecommendations() from src/lib/recommendations.ts
   if (convertedScanId) {
-    generateRecommendationsAsync(user.id, business.id, convertedScanId, supabase).catch((err) =>
+    generateAndStoreRecommendations({
+      userId: user.id,
+      businessId: business.id,
+      scanData: {
+        scanId: convertedScanId,
+        overallScore: null, // will be fetched by the shared function if needed
+        engineResults: [],
+      },
+      business: {
+        name: business_name,
+        websiteUrl: url ?? null,
+        industry: industry ?? null,
+        location: location ?? null,
+      },
+      supabase,
+    }).catch((err) =>
       console.error('[ONBOARDING] Recommendation generation failed (non-blocking):', err)
     )
   }
@@ -302,14 +341,13 @@ async function convertFreeScanResults(
     }
     queryId = query.id
 
-    // Create scan_result
+    // Create scan record (no query_id column on scans table)
     const rawEngines = resultsData.engines
     const engines = (Array.isArray(rawEngines) ? rawEngines : []) as unknown as FreeScanEngineResult[]
     const mentionCount = engines.filter((e) => e.is_mentioned).length
     const { data: scanResult, error: scanError } = await supabase
       .from('scans')
       .insert({
-        query_id: query.id,
         user_id: userId,
         business_id: businessId,
         scan_type: 'free' as const,
@@ -325,7 +363,7 @@ async function convertFreeScanResults(
     }
     scanResultId = scanResult.id
 
-    // Create scan_result_details for each engine
+    // Create scan_engine_results for each engine
     const engineMap: Record<string, string> = {
       chatgpt: 'chatgpt',
       gemini: 'gemini',
@@ -333,6 +371,8 @@ async function convertFreeScanResults(
       claude: 'claude',
       google_ai_overviews: 'google_ai_overviews',
     }
+
+    const sentimentToScore: Record<string, number> = { positive: 80, neutral: 50, negative: 20 }
 
     const details = engines
       .filter((e) => engineMap[e.engine])
@@ -343,6 +383,7 @@ async function convertFreeScanResults(
         is_mentioned: e.is_mentioned,
         rank_position: e.mention_position,
         sentiment: e.sentiment,
+        sentiment_score: sentimentToScore[e.sentiment ?? 'neutral'] ?? 50,
       }))
 
     if (details.length > 0) {
@@ -351,7 +392,8 @@ async function convertFreeScanResults(
         .insert(details)
 
       if (detailsError) {
-        console.error('Failed to create scan result details:', detailsError.message)
+        console.error('Failed to create scan engine results:', detailsError.message)
+        // Non-fatal: scan record exists, engine details just didn't save
       }
     }
   } catch (err) {
@@ -382,90 +424,5 @@ async function convertFreeScanResults(
   return scanResultId
 }
 
-/**
- * Generate AI recommendations from scan results (non-blocking).
- * Called after free scan conversion during onboarding.
- */
-async function generateRecommendationsAsync(
-  userId: string,
-  businessId: string,
-  scanId: string,
-  supabase: Awaited<ReturnType<typeof createClient>>
-) {
-  const apiKey = process.env.OPENROUTER_AGENT_KEY ?? process.env.OPENROUTER_API_KEY
-  if (!apiKey) return
-
-  // Fetch business + scan + engine results
-  const [{ data: business }, { data: scan }, { data: engineResults }] = await Promise.all([
-    supabase.from('businesses').select('name, website_url, industry, location').eq('id', businessId).single(),
-    supabase.from('scans').select('id, overall_score').eq('id', scanId).single(),
-    supabase.from('scan_engine_results').select('engine, is_mentioned, rank_position, sentiment').eq('scan_id', scanId),
-  ])
-
-  if (!business || !scan) return
-
-  // Check deduplication
-  const { data: existing } = await supabase
-    .from('recommendations')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('scan_id', scanId)
-    .limit(1)
-  if (existing && existing.length > 0) return
-
-  const scanContext = `Overall visibility score: ${scan.overall_score ?? 'N/A'}/100
-Engine results:
-${(engineResults ?? []).map((r) => `- ${r.engine}: ${r.is_mentioned ? `mentioned (rank ${r.rank_position ?? '?'})` : 'NOT mentioned'}`).join('\n')}`
-
-  const location = business.location ? ` in ${business.location}` : ''
-  const industry = business.industry ?? 'local business'
-
-  const client = getAgentClient()
-  const response = await client.chat.completions.create({
-    model: MODELS.haiku,
-    max_tokens: 1500,
-    messages: [{
-      role: 'user',
-      content: `You are an AI search optimization strategist. Based on the scan data below, generate 4-5 prioritized recommendations for improving ${business.name}'s visibility in AI search engines.
-
-Business: ${business.name} — ${industry}${location}
-Website: ${business.website_url ?? 'N/A'}
-
-Current AI Visibility Scan:
-${scanContext}
-
-Return ONLY a JSON array with this exact structure (no other text):
-[{"title":"Short action title","description":"2-3 sentence explanation","priority":"high|medium|low","recommendation_type":"content|technical|citation|profile|schema","suggested_agent":"content_writer|blog_writer|faq_agent|schema_optimizer|null","credits_cost":1,"effort":"low|medium|high","impact":"low|medium|high","evidence":"One sentence citing scan evidence"}]`
-    }],
-  })
-
-  const text = response.choices[0]?.message?.content ?? ''
-  const jsonMatch = text.match(/\[[\s\S]*\]/)
-  if (!jsonMatch) return
-
-  const recs = JSON.parse(jsonMatch[0]) as Array<{
-    title: string; description: string; priority: string
-    recommendation_type: string; suggested_agent: string | null
-    credits_cost: number; effort: string; impact: string; evidence: string
-  }>
-
-  const toInsert = recs.map((rec) => ({
-    user_id: userId,
-    business_id: businessId,
-    scan_id: scanId,
-    title: rec.title,
-    description: rec.description,
-    priority: rec.priority as 'high' | 'medium' | 'low',
-    recommendation_type: rec.recommendation_type as 'content' | 'technical' | 'citation' | 'profile' | 'schema',
-    suggested_agent: rec.suggested_agent as 'content_writer' | 'blog_writer' | 'faq_agent' | 'schema_optimizer' | null,
-    credits_cost: rec.credits_cost,
-    effort: rec.effort as 'low' | 'medium' | 'high',
-    impact: rec.impact as 'low' | 'medium' | 'high',
-    evidence: rec.evidence,
-    status: 'new' as const,
-  }))
-
-  if (toInsert.length > 0) {
-    await supabase.from('recommendations').insert(toInsert)
-  }
-}
+// Recommendation generation is now handled by the shared
+// generateAndStoreRecommendations() in src/lib/recommendations.ts

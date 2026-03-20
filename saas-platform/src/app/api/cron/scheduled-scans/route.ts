@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { inngest } from '@/inngest/client'
 
 export async function GET(request: Request) {
   // Verify cron secret
@@ -32,23 +33,20 @@ export async function GET(request: Request) {
 
     const results = []
     for (const business of businesses || []) {
-      // Get user's subscription to determine scan frequency
+      // Get user's subscription to determine scan frequency based on plan_tier
       const { data: sub } = await supabase
         .from('subscriptions')
-        .select('plan_id')
+        .select('plan_tier')
         .eq('user_id', business.user_id)
         .single()
 
-      // Get plan details for scan frequency
-      let scanFrequencyDays = 7 // default
-      if (sub?.plan_id) {
-        const { data: plan } = await supabase
-          .from('plans')
-          .select('scan_frequency_days')
-          .eq('id', sub.plan_id)
-          .single()
-        if (plan) scanFrequencyDays = plan.scan_frequency_days
+      // Determine scan frequency from plan tier (no plans table lookup needed)
+      const SCAN_FREQUENCY_BY_TIER: Record<string, number> = {
+        starter: 7,   // weekly
+        pro: 1,       // daily
+        business: 1,  // daily (unlimited)
       }
+      const scanFrequencyDays = SCAN_FREQUENCY_BY_TIER[sub?.plan_tier ?? ''] ?? 7
 
       // Create a new scan record
       const { data: scan, error: scanError } = await supabase
@@ -77,8 +75,15 @@ export async function GET(request: Request) {
         })
         .eq('id', business.id)
 
-      // TODO: Send Inngest event `scan/manual.started` to trigger actual scan
-      // await inngest.send({ name: 'scan/manual.started', data: { scanId: scan.id, businessId: business.id } })
+      // Fire Inngest event to trigger the actual scan pipeline
+      await inngest.send({
+        name: 'scan/manual.started',
+        data: {
+          scanId: scan.id,
+          userId: business.user_id,
+          businessId: business.id,
+        },
+      })
 
       results.push({ business_id: business.id, scan_id: scan.id, status: 'queued' })
     }

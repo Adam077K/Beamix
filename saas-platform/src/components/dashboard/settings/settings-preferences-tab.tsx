@@ -139,7 +139,7 @@ export function SettingsPreferencesTab() {
             content_lang?: string
             timezone?: string
             weekly_digest?: boolean
-            scan_complete_emails?: boolean
+            ranking_change_alerts?: boolean
             competitor_alerts?: boolean
             agent_completion?: boolean
           }
@@ -148,7 +148,7 @@ export function SettingsPreferencesTab() {
           setTimezone(data.timezone ?? 'Asia/Jerusalem')
           setNotifications({
             weeklyDigest: data.weekly_digest ?? true,
-            rankingDrop: data.scan_complete_emails ?? true,
+            rankingDrop: data.ranking_change_alerts ?? true,
             competitorMovement: data.competitor_alerts ?? false,
             agentComplete: data.agent_completion ?? true,
           })
@@ -178,7 +178,7 @@ export function SettingsPreferencesTab() {
           content_lang: contentLanguage,
           timezone,
           weekly_digest: notifications.weeklyDigest,
-          scan_complete_emails: notifications.rankingDrop,
+          ranking_change_alerts: notifications.rankingDrop,
           competitor_alerts: notifications.competitorMovement,
           agent_completion: notifications.agentComplete,
         }),

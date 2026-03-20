@@ -83,8 +83,10 @@ export const scanManual = inngest.createFunction(
       const parsedResults = responses.map((r) => parseEngineResponse(r, business.name))
       const compositeScore = calculateCompositeScore(parsedResults)
 
-      // Insert per-engine results
+      // Insert per-engine results (include is_mock flag for transparency)
+      const mockEngines: string[] = []
       for (const parsed of parsedResults) {
+        if (parsed.isMock) mockEngines.push(parsed.engine)
         await supabase.from('scan_engine_results').insert({
           scan_id: scanId,
           business_id: businessId,
@@ -95,13 +97,20 @@ export const scanManual = inngest.createFunction(
         })
       }
 
-      // Update scan with overall score
+      if (mockEngines.length > 0) {
+        console.warn(
+          `[scan-manual] Scan ${scanId} used MOCK results for engines: ${mockEngines.join(', ')}`
+        )
+      }
+
+      // Update scan with overall score and mock metadata
       await supabase
         .from('scans')
         .update({
           status: 'completed',
           completed_at: new Date().toISOString(),
           overall_score: compositeScore.overallScore,
+          ...(mockEngines.length > 0 ? { metadata: { mock_engines: mockEngines } } : {}),
         })
         .eq('id', scanId)
 

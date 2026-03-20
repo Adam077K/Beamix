@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
-import { cn } from '@/lib/utils'
+import { cn, getScoreColor } from '@/lib/utils'
 import {
   Loader2,
   CheckCircle2,
@@ -43,12 +43,8 @@ interface ScanData {
 
 // --- Utility functions ---
 
-function getScoreColorHex(score: number): string {
-  if (score >= 75) return '#06B6D4'  // score-excellent (cyan — data viz exception)
-  if (score >= 50) return '#10B981'  // score-good
-  if (score >= 25) return '#F59E0B'  // score-fair
-  return '#EF4444'                   // score-critical
-}
+// getScoreColorHex: alias for the shared getScoreColor from @/lib/utils
+const getScoreColorHex = (score: number): string => getScoreColor(score)
 
 function getScoreLabel(score: number): string {
   if (score >= 75) return 'Excellent'

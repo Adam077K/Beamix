@@ -71,6 +71,7 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     .from('credit_pools')
     .select('base_allocation, topup_amount, rollover_amount, used_amount, held_amount')
     .eq('user_id', user.id)
+    .eq('pool_type', 'monthly')
     .single()
 
   const availableCredits = credits

@@ -152,6 +152,7 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
   const [selectedAgent, setSelectedAgent] = useState<AgentDef | null>(null)
   const [isExecuting, setIsExecuting] = useState(false)
   const [execSearch, setExecSearch] = useState('')
+  const [executeError, setExecuteError] = useState<string | null>(null)
 
   // ── KPI calculations ────────────────────────────────────────────────────────
   const totalRuns = recentExecutions.length
@@ -178,6 +179,7 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
   async function handleExecute(params: AgentExecuteParams) {
     if (!selectedAgent) return
     setIsExecuting(true)
+    setExecuteError(null)
     try {
       const slug = agentTypeToSlug(selectedAgent.type) ?? selectedAgent.type.replace(/_/g, '-')
       const res = await fetch(`/api/agents/${slug}`, {
@@ -189,7 +191,11 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
         const data = await res.json()
         setModalOpen(false)
         router.push(`/dashboard/agents/${selectedAgent.type}?execution=${data.execution_id}`)
+      } else {
+        setExecuteError('Failed to start agent. Please try again.')
       }
+    } catch {
+      setExecuteError('Network error. Please check your connection and try again.')
     } finally {
       setIsExecuting(false)
     }
@@ -475,16 +481,24 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
 
       {/* ── Agent launch modal ─────────────────────────────────────────────── */}
       {selectedAgent && (
-        <AgentModal
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-          agentName={selectedAgent.name}
-          agentSlug={agentTypeToSlug(selectedAgent.type) ?? selectedAgent.type.replace(/_/g, '-')}
-          creditCost={selectedAgent.credits}
-          totalCredits={totalCredits}
-          onExecute={handleExecute}
-          isLoading={isExecuting}
-        />
+        <>
+          <AgentModal
+            open={modalOpen}
+            onOpenChange={(open) => {
+              setModalOpen(open)
+              if (!open) setExecuteError(null)
+            }}
+            agentName={selectedAgent.name}
+            agentSlug={agentTypeToSlug(selectedAgent.type) ?? selectedAgent.type.replace(/_/g, '-')}
+            creditCost={selectedAgent.credits}
+            totalCredits={totalCredits}
+            onExecute={handleExecute}
+            isLoading={isExecuting}
+          />
+          {executeError && !modalOpen && (
+            <p className="text-sm text-red-500 mt-2">{executeError}</p>
+          )}
+        </>
       )}
     </div>
   )

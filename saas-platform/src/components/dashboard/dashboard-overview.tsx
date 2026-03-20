@@ -24,7 +24,7 @@ import { TrendBadge } from '@/components/ui/trend-badge'
 import { DataTable } from '@/components/ui/data-table'
 import { ScoreRing } from '@/components/ui/score-ring'
 import { format } from 'date-fns'
-import { cn } from '@/lib/utils'
+import { cn, getScoreColor } from '@/lib/utils'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -60,14 +60,6 @@ const MOCK_COMPETITORS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getScoreColor(score: number | null): string {
-  if (score === null) return '#E5E7EB'
-  if (score >= 75) return '#06B6D4'
-  if (score >= 50) return '#10B981'
-  if (score >= 25) return '#F59E0B'
-  return '#EF4444'
-}
-
 function getAgentStatus(status: string): StatusDotStatus {
   if (status === 'completed') return 'completed'
   if (status === 'running' || status === 'in_progress') return 'running'
@@ -101,6 +93,7 @@ interface DashboardOverviewProps {
   lastScanned: string | null
   totalCredits: number
   monthlyCredits: number
+  usedCredits?: number
   enginesMentioning?: number | null
   totalEngines?: number | null
   trendData?: Array<{ score: number }>
@@ -224,6 +217,7 @@ export function DashboardOverview({
   mentionDelta,
   totalCredits,
   monthlyCredits,
+  usedCredits,
   enginesMentioning,
   totalEngines,
   recommendations,
@@ -233,7 +227,7 @@ export function DashboardOverview({
   contentStats,
 }: DashboardOverviewProps) {
   const hasData = score !== null
-  const creditsUsed = monthlyCredits - totalCredits
+  const creditsUsed = usedCredits ?? 0
   const creditsPercent = monthlyCredits > 0 ? Math.round((creditsUsed / monthlyCredits) * 100) : 0
 
   const [activitySearch, setActivitySearch] = useState('')

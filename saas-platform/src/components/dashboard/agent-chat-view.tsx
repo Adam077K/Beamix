@@ -176,7 +176,13 @@ export function AgentChatView({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isRunning])
 
-  if (!meta) return null
+  if (!meta) return (
+    <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
+      <h2 className="text-xl font-semibold text-gray-900">Agent not found</h2>
+      <p className="text-gray-500">This agent type is not available or has been removed.</p>
+      <a href="/dashboard/agents" className="text-sm text-[#FF3C00] hover:underline">← Back to Agents</a>
+    </div>
+  )
 
   const Icon = meta.icon
   const canAfford = remainingCredits >= meta.credits

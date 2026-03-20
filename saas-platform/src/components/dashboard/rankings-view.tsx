@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import {
   BarChart3,
@@ -44,7 +44,7 @@ import {
 import { formatDistanceToNow, format } from 'date-fns'
 import type { LlmProvider } from '@/constants/engines'
 import { PROVIDER_LABELS } from '@/constants/engines'
-import { cn } from '@/lib/utils'
+import { cn, getScoreColor } from '@/lib/utils'
 import type { ColumnDef } from '@tanstack/react-table'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -93,14 +93,6 @@ function getEngineBarColor(engine: string): string {
 function rankToBarScore(rank: number | null): number {
   if (!rank || rank <= 0) return 0
   return Math.max(0, Math.min(100, Math.round((1 / rank) * 100)))
-}
-
-function getScoreColor(score: number | null): string {
-  if (score === null) return '#E5E7EB'
-  if (score >= 75) return '#06B6D4'
-  if (score >= 50) return '#10B981'
-  if (score >= 25) return '#F59E0B'
-  return '#EF4444'
 }
 
 // ─── Sentiment badge ──────────────────────────────────────────────────────────
@@ -443,6 +435,14 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
   const [chartPeriod, setChartPeriod] = useState('All')
   const periodOptions = ['All', '30d', '7d']
 
+  const filteredChartData = useMemo(() => {
+    if (chartPeriod === 'All') return chartData
+    const days = chartPeriod === '7d' ? 7 : 30
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - days)
+    return chartData.filter(d => new Date(d.date) >= cutoff)
+  }, [chartData, chartPeriod])
+
   // ── Last scanned label ────────────────────────────────────────────────────
   const lastScannedLabel = latestScan
     ? formatDistanceToNow(new Date(latestScan.created_at), { addSuffix: true })
@@ -702,7 +702,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
             onPeriodChange={setChartPeriod}
           >
             <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={chartData} margin={CHART_MARGINS.default}>
+              <AreaChart data={filteredChartData} margin={CHART_MARGINS.default}>
                 <defs>
                   <linearGradient id="rankScoreGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%"  stopColor={CHART_COLORS.primary} stopOpacity={0.18} />

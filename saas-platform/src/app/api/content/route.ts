@@ -72,7 +72,8 @@ export async function GET(request: NextRequest) {
   }
 
   if (search) {
-    query = query.ilike('title', `%${search}%`)
+    const escapedSearch = search.replace(/%/g, '\\%').replace(/_/g, '\\_')
+    query = query.ilike('title', `%${escapedSearch}%`)
   }
 
   query = query

@@ -120,39 +120,62 @@ export async function allocateMonthlyCredits(userId: string): Promise<void> {
 
 /**
  * Adds top-up credits to a user's bonus_credits balance.
+ *
+ * Uses optimistic concurrency control to prevent race conditions:
+ * the UPDATE includes a WHERE clause on the current topup_amount value.
+ * If a concurrent write changed topup_amount between our SELECT and UPDATE,
+ * the UPDATE matches 0 rows and we retry (up to 3 attempts).
  */
 export async function addTopupCredits(userId: string, amount: number): Promise<void> {
   const supabase = await createServiceClient()
+  const MAX_RETRIES = 3
 
-  const { data: credits, error: fetchError } = await supabase
-    .from('credit_pools')
-    .select('id, topup_amount, base_allocation, rollover_amount, used_amount')
-    .eq('user_id', userId)
-    .single()
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const { data: credits, error: fetchError } = await supabase
+      .from('credit_pools')
+      .select('id, topup_amount, base_allocation, rollover_amount, used_amount')
+      .eq('user_id', userId)
+      .single()
 
-  if (fetchError) {
-    throw new Error(`Failed to fetch credits: ${fetchError.message}`)
+    if (fetchError) {
+      throw new Error(`Failed to fetch credits: ${fetchError.message}`)
+    }
+
+    const currentTopup = credits?.topup_amount ?? 0
+    const newTopup = currentTopup + amount
+    const newTotal = (credits?.base_allocation ?? 0) + newTopup + (credits?.rollover_amount ?? 0) - (credits?.used_amount ?? 0)
+
+    // Atomic compare-and-swap: only update if topup_amount hasn't changed
+    const { data: updated, error: updateError } = await supabase
+      .from('credit_pools')
+      .update({ topup_amount: newTopup })
+      .eq('user_id', userId)
+      .eq('topup_amount', currentTopup)
+      .select('id')
+
+    if (updateError) {
+      throw new Error(`Failed to update credits: ${updateError.message}`)
+    }
+
+    if (!updated || updated.length === 0) {
+      // Concurrent modification detected — retry
+      if (attempt === MAX_RETRIES) {
+        throw new Error('Failed to update topup credits after max retries (concurrent modification)')
+      }
+      continue
+    }
+
+    // Success — record the transaction
+    await supabase.from('credit_transactions').insert({
+      user_id: userId,
+      pool_id: credits!.id,
+      pool_type: 'topup' as const,
+      transaction_type: 'topup' as const,
+      amount,
+      balance_after: newTotal,
+      description: `Top-up: ${amount} agent uses purchased`,
+    })
+
+    return // success
   }
-
-  const newTopup = (credits?.topup_amount ?? 0) + amount
-  const newTotal = (credits?.base_allocation ?? 0) + newTopup + (credits?.rollover_amount ?? 0) - (credits?.used_amount ?? 0)
-
-  const { error: updateError } = await supabase
-    .from('credit_pools')
-    .update({ topup_amount: newTopup })
-    .eq('user_id', userId)
-
-  if (updateError) {
-    throw new Error(`Failed to update credits: ${updateError.message}`)
-  }
-
-  await supabase.from('credit_transactions').insert({
-    user_id: userId,
-    pool_id: credits!.id,
-    pool_type: 'topup' as const,
-    transaction_type: 'topup' as const,
-    amount,
-    balance_after: newTotal,
-    description: `Top-up: ${amount} agent uses purchased`,
-  })
 }

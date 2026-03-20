@@ -15,6 +15,7 @@ export default async function AgentsPage() {
       .from('credit_pools')
       .select('base_allocation, topup_amount, rollover_amount, used_amount')
       .eq('user_id', user.id)
+      .eq('pool_type', 'monthly')
       .single(),
     supabase
       .from('agent_jobs')

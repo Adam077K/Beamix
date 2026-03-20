@@ -201,6 +201,10 @@ function buildMockResponse(
   query: EngineQuery,
   startMs: number,
 ): EngineResponse {
+  console.warn(
+    `[engine-adapter] Returning MOCK results for engine="${engine}" ` +
+    `business="${query.businessName}" — API key missing or engine call failed`
+  )
   const locationClause = query.location ? ` in ${query.location}` : ''
   const mentioned = hashCode(`${engine}-${query.businessName}`) % 3 !== 0
 
