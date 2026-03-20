@@ -165,6 +165,7 @@ export const scanManual = inngest.createFunction(
           mention_count: engineData.mentioned ? 1 : 0,
           rank_position: engineData.mention_position,
           sentiment: engineData.sentiment,
+          sentiment_score: engineData.sentiment === 'positive' ? 80 : engineData.sentiment === 'neutral' ? 50 : engineData.sentiment === 'negative' ? 20 : null,
         })
       }
 
