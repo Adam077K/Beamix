@@ -72,9 +72,6 @@ const MAIN_NAV = [
 
 interface SidebarProps {
   businessName: string
-  planTier: string
-  trialDaysLeft: number | null
-  onClose?: () => void
   className?: string
 }
 

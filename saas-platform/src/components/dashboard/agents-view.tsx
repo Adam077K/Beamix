@@ -211,10 +211,12 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
 
   // ── Execution table ─────────────────────────────────────────────────────────
   const filteredExecutions = execSearch
-    ? recentExecutions.filter((e) => {
-        const label = AGENTS.find((a) => a.type === e.agent_type)?.name ?? e.agent_type
-        return label.toLowerCase().includes(execSearch.toLowerCase())
-      })
+    ? recentExecutions
+        .filter((e) => {
+          const label = AGENTS.find((a) => a.type === e.agent_type)?.name ?? e.agent_type
+          return label.toLowerCase().includes(execSearch.toLowerCase())
+        })
+        .slice(0, 50)
     : recentExecutions.slice(0, 10)
 
   const STATUS_LABELS: Record<StatusDotStatus, string> = {

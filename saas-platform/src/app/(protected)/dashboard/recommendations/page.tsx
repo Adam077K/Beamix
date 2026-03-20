@@ -31,10 +31,10 @@ export default async function RecommendationsPage() {
 
   const items = recommendations ?? []
 
-  // Show upsell for users who are on trial or have no paid plan
-  const isPaying =
+  // Show upsell only for users with no plan (free tier) or cancelled subscription.
+  // Trialing users have full access during their 7-day trial — don't show upsell to them.
+  const hasAccess =
     subscription?.plan_tier != null &&
-    subscription.status !== 'trialing' &&
     subscription.status !== 'cancelled'
 
   const impactClass = (impact: string | null) => {
@@ -57,7 +57,7 @@ export default async function RecommendationsPage() {
         description="AI-powered suggestions to improve your search visibility"
       />
 
-      {!isPaying && (
+      {!hasAccess && (
         <div className="flex items-center justify-between gap-4 rounded-[20px] border border-[#FF3C00]/20 bg-[#FF3C00]/5 px-5 py-4">
           <div className="flex items-center gap-3 min-w-0">
             <Sparkles className="h-5 w-5 shrink-0 text-[#FF3C00]" aria-hidden="true" />

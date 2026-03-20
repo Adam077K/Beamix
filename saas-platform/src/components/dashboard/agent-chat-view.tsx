@@ -282,7 +282,11 @@ export function AgentChatView({
   }
 
   async function handleCopy(content: string, index: number) {
-    await navigator.clipboard.writeText(content)
+    try {
+      await navigator.clipboard.writeText(content)
+    } catch {
+      window.prompt('Copy this content:', content.slice(0, 500))
+    }
     setCopiedIndex(index)
     setTimeout(() => setCopiedIndex(null), 2000)
   }

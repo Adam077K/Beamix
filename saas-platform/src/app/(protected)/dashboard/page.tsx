@@ -104,7 +104,7 @@ export default async function DashboardPage() {
       mentionCount={latestScan?.mentions_count ?? 0}
       mentionDelta={mentionDelta}
       lastScanned={latestScan?.created_at ?? null}
-      totalCredits={credits ? (credits.base_allocation + credits.rollover_amount + credits.topup_amount - credits.used_amount) : 0}
+      totalCredits={credits ? (credits.base_allocation + credits.rollover_amount + credits.topup_amount - credits.used_amount - (credits.held_amount ?? 0)) : 0}
       monthlyCredits={credits?.base_allocation ?? 0}
       usedCredits={credits?.used_amount ?? 0}
       enginesMentioning={enginesMentioning}

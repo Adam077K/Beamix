@@ -16,13 +16,14 @@ interface DashboardShellProps {
 }
 
 const TOP_NAV_TABS = [
-  { href: '/dashboard',                 label: 'Overview' },
-  { href: '/dashboard/rankings',        label: 'Rankings' },
-  { href: '/dashboard/agents',          label: 'Agents' },
-  { href: '/dashboard/content',         label: 'Content' },
-  { href: '/dashboard/competitors',     label: 'Competitors' },
-  { href: '/dashboard/notifications',   label: 'Notifications' },
-  { href: '/dashboard/settings',        label: 'Settings' },
+  { href: '/dashboard',                   label: 'Overview' },
+  { href: '/dashboard/rankings',          label: 'Rankings' },
+  { href: '/dashboard/agents',            label: 'Agents' },
+  { href: '/dashboard/content',           label: 'Content' },
+  { href: '/dashboard/competitors',       label: 'Competitors' },
+  { href: '/dashboard/recommendations',   label: 'Recommendations' },
+  { href: '/dashboard/notifications',     label: 'Notifications' },
+  { href: '/dashboard/settings',          label: 'Settings' },
 ]
 
 const MOBILE_NAV_ITEMS = [
@@ -85,8 +86,6 @@ export function DashboardShell({
       <div className="hidden md:block">
         <Sidebar
           businessName={businessName}
-          planTier={planTier}
-          trialDaysLeft={trialDaysLeft}
         />
       </div>
 

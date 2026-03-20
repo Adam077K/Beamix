@@ -34,29 +34,18 @@ export const scanManual = inngest.createFunction(
       await supabase.from('scans').update({ status: 'processing' }).eq('id', scanId)
     })
 
-    // Fetch business details
+    // Fetch business details + verify ownership in a single query
     const business = await step.run('fetch-business', async () => {
       const { data } = await supabase
         .from('businesses')
-        .select('name, website_url, industry, location')
+        .select('name, website_url, industry, location, user_id')
         .eq('id', businessId)
         .single()
       return data
     })
 
     if (!business) throw new Error('Business not found')
-
-    // Ownership verification: ensure the business belongs to the requesting user
-    const ownerCheck = await step.run('verify-ownership', async () => {
-      const { data } = await supabase
-        .from('businesses')
-        .select('user_id')
-        .eq('id', businessId)
-        .single()
-      return data?.user_id === userId
-    })
-
-    if (!ownerCheck) throw new Error('Business does not belong to user')
+    if (business.user_id !== userId) throw new Error('Business does not belong to user')
 
     // Determine scan tier from user's plan
     const planData = await step.run('fetch-plan', async () => {
