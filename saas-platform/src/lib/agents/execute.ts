@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import type { Json } from '@/lib/types/database.types'
-import { AGENT_CONFIG, isPlanSufficient } from './config'
+import { AGENT_CONFIG, isPlanSufficient, UNLIMITED_DAILY_LIMITS } from './config'
 import type { AgentOutput } from './mock-outputs'
 import { holdCredits, confirmCredits, releaseCredits, InsufficientCreditsError } from './credit-guard'
 import { runAgentLLM } from './llm-runner'
@@ -75,24 +75,46 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     )
   }
 
-  // 3. Credits balance check (fast-fail before creating a DB record)
-  const { data: credits } = await supabase
-    .from('credit_pools')
-    .select('base_allocation, topup_amount, rollover_amount, used_amount, held_amount')
-    .eq('user_id', user.id)
-    .order('period_end', { ascending: false })
-    .limit(1)
-    .single()
+  // 3. Credits / rate-limit check
+  if (config.isUnlimited) {
+    // Unlimited agents: check daily rate limit instead of credits
+    const dailyLimit = UNLIMITED_DAILY_LIMITS[userPlan] ?? UNLIMITED_DAILY_LIMITS.starter ?? 10
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
 
-  const availableCredits = credits
-    ? (credits.base_allocation + credits.topup_amount + credits.rollover_amount - credits.used_amount - (credits.held_amount ?? 0))
-    : 0
+    const { count: todayCount } = await supabase
+      .from('agent_jobs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('agent_type', config.dbType)
+      .gte('created_at', todayStart.toISOString())
 
-  if (availableCredits < config.cost) {
-    return NextResponse.json(
-      { error: `Not enough credits. You need ${config.cost} but have ${availableCredits}.` },
-      { status: 402 }
-    )
+    if ((todayCount ?? 0) >= dailyLimit) {
+      return NextResponse.json(
+        { error: `Daily limit reached for ${config.name}. You can run it up to ${dailyLimit} times per day. Resets at midnight.` },
+        { status: 429 }
+      )
+    }
+  } else {
+    // Premium agents: check AI Runs balance
+    const { data: credits } = await supabase
+      .from('credit_pools')
+      .select('base_allocation, topup_amount, rollover_amount, used_amount, held_amount')
+      .eq('user_id', user.id)
+      .order('period_end', { ascending: false })
+      .limit(1)
+      .single()
+
+    const availableCredits = credits
+      ? (credits.base_allocation + credits.topup_amount + credits.rollover_amount - credits.used_amount - (credits.held_amount ?? 0))
+      : 0
+
+    if (availableCredits < config.cost) {
+      return NextResponse.json(
+        { error: `Not enough AI Runs. You need ${config.cost} but have ${availableCredits}. Upgrade your plan for more runs.` },
+        { status: 402 }
+      )
+    }
   }
 
   // 4. Validate input
@@ -204,22 +226,24 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     return NextResponse.json({ error: 'Failed to create execution record' }, { status: 500 })
   }
 
-  // 6. Hold credits BEFORE running the agent (prevents race conditions)
-  try {
-    await holdCredits(user.id, config.dbType, execution.id)
-  } catch (err) {
-    await supabase
-      .from('agent_jobs')
-      .update({ status: 'failed', error_message: 'Credit hold failed' })
-      .eq('id', execution.id)
+  // 6. Hold credits BEFORE running the agent (skip for unlimited agents)
+  if (!config.isUnlimited) {
+    try {
+      await holdCredits(user.id, config.dbType, execution.id)
+    } catch (err) {
+      await supabase
+        .from('agent_jobs')
+        .update({ status: 'failed', error_message: 'Credit hold failed' })
+        .eq('id', execution.id)
 
-    if (err instanceof InsufficientCreditsError) {
-      return NextResponse.json(
-        { error: 'Not enough credits to run this agent.' },
-        { status: 402 }
-      )
+      if (err instanceof InsufficientCreditsError) {
+        return NextResponse.json(
+          { error: 'Not enough AI Runs to use this agent.' },
+          { status: 402 }
+        )
+      }
+      return NextResponse.json({ error: 'Failed to reserve credits' }, { status: 500 })
     }
-    return NextResponse.json({ error: 'Failed to reserve credits' }, { status: 500 })
   }
 
   // 7. Run real LLM agent
@@ -238,13 +262,18 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     )
   } catch (err) {
     // Release credits on failure so they're not locked
-    await releaseCredits(execution.id)
+    if (!config.isUnlimited) {
+      await releaseCredits(execution.id)
+    }
     await supabase
       .from('agent_jobs')
       .update({ status: 'failed', error_message: String(err) })
       .eq('id', execution.id)
     console.error('[executeAgent] LLM execution failed:', err)
-    return NextResponse.json({ error: 'Agent execution failed. Credits have been refunded.' }, { status: 500 })
+    return NextResponse.json(
+      { error: config.isUnlimited ? 'Agent execution failed. Please try again.' : 'Agent execution failed. Your AI Run has been refunded.' },
+      { status: 500 },
+    )
   }
 
   const completedAt = new Date().toISOString()
@@ -302,11 +331,15 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     }
     // Structured outputs are stored in agent_jobs.output_data (set in step 8).
 
-    // 10. Confirm credits after successful completion
-    await confirmCredits(execution.id)
+    // 10. Confirm credits after successful completion (skip for unlimited agents)
+    if (!config.isUnlimited) {
+      await confirmCredits(execution.id)
+    }
   } catch (postErr) {
     // Release credits so they are not locked permanently
-    await releaseCredits(execution.id)
+    if (!config.isUnlimited) {
+      await releaseCredits(execution.id)
+    }
     await supabase
       .from('agent_jobs')
       .update({ status: 'failed', error_message: String(postErr) })
