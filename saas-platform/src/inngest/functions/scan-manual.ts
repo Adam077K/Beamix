@@ -156,6 +156,7 @@ export const scanManual = inngest.createFunction(
         )
         if (isMock) mockEngines.push(engineData.engine)
 
+        const queriesChecked = tierConfig.queriesPerEngine[engineData.engine as ScanEngine] ?? 2
         await supabase.from('scan_engine_results').insert({
           scan_id: scanId,
           business_id: businessId,
@@ -163,6 +164,8 @@ export const scanManual = inngest.createFunction(
           is_mentioned: engineData.mentioned,
           is_cited: false,
           mention_count: engineData.mentioned ? 1 : 0,
+          queries_checked: queriesChecked,
+          queries_mentioned: engineData.mentioned ? 1 : 0,
           rank_position: engineData.mention_position,
           sentiment: engineData.sentiment,
           sentiment_score: engineData.sentiment === 'positive' ? 80 : engineData.sentiment === 'neutral' ? 50 : engineData.sentiment === 'negative' ? 20 : null,

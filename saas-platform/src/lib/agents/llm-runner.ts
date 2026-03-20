@@ -98,6 +98,10 @@ export async function runAgentLLM(
 
   const text = response.choices[0]?.message?.content ?? ''
 
+  if (!text || text.trim().length < 20) {
+    throw new Error('LLM returned empty or unusable response')
+  }
+
   return buildOutput(config.dbType, text, input)
 }
 

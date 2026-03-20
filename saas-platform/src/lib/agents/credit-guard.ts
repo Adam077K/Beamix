@@ -57,7 +57,10 @@ export async function holdCredits(userId: string, agentType: string, jobId: stri
 export async function confirmCredits(jobId: string): Promise<void> {
   const supabase = getServiceClient()
   const { error } = await supabase.rpc('confirm_credits', { p_job_id: jobId })
-  if (error) console.error('confirm_credits error:', error)
+  if (error) {
+    console.error('confirm_credits error:', error)
+    throw new Error('Failed to confirm credits')
+  }
 }
 
 /**
