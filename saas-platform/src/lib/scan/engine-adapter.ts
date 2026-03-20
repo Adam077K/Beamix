@@ -56,6 +56,60 @@ export async function queryAllEngines(
   return Promise.all(engines.map((engine) => queryEngine(engine, query)))
 }
 
+/**
+ * Query an engine with a plain text query string (no EngineQuery wrapper).
+ * Used by the new scan pipeline with natural, unbranded queries.
+ * Temperature 0.3 for reproducible measurement results.
+ */
+export async function queryEngineRaw(
+  engine: 'chatgpt' | 'gemini' | 'perplexity',
+  query: string,
+): Promise<EngineResponse> {
+  const start = Date.now()
+
+  if (!(process.env.OPENROUTER_SCAN_KEY ?? process.env.OPENROUTER_API_KEY)) {
+    return buildMockResponseRaw(engine, query, start)
+  }
+
+  const modelMap: Record<string, string> = {
+    chatgpt: MODELS.chatgpt,
+    gemini: MODELS.gemini,
+    perplexity: MODELS.perplexity,
+  }
+
+  try {
+    const client = getScanClient()
+    const response = await client.chat.completions.create({
+      model: modelMap[engine] ?? MODELS.chatgpt,
+      messages: [{ role: 'user', content: query }],
+      max_tokens: 1500,
+      temperature: 0.3,
+    })
+
+    return {
+      engine,
+      rawResponse: response.choices[0]?.message?.content ?? '',
+      timestamp: new Date(),
+      latencyMs: Date.now() - start,
+      isMock: false,
+    }
+  } catch (error: unknown) {
+    console.error(`[engine-adapter] ${engine} API error:`, error instanceof Error ? error.message : error)
+    return buildMockResponseRaw(engine, query, start)
+  }
+}
+
+function buildMockResponseRaw(engine: string, query: string, startMs: number): EngineResponse {
+  console.warn(`[engine-adapter] MOCK response for ${engine} — API key missing or call failed`)
+  return {
+    engine,
+    rawResponse: `Here are some recommended options for "${query}": TopCompetitor Co is widely regarded as a market leader. RivalBiz Inc and ThirdOption Ltd also receive strong reviews. These providers are known for quality and competitive pricing.`,
+    timestamp: new Date(),
+    latencyMs: Date.now() - startMs,
+    isMock: true,
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Prompt builder
 // ---------------------------------------------------------------------------

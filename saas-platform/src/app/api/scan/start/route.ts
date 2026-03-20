@@ -3,11 +3,11 @@ import { nanoid } from 'nanoid'
 import { scanStartSchema } from '@/lib/scan/validation'
 import { createServiceClient } from '@/lib/supabase/server'
 import { runMockScan } from '@/lib/scan/mock-engine'
-import { queryEngine, type EngineQuery } from '@/lib/scan/engine-adapter'
-import { parseEngineResponse } from '@/lib/scan/parser'
-import { calculateCompositeScore } from '@/lib/scan/scorer'
+import { queryEngineRaw } from '@/lib/scan/engine-adapter'
+import { generateScanQueries } from '@/lib/scan/query-templates'
+import { analyzeResponses, type RawEngineResponse } from '@/lib/scan/analyzer'
 import { INDUSTRY_COMPETITORS } from '@/constants/industries'
-import type { ScanResults, EngineResult, LeaderboardEntry, LLMEngine, QuickWin } from '@/lib/types'
+import type { ScanResults, EngineResult, LeaderboardEntry, QuickWin } from '@/lib/types'
 
 // Allow up to 60s for LLM API calls
 export const maxDuration = 60
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
     const supabase = await createServiceClient()
 
-    // IP-based rate limiting — max 3 scans per IP per hour
+    // IP-based rate limiting — max 5 scans per IP per hour
     const ip =
       request.headers.get('x-real-ip') ||
       request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     const scanId = insertedScan.id
     console.log(`[scan/start] Created scan ${scanId} for "${business_name}"`)
 
-    // Process scan synchronously — maxDuration=60 gives us plenty of time
+    // Process scan synchronously — maxDuration=60 gives plenty of time
     try {
       const scanResults = await runScan(business_name, url, sector, location)
 
@@ -104,8 +104,6 @@ export async function POST(request: Request) {
       await supabase.from('free_scans').update({ status: 'failed' }).eq('id', scanId)
     }
 
-    // Return scan_id — client navigates to /scan/{id} and polls
-    // By this point the scan is already completed in DB
     return NextResponse.json(
       { scan_id: scanId, status: 'processing' },
       { status: 202 }
@@ -116,6 +114,13 @@ export async function POST(request: Request) {
   }
 }
 
+/**
+ * NEW PIPELINE: Smart query generation → parallel engine queries → LLM analysis
+ *
+ * Step 1: Generate 2 natural, unbranded queries (0 API calls)
+ * Step 2: Query 3 engines × 2 queries = 6 calls in parallel (~3-5s)
+ * Step 3: Analyze all responses with Gemini Flash (1 call, ~1-2s)
+ */
 async function runScan(
   businessName: string,
   websiteUrl: string,
@@ -129,45 +134,89 @@ async function runScan(
     return runMockScan(businessName, businessName, industry)
   }
 
-  console.log('[scan] Querying real engines via OpenRouter...')
+  // Step 1: Generate natural search queries
+  const [broadQuery, specificQuery] = generateScanQueries(industry, location)
+  console.log(`[scan] Queries: "${broadQuery}" | "${specificQuery}"`)
 
-  const engineQuery: EngineQuery = {
-    query: `Who are the best ${industry} businesses${location ? ` in ${location}` : ''}? Is ${businessName} (${websiteUrl}) recommended?`,
+  // Step 2: Query all 3 engines with both queries in parallel (6 calls)
+  const engines: Array<'chatgpt' | 'gemini' | 'perplexity'> = ['chatgpt', 'gemini', 'perplexity']
+
+  const rawResponses = await Promise.all(
+    engines.flatMap((engine) => [
+      queryEngineRaw(engine, broadQuery).then((r) => ({ ...r, query: broadQuery } as RawEngineResponse)),
+      queryEngineRaw(engine, specificQuery).then((r) => ({ ...r, query: specificQuery } as RawEngineResponse)),
+    ])
+  )
+
+  const mockCount = rawResponses.filter((r) => r.isMock).length
+  console.log(`[scan] Got ${rawResponses.length} responses (${mockCount} mock)`)
+
+  // Step 3: Analyze with LLM
+  const analysis = await analyzeResponses({
     businessName,
-    businessUrl: websiteUrl,
+    websiteUrl,
     industry,
-    location: location ?? undefined,
+    location,
+    queries: [broadQuery, specificQuery],
+    responses: rawResponses,
+  })
+
+  console.log(`[scan] Analysis: ${analysis.visibility_summary}`)
+
+  // Build ScanResults from analysis
+  return buildScanResults(businessName, industry, analysis, rawResponses)
+}
+
+function buildScanResults(
+  businessName: string,
+  industry: string,
+  analysis: Awaited<ReturnType<typeof analyzeResponses>>,
+  rawResponses: RawEngineResponse[],
+): ScanResults {
+  // Build engine results
+  const engineResults: EngineResult[] = analysis.engines.map((e) => {
+    const snippet = rawResponses.find((r) => r.engine === e.engine)?.rawResponse?.slice(0, 300) ?? ''
+    return {
+      engine: e.engine as EngineResult['engine'],
+      is_mentioned: e.mentioned,
+      mention_position: e.mention_position,
+      sentiment: e.sentiment,
+      competitors_mentioned: e.competitors_found,
+      response_snippet: e.context_quote ?? snippet,
+    }
+  })
+
+  // Calculate visibility score
+  const mentionedCount = engineResults.filter((e) => e.is_mentioned).length
+  const totalEngines = engineResults.length
+  const mentionRate = totalEngines > 0 ? mentionedCount / totalEngines : 0
+
+  // Score: 40% mention presence + 30% position quality + 30% sentiment
+  let visibilityScore = Math.round(mentionRate * 40)
+
+  for (const e of engineResults) {
+    if (e.is_mentioned && e.mention_position !== null) {
+      // Position score: 1st = 30, 2nd = 25, 3rd = 20, 4th+ = 15
+      const posScore = Math.max(15, 30 - (e.mention_position - 1) * 5)
+      visibilityScore += Math.round(posScore * 0.3 / totalEngines)
+    }
+    if (e.sentiment === 'positive') visibilityScore += Math.round(30 * 0.3 / totalEngines)
+    else if (e.sentiment === 'neutral') visibilityScore += Math.round(15 * 0.3 / totalEngines)
   }
 
-  const [chatgpt, gemini, perplexity] = await Promise.all([
-    queryEngine('chatgpt', engineQuery),
-    queryEngine('gemini', engineQuery),
-    queryEngine('perplexity', engineQuery),
-  ])
+  visibilityScore = Math.max(0, Math.min(100, visibilityScore))
 
-  console.log(`[scan] Engines responded — ChatGPT mock:${chatgpt.isMock} Gemini mock:${gemini.isMock} Perplexity mock:${perplexity.isMock}`)
+  // Build leaderboard from real competitors
+  const competitors = analysis.top_competitors.length > 0
+    ? analysis.top_competitors
+    : INDUSTRY_COMPETITORS[industry] ?? ['Top Competitor']
 
-  const responses = [chatgpt, gemini, perplexity]
-  const parsedResults = responses.map((r) => parseEngineResponse(r, businessName))
-  const compositeScore = calculateCompositeScore(parsedResults)
-
-  const engines: EngineResult[] = parsedResults.map((p, i) => ({
-    engine: p.engine as LLMEngine,
-    is_mentioned: p.isMentioned,
-    mention_position: p.mentionPosition,
-    sentiment: p.sentiment >= 65 ? 'positive' as const : p.sentiment >= 40 ? 'neutral' as const : 'negative' as const,
-    competitors_mentioned: p.competitorNames,
-    response_snippet: responses[i]?.rawResponse?.slice(0, 300) ?? '',
-  }))
-
-  const competitors = INDUSTRY_COMPETITORS[industry] ?? ['Top Competitor', 'Industry Leader']
   const topCompetitor = competitors[0] ?? 'Top Competitor'
-  const visibilityScore = compositeScore.overallScore
   const topCompetitorScore = Math.min(95, visibilityScore + 10 + Math.round(Math.random() * 15))
 
   const competitorScores = competitors.slice(0, 5).map((name, i) => ({
     name,
-    score: Math.max(20, Math.min(95, topCompetitorScore - i * 8 + Math.round(Math.random() * 10 - 5))),
+    score: Math.max(20, Math.min(95, topCompetitorScore - i * 5 + Math.round(Math.random() * 8 - 4))),
   }))
   competitorScores.push({ name: businessName, score: visibilityScore })
   competitorScores.sort((a, b) => b.score - a.score)
@@ -185,7 +234,7 @@ async function runScan(
 
   return {
     visibility_score: visibilityScore,
-    engines,
+    engines: engineResults,
     top_competitor: topCompetitor,
     top_competitor_score: topCompetitorScore,
     quick_wins: quickWins,
