@@ -50,6 +50,25 @@ export interface ScanResults {
     website_title?: string | null
     website_description?: string | null
   }
+  /** Per-query breakdown: which engines found you for which query */
+  per_query_breakdown?: Array<{
+    query: string
+    query_type: 'category' | 'brand' | 'authority'
+    engines_mentioning: string[]
+    engines_not_mentioning: string[]
+    competitor_highlights: Array<{ name: string; praised_for: string }>
+    user_finding: string | null
+  }>
+  /** Brand attributes extracted from engine responses */
+  brand_attributes?: {
+    associated_qualities: string[]
+    missing_qualities: string[]
+    competitor_advantages: Array<{ competitor: string; advantage: string }>
+  }
+  /** Share of Voice: your mentions / total mentions as percentage */
+  share_of_voice?: number
+  /** Citation URLs found in engine responses */
+  citation_urls?: string[]
 }
 
 export interface LeaderboardEntry {

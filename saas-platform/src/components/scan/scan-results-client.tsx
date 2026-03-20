@@ -361,9 +361,16 @@ function EngineCard({
           </div>
         )}
 
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          &ldquo;{result.response_snippet}&rdquo;
-        </p>
+        {result.is_mentioned && result.response_snippet && (
+          <div className="mt-3 rounded-lg bg-green-50 border border-green-200 p-3">
+            <p className="text-sm text-green-800 italic">&ldquo;{result.response_snippet}&rdquo;</p>
+          </div>
+        )}
+        {!result.is_mentioned && (
+          <div className="mt-3 rounded-lg bg-red-50 border border-red-200 p-3">
+            <p className="text-sm text-red-700">Not mentioned in responses for your industry queries.</p>
+          </div>
+        )}
 
         {result.competitors_mentioned.length > 0 && (
           <div className="mt-3">
@@ -957,6 +964,29 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
           </motion.div>
         )}
 
+        {/* Share of Voice */}
+        {results.share_of_voice !== undefined && (
+          <>
+            <Separator className="my-8" />
+            <motion.div variants={itemVariants}>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-xl border border-border p-4 text-center">
+                  <p className="text-3xl font-bold text-primary">{results.share_of_voice}%</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Your AI Share of Voice</p>
+                </div>
+                <div className="rounded-xl border border-border p-4 text-center">
+                  <p className="text-3xl font-bold text-foreground">
+                    {results.top_competitor_score > 0
+                      ? Math.round(results.top_competitor_score / (results.top_competitor_score + results.visibility_score) * 100)
+                      : '\u2014'}%
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">{results.top_competitor}&apos;s Share</p>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+
         <Separator className="my-8" />
 
         {/* Engine Breakdown */}
@@ -1045,12 +1075,112 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
           </>
         )}
 
+        {/* Per-Query Breakdown */}
+        {results.per_query_breakdown && results.per_query_breakdown.length > 0 && (
+          <>
+            <Separator className="my-8" />
+            <motion.div variants={itemVariants}>
+              <h2 className="font-sans font-bold text-xl text-foreground">
+                Per-Query Breakdown
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                How you appear for each type of search
+              </p>
+              <div className="mt-4 space-y-4">
+                {results.per_query_breakdown.map((q, i) => (
+                  <div key={i} className="rounded-xl border border-border p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground mb-1">
+                          {q.query_type === 'category' ? 'Industry Search' : q.query_type === 'brand' ? 'Brand Search' : 'Expert Search'}
+                        </span>
+                        <p className="text-sm text-foreground italic">&ldquo;{q.query}&rdquo;</p>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        {['chatgpt', 'gemini', 'perplexity'].map((eng) => (
+                          <span
+                            key={eng}
+                            className={cn(
+                              'inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium',
+                              q.engines_mentioning.includes(eng)
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-red-100 text-red-600'
+                            )}
+                            title={`${eng}: ${q.engines_mentioning.includes(eng) ? 'Found' : 'Not found'}`}
+                          >
+                            {q.engines_mentioning.includes(eng) ? '\u2713' : '\u2717'}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    {q.user_finding && (
+                      <p className="mt-2 text-sm text-muted-foreground">{q.user_finding}</p>
+                    )}
+                    {q.competitor_highlights.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {q.competitor_highlights.slice(0, 3).map((c, ci) => (
+                          <span key={ci} className="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-800">
+                            <Trophy className="h-3 w-3 mr-1" />
+                            {c.name}: {c.praised_for}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+
         <Separator className="my-8" />
 
         {/* Leaderboard */}
         <motion.div variants={itemVariants}>
           <LeaderboardSection leaderboard={results.leaderboard} />
         </motion.div>
+
+        {/* Why Competitors Rank Higher */}
+        {results.brand_attributes && results.brand_attributes.competitor_advantages.length > 0 && (
+          <>
+            <Separator className="my-8" />
+            <motion.div variants={itemVariants}>
+              <h2 className="font-sans font-bold text-xl text-foreground">
+                Why Competitors Rank Higher
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                What AI engines associate with your competitors that they don&apos;t associate with you
+              </p>
+              <div className="mt-4 space-y-3">
+                {results.brand_attributes.competitor_advantages.map((ca, i) => (
+                  <div key={i} className="rounded-xl border border-red-100 bg-red-50/50 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100">
+                        <TrendingUp className="h-3.5 w-3.5 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground text-sm">{ca.competitor}</p>
+                        <p className="text-sm text-muted-foreground mt-0.5">{ca.advantage}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {results.brand_attributes.missing_qualities.length > 0 && (
+                <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50/50 p-4">
+                  <p className="text-sm font-medium text-foreground mb-2">Qualities you&apos;re missing:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {results.brand_attributes.missing_qualities.map((q, i) => (
+                      <span key={i} className="inline-flex items-center rounded-full border border-amber-200 bg-white px-2.5 py-1 text-xs text-amber-800">
+                        {q}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
 
         <Separator className="my-8" />
 

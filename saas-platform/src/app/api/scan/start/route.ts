@@ -262,6 +262,12 @@ function buildScanResults(
     impact: r.impact,
   }))
 
+  // Share of Voice: user mentions / total mentions across all engines
+  const totalMentions = analysis.engines.reduce((sum, e) => sum + (e.mentioned ? 1 : 0), 0)
+    + analysis.top_competitors.reduce((sum, c) => sum + c.mention_count, 0)
+  const userMentions = analysis.engines.filter(e => e.mentioned).length
+  const shareOfVoice = totalMentions > 0 ? Math.round((userMentions / totalMentions) * 100) : 0
+
   return {
     visibility_score: visibilityScore,
     engines: engineResults,
@@ -280,5 +286,9 @@ function buildScanResults(
       website_title: research.websiteTitle ?? null,
       website_description: research.websiteDescription ?? null,
     },
+    share_of_voice: shareOfVoice,
+    per_query_breakdown: analysis.per_query_breakdown,
+    brand_attributes: analysis.brand_attributes,
+    citation_urls: analysis.citation_urls,
   }
 }

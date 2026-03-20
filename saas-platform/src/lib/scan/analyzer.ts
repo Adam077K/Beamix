@@ -44,6 +44,26 @@ const analysisResultSchema = z.object({
   })),
   recommendations: z.array(recommendationSchema),
   visibility_summary: z.string(),
+  per_query_breakdown: z.array(z.object({
+    query: z.string(),
+    query_type: z.enum(['category', 'brand', 'authority']),
+    engines_mentioning: z.array(z.string()),
+    engines_not_mentioning: z.array(z.string()),
+    competitor_highlights: z.array(z.object({
+      name: z.string(),
+      praised_for: z.string(),
+    })),
+    user_finding: z.string().nullable(),
+  })).optional(),
+  brand_attributes: z.object({
+    associated_qualities: z.array(z.string()),
+    missing_qualities: z.array(z.string()),
+    competitor_advantages: z.array(z.object({
+      competitor: z.string(),
+      advantage: z.string(),
+    })),
+  }).optional(),
+  citation_urls: z.array(z.string()).optional(),
 })
 
 export type EngineAnalysis = z.infer<typeof engineAnalysisSchema>
@@ -105,7 +125,7 @@ export async function analyzeResponses(params: {
         },
         { role: 'user', content: prompt },
       ],
-      max_tokens: 3000,
+      max_tokens: 4000,
       temperature: 0.15,
     })
 
@@ -180,6 +200,23 @@ Also extract:
   - If competitors have better presence: "Study [competitor]'s content strategy — they rank #1 across all engines."
 - "visibility_summary": One sentence summarizing the business's AI visibility across all engines.
 
+ADDITIONAL DEEP ANALYSIS (extract from the same responses):
+
+- "per_query_breakdown": For EACH query, list:
+  - "query": the query text
+  - "query_type": "category" (industry search), "brand" (direct name search), or "authority" (expert/advice search)
+  - "engines_mentioning": which engines mentioned "${businessName}" for THIS query
+  - "engines_not_mentioning": which engines did NOT mention "${businessName}" for this query
+  - "competitor_highlights": for competitors found in THIS query's responses, what are they praised for? (e.g., {"name": "Roto-Rooter", "praised_for": "24/7 emergency service and nationwide coverage"})
+  - "user_finding": if "${businessName}" IS mentioned in this query, what is said about them? If NOT mentioned, null.
+
+- "brand_attributes": Analyze how "${businessName}" is perceived across ALL responses:
+  - "associated_qualities": what positive traits/features are associated with "${businessName}"? (e.g., ["affordable pricing", "good customer service", "fast response time"])
+  - "missing_qualities": what traits do competitors have that "${businessName}" is NOT associated with? (e.g., ["24/7 availability", "online booking", "extensive FAQ content"])
+  - "competitor_advantages": for each major competitor, what is their specific advantage over "${businessName}"? (e.g., [{"competitor": "Roto-Rooter", "advantage": "Mentioned across all engines due to comprehensive FAQ schema and nationwide brand recognition"}])
+
+- "citation_urls": any URLs cited in the engine responses (especially from Perplexity which cites sources). Extract all URLs found.
+
 Return ONLY this JSON (no other text):
 {
   "engines": [
@@ -189,7 +226,10 @@ Return ONLY this JSON (no other text):
   ],
   "top_competitors": [{"name": string, "mention_count": number, "best_position": number|null}],
   "recommendations": [{"title": string, "description": string, "impact": "high"|"medium"|"low"}],
-  "visibility_summary": string
+  "visibility_summary": string,
+  "per_query_breakdown": [{"query": string, "query_type": "category"|"brand"|"authority", "engines_mentioning": [string], "engines_not_mentioning": [string], "competitor_highlights": [{"name": string, "praised_for": string}], "user_finding": string|null}],
+  "brand_attributes": {"associated_qualities": [string], "missing_qualities": [string], "competitor_advantages": [{"competitor": string, "advantage": string}]},
+  "citation_urls": [string]
 }`
 }
 
@@ -244,6 +284,13 @@ function buildFallbackAnalysis(
     visibility_summary: mentionedCount === 0
       ? `${businessName} was not found in any AI search engine.`
       : `${businessName} appears in ${mentionedCount} of 3 AI engines.`,
+    per_query_breakdown: [],
+    brand_attributes: {
+      associated_qualities: [],
+      missing_qualities: [],
+      competitor_advantages: [],
+    },
+    citation_urls: [],
   }
 }
 
