@@ -630,17 +630,12 @@ function ShareSection({ scanId, businessName, score }: { scanId: string; busines
     try {
       await navigator.clipboard.writeText(rawShareUrl)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
     } catch {
-      const textArea = document.createElement('textarea')
-      textArea.value = rawShareUrl
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
+      // Clipboard API unavailable (e.g. non-HTTPS) — show manual copy prompt
+      window.prompt('Copy this link:', rawShareUrl)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
     }
+    setTimeout(() => setCopied(false), 2000)
   }
 
   const shareUrl = encodeURIComponent(rawShareUrl)

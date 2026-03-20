@@ -69,8 +69,9 @@ export async function POST(request: Request) {
       .single()
 
     if (bizError) {
+      console.error('[onboarding] Failed to create business:', bizError.message)
       return NextResponse.json(
-        { error: 'Failed to create business', details: bizError.message },
+        { error: 'Failed to create business. Please try again.' },
         { status: 500 }
       )
     }
@@ -195,9 +196,9 @@ export async function POST(request: Request) {
     )
 
   if (profileError) {
-    console.error('Failed to upsert onboarding status:', profileError.message)
+    console.error('[onboarding] Failed to upsert onboarding status:', profileError.message)
     return NextResponse.json(
-      { error: 'Failed to complete onboarding', details: profileError.message },
+      { error: 'Failed to complete onboarding. Please try again.' },
       { status: 500 }
     )
   }

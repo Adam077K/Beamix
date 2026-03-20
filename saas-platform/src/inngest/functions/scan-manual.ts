@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { inngest } from '../client'
 import { createClient } from '@supabase/supabase-js'
 import { queryEngineRaw } from '@/lib/scan/engine-adapter'
@@ -6,19 +7,28 @@ import { analyzeResponses, type RawEngineResponse } from '@/lib/scan/analyzer'
 import { buildScanResults } from '@/lib/scan/build-results'
 import { getTierConfig, type ScanEngine } from '@/lib/scan/tier-config'
 
+const eventDataSchema = z.object({
+  scanId: z.string().uuid(),
+  businessId: z.string().uuid(),
+  userId: z.string().uuid(),
+})
+
 export const scanManual = inngest.createFunction(
   { id: 'scan-manual', name: 'Process Manual Scan (v3 Pipeline)' },
   { event: 'scan/manual.started' },
   async ({ event, step }) => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    )
-    const { scanId, businessId, userId } = event.data as {
-      scanId: string
-      businessId: string
-      userId: string
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Missing required Supabase env vars')
     }
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+    )
+    const parsed = eventDataSchema.safeParse(event.data)
+    if (!parsed.success) {
+      throw new Error(`Invalid event data: ${parsed.error.message}`)
+    }
+    const { scanId, businessId, userId } = parsed.data
 
     await step.run('update-status', async () => {
       await supabase.from('scans').update({ status: 'processing' }).eq('id', scanId)
