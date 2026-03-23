@@ -9,7 +9,6 @@ import {
   FileText,
   Settings,
   LogOut,
-  Zap,
   Users,
   Bell,
   Lightbulb,
@@ -64,7 +63,6 @@ function NavIcon({ icon: Icon, href, label, onClick, isActive }: NavIconProps) {
 const MAIN_NAV = [
   { label: 'Overview',        href: '/dashboard',                    icon: LayoutDashboard },
   { label: 'Rankings',        href: '/dashboard/rankings',           icon: BarChart3 },
-  { label: 'AI Readiness',    href: '/dashboard/ai-readiness',       icon: Zap },
   { label: 'Competitors',     href: '/dashboard/competitors',        icon: Users },
   { label: 'AI Agents',       href: '/dashboard/agents',             icon: Bot },
   { label: 'Content',         href: '/dashboard/content',            icon: FileText },
@@ -74,9 +72,6 @@ const MAIN_NAV = [
 
 interface SidebarProps {
   businessName: string
-  planTier: string
-  trialDaysLeft: number | null
-  onClose?: () => void
   className?: string
 }
 
@@ -101,8 +96,8 @@ export function Sidebar({ businessName, className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-30 flex h-screen w-[60px] flex-col items-center',
-        'border-r border-border bg-card py-3',
+        'fixed top-0 z-30 flex h-screen w-[60px] flex-col items-center',
+        'ltr:left-0 ltr:border-r rtl:right-0 rtl:border-l border-border bg-card py-3',
         className
       )}
     >

@@ -37,6 +37,7 @@ interface AgentDef {
   description: string
   icon: React.ComponentType<{ className?: string }>
   credits: number
+  isUnlimited: boolean
   colorIcon: string
   colorBg: string
 }
@@ -47,7 +48,8 @@ const AGENTS: AgentDef[] = [
     name: 'Content Writer',
     description: 'Generate AI-optimized website content, landing pages, and product descriptions that rank in AI search.',
     icon: FileText,
-    credits: 3,
+    credits: 1,
+    isUnlimited: false,
     colorIcon: 'text-[#FF3C00]',
     colorBg: 'bg-[#FF3C00]/10',
   },
@@ -56,7 +58,8 @@ const AGENTS: AgentDef[] = [
     name: 'Blog Writer',
     description: 'Write SEO and AI-optimized blog posts that establish your expertise and improve citations.',
     icon: BookOpen,
-    credits: 5,
+    credits: 1,
+    isUnlimited: false,
     colorIcon: 'text-violet-600',
     colorBg: 'bg-violet-50',
   },
@@ -65,7 +68,8 @@ const AGENTS: AgentDef[] = [
     name: 'Review Analyzer',
     description: 'Analyze your online reviews across platforms and generate response templates to boost sentiment.',
     icon: Star,
-    credits: 2,
+    credits: 0,
+    isUnlimited: true,
     colorIcon: 'text-amber-600',
     colorBg: 'bg-amber-50',
   },
@@ -74,7 +78,8 @@ const AGENTS: AgentDef[] = [
     name: 'Schema Optimizer',
     description: 'Generate JSON-LD structured data markup for your website to help AI engines understand your business.',
     icon: Code2,
-    credits: 2,
+    credits: 0,
+    isUnlimited: true,
     colorIcon: 'text-emerald-600',
     colorBg: 'bg-emerald-50',
   },
@@ -83,25 +88,28 @@ const AGENTS: AgentDef[] = [
     name: 'Social Strategist',
     description: 'Create a social media strategy designed to build the authority signals AI engines look for.',
     icon: Share2,
-    credits: 3,
+    credits: 1,
+    isUnlimited: false,
     colorIcon: 'text-pink-600',
     colorBg: 'bg-pink-50',
   },
   {
     type: 'competitor_intelligence',
-    name: 'Competitor Research',
+    name: 'Competitor Intelligence',
     description: 'Deep-dive analysis of how your competitors rank in AI search and what strategies they use.',
     icon: Search,
-    credits: 4,
+    credits: 1,
+    isUnlimited: false,
     colorIcon: 'text-[#FF3C00]',
     colorBg: 'bg-[#FF3C00]/10',
   },
   {
     type: 'faq_agent',
-    name: 'Query Researcher',
-    description: 'Discover what questions potential customers ask AI engines about your industry and location.',
+    name: 'FAQ Agent',
+    description: 'Generate FAQ content that AI engines love to cite — answers real customer questions.',
     icon: MessageSquare,
-    credits: 2,
+    credits: 0,
+    isUnlimited: true,
     colorIcon: 'text-sky-600',
     colorBg: 'bg-sky-50',
   },
@@ -203,10 +211,12 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
 
   // ── Execution table ─────────────────────────────────────────────────────────
   const filteredExecutions = execSearch
-    ? recentExecutions.filter((e) => {
-        const label = AGENTS.find((a) => a.type === e.agent_type)?.name ?? e.agent_type
-        return label.toLowerCase().includes(execSearch.toLowerCase())
-      })
+    ? recentExecutions
+        .filter((e) => {
+          const label = AGENTS.find((a) => a.type === e.agent_type)?.name ?? e.agent_type
+          return label.toLowerCase().includes(execSearch.toLowerCase())
+        })
+        .slice(0, 50)
     : recentExecutions.slice(0, 10)
 
   const STATUS_LABELS: Record<StatusDotStatus, string> = {
@@ -256,15 +266,20 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
       },
     },
     {
-      header: 'Credits',
+      header: 'Cost',
       accessorKey: 'credits_cost',
       meta: { align: 'right' },
-      cell: ({ row }) => (
-        <span className="flex items-center justify-end gap-1 text-xs text-muted-foreground tabular-nums">
-          <Zap className="h-3 w-3 text-[#FF3C00]" aria-hidden="true" />
-          {row.original.credits_cost}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const cost = row.original.credits_cost
+        return cost === 0 ? (
+          <span className="text-xs text-emerald-600 font-medium">Free</span>
+        ) : (
+          <span className="flex items-center justify-end gap-1 text-xs text-muted-foreground tabular-nums">
+            <Zap className="h-3 w-3 text-[#FF3C00]" aria-hidden="true" />
+            {cost} Run
+          </span>
+        )
+      },
     },
     {
       header: 'Started',
@@ -324,7 +339,7 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
               <span className="shrink-0 text-muted-foreground [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
                 <Zap />
               </span>
-              <span className="section-eyebrow truncate">Credits Used</span>
+              <span className="section-eyebrow truncate">AI Runs Used</span>
             </div>
             <div className="flex flex-col gap-0.5">
               <span className="metric-value text-3xl">
@@ -360,7 +375,7 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-up [animation-delay:160ms]">
         {AGENTS.map((agent, i) => {
           const Icon = agent.icon
-          const canAfford = totalCredits >= agent.credits
+          const canAfford = agent.isUnlimited || totalCredits >= agent.credits
           const lastStatus = lastStatusByType[agent.type]
           return (
             <div
@@ -390,10 +405,24 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
                   )}
                   <Badge
                     variant="outline"
-                    className="text-[10px] font-medium border-border text-muted-foreground"
+                    className={cn(
+                      'text-[10px] font-medium border-border',
+                      agent.isUnlimited
+                        ? 'text-emerald-600 border-emerald-200 bg-emerald-50'
+                        : 'text-muted-foreground',
+                    )}
                   >
-                    <Zap className="h-2.5 w-2.5 mr-0.5 text-[#FF3C00]" aria-hidden="true" />
-                    {agent.credits} cr
+                    {agent.isUnlimited ? (
+                      <>
+                        <Sparkles className="h-2.5 w-2.5 mr-0.5 text-emerald-500" aria-hidden="true" />
+                        Unlimited
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="h-2.5 w-2.5 mr-0.5 text-[#FF3C00]" aria-hidden="true" />
+                        1 AI Run
+                      </>
+                    )}
                   </Badge>
                 </div>
               </div>
@@ -419,10 +448,10 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
                   e.stopPropagation()
                   openModal(agent)
                 }}
-                aria-label={canAfford ? `Run ${agent.name}` : `Not enough credits for ${agent.name}`}
+                aria-label={canAfford ? `Run ${agent.name}` : `Not enough AI Runs for ${agent.name}`}
               >
                 <Sparkles className="me-1.5 h-3 w-3 rtl:order-last" aria-hidden="true" />
-                {canAfford ? 'Run Agent' : 'Not enough credits'}
+                {canAfford ? 'Run Agent' : 'Not enough AI Runs'}
               </Button>
 
               {/* Card-level link behind the button */}
@@ -489,7 +518,7 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
               if (!open) setExecuteError(null)
             }}
             agentName={selectedAgent.name}
-            agentSlug={agentTypeToSlug(selectedAgent.type) ?? selectedAgent.type.replace(/_/g, '-')}
+
             creditCost={selectedAgent.credits}
             totalCredits={totalCredits}
             onExecute={handleExecute}

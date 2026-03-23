@@ -53,7 +53,7 @@ export interface ScanResults {
   /** Per-query breakdown: which engines found you for which query */
   per_query_breakdown?: Array<{
     query: string
-    query_type: 'category' | 'brand' | 'authority'
+    query_type: string
     engines_mentioning: string[]
     engines_not_mentioning: string[]
     competitor_highlights: Array<{ name: string; praised_for: string }>
@@ -69,6 +69,29 @@ export interface ScanResults {
   share_of_voice?: number
   /** Citation URLs found in engine responses */
   citation_urls?: string[]
+
+  // --- NEW: 3-dimensional scoring (scan redesign) ---
+  /** Brand Awareness sub-score: do AI engines know you exist? (0-100) */
+  brand_awareness_score?: number
+  /** Ranking Quality sub-score: where do you appear when mentioned? (0-100) */
+  ranking_quality_score?: number
+  /** Citation Quality sub-score: how are you described? (0-100) */
+  citation_quality_score?: number
+  /** Per-engine breakdown with individual scores */
+  engine_scores?: Record<string, { score: number; mentioned_in: number; best_position: number | null }>
+  /** Per-query-type breakdown with scores */
+  query_type_scores?: Record<string, { score: number; engines_mentioning: string[] }>
+  /** Engines that returned mock data (empty = all real results) */
+  mock_engines?: string[]
+}
+
+/** Typed signal connecting scan findings to agent recommendations */
+export interface ScanSignal {
+  signal_type: 'not_mentioned' | 'low_position' | 'no_citation' | 'negative_sentiment' | 'competitor_gap'
+  affected_engines: string[]
+  affected_query_types: string[]
+  competitor_names?: string[]
+  detail: string
 }
 
 export interface LeaderboardEntry {

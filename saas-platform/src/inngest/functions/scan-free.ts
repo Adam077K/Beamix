@@ -1,151 +1,141 @@
+import { z } from 'zod'
 import { inngest } from '../client'
 import { createClient } from '@supabase/supabase-js'
-import { queryEngine, type EngineQuery } from '@/lib/scan/engine-adapter'
-import { parseEngineResponse } from '@/lib/scan/parser'
-import { calculateCompositeScore } from '@/lib/scan/scorer'
-import { INDUSTRY_COMPETITORS } from '@/constants/industries'
-import type { ScanResults, EngineResult, LeaderboardEntry, LLMEngine, QuickWin } from '@/lib/types'
+import { getTierConfig } from '@/lib/scan/tier-config'
+import {
+  researchStep,
+  generateQueriesStep,
+  queryEngineStep,
+  analyzeStep,
+  buildResultsStep,
+  type ScanContext,
+} from '@/lib/scan/scan-core'
+import type { RawEngineResponse } from '@/lib/scan/analyzer'
 
-// Quick win templates for recommendations
-const QUICK_WIN_TEMPLATES: QuickWin[] = [
-  { title: 'Add FAQ Schema Markup', description: 'Structured FAQ data helps AI engines understand and cite your expertise. Add JSON-LD FAQ schema to your homepage.', impact: 'high', engine_benefit: 'ChatGPT, Gemini' },
-  { title: 'Create an About Page with Entity Data', description: 'AI engines look for structured entity information. Include founding year, team size, service area, and certifications.', impact: 'high', engine_benefit: 'All engines' },
-  { title: 'Publish Expert Blog Content', description: 'Regular, in-depth content establishes topical authority. Aim for 1-2 posts per month on industry topics.', impact: 'medium', engine_benefit: 'Perplexity, ChatGPT' },
-  { title: 'Optimize Google Business Profile', description: 'Complete and active GBP listings are a key signal for AI engines, especially for local queries.', impact: 'high', engine_benefit: 'Gemini, ChatGPT' },
-  { title: 'Add Structured Data (LocalBusiness)', description: 'JSON-LD LocalBusiness schema helps AI engines identify your business type, location, and services.', impact: 'medium', engine_benefit: 'All engines' },
-  { title: 'Build Citation Consistency', description: 'Ensure your business name, address, and phone are consistent across directories and review sites.', impact: 'medium', engine_benefit: 'ChatGPT, Perplexity' },
-  { title: 'Get More Customer Reviews', description: 'AI engines reference review sentiment. Actively request reviews on Google, Yelp, and industry-specific platforms.', impact: 'high', engine_benefit: 'All engines' },
-]
+const eventDataSchema = z.object({
+  freeScanId: z.string().uuid(),
+  businessName: z.string(),
+  websiteUrl: z.string().url(),
+  sector: z.string().optional(),
+  location: z.string().nullable().optional(),
+})
 
 export const scanFree = inngest.createFunction(
-  { id: 'scan-free', name: 'Process Free Scan' },
+  {
+    id: 'scan-free',
+    name: 'Process Free Scan (Async)',
+    retries: 2, // Free scans: limited retries to control API budget
+  },
   { event: 'scan/free.started' },
   async ({ event, step }) => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    )
-    const { scanId, businessName, websiteUrl, industry, location } = event.data as {
-      scanId: string
-      businessName: string
-      websiteUrl: string
-      industry: string
-      location?: string
-      language?: string
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Missing required Supabase env vars')
     }
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+    )
 
-    await step.run('update-status-processing', async () => {
-      await supabase.from('free_scans').update({ status: 'processing' }).eq('id', scanId)
+    const parsed = eventDataSchema.safeParse(event.data)
+    if (!parsed.success) {
+      throw new Error(`Invalid event data: ${parsed.error.message}`)
+    }
+    const { freeScanId, businessName, websiteUrl, sector, location } = parsed.data
+
+    const ctx: ScanContext = { businessName, websiteUrl, location, sector }
+    const tierConfig = getTierConfig(null) // Always free tier
+
+    // Step 1: Lock scan to processing
+    await step.run('update-status', async () => {
+      const { data } = await supabase
+        .from('free_scans')
+        .update({ status: 'processing' })
+        .eq('id', freeScanId)
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString())
+        .select('id')
+        .single()
+      if (!data) throw new Error('Free scan already processing, expired, or not found')
     })
 
-    const engineQuery: EngineQuery = {
-      query: `Who are the best ${industry} businesses${location ? ` in ${location}` : ''}? Is ${businessName} (${websiteUrl}) recommended?`,
-      businessName,
-      businessUrl: websiteUrl,
-      industry,
-      location,
+    // Step 2: Research business
+    const research = await step.run('research-business', async () => {
+      return researchStep(ctx)
+    })
+
+    // Update industry if research found a better one than what the user submitted
+    if (research.industry && sector && research.industry !== sector) {
+      await step.run('update-industry', async () => {
+        await supabase.from('free_scans').update({ industry: research.industry }).eq('id', freeScanId)
+      })
     }
 
-    try {
-      // Query each engine as a separate step for retry isolation
-      const chatgptResult = await step.run('query-chatgpt', async () => {
-        const response = await queryEngine('chatgpt', engineQuery)
-        return { engine: response.engine, rawResponse: response.rawResponse, latencyMs: response.latencyMs, isMock: response.isMock }
+    // Step 3: Generate queries
+    const queries = await step.run('generate-queries', async () => {
+      return generateQueriesStep(ctx, research, tierConfig)
+    })
+
+    // Step 4: Query each engine as separate retryable steps
+    const allResponses: RawEngineResponse[] = []
+    const mockEngines: string[] = []
+
+    for (const engine of tierConfig.engines) {
+      const engineQueryCount = tierConfig.queriesPerEngine[engine] ?? 2
+      const result = await step.run(`query-${engine}`, async () => {
+        return queryEngineStep(engine, queries, engineQueryCount)
       })
+      allResponses.push(...result.responses)
+      if (result.hasMock) mockEngines.push(engine)
+    }
 
-      const geminiResult = await step.run('query-gemini', async () => {
-        const response = await queryEngine('gemini', engineQuery)
-        return { engine: response.engine, rawResponse: response.rawResponse, latencyMs: response.latencyMs, isMock: response.isMock }
+    // If ALL responses are mock (API key misconfigured), fail — never show fake data as real
+    const realResponses = allResponses.filter((r) => !r.isMock)
+    if (realResponses.length === 0 && allResponses.length > 0) {
+      await step.run('mark-failed-all-mock', async () => {
+        await supabase.from('free_scans').update({
+          status: 'failed',
+          completed_at: new Date().toISOString(),
+        }).eq('id', freeScanId)
       })
+      throw new Error('All engines returned mock data — API key may be misconfigured')
+    }
 
-      const perplexityResult = await step.run('query-perplexity', async () => {
-        const response = await queryEngine('perplexity', engineQuery)
-        return { engine: response.engine, rawResponse: response.rawResponse, latencyMs: response.latencyMs, isMock: response.isMock }
-      })
-
-      const results = await step.run('parse-and-score', async () => {
-        const responses = [chatgptResult, geminiResult, perplexityResult].map((r) => ({
-          ...r,
-          timestamp: new Date(),
-        }))
-
-        const parsedResults = responses.map((r) => parseEngineResponse(r, businessName))
-        const compositeScore = calculateCompositeScore(parsedResults)
-
-        // Transform into ScanResults format expected by the client
-        const engines: EngineResult[] = parsedResults.map((p, i) => ({
-          engine: p.engine as LLMEngine,
-          is_mentioned: p.isMentioned,
-          mention_position: p.mentionPosition,
-          sentiment: p.sentiment >= 65 ? 'positive' : p.sentiment >= 40 ? 'neutral' : 'negative',
-          competitors_mentioned: p.competitorNames,
-          response_snippet: responses[i]?.rawResponse?.slice(0, 300) ?? '',
-        }))
-
-        // Generate competitor data
-        const competitors = INDUSTRY_COMPETITORS[industry] ?? ['Top Competitor', 'Industry Leader']
-        const topCompetitor = competitors[0] ?? 'Top Competitor'
-        const visibilityScore = compositeScore.overallScore
-        const topCompetitorScore = Math.min(95, visibilityScore + 10 + Math.round(Math.random() * 15))
-
-        // Generate leaderboard
-        const leaderboard: LeaderboardEntry[] = []
-        const competitorScores = competitors.slice(0, 5).map((name, i) => ({
-          name,
-          score: Math.max(20, Math.min(95, topCompetitorScore - i * 8 + Math.round(Math.random() * 10 - 5))),
-        }))
-        competitorScores.push({ name: businessName, score: visibilityScore })
-        competitorScores.sort((a, b) => b.score - a.score)
-        competitorScores.forEach((c, i) => {
-          leaderboard.push({
-            name: c.name,
-            score: c.score,
-            rank: i + 1,
-            is_user: c.name === businessName,
-          })
-        })
-
-        const userEntry = leaderboard.find((e) => e.is_user)
-
-        // Pick 3-4 quick wins
-        const shuffled = [...QUICK_WIN_TEMPLATES].sort(() => Math.random() - 0.5)
-        const quickWins = shuffled.slice(0, 3 + Math.round(Math.random()))
-
-        const scanResults: ScanResults = {
-          visibility_score: visibilityScore,
-          engines,
-          top_competitor: topCompetitor,
-          top_competitor_score: topCompetitorScore,
-          quick_wins: quickWins,
-          rank: userEntry?.rank ?? leaderboard.length,
-          total_businesses: leaderboard.length,
-          leaderboard,
-        }
-
-        return scanResults
-      })
-
-      await step.run('save-results', async () => {
-        await supabase
-          .from('free_scans')
-          .update({
-            status: 'completed',
-            overall_score: results.visibility_score,
-            results_data: results,
-            completed_at: new Date().toISOString(),
-          })
-          .eq('id', scanId)
-      })
-
-      return { scanId, visibilityScore: results.visibility_score }
-    } catch (error) {
+    // If ALL engines failed (no responses at all), mark scan as failed
+    if (allResponses.length === 0) {
       await step.run('mark-failed', async () => {
-        await supabase
-          .from('free_scans')
-          .update({ status: 'failed' })
-          .eq('id', scanId)
+        await supabase.from('free_scans').update({
+          status: 'failed',
+          completed_at: new Date().toISOString(),
+        }).eq('id', freeScanId)
       })
-      throw error // re-throw so Inngest records the failure
+      throw new Error('All engine queries failed — scan marked as failed')
     }
+
+    // Step 5: Analyze all responses
+    const analysis = await step.run('analyze-responses', async () => {
+      return analyzeStep(ctx, research, queries, allResponses)
+    })
+
+    // Step 6: Build results and save
+    await step.run('save-results', async () => {
+      const scanResults = buildResultsStep(ctx, research, queries, analysis)
+
+      await supabase.from('free_scans').update({
+        status: 'completed',
+        overall_score: scanResults.visibility_score,
+        results_data: JSON.parse(JSON.stringify(scanResults)),
+        completed_at: new Date().toISOString(),
+        ...(mockEngines.length > 0 ? { mock_engines: mockEngines } : {}),
+      }).eq('id', freeScanId)
+
+      if (mockEngines.length > 0) {
+        console.warn(`[scan-free] Scan ${freeScanId} used MOCK for: ${mockEngines.join(', ')}`)
+      }
+      console.log(`[scan-free] Scan ${freeScanId} completed — score: ${scanResults.visibility_score}`)
+
+      return { overallScore: scanResults.visibility_score }
+    })
+
+    return { freeScanId }
   },
 )

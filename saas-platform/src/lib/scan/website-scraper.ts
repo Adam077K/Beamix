@@ -20,6 +20,29 @@ export interface WebsiteContext {
 }
 
 /**
+ * Validate URL is safe to fetch (SSRF protection).
+ * Blocks internal IPs, non-HTTP schemes, and metadata endpoints.
+ */
+function isSafeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false
+    const hostname = parsed.hostname.toLowerCase()
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') return false
+    if (hostname === '0.0.0.0' || hostname === '[::1]') return false
+    if (hostname.startsWith('10.') || hostname.startsWith('192.168.')) return false
+    if (/^172\.(1[6-9]|2\d|3[01])\./.test(hostname)) return false
+    if (hostname.startsWith('169.254.')) return false // AWS/cloud metadata
+    if (hostname.startsWith('fd') || hostname.startsWith('fe80')) return false // IPv6 link-local
+    if (hostname.endsWith('.internal') || hostname.endsWith('.local')) return false
+    if (hostname.endsWith('.svc.cluster.local')) return false // Kubernetes
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
  * Scrape homepage to understand what the business does.
  * Returns extracted text or empty context on failure.
  */
@@ -30,6 +53,11 @@ export async function scrapeWebsite(url: string): Promise<WebsiteContext> {
     headlines: [],
     bodySnippet: null,
     success: false,
+  }
+
+  if (!isSafeUrl(url)) {
+    console.warn(`[scraper] Blocked unsafe URL: ${url}`)
+    return empty
   }
 
   try {

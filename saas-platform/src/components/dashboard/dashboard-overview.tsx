@@ -347,7 +347,7 @@ export function DashboardOverview({
       ),
     },
     {
-      header: 'Credits',
+      header: 'Runs',
       accessorKey: 'credits_cost',
       meta: { align: 'right' },
       cell: ({ row }) => (
@@ -570,14 +570,14 @@ export function DashboardOverview({
             </Card>
             <Card className="rounded-[20px] shadow-[var(--shadow-card)]">
               <CardContent className="p-4 flex flex-col gap-2">
-                <span className="section-eyebrow">Credits</span>
+                <span className="section-eyebrow">AI Runs</span>
                 <span className="metric-value text-2xl font-bold text-foreground leading-none">
                   {creditsUsed}/{monthlyCredits}
                 </span>
                 <Progress
                   value={creditsPercent}
                   className="h-1.5 bg-primary/15 [&>div]:bg-primary"
-                  aria-label={`${creditsPercent}% credits used`}
+                  aria-label={`${creditsPercent}% AI Runs used`}
                 />
               </CardContent>
             </Card>
@@ -647,7 +647,7 @@ export function DashboardOverview({
         {/* Credit Usage */}
         <Card className="rounded-[20px] shadow-[var(--shadow-card)]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">Agent Credit Usage</CardTitle>
+            <CardTitle className="text-base font-semibold">AI Run Usage</CardTitle>
           </CardHeader>
           <CardContent className="px-6 pb-6 pt-0 flex flex-col gap-4">
             <div className="flex flex-col gap-2">
@@ -675,11 +675,11 @@ export function DashboardOverview({
                   aria-valuenow={creditsPercent}
                   aria-valuemin={0}
                   aria-valuemax={100}
-                  aria-label={`${creditsUsed} of ${monthlyCredits} credits used`}
+                  aria-label={`${creditsUsed} of ${monthlyCredits} AI Runs used`}
                 />
               </div>
               <span className="text-sm text-muted-foreground">
-                {creditsUsed} of {monthlyCredits} credits used this month
+                {creditsUsed} of {monthlyCredits} AI Runs used this month
               </span>
             </div>
 

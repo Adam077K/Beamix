@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Search, Bell, Menu, X } from 'lucide-react'
+import { Bell, Menu, X } from 'lucide-react'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { UserMenu } from '@/components/dashboard/user-menu'
+import { LanguageToggle } from '@/components/ui/language-toggle'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 interface DashboardShellProps {
@@ -16,20 +18,19 @@ interface DashboardShellProps {
 }
 
 const TOP_NAV_TABS = [
-  { href: '/dashboard',                 label: 'Overview' },
-  { href: '/dashboard/rankings',        label: 'Rankings' },
-  { href: '/dashboard/agents',          label: 'Agents' },
-  { href: '/dashboard/content',         label: 'Content' },
-  { href: '/dashboard/competitors',     label: 'Competitors' },
-  { href: '/dashboard/ai-readiness',    label: 'AI Readiness' },
-  { href: '/dashboard/notifications',   label: 'Notifications' },
-  { href: '/dashboard/settings',        label: 'Settings' },
+  { href: '/dashboard',                   label: 'Overview' },
+  { href: '/dashboard/rankings',          label: 'Rankings' },
+  { href: '/dashboard/agents',            label: 'Agents' },
+  { href: '/dashboard/content',           label: 'Content' },
+  { href: '/dashboard/competitors',       label: 'Competitors' },
+  { href: '/dashboard/recommendations',   label: 'Recommendations' },
+  { href: '/dashboard/notifications',     label: 'Notifications' },
+  { href: '/dashboard/settings',          label: 'Settings' },
 ]
 
 const MOBILE_NAV_ITEMS = [
   { href: '/dashboard',                    label: 'Overview' },
   { href: '/dashboard/rankings',           label: 'Rankings' },
-  { href: '/dashboard/ai-readiness',       label: 'AI Readiness' },
   { href: '/dashboard/competitors',        label: 'Competitors' },
   { href: '/dashboard/agents',             label: 'AI Agents' },
   { href: '/dashboard/content',            label: 'Content' },
@@ -87,8 +88,6 @@ export function DashboardShell({
       <div className="hidden md:block">
         <Sidebar
           businessName={businessName}
-          planTier={planTier}
-          trialDaysLeft={trialDaysLeft}
         />
       </div>
 
@@ -101,7 +100,7 @@ export function DashboardShell({
             aria-hidden="true"
           />
           <div
-            className="fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col md:hidden"
+            className="fixed inset-y-0 ltr:left-0 rtl:right-0 z-50 w-64 bg-card ltr:border-r rtl:border-l border-border flex flex-col md:hidden"
             role="dialog"
             aria-modal="true"
           >
@@ -164,7 +163,7 @@ export function DashboardShell({
       )}
 
       {/* Main content area */}
-      <div className="flex flex-1 flex-col md:pl-[60px]">{/* Matches sidebar width */}
+      <div className="flex flex-1 flex-col ltr:md:pl-[60px] rtl:md:pr-[60px]">{/* Matches sidebar width */}
         {/* Top navigation bar */}
         <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-card/95 backdrop-blur-sm px-4 md:px-6">
           {/* Left: Logo + nav tabs */}
@@ -187,7 +186,7 @@ export function DashboardShell({
                 <span className="text-xs font-bold text-white">B</span>
               </div>
               <span className="text-sm font-semibold tracking-tight">
-                Beam<span className="text-primary/80">ix</span>
+                Beam<span className="text-primary">ix</span>
               </span>
             </Link>
 
@@ -204,14 +203,9 @@ export function DashboardShell({
             </nav>
           </div>
 
-          {/* Right: Search + notifications + user menu */}
+          {/* Right: Language toggle + notifications + trial + user menu */}
           <div className="flex items-center gap-2">
-            <button
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              aria-label="Search"
-            >
-              <Search className="h-4 w-4" />
-            </button>
+            <LanguageToggle />
             <Link
               href="/dashboard/notifications"
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -219,6 +213,18 @@ export function DashboardShell({
             >
               <Bell className="h-4 w-4" />
             </Link>
+            {trialDaysLeft !== null && trialDaysLeft > 0 && (
+              <Badge className="hidden sm:inline-flex bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100">
+                Trial: {trialDaysLeft}d left
+              </Badge>
+            )}
+            {trialDaysLeft !== null && trialDaysLeft <= 0 && (
+              <Link href="/pricing">
+                <Badge className="hidden sm:inline-flex bg-red-100 text-red-700 border-red-200 hover:bg-red-200 cursor-pointer">
+                  Trial expired · Upgrade
+                </Badge>
+              </Link>
+            )}
             <UserMenu businessName={businessName} planTier={planTier} />
           </div>
         </header>

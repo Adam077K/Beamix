@@ -27,7 +27,6 @@ interface AgentModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   agentName: string
-  agentSlug: string
   creditCost: number
   totalCredits: number
   onExecute: (params: AgentExecuteParams) => void
@@ -187,9 +186,15 @@ export function AgentModal({
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-primary shrink-0" />
               <span className="text-sm text-foreground">
-                This will use{' '}
-                <strong className="font-semibold">{creditCost}</strong>{' '}
-                credit{creditCost !== 1 ? 's' : ''}
+                {creditCost === 0 ? (
+                  <strong className="font-semibold">Free (Unlimited)</strong>
+                ) : (
+                  <>
+                    This will use{' '}
+                    <strong className="font-semibold">{creditCost}</strong>{' '}
+                    AI Run
+                  </>
+                )}
               </span>
             </div>
             <span
@@ -198,13 +203,13 @@ export function AgentModal({
                 canAfford ? 'text-muted-foreground' : 'text-destructive'
               )}
             >
-              {totalCredits} available
+              {totalCredits} AI Runs available
             </span>
           </div>
 
           {!canAfford && (
             <p className="text-xs text-destructive -mt-2">
-              Not enough credits. You need {creditCost} but only have {totalCredits}.
+              Not enough AI Runs. You need {creditCost} but only have {totalCredits}.
             </p>
           )}
         </div>

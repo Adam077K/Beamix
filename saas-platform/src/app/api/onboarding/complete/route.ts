@@ -4,6 +4,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sendWelcomeEmail, sendTrialStartEmail } from '@/lib/email/events'
 import { generateAndStoreRecommendations } from '@/lib/recommendations'
 import type { Json } from '@/lib/types/database.types'
+import type { QuickWin } from '@/lib/types'
 
 const onboardingSchema = z.object({
   business_name: z.string().min(2).max(100),
@@ -68,8 +69,9 @@ export async function POST(request: Request) {
       .single()
 
     if (bizError) {
+      console.error('[onboarding] Failed to create business:', bizError.message)
       return NextResponse.json(
-        { error: 'Failed to create business', details: bizError.message },
+        { error: 'Failed to create business. Please try again.' },
         { status: 500 }
       )
     }
@@ -89,6 +91,8 @@ export async function POST(request: Request) {
   // 2. Link free scan and convert results.
   //    Priority: scan_id (if provided) → email match → skip.
   let convertedScanId: string | null = null
+  let convertedEngineResults: ConvertedEngineResult[] = []
+  let convertedOverallScore: number | null = null
   {
     const serviceSupa = await createServiceClient()
 
@@ -106,7 +110,22 @@ export async function POST(request: Request) {
         // Non-fatal — business was created, scan just didn't link
         console.error('Failed to link free scan by scan_id:', scanLinkError.message)
       } else if (freeScan?.results_data && freeScan.status === 'completed') {
-        convertedScanId = await convertFreeScanResults(serviceSupa, freeScan, user.id, business.id)
+        const converted = await convertFreeScanResults(serviceSupa, freeScan, user.id, business.id)
+        convertedScanId = converted.scanId
+        convertedEngineResults = converted.engineResults
+        convertedOverallScore = converted.overallScore
+        // Insert quick_wins from free scan immediately (non-blocking)
+        if (converted.scanId && converted.quickWins.length > 0) {
+          insertQuickWinsAsRecommendations(
+            serviceSupa,
+            converted.quickWins,
+            user.id,
+            business.id,
+            converted.scanId,
+          ).catch((err) =>
+            console.error('[ONBOARDING] Quick wins insert failed (non-blocking):', err)
+          )
+        }
       }
     } else if (user.email) {
       // Email match path: find + claim the most recent completed scan atomically
@@ -134,7 +153,22 @@ export async function POST(request: Request) {
         if (claimError) {
           console.error('Failed to claim email-matched free scan:', claimError.message)
         } else if (freeScan?.results_data && freeScan.status === 'completed') {
-          convertedScanId = await convertFreeScanResults(serviceSupa, freeScan, user.id, business.id)
+          const converted = await convertFreeScanResults(serviceSupa, freeScan, user.id, business.id)
+          convertedScanId = converted.scanId
+          convertedEngineResults = converted.engineResults
+          convertedOverallScore = converted.overallScore
+          // Insert quick_wins from free scan immediately (non-blocking)
+          if (converted.scanId && converted.quickWins.length > 0) {
+            insertQuickWinsAsRecommendations(
+              serviceSupa,
+              converted.quickWins,
+              user.id,
+              business.id,
+              converted.scanId,
+            ).catch((err) =>
+              console.error('[ONBOARDING] Quick wins insert failed (non-blocking):', err)
+            )
+          }
         }
       }
     }
@@ -162,9 +196,9 @@ export async function POST(request: Request) {
     )
 
   if (profileError) {
-    console.error('Failed to upsert onboarding status:', profileError.message)
+    console.error('[onboarding] Failed to upsert onboarding status:', profileError.message)
     return NextResponse.json(
-      { error: 'Failed to complete onboarding', details: profileError.message },
+      { error: 'Failed to complete onboarding. Please try again.' },
       { status: 500 }
     )
   }
@@ -252,16 +286,17 @@ export async function POST(request: Request) {
     }
   }
 
-  // Fire-and-forget: generate recommendations from scan data (non-blocking)
-  // Uses shared generateAndStoreRecommendations() from src/lib/recommendations.ts
+  // Fire-and-forget: generate additional AI recommendations from scan data (non-blocking).
+  // Supplements quick_wins already inserted above with richer LLM-generated recommendations.
+  // Deduplication in generateAndStoreRecommendations prevents double-inserts.
   if (convertedScanId) {
     generateAndStoreRecommendations({
       userId: user.id,
       businessId: business.id,
       scanData: {
         scanId: convertedScanId,
-        overallScore: null, // will be fetched by the shared function if needed
-        engineResults: [],
+        overallScore: convertedOverallScore,
+        engineResults: convertedEngineResults,
       },
       business: {
         name: business_name,
@@ -305,7 +340,21 @@ interface FreeScanEngineResult {
   response_snippet: string
 }
 
- 
+interface ConvertedEngineResult {
+  engine: string
+  is_mentioned: boolean
+  rank_position: number | null
+  sentiment: string | null
+  sentiment_score: number | null
+}
+
+interface ConvertFreeScanResult {
+  scanId: string | null
+  engineResults: ConvertedEngineResult[]
+  overallScore: number | null
+  quickWins: QuickWin[]
+}
+
 type SupabaseClient = Awaited<ReturnType<typeof createServiceClient>>
 
 async function convertFreeScanResults(
@@ -313,12 +362,29 @@ async function convertFreeScanResults(
   freeScan: FreeScanRow,
   userId: string,
   businessId: string
-): Promise<string | null> {
-  if (!freeScan.results_data || typeof freeScan.results_data !== 'object' || Array.isArray(freeScan.results_data)) return null
+): Promise<ConvertFreeScanResult> {
+  const empty: ConvertFreeScanResult = { scanId: null, engineResults: [], overallScore: null, quickWins: [] }
+
+  if (!freeScan.results_data || typeof freeScan.results_data !== 'object' || Array.isArray(freeScan.results_data)) {
+    return empty
+  }
   const resultsData = freeScan.results_data as Record<string, Json | undefined>
+
+  // Extract quick_wins from the free scan's results_data JSONB blob
+  const rawQuickWins = resultsData.quick_wins
+  const quickWins: QuickWin[] = Array.isArray(rawQuickWins)
+    ? (rawQuickWins as unknown[]).filter(
+        (w): w is QuickWin =>
+          typeof w === 'object' &&
+          w !== null &&
+          typeof (w as Record<string, unknown>).title === 'string' &&
+          typeof (w as Record<string, unknown>).description === 'string'
+      )
+    : []
 
   let queryId: string | null = null
   let scanResultId: string | null = null
+  const engineResults: ConvertedEngineResult[] = []
 
   try {
     // Create a tracked query for the free scan
@@ -337,7 +403,7 @@ async function convertFreeScanResults(
 
     if (queryError || !query) {
       console.error('Failed to create tracked query:', queryError?.message)
-      return null
+      return empty
     }
     queryId = query.id
 
@@ -359,7 +425,7 @@ async function convertFreeScanResults(
 
     if (scanError || !scanResult) {
       console.error('Failed to create scan result:', scanError?.message)
-      return null
+      return empty
     }
     scanResultId = scanResult.id
 
@@ -395,6 +461,19 @@ async function convertFreeScanResults(
         // Non-fatal: scan record exists, engine details just didn't save
       }
     }
+
+    // Collect engine results for downstream recommendation generation context
+    for (const e of engines) {
+      if (engineMap[e.engine]) {
+        engineResults.push({
+          engine: engineMap[e.engine],
+          is_mentioned: e.is_mentioned,
+          rank_position: e.mention_position,
+          sentiment: e.sentiment,
+          sentiment_score: sentimentToScore[e.sentiment ?? 'neutral'] ?? 50,
+        })
+      }
+    }
   } catch (err) {
     console.error('convertFreeScanResults failed:', err)
     // Attempt cleanup: delete the scan_result if it was created (details cascade or orphan)
@@ -417,11 +496,83 @@ async function convertFreeScanResults(
         console.error('Cleanup: failed to delete tracked_query:', cleanupQueryErr.message)
       }
     }
-    return null
+    return empty
   }
 
-  return scanResultId
+  return {
+    scanId: scanResultId,
+    engineResults,
+    overallScore: freeScan.overall_score,
+    quickWins,
+  }
 }
 
-// Recommendation generation is now handled by the shared
-// generateAndStoreRecommendations() in src/lib/recommendations.ts
+/**
+ * Maps a QuickWin impact level to a recommendation priority.
+ */
+function impactToPriority(impact: string): 'high' | 'medium' | 'low' {
+  if (impact === 'high') return 'high'
+  if (impact === 'medium') return 'medium'
+  return 'low'
+}
+
+/**
+ * Inserts quick_wins from the free scan as rows in the recommendations table.
+ *
+ * This gives new users immediate actionable items on the recommendations page
+ * without waiting for LLM generation. The LLM-based generateAndStoreRecommendations()
+ * is also called after this — its deduplication check (same scan_id) ensures the
+ * two paths do not insert duplicate rows for the same scan.
+ *
+ * Non-blocking — caller must .catch() the returned promise.
+ */
+async function insertQuickWinsAsRecommendations(
+  supabase: SupabaseClient,
+  quickWins: QuickWin[],
+  userId: string,
+  businessId: string,
+  scanId: string,
+): Promise<void> {
+  if (quickWins.length === 0) return
+
+  // Deduplication: skip if recommendations already exist for this scan
+  const { data: existing } = await supabase
+    .from('recommendations')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('scan_id', scanId)
+    .limit(1)
+
+  if (existing && existing.length > 0) {
+    console.log('[ONBOARDING] Recommendations already exist for scan, skipping quick_wins insert')
+    return
+  }
+
+  const toInsert = quickWins.map((win) => ({
+    user_id: userId,
+    business_id: businessId,
+    scan_id: scanId,
+    title: win.title,
+    description: win.description,
+    priority: impactToPriority(win.impact),
+    recommendation_type: 'content',
+    suggested_agent: null,
+    credits_cost: 1,
+    effort: win.impact === 'high' ? 'medium' : 'low',
+    impact: win.impact,
+    evidence: win.engine_benefit ?? null,
+    status: 'new' as const,
+    is_free_preview: true,
+    action_items: [] as Json,
+  }))
+
+  const { error: insertError } = await supabase
+    .from('recommendations')
+    .insert(toInsert)
+
+  if (insertError) {
+    console.error('[ONBOARDING] Failed to insert quick_wins as recommendations:', insertError.message)
+  } else {
+    console.log(`[ONBOARDING] Inserted ${toInsert.length} quick_wins as recommendations for scan ${scanId}`)
+  }
+}

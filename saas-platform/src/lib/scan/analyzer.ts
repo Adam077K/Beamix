@@ -143,7 +143,7 @@ export async function analyzeResponses(params: {
       return buildFallbackAnalysis(businessName, responses)
     }
 
-    console.log(`[analyzer] Analysis complete — ${parsed.data.engines.filter((e) => e.mentioned).length}/3 engines mention business, ${parsed.data.recommendations.length} recommendations`)
+    console.log(`[analyzer] Analysis complete — ${parsed.data.engines.filter((e) => e.mentioned).length}/${parsed.data.engines.length} engines mention business, ${parsed.data.recommendations.length} recommendations`)
     return parsed.data
   } catch (error) {
     console.error('[analyzer] LLM analysis failed:', error instanceof Error ? error.message : error)

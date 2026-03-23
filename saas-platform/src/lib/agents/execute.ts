@@ -2,11 +2,20 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import type { Json } from '@/lib/types/database.types'
-import { AGENT_CONFIG, isPlanSufficient } from './config'
+import { AGENT_CONFIG, isPlanSufficient, UNLIMITED_DAILY_LIMITS } from './config'
 import type { AgentOutput } from './mock-outputs'
 import { holdCredits, confirmCredits, releaseCredits, InsufficientCreditsError } from './credit-guard'
 import { runAgentLLM } from './llm-runner'
 import { runQAGate } from './qa-gate'
+
+/** Scan data context passed to agents for scan-aware content generation */
+export interface ScanContext {
+  visibilityScore?: number | null
+  engineMentions?: Array<{ engine: string; mentioned: boolean; position: number | null; sentiment: string | null }>
+  topCompetitors?: Array<{ name: string; score: number }>
+  brandAttributes?: { associated_qualities?: string[]; missing_qualities?: string[] }
+  quickWins?: Array<{ title: string; description: string }>
+}
 
 /**
  * Shared Zod schema for agent execution input.
@@ -49,8 +58,10 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     .eq('user_id', user.id)
     .single()
 
-  const userPlan = subscription?.plan_tier ?? 'free'
+  const userPlan = subscription?.plan_tier ?? null
   const subStatus = subscription?.status ?? 'active'
+  // Trialing users get starter-level access (per product spec: trial = 5 agent credits)
+  const effectivePlan = userPlan ?? (subStatus === 'trialing' ? 'starter' : null)
 
   if (subStatus !== 'active' && subStatus !== 'trialing') {
     return NextResponse.json(
@@ -59,32 +70,38 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     )
   }
 
-  if (!isPlanSufficient(userPlan, config.minPlan)) {
+  if (!isPlanSufficient(effectivePlan, config.minPlan)) {
     return NextResponse.json(
-      { error: `This agent requires the ${config.minPlan} plan or higher. You are on the ${userPlan} plan.` },
+      { error: `This agent requires the ${config.minPlan} plan or higher. You are on the ${effectivePlan ?? 'free'} plan.` },
       { status: 403 }
     )
   }
 
-  // 3. Credits balance check (fast-fail before creating a DB record)
-  const { data: credits } = await supabase
-    .from('credit_pools')
-    .select('base_allocation, topup_amount, rollover_amount, used_amount, held_amount')
-    .eq('user_id', user.id)
-    .order('period_end', { ascending: false })
-    .limit(1)
-    .single()
+  // 3. Rate-limit check for unlimited agents (credits checked atomically by holdCredits RPC)
+  if (config.isUnlimited) {
+    // Unlimited agents: check daily rate limit instead of credits
+    const dailyLimit = UNLIMITED_DAILY_LIMITS[effectivePlan ?? 'starter'] ?? UNLIMITED_DAILY_LIMITS.starter ?? 10
+    // Use UTC midnight to avoid timezone-dependent rate limit resets
+    const todayStartUTC = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z')
 
-  const availableCredits = credits
-    ? (credits.base_allocation + credits.topup_amount + credits.rollover_amount - credits.used_amount - (credits.held_amount ?? 0))
-    : 0
+    const { count: todayCount } = await supabase
+      .from('agent_jobs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('agent_type', config.dbType)
+      .neq('status', 'failed')
+      .gte('created_at', todayStartUTC.toISOString())
 
-  if (availableCredits < config.cost) {
-    return NextResponse.json(
-      { error: `Not enough credits. You need ${config.cost} but have ${availableCredits}.` },
-      { status: 402 }
-    )
+    if ((todayCount ?? 0) >= dailyLimit) {
+      return NextResponse.json(
+        { error: `Daily limit reached for ${config.name}. You can run it up to ${dailyLimit} times per day. Resets at midnight UTC.` },
+        { status: 429 }
+      )
+    }
   }
+  // Premium agents: credit balance is checked atomically by holdCredits() RPC below.
+  // No pre-check here — avoids TOCTOU race condition where concurrent requests
+  // both pass a read-based check before either holds credits.
 
   // 4. Validate input
   let body: unknown
@@ -127,6 +144,47 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
   const businessId = business.id
   const businessName = business.name
 
+  // Fetch latest scan data for agent context (scan-aware agents)
+  let scanContext: ScanContext | undefined
+  {
+    const { data: latestScan } = await supabase
+      .from('scans')
+      .select('overall_score, results_summary')
+      .eq('business_id', businessId)
+      .eq('status', 'completed')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (latestScan?.results_summary && typeof latestScan.results_summary === 'object') {
+      const rd = latestScan.results_summary as Record<string, unknown>
+      scanContext = {
+        visibilityScore: latestScan.overall_score ?? (rd.visibility_score as number | undefined),
+        engineMentions: Array.isArray(rd.engines)
+          ? (rd.engines as Array<Record<string, unknown>>).map((e) => ({
+              engine: String(e.engine ?? ''),
+              mentioned: Boolean(e.is_mentioned),
+              position: (e.mention_position as number | null) ?? null,
+              sentiment: (e.sentiment as string | null) ?? null,
+            }))
+          : undefined,
+        topCompetitors: Array.isArray(rd.leaderboard)
+          ? (rd.leaderboard as Array<Record<string, unknown>>)
+              .filter((e) => !e.is_user)
+              .slice(0, 5)
+              .map((e) => ({ name: String(e.name ?? ''), score: Number(e.score ?? 0) }))
+          : undefined,
+        brandAttributes: rd.brand_attributes as { associated_qualities?: string[]; missing_qualities?: string[] } | undefined,
+        quickWins: Array.isArray(rd.quick_wins)
+          ? (rd.quick_wins as Array<Record<string, unknown>>).map((w) => ({
+              title: String(w.title ?? ''),
+              description: String(w.description ?? ''),
+            }))
+          : undefined,
+      }
+    }
+  }
+
   // 5. Insert agent_jobs record (status='pending')
   const startedAt = new Date().toISOString()
   const { data: execution, error: execError } = await supabase
@@ -154,22 +212,24 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     return NextResponse.json({ error: 'Failed to create execution record' }, { status: 500 })
   }
 
-  // 6. Hold credits BEFORE running the agent (prevents race conditions)
-  try {
-    await holdCredits(user.id, config.dbType, execution.id)
-  } catch (err) {
-    await supabase
-      .from('agent_jobs')
-      .update({ status: 'failed', error_message: 'Credit hold failed' })
-      .eq('id', execution.id)
+  // 6. Hold credits BEFORE running the agent (skip for unlimited agents)
+  if (!config.isUnlimited) {
+    try {
+      await holdCredits(user.id, config.dbType, execution.id)
+    } catch (err) {
+      await supabase
+        .from('agent_jobs')
+        .update({ status: 'failed', error_message: 'Credit hold failed' })
+        .eq('id', execution.id)
 
-    if (err instanceof InsufficientCreditsError) {
-      return NextResponse.json(
-        { error: 'Not enough credits to run this agent.' },
-        { status: 402 }
-      )
+      if (err instanceof InsufficientCreditsError) {
+        return NextResponse.json(
+          { error: 'Not enough AI Runs to use this agent.' },
+          { status: 402 }
+        )
+      }
+      return NextResponse.json({ error: 'Failed to reserve credits' }, { status: 500 })
     }
-    return NextResponse.json({ error: 'Failed to reserve credits' }, { status: 500 })
   }
 
   // 7. Run real LLM agent
@@ -182,18 +242,24 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
         websiteUrl: business.website_url ?? undefined,
         industry: business.industry ?? undefined,
         location: business.location ?? undefined,
+        scanData: scanContext,
       },
       input,
     )
   } catch (err) {
     // Release credits on failure so they're not locked
-    await releaseCredits(execution.id)
+    if (!config.isUnlimited) {
+      await releaseCredits(execution.id)
+    }
+    console.error('[executeAgent] LLM execution failed:', err)
     await supabase
       .from('agent_jobs')
-      .update({ status: 'failed', error_message: String(err) })
+      .update({ status: 'failed', error_message: 'LLM execution failed' })
       .eq('id', execution.id)
-    console.error('[executeAgent] LLM execution failed:', err)
-    return NextResponse.json({ error: 'Agent execution failed. Credits have been refunded.' }, { status: 500 })
+    return NextResponse.json(
+      { error: config.isUnlimited ? 'Agent execution failed. Please try again.' : 'Agent execution failed. Your AI Run has been refunded.' },
+      { status: 500 },
+    )
   }
 
   const completedAt = new Date().toISOString()
@@ -251,16 +317,20 @@ export async function executeAgent(slug: string, request: Request): Promise<Next
     }
     // Structured outputs are stored in agent_jobs.output_data (set in step 8).
 
-    // 10. Confirm credits after successful completion
-    await confirmCredits(execution.id)
+    // 10. Confirm credits after successful completion (skip for unlimited agents)
+    if (!config.isUnlimited) {
+      await confirmCredits(execution.id)
+    }
   } catch (postErr) {
     // Release credits so they are not locked permanently
-    await releaseCredits(execution.id)
+    if (!config.isUnlimited) {
+      await releaseCredits(execution.id)
+    }
+    console.error('[executeAgent] Post-LLM step failed, credits released:', postErr)
     await supabase
       .from('agent_jobs')
-      .update({ status: 'failed', error_message: String(postErr) })
+      .update({ status: 'failed', error_message: 'Failed to save agent output' })
       .eq('id', execution.id)
-    console.error('[executeAgent] Post-LLM step failed, credits released:', postErr)
     return NextResponse.json(
       { error: 'Failed to save agent output. Credits have been refunded.' },
       { status: 500 },
