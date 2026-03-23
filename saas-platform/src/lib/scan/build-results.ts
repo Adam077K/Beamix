@@ -112,8 +112,7 @@ export function buildScanResults(params: {
     visibility_score: visibilityScore,
     engines: engineResults,
     top_competitor: topCompetitor?.name ?? 'Industry Leader',
-    top_competitor_score:
-      topCompetitor?.score ?? Math.min(95, visibilityScore + 15),
+    top_competitor_score: topCompetitor?.score ?? 0,
     quick_wins: quickWins,
     rank: userEntry?.rank ?? leaderboard.length,
     total_businesses: leaderboard.length,
@@ -131,5 +130,22 @@ export function buildScanResults(params: {
     per_query_breakdown: analysis.per_query_breakdown,
     brand_attributes: analysis.brand_attributes,
     citation_urls: analysis.citation_urls,
+    // Sub-scores will be populated when the new prompts/scoring module is wired in
+    // For now, derive approximate sub-scores from the existing formula
+    brand_awareness_score: totalEngines > 0
+      ? Math.round((engineResults.filter((e) => e.is_mentioned).length / totalEngines) * 100)
+      : 0,
+    ranking_quality_score: (() => {
+      const mentioned = engineResults.filter((e) => e.is_mentioned && e.mention_position !== null)
+      if (mentioned.length === 0) return 0
+      const avg = mentioned.reduce((sum, e) => sum + Math.max(10, 110 - (e.mention_position ?? 10) * 10), 0) / mentioned.length
+      return Math.round(avg)
+    })(),
+    citation_quality_score: (() => {
+      const mentioned = engineResults.filter((e) => e.is_mentioned)
+      if (mentioned.length === 0) return 0
+      const sentScores = mentioned.map((e) => e.sentiment === 'positive' ? 80 : e.sentiment === 'neutral' ? 50 : 20)
+      return Math.round(sentScores.reduce((a, b) => a + b, 0) / sentScores.length)
+    })(),
   }
 }

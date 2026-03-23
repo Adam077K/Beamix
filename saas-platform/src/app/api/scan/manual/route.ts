@@ -43,6 +43,37 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Business not found' }, { status: 404 })
   }
 
+  // Enforce plan-tier scan rate limits: Starter=1/week, Pro=1/day, Business=unlimited
+  const { data: sub } = await supabase
+    .from('subscriptions')
+    .select('plan_tier')
+    .eq('user_id', user.id)
+    .single()
+
+  const tier = sub?.plan_tier ?? null
+  const scanLimits: Record<string, { windowMs: number; max: number }> = {
+    starter:  { windowMs: 7 * 24 * 60 * 60 * 1000, max: 1 },  // 1/week
+    pro:      { windowMs: 24 * 60 * 60 * 1000,      max: 1 },  // 1/day
+    business: { windowMs: 0,                         max: Infinity },
+  }
+  const limit = scanLimits[tier ?? 'starter'] ?? scanLimits.starter
+
+  if (limit.max !== Infinity) {
+    const since = new Date(Date.now() - limit.windowMs).toISOString()
+    const { count } = await supabase
+      .from('scans')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('scanned_at', since)
+      .neq('status', 'failed')
+    if ((count ?? 0) >= limit.max) {
+      return NextResponse.json(
+        { error: 'Scan limit reached for your plan. Upgrade for more scans.' },
+        { status: 429 }
+      )
+    }
+  }
+
   // Create scan record
   const { data: scan, error: scanError } = await supabase
     .from('scans')

@@ -1,8 +1,8 @@
 import { serve } from 'inngest/next'
 import { inngest } from '@/inngest/client'
-import { scanManual } from '@/inngest/functions'
+import { scanManual, scanFree } from '@/inngest/functions'
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [scanManual],
+  functions: [scanManual, scanFree],
 })

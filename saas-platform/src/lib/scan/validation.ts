@@ -4,7 +4,11 @@ export const scanStartSchema = z.object({
   url: z
     .string()
     .min(1, 'Website URL is required')
-    .url('Please enter a valid URL'),
+    .url('Please enter a valid URL')
+    .refine(
+      (v) => v.startsWith('https://') || v.startsWith('http://'),
+      'URL must use http or https'
+    ),
   business_name: z
     .string()
     .min(1, 'Business name is required')
