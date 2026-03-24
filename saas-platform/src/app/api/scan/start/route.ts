@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { nanoid } from 'nanoid'
 import { scanStartSchema } from '@/lib/scan/validation'
 import { createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import {
   researchStep,
   generateQueriesStep,
@@ -13,7 +14,7 @@ import {
 import { getTierConfig } from '@/lib/scan/tier-config'
 import type { RawEngineResponse } from '@/lib/scan/analyzer'
 
-// Allow up to 55s for synchronous scan (Vercel Hobby=60s, Pro=300s)
+// Allow enough time for the background scan to complete
 export const maxDuration = 55
 
 export async function POST(request: Request) {
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
 
     const scanIdToken = nanoid(12)
 
-    // Insert scan record as 'processing' — we run synchronously
+    // Insert scan record as 'processing'
     const { data: insertResult, error: insertError } = await supabase
       .from('free_scans')
       .insert({
@@ -76,73 +77,10 @@ export async function POST(request: Request) {
     }
 
     const scanId = insertResult.id
-    console.log(`[scan/start] Scan ${scanId} starting synchronously`)
 
-    // Run scan synchronously — calls OpenRouter directly
-    const ctx: ScanContext = { businessName: business_name, websiteUrl: url, location, sector }
-    const tierConfig = getTierConfig(null) // free tier
-
-    try {
-      // Step 1: Research business via Perplexity
-      console.log(`[scan/start] Step 1: Researching "${business_name}"...`)
-      const research = await researchStep(ctx)
-      console.log(`[scan/start] Research done — industry: "${research.industry}"`)
-
-      if (research.industry && sector && research.industry !== sector) {
-        await supabase.from('free_scans').update({ industry: research.industry }).eq('id', scanId)
-      }
-
-      // Step 2: Generate queries (organic only, no brand queries)
-      const queries = generateQueriesStep(ctx, research, tierConfig)
-      console.log(`[scan/start] Generated ${queries.length} queries`)
-
-      // Step 3: Query engines (ChatGPT, Gemini, Perplexity)
-      const allResponses: RawEngineResponse[] = []
-      const mockEngines: string[] = []
-
-      for (const engine of tierConfig.engines) {
-        const engineQueryCount = tierConfig.queriesPerEngine[engine] ?? 2
-        console.log(`[scan/start] Querying ${engine} with ${engineQueryCount} queries...`)
-        const result = await queryEngineStep(engine, queries, engineQueryCount)
-        allResponses.push(...result.responses)
-        if (result.hasMock) mockEngines.push(engine)
-        console.log(`[scan/start] ${engine}: ${result.responses.length} responses (mock: ${result.hasMock})`)
-      }
-
-      // Check for all-mock (API key issue)
-      const realResponses = allResponses.filter((r) => !r.isMock)
-      if (realResponses.length === 0) {
-        await supabase.from('free_scans').update({ status: 'failed', completed_at: new Date().toISOString() }).eq('id', scanId)
-        console.error(`[scan/start] Scan ${scanId} FAILED — all engines returned mock data. OPENROUTER_SCAN_KEY may be wrong or missing.`)
-        return NextResponse.json(
-          { scan_id: scanId, scan_token: insertResult.scan_id, status: 'failed', error: 'AI engines unavailable — check API key configuration' },
-          { status: 500 }
-        )
-      }
-
-      console.log(`[scan/start] Got ${realResponses.length} real responses, ${mockEngines.length} mock engines`)
-
-      // Step 4: Analyze all responses with Gemini Flash
-      console.log(`[scan/start] Analyzing ${allResponses.length} responses...`)
-      const analysis = await analyzeStep(ctx, research, queries, allResponses)
-
-      // Step 5: Build results
-      const scanResults = buildResultsStep(ctx, research, queries, analysis)
-
-      // Save results
-      await supabase.from('free_scans').update({
-        status: 'completed',
-        overall_score: scanResults.visibility_score,
-        results_data: JSON.parse(JSON.stringify(scanResults)),
-        completed_at: new Date().toISOString(),
-        ...(mockEngines.length > 0 ? { mock_engines: mockEngines } : {}),
-      }).eq('id', scanId)
-
-      console.log(`[scan/start] Scan ${scanId} COMPLETED — score: ${scanResults.visibility_score}`)
-    } catch (scanError) {
-      console.error(`[scan/start] Scan ${scanId} processing failed:`, scanError)
-      await supabase.from('free_scans').update({ status: 'failed' }).eq('id', scanId)
-    }
+    // Run scan in background — return 202 immediately so frontend can redirect.
+    // The scan updates the DB directly; frontend polls /api/scan/{id}/status.
+    runScanInBackground(scanId, business_name, url, sector, location)
 
     return NextResponse.json(
       { scan_id: scanId, scan_token: insertResult.scan_id, status: 'processing' },
@@ -152,4 +90,100 @@ export async function POST(request: Request) {
     console.error('[scan/start] Unhandled error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
+
+/**
+ * Run the scan asynchronously. This function is NOT awaited — it runs in the
+ * background after the HTTP response is sent. Uses its own Supabase client
+ * since the request-scoped one may be closed.
+ *
+ * On Vercel, the function continues executing after the response is sent
+ * as long as maxDuration hasn't been reached. The scan typically takes 20-40s.
+ */
+function runScanInBackground(
+  scanId: string,
+  businessName: string,
+  websiteUrl: string,
+  sector: string | undefined,
+  location: string | undefined,
+) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('[scan/bg] Missing Supabase env vars — cannot run scan')
+    return
+  }
+  const supabase = createClient(supabaseUrl, supabaseKey)
+
+  const ctx: ScanContext = { businessName, websiteUrl, location, sector }
+  const tierConfig = getTierConfig(null)
+
+  // Fire and forget — errors are caught internally
+  ;(async () => {
+    try {
+      console.log(`[scan/bg] ${scanId} — starting scan for "${businessName}"`)
+
+      // Step 1: Research
+      const research = await researchStep(ctx)
+      console.log(`[scan/bg] ${scanId} — research done: "${research.industry}"`)
+
+      if (research.industry && sector && research.industry !== sector) {
+        await supabase.from('free_scans').update({ industry: research.industry }).eq('id', scanId)
+      }
+
+      // Step 2: Generate queries
+      const queries = generateQueriesStep(ctx, research, tierConfig)
+      console.log(`[scan/bg] ${scanId} — ${queries.length} queries`)
+
+      // Step 3: Query engines
+      const allResponses: RawEngineResponse[] = []
+      const mockEngines: string[] = []
+
+      for (const engine of tierConfig.engines) {
+        const engineQueryCount = tierConfig.queriesPerEngine[engine] ?? 2
+        const result = await queryEngineStep(engine, queries, engineQueryCount)
+        allResponses.push(...result.responses)
+        if (result.hasMock) mockEngines.push(engine)
+        console.log(`[scan/bg] ${scanId} — ${engine}: ${result.responses.length} responses, mock=${result.hasMock}`)
+      }
+
+      // Check for all-mock
+      const realResponses = allResponses.filter((r) => !r.isMock)
+      if (realResponses.length === 0) {
+        console.error(`[scan/bg] ${scanId} — ALL MOCK. Check OPENROUTER_SCAN_KEY.`)
+        await supabase.from('free_scans').update({
+          status: 'failed',
+          completed_at: new Date().toISOString(),
+        }).eq('id', scanId)
+        return
+      }
+
+      // Step 4: Analyze
+      console.log(`[scan/bg] ${scanId} — analyzing ${allResponses.length} responses...`)
+      const analysis = await analyzeStep(ctx, research, queries, allResponses)
+
+      // Step 5: Build results + save
+      const scanResults = buildResultsStep(ctx, research, queries, analysis)
+
+      await supabase.from('free_scans').update({
+        status: 'completed',
+        overall_score: scanResults.visibility_score,
+        results_data: JSON.parse(JSON.stringify(scanResults)),
+        completed_at: new Date().toISOString(),
+        ...(mockEngines.length > 0 ? { mock_engines: mockEngines } : {}),
+      }).eq('id', scanId)
+
+      console.log(`[scan/bg] ${scanId} — DONE, score: ${scanResults.visibility_score}`)
+    } catch (err) {
+      console.error(`[scan/bg] ${scanId} — FAILED:`, err)
+      try {
+        await supabase.from('free_scans').update({
+          status: 'failed',
+          completed_at: new Date().toISOString(),
+        }).eq('id', scanId)
+      } catch {
+        // Best-effort DB update
+      }
+    }
+  })()
 }
