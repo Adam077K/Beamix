@@ -2,9 +2,10 @@
  * Smart query generation for AI visibility scanning.
  *
  * Pipeline:
- * 1. Perplexity does deep research about the business
- * 2. We generate 3 simple, natural queries from the research
- * 3. Each engine gets a subset — Perplexity gets all 3, others get 2 random
+ * 1. Scrape website homepage for real context
+ * 2. Perplexity researches the business WITH the scraped context + user's sector hint
+ * 3. Generate 3 simple, natural queries from the research
+ * 4. Each engine gets a subset — Perplexity gets all 3, others get 2 random
  */
 
 import { getScanClient, MODELS } from '@/lib/openrouter'
@@ -26,21 +27,32 @@ export interface BusinessResearch {
 
 /**
  * Research the business using website scraping + Perplexity web search.
- * This is the deep research step — Perplexity gets a detailed prompt
- * to fully understand the business, its industry, and its market.
+ *
+ * Flow: scrape website FIRST → pass scraped content + sector hint to Perplexity.
+ * This gives Perplexity 3 signals: URL (web search), homepage text (what the
+ * business says about itself), and the user's sector hint.
  */
 export async function researchBusiness(
   businessName: string,
   websiteUrl: string,
+  sector?: string,
 ): Promise<BusinessResearch> {
-  const [websiteCtx, perplexityResearch] = await Promise.all([
-    scrapeWebsite(websiteUrl),
-    callPerplexityResearch(businessName, websiteUrl),
-  ])
-
+  // Step 1: Scrape website first — we need the content for Perplexity
+  const websiteCtx = await scrapeWebsite(websiteUrl)
   const websiteContext = summarizeWebsiteContext(websiteCtx)
 
-  const industry = perplexityResearch.industry || extractIndustryFromWebsite(websiteCtx) || 'local business'
+  console.log(`[research] Scraped ${websiteUrl} — title: "${websiteCtx.title}", context: ${websiteContext.length} chars`)
+
+  // Step 2: Research with Perplexity — pass website context + sector hint
+  const perplexityResearch = await callPerplexityResearch(
+    businessName,
+    websiteUrl,
+    websiteContext,
+    sector ?? 'general',
+  )
+
+  // Combine results
+  const industry = perplexityResearch.industry || extractIndustryFromWebsite(websiteCtx) || sector || 'local business'
   const description = perplexityResearch.description || websiteCtx.metaDescription || `${businessName} — ${industry}`
   const services = perplexityResearch.services.length > 0
     ? perplexityResearch.services
@@ -57,18 +69,36 @@ export async function researchBusiness(
 }
 
 /**
- * Deep Perplexity research — detailed prompt to understand the business.
- * This is the ONLY place where we use a detailed, structured prompt.
- * All other queries (to ChatGPT, Gemini, Perplexity scan queries) are simple and natural.
+ * Deep Perplexity research — detailed prompt with website context + sector hint.
+ *
+ * Perplexity receives 3 signals:
+ * 1. The URL — it can web-search for the business
+ * 2. The scraped homepage text — what the business says about itself
+ * 3. The user's sector hint — what the user thinks their industry is
+ *
+ * This prevents Perplexity from confusing "Rocket" (the AI code platform)
+ * with "Rocket" (the rocket company) or any other business with a generic name.
  */
 async function callPerplexityResearch(
   businessName: string,
   websiteUrl: string,
+  websiteContext: string,
+  sector: string,
 ): Promise<{ industry: string; description: string; services: string[]; targetCustomers: string }> {
   const empty = { industry: '', description: '', services: [] as string[], targetCustomers: '' }
 
   const hasApiKey = !!(process.env.OPENROUTER_SCAN_KEY ?? process.env.OPENROUTER_API_KEY)
   if (!hasApiKey) return empty
+
+  // Build the website context section (only if we have content)
+  const websiteSection = websiteContext.trim()
+    ? `\nHere is text extracted from their homepage:\n---\n${websiteContext.slice(0, 1500)}\n---\n`
+    : ''
+
+  // Build the sector hint (only if not 'general')
+  const sectorHint = sector && sector !== 'general'
+    ? `The user describes their business as being in the "${sector}" industry.\n`
+    : ''
 
   try {
     const client = getScanClient()
@@ -77,26 +107,26 @@ async function callPerplexityResearch(
       messages: [{
         role: 'user',
         content: `Research the business "${businessName}" at ${websiteUrl}.
+${sectorHint}${websiteSection}
+Based on their website and your web search, tell me:
+- What industry/category are they in? Use a specific 2-5 word label (e.g., "AI code generation platform", "emergency plumbing services", "vegan restaurant chain").
+- What exactly do they do? What is their main product or service?
+- What specific services or products do they offer? List 2-5 items.
+- Who are their customers? Be specific (e.g., "developers building web apps", "homeowners in NYC").
+- Who are their main competitors? Name 3-5 real companies that compete with them.
 
-Visit their website and search the web to find out:
-- What industry/category are they in? (use a short 2-4 word label like "plumbing services" or "digital marketing agency")
-- What do they actually do? What's their main product or service?
-- What specific services or products do they offer?
-- Who are their customers?
-- Who are their main competitors in this market?
-
-I need accurate, current information based on their real website.
+Be specific and accurate. Use their actual website content to understand what they do.
 
 Return ONLY this JSON:
 {
-  "industry": "2-4 word industry label",
-  "description": "2-3 sentences about what this business does",
-  "services": ["main service", "second service", "third service"],
-  "target_customers": "who their customers are",
-  "competitors": ["competitor 1", "competitor 2", "competitor 3"]
+  "industry": "specific 2-5 word industry label",
+  "description": "2-3 sentences about what this business actually does",
+  "services": ["specific service 1", "specific service 2", "specific service 3"],
+  "target_customers": "specific customer segment",
+  "competitors": ["real competitor 1", "real competitor 2", "real competitor 3"]
 }`,
       }],
-      max_tokens: 600,
+      max_tokens: 800,
       temperature: 0.2,
     })
 
@@ -145,8 +175,7 @@ function extractIndustryFromWebsite(ctx: Awaited<ReturnType<typeof scrapeWebsite
  * These mimic what a REAL USER would type into ChatGPT, Gemini, or Perplexity
  * when looking for this type of business. Short, natural, no instructions.
  *
- * The business name is NEVER mentioned in any query — we're measuring
- * organic visibility (does the AI recommend you without being asked about you?).
+ * The business name is NEVER mentioned in any query.
  */
 export function generateScanQueries(
   _businessName: string,
@@ -157,13 +186,8 @@ export function generateScanQueries(
   const loc = location && location !== 'Global' ? ` in ${location}` : ''
   const primaryService = research.services[0] ?? research.industry
 
-  // Query 1: Direct category search — "best X in Y"
   const q1 = `best ${primaryService}${loc}`
-
-  // Query 2: Recommendation request — "recommend a X in Y"
   const q2 = `can you recommend a good ${primaryService}${loc}`
-
-  // Query 3: Top companies — "top X companies in Y"
   const q3 = `top ${research.industry} companies${loc}`
 
   console.log(`[queries] Q1: "${q1}"`)
