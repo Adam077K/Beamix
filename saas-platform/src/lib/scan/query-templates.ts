@@ -2,9 +2,9 @@
  * Smart query generation for AI visibility scanning.
  *
  * Pipeline:
- * 1. Scrape website homepage for real context
- * 2. Perplexity researches the business (web search)
- * 3. Generate 3 queries based on real data, not guesses
+ * 1. Perplexity does deep research about the business
+ * 2. We generate 3 simple, natural queries from the research
+ * 3. Each engine gets a subset — Perplexity gets all 3, others get 2 random
  */
 
 import { getScanClient, MODELS } from '@/lib/openrouter'
@@ -26,15 +26,13 @@ export interface BusinessResearch {
 
 /**
  * Research the business using website scraping + Perplexity web search.
- * Returns real, grounded information about what the business does.
- *
- * Cost: 1 API call (Perplexity) + 1 website fetch. ~1-3s.
+ * This is the deep research step — Perplexity gets a detailed prompt
+ * to fully understand the business, its industry, and its market.
  */
 export async function researchBusiness(
   businessName: string,
   websiteUrl: string,
 ): Promise<BusinessResearch> {
-  // Step 1: Scrape website (parallel with Perplexity call)
   const [websiteCtx, perplexityResearch] = await Promise.all([
     scrapeWebsite(websiteUrl),
     callPerplexityResearch(businessName, websiteUrl),
@@ -42,7 +40,6 @@ export async function researchBusiness(
 
   const websiteContext = summarizeWebsiteContext(websiteCtx)
 
-  // Combine website data + Perplexity research
   const industry = perplexityResearch.industry || extractIndustryFromWebsite(websiteCtx) || 'local business'
   const description = perplexityResearch.description || websiteCtx.metaDescription || `${businessName} — ${industry}`
   const services = perplexityResearch.services.length > 0
@@ -51,7 +48,6 @@ export async function researchBusiness(
   const targetCustomers = perplexityResearch.targetCustomers || 'general customers'
 
   console.log(`[research] Industry: "${industry}", Services: [${services.join(', ')}]`)
-  console.log(`[research] Website title: "${websiteCtx.title}", scraped: ${websiteCtx.success}`)
 
   return {
     industry, description, services, targetCustomers, websiteContext,
@@ -60,6 +56,11 @@ export async function researchBusiness(
   }
 }
 
+/**
+ * Deep Perplexity research — detailed prompt to understand the business.
+ * This is the ONLY place where we use a detailed, structured prompt.
+ * All other queries (to ChatGPT, Gemini, Perplexity scan queries) are simple and natural.
+ */
 async function callPerplexityResearch(
   businessName: string,
   websiteUrl: string,
@@ -75,21 +76,23 @@ async function callPerplexityResearch(
       model: MODELS.researcher,
       messages: [{
         role: 'user',
-        content: `Search the web and research the business "${businessName}" at ${websiteUrl}. Visit their website and find out:
-- What exactly does this business do? What is their main product or service?
-- What industry are they in?
-- Who are their customers?
+        content: `Research the business "${businessName}" at ${websiteUrl}.
+
+Visit their website and search the web to find out:
+- What industry/category are they in? (use a short 2-4 word label like "plumbing services" or "digital marketing agency")
+- What do they actually do? What's their main product or service?
 - What specific services or products do they offer?
-- Who are their main competitors?
+- Who are their customers?
+- Who are their main competitors in this market?
 
-Be thorough — I need ACCURATE, CURRENT information based on their actual website, not guesses.
+I need accurate, current information based on their real website.
 
-Return ONLY this JSON (no other text):
+Return ONLY this JSON:
 {
-  "industry": "2-4 word industry (e.g., 'AI visibility platform', 'plumbing services', 'Italian restaurant')",
-  "description": "2-3 sentences describing what this business actually does",
-  "services": ["their main service/product", "second service", "third service"],
-  "target_customers": "Who their customers are (e.g., 'small businesses', 'homeowners in NYC')",
+  "industry": "2-4 word industry label",
+  "description": "2-3 sentences about what this business does",
+  "services": ["main service", "second service", "third service"],
+  "target_customers": "who their customers are",
   "competitors": ["competitor 1", "competitor 2", "competitor 3"]
 }`,
       }],
@@ -115,11 +118,9 @@ Return ONLY this JSON (no other text):
 }
 
 function extractIndustryFromWebsite(ctx: Awaited<ReturnType<typeof scrapeWebsite>>): string | null {
-  // Try to extract industry from title or meta description
   const text = [ctx.title, ctx.metaDescription, ...ctx.headlines].filter(Boolean).join(' ').toLowerCase()
   if (!text) return null
 
-  // Simple keyword matching for common industries
   const industryKeywords: Record<string, string> = {
     'plumb': 'plumbing services', 'dent': 'dental clinic', 'restaurant': 'restaurant',
     'lawyer': 'legal services', 'attorney': 'legal services', 'real estate': 'real estate',
@@ -135,50 +136,39 @@ function extractIndustryFromWebsite(ctx: Awaited<ReturnType<typeof scrapeWebsite
 }
 
 // ---------------------------------------------------------------------------
-// Query generation
+// Query generation — simple, natural queries like real users would type
 // ---------------------------------------------------------------------------
 
-function extractDomain(url: string): string {
-  try {
-    return new URL(url).hostname.replace('www.', '')
-  } catch {
-    return url
-  }
-}
-
 /**
- * Generate 3 smart search queries based on real business research.
+ * Generate 3 simple, natural search queries based on business research.
  *
- * @returns [categoryQuery, brandQuery, authorityQuery]
+ * These mimic what a REAL USER would type into ChatGPT, Gemini, or Perplexity
+ * when looking for this type of business. Short, natural, no instructions.
+ *
+ * The business name is NEVER mentioned in any query — we're measuring
+ * organic visibility (does the AI recommend you without being asked about you?).
  */
 export function generateScanQueries(
-  businessName: string,
-  websiteUrl: string,
+  _businessName: string,
+  _websiteUrl: string,
   research: BusinessResearch,
   location?: string | null,
 ): [string, string, string] {
-  const locationClause = location && location !== 'Global' ? ` in ${location}` : ''
-  const domain = extractDomain(websiteUrl)
+  const loc = location && location !== 'Global' ? ` in ${location}` : ''
+  const primaryService = research.services[0] ?? research.industry
 
-  const industry = research.industry
-  const primaryService = research.services[0] ?? industry
-  const businessDesc = research.description
-    ? ` They ${research.description.toLowerCase().startsWith('they') ? research.description.slice(5) : research.description.toLowerCase()}`
-    : ''
+  // Query 1: Direct category search — "best X in Y"
+  const q1 = `best ${primaryService}${loc}`
 
-  // Query 1: Category/organic visibility
-  // Natural question a customer would ask. Numbered list for position extraction.
-  const categoryQuery = `What are the top ${primaryService} companies${locationClause}? Rank them 1-10 with a short description of each and why they're recommended.`
+  // Query 2: Recommendation request — "recommend a X in Y"
+  const q2 = `can you recommend a good ${primaryService}${loc}`
 
-  // Query 2: Direct brand recognition with full context
-  // Give the model enough context to find the RIGHT business
-  const brandQuery = `Search for "${businessName}" (website: ${domain}).${businessDesc} What do you know about them? Are they good? What are their strengths and weaknesses? Who are their competitors?`
+  // Query 3: Top companies — "top X companies in Y"
+  const q3 = `top ${research.industry} companies${loc}`
 
-  // Query 3: Problem/solution authority (only sent to Perplexity)
-  const customerContext = research.targetCustomers !== 'general customers'
-    ? ` for ${research.targetCustomers}`
-    : ''
-  const authorityQuery = `What are the best ${industry} solutions${customerContext}${locationClause}? Compare the top options and explain which is best for different needs.`
+  console.log(`[queries] Q1: "${q1}"`)
+  console.log(`[queries] Q2: "${q2}"`)
+  console.log(`[queries] Q3: "${q3}"`)
 
-  return [categoryQuery, brandQuery, authorityQuery]
+  return [q1, q2, q3]
 }
