@@ -20,6 +20,7 @@ export interface BusinessResearch {
   description: string
   services: string[]
   targetCustomers: string
+  competitors: string[]
   searchQueries: string[]
   websiteContext: string
   websiteTitle: string | null
@@ -58,13 +59,15 @@ export async function researchBusiness(
     ? perplexityResearch.services
     : websiteCtx.headlines.slice(0, 3)
   const targetCustomers = perplexityResearch.targetCustomers || 'general customers'
+  const competitors = perplexityResearch.competitors
   const searchQueries = perplexityResearch.searchQueries
 
   console.log(`[research] Industry: "${industry}", Services: [${services.join(', ')}]`)
-  console.log(`[research] Search queries from Perplexity: [${searchQueries.join(' | ')}]`)
+  console.log(`[research] Competitors: [${competitors.join(', ')}]`)
+  console.log(`[research] Search queries: [${searchQueries.join(' | ')}]`)
 
   return {
-    industry, description, services, targetCustomers, searchQueries, websiteContext,
+    industry, description, services, targetCustomers, competitors, searchQueries, websiteContext,
     websiteTitle: websiteCtx.title,
     websiteDescription: websiteCtx.metaDescription,
   }
@@ -89,8 +92,8 @@ async function callPerplexityResearch(
   websiteUrl: string,
   websiteContext: string,
   sector: string,
-): Promise<{ industry: string; description: string; services: string[]; targetCustomers: string; searchQueries: string[] }> {
-  const empty = { industry: '', description: '', services: [] as string[], targetCustomers: '', searchQueries: [] as string[] }
+): Promise<{ industry: string; description: string; services: string[]; targetCustomers: string; competitors: string[]; searchQueries: string[] }> {
+  const empty = { industry: '', description: '', services: [] as string[], targetCustomers: '', competitors: [] as string[], searchQueries: [] as string[] }
 
   const hasApiKey = !!(process.env.OPENROUTER_SCAN_KEY ?? process.env.OPENROUTER_API_KEY)
   if (!hasApiKey) return empty
@@ -154,6 +157,7 @@ Return ONLY this JSON:
       description: parsed.description ?? '',
       services: Array.isArray(parsed.services) ? parsed.services : [],
       targetCustomers: parsed.target_customers ?? '',
+      competitors: Array.isArray(parsed.competitors) ? parsed.competitors.slice(0, 5) : [],
       searchQueries: Array.isArray(parsed.search_queries) ? parsed.search_queries.slice(0, 3) : [],
     }
   } catch (error) {

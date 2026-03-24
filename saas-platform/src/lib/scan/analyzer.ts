@@ -97,8 +97,9 @@ export async function analyzeResponses(params: {
   location?: string | null
   queries: string[]
   responses: RawEngineResponse[]
+  knownCompetitors?: string[]
 }): Promise<AnalysisResult> {
-  const { businessName, websiteUrl, industry, location, queries, responses } = params
+  const { businessName, websiteUrl, industry, location, queries, responses, knownCompetitors } = params
 
   const hasApiKey = !!(process.env.OPENROUTER_SCAN_KEY ?? process.env.OPENROUTER_API_KEY)
   if (!hasApiKey) {
@@ -112,6 +113,7 @@ export async function analyzeResponses(params: {
     location,
     queries,
     responses,
+    knownCompetitors,
   })
 
   try {
@@ -162,8 +164,9 @@ function buildAnalyzerPrompt(params: {
   location?: string | null
   queries: string[]
   responses: RawEngineResponse[]
+  knownCompetitors?: string[]
 }): string {
-  const { businessName, websiteUrl, industry, location, queries, responses } = params
+  const { businessName, websiteUrl, industry, location, queries, responses, knownCompetitors } = params
 
   // Group responses by query
   const queryBlocks = queries.map((query, qi) => {
@@ -172,12 +175,17 @@ function buildAnalyzerPrompt(params: {
     return `QUERY ${qi + 1}: "${query}"\n${formatted}`
   }).join('\n\n---\n\n')
 
+  const competitorSection = knownCompetitors && knownCompetitors.length > 0
+    ? `\nKnown competitors from our research: ${knownCompetitors.join(', ')}\nLook specifically for these competitors in the responses, plus any others in the SAME industry.\n`
+    : ''
+
   return `Analyze these AI search engine responses to determine how visible "${businessName}" (${websiteUrl}) is.
 
 Business: ${businessName}
 Website: ${websiteUrl}
 Industry: ${industry}
 Location: ${location ?? 'not specified'}
+${competitorSection}
 
 ${queryBlocks}
 
@@ -190,10 +198,10 @@ For each engine (chatgpt, gemini, perplexity):
 - "mention_position": IMPORTANT — look at numbered lists (1. 2. 3. etc). If "${businessName}" is item #3, position = 3. If mentioned in running text without a list, count how many OTHER businesses are named before it (position = that count + 1). Set null ONLY if not mentioned at all.
 - "sentiment": If mentioned — "positive" (recommended, praised, trusted), "neutral" (just listed), or "negative" (criticized, warned against). null if not mentioned.
 - "context_quote": The EXACT sentence or phrase where ${businessName} is mentioned. Max 200 chars. null if not mentioned.
-- "competitors_found": Other businesses mentioned alongside (not "${businessName}"). Include their list position if available. Max 6 per engine.
+- "competitors_found": ONLY include businesses that are DIRECT competitors in the "${industry}" industry. Do NOT include businesses from adjacent or different industries. Only include companies that offer similar products/services to "${businessName}". Include their list position if available. Max 6 per engine.
 
 Also extract:
-- "top_competitors": Deduplicated list across all engines. For each: name, how many engines mentioned them (1-3), and their best (lowest number) position. Max 8.
+- "top_competitors": Deduplicated list of DIRECT competitors across all engines. Only include businesses in the "${industry}" industry that compete for the same customers. For each: name, how many engines mentioned them (1-3), and their best (lowest number) position. Max 8.
 - "recommendations": 3-4 SPECIFIC, PERSONALIZED recommendations for improving ${businessName}'s AI visibility. Base each recommendation on what you actually found in the scan data. Reference specific engines or findings. Examples:
   - If not mentioned in Gemini: "Optimize Google Business Profile — Gemini draws heavily from Google's ecosystem and currently doesn't mention you."
   - If mentioned but low position: "Improve topical authority — you appear at position #7 in ChatGPT. Publishing expert content on [industry topic] can push you higher."

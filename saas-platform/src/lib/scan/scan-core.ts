@@ -156,6 +156,7 @@ export async function analyzeStep(
     location: ctx.location,
     queries,
     responses: rawResponses,
+    knownCompetitors: research.competitors,
   })
 }
 
