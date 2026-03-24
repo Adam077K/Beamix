@@ -77,19 +77,27 @@ export async function queryEngineRaw(
     }
   } catch (error: unknown) {
     console.error(`[engine-adapter] ${engine} API error:`, error instanceof Error ? error.message : error)
-    return buildMockResponseRaw(engine, query, start)
+    // Return empty response with isMock flag — NOT fake competitor data.
+    // The caller filters out mock responses before analysis.
+    return {
+      engine,
+      rawResponse: '',
+      timestamp: new Date(),
+      latencyMs: Date.now() - start,
+      isMock: true,
+    }
   }
 }
 
 // ---------------------------------------------------------------------------
-// Mock fallback (API key missing or engine failure)
+// Mock fallback (API key completely missing)
 // ---------------------------------------------------------------------------
 
-function buildMockResponseRaw(engine: string, query: string, startMs: number): EngineResponse {
-  console.warn(`[engine-adapter] MOCK response for ${engine} — API key missing or call failed`)
+function buildMockResponseRaw(engine: string, _query: string, startMs: number): EngineResponse {
+  console.warn(`[engine-adapter] No API key for ${engine} — returning empty mock`)
   return {
     engine,
-    rawResponse: `Here are some recommended options for "${query}": TopCompetitor Co is widely regarded as a market leader. RivalBiz Inc and ThirdOption Ltd also receive strong reviews. These providers are known for quality and competitive pricing.`,
+    rawResponse: '',
     timestamp: new Date(),
     latencyMs: Date.now() - startMs,
     isMock: true,

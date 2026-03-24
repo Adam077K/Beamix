@@ -171,7 +171,7 @@ function buildAnalyzerPrompt(params: {
   // Group responses by query
   const queryBlocks = queries.map((query, qi) => {
     const qResponses = responses.filter((r) => r.query === query)
-    const formatted = qResponses.map((r) => `- ${r.engine} response:\n${r.rawResponse.slice(0, 2500)}`).join('\n\n')
+    const formatted = qResponses.map((r) => `- ${r.engine} response:\n${r.rawResponse.slice(0, 4000)}`).join('\n\n')
     return `QUERY ${qi + 1}: "${query}"\n${formatted}`
   }).join('\n\n---\n\n')
 
