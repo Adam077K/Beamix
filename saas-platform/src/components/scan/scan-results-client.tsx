@@ -31,7 +31,7 @@ import {
   Download,
 } from 'lucide-react'
 
-type ScanPageStatus = 'loading' | 'processing' | 'completed' | 'error' | 'timeout'
+type ScanPageStatus = 'loading' | 'processing' | 'completed' | 'error'
 
 interface ScanData {
   scan_id: string
@@ -762,23 +762,17 @@ function ConversionCTA({ scanId, email }: { scanId: string; email?: string | nul
 
 // --- Main Component ---
 
-const POLL_TIMEOUT_MS = 90_000
-
 export function ScanResultsClient({ scanId }: { scanId: string }) {
   const [status, setStatus] = useState<ScanPageStatus>('loading')
   const [scanData, setScanData] = useState<ScanData | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const scanEmail = scanData?.email ?? null
   const statusRef = useRef(status)
-  const startTimeRef = useRef<number>(Date.now())
   useEffect(() => { statusRef.current = status }, [status])
 
   const pollStatus = useCallback(async () => {
-    // Timeout guard — stop polling after 90 seconds
-    if (Date.now() - startTimeRef.current >= POLL_TIMEOUT_MS) {
-      setStatus('timeout')
-      return
-    }
+    // No timeout — keep polling until scan completes or fails.
+    // Scans can take 30s-2min depending on engine response times.
     try {
       const res = await fetch(`/api/scan/${scanId}/status`)
       if (!res.ok) {
@@ -823,27 +817,6 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
 
   if (status === 'loading' || status === 'processing') {
     return <ProcessingState />
-  }
-
-  if (status === 'timeout') {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-        <AlertTriangle className="h-12 w-12 text-amber-500" />
-        <h2 className="mt-4 font-sans font-bold text-2xl text-foreground">
-          Taking longer than expected
-        </h2>
-        <p className="mt-2 max-w-sm text-center text-muted-foreground">
-          Your scan is taking longer than expected. We&apos;ll email your results when
-          they&apos;re ready.
-        </p>
-        <Button
-          className="mt-6 bg-primary text-white hover:bg-primary/90"
-          onClick={() => window.location.reload()}
-        >
-          Try Again
-        </Button>
-      </div>
-    )
   }
 
   if (status === 'error') {
