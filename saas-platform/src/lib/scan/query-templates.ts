@@ -3,8 +3,8 @@
  *
  * Pipeline:
  * 1. Scrape website homepage for real context
- * 2. Perplexity researches the business WITH the scraped context + user's sector hint
- * 3. Generate 3 simple, natural queries from the research
+ * 2. Perplexity researches the business AND generates natural search queries
+ * 3. Use Perplexity's queries (it knows how real users search for this product)
  * 4. Each engine gets a subset — Perplexity gets all 3, others get 2 random
  */
 
@@ -20,6 +20,7 @@ export interface BusinessResearch {
   description: string
   services: string[]
   targetCustomers: string
+  searchQueries: string[]
   websiteContext: string
   websiteTitle: string | null
   websiteDescription: string | null
@@ -28,9 +29,8 @@ export interface BusinessResearch {
 /**
  * Research the business using website scraping + Perplexity web search.
  *
- * Flow: scrape website FIRST → pass scraped content + sector hint to Perplexity.
- * This gives Perplexity 3 signals: URL (web search), homepage text (what the
- * business says about itself), and the user's sector hint.
+ * Perplexity also generates the scan queries — it understands the business
+ * deeply and knows how real customers would search for this type of product.
  */
 export async function researchBusiness(
   businessName: string,
@@ -58,44 +58,47 @@ export async function researchBusiness(
     ? perplexityResearch.services
     : websiteCtx.headlines.slice(0, 3)
   const targetCustomers = perplexityResearch.targetCustomers || 'general customers'
+  const searchQueries = perplexityResearch.searchQueries
 
   console.log(`[research] Industry: "${industry}", Services: [${services.join(', ')}]`)
+  console.log(`[research] Search queries from Perplexity: [${searchQueries.join(' | ')}]`)
 
   return {
-    industry, description, services, targetCustomers, websiteContext,
+    industry, description, services, targetCustomers, searchQueries, websiteContext,
     websiteTitle: websiteCtx.title,
     websiteDescription: websiteCtx.metaDescription,
   }
 }
 
 /**
- * Deep Perplexity research — detailed prompt with website context + sector hint.
+ * Deep Perplexity research — understands the business AND generates scan queries.
  *
- * Perplexity receives 3 signals:
- * 1. The URL — it can web-search for the business
- * 2. The scraped homepage text — what the business says about itself
- * 3. The user's sector hint — what the user thinks their industry is
+ * The key insight: Perplexity knows how real users search. After understanding
+ * the business, it generates 3 natural queries that a customer would actually
+ * type into ChatGPT/Perplexity to find this type of product.
  *
- * This prevents Perplexity from confusing "Rocket" (the AI code platform)
- * with "Rocket" (the rocket company) or any other business with a generic name.
+ * Example for Rocket.new:
+ * - "best AI app builder"
+ * - "top vibe coding tools"
+ * - "no-code AI platform for building apps"
+ *
+ * NOT: "best Natural language app generation" (which nobody searches for)
  */
 async function callPerplexityResearch(
   businessName: string,
   websiteUrl: string,
   websiteContext: string,
   sector: string,
-): Promise<{ industry: string; description: string; services: string[]; targetCustomers: string }> {
-  const empty = { industry: '', description: '', services: [] as string[], targetCustomers: '' }
+): Promise<{ industry: string; description: string; services: string[]; targetCustomers: string; searchQueries: string[] }> {
+  const empty = { industry: '', description: '', services: [] as string[], targetCustomers: '', searchQueries: [] as string[] }
 
   const hasApiKey = !!(process.env.OPENROUTER_SCAN_KEY ?? process.env.OPENROUTER_API_KEY)
   if (!hasApiKey) return empty
 
-  // Build the website context section (only if we have content)
   const websiteSection = websiteContext.trim()
     ? `\nHere is text extracted from their homepage:\n---\n${websiteContext.slice(0, 1500)}\n---\n`
     : ''
 
-  // Build the sector hint (only if not 'general')
   const sectorHint = sector && sector !== 'general'
     ? `The user describes their business as being in the "${sector}" industry.\n`
     : ''
@@ -109,21 +112,32 @@ async function callPerplexityResearch(
         content: `Research the business "${businessName}" at ${websiteUrl}.
 ${sectorHint}${websiteSection}
 Based on their website and your web search, tell me:
-- What industry/category are they in? Use a specific 2-5 word label (e.g., "AI code generation platform", "emergency plumbing services", "vegan restaurant chain").
-- What exactly do they do? What is their main product or service?
-- What specific services or products do they offer? List 2-5 items.
-- Who are their customers? Be specific (e.g., "developers building web apps", "homeowners in NYC").
-- Who are their main competitors? Name 3-5 real companies that compete with them.
 
-Be specific and accurate. Use their actual website content to understand what they do.
+1. INDUSTRY: What specific category are they in? Use a clear 2-5 word label.
+   Examples: "AI app builder platform", "emergency plumbing services", "B2B SaaS analytics"
+
+2. DESCRIPTION: What exactly do they do? 2-3 sentences.
+
+3. SERVICES: What specific products/services do they offer? List 2-5.
+
+4. CUSTOMERS: Who are their customers? Be specific.
+
+5. COMPETITORS: Name 3-5 REAL companies that directly compete with them in the same market.
+
+6. SEARCH QUERIES: What would a real person type into ChatGPT or Google to find this type of product/service?
+   Give me exactly 3 short, natural search queries. These should be what CUSTOMERS would actually search for.
+   Do NOT mention "${businessName}" in the queries — use generic category terms.
+   Keep them short (3-7 words), like real search queries.
+   Examples: "best AI app builder", "top plumber near me", "affordable SEO agency"
 
 Return ONLY this JSON:
 {
-  "industry": "specific 2-5 word industry label",
-  "description": "2-3 sentences about what this business actually does",
-  "services": ["specific service 1", "specific service 2", "specific service 3"],
-  "target_customers": "specific customer segment",
-  "competitors": ["real competitor 1", "real competitor 2", "real competitor 3"]
+  "industry": "specific category label",
+  "description": "what this business does",
+  "services": ["service 1", "service 2", "service 3"],
+  "target_customers": "who buys from them",
+  "competitors": ["competitor 1", "competitor 2", "competitor 3"],
+  "search_queries": ["short natural query 1", "short natural query 2", "short natural query 3"]
 }`,
       }],
       max_tokens: 800,
@@ -140,6 +154,7 @@ Return ONLY this JSON:
       description: parsed.description ?? '',
       services: Array.isArray(parsed.services) ? parsed.services : [],
       targetCustomers: parsed.target_customers ?? '',
+      searchQueries: Array.isArray(parsed.search_queries) ? parsed.search_queries.slice(0, 3) : [],
     }
   } catch (error) {
     console.warn('[research] Perplexity research failed:', error instanceof Error ? error.message : error)
@@ -166,16 +181,14 @@ function extractIndustryFromWebsite(ctx: Awaited<ReturnType<typeof scrapeWebsite
 }
 
 // ---------------------------------------------------------------------------
-// Query generation — simple, natural queries like real users would type
+// Query generation
 // ---------------------------------------------------------------------------
 
 /**
- * Generate 3 simple, natural search queries based on business research.
+ * Generate 3 scan queries.
  *
- * These mimic what a REAL USER would type into ChatGPT, Gemini, or Perplexity
- * when looking for this type of business. Short, natural, no instructions.
- *
- * The business name is NEVER mentioned in any query.
+ * Primary: use Perplexity-generated queries (it knows how real users search).
+ * Fallback: template-based queries if Perplexity didn't return search_queries.
  */
 export function generateScanQueries(
   _businessName: string,
@@ -184,12 +197,24 @@ export function generateScanQueries(
   location?: string | null,
 ): [string, string, string] {
   const loc = location && location !== 'Global' ? ` in ${location}` : ''
-  const primaryService = research.services[0] ?? research.industry
 
+  // Use Perplexity-generated queries if available (much better quality)
+  if (research.searchQueries.length >= 3) {
+    const queries = research.searchQueries.slice(0, 3) as [string, string, string]
+    console.log(`[queries] Using Perplexity-generated queries:`)
+    console.log(`[queries] Q1: "${queries[0]}"`)
+    console.log(`[queries] Q2: "${queries[1]}"`)
+    console.log(`[queries] Q3: "${queries[2]}"`)
+    return queries
+  }
+
+  // Fallback: template-based queries
+  const primaryService = research.services[0] ?? research.industry
   const q1 = `best ${primaryService}${loc}`
   const q2 = `can you recommend a good ${primaryService}${loc}`
   const q3 = `top ${research.industry} companies${loc}`
 
+  console.log(`[queries] Using template queries (Perplexity didn't generate search_queries):`)
   console.log(`[queries] Q1: "${q1}"`)
   console.log(`[queries] Q2: "${q2}"`)
   console.log(`[queries] Q3: "${q3}"`)
