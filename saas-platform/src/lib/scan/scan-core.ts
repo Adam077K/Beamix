@@ -37,7 +37,7 @@ export interface ScanEngineResult {
  * Step 1: Research the business via Perplexity + website scrape.
  */
 export async function researchStep(ctx: ScanContext) {
-  return researchBusiness(ctx.businessName, ctx.websiteUrl)
+  return researchBusiness(ctx.businessName, ctx.websiteUrl, ctx.sector ?? undefined)
 }
 
 /**
