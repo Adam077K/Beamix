@@ -138,7 +138,6 @@ export async function POST(request: Request) {
     }
 
     // Return 202 — by this point the DB is already updated to 'completed' or 'failed'.
-    // The frontend's next status poll will see the result.
     return NextResponse.json(
       { scan_id: scanId, scan_token: insertResult.scan_id, status: 'processing' },
       { status: 202 }
