@@ -53,7 +53,7 @@ export async function POST(request: Request) {
 
     const scanIdToken = nanoid(12)
 
-    // Insert scan record
+    // Insert scan record as 'processing' — we run synchronously
     const { data: insertResult, error: insertError } = await supabase
       .from('free_scans')
       .insert({
@@ -76,77 +76,54 @@ export async function POST(request: Request) {
     }
 
     const scanId = insertResult.id
+    console.log(`[scan/start] Scan ${scanId} starting synchronously`)
 
-    // Try Inngest async path first, fall back to synchronous
-    let useInngest = false
-    try {
-      if (process.env.INNGEST_EVENT_KEY) {
-        const { inngest } = await import('@/inngest/client')
-        await inngest.send({
-          name: 'scan/free.started',
-          data: {
-            freeScanId: scanId,
-            businessName: business_name,
-            websiteUrl: url,
-            sector: sector || undefined,
-            location: location || null,
-          },
-        })
-        useInngest = true
-        console.log(`[scan/start] Scan ${scanId} queued via Inngest`)
-      }
-    } catch (inngestErr) {
-      console.warn(`[scan/start] Inngest unavailable, falling back to sync:`, inngestErr instanceof Error ? inngestErr.message : inngestErr)
-    }
-
-    // If Inngest is available, return 202 (async processing)
-    if (useInngest) {
-      return NextResponse.json(
-        { scan_id: scanId, scan_token: insertResult.scan_id, status: 'processing' },
-        { status: 202 }
-      )
-    }
-
-    // Synchronous fallback — run scan inline (works without Inngest)
-    console.log(`[scan/start] Running scan ${scanId} synchronously (no Inngest)`)
-
+    // Run scan synchronously — calls OpenRouter directly
     const ctx: ScanContext = { businessName: business_name, websiteUrl: url, location, sector }
-    const tierConfig = getTierConfig(null)
+    const tierConfig = getTierConfig(null) // free tier
 
     try {
-      // Step 1: Research
+      // Step 1: Research business via Perplexity
+      console.log(`[scan/start] Step 1: Researching "${business_name}"...`)
       const research = await researchStep(ctx)
+      console.log(`[scan/start] Research done — industry: "${research.industry}"`)
 
       if (research.industry && sector && research.industry !== sector) {
         await supabase.from('free_scans').update({ industry: research.industry }).eq('id', scanId)
       }
 
-      // Step 2: Generate queries
+      // Step 2: Generate queries (organic only, no brand queries)
       const queries = generateQueriesStep(ctx, research, tierConfig)
+      console.log(`[scan/start] Generated ${queries.length} queries`)
 
-      // Step 3: Query engines
+      // Step 3: Query engines (ChatGPT, Gemini, Perplexity)
       const allResponses: RawEngineResponse[] = []
       const mockEngines: string[] = []
 
       for (const engine of tierConfig.engines) {
         const engineQueryCount = tierConfig.queriesPerEngine[engine] ?? 2
+        console.log(`[scan/start] Querying ${engine} with ${engineQueryCount} queries...`)
         const result = await queryEngineStep(engine, queries, engineQueryCount)
         allResponses.push(...result.responses)
         if (result.hasMock) mockEngines.push(engine)
+        console.log(`[scan/start] ${engine}: ${result.responses.length} responses (mock: ${result.hasMock})`)
       }
 
       // Check for all-mock (API key issue)
       const realResponses = allResponses.filter((r) => !r.isMock)
       if (realResponses.length === 0) {
         await supabase.from('free_scans').update({ status: 'failed', completed_at: new Date().toISOString() }).eq('id', scanId)
-        console.error(`[scan/start] Scan ${scanId} failed — all engines returned mock data. Check OPENROUTER_SCAN_KEY.`)
+        console.error(`[scan/start] Scan ${scanId} FAILED — all engines returned mock data. OPENROUTER_SCAN_KEY may be wrong or missing.`)
         return NextResponse.json(
-          { scan_id: scanId, scan_token: insertResult.scan_id, status: 'failed', error: 'AI engines unavailable' },
-          { status: 202 }
+          { scan_id: scanId, scan_token: insertResult.scan_id, status: 'failed', error: 'AI engines unavailable — check API key configuration' },
+          { status: 500 }
         )
       }
 
-      // Step 4: Analyze
+      console.log(`[scan/start] Got ${realResponses.length} real responses, ${mockEngines.length} mock engines`)
+
+      // Step 4: Analyze all responses with Gemini Flash
+      console.log(`[scan/start] Analyzing ${allResponses.length} responses...`)
       const analysis = await analyzeStep(ctx, research, queries, allResponses)
 
       // Step 5: Build results
@@ -161,7 +138,7 @@ export async function POST(request: Request) {
         ...(mockEngines.length > 0 ? { mock_engines: mockEngines } : {}),
       }).eq('id', scanId)
 
-      console.log(`[scan/start] Scan ${scanId} completed — score: ${scanResults.visibility_score}`)
+      console.log(`[scan/start] Scan ${scanId} COMPLETED — score: ${scanResults.visibility_score}`)
     } catch (scanError) {
       console.error(`[scan/start] Scan ${scanId} processing failed:`, scanError)
       await supabase.from('free_scans').update({ status: 'failed' }).eq('id', scanId)
