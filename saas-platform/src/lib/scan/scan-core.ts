@@ -1,9 +1,8 @@
 /**
  * Shared scan core — the unified pipeline used by both free and paid scans.
  *
- * Design: Each function returns data. The caller (Inngest function) wraps each
- * in an Inngest step for retry isolation. This module does NOT know about
- * Inngest — it's pure business logic.
+ * Design: Each function returns data. The caller wraps each in an Inngest
+ * step (for retry isolation) or calls directly (sync mode).
  */
 
 import { queryEngineRaw, type EngineResponse } from '@/lib/scan/engine-adapter'
@@ -42,43 +41,80 @@ export async function researchStep(ctx: ScanContext) {
 }
 
 /**
- * Step 2: Generate queries based on research and tier.
- *
- * IMPORTANT: The old generateScanQueries() returns [categoryQuery, brandQuery, authorityQuery].
- * The brand query explicitly names the business and inflates scores.
- * We filter it out — only organic queries (category + authority) are used for scoring.
- * The brand query is kept as an UNSCORED diagnostic (index 1, filtered here).
+ * Step 2: Generate 3 natural queries from research data.
+ * Returns all 3 queries — the distribution to engines happens in queryEngineStep.
  */
 export function generateQueriesStep(
   ctx: ScanContext,
   research: Awaited<ReturnType<typeof researchBusiness>>,
   _tierConfig: ScanTierConfig,
 ) {
-  const allQueries = generateScanQueries(
+  return generateScanQueries(
     ctx.businessName,
     ctx.websiteUrl,
     research,
     ctx.location,
   )
-  // Filter out brand query (index 1) — it names the business and inflates scores.
-  // Keep category (index 0) and authority (index 2) as organic queries.
-  return [allQueries[0], allQueries[2]].filter(Boolean)
+}
+
+/**
+ * Pick which queries to send to a specific engine.
+ *
+ * - Perplexity: gets ALL 3 queries (best at finding businesses, native web search)
+ * - ChatGPT & Gemini: get 2 RANDOM queries out of 3 (saves cost, adds variety)
+ *
+ * The randomization is seeded by scanId so the same scan always produces
+ * the same query assignment (reproducible results).
+ */
+export function pickQueriesForEngine(
+  engine: ScanEngine,
+  allQueries: string[],
+  queriesPerEngine: number,
+  scanId: string,
+): string[] {
+  // Perplexity gets all queries
+  if (engine === 'perplexity') {
+    return allQueries
+  }
+
+  // For other engines: pick N random queries seeded by scanId + engine name
+  if (queriesPerEngine >= allQueries.length) {
+    return allQueries
+  }
+
+  // Simple seeded shuffle: hash scanId+engine to get a stable starting index
+  const seed = hashString(`${scanId}-${engine}`)
+  const indices = allQueries.map((_, i) => i)
+
+  // Fisher-Yates shuffle with seed
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.abs((seed + i * 31) % (i + 1))
+    ;[indices[i], indices[j]] = [indices[j], indices[i]]
+  }
+
+  return indices.slice(0, queriesPerEngine).sort().map((i) => allQueries[i])
+}
+
+function hashString(str: string): number {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0
+  }
+  return Math.abs(hash)
 }
 
 /**
  * Step 3: Query a single engine with its allocated queries.
- * Each engine is called as a separate Inngest step for retry isolation.
  */
 export async function queryEngineStep(
   engine: ScanEngine,
   queries: string[],
-  queriesPerEngine: number,
+  _queriesPerEngine: number,
 ): Promise<ScanEngineResult> {
-  const engineQueries = queries.slice(0, Math.min(queriesPerEngine, queries.length))
   const responses: RawEngineResponse[] = []
   let hasMock = false
 
-  const promises = engineQueries.map((query) =>
+  const promises = queries.map((query) =>
     queryEngineRaw(engine, query)
       .then((r): RawEngineResponse => ({
         engine: r.engine,

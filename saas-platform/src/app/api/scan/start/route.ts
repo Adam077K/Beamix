@@ -5,6 +5,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import {
   researchStep,
   generateQueriesStep,
+  pickQueriesForEngine,
   queryEngineStep,
   analyzeStep,
   buildResultsStep,
@@ -99,10 +100,12 @@ export async function POST(request: Request) {
 
       for (const engine of tierConfig.engines) {
         const engineQueryCount = tierConfig.queriesPerEngine[engine] ?? 2
-        const result = await queryEngineStep(engine, queries, engineQueryCount)
+        // Perplexity gets all 3 queries, ChatGPT/Gemini get 2 random (seeded by scanId)
+        const engineQueries = pickQueriesForEngine(engine, queries, engineQueryCount, scanId)
+        const result = await queryEngineStep(engine, engineQueries, engineQueries.length)
         allResponses.push(...result.responses)
         if (result.hasMock) mockEngines.push(engine)
-        console.log(`[scan] ${scanId} — ${engine}: ${result.responses.length} responses, mock=${result.hasMock}`)
+        console.log(`[scan] ${scanId} — ${engine}: ${result.responses.length} responses (${engineQueries.length} queries), mock=${result.hasMock}`)
       }
 
       const realResponses = allResponses.filter((r) => !r.isMock)
