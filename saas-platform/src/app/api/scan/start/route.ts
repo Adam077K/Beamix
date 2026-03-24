@@ -15,7 +15,7 @@ import {
 import { getTierConfig } from '@/lib/scan/tier-config'
 import type { RawEngineResponse } from '@/lib/scan/analyzer'
 
-// Keep alive long enough for the background scan (research + 4-6 engine calls + analysis)
+// Keep alive long enough for the background scan (research + engine calls + analysis)
 export const maxDuration = 55
 
 export async function POST(request: Request) {
