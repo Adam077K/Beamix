@@ -78,8 +78,8 @@ export async function POST(request: Request) {
 
     const scanId = insertResult.id
 
-    // Run scan in background — return 202 immediately so frontend can redirect
-    // The scan updates the DB directly; frontend polls /api/scan/{id}/status
+    // Run scan in background — return 202 immediately so frontend can redirect.
+    // The scan updates the DB directly; frontend polls /api/scan/{id}/status.
     runScanInBackground(scanId, business_name, url, sector, location)
 
     return NextResponse.json(
@@ -182,7 +182,7 @@ function runScanInBackground(
           completed_at: new Date().toISOString(),
         }).eq('id', scanId)
       } catch {
-        // Best-effort DB update — don't throw from error handler
+        // Best-effort DB update
       }
     }
   })()
