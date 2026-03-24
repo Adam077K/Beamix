@@ -78,5 +78,5 @@ export const MODELS = {
   agentExecution: 'anthropic/claude-sonnet-4',
 
   // QA gate + recommendations — fast, cheap model
-  haiku: 'anthropic/claude-haiku-4',
+  haiku: 'anthropic/claude-haiku-4.5',
 } as const
