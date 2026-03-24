@@ -1,25 +1,19 @@
 /**
  * Shared scan result builder — used by both free and paid scan pipelines.
  *
- * Takes raw analyzer output and constructs the full ScanResults object
- * with leaderboard, brand attributes, quick wins, and composite score.
+ * Scoring formula (revised based on SparkToro research + industry audit):
+ * - 50% mention rate (most reliable signal — did the AI mention you?)
+ * - 20% position quality (unreliable per SparkToro, downweighted)
+ * - 15% sentiment (positive/neutral/negative)
+ * - 15% content richness (did the AI say something substantial about you?)
+ *
+ * SAME formula used for both user and competitors — fair leaderboard.
  */
 
 import type { AnalysisResult } from './analyzer'
 import type { ScanResults, EngineResult, LeaderboardEntry } from '@/lib/types/index'
 import type { BusinessResearch } from './query-templates'
 
-/**
- * Build the complete ScanResults object from analyzer output.
- *
- * Uses the analyzer's engine breakdown for mention/position/sentiment,
- * competitor data for the leaderboard, and recommendations as quick wins.
- *
- * Score formula mirrors calculateCompositeScore weights:
- * - 40% mention rate
- * - 30% position quality
- * - 30% sentiment
- */
 export function buildScanResults(params: {
   businessName: string
   websiteUrl: string
@@ -40,43 +34,59 @@ export function buildScanResults(params: {
     response_snippet: e.context_quote ?? '',
   }))
 
-  // Visibility score: 40% mention + 30% position + 30% sentiment
+  // ---------------------------------------------------------------------------
+  // Visibility score: 50% mention + 20% position + 15% sentiment + 15% content
+  // ---------------------------------------------------------------------------
   const totalEngines = engineResults.length
   let visibilityScore = 0
 
   if (totalEngines > 0) {
     const mentionedCount = engineResults.filter((e) => e.is_mentioned).length
 
-    // Mention component: 0–40 pts
-    visibilityScore += Math.round((mentionedCount / totalEngines) * 40)
+    // Mention component: 0–50 pts (most reliable signal)
+    visibilityScore += Math.round((mentionedCount / totalEngines) * 50)
 
-    // Position component: 0–30 pts
+    // Position component: 0–20 pts (unreliable per SparkToro, downweighted)
     for (const e of engineResults) {
       if (e.is_mentioned && e.mention_position !== null) {
-        const posScore = Math.max(5, 30 - (e.mention_position - 1) * 3)
+        const posScore = Math.max(3, 20 - (e.mention_position - 1) * 2)
         visibilityScore += Math.round(posScore / totalEngines)
       }
     }
 
-    // Sentiment component: 0–30 pts
+    // Sentiment component: 0–15 pts
     for (const e of engineResults) {
-      if (e.sentiment === 'positive') visibilityScore += Math.round(30 / totalEngines)
-      else if (e.sentiment === 'neutral') visibilityScore += Math.round(15 / totalEngines)
+      if (e.sentiment === 'positive') visibilityScore += Math.round(15 / totalEngines)
+      else if (e.sentiment === 'neutral') visibilityScore += Math.round(8 / totalEngines)
+    }
+
+    // Content richness: 0–15 pts (did engines say something substantial?)
+    for (const e of engineResults) {
+      if (e.is_mentioned && e.response_snippet.length > 50) {
+        visibilityScore += Math.round(15 / totalEngines)
+      } else if (e.is_mentioned && e.response_snippet.length > 20) {
+        visibilityScore += Math.round(8 / totalEngines)
+      }
     }
   }
 
   visibilityScore = Math.max(0, Math.min(100, visibilityScore))
 
-  // Real competitor scores derived from analyzer data
+  // ---------------------------------------------------------------------------
+  // Competitor scores — SAME formula as user for fair leaderboard comparison
+  // ---------------------------------------------------------------------------
   const leaderboardEntries: Array<{ name: string; score: number }> = []
 
   for (const comp of analysis.top_competitors) {
     if (comp.name.toLowerCase() === businessName.toLowerCase()) continue
     const mentionRate = comp.mention_count / Math.max(1, analysis.engines.length)
-    const posBonus = comp.best_position !== null
-      ? Math.max(5, 35 - (comp.best_position - 1) * 4)
-      : 10
-    const score = Math.min(95, Math.round(mentionRate * 60 + posBonus))
+    // Same weights: 50% mention + 20% position + 25% baseline (15% sentiment + 15% content, estimated for competitors)
+    const mentionPts = Math.round(mentionRate * 50)
+    const posPts = comp.best_position !== null
+      ? Math.round(Math.max(3, 20 - (comp.best_position - 1) * 2))
+      : 0
+    const baselinePts = Math.round(mentionRate * 25) // neutral sentiment + content assumed for mentioned competitors
+    const score = Math.min(100, mentionPts + posPts + baselinePts)
     leaderboardEntries.push({ name: comp.name, score })
   }
 
@@ -87,26 +97,35 @@ export function buildScanResults(params: {
     name: entry.name,
     score: entry.score,
     rank: i + 1,
-    is_user: entry.name === businessName,
+    is_user: entry.name.toLowerCase() === businessName.toLowerCase(),
   }))
 
   const userEntry = leaderboard.find((e) => e.is_user)
   const topCompetitor = leaderboardEntries.find((e) => e.name !== businessName)
 
-  // Personalized recommendations from analyzer
   const quickWins = analysis.recommendations.map((r) => ({
     title: r.title,
     description: r.description,
     impact: r.impact,
   }))
 
-  // Share of Voice: user mentions / total mentions across all engines
-  const userMentions = analysis.engines.filter((e) => e.mentioned).length
-  const totalMentions =
-    userMentions +
-    analysis.top_competitors.reduce((sum, c) => sum + c.mention_count, 0)
-  const shareOfVoice =
-    totalMentions > 0 ? Math.round((userMentions / totalMentions) * 100) : 0
+  // ---------------------------------------------------------------------------
+  // Share of Voice — user vs top competitor (not aggregate sum)
+  // ---------------------------------------------------------------------------
+  const userMentionRate = totalEngines > 0
+    ? analysis.engines.filter((e) => e.mentioned).length / totalEngines
+    : 0
+  // Filter out the user's own business from competitors before SOV calculation
+  const actualCompetitors = analysis.top_competitors.filter(
+    (c) => c.name.toLowerCase() !== businessName.toLowerCase()
+  )
+  const topCompMentionRate = actualCompetitors.length > 0
+    ? (actualCompetitors[0]?.mention_count ?? 0) / Math.max(1, totalEngines)
+    : 0
+  const totalRate = userMentionRate + topCompMentionRate
+  const shareOfVoice = totalRate > 0
+    ? Math.round((userMentionRate / totalRate) * 100)
+    : 0
 
   return {
     visibility_score: visibilityScore,
@@ -130,16 +149,14 @@ export function buildScanResults(params: {
     per_query_breakdown: analysis.per_query_breakdown,
     brand_attributes: analysis.brand_attributes,
     citation_urls: analysis.citation_urls,
-    // Sub-scores will be populated when the new prompts/scoring module is wired in
-    // For now, derive approximate sub-scores from the existing formula
     brand_awareness_score: totalEngines > 0
       ? Math.round((engineResults.filter((e) => e.is_mentioned).length / totalEngines) * 100)
       : 0,
     ranking_quality_score: (() => {
       const mentioned = engineResults.filter((e) => e.is_mentioned && e.mention_position !== null)
       if (mentioned.length === 0) return 0
-      const avg = mentioned.reduce((sum, e) => sum + Math.max(10, 110 - (e.mention_position ?? 10) * 10), 0) / mentioned.length
-      return Math.round(avg)
+      const avg = mentioned.reduce((sum, e) => sum + Math.max(10, Math.min(100, 110 - (e.mention_position ?? 10) * 10)), 0) / mentioned.length
+      return Math.min(100, Math.max(0, Math.round(avg)))
     })(),
     citation_quality_score: (() => {
       const mentioned = engineResults.filter((e) => e.is_mentioned)
