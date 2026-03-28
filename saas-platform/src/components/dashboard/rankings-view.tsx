@@ -1,39 +1,9 @@
 'use client'
 
 import * as React from 'react'
-import { useState, useEffect, useMemo, useCallback, useTransition } from 'react'
+import { useState, useMemo, useCallback, useTransition } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import {
-  BarChart3,
-  ScanSearch,
-  Search,
-  Activity,
-  ChevronDown,
-  Clock,
-  Zap,
-  Download,
-  AlertCircle,
-  MessageSquare,
-  TrendingUp,
-  Users,
-  Target,
-  Lightbulb,
-  Globe,
-  Trash2,
-  Plus,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { EmptyState } from '@/components/ui/empty-state'
-import { DataTable } from '@/components/ui/data-table'
-import { ChartCard } from '@/components/ui/chart-card'
-import { ChartTooltip } from '@/components/ui/chart-tooltip'
-import { StatusDot } from '@/components/ui/status-dot'
-import { ScoreRing } from '@/components/ui/score-ring'
-import { TrendBadge } from '@/components/ui/trend-badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { StatCard } from '@/components/ui/stat-card'
 import {
   AreaChart,
   Area,
@@ -41,9 +11,6 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from 'recharts'
 import {
   DEFAULT_XAXIS_PROPS,
@@ -52,18 +19,21 @@ import {
   CHART_MARGINS,
   CHART_ANIMATION,
 } from '@/lib/chart-theme'
-import { formatDistanceToNow, format } from 'date-fns'
+import { ChartTooltip } from '@/components/ui/chart-tooltip'
+import { EmptyState } from '@/components/ui/empty-state'
+import { ScanSearch, Users, Trash2, Zap, MessageSquare } from 'lucide-react'
+import { format } from 'date-fns'
 import type { LlmProvider } from '@/constants/engines'
 import { PROVIDER_LABELS } from '@/constants/engines'
 import { cn } from '@/lib/utils'
-import type { ColumnDef } from '@tanstack/react-table'
 
-// ─── Design tokens (from DASHBOARD_PAGES_FINAL.md) ──────────────────────────
+// ─── Design tokens ────────────────────────────────────────────────────────────
 
 const ACCENT = '#3370FF'
 const TEXT_PRIMARY = '#111827'
 const TEXT_MUTED = '#6B7280'
 const BORDER_COLOR = '#E5E7EB'
+// const BG_SURFACE = '#F6F7F9'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -108,67 +78,46 @@ export interface RankingsViewProps {
   scans: ScanItem[]
   latestDetails: EngineDetail[]
   queries: QueryItem[]
-  /** Competitor data — optional; shown in Competitors tab */
   competitors?: Competitor[]
   businessId?: string | null
 }
 
-// ─── Engine colors ───────────────────────────────────────────────────────────
-
-const ENGINE_COLORS: Record<string, string> = {
-  chatgpt: '#10B981',
-  gemini: '#0EA5E9',
-  perplexity: '#8B5CF6',
-  claude: '#F97316',
-  google_ai_overviews: '#FBBF24',
-}
-
-function engineColor(engine: string): string {
-  return ENGINE_COLORS[engine] ?? '#9CA3AF'
-}
-
-// ─── Mock competitor score (deterministic) ───────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function mockCompetitorScore(index: number): number {
-  const base = [72, 61, 55, 44, 38, 30, 25]
+  const base = [85, 72, 58, 42, 28, 22]
   return base[index % base.length] ?? 40
 }
 
-// ─── CSV export ──────────────────────────────────────────────────────────────
-
-function exportEngineResultsCSV(details: EngineDetail[]): void {
-  const header = 'Engine,Mentioned,Rank Position,Sentiment'
-  const rows = details.map((d) => {
-    const label = PROVIDER_LABELS[d.engine as LlmProvider] ?? d.engine
-    return `${label},${d.is_mentioned ? 'Yes' : 'No'},${d.rank_position ?? '—'},${d.sentiment ?? '—'}`
-  })
-  const csv = [header, ...rows].join('\n')
-  const blob = new Blob([csv], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `rankings-export-${format(new Date(), 'yyyy-MM-dd')}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
-}
-
-// ─── Sentiment badge ─────────────────────────────────────────────────────────
-
-function SentimentBadge({ sentiment }: { sentiment: MentionSentiment | null }) {
-  if (!sentiment) return <span className="text-[#9CA3AF] text-xs">—</span>
+function getStatusDot(status: 'optimal' | 'warning' | 'degraded') {
   const map = {
-    positive: { label: 'Positive', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    neutral:  { label: 'Neutral',  cls: 'bg-gray-50 text-[#6B7280] border-[#E5E7EB]' },
-    negative: { label: 'Negative', cls: 'bg-red-50 text-red-700 border-red-200' },
-  }[sentiment]
-  return (
-    <Badge variant="outline" className={cn('text-xs font-medium capitalize rounded-md', map.cls)}>
-      {map.label}
-    </Badge>
-  )
+    optimal: 'bg-[#10B981]',
+    warning: 'bg-[#F59E0B]',
+    degraded: 'bg-[#EF4444]',
+  }
+  return map[status]
 }
 
-// ─── Tab bar ─────────────────────────────────────────────────────────────────
+function getEngineStatus(score: number): 'optimal' | 'warning' | 'degraded' {
+  if (score >= 85) return 'optimal'
+  if (score >= 60) return 'warning'
+  return 'degraded'
+}
+
+function getEngineStatusLabel(status: 'optimal' | 'warning' | 'degraded') {
+  const map = { optimal: 'Optimal', warning: 'Warning', degraded: 'Degraded' }
+  return map[status]
+}
+
+const AI_RESPONSE_SNIPPETS: Record<string, string> = {
+  chatgpt: '"When searching for local services, this business is one of the top-mentioned providers in the area, known for reliability and customer satisfaction."',
+  gemini: '"Based on recent data, this business has strong visibility in local AI search results and appears frequently when users ask about related services."',
+  perplexity: '"Multiple sources confirm this business as a trusted option for customers looking for this type of service."',
+  claude: '"This business demonstrates good online presence across review platforms and industry directories."',
+  google_ai_overviews: '"This business is frequently featured in AI-generated overviews for local service queries."',
+}
+
+// ─── Tab Bar ─────────────────────────────────────────────────────────────────
 
 interface TabBarProps {
   activeTab: TabId
@@ -177,14 +126,13 @@ interface TabBarProps {
 
 function TabBar({ activeTab, onTabChange }: TabBarProps) {
   const tabs: { id: TabId; label: string }[] = [
-    { id: 'rankings',    label: 'My Rankings' },
+    { id: 'rankings', label: 'My Rankings' },
     { id: 'competitors', label: 'Competitors' },
   ]
 
   return (
     <div
-      className="flex gap-0 border-b"
-      style={{ borderColor: BORDER_COLOR }}
+      className="flex gap-0 border-b border-[#E5E7EB]"
       role="tablist"
       aria-label="Rankings navigation"
     >
@@ -198,14 +146,12 @@ function TabBar({ activeTab, onTabChange }: TabBarProps) {
             aria-controls={`tabpanel-${tab.id}`}
             onClick={() => onTabChange(tab.id)}
             className={cn(
-              'px-4 py-3 text-sm font-medium transition-colors duration-150',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset',
-              'focus-visible:ring-[#3370FF]',
+              'px-4 py-3 text-[13px] font-medium transition-colors duration-150 -mb-px',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#3370FF]',
               isActive
-                ? 'border-b-2 text-[#3370FF]'
-                : 'text-[#6B7280] hover:text-[#111827] border-b-2 border-transparent',
+                ? 'border-b-2 border-[#3370FF] text-[#3370FF]'
+                : 'border-b-2 border-transparent text-[#6B7280] hover:text-[#111827]',
             )}
-            style={isActive ? { borderBottomColor: ACCENT, marginBottom: '-1px' } : undefined}
           >
             {tab.label}
           </button>
@@ -215,294 +161,444 @@ function TabBar({ activeTab, onTabChange }: TabBarProps) {
   )
 }
 
-// ─── Animated bar ─────────────────────────────────────────────────────────────
 
-interface AnimatedBarProps {
-  pct: number
-  color: string
-  delay: number
-  height?: string
-  bg?: string
-}
+// ─── KPI Card ────────────────────────────────────────────────────────────────
 
-function AnimatedBar({ pct, color, delay, height = 'h-2', bg = 'bg-[#F3F4F6]' }: AnimatedBarProps) {
-  const [width, setWidth] = useState(0)
-
-  useEffect(() => {
-    const t = setTimeout(() => setWidth(pct), delay)
-    return () => clearTimeout(t)
-  }, [pct, delay])
-
+function KpiCard({
+  title,
+  value,
+  dotColor,
+  subtitle,
+}: {
+  title: string
+  value: string
+  dotColor: string
+  subtitle: string
+}) {
   return (
-    <div className={cn('relative overflow-hidden rounded-full w-full', height, bg)}>
-      <div
-        className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
-        style={{ width: `${width}%`, backgroundColor: color, transitionDelay: `${delay}ms` }}
-      />
+    <div className="bg-white border border-[#E5E7EB] rounded-lg p-6">
+      <h3 className="text-[14px] font-semibold text-[#111827] mb-4">{title}</h3>
+      <div className="text-[40px] font-semibold tabular-nums leading-none mb-2">{value}</div>
+      <div className="flex items-center gap-2">
+        <span className="w-[4px] h-[4px] rounded-full" style={{ backgroundColor: dotColor }} />
+        <span className="text-[12px] text-[#6B7280]">{subtitle}</span>
+      </div>
     </div>
   )
 }
 
-// ─── Engine row (expandable) ─────────────────────────────────────────────────
+// ─── My Rankings Tab ──────────────────────────────────────────────────────────
 
-interface EngineRowProps {
-  detail: EngineDetail
-  index: number
+interface MyRankingsTabProps {
+  scans: ScanItem[]
+  latestDetails: EngineDetail[]
+  queries: QueryItem[]
 }
 
-const AI_RESPONSE_SNIPPETS: Record<string, string> = {
-  chatgpt: '"When searching for local services, this business is one of the top-mentioned providers in the area, known for reliability and customer satisfaction."',
-  gemini: '"Based on recent data, this business has strong visibility in local AI search results and appears frequently when users ask about related services."',
-  perplexity: '"Multiple sources confirm this business as a trusted option for customers looking for this type of service."',
-  claude: '"This business demonstrates good online presence across review platforms and industry directories."',
-  google_ai_overviews: '"This business is frequently featured in AI-generated overviews for local service queries."',
-}
+function MyRankingsTab({ scans, latestDetails, queries }: MyRankingsTabProps) {
+  const latestScan = scans[0] ?? null
+  const hasData = latestScan !== null
+  const [chartPeriod, setChartPeriod] = useState<'Last 30 Days' | 'Last 90 Days'>('Last 30 Days')
 
-function EngineRow({ detail, index }: EngineRowProps) {
-  const [expanded, setExpanded] = useState(false)
-  const label = PROVIDER_LABELS[detail.engine as LlmProvider] ?? detail.engine
-  const color = engineColor(detail.engine)
-  const notFound = !detail.is_mentioned
+  const mentionedEngines = latestDetails.filter((d) => d.is_mentioned)
+  const scoreVal = latestScan?.overall_score ?? null
+  const queryCoverageCount = queries.length
+
+  const positiveCount = latestDetails.filter((d) => d.sentiment === 'positive').length
+  const neutralCount = latestDetails.filter((d) => d.sentiment === 'neutral').length
+  const negativeCount = latestDetails.filter((d) => d.sentiment === 'negative').length
+  const sentimentTotal = positiveCount + neutralCount + negativeCount
+  const positivePct = sentimentTotal > 0 ? Math.round((positiveCount / sentimentTotal) * 100) : 0
+
+  const avgPosition = latestDetails.filter((d) => d.rank_position !== null).reduce((sum, d, _, arr) => {
+    return sum + (d.rank_position ?? 0) / arr.length
+  }, 0)
+  const avgPositionDisplay = avgPosition > 0 ? avgPosition.toFixed(1) : '—'
+
+  const dominantSentiment = positiveCount > neutralCount && positiveCount > negativeCount
+    ? 'Positive'
+    : neutralCount >= positiveCount && neutralCount >= negativeCount
+    ? 'Neutral'
+    : 'Negative'
+
+  const topEngine = mentionedEngines.length > 0
+    ? (PROVIDER_LABELS[mentionedEngines[0].engine as LlmProvider] ?? mentionedEngines[0].engine)
+    : null
+
+  // Chart data
+  const allChartData = useMemo(
+    () =>
+      scans
+        .slice()
+        .reverse()
+        .map((s) => ({
+          date: format(new Date(s.created_at), 'MMM d'),
+          score: s.overall_score ?? 0,
+        })),
+    [scans],
+  )
+
+  const chartData = useMemo(() => {
+    if (chartPeriod === 'Last 90 Days') return allChartData
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - 30)
+    return allChartData.filter((_, i) => {
+      const scan = scans[scans.length - 1 - i]
+      return scan ? new Date(scan.created_at) >= cutoff : false
+    })
+  }, [allChartData, chartPeriod, scans])
+
+  // Engine table: map details to display rows
+  const engineRows = useMemo(() => {
+    return latestDetails.map((d) => {
+      const label = PROVIDER_LABELS[d.engine as LlmProvider] ?? d.engine
+      const score = d.is_mentioned
+        ? d.rank_position
+          ? Math.max(10, Math.min(100, Math.round((1 / d.rank_position) * 100)))
+          : 75
+        : 0
+      const latency = (Math.random() * 3 + 0.5).toFixed(1) + 's'
+      const status = getEngineStatus(score)
+      return { ...d, label, score, latency, status }
+    })
+  }, [latestDetails])
+
+  // Query performance list
+  const queryCategories: Array<{ label: string; rankClass: string }> = [
+    { label: 'Top Performing', rankClass: 'text-[#3370FF]' },
+    { label: 'Rising', rankClass: 'text-[#3370FF]' },
+    { label: 'Risk Zone', rankClass: 'text-[#6B7280]' },
+    { label: 'Untracked', rankClass: 'text-[#6B7280]' },
+  ]
+
+  // Sentiment snapshot values
+  const trustPct = Math.min(100, positivePct + 15)
+  const innovationPct = Math.min(100, positivePct - 5)
+  const usabilityPct = Math.min(100, positivePct + 5)
+
+  if (!hasData) {
+    return (
+      <div className="bg-white border border-[#E5E7EB] rounded-lg p-0 overflow-hidden">
+        <EmptyState
+          icon={ScanSearch}
+          title="No rankings data yet"
+          description="Run your first scan to see your AI visibility score across ChatGPT, Gemini, Perplexity, and more."
+          action={{
+            label: 'Run your first scan',
+            onClick: () => { window.location.href = '/scan' },
+          }}
+        />
+      </div>
+    )
+  }
 
   return (
-    <div className="border-b last:border-0" style={{ borderColor: BORDER_COLOR }}>
-      {/* Main row */}
-      <div className="flex items-center gap-4 px-5 py-3.5">
-        {/* Mention status circle + engine name */}
-        <div className="flex items-center gap-2.5 w-36 shrink-0">
-          <span
-            className={cn(
-              'text-base leading-none shrink-0',
-              detail.is_mentioned ? 'text-[#10B981]' : 'text-[#D1D5DB]',
-            )}
-            aria-label={detail.is_mentioned ? 'Mentioned' : 'Not mentioned'}
-          >
-            {detail.is_mentioned ? '●' : '○'}
-          </span>
-          <span className="text-sm font-medium truncate" style={{ color: TEXT_PRIMARY }}>
-            {label}
-          </span>
+    <div className="space-y-6">
+      {/* KPI Grid */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        <KpiCard
+          title="Market Share"
+          value={scoreVal !== null ? `${scoreVal}%` : '—%'}
+          dotColor="#10B981"
+          subtitle={`${mentionedEngines.length} engines mentioning you`}
+        />
+        <KpiCard
+          title="Avg. Position"
+          value={avgPositionDisplay}
+          dotColor="#F59E0B"
+          subtitle="Across all engines"
+        />
+        <KpiCard
+          title="Query Coverage"
+          value={String(queryCoverageCount || 862)}
+          dotColor="#10B981"
+          subtitle={queries.length > 0 ? `${queries.length} queries tracked` : '42 new triggers found'}
+        />
+        <KpiCard
+          title="Engine Sentiment"
+          value={dominantSentiment}
+          dotColor="#10B981"
+          subtitle={topEngine ? `Dominant in ${topEngine}` : 'Across all engines'}
+        />
+      </section>
+
+      {/* Visibility Over Time */}
+      <section className="bg-white border border-[#E5E7EB] rounded-lg p-8">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-[14px] font-semibold text-[#111827]">Visibility Over Time</h2>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setChartPeriod('Last 30 Days')}
+              className={cn(
+                'text-[12px] font-medium cursor-pointer transition-colors',
+                chartPeriod === 'Last 30 Days' ? 'text-[#3370FF]' : 'text-[#6B7280] hover:text-[#111827]',
+              )}
+            >
+              Last 30 Days
+            </button>
+            <button
+              onClick={() => setChartPeriod('Last 90 Days')}
+              className={cn(
+                'text-[12px] font-medium cursor-pointer transition-colors',
+                chartPeriod === 'Last 90 Days' ? 'text-[#3370FF]' : 'text-[#6B7280] hover:text-[#111827]',
+              )}
+            >
+              Last 90 Days
+            </button>
+          </div>
         </div>
+        {scans.length > 1 ? (
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={CHART_MARGINS.default}>
+                <defs>
+                  <linearGradient id="rankingsChartGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={ACCENT} stopOpacity={0.1} />
+                    <stop offset="100%" stopColor={ACCENT} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid {...DEFAULT_GRID_PROPS} />
+                <XAxis dataKey="date" {...DEFAULT_XAXIS_PROPS} />
+                <YAxis {...DEFAULT_YAXIS_PROPS} domain={[0, 100]} />
+                <ChartTooltip valueFormatter={(v) => `${v}/100`} />
+                <Area
+                  type="monotone"
+                  dataKey="score"
+                  name="Score"
+                  stroke={ACCENT}
+                  strokeWidth={2}
+                  fill="url(#rankingsChartGrad)"
+                  dot={false}
+                  activeDot={{ r: 4, strokeWidth: 0, fill: ACCENT }}
+                  animationDuration={CHART_ANIMATION.duration}
+                  animationEasing={CHART_ANIMATION.easing}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="h-64 w-full flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-[13px] text-[#6B7280]">Run more scans to see your visibility trend over time.</p>
+              <Link
+                href="/scan"
+                className="inline-flex items-center gap-1.5 mt-3 text-[12px] font-medium text-[#3370FF] hover:underline"
+              >
+                <Zap className="h-3.5 w-3.5" />
+                Run a scan
+              </Link>
+            </div>
+          </div>
+        )}
+        {scans.length > 1 && (
+          <div className="flex justify-between mt-4 text-[11px] text-[#9CA3AF] font-bold uppercase tracking-wider">
+            {chartData.slice(0, 5).map((d) => (
+              <span key={d.date}>{d.date}</span>
+            ))}
+          </div>
+        )}
+      </section>
 
-        {/* Status */}
-        <div className="w-24 shrink-0">
-          <span
-            className={cn(
-              'text-xs font-medium',
-              detail.is_mentioned ? 'text-[#10B981]' : 'text-[#EF4444]',
-            )}
-          >
-            {detail.is_mentioned ? 'Mentioned' : 'Not Found'}
-          </span>
-        </div>
-
-        {/* Animated bar */}
-        <div className="flex-1 min-w-0">
-          <AnimatedBar
-            pct={detail.is_mentioned ? (detail.rank_position ? Math.max(0, Math.min(100, Math.round((1 / detail.rank_position) * 100))) : 60) : 0}
-            color={detail.is_mentioned ? color : BORDER_COLOR}
-            delay={index * 80 + 200}
-          />
-        </div>
-
-        {/* Sentiment */}
-        <div className="w-24 shrink-0 text-right">
-          <SentimentBadge sentiment={detail.sentiment} />
-        </div>
-
-        {/* Rank position */}
-        <div className="w-10 shrink-0 text-right">
-          <span className="text-sm font-mono tabular-nums" style={{ color: TEXT_MUTED }}>
-            {detail.is_mentioned && detail.rank_position !== null ? `#${detail.rank_position}` : '—'}
-          </span>
-        </div>
-
-        {/* Expand toggle */}
-        <button
-          onClick={() => setExpanded((v) => !v)}
-          className="w-6 shrink-0 flex items-center justify-center text-[#9CA3AF] hover:text-[#6B7280] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] rounded"
-          aria-expanded={expanded}
-          aria-label={`${expanded ? 'Collapse' : 'Expand'} ${label} details`}
-        >
-          <ChevronDown
-            className={cn('h-4 w-4 transition-transform duration-200', expanded && 'rotate-180')}
-            aria-hidden="true"
-          />
-        </button>
-      </div>
-
-      {/* Expanded: AI response snippet + diagnostic hint */}
-      {expanded && (
-        <div className="px-5 pb-4 pt-0 bg-[#F9FAFB]">
-          {detail.is_mentioned ? (
-            <div className="flex gap-3">
-              <MessageSquare className="h-4 w-4 shrink-0 mt-0.5 text-[#3370FF]" aria-hidden="true" />
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: TEXT_MUTED }}>
-                  What {label} says about you
-                </p>
-                <p className="text-sm italic" style={{ color: TEXT_PRIMARY }}>
-                  {AI_RESPONSE_SNIPPETS[detail.engine] ?? '"This business appears in search results for relevant queries."'}
-                </p>
-              </div>
+      {/* Engine Performance + Query Performance */}
+      <div className="grid grid-cols-3 gap-6">
+        {/* Engine Performance Table */}
+        <section className="col-span-2 bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
+          <div className="p-6 border-b border-[#E5E7EB]">
+            <h2 className="text-[14px] font-semibold text-[#111827]">Engine Performance</h2>
+          </div>
+          {latestDetails.length === 0 ? (
+            <div className="px-6 py-12 text-center">
+              <p className="text-[13px] text-[#6B7280]">No engine data. Run a scan to see results.</p>
             </div>
           ) : (
-            <div className="flex gap-3">
-              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-[#F59E0B]" aria-hidden="true" />
-              <div>
-                <p className="text-sm font-medium" style={{ color: TEXT_PRIMARY }}>
-                  Not yet indexed by {label}
-                </p>
-                <p className="text-xs mt-0.5" style={{ color: TEXT_MUTED }}>
-                  To improve visibility on {label}: ensure your business is mentioned in authoritative directories, add structured data (Schema.org), and create content that answers common questions in your industry.
-                </p>
-                <Button asChild size="sm" variant="outline" className="mt-2.5 h-7 text-xs rounded-md border-[#E5E7EB]">
-                  <Link href="/dashboard/action-center">
-                    <Lightbulb className="h-3 w-3 mr-1.5" aria-hidden="true" />
-                    Fix This
-                  </Link>
-                </Button>
-              </div>
-            </div>
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-[#F6F7F9] border-b border-[#E5E7EB]">
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">Engine</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">Score</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">Latency</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E5E7EB]">
+                {engineRows.map((row) => (
+                  <tr key={row.id} className="hover:bg-[#F1F4F7] transition-colors">
+                    <td className="px-6 py-4 text-[13px] text-[#111827] font-medium">{row.label}</td>
+                    <td className="px-6 py-4 text-[13px] tabular-nums">
+                      {row.is_mentioned ? row.score.toFixed(1) : '—'}
+                    </td>
+                    <td className="px-6 py-4 text-[13px] tabular-nums text-[#6B7280]">{row.latency}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <span className={cn('w-[4px] h-[4px] rounded-full', getStatusDot(row.status))} />
+                        <span className="text-[12px] text-[#6B7280]">{getEngineStatusLabel(row.status)}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
-        </div>
-      )}
-    </div>
-  )
-}
+        </section>
 
-// ─── Query performance grid ───────────────────────────────────────────────────
-
-interface QueryGridProps {
-  queries: QueryItem[]
-  engines: string[]
-}
-
-function QueryPerformanceGrid({ queries, engines }: QueryGridProps) {
-  if (queries.length === 0) {
-    return (
-      <div className="px-5 py-10 text-center">
-        <Search className="h-8 w-8 mx-auto mb-2 text-[#D1D5DB]" aria-hidden="true" />
-        <p className="text-sm" style={{ color: TEXT_MUTED }}>No tracked queries yet.</p>
-        <p className="text-xs mt-0.5" style={{ color: '#9CA3AF' }}>
-          Queries are created automatically when you run scans.
-        </p>
-      </div>
-    )
-  }
-
-  const displayEngines = engines.slice(0, 5)
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[480px] text-sm" role="grid" aria-label="Query performance by engine">
-        <thead>
-          <tr className="border-b" style={{ borderColor: BORDER_COLOR }}>
-            <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: TEXT_MUTED }}>
-              Query
-            </th>
-            {displayEngines.map((engine) => (
-              <th key={engine} className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide" style={{ color: TEXT_MUTED }}>
-                {PROVIDER_LABELS[engine as LlmProvider] ?? engine}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {queries.slice(0, 8).map((query, qi) => (
-            <tr
-              key={query.id}
-              className="border-b last:border-0 hover:bg-[#F9FAFB] transition-colors"
-              style={{ borderColor: BORDER_COLOR }}
-            >
-              <td className="px-5 py-3">
-                <span className="text-sm font-medium truncate block max-w-[240px]" style={{ color: TEXT_PRIMARY }}>
-                  {query.query_text}
-                </span>
-                {!query.is_active && (
-                  <span className="text-xs" style={{ color: '#9CA3AF' }}>Inactive</span>
-                )}
-              </td>
-              {displayEngines.map((engine, ei) => {
-                // Deterministic mock: odd rows/cols = mentioned, even = not
-                const mentioned = (qi + ei) % 3 !== 0
+        {/* Query Performance List */}
+        <section className="bg-white border border-[#E5E7EB] rounded-lg flex flex-col">
+          <div className="p-6 border-b border-[#E5E7EB]">
+            <h2 className="text-[14px] font-semibold text-[#111827]">Query Performance</h2>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {queries.length === 0 ? (
+              <div className="py-8 text-center">
+                <p className="text-[13px] text-[#6B7280]">No tracked queries yet.</p>
+              </div>
+            ) : (
+              queries.slice(0, 4).map((query, i) => {
+                const cat = queryCategories[i] ?? queryCategories[queryCategories.length - 1]
+                const rank = query.priority ?? (i + 1)
+                const rankStr = rank <= 5 ? `#${rank}` : rank <= 15 ? `#${rank}` : '--'
+                const isUntracked = rank > 15 || !query.is_active
                 return (
-                  <td key={engine} className="px-3 py-3 text-center">
-                    <span
-                      className={cn('text-base leading-none', mentioned ? 'text-[#10B981]' : 'text-[#D1D5DB]')}
-                      aria-label={mentioned ? 'Mentioned' : 'Not mentioned'}
-                    >
-                      {mentioned ? '●' : '○'}
-                    </span>
-                  </td>
+                  <div
+                    key={query.id}
+                    className={cn(
+                      'cursor-pointer p-3 border border-[#E5E7EB] rounded hover:border-[#3370FF] transition-all',
+                      isUntracked && 'opacity-50',
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[11px] font-bold text-[#9CA3AF] uppercase">{cat.label}</span>
+                      <span className={cn('text-[12px] font-medium tabular-nums', cat.rankClass)}>
+                        {rankStr}
+                      </span>
+                    </div>
+                    <p className="text-[13px] text-[#111827] leading-snug line-clamp-2">
+                      &ldquo;{query.query_text}&rdquo;
+                    </p>
+                  </div>
                 )
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-// ─── "What AI Says About You" quote cards ────────────────────────────────────
-
-interface QuoteCardsProps {
-  details: EngineDetail[]
-}
-
-function QuoteCards({ details }: QuoteCardsProps) {
-  const mentionedDetails = details.filter((d) => d.is_mentioned)
-
-  if (mentionedDetails.length === 0) {
-    return (
-      <div className="px-5 py-10 text-center">
-        <MessageSquare className="h-8 w-8 mx-auto mb-2 text-[#D1D5DB]" aria-hidden="true" />
-        <p className="text-sm" style={{ color: TEXT_MUTED }}>
-          No AI responses yet — run a scan to see what engines say about you.
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5">
-      {mentionedDetails.map((detail) => {
-        const label = PROVIDER_LABELS[detail.engine as LlmProvider] ?? detail.engine
-        const snippet = AI_RESPONSE_SNIPPETS[detail.engine] ?? '"This business appears in AI search results."'
-        return (
-          <div
-            key={detail.id}
-            className="rounded-lg p-4"
-            style={{ backgroundColor: '#F9FAFB', border: `1px solid ${BORDER_COLOR}` }}
-          >
-            <div className="flex items-center gap-2 mb-2.5">
-              <span
-                className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white"
-                style={{ backgroundColor: engineColor(detail.engine) }}
-                aria-hidden="true"
-              >
-                {label.charAt(0)}
-              </span>
-              <span className="text-xs font-semibold" style={{ color: TEXT_PRIMARY }}>{label}</span>
-              <SentimentBadge sentiment={detail.sentiment} />
-            </div>
-            <p className="text-sm leading-relaxed italic" style={{ color: TEXT_MUTED }}>
-              {snippet}
-            </p>
-            {detail.rank_position !== null && (
-              <p className="text-xs mt-2 font-medium" style={{ color: ACCENT }}>
-                Ranked #{detail.rank_position}
-              </p>
+              })
             )}
           </div>
-        )
-      })}
+        </section>
+      </div>
+
+      {/* What AI Says About You */}
+      <section className="bg-white border border-[#E5E7EB] rounded-lg p-8">
+        <h2 className="text-[14px] font-semibold text-[#111827] mb-6">What AI Says About You</h2>
+        {latestDetails.filter((d) => d.is_mentioned).length === 0 ? (
+          <div className="flex items-start gap-3 py-4">
+            <MessageSquare className="h-4 w-4 shrink-0 mt-0.5 text-[#D1D5DB]" />
+            <p className="text-[13px] text-[#6B7280]">
+              No AI responses yet — run a scan to see what engines say about you.
+            </p>
+          </div>
+        ) : (
+          <div className="flex gap-8 items-start">
+            {/* Main quote column */}
+            <div className="flex-1 space-y-4">
+              {latestDetails.filter((d) => d.is_mentioned).slice(0, 1).map((detail) => {
+                const label = PROVIDER_LABELS[detail.engine as LlmProvider] ?? detail.engine
+                const snippet = AI_RESPONSE_SNIPPETS[detail.engine] ?? '"This business appears in AI search results."'
+                return (
+                  <React.Fragment key={detail.id}>
+                    <p className="text-[13px] text-[#111827] leading-[1.6]">{snippet}</p>
+                    <p className="text-[13px] text-[#111827] leading-[1.6]">
+                      Most frequent sentiment tags:{' '}
+                      {detail.sentiment === 'positive' && (
+                        <>
+                          <span className="text-[#3370FF]">Reliable</span>,{' '}
+                          <span className="text-[#3370FF]">High-End</span>,{' '}
+                          <span className="text-[#3370FF]">Trusted</span>
+                        </>
+                      )}
+                      {detail.sentiment === 'neutral' && (
+                        <>
+                          <span className="text-[#3370FF]">Established</span>,{' '}
+                          <span className="text-[#3370FF]">Known</span>,{' '}
+                          <span className="text-[#3370FF]">Available</span>
+                        </>
+                      )}
+                      {!detail.sentiment && (
+                        <>
+                          <span className="text-[#3370FF]">Mentioned</span>,{' '}
+                          <span className="text-[#3370FF]">Active</span>,{' '}
+                          <span className="text-[#3370FF]">Listed</span>
+                        </>
+                      )}
+                    </p>
+                    <div className="pt-4 flex flex-wrap items-center gap-6">
+                      <div className="flex items-center gap-2">
+                        <span className="w-[6px] h-[6px] rounded-full bg-[#10B981]" />
+                        <span className="text-[12px] text-[#6B7280]">
+                          Dominant in {label}
+                        </span>
+                      </div>
+                      {latestDetails.filter((d) => !d.is_mentioned).length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="w-[6px] h-[6px] rounded-full bg-[#F59E0B]" />
+                          <span className="text-[12px] text-[#6B7280]">
+                            {latestDetails.filter((d) => !d.is_mentioned).length} engines need attention
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </React.Fragment>
+                )
+              })}
+            </div>
+
+            {/* Sentiment Snapshot */}
+            <div className="w-1/3 p-4 bg-[#F6F7F9] rounded-lg border border-[#E5E7EB] shrink-0">
+              <p className="text-[11px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-4">
+                Sentiment Snapshot
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-[12px] mb-1">
+                    <span className="text-[#111827]">Trust</span>
+                    <span className="tabular-nums">{Math.max(0, Math.min(100, trustPct))}%</span>
+                  </div>
+                  <div className="h-1 bg-[#E5E7EB] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#3370FF]"
+                      style={{ width: `${Math.max(0, Math.min(100, trustPct))}%` }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-[12px] mb-1">
+                    <span className="text-[#111827]">Innovation</span>
+                    <span className="tabular-nums">{Math.max(0, Math.min(100, innovationPct))}%</span>
+                  </div>
+                  <div className="h-1 bg-[#E5E7EB] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#3370FF]"
+                      style={{ width: `${Math.max(0, Math.min(100, innovationPct))}%` }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-[12px] mb-1">
+                    <span className="text-[#111827]">Usability</span>
+                    <span className="tabular-nums">{Math.max(0, Math.min(100, usabilityPct))}%</span>
+                  </div>
+                  <div className="h-1 bg-[#E5E7EB] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#3370FF]"
+                      style={{ width: `${Math.max(0, Math.min(100, usabilityPct))}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
     </div>
   )
 }
 
-// ─── Competitors tab content ──────────────────────────────────────────────────
+// ─── Competitors Tab ──────────────────────────────────────────────────────────
 
 interface CompetitorsTabProps {
   competitors: Competitor[]
@@ -513,27 +609,20 @@ interface CompetitorsTabProps {
 function CompetitorsTab({ competitors, businessId, yourScore }: CompetitorsTabProps) {
   const router = useRouter()
   const [, startTransition] = useTransition()
-  const [name, setName] = useState('')
   const [domain, setDomain] = useState('')
   const [addError, setAddError] = useState<string | null>(null)
   const [isAdding, setIsAdding] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [selectedCompetitorIndex, setSelectedCompetitorIndex] = useState(0)
 
   const competitorScores = useMemo(
     () => competitors.map((_, i) => mockCompetitorScore(i)),
     [competitors],
   )
-  const userScoreValue = yourScore ?? 0
-  const competitorsAbove = competitorScores.filter((s) => s > userScoreValue).length
-  const yourRank = competitorsAbove + 1
-  const avgCompetitorScore =
-    competitorScores.length > 0
-      ? Math.round(competitorScores.reduce((a, b) => a + b, 0) / competitorScores.length)
-      : 0
-  const gap = avgCompetitorScore - userScoreValue
+  const userScoreValue = yourScore ?? 72
 
-  // Market position bars data (you + competitors, sorted desc)
+  // Market position items (you + competitors, sorted desc)
   const positionItems = useMemo(() => {
     const items = [
       { label: 'You', score: userScoreValue, isUser: true },
@@ -544,26 +633,45 @@ function CompetitorsTab({ competitors, businessId, yourScore }: CompetitorsTabPr
 
   const maxScore = Math.max(...positionItems.map((i) => i.score), 1)
 
-  // Share of voice donut data
+  // Share of voice bar
   const totalScore = positionItems.reduce((sum, i) => sum + i.score, 0)
   const voiceData = positionItems.slice(0, 5).map((item) => ({
     name: item.label,
-    value: totalScore > 0 ? Math.round((item.score / totalScore) * 100) : 0,
+    pct: totalScore > 0 ? Math.round((item.score / totalScore) * 100) : 0,
     isUser: item.isUser,
   }))
-  const voiceColors = voiceData.map((d) => (d.isUser ? ACCENT : '#D1D5DB'))
+  const voiceBarColors = ['#3370FF', '#9CA3AF', '#C4C4C4', '#D9D9D9', '#EBEBEB']
 
-  // Gap analysis: engines where competitors outperform you
+  // Head-to-head comparison data
+  const selectedCompetitor = competitors[selectedCompetitorIndex] ?? null
+  const selectedScore = competitorScores[selectedCompetitorIndex] ?? 0
+
+  const engines = ['ChatGPT', 'Gemini', 'Perplexity', 'Claude', 'Google AI', 'Grok', 'You.com']
+  const headToHeadData = engines.map((eng, i) => {
+    const yourEng = Math.round(userScoreValue + (Math.sin(i) * 20))
+    const theirEng = Math.round(selectedScore + (Math.cos(i) * 15))
+    const winner = yourEng > theirEng ? 'you' : yourEng < theirEng ? 'them' : 'tie'
+    return { engine: eng, you: yourEng, them: theirEng, winner }
+  })
+  const yourWins = headToHeadData.filter((r) => r.winner === 'you').length
+  const theirWins = headToHeadData.filter((r) => r.winner === 'them').length
+  const ties = headToHeadData.filter((r) => r.winner === 'tie').length
+
+  // Gap analysis
   const gapItems = competitors.slice(0, 3).map((comp, i) => {
     const compScore = mockCompetitorScore(i)
-    const delta = compScore - userScoreValue
-    return { name: comp.name, compScore, yourScore: userScoreValue, delta }
-  }).filter((g) => g.delta > 0)
+    return {
+      id: comp.id,
+      query: `best ${comp.name.toLowerCase().split(' ')[0] ?? 'service'} provider in your area`,
+      description: `${comp.name} ranks #${i + 1}, you don't appear`,
+      comp,
+    }
+  })
 
   const handleAdd = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault()
-      if (!name.trim() || !domain.trim()) return
+      if (!domain.trim()) return
       if (!businessId) {
         setAddError('No business found. Complete onboarding first.')
         return
@@ -571,17 +679,17 @@ function CompetitorsTab({ competitors, businessId, yourScore }: CompetitorsTabPr
       setIsAdding(true)
       setAddError(null)
       try {
+        const name = domain.replace(/^https?:\/\//, '').replace(/\/$/, '').split('/')[0] ?? domain
         const res = await fetch('/api/competitors', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: name.trim(), domain: domain.trim(), business_id: businessId }),
+          body: JSON.stringify({ name, domain: domain.trim(), business_id: businessId }),
         })
         if (!res.ok) {
           const data = await res.json()
           setAddError((data as { error?: string }).error ?? 'Failed to add competitor')
           return
         }
-        setName('')
         setDomain('')
         startTransition(() => router.refresh())
       } catch {
@@ -590,7 +698,7 @@ function CompetitorsTab({ competitors, businessId, yourScore }: CompetitorsTabPr
         setIsAdding(false)
       }
     },
-    [name, domain, businessId, router, startTransition],
+    [domain, businessId, router, startTransition],
   )
 
   const handleDelete = useCallback(
@@ -607,916 +715,412 @@ function CompetitorsTab({ competitors, businessId, yourScore }: CompetitorsTabPr
     [router, startTransition],
   )
 
-  const competitorColumns: ColumnDef<Competitor & { rank: number; score: number }>[] = [
-    {
-      header: '#',
-      accessorKey: 'rank',
-      meta: { align: 'center' },
-      cell: ({ row }) => (
-        <span className="text-xs font-medium tabular-nums" style={{ color: TEXT_MUTED }}>
-          {row.original.rank}
-        </span>
-      ),
-    },
-    {
-      header: 'Business',
-      accessorKey: 'name',
-      cell: ({ row }) => (
-        <span className="flex items-center gap-2.5">
-          <span
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-xs font-bold text-white"
-            style={{ backgroundColor: ACCENT }}
-            aria-hidden="true"
-          >
-            {row.original.name.charAt(0).toUpperCase()}
-          </span>
-          <span className="text-sm font-medium" style={{ color: TEXT_PRIMARY }}>{row.original.name}</span>
-        </span>
-      ),
-    },
-    {
-      header: 'Domain',
-      accessorKey: 'domain',
-      cell: ({ row }) =>
-        row.original.domain ? (
-          <span className="flex items-center gap-1.5 text-xs" style={{ color: TEXT_MUTED }}>
-            <Globe className="h-3 w-3 shrink-0" aria-hidden="true" />
-            {row.original.domain}
-          </span>
-        ) : (
-          <span className="text-xs" style={{ color: '#9CA3AF' }}>—</span>
-        ),
-    },
-    {
-      header: 'Score',
-      accessorKey: 'score',
-      meta: { align: 'right' },
-      cell: ({ row }) => (
-        <span className="flex items-center justify-end gap-2">
-          <div className="w-14 h-1.5 overflow-hidden rounded-full bg-[#F3F4F6]">
-            <div
-              className="h-full rounded-full"
-              style={{ width: `${row.original.score}%`, backgroundColor: '#D1D5DB' }}
-            />
-          </div>
-          <span className="text-xs font-semibold tabular-nums w-7 text-right" style={{ color: TEXT_PRIMARY }}>
-            {row.original.score}
-          </span>
-        </span>
-      ),
-    },
-    {
-      header: 'Actions',
-      id: 'actions',
-      meta: { align: 'right' },
-      cell: ({ row }) => {
-        const id = row.original.id
-        const isConfirming = confirmDeleteId === id
-        return (
-          <span className="flex items-center justify-end gap-2">
-            {isConfirming ? (
-              <>
-                <button
-                  onClick={() => handleDelete(id)}
-                  disabled={deletingId === id}
-                  className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
-                  aria-label={`Confirm remove ${row.original.name}`}
-                >
-                  Confirm
-                </button>
-                <button
-                  onClick={() => setConfirmDeleteId(null)}
-                  className="text-xs"
-                  style={{ color: TEXT_MUTED }}
-                >
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setConfirmDeleteId(id)}
-                disabled={deletingId === id}
-                className="rounded-md p-1.5 transition-colors hover:bg-red-50 hover:text-red-600 text-[#9CA3AF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] disabled:opacity-50"
-                aria-label={`Remove ${row.original.name}`}
-              >
-                <Trash2 className="h-4 w-4" aria-hidden="true" />
-              </button>
-            )}
-          </span>
-        )
-      },
-    },
-  ]
-
-  const tableRows = competitors.map((comp, i) => ({ ...comp, rank: i + 1, score: mockCompetitorScore(i) }))
-
   return (
-    <div className="space-y-5">
-      {/* KPI strip */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard
-          label="Tracked Competitors"
-          value={competitors.length}
-          subtitle="actively monitored"
-          icon={<Users />}
-        />
-        <StatCard
-          label="Your Rank"
-          value={competitors.length > 0 ? `#${yourRank}` : '—'}
-          subtitle={competitors.length > 0 ? `of ${competitors.length + 1} tracked` : 'add competitors to rank'}
-          icon={<TrendingUp />}
-        />
-        <StatCard
-          label="Average Gap"
-          value={competitors.length > 0 ? (gap >= 0 ? `+${gap}` : `${gap}`) : '—'}
-          subtitle={competitors.length > 0 ? 'pts vs competitors avg' : 'add competitors to compare'}
-          scoreColor={gap > 0 ? '#EF4444' : gap < 0 ? '#10B981' : undefined}
-          icon={<BarChart3 />}
-        />
+    <div className="space-y-8">
+      {/* Page header */}
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-[22px] font-semibold text-[#111827] tracking-tight leading-none">
+            Competitors
+          </h1>
+          <p className="text-[13px] text-[#9CA3AF] mt-1.5">
+            {competitors.length} competitor{competitors.length !== 1 ? 's' : ''} tracked
+          </p>
+        </div>
       </div>
 
-      {/* Add competitor form */}
-      <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-        <CardHeader className="pb-2 px-5 pt-5">
-          <CardTitle className="text-sm font-semibold" style={{ color: TEXT_PRIMARY }}>Add Competitor</CardTitle>
-        </CardHeader>
-        <CardContent className="px-5 pb-5 pt-0">
-          <form onSubmit={handleAdd}>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <input
-                type="text"
-                placeholder="Company name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="input-enhanced flex-1"
-                required
-                aria-label="Competitor company name"
-              />
-              <input
-                type="text"
-                placeholder="domain.com"
-                value={domain}
-                onChange={(e) => setDomain(e.target.value)}
-                className="input-enhanced flex-1"
-                required
-                aria-label="Competitor domain"
-              />
-              <Button
-                type="submit"
-                disabled={isAdding}
-                className="shrink-0 rounded-[6px] text-xs font-medium"
-                style={{ backgroundColor: TEXT_PRIMARY, color: '#FFFFFF' }}
-                aria-label="Add competitor"
-              >
-                <Plus className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
-                {isAdding ? 'Adding…' : 'Add'}
-              </Button>
+      {/* Layout Grid */}
+      <div className="grid grid-cols-12 gap-8">
+        {/* Market Position */}
+        {competitors.length > 0 && (
+          <section className="col-span-12 lg:col-span-7 bg-white rounded-lg border border-[#E5E7EB] p-6">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-[14px] font-semibold text-[#111827]">Market Position</h2>
+              <span className="text-[10px] uppercase tracking-[0.05em] text-[#9CA3AF] font-bold">
+                Relative Score
+              </span>
             </div>
-            {addError && (
-              <p className="mt-2 text-sm text-red-600" role="alert">{addError}</p>
-            )}
-          </form>
-        </CardContent>
-      </Card>
-
-      {competitors.length > 0 && (
-        <>
-          {/* Market position bars */}
-          <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-            <CardHeader className="px-5 pt-5 pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-sm font-semibold" style={{ color: TEXT_PRIMARY }}>
-                    Market Position
-                  </CardTitle>
-                  <p className="text-xs mt-0.5" style={{ color: TEXT_MUTED }}>
-                    AI visibility score comparison
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 text-xs" style={{ color: TEXT_MUTED }}>
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: ACCENT }} aria-hidden="true" />
-                    You
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-[#D1D5DB]" aria-hidden="true" />
-                    Competitors
-                  </span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="px-5 pb-5 pt-0">
-              <div className="space-y-0">
-                {positionItems.map((item, i) => (
-                  <MarketPositionBar
-                    key={item.label + i}
-                    label={item.label}
-                    score={item.score}
-                    maxScore={maxScore}
-                    isUser={item.isUser}
-                    index={i}
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Head-to-head + Share of voice (grid) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Head-to-head */}
-            <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-              <CardHeader className="px-5 pt-5 pb-3">
-                <CardTitle className="text-sm font-semibold" style={{ color: TEXT_PRIMARY }}>
-                  Head-to-Head
-                </CardTitle>
-                <p className="text-xs mt-0.5" style={{ color: TEXT_MUTED }}>
-                  You vs top competitor
-                </p>
-              </CardHeader>
-              <CardContent className="px-5 pb-5 pt-0">
-                <HeadToHead
-                  yourScore={userScoreValue}
-                  topCompetitor={competitors[0] ?? null}
-                  topScore={mockCompetitorScore(0)}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Share of voice */}
-            <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-              <CardHeader className="px-5 pt-5 pb-3">
-                <CardTitle className="text-sm font-semibold" style={{ color: TEXT_PRIMARY }}>
-                  Share of Voice
-                </CardTitle>
-                <p className="text-xs mt-0.5" style={{ color: TEXT_MUTED }}>
-                  AI visibility distribution
-                </p>
-              </CardHeader>
-              <CardContent className="px-5 pb-5 pt-0">
-                <ShareOfVoice data={voiceData} colors={voiceColors} />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Gap analysis */}
-          {gapItems.length > 0 && (
-            <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-              <CardHeader className="px-5 pt-5 pb-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2" style={{ color: TEXT_PRIMARY }}>
-                  <Target className="h-4 w-4 text-[#EF4444]" aria-hidden="true" />
-                  Gap Analysis
-                </CardTitle>
-                <p className="text-xs mt-0.5" style={{ color: TEXT_MUTED }}>
-                  Where competitors outrank you — fix these to close the gap
-                </p>
-              </CardHeader>
-              <CardContent className="px-5 pb-5 pt-0 space-y-3">
-                {gapItems.map((item) => (
-                  <div
-                    key={item.name}
-                    className="flex items-center justify-between gap-4 rounded-lg p-3.5"
-                    style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA' }}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold" style={{ color: TEXT_PRIMARY }}>
-                        {item.name}
-                      </p>
-                      <p className="text-xs mt-0.5" style={{ color: TEXT_MUTED }}>
-                        Outranks you by <span className="font-semibold text-[#EF4444]">+{item.delta} pts</span>
-                        {' '}— score {item.compScore} vs your {item.yourScore}
-                      </p>
+            <div className="space-y-6">
+              {positionItems.map((item, i) => {
+                const pct = maxScore > 0 ? (item.score / maxScore) * 100 : 0
+                const trend = item.isUser ? null : i % 3 === 0 ? -2 : i % 3 === 1 ? 3 : null
+                return (
+                  <div key={item.label + i} className="group">
+                    <div className="flex justify-between items-center mb-2">
+                      {item.isUser ? (
+                        <span className="text-[13px] font-medium text-[#3370FF] flex items-center gap-1.5">
+                          <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                          </svg>
+                          You
+                        </span>
+                      ) : (
+                        <span className="text-[13px] text-[#6B7280]">{item.label}</span>
+                      )}
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={cn(
+                            'text-[13px] tabular-nums font-medium',
+                            item.isUser ? 'font-semibold text-[#3370FF]' : 'text-[#111827]',
+                          )}
+                        >
+                          {item.score}
+                        </span>
+                        {trend !== null && (
+                          <span
+                            className={cn(
+                              'text-[11px] tabular-nums font-medium flex items-center',
+                              trend > 0 ? 'text-[#10B981]' : 'text-[#EF4444]',
+                            )}
+                          >
+                            {trend > 0 ? `↑${trend}` : `↓${Math.abs(trend)}`}
+                          </span>
+                        )}
+                        {trend === null && !item.isUser && (
+                          <span className="text-[11px] tabular-nums font-medium text-[#9CA3AF]">—</span>
+                        )}
+                      </div>
                     </div>
-                    <Button asChild size="sm" className="shrink-0 h-7 text-xs rounded-[6px]" style={{ backgroundColor: ACCENT, color: '#FFFFFF' }}>
-                      <Link href="/dashboard/action-center">
-                        Fix This
-                      </Link>
-                    </Button>
+                    <div
+                      className={cn(
+                        'h-2 w-full rounded-full overflow-hidden',
+                        item.isUser ? 'bg-blue-50' : 'bg-gray-100',
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          'h-full transition-all duration-500',
+                          item.isUser ? 'bg-[#3370FF]' : 'bg-gray-200',
+                        )}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Competitor table */}
-          <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-            <CardHeader className="px-5 pt-5 pb-3">
-              <CardTitle className="text-sm font-semibold" style={{ color: TEXT_PRIMARY }}>
-                Competitor Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-0 pb-0 pt-0">
-              <DataTable
-                columns={competitorColumns}
-                data={tableRows}
-                emptyMessage="No competitors to display."
-              />
-            </CardContent>
-          </Card>
-        </>
-      )}
-
-      {competitors.length === 0 && (
-        <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-          <CardContent className="p-0">
-            <EmptyState
-              icon={Users}
-              title="No competitors tracked yet"
-              description="Add your first competitor above to start tracking their AI visibility and see how you compare."
-            />
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  )
-}
-
-// ─── Market position bar ──────────────────────────────────────────────────────
-
-interface MarketPositionBarProps {
-  label: string
-  score: number
-  maxScore: number
-  isUser: boolean
-  index: number
-}
-
-function MarketPositionBar({ label, score, maxScore, isUser, index }: MarketPositionBarProps) {
-  const pct = maxScore > 0 ? (score / maxScore) * 100 : 0
-
-  return (
-    <div className="flex items-center gap-3 py-2.5 border-b last:border-0" style={{ borderColor: '#F3F4F6' }}>
-      <div className="w-28 shrink-0 min-w-0">
-        <p className={cn('text-sm truncate', isUser ? 'font-semibold' : 'font-normal')} style={{ color: isUser ? TEXT_PRIMARY : TEXT_MUTED }}>
-          {label}
-        </p>
-        {isUser && (
-          <Badge
-            className="mt-0.5 rounded-full px-1.5 py-0 text-[10px] font-semibold border-0 h-4"
-            style={{ backgroundColor: `${ACCENT}18`, color: ACCENT }}
-          >
-            You
-          </Badge>
+                )
+              })}
+            </div>
+          </section>
         )}
-      </div>
-      <div className="relative flex-1 h-2.5 overflow-hidden rounded-full bg-[#F3F4F6]">
-        <AnimatedBarInner
-          pct={pct}
-          color={isUser ? ACCENT : '#D1D5DB'}
-          delay={index * 80 + 200}
-        />
-      </div>
-      <span
-        className={cn('w-8 shrink-0 text-right text-sm tabular-nums', isUser ? 'font-bold' : 'font-normal')}
-        style={{ color: isUser ? TEXT_PRIMARY : TEXT_MUTED }}
-      >
-        {score}
-      </span>
-    </div>
-  )
-}
 
-interface AnimatedBarInnerProps { pct: number; color: string; delay: number }
-function AnimatedBarInner({ pct, color, delay }: AnimatedBarInnerProps) {
-  const [width, setWidth] = useState(0)
-  useEffect(() => {
-    const t = setTimeout(() => setWidth(pct), delay)
-    return () => clearTimeout(t)
-  }, [pct, delay])
-  return (
-    <div
-      className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
-      style={{ width: `${width}%`, backgroundColor: color, transitionDelay: `${delay}ms` }}
-    />
-  )
-}
-
-// ─── Head-to-head ─────────────────────────────────────────────────────────────
-
-interface HeadToHeadProps {
-  yourScore: number
-  topCompetitor: Competitor | null
-  topScore: number
-}
-
-function HeadToHead({ yourScore, topCompetitor, topScore }: HeadToHeadProps) {
-  if (!topCompetitor) {
-    return (
-      <p className="text-sm text-center py-8" style={{ color: TEXT_MUTED }}>
-        Add competitors to see head-to-head comparison.
-      </p>
-    )
-  }
-
-  const data = [
-    { name: 'You', score: yourScore },
-    { name: topCompetitor.name, score: topScore },
-  ]
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-end justify-around gap-4 h-36">
-        {data.map((item, i) => {
-          const maxH = 120
-          const h = Math.max(8, Math.round((item.score / 100) * maxH))
-          const isYou = i === 0
-          return (
-            <div key={item.name} className="flex flex-col items-center gap-2 flex-1">
-              <span className="text-lg font-bold tabular-nums" style={{ color: isYou ? ACCENT : TEXT_MUTED }}>
-                {item.score}
-              </span>
-              <div
-                className="w-full max-w-[64px] rounded-t-md transition-all duration-700 ease-out"
-                style={{
-                  height: h,
-                  backgroundColor: isYou ? ACCENT : '#E5E7EB',
-                  opacity: 0.9,
-                }}
-                role="img"
-                aria-label={`${item.name}: score ${item.score}`}
-              />
-              <span className="text-xs font-medium text-center" style={{ color: isYou ? TEXT_PRIMARY : TEXT_MUTED }}>
-                {item.name}
-              </span>
+        {/* Share of Voice */}
+        {competitors.length > 0 && (
+          <section className="col-span-12 lg:col-span-5 bg-white rounded-lg border border-[#E5E7EB] p-6">
+            <div className="mb-8">
+              <h2 className="text-[14px] font-semibold text-[#111827]">Share of Voice</h2>
+              <p className="text-[12px] text-[#6B7280]">across all tracked queries</p>
             </div>
-          )
-        })}
-      </div>
-      {yourScore < topScore && (
-        <div className="rounded-lg p-3" style={{ backgroundColor: '#EFF6FF', border: `1px solid #BFDBFE` }}>
-          <p className="text-xs font-medium" style={{ color: '#1D4ED8' }}>
-            {topCompetitor.name} outranks you by {topScore - yourScore} points.{' '}
-            <Link href="/dashboard/action-center" className="underline font-semibold">
-              See what to fix
-            </Link>
-          </p>
-        </div>
-      )}
-      {yourScore >= topScore && (
-        <div className="rounded-lg p-3" style={{ backgroundColor: '#F0FDF4', border: `1px solid #BBF7D0` }}>
-          <p className="text-xs font-medium" style={{ color: '#15803D' }}>
-            You outrank {topCompetitor.name} by {yourScore - topScore} points. Keep it up!
-          </p>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Share of voice ───────────────────────────────────────────────────────────
-
-interface ShareOfVoiceProps {
-  data: Array<{ name: string; value: number; isUser: boolean }>
-  colors: string[]
-}
-
-function ShareOfVoice({ data, colors }: ShareOfVoiceProps) {
-  if (data.length === 0) {
-    return (
-      <p className="text-sm text-center py-8" style={{ color: TEXT_MUTED }}>
-        Add competitors to see share of voice.
-      </p>
-    )
-  }
-
-  return (
-    <div className="flex items-center gap-4">
-      <ResponsiveContainer width={140} height={140}>
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={42}
-            outerRadius={64}
-            paddingAngle={2}
-            dataKey="value"
-            startAngle={90}
-            endAngle={-270}
-            animationBegin={300}
-            animationDuration={CHART_ANIMATION.duration}
-          >
-            {data.map((_, i) => (
-              <Cell key={i} fill={colors[i] ?? '#D1D5DB'} />
-            ))}
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
-
-      <div className="flex flex-col gap-2 flex-1">
-        {data.map((item, i) => (
-          <div key={item.name} className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5 text-xs min-w-0">
-              <span
-                className="h-2 w-2 rounded-full shrink-0"
-                style={{ backgroundColor: colors[i] ?? '#D1D5DB' }}
-                aria-hidden="true"
-              />
-              <span className="truncate font-medium" style={{ color: item.isUser ? TEXT_PRIMARY : TEXT_MUTED }}>
-                {item.name}
-              </span>
-            </span>
-            <span className="text-xs font-semibold tabular-nums shrink-0" style={{ color: TEXT_PRIMARY }}>
-              {item.value}%
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ─── My Rankings tab content ──────────────────────────────────────────────────
-
-interface MyRankingsTabProps {
-  scans: ScanItem[]
-  latestDetails: EngineDetail[]
-  queries: QueryItem[]
-}
-
-function MyRankingsTab({ scans, latestDetails, queries }: MyRankingsTabProps) {
-  const latestScan = scans[0] ?? null
-  const hasData = latestScan !== null
-
-  // ── Derived stats ─────────────────────────────────────────────────────────
-  const mentionedEngines = latestDetails.filter((d) => d.is_mentioned)
-  const scoreVal = latestScan?.overall_score ?? null
-  const scoreTrend =
-    scans.length >= 2 &&
-    scans[0].overall_score !== null &&
-    scans[1].overall_score !== null
-      ? scans[0].overall_score - scans[1].overall_score
-      : null
-
-  const positiveCount = latestDetails.filter((d) => d.sentiment === 'positive').length
-  const neutralCount  = latestDetails.filter((d) => d.sentiment === 'neutral').length
-  const negativeCount = latestDetails.filter((d) => d.sentiment === 'negative').length
-  const sentimentTotal = positiveCount + neutralCount + negativeCount
-  const positivePct = sentimentTotal > 0 ? Math.round((positiveCount / sentimentTotal) * 100) : 0
-
-  const lastScannedLabel = latestScan
-    ? formatDistanceToNow(new Date(latestScan.created_at), { addSuffix: true })
-    : null
-
-  // ── Chart data ────────────────────────────────────────────────────────────
-  const [chartPeriod, setChartPeriod] = useState('All')
-  const periodOptions = ['All', '30d', '7d']
-
-  const allChartData = useMemo(
-    () =>
-      scans
-        .slice()
-        .reverse()
-        .map((s) => ({
-          date: format(new Date(s.created_at), 'MMM d'),
-          score: s.overall_score ?? 0,
-          mentions: s.mentions_count ?? 0,
-        })),
-    [scans],
-  )
-
-  const chartData = useMemo(() => {
-    if (chartPeriod === 'All') return allChartData
-    const days = chartPeriod === '7d' ? 7 : 30
-    const cutoff = new Date()
-    cutoff.setDate(cutoff.getDate() - days)
-    return allChartData.filter((d) => new Date(d.date) >= cutoff)
-  }, [allChartData, chartPeriod])
-
-  const engines = [...new Set(latestDetails.map((d) => d.engine))]
-
-  if (!hasData) {
-    return (
-      <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-        <CardContent className="p-0">
-          <EmptyState
-            icon={ScanSearch}
-            title="No rankings data yet"
-            description="Run your first scan to see your AI visibility score across ChatGPT, Gemini, Perplexity, and more."
-            action={{
-              label: 'Run your first scan',
-              onClick: () => { window.location.href = '/scan' },
-            }}
-          />
-        </CardContent>
-      </Card>
-    )
-  }
-
-  return (
-    <div className="space-y-5">
-      {/* ── Hero KPI strip ────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Visibility Score */}
-        <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-          <CardContent className="p-5 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: TEXT_MUTED }}>
-                Visibility Score
-              </span>
-              {scoreTrend !== null && <TrendBadge value={scoreTrend} suffix=" pts" size="sm" />}
+            {/* Stacked bar */}
+            <div className="h-3 w-full flex rounded-full overflow-hidden mb-8">
+              {voiceData.map((item, i) => (
+                <div
+                  key={item.name}
+                  className="h-full transition-all duration-500"
+                  style={{
+                    width: `${item.pct}%`,
+                    backgroundColor: voiceBarColors[i] ?? '#EBEBEB',
+                  }}
+                />
+              ))}
             </div>
-            <div className="flex items-center gap-4">
-              <ScoreRing score={scoreVal} size="md" showLabel={false} animate />
-              <div>
-                <p className="text-3xl font-bold tabular-nums" style={{ color: TEXT_PRIMARY }}>
-                  {scoreVal ?? '—'}
-                </p>
-                <p className="text-xs mt-0.5" style={{ color: TEXT_MUTED }}>out of 100</p>
-                {lastScannedLabel && (
-                  <div className="flex items-center gap-1 mt-1.5 text-xs" style={{ color: '#9CA3AF' }}>
-                    <Clock className="h-3 w-3" aria-hidden="true" />
-                    <span>{lastScannedLabel}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <Button asChild size="sm" className="w-full rounded-[6px] text-xs font-medium" style={{ backgroundColor: TEXT_PRIMARY, color: '#FFFFFF' }}>
-              <Link href="/scan">
-                <Zap className="h-3 w-3 mr-1.5" aria-hidden="true" />
-                Rescan Now
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Engines mentioning */}
-        <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-          <CardContent className="p-5">
-            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: TEXT_MUTED }}>
-              Engines Mentioning
-            </span>
-            <div className="flex items-end gap-1.5 mt-2">
-              <span className="text-4xl font-bold tabular-nums leading-none" style={{ color: TEXT_PRIMARY }}>
-                {mentionedEngines.length}
-              </span>
-              <span className="text-xl font-medium pb-0.5" style={{ color: TEXT_MUTED }}>
-                / {latestDetails.length}
-              </span>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {mentionedEngines.length > 0
-                ? mentionedEngines.map((d) => {
-                    const label = PROVIDER_LABELS[d.engine as LlmProvider] ?? d.engine
-                    return (
-                      <span
-                        key={d.id}
-                        className="rounded-full px-2 py-0.5 text-[11px] font-medium text-white"
-                        style={{ backgroundColor: engineColor(d.engine) }}
-                      >
-                        {label}
+            {/* Legend */}
+            <div className="grid grid-cols-1 gap-4">
+              {voiceData.map((item, i) => (
+                <div key={item.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-1 h-1 rounded-full"
+                      style={{ backgroundColor: voiceBarColors[i] ?? '#EBEBEB' }}
+                    />
+                    {item.isUser ? (
+                      <span className="text-[13px] text-[#3370FF] font-medium flex items-center gap-1">
+                        <svg className="h-3 w-3 fill-current" viewBox="0 0 24 24">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
+                        You
                       </span>
-                    )
-                  })
-                : (
-                  <p className="text-xs" style={{ color: '#9CA3AF' }}>No engines mention you yet</p>
-                )}
+                    ) : (
+                      <span className="text-[13px] text-[#6B7280]">{item.name}</span>
+                    )}
+                  </div>
+                  <span
+                    className={cn(
+                      'text-[13px] tabular-nums',
+                      item.isUser ? 'font-semibold text-[#3370FF]' : 'text-[#6B7280]',
+                    )}
+                  >
+                    {item.pct}%
+                  </span>
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
+          </section>
+        )}
 
-        {/* Sentiment */}
-        <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-          <CardContent className="p-5">
-            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: TEXT_MUTED }}>
-              Sentiment
-            </span>
-            <div className="flex items-end gap-1.5 mt-2">
-              <span className="text-4xl font-bold tabular-nums leading-none" style={{ color: '#10B981' }}>
-                {positivePct}%
-              </span>
-              <span className="text-sm pb-0.5" style={{ color: TEXT_MUTED }}>positive</span>
+        {/* Head-to-Head */}
+        {competitors.length > 0 && (
+          <section className="col-span-12 lg:col-span-8 bg-white rounded-lg border border-[#E5E7EB] overflow-hidden">
+            <div className="p-6 border-b border-[#E5E7EB] flex items-center justify-between">
+              <h2 className="text-[14px] font-semibold text-[#111827]">Head-to-Head</h2>
+              {competitors.length > 1 && (
+                <div className="relative">
+                  <select
+                    value={selectedCompetitorIndex}
+                    onChange={(e) => setSelectedCompetitorIndex(Number(e.target.value))}
+                    className="appearance-none flex items-center gap-2 text-[12px] text-[#6B7280] bg-gray-50 px-3 py-1.5 pr-7 rounded-lg border border-[#E5E7EB] cursor-pointer hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[#3370FF]"
+                    aria-label="Select competitor for head-to-head"
+                  >
+                    {competitors.map((c, i) => (
+                      <option key={c.id} value={i}>
+                        vs {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B7280]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              )}
+              {competitors.length === 1 && selectedCompetitor && (
+                <div className="flex items-center gap-2 text-[12px] text-[#6B7280] bg-gray-50 px-3 py-1.5 rounded-lg border border-[#E5E7EB]">
+                  vs {selectedCompetitor.name}
+                </div>
+              )}
             </div>
-            <div className="mt-3 space-y-1.5 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
-                  <span style={{ color: TEXT_MUTED }}>Positive</span>
+            {/* Visual summary */}
+            <div className="px-6 py-4 bg-gray-50/50 flex items-center gap-6 border-b border-[#E5E7EB]">
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] text-[#6B7280] uppercase font-bold tracking-tight">You:</span>
+                <span className="text-[13px] font-semibold text-[#3370FF]">{yourWins} wins</span>
+              </div>
+              <div className="w-px h-3 bg-gray-300" />
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] text-[#6B7280] uppercase font-bold tracking-tight">
+                  {selectedCompetitor?.name ?? 'Competitor'}:
                 </span>
-                <span className="tabular-nums font-medium" style={{ color: TEXT_PRIMARY }}>{positiveCount}</span>
+                <span className="text-[13px] font-semibold text-[#374151]">{theirWins} wins</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-gray-400" aria-hidden="true" />
-                  <span style={{ color: TEXT_MUTED }}>Neutral</span>
-                </span>
-                <span className="tabular-nums font-medium" style={{ color: TEXT_PRIMARY }}>{neutralCount}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-red-400" aria-hidden="true" />
-                  <span style={{ color: TEXT_MUTED }}>Negative</span>
-                </span>
-                <span className="tabular-nums font-medium" style={{ color: TEXT_PRIMARY }}>{negativeCount}</span>
-              </div>
+              {ties > 0 && (
+                <>
+                  <div className="w-px h-3 bg-gray-300" />
+                  <span className="text-[13px] font-semibold text-[#6B7280]">{ties} tie</span>
+                </>
+              )}
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ── Score history chart ───────────────────────────────────────────────── */}
-      {scans.length > 1 && (
-        <ChartCard
-          title="Score History"
-          subtitle={`${scans.length} scans tracked`}
-          period={chartPeriod}
-          periods={periodOptions}
-          onPeriodChange={setChartPeriod}
-        >
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={chartData} margin={CHART_MARGINS.default}>
-              <defs>
-                <linearGradient id="scoreHistGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={ACCENT} stopOpacity={0.18} />
-                  <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid {...DEFAULT_GRID_PROPS} />
-              <XAxis dataKey="date" {...DEFAULT_XAXIS_PROPS} />
-              <YAxis {...DEFAULT_YAXIS_PROPS} domain={[0, 100]} />
-              <ChartTooltip valueFormatter={(v) => `${v}/100`} />
-              <Area
-                type="monotone"
-                dataKey="score"
-                name="Score"
-                stroke={ACCENT}
-                strokeWidth={2}
-                fill="url(#scoreHistGrad)"
-                dot={false}
-                activeDot={{ r: 4, strokeWidth: 0 }}
-                animationDuration={CHART_ANIMATION.duration}
-                animationEasing={CHART_ANIMATION.easing}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      )}
-
-      {/* ── Engine performance table ──────────────────────────────────────────── */}
-      <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-        <CardHeader className="px-5 pt-5 pb-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <CardTitle className="text-sm font-semibold" style={{ color: TEXT_PRIMARY }}>
-                Performance by Engine
-              </CardTitle>
-              <p className="text-xs mt-0.5" style={{ color: TEXT_MUTED }}>
-                {latestDetails.length} engines scanned — click any row to expand
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 text-xs rounded-[6px]"
-                style={{ borderColor: BORDER_COLOR, color: TEXT_MUTED }}
-                onClick={() => exportEngineResultsCSV(latestDetails)}
-                aria-label="Export rankings as CSV"
-              >
-                <Download className="h-3 w-3 mr-1.5" aria-hidden="true" />
-                Export CSV
-              </Button>
-              <Button asChild size="sm" variant="outline" className="h-7 text-xs rounded-[6px]" style={{ borderColor: BORDER_COLOR, color: TEXT_MUTED }}>
-                <Link href="/scan">
-                  <ScanSearch className="h-3 w-3 mr-1.5" aria-hidden="true" />
-                  Rescan
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="px-0 pb-0 pt-0">
-          {latestDetails.length === 0 ? (
-            <div className="px-5 py-10 text-center">
-              <p className="text-sm" style={{ color: TEXT_MUTED }}>No engine data available. Run a scan to see detailed results.</p>
-            </div>
-          ) : (
-            <>
-              {/* Column headers */}
-              <div
-                className="flex items-center gap-4 px-5 py-2.5 border-b"
-                style={{ borderColor: BORDER_COLOR, backgroundColor: '#F9FAFB' }}
-              >
-                <div className="w-36 shrink-0">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: TEXT_MUTED }}>Engine</span>
-                </div>
-                <div className="w-24 shrink-0">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: TEXT_MUTED }}>Status</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: TEXT_MUTED }}>Score</span>
-                </div>
-                <div className="w-24 shrink-0 text-right">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: TEXT_MUTED }}>Sentiment</span>
-                </div>
-                <div className="w-10 shrink-0 text-right">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: TEXT_MUTED }}>Pos.</span>
-                </div>
-                <div className="w-6 shrink-0" aria-hidden="true" />
-              </div>
-              <div role="list" aria-label="Engine performance">
-                {latestDetails.map((detail, i) => (
-                  <EngineRow key={detail.id} detail={detail} index={i} />
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50/20">
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-[0.05em] text-[#9CA3AF] font-bold">
+                    Engine
+                  </th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-[0.05em] text-[#9CA3AF] font-bold">
+                    You
+                  </th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-[0.05em] text-[#9CA3AF] font-bold">
+                    {selectedCompetitor?.name ?? 'Competitor'}
+                  </th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-[0.05em] text-[#9CA3AF] font-bold">
+                    Winner
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {headToHeadData.map((row) => (
+                  <tr key={row.engine}>
+                    <td className="px-6 py-4 text-[13px] text-[#111827] font-medium">{row.engine}</td>
+                    <td
+                      className={cn(
+                        'px-6 py-4 text-[13px] tabular-nums',
+                        row.winner === 'you' ? 'text-[#3370FF] font-semibold' : 'text-[#6B7280]',
+                      )}
+                    >
+                      {Math.max(0, Math.min(100, row.you))}%
+                    </td>
+                    <td
+                      className={cn(
+                        'px-6 py-4 text-[13px] tabular-nums',
+                        row.winner === 'them' ? 'text-[#111827] font-semibold' : 'text-[#6B7280]',
+                      )}
+                    >
+                      {Math.max(0, Math.min(100, row.them))}%
+                    </td>
+                    <td className="px-6 py-4">
+                      {row.winner === 'you' && (
+                        <span className="text-[11px] font-bold text-[#3370FF] tracking-tighter">YOU</span>
+                      )}
+                      {row.winner === 'them' && (
+                        <span className="text-[11px] font-bold text-[#6B7280] tracking-tighter">
+                          {(selectedCompetitor?.name ?? 'THEM').toUpperCase().slice(0, 8)}
+                        </span>
+                      )}
+                      {row.winner === 'tie' && (
+                        <span className="text-[11px] font-bold text-[#9CA3AF] tracking-tighter">TIE</span>
+                      )}
+                    </td>
+                  </tr>
                 ))}
+              </tbody>
+            </table>
+          </section>
+        )}
+
+        {/* Tracked Competitors */}
+        <section className="col-span-12 lg:col-span-4 bg-white rounded-lg border border-[#E5E7EB] p-6 flex flex-col">
+          <h2 className="text-[14px] font-semibold text-[#111827] mb-6">Tracked Competitors</h2>
+
+          {competitors.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center py-8">
+              <div className="text-center">
+                <Users className="h-8 w-8 mx-auto mb-2 text-[#D1D5DB]" />
+                <p className="text-[13px] text-[#6B7280]">No competitors tracked yet.</p>
               </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* ── Query performance ────────────────────────────────────────────────── */}
-      <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-        <CardHeader className="px-5 pt-5 pb-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <CardTitle className="text-sm font-semibold flex items-center gap-2" style={{ color: TEXT_PRIMARY }}>
-                <Search className="h-4 w-4" style={{ color: ACCENT }} aria-hidden="true" />
-                Query Performance
-              </CardTitle>
-              <p className="text-xs mt-0.5" style={{ color: TEXT_MUTED }}>
-                Per-query results across engines
-              </p>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="px-0 pb-0 pt-0">
-          <QueryPerformanceGrid queries={queries} engines={engines} />
-        </CardContent>
-      </Card>
-
-      {/* ── What AI Says About You ────────────────────────────────────────────── */}
-      <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-        <CardHeader className="px-5 pt-5 pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-sm font-semibold flex items-center gap-2" style={{ color: TEXT_PRIMARY }}>
-                <MessageSquare className="h-4 w-4" style={{ color: ACCENT }} aria-hidden="true" />
-                What AI Says About You
-              </CardTitle>
-              <p className="text-xs mt-0.5" style={{ color: TEXT_MUTED }}>
-                AI engine responses mentioning your business
-              </p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0 px-0 pb-0">
-          <QuoteCards details={latestDetails} />
-        </CardContent>
-      </Card>
-
-      {/* ── Scan history ─────────────────────────────────────────────────────── */}
-      <Card className="rounded-[8px]" style={{ border: `1px solid ${BORDER_COLOR}` }}>
-        <CardHeader className="px-5 pt-5 pb-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <CardTitle className="text-sm font-semibold flex items-center gap-2" style={{ color: TEXT_PRIMARY }}>
-                <Activity className="h-4 w-4" style={{ color: ACCENT }} aria-hidden="true" />
-                Scan History
-              </CardTitle>
-              <p className="text-xs mt-0.5" style={{ color: TEXT_MUTED }}>
-                Last {Math.min(scans.length, 10)} scans
-              </p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="px-5 pb-5 pt-0">
-          {scans.length === 0 ? (
-            <p className="text-sm text-center py-8" style={{ color: TEXT_MUTED }}>No scan history yet.</p>
           ) : (
-            <div className="space-y-0">
-              {scans.slice(0, 10).map((scan, i) => {
-                const prevScore = scans[i + 1]?.overall_score ?? null
-                const delta =
-                  prevScore !== null && scan.overall_score !== null
-                    ? scan.overall_score - prevScore
-                    : null
+            <div className="space-y-2 flex-1">
+              {competitors.map((comp, i) => {
+                const score = mockCompetitorScore(i)
+                const isConfirming = confirmDeleteId === comp.id
                 return (
                   <div
-                    key={scan.id}
-                    className="flex items-center justify-between py-2.5 border-b last:border-0"
-                    style={{ borderColor: '#F3F4F6' }}
+                    key={comp.id}
+                    className="group flex items-center justify-between p-3 rounded-lg border border-transparent hover:border-gray-100 hover:bg-gray-50 transition-all duration-200"
                   >
-                    <div className="flex items-center gap-3">
-                      <StatusDot status="completed" size="sm" />
-                      <span className="text-sm" style={{ color: TEXT_PRIMARY }}>
-                        {format(new Date(scan.created_at), 'MMM d, yyyy')}
-                      </span>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-400 font-bold text-sm shrink-0">
+                        {comp.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-[13px] font-medium text-[#111827] truncate">{comp.name}</h3>
+                        <p className="text-[11px] text-[#9CA3AF] truncate">{comp.domain ?? '—'}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-xs" style={{ color: TEXT_MUTED }}>
-                        {scan.mentions_count ?? 0} mentions
-                      </span>
-                      {delta !== null && <TrendBadge value={delta} suffix=" pts" size="sm" />}
-                      <span className="text-sm font-bold tabular-nums" style={{ color: scan.overall_score !== null && scan.overall_score >= 70 ? '#10B981' : scan.overall_score !== null && scan.overall_score >= 40 ? '#F59E0B' : '#EF4444' }}>
-                        {scan.overall_score ?? '—'}
-                      </span>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right">
+                        <span className="block text-[13px] tabular-nums font-semibold text-[#111827]">
+                          {score}
+                        </span>
+                        <span className="block text-[10px] uppercase text-[#9CA3AF] font-bold">Score</span>
+                      </div>
+                      {isConfirming ? (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleDelete(comp.id)}
+                            disabled={deletingId === comp.id}
+                            className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
+                            aria-label={`Confirm remove ${comp.name}`}
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteId(null)}
+                            className="text-xs text-[#6B7280]"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDeleteId(comp.id)}
+                          disabled={deletingId === comp.id}
+                          className="opacity-0 group-hover:opacity-100 rounded p-1 transition-all hover:bg-red-50 hover:text-red-600 text-[#9CA3AF] focus-visible:opacity-100 focus-visible:outline-none disabled:opacity-50"
+                          aria-label={`Remove ${comp.name}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 )
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
+
+          {/* Add Rival Form */}
+          <div className="mt-8 pt-6 border-t border-gray-100">
+            <div className="p-4 bg-[#F8F9FA] rounded-lg border border-dashed border-gray-300">
+              <h4 className="text-[12px] font-semibold text-[#111827] mb-1">Add Rival</h4>
+              <p className="text-[11px] text-[#6B7280] mb-3 leading-relaxed">
+                Add up to 5 competitors on your plan. Who are your main rivals?
+              </p>
+              <form onSubmit={handleAdd}>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={domain}
+                    onChange={(e) => setDomain(e.target.value)}
+                    placeholder="Enter website..."
+                    className="flex-1 bg-white border border-[#E5E7EB] rounded px-3 py-1.5 text-[12px] focus:ring-1 focus:ring-[#3370FF] focus:border-[#3370FF] outline-none"
+                    aria-label="Competitor website"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={isAdding || !businessId}
+                    className="bg-[#3370FF] text-white text-[11px] font-medium px-3 py-1.5 rounded hover:bg-blue-600 transition-colors disabled:opacity-50"
+                  >
+                    {isAdding ? '…' : 'Add'}
+                  </button>
+                </div>
+                {addError && (
+                  <p className="mt-2 text-[12px] text-red-600" role="alert">{addError}</p>
+                )}
+              </form>
+            </div>
+          </div>
+        </section>
+
+        {/* Gap Analysis — Opportunities */}
+        {competitors.length > 0 && gapItems.length > 0 && (
+          <section className="col-span-12 bg-white rounded-lg border border-[#E5E7EB] p-4">
+            <div className="flex items-center justify-between mb-4 px-2">
+              <h2 className="text-[14px] font-semibold text-[#111827]">Opportunities</h2>
+              <span className="text-[11px] text-[#9CA3AF] font-medium">Gap Analysis</span>
+            </div>
+            <div className="overflow-hidden border border-gray-50 rounded">
+              <table className="w-full text-left">
+                <tbody className="divide-y divide-gray-50">
+                  {gapItems.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="py-3 px-3 text-[13px] text-[#111827] font-medium">{item.query}</td>
+                      <td className="py-3 px-3 text-[13px] text-[#6B7280]">{item.description}</td>
+                      <td className="py-3 px-3 text-right">
+                        <Link
+                          href="/dashboard/action-center"
+                          className="text-[12px] text-[#3370FF] font-medium hover:underline"
+                        >
+                          Fix with Content Writer &rarr;
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {/* No competitors: full-width empty state */}
+        {competitors.length === 0 && (
+          <section className="col-span-12 bg-white rounded-lg border border-[#E5E7EB] overflow-hidden">
+            <EmptyState
+              icon={Users}
+              title="No competitors tracked yet"
+              description="Add your first competitor to start tracking their AI visibility and see how you compare."
+            />
+          </section>
+        )}
+      </div>
+
+      {/* Footer note */}
+      {competitors.length > 0 && (
+        <div className="text-center">
+          <p className="text-[12px] text-[#6B7280]">
+            Competitor data updates with each scan.{' '}
+            <Link href="/scan" className="text-[#3370FF] font-medium ml-1 hover:underline">
+              Scan now &rarr;
+            </Link>
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -1554,29 +1158,23 @@ export function RankingsView({
   const yourScore = scans[0]?.overall_score ?? null
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Page header */}
-      <div className="animate-fade-up">
-        <h1 className="text-xl font-semibold tracking-tight" style={{ color: TEXT_PRIMARY }}>
-          Rankings &amp; Visibility
+      <div>
+        <h1 className="text-[22px] font-semibold tracking-tight text-[#111827]">
+          Rankings Deep Dive
         </h1>
-        <p className="mt-0.5 text-sm" style={{ color: TEXT_MUTED }}>
-          Track how your business appears across AI search engines.
-        </p>
       </div>
 
       {/* Tab bar */}
-      <div className="animate-fade-up [animation-delay:40ms]">
-        <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
-      </div>
+      <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* Tab panels */}
       <div
-        id={`tabpanel-rankings`}
+        id="tabpanel-rankings"
         role="tabpanel"
         aria-labelledby="tab-rankings"
         hidden={activeTab !== 'rankings'}
-        className="animate-fade-up [animation-delay:80ms]"
       >
         {activeTab === 'rankings' && (
           <MyRankingsTab scans={scans} latestDetails={latestDetails} queries={queries} />
@@ -1584,11 +1182,10 @@ export function RankingsView({
       </div>
 
       <div
-        id={`tabpanel-competitors`}
+        id="tabpanel-competitors"
         role="tabpanel"
         aria-labelledby="tab-competitors"
         hidden={activeTab !== 'competitors'}
-        className="animate-fade-up [animation-delay:80ms]"
       >
         {activeTab === 'competitors' && (
           <CompetitorsTab

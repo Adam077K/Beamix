@@ -44,20 +44,20 @@ interface ContentTypeMeta {
 }
 
 const CONTENT_TYPE_META: Record<string, ContentTypeMeta> = {
-  blog_post:              { label: 'Blog',    icon: BookOpen,      colorIcon: 'text-violet-600',  colorBg: 'bg-violet-50',  filterKey: 'blog'   },
-  article:                { label: 'Blog',    icon: BookOpen,      colorIcon: 'text-violet-600',  colorBg: 'bg-violet-50',  filterKey: 'blog'   },
-  faq:                    { label: 'FAQ',     icon: MessageSquare, colorIcon: 'text-emerald-600', colorBg: 'bg-emerald-50', filterKey: 'faq'    },
-  faq_agent:              { label: 'FAQ',     icon: MessageSquare, colorIcon: 'text-emerald-600', colorBg: 'bg-emerald-50', filterKey: 'faq'    },
-  schema_markup:          { label: 'Schema',  icon: Code2,         colorIcon: 'text-blue-600',    colorBg: 'bg-blue-50',    filterKey: 'schema' },
-  schema_recommendations: { label: 'Schema',  icon: Code2,         colorIcon: 'text-blue-600',    colorBg: 'bg-blue-50',    filterKey: 'schema' },
-  llms_txt:               { label: 'LLMS.txt', icon: FileQuestion, colorIcon: 'text-amber-600',   colorBg: 'bg-amber-50',   filterKey: 'llms'   },
-  social_post:            { label: 'Social',  icon: Share2,        colorIcon: 'text-pink-600',    colorBg: 'bg-pink-50',    filterKey: 'reports'},
-  social_strategy:        { label: 'Social',  icon: Share2,        colorIcon: 'text-pink-600',    colorBg: 'bg-pink-50',    filterKey: 'reports'},
-  competitor_report:      { label: 'Report',  icon: BarChart3,     colorIcon: 'text-orange-600',  colorBg: 'bg-orange-50',  filterKey: 'reports'},
-  competitor_intelligence:{ label: 'Report',  icon: BarChart3,     colorIcon: 'text-orange-600',  colorBg: 'bg-orange-50',  filterKey: 'reports'},
-  query_suggestions:      { label: 'Queries', icon: Search,        colorIcon: 'text-teal-600',    colorBg: 'bg-teal-50',    filterKey: 'reports'},
-  review_analysis:        { label: 'Review',  icon: Star,          colorIcon: 'text-amber-600',   colorBg: 'bg-amber-50',   filterKey: 'reports'},
-  review_response:        { label: 'Review',  icon: Star,          colorIcon: 'text-amber-600',   colorBg: 'bg-amber-50',   filterKey: 'reports'},
+  blog_post:              { label: 'Blog',     icon: BookOpen,      colorIcon: 'text-violet-600',  colorBg: 'bg-violet-50',  filterKey: 'blog'    },
+  article:                { label: 'Blog',     icon: BookOpen,      colorIcon: 'text-violet-600',  colorBg: 'bg-violet-50',  filterKey: 'blog'    },
+  faq:                    { label: 'FAQ',      icon: MessageSquare, colorIcon: 'text-emerald-600', colorBg: 'bg-emerald-50', filterKey: 'faq'     },
+  faq_agent:              { label: 'FAQ',      icon: MessageSquare, colorIcon: 'text-emerald-600', colorBg: 'bg-emerald-50', filterKey: 'faq'     },
+  schema_markup:          { label: 'Schema',   icon: Code2,         colorIcon: 'text-blue-600',    colorBg: 'bg-blue-50',    filterKey: 'schema'  },
+  schema_recommendations: { label: 'Schema',   icon: Code2,         colorIcon: 'text-blue-600',    colorBg: 'bg-blue-50',    filterKey: 'schema'  },
+  llms_txt:               { label: 'LLMS.txt', icon: FileQuestion,  colorIcon: 'text-amber-600',   colorBg: 'bg-amber-50',   filterKey: 'llms'    },
+  social_post:            { label: 'Social',   icon: Share2,        colorIcon: 'text-pink-600',    colorBg: 'bg-pink-50',    filterKey: 'reports' },
+  social_strategy:        { label: 'Social',   icon: Share2,        colorIcon: 'text-pink-600',    colorBg: 'bg-pink-50',    filterKey: 'reports' },
+  competitor_report:      { label: 'Report',   icon: BarChart3,     colorIcon: 'text-orange-600',  colorBg: 'bg-orange-50',  filterKey: 'reports' },
+  competitor_intelligence:{ label: 'Report',   icon: BarChart3,     colorIcon: 'text-orange-600',  colorBg: 'bg-orange-50',  filterKey: 'reports' },
+  query_suggestions:      { label: 'Queries',  icon: Search,        colorIcon: 'text-teal-600',    colorBg: 'bg-teal-50',    filterKey: 'reports' },
+  review_analysis:        { label: 'Review',   icon: Star,          colorIcon: 'text-amber-600',   colorBg: 'bg-amber-50',   filterKey: 'reports' },
+  review_response:        { label: 'Review',   icon: Star,          colorIcon: 'text-amber-600',   colorBg: 'bg-amber-50',   filterKey: 'reports' },
 }
 
 // ─── Filter tabs ──────────────────────────────────────────────────────────────
@@ -72,33 +72,54 @@ const FILTER_TABS: { value: FilterKey; label: string }[] = [
   { value: 'llms',   label: 'LLMS.txt' },
 ]
 
-// ─── Quality dot ──────────────────────────────────────────────────────────────
+// ─── Quality badge ────────────────────────────────────────────────────────────
 
-function QualityDot({ score }: { score: number | null }): React.ReactElement {
+function QualityBadge({ score }: { score: number | null }): React.ReactElement {
   if (score === null) {
     return (
-      <span className="flex items-center gap-1.5">
-        <span className="h-2 w-2 rounded-full bg-gray-300 shrink-0" aria-hidden="true" />
-        <span className="text-xs text-[#9CA3AF]">—</span>
-      </span>
+      <div className="flex items-center gap-1.5">
+        <span className="w-[4px] h-[4px] rounded-full bg-[#D1D5DB] shrink-0" aria-hidden="true" />
+        <span className="text-[12px] text-[#9CA3AF] tabular-nums">—</span>
+      </div>
     )
   }
 
-  const color =
+  const config =
     score >= 80
-      ? { dot: 'bg-[#10B981]', text: 'text-[#10B981]', label: 'Good' }
+      ? { dot: 'bg-[#10B981]', text: 'text-[#6B7280]', label: 'Good' }
       : score >= 50
-      ? { dot: 'bg-[#F59E0B]', text: 'text-[#F59E0B]', label: 'Fair' }
-      : { dot: 'bg-[#EF4444]', text: 'text-[#EF4444]', label: 'Low' }
+      ? { dot: 'bg-[#F59E0B]', text: 'text-[#6B7280]', label: 'Fair' }
+      : { dot: 'bg-[#EF4444]', text: 'text-[#6B7280]', label: 'Low' }
 
   return (
-    <span className="flex items-center gap-1.5" title={`Quality score: ${score}`}>
+    <div
+      className="flex items-center gap-1.5"
+      title={`Quality score: ${score}`}
+    >
+      <span className={cn('w-[4px] h-[4px] rounded-full shrink-0', config.dot)} aria-hidden="true" />
+      <span className={cn('text-[12px] tabular-nums', config.text)}>{score}</span>
+    </div>
+  )
+}
+
+// ─── Status badge ─────────────────────────────────────────────────────────────
+
+function StatusBadge({ status }: { status: string }): React.ReactElement {
+  const isPublished = status === 'published' || status === 'completed'
+
+  return (
+    <div className="flex items-center gap-1.5">
       <span
-        className={cn('h-2 w-2 rounded-full shrink-0', color.dot)}
+        className={cn(
+          'w-[4px] h-[4px] rounded-full shrink-0',
+          isPublished ? 'bg-[#10B981]' : 'bg-[#9CA3AF]',
+        )}
         aria-hidden="true"
       />
-      <span className={cn('text-xs tabular-nums font-medium', color.text)}>{score}</span>
-    </span>
+      <span className="text-[12px] text-[#6B7280]">
+        {isPublished ? 'Published' : 'Draft'}
+      </span>
+    </div>
   )
 }
 
@@ -110,7 +131,7 @@ function getWordCount(content: string | null): number | null {
   return words.length
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export function ContentLibraryView({ items }: ContentLibraryViewProps): React.ReactElement {
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all')
@@ -140,25 +161,26 @@ export function ContentLibraryView({ items }: ContentLibraryViewProps): React.Re
     <div className="space-y-6">
 
       {/* ── Page header ──────────────────────────────────────────────────────── */}
-      <div>
+      <div className="flex flex-col gap-1">
         <div className="flex items-baseline gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight text-[#111827]">
+          <h1 className="text-[22px] font-semibold tracking-tight text-[#111827]">
             Content Library
           </h1>
-          <span className="text-sm text-[#6B7280] tabular-nums">
+          <span className="text-[13px] text-[#9CA3AF] tabular-nums">
             {items.length} item{items.length !== 1 ? 's' : ''}
           </span>
         </div>
-        <p className="mt-1 text-sm text-[#6B7280]">
+        <p className="text-[13px] text-[#6B7280]">
           AI-generated content created by your agents.
         </p>
       </div>
 
-      {/* ── Filter + search bar ───────────────────────────────────────────────── */}
+      {/* ── Toolbar: filters + search ─────────────────────────────────────────── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
         {/* Filter tabs */}
         <div
-          className="flex gap-0.5 bg-[#F3F4F6] rounded-lg p-1 w-fit flex-wrap"
+          className="flex items-center gap-1"
           role="tablist"
           aria-label="Filter content by type"
         >
@@ -169,10 +191,10 @@ export function ContentLibraryView({ items }: ContentLibraryViewProps): React.Re
               aria-selected={activeFilter === tab.value}
               onClick={() => handleFilterChange(tab.value)}
               className={cn(
-                'px-3 py-1.5 text-xs rounded-md transition-all font-medium',
+                'h-8 px-3 text-[12px] font-medium rounded-[6px] transition-colors whitespace-nowrap',
                 activeFilter === tab.value
-                  ? 'bg-white text-[#111827] shadow-sm'
-                  : 'text-[#6B7280] hover:text-[#111827]',
+                  ? 'bg-[#111827] text-white'
+                  : 'text-[#6B7280] hover:bg-[#F6F7F9] hover:text-[#111827]',
               )}
             >
               {tab.label}
@@ -181,9 +203,9 @@ export function ContentLibraryView({ items }: ContentLibraryViewProps): React.Re
         </div>
 
         {/* Search */}
-        <div className="relative w-full max-w-xs">
+        <div className="relative">
           <Search
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#9CA3AF]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-[14px] w-[14px] text-[#9CA3AF]"
             aria-hidden="true"
           />
           <input
@@ -191,150 +213,137 @@ export function ContentLibraryView({ items }: ContentLibraryViewProps): React.Re
             placeholder="Search content..."
             value={searchQuery}
             onChange={handleSearchChange}
-            className="h-8 w-full rounded-lg border border-[#E5E7EB] bg-white pl-8 pr-3 text-xs text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3370FF]/40 focus:border-[#3370FF]"
+            className="h-9 w-64 pl-10 pr-4 bg-white border border-[#E5E7EB] rounded-[6px] text-[13px] text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3370FF]/10 focus:border-[#3370FF]"
             aria-label="Search content by title"
           />
         </div>
       </div>
 
       {/* ── Table card ────────────────────────────────────────────────────────── */}
-      <div className="rounded-lg border border-[#E5E7EB] bg-white overflow-hidden">
+      <div className="bg-white border border-[#E5E7EB] rounded-[8px] overflow-hidden">
 
         {/* Empty state — no content at all */}
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F3F4F6] mb-3">
+          <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[8px] bg-[#F6F7F9] border border-[#E5E7EB] mb-4">
               <FileText className="h-5 w-5 text-[#9CA3AF]" aria-hidden="true" />
             </div>
-            <p className="text-sm font-medium text-[#111827]">No content yet</p>
-            <p className="mt-1 text-xs text-[#6B7280] max-w-xs">
-              No content yet. Launch an agent to create your first piece.
+            <p className="text-[14px] font-semibold text-[#111827]">No content yet</p>
+            <p className="mt-1.5 text-[12px] text-[#6B7280] max-w-xs leading-relaxed">
+              Launch an agent from the Agents Hub to generate your first piece of content.
             </p>
           </div>
         ) : filteredItems.length === 0 ? (
           /* Empty state — filter/search has no results */
-          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F3F4F6] mb-3">
+          <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[8px] bg-[#F6F7F9] border border-[#E5E7EB] mb-4">
               <Search className="h-5 w-5 text-[#9CA3AF]" aria-hidden="true" />
             </div>
-            <p className="text-sm font-medium text-[#111827]">No results</p>
-            <p className="mt-1 text-xs text-[#6B7280]">
+            <p className="text-[14px] font-semibold text-[#111827]">No results found</p>
+            <p className="mt-1.5 text-[12px] text-[#6B7280]">
               Try a different filter or search term.
             </p>
           </div>
         ) : (
           /* Table */
           <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
+            <table className="w-full text-left">
               <thead>
                 <tr className="bg-[#F6F7F9] border-b border-[#E5E7EB]">
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#6B7280] whitespace-nowrap w-[40%]">
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider w-[40%]">
                     Title
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#6B7280] whitespace-nowrap">
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider whitespace-nowrap">
                     Type
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#6B7280] whitespace-nowrap">
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider whitespace-nowrap">
                     Quality
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#6B7280] whitespace-nowrap">
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider whitespace-nowrap">
                     Status
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#6B7280] whitespace-nowrap">
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider whitespace-nowrap">
                     Words
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-[#6B7280] whitespace-nowrap">
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider whitespace-nowrap">
                     Created
                   </th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-[#6B7280] whitespace-nowrap">
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider whitespace-nowrap text-right">
                     Action
                   </th>
                 </tr>
               </thead>
-              <tbody>
-                {filteredItems.map((item, index) => {
+              <tbody className="divide-y divide-[#E5E7EB]">
+                {filteredItems.map((item) => {
                   const meta = CONTENT_TYPE_META[item.agent_type] ?? {
                     label: item.agent_type.replace(/_/g, ' '),
                     icon: FileText,
                     colorIcon: 'text-[#9CA3AF]',
-                    colorBg: 'bg-[#F3F4F6]',
+                    colorBg: 'bg-[#F6F7F9]',
                     filterKey: 'all',
                   }
                   const Icon = meta.icon
                   const wordCount = getWordCount(item.content)
 
-                  const isPublished =
-                    item.status === 'published' || item.status === 'completed'
-
                   return (
                     <tr
                       key={item.id}
-                      className={cn(
-                        'border-b border-[#F3F4F6] transition-colors hover:bg-[#FAFAFA]',
-                        index === filteredItems.length - 1 && 'border-b-0',
-                      )}
+                      className="hover:bg-[#F1F4F7] transition-colors"
                     >
                       {/* Title */}
-                      <td className="px-4 py-3">
-                        <span className="flex items-center gap-2.5 min-w-0">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3 min-w-0">
                           <span
                             className={cn(
-                              'flex h-7 w-7 shrink-0 items-center justify-center rounded-md',
+                              'flex h-7 w-7 shrink-0 items-center justify-center rounded-[6px]',
                               meta.colorBg,
                               meta.colorIcon,
                             )}
                           >
                             <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                           </span>
-                          <span className="text-sm font-medium text-[#111827] truncate max-w-[220px]">
-                            {item.title}
-                          </span>
-                        </span>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[13px] font-medium text-[#111827] truncate max-w-[260px]">
+                              {item.title}
+                            </span>
+                          </div>
+                        </div>
                       </td>
 
                       {/* Type */}
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="text-xs text-[#6B7280]">{meta.label}</span>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-[13px] text-[#6B7280]">{meta.label}</span>
                       </td>
 
                       {/* Quality */}
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <QualityDot score={item.quality_score} />
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <QualityBadge score={item.quality_score} />
                       </td>
 
                       {/* Status */}
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span
-                          className={cn(
-                            'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
-                            isPublished
-                              ? 'bg-emerald-50 text-emerald-700'
-                              : 'bg-[#F3F4F6] text-[#6B7280]',
-                          )}
-                        >
-                          {isPublished ? 'Published' : 'Draft'}
-                        </span>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <StatusBadge status={item.status} />
                       </td>
 
                       {/* Word count */}
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="text-xs text-[#6B7280] tabular-nums">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-[13px] text-[#6B7280] tabular-nums">
                           {wordCount !== null ? wordCount.toLocaleString() : '—'}
                         </span>
                       </td>
 
                       {/* Created date */}
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="text-xs text-[#6B7280] tabular-nums">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-[13px] text-[#6B7280] tabular-nums">
                           {format(new Date(item.created_at), 'MMM d, yyyy')}
                         </span>
                       </td>
 
                       {/* Edit action */}
-                      <td className="px-4 py-3 whitespace-nowrap text-right">
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
                         <Link
                           href={`/dashboard/content/${item.id}`}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-[#6B7280] hover:text-[#111827] transition-colors"
+                          className="inline-flex items-center gap-1.5 h-7 px-3 text-[12px] font-medium text-[#6B7280] border border-[#E5E7EB] rounded-[6px] hover:bg-[#F6F7F9] hover:text-[#111827] transition-colors"
                           aria-label={`Edit ${item.title}`}
                         >
                           <Pencil className="h-3 w-3" aria-hidden="true" />

@@ -1,28 +1,28 @@
 'use client'
 
 import { useState } from 'react'
-import { Building2, CreditCard, Settings2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SettingsBusinessTab } from '@/components/dashboard/settings/settings-business-tab'
 import { SettingsBillingTab } from '@/components/dashboard/settings/settings-billing-tab'
 import { SettingsPreferencesTab } from '@/components/dashboard/settings/settings-preferences-tab'
+import { SettingsIntegrationsTab } from '@/components/dashboard/settings/settings-integrations-tab'
 
 // ── Types ───────────────────────────────────────────────────
 
-type SettingsTab = 'business' | 'billing' | 'preferences'
+type SettingsTab = 'business' | 'billing' | 'preferences' | 'integrations'
 
-interface NavItem {
+interface TabItem {
   id: SettingsTab
   label: string
-  icon: React.ComponentType<{ className?: string }>
 }
 
-// ── Nav config ──────────────────────────────────────────────
+// ── Tab config ──────────────────────────────────────────────
 
-const NAV_ITEMS: NavItem[] = [
-  { id: 'business', label: 'Business Profile', icon: Building2 },
-  { id: 'billing', label: 'Billing', icon: CreditCard },
-  { id: 'preferences', label: 'Preferences', icon: Settings2 },
+const TABS: TabItem[] = [
+  { id: 'business', label: 'Business' },
+  { id: 'billing', label: 'Billing' },
+  { id: 'preferences', label: 'Preferences' },
+  { id: 'integrations', label: 'Integrations' },
 ]
 
 // ── Settings Page ───────────────────────────────────────────
@@ -31,56 +31,45 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('business')
 
   return (
-    <div className="space-y-6 animate-fade-up">
+    <div className="max-w-[800px] mx-auto py-8 px-0 animate-fade-up">
 
       {/* Page header */}
-      <div>
-        <h1 className="text-xl font-semibold text-[#111827]">Settings</h1>
-        <p className="mt-0.5 text-sm text-[#6B7280]">
-          Manage your account, billing, and preferences
-        </p>
-      </div>
+      <header className="mb-8">
+        <h1 className="text-[22px] font-semibold text-[#111827] tracking-tight">Settings</h1>
+      </header>
 
-      {/* Two-column layout: left nav + content */}
-      <div className="flex gap-6 items-start">
+      {/* Tab Navigation — horizontal underline style */}
+      <nav
+        className="flex gap-6 border-b border-[#E5E7EB] mb-8"
+        aria-label="Settings sections"
+      >
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                'pb-3 text-[13px] font-medium transition-colors focus-visible:outline-none',
+                isActive
+                  ? 'border-b-2 border-[#3370FF] text-[#111827]'
+                  : 'text-[#6B7280] hover:text-[#111827]',
+              )}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
+      </nav>
 
-        {/* Left sidebar nav */}
-        <nav
-          className="shrink-0 w-[200px] flex flex-col gap-1"
-          aria-label="Settings navigation"
-        >
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon
-            const isActive = activeTab === item.id
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setActiveTab(item.id)}
-                className={cn(
-                  'flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm font-medium text-left transition-all duration-150',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF]/40',
-                  isActive
-                    ? 'bg-[#EBF0FF] text-[#3370FF]'
-                    : 'text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]',
-                )}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                {item.label}
-              </button>
-            )
-          })}
-        </nav>
+      {/* Tab content */}
+      {activeTab === 'business' && <SettingsBusinessTab />}
+      {activeTab === 'billing' && <SettingsBillingTab />}
+      {activeTab === 'preferences' && <SettingsPreferencesTab />}
+      {activeTab === 'integrations' && <SettingsIntegrationsTab />}
 
-        {/* Content area */}
-        <div className="flex-1 min-w-0">
-          {activeTab === 'business' && <SettingsBusinessTab />}
-          {activeTab === 'billing' && <SettingsBillingTab />}
-          {activeTab === 'preferences' && <SettingsPreferencesTab />}
-        </div>
-
-      </div>
     </div>
   )
 }

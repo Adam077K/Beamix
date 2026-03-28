@@ -5,7 +5,6 @@ import { X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -16,111 +15,69 @@ import {
 import { INDUSTRIES } from '@/constants/industries'
 import { cn } from '@/lib/utils'
 
-// ── Tag Input ──────────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────────
 
-function TagInput({
-  tags,
-  onTagsChange,
-  placeholder,
-  maxTags,
-}: {
-  tags: string[]
-  onTagsChange: (tags: string[]) => void
-  placeholder: string
-  maxTags?: number
-}) {
-  const [inputValue, setInputValue] = useState('')
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      const trimmed = inputValue.trim()
-      if (
-        trimmed &&
-        !tags.includes(trimmed) &&
-        (!maxTags || tags.length < maxTags)
-      ) {
-        onTagsChange([...tags, trimmed])
-        setInputValue('')
-      }
-    }
-    if (e.key === 'Backspace' && inputValue === '' && tags.length > 0) {
-      onTagsChange(tags.slice(0, -1))
-    }
-  }
-
-  function removeTag(tagToRemove: string) {
-    onTagsChange(tags.filter((t) => t !== tagToRemove))
-  }
-
-  return (
-    <div className="space-y-2">
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-[#EBF0FF] text-[#3370FF] text-xs font-medium"
-            >
-              {tag}
-              <button
-                type="button"
-                onClick={() => removeTag(tag)}
-                aria-label={`Remove ${tag}`}
-                className="rounded-full p-0.5 hover:bg-[#3370FF]/20 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#3370FF]"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-      <Input
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={
-          maxTags !== undefined && tags.length >= maxTags
-            ? `Max ${maxTags} items`
-            : placeholder
-        }
-        disabled={maxTags !== undefined && tags.length >= maxTags}
-        className="w-full border-[#E5E7EB] bg-white text-[#111827] placeholder:text-[#9CA3AF] rounded-lg focus-visible:ring-[#3370FF]/40 focus-visible:border-[#3370FF]"
-      />
-      {maxTags && (
-        <p className="text-xs text-[#9CA3AF]">
-          {tags.length}/{maxTags} added
-        </p>
-      )}
-    </div>
-  )
+interface BusinessFormData {
+  businessName: string
+  websiteUrl: string
+  industry: string
+  location: string
+  companySize: string
+  description: string
+  services: string[]
 }
+
+// ── Company sizes ───────────────────────────────────────────
+
+const COMPANY_SIZES = [
+  { value: '1-10', label: '1-10 employees' },
+  { value: '11-50', label: '11-50 employees' },
+  { value: '51-200', label: '51-200 employees' },
+  { value: '201-500', label: '201-500 employees' },
+  { value: '500+', label: '500+ employees' },
+]
 
 // ── Loading Skeleton ────────────────────────────────────────
 
 function BusinessFormSkeleton() {
   return (
-    <div className="space-y-5 animate-pulse" aria-label="Loading business profile">
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="space-y-2">
-            <div className="h-4 w-24 rounded bg-[#F3F4F6]" />
-            <div className="h-9 rounded-lg bg-[#F3F4F6]" />
+    <div className="animate-pulse" aria-label="Loading business profile">
+      <div className="bg-white border border-[#E5E7EB] rounded-lg p-8">
+        <div className="flex flex-col gap-5">
+          {[1, 2].map((i) => (
+            <div key={i} className="flex flex-col gap-2">
+              <div className="h-3 w-24 rounded bg-[#F3F4F6]" />
+              <div className="h-10 rounded-lg bg-[#F3F4F6]" />
+            </div>
+          ))}
+          <div className="grid grid-cols-2 gap-6">
+            {[1, 2].map((i) => (
+              <div key={i} className="flex flex-col gap-2">
+                <div className="h-3 w-20 rounded bg-[#F3F4F6]" />
+                <div className="h-10 rounded-lg bg-[#F3F4F6]" />
+              </div>
+            ))}
           </div>
-        ))}
+          <div className="flex flex-col gap-2">
+            <div className="h-3 w-28 rounded bg-[#F3F4F6]" />
+            <div className="h-10 rounded-lg bg-[#F3F4F6]" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className="h-3 w-16 rounded bg-[#F3F4F6]" />
+            <div className="h-[44px] rounded-lg bg-[#F3F4F6]" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className="h-3 w-24 rounded bg-[#F3F4F6]" />
+            <div className="h-[120px] rounded-lg bg-[#F3F4F6]" />
+          </div>
+        </div>
       </div>
-      <div className="space-y-2">
-        <div className="h-4 w-32 rounded bg-[#F3F4F6]" />
-        <div className="h-24 rounded-lg bg-[#F3F4F6]" />
-      </div>
-      <div className="space-y-2">
-        <div className="h-4 w-28 rounded bg-[#F3F4F6]" />
-        <div className="h-9 rounded-lg bg-[#F3F4F6]" />
-      </div>
-      <div className="h-px bg-[#F3F4F6]" />
-      <div className="flex justify-end gap-2">
-        <div className="h-9 w-20 rounded-lg bg-[#F3F4F6]" />
-        <div className="h-9 w-28 rounded-lg bg-[#F3F4F6]" />
+      <div className="mt-8 flex items-center justify-between">
+        <div className="h-3 w-32 rounded bg-[#F3F4F6]" />
+        <div className="flex gap-4">
+          <div className="h-9 w-20 rounded-md bg-[#F3F4F6]" />
+          <div className="h-9 w-28 rounded-lg bg-[#F3F4F6]" />
+        </div>
       </div>
     </div>
   )
@@ -131,24 +88,85 @@ function BusinessFormSkeleton() {
 function Field({
   label,
   htmlFor,
-  hint,
   children,
 }: {
   label: string
   htmlFor?: string
-  hint?: string
   children: React.ReactNode
 }) {
   return (
-    <div className="space-y-1.5">
-      <Label
+    <div className="flex flex-col gap-2">
+      <label
         htmlFor={htmlFor}
-        className="text-sm font-medium text-[#6B7280]"
+        className="text-[12px] font-semibold text-[#111827]"
       >
         {label}
-      </Label>
-      {hint && <p className="text-xs text-[#9CA3AF]">{hint}</p>}
+      </label>
       {children}
+    </div>
+  )
+}
+
+// ── Services Tag Display ────────────────────────────────────
+
+function ServicesField({
+  services,
+  onServicesChange,
+}: {
+  services: string[]
+  onServicesChange: (services: string[]) => void
+}) {
+  const [inputValue, setInputValue] = useState('')
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      const trimmed = inputValue.trim()
+      if (trimmed && !services.includes(trimmed)) {
+        onServicesChange([...services, trimmed])
+        setInputValue('')
+      }
+    }
+    if (e.key === 'Backspace' && inputValue === '' && services.length > 0) {
+      onServicesChange(services.slice(0, -1))
+    }
+  }
+
+  function removeService(service: string) {
+    onServicesChange(services.filter((s) => s !== service))
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-[12px] font-semibold text-[#111827]">Services</label>
+      <div className="flex flex-wrap gap-2 p-2 border border-[#E5E7EB] rounded-lg min-h-[44px] focus-within:border-[#3370FF] transition-all">
+        {services.map((service) => (
+          <span
+            key={service}
+            className="inline-flex items-center gap-1 px-2 py-1 bg-[#F3F4F6] text-[#111827] text-[11px] font-medium rounded-[4px]"
+          >
+            {service}
+            <button
+              type="button"
+              onClick={() => removeService(service)}
+              aria-label={`Remove ${service}`}
+              className="rounded-full p-0.5 hover:bg-[#E5E7EB] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#3370FF]"
+            >
+              <X className="h-2.5 w-2.5" />
+            </button>
+          </span>
+        ))}
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={services.length === 0 ? 'Add a service and press Enter' : ''}
+          className="flex-1 min-w-[120px] text-[13px] outline-none bg-transparent placeholder:text-[#9CA3AF]"
+          aria-label="Add service"
+        />
+      </div>
+      <p className="text-[11px] text-[#9CA3AF]">Type a service and press Enter to add</p>
     </div>
   )
 }
@@ -160,21 +178,24 @@ export function SettingsBusinessTab() {
   const [websiteUrl, setWebsiteUrl] = useState('')
   const [industry, setIndustry] = useState('')
   const [location, setLocation] = useState('')
+  const [companySize, setCompanySize] = useState('')
   const [description, setDescription] = useState('')
   const [services, setServices] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [savedAt, setSavedAt] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   // Store initial values for discard
-  const [initial, setInitial] = useState({
+  const [initial, setInitial] = useState<BusinessFormData>({
     businessName: '',
     websiteUrl: '',
     industry: '',
     location: '',
+    companySize: '',
     description: '',
-    services: [] as string[],
+    services: [],
   })
 
   useEffect(() => {
@@ -187,23 +208,24 @@ export function SettingsBusinessTab() {
             website_url: string | null
             industry: string | null
             location: string | null
+            company_size: string | null
             description: string | null
             services: string[] | null
           }
-          const loaded = {
+          const loaded: BusinessFormData = {
             businessName: data.name ?? '',
             websiteUrl: data.website_url ?? '',
             industry: data.industry ?? '',
             location: data.location ?? '',
+            companySize: data.company_size ?? '',
             description: data.description ?? '',
             services: Array.isArray(data.services) ? data.services : [],
-
-
           }
           setBusinessName(loaded.businessName)
           setWebsiteUrl(loaded.websiteUrl)
           setIndustry(loaded.industry)
           setLocation(loaded.location)
+          setCompanySize(loaded.companySize)
           setDescription(loaded.description)
           setServices(loaded.services)
           setInitial(loaded)
@@ -222,10 +244,9 @@ export function SettingsBusinessTab() {
     setWebsiteUrl(initial.websiteUrl)
     setIndustry(initial.industry)
     setLocation(initial.location)
+    setCompanySize(initial.companySize)
     setDescription(initial.description)
     setServices(initial.services)
-
-
     setSaved(false)
     setError(null)
   }, [initial])
@@ -243,15 +264,15 @@ export function SettingsBusinessTab() {
           website_url: websiteUrl,
           industry,
           location,
+          company_size: companySize,
           description,
           services,
-
-
         }),
       })
       if (res.ok) {
         setSaved(true)
-        setInitial({ businessName, websiteUrl, industry, location, description, services })
+        setSavedAt('just now')
+        setInitial({ businessName, websiteUrl, industry, location, companySize, description, services })
         setTimeout(() => setSaved(false), 3000)
       } else {
         setError('Failed to save changes. Please try again.')
@@ -261,67 +282,68 @@ export function SettingsBusinessTab() {
     } finally {
       setSaving(false)
     }
-  }, [businessName, websiteUrl, industry, location, description, services])
+  }, [businessName, websiteUrl, industry, location, companySize, description, services])
 
   const inputClass = cn(
-    'w-full border-[#E5E7EB] bg-white text-[#111827] placeholder:text-[#9CA3AF] rounded-lg',
-    'focus-visible:ring-[#3370FF]/40 focus-visible:border-[#3370FF]',
+    'h-10 px-3 border border-[#E5E7EB] rounded-lg text-[13px] outline-none',
+    'focus:border-[#3370FF] focus:ring-2 focus:ring-blue-600/10 transition-all',
+    'bg-white text-[#111827] placeholder:text-[#9CA3AF]',
   )
 
+  const selectTriggerClass = cn(
+    'h-10 px-3 border border-[#E5E7EB] rounded-lg text-[13px] outline-none',
+    'focus:border-[#3370FF] focus:ring-2 focus:ring-blue-600/10 transition-all',
+    'bg-white text-[#111827]',
+  )
+
+  if (loading) return <BusinessFormSkeleton />
+
   return (
-    <div className="bg-white rounded-lg border border-[#E5E7EB] p-5">
+    <>
+      {/* Error state */}
+      {error && (
+        <div
+          role="alert"
+          className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-700"
+        >
+          {error}
+        </div>
+      )}
 
-      {/* Section header */}
-      <div className="mb-5">
-        <h2 className="text-base font-semibold text-[#111827]">Business Profile</h2>
-        <p className="mt-0.5 text-sm text-[#6B7280]">
-          Update your business information for more accurate scans.
-        </p>
-      </div>
+      {/* Form card */}
+      <div className="bg-white border border-[#E5E7EB] rounded-lg p-8">
+        <form className="flex flex-col gap-5">
 
-      {loading ? (
-        <BusinessFormSkeleton />
-      ) : (
-        <div className="space-y-5">
+          {/* Business Name */}
+          <Field label="Business Name" htmlFor="business-name">
+            <Input
+              id="business-name"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              placeholder="Your business name"
+              className={inputClass}
+            />
+          </Field>
 
-          {/* Error state */}
-          {error && (
-            <div
-              role="alert"
-              className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-            >
-              {error}
-            </div>
-          )}
+          {/* Website */}
+          <Field label="Website" htmlFor="website-url">
+            <Input
+              id="website-url"
+              value={websiteUrl}
+              onChange={(e) => setWebsiteUrl(e.target.value)}
+              placeholder="yourbusiness.com"
+              className={inputClass}
+            />
+          </Field>
 
-          {/* 2-column grid on desktop */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-
-            <Field label="Business Name" htmlFor="business-name">
-              <Input
-                id="business-name"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                placeholder="Your business name"
-                className={inputClass}
-              />
-            </Field>
-
-            <Field label="Website URL" htmlFor="website-url">
-              <Input
-                id="website-url"
-                value={websiteUrl}
-                onChange={(e) => setWebsiteUrl(e.target.value)}
-                placeholder="https://yourbusiness.com"
-                className={inputClass}
-              />
-            </Field>
+          {/* Industry & Location — 2-column grid */}
+          <div className="grid grid-cols-2 gap-6">
 
             <Field label="Industry" htmlFor="industry-select">
               <Select value={industry} onValueChange={setIndustry}>
                 <SelectTrigger
                   id="industry-select"
-                  className="w-full border-[#E5E7EB] bg-white text-[#111827] rounded-lg focus:ring-[#3370FF]/40 focus:border-[#3370FF]"
+                  className={selectTriggerClass}
                 >
                   <SelectValue placeholder="Select industry" />
                 </SelectTrigger>
@@ -335,7 +357,7 @@ export function SettingsBusinessTab() {
               </Select>
             </Field>
 
-            <Field label="Location / Primary Market" htmlFor="location">
+            <Field label="Location" htmlFor="location">
               <Input
                 id="location"
                 value={location}
@@ -347,8 +369,30 @@ export function SettingsBusinessTab() {
 
           </div>
 
-          {/* Description — full width */}
-          <Field label="Business Description" htmlFor="description">
+          {/* Company Size */}
+          <Field label="Company Size" htmlFor="company-size">
+            <Select value={companySize} onValueChange={setCompanySize}>
+              <SelectTrigger
+                id="company-size"
+                className={selectTriggerClass}
+              >
+                <SelectValue placeholder="Select company size" />
+              </SelectTrigger>
+              <SelectContent>
+                {COMPANY_SIZES.map((size) => (
+                  <SelectItem key={size.value} value={size.value}>
+                    {size.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+
+          {/* Services */}
+          <ServicesField services={services} onServicesChange={setServices} />
+
+          {/* Description */}
+          <Field label="Description" htmlFor="description">
             <Textarea
               id="description"
               value={description}
@@ -357,62 +401,82 @@ export function SettingsBusinessTab() {
                   setDescription(e.target.value)
                 }
               }}
-              placeholder="Describe your business and what makes it unique..."
+              placeholder="Enter company bio..."
               rows={4}
-              className={cn(inputClass, 'resize-none')}
+              className={cn(
+                'p-3 border border-[#E5E7EB] rounded-lg text-[13px] outline-none resize-none',
+                'focus:border-[#3370FF] focus:ring-2 focus:ring-blue-600/10 transition-all',
+                'bg-white text-[#111827] placeholder:text-[#9CA3AF]',
+              )}
             />
-            <p className="text-end text-xs text-[#9CA3AF]">
+            <p className="text-end text-[11px] text-[#9CA3AF]">
               {description.length}/500
             </p>
           </Field>
 
-          {/* Services */}
-          <Field
-            label="Services / Products"
-            hint="Type a service and press Enter to add"
+        </form>
+      </div>
+
+      {/* Footer — outside the card */}
+      <footer className="mt-8 flex items-center justify-between">
+        <div className="text-[11px] text-[#9CA3AF] tabular-nums font-medium">
+          {savedAt ? `Last saved: ${savedAt}` : saved ? 'Last saved: just now' : '\u00A0'}
+        </div>
+        <div className="flex items-center gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleDiscard}
+            disabled={saving}
+            className="px-5 py-2 text-[13px] font-medium text-[#111827] border border-[#E5E7EB] rounded-md hover:bg-gray-50 transition-colors"
           >
-            <TagInput
-              tags={services}
-              onTagsChange={setServices}
-              placeholder="e.g., SEO Consulting"
-            />
-          </Field>
+            Discard
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="px-5 py-2 text-[13px] font-medium text-white bg-[#111827] rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </div>
+      </footer>
 
-          {/* Divider */}
-          <div className="h-px bg-[#F3F4F6]" />
-
-          {/* Footer actions */}
-          <div className="flex items-center justify-between gap-3">
+      {/* Information panel — 2-column grid */}
+      <div className="mt-12 grid grid-cols-2 gap-8 border-t border-[#E5E7EB] pt-8">
+        <div>
+          <h3 className="text-[14px] font-semibold text-[#111827] mb-2">Security Verification</h3>
+          <p className="text-[12px] text-[#6B7280] leading-relaxed">
+            Your business identity is verified periodically to maintain compliance standards.
+            Any changes to the legal name will require re-authentication.
+          </p>
+        </div>
+        <div className="bg-blue-50/50 p-4 rounded-lg">
+          <div className="flex items-start gap-3">
+            <svg
+              className="h-[18px] w-[18px] text-blue-600 shrink-0 mt-0.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
             <div>
-              {saved && (
-                <span className="text-sm font-medium text-[#10B981]">
-                  Changes saved successfully
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleDiscard}
-                disabled={saving}
-                className="rounded-lg border-[#E5E7EB] text-[#6B7280] hover:text-[#111827] hover:bg-[#F6F7F9]"
-              >
-                Discard
-              </Button>
-              <Button
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                className="rounded-lg bg-[#111827] text-white hover:bg-[#1f2937] focus-visible:ring-[#3370FF]/40"
-              >
-                {saving ? 'Saving...' : 'Save Changes'}
-              </Button>
+              <h4 className="text-[12px] font-semibold text-blue-900">Optimization Tip</h4>
+              <p className="text-[11px] text-blue-700 mt-1">
+                Companies with complete website and industry data see a 40% increase in scan accuracy.
+              </p>
             </div>
           </div>
-
         </div>
-      )}
-    </div>
+      </div>
+    </>
   )
 }

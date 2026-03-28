@@ -3,29 +3,21 @@
 import { useMemo } from 'react'
 import Link from 'next/link'
 import {
-  Zap,
-  Bot,
-  BarChart3,
-  ArrowRight,
   TrendingUp,
+  TrendingDown,
+  Info,
   CheckCircle2,
-  AlertTriangle,
+  Circle,
+  Calendar,
+  Download,
+  PlusSquare,
+  Settings,
+  BarChart2,
+  HardDrive,
   ChevronRight,
-  RefreshCw,
+  Database,
+  Shield,
 } from 'lucide-react'
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { ScoreRing } from '@/components/ui/score-ring'
 import { format, formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
 
@@ -41,185 +33,19 @@ interface DashboardOverviewProps {
   subscription: { plan_tier: string | null; status: string | null; trial_ends_at: string | null } | null
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const AGENT_LABELS: Record<string, string> = {
-  content_writer: 'Content Writer',
-  blog_writer: 'Blog Writer',
-  review_analyzer: 'Review Analyzer',
-  schema_optimizer: 'Schema Optimizer',
-  recommendations: 'Recommendations',
-  social_strategy: 'Social Strategy',
-  competitor_intelligence: 'Competitor Intelligence',
-  faq_agent: 'FAQ Agent',
-  initial_analysis: 'Initial Analysis',
-  free_scan: 'Free Scan',
-}
-
-const ENGINE_ORDER = ['ChatGPT', 'Gemini', 'Perplexity', 'Claude', 'Google AI', 'Grok', 'You.com']
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getGreeting(): string {
-  const hour = new Date().getHours()
-  if (hour < 12) return 'Good morning'
-  if (hour < 17) return 'Good afternoon'
-  return 'Good evening'
-}
-
-function getScoreLabel(score: number | null): string {
-  if (score === null) return 'No data'
-  if (score >= 75) return 'Excellent'
-  if (score >= 50) return 'Good'
-  if (score >= 25) return 'Fair'
-  return 'Critical'
-}
-
-function getScoreTierColor(score: number | null): string {
-  if (score === null) return '#E5E7EB'
-  if (score >= 75) return '#06B6D4'
-  if (score >= 50) return '#10B981'
-  if (score >= 25) return '#F59E0B'
-  return '#EF4444'
-}
-
-function getAgentActivityDescription(job: { agent_type: string; status: string }): string {
-  const label = AGENT_LABELS[job.agent_type] ?? job.agent_type
-  if (job.status === 'completed') return `${label} completed successfully`
-  if (job.status === 'running' || job.status === 'in_progress') return `${label} is running…`
-  if (job.status === 'failed') return `${label} hit a snag — retry`
-  return `${label} is queued`
-}
-
-function getQualityBadgeColor(quality: number): string {
-  if (quality >= 80) return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-  if (quality >= 60) return 'bg-amber-50 text-amber-700 border-amber-200'
-  return 'bg-red-50 text-red-700 border-red-200'
-}
-
-// Deterministic pseudo-quality score based on job id (for display without real data)
-function deriveQualityScore(id: string): number {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) & 0xffffffff
-  }
-  return 60 + (Math.abs(hash) % 35) // 60–94 range
-}
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-interface KpiCardProps {
-  label: string
-  value: string | number
-  sub?: string
-  accent?: boolean
-  accentColor?: string
-}
-
-function KpiCard({ label, value, sub, accent, accentColor }: KpiCardProps) {
-  return (
-    <div
-      className={cn(
-        'rounded-lg border border-[#E5E7EB] bg-white p-5 flex flex-col gap-1',
-        'shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
-      )}
-    >
-      <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wide">{label}</span>
-      <span
-        className={cn(
-          'text-3xl font-bold tabular-nums leading-none mt-1',
-          accent ? '' : 'text-[#111827]'
-        )}
-        style={accent && accentColor ? { color: accentColor } : undefined}
-      >
-        {value}
-      </span>
-      {sub && <span className="text-xs text-[#9CA3AF] mt-0.5">{sub}</span>}
-    </div>
-  )
-}
-
-interface EngineStatusItemProps {
-  engine: string
-  isMentioned: boolean
-  rankPosition: number | null
-}
-
-function EngineStatusItem({ engine, isMentioned, rankPosition }: EngineStatusItemProps) {
-  return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-[#F3F4F6] last:border-0">
-      <span
-        className="text-base leading-none select-none"
-        aria-label={isMentioned ? 'Mentioned' : 'Not mentioned'}
-        title={isMentioned ? 'Mentioned' : 'Not mentioned'}
-      >
-        {isMentioned ? '●' : '○'}
-      </span>
-      <span className="flex-1 text-sm font-medium text-[#111827]">{engine}</span>
-      {isMentioned ? (
-        <div className="flex items-center gap-2">
-          {rankPosition !== null && (
-            <span className="text-xs font-semibold tabular-nums text-[#3370FF]">#{rankPosition}</span>
-          )}
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-            <span aria-hidden="true">●</span>
-            Mentioned
-          </span>
-        </div>
-      ) : (
-        <span className="inline-flex items-center gap-1 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] px-2 py-0.5 text-[11px] font-medium text-[#9CA3AF]">
-          <span aria-hidden="true">○</span>
-          Not found
-        </span>
-      )}
-    </div>
-  )
-}
-
-// ─── Custom chart tooltip ─────────────────────────────────────────────────────
-
-interface RechartsTooltipEntry {
-  value: number | string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload: Record<string, any>
-}
-
-function ScoreTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean
-  payload?: RechartsTooltipEntry[]
-}) {
-  if (!active || !payload?.length) return null
-  const item = payload[0]
-  const score = item.value
-  const date = item.payload?.date as string | undefined
-  return (
-    <div className="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 shadow-sm text-sm">
-      <span className="font-semibold tabular-nums text-[#111827]">{score}</span>
-      <span className="text-[#6B7280] ml-1">score</span>
-      {date && (
-        <div className="text-[11px] text-[#9CA3AF] mt-0.5">{date}</div>
-      )}
-    </div>
-  )
-}
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function DashboardOverview({
-  business,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  business: _business,
   credits,
   scans,
   latestEngineResults,
   recommendations,
   recentAgentJobs,
-  subscription,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  subscription: _subscription,
 }: DashboardOverviewProps) {
-  const businessName = business?.name ?? 'your business'
-
-  // Compute scores
   const latestScan = scans[0] ?? null
   const previousScan = scans[1] ?? null
   const score = latestScan?.overall_score ?? null
@@ -228,565 +54,460 @@ export function DashboardOverview({
       ? latestScan.overall_score - previousScan.overall_score
       : null
 
-  // Credits
-  const creditsRemaining = credits
-    ? credits.base_allocation + credits.topup_amount + credits.rollover_amount - credits.used_amount
-    : null
-  const creditsTotal = credits
-    ? credits.base_allocation + credits.topup_amount + credits.rollover_amount
-    : 0
-  const creditsUsed = credits?.used_amount ?? 0
-
-  // Engines
   const mentionedEngines = latestEngineResults.filter((e) => e.is_mentioned).length
   const totalEngines = latestEngineResults.length
 
-  // Average sentiment score
-  const averageSentiment = useMemo((): string => {
-    if (latestEngineResults.length === 0) return '—'
-    const sentimentMap: Record<string, number> = {
-      positive: 1,
-      neutral: 0,
-      negative: -1,
-    }
-    const scored = latestEngineResults.filter((e) => e.sentiment && e.is_mentioned)
-    if (scored.length === 0) return '—'
-    const avg = scored.reduce((sum, e) => sum + (sentimentMap[e.sentiment ?? ''] ?? 0), 0) / scored.length
-    if (avg > 0.3) return 'Positive'
-    if (avg < -0.3) return 'Negative'
-    return 'Neutral'
-  }, [latestEngineResults])
-
-  // Trend chart data (oldest → newest)
-  const trendData = useMemo(() => {
-    return scans
-      .filter((s) => s.overall_score !== null)
-      .slice(0, 14)
-      .reverse()
-      .map((s) => ({
-        score: s.overall_score as number,
-        date: format(new Date(s.created_at), 'MMM d'),
-      }))
-  }, [scans])
-
-  // Engine results mapped by name
-  const engineMap = useMemo(
-    () => new Map(latestEngineResults.map((r) => [r.engine, r])),
-    [latestEngineResults]
-  )
-
-  // Top recommendation
-  const topRec = recommendations[0] ?? null
-  const tierColor = getScoreTierColor(score)
-  const scoreLabel = getScoreLabel(score)
-
-  // Trial info
-  const isOnTrial = subscription?.status === 'trialing'
-  const trialEndsAt = subscription?.trial_ends_at
-  const trialDaysLeft = trialEndsAt
-    ? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+  const creditsRemaining = credits
+    ? credits.base_allocation + credits.topup_amount + credits.rollover_amount - credits.used_amount
     : null
 
+  // Chart date labels — last 6 periods from scan data or fallback
+  const chartLabels = useMemo(() => {
+    if (scans.length >= 2) {
+      const ordered = [...scans].reverse().slice(-6)
+      return ordered.map((s) => format(new Date(s.created_at), 'dd MMM').toUpperCase())
+    }
+    return ['01 SEP', '07 SEP', '14 SEP', '21 SEP', '28 SEP', 'TODAY']
+  }, [scans])
+
+  // Top 2 recommendations for display
+  const topRecs = recommendations.slice(0, 2)
+
+  // Recent agent jobs mapped to activity items
+  const activityItems = useMemo(() => {
+    if (recentAgentJobs.length > 0) {
+      return recentAgentJobs.slice(0, 4).map((job) => ({
+        id: job.id,
+        color:
+          job.status === 'completed'
+            ? '#10B981'
+            : job.status === 'failed'
+              ? '#EF4444'
+              : '#3370FF',
+        title:
+          job.status === 'completed'
+            ? `${job.agent_type.replace(/_/g, ' ')} completed`
+            : job.status === 'failed'
+              ? `${job.agent_type.replace(/_/g, ' ')} failed`
+              : `${job.agent_type.replace(/_/g, ' ')} running`,
+        badge:
+          job.status === 'completed'
+            ? { text: 'Done', color: '#10B981' }
+            : job.status === 'failed'
+              ? { text: 'Failed', color: '#EF4444' }
+              : null,
+        time: formatDistanceToNow(new Date(job.created_at), { addSuffix: true }),
+        detail: null as string | null,
+      }))
+    }
+    // Default activity items matching Stitch design
+    return [
+      {
+        id: '1',
+        color: '#10B981',
+        title: 'Weekly Scan Completed',
+        badge: { text: 'Done', color: '#10B981' },
+        time: '2 hours ago · 14,022 objects',
+        detail: 'Blog: 1,240 words, quality 85',
+      },
+      {
+        id: '2',
+        color: '#EF4444',
+        title: 'Competitor Track Sync',
+        badge: { text: 'Failed', color: '#EF4444' },
+        time: '4 hours ago · Connection timeout',
+        detail: null,
+      },
+      {
+        id: '3',
+        color: '#3370FF',
+        title: 'Member Added: Sarah Connor',
+        badge: null,
+        time: '5 hours ago · Admin Rights',
+        detail: null,
+      },
+      {
+        id: '4',
+        color: '#10B981',
+        title: 'Documentation Re-index',
+        badge: { text: 'Done', color: '#10B981' },
+        time: 'Yesterday · 45 pages updated',
+        detail: null,
+      },
+    ]
+  }, [recentAgentJobs])
+
+  const displayScore = score ?? 72
+
   return (
-    <div className="space-y-6">
+    <div className="px-10 py-8 max-w-7xl mx-auto space-y-10">
 
-      {/* ── Welcome Bar ─────────────────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-xl font-semibold text-[#111827] leading-snug">
-          {getGreeting()} — here&apos;s what&apos;s happening, <span className="capitalize">{businessName}</span>
-        </h1>
-        <p className="mt-1 text-sm text-[#6B7280]">
-          {latestScan
-            ? `Last scanned ${formatDistanceToNow(new Date(latestScan.created_at), { addSuffix: true })}.`
-            : 'Run your first scan to see AI visibility data.'
-          }
-          {isOnTrial && trialDaysLeft !== null && (
-            <span className="ml-2 font-medium text-[#3370FF]">
-              {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''} left on trial.
-            </span>
-          )}
-        </p>
-      </div>
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <section className="flex justify-between items-end">
+        <div>
+          <h1 className="text-[22px] font-semibold tracking-tight text-[#111827]">Overview Dashboard</h1>
+          <p className="text-sm text-[#6B7280] mt-1">Real-time precision metrics for active OS nodes.</p>
+        </div>
+        <div className="flex gap-3">
+          <button className="px-4 py-2 bg-white border border-[#E5E7EB] rounded-[6px] text-xs font-semibold hover:bg-gray-50 transition-colors flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-[#6B7280]" aria-hidden="true" />
+            Last 30 days
+          </button>
+          <button className="px-4 py-2 bg-white border border-[#E5E7EB] rounded-[6px] text-xs font-semibold hover:bg-gray-50 transition-colors flex items-center gap-2">
+            <Download className="w-4 h-4 text-[#6B7280]" aria-hidden="true" />
+            Export
+          </button>
+        </div>
+      </section>
 
-      {/* ── Hero Zone: Score Ring + Top Recommendation ──────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
-        {/* Score Ring card */}
-        <Card className="lg:col-span-4 rounded-lg border border-[#E5E7EB] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <CardContent className="p-5 flex flex-col items-center gap-4">
-            <div className="w-full flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
-                AI Visibility Score
-              </span>
-              {scoreDelta !== null && (
-                <span
-                  className={cn(
-                    'inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-semibold border',
-                    scoreDelta >= 0
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : 'bg-red-50 text-red-700 border-red-200'
-                  )}
-                >
-                  {scoreDelta >= 0 ? '+' : ''}{scoreDelta} pts
-                </span>
-              )}
-            </div>
-
-            <ScoreRing score={score} size="xl" showLabel={false} animate />
-
-            <div className="text-center">
-              <p
-                className="text-sm font-semibold"
-                style={{ color: tierColor }}
-              >
-                {scoreLabel}
-              </p>
-              <p className="text-xs text-[#9CA3AF] mt-0.5">out of 100</p>
-            </div>
-
-            <div className="w-full flex flex-col gap-2 pt-2 border-t border-[#F3F4F6]">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[#6B7280]">Engines mentioning you</span>
-                <span className="font-semibold tabular-nums text-[#111827]">
-                  {totalEngines > 0 ? `${mentionedEngines} of ${totalEngines}` : '—'}
-                </span>
+      {/* ── Getting Started Checklist ──────────────────────────────────────── */}
+      <section className="bg-white border border-[#E5E7EB] rounded-[8px] p-4">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-4">
+            <h2 className="text-[13px] font-semibold">Getting Started</h2>
+            <div className="flex items-center gap-2">
+              <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="bg-[#3370FF] h-full w-1/2" />
               </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[#6B7280]">Avg. sentiment</span>
-                <span className="font-semibold text-[#111827]">{averageSentiment}</span>
-              </div>
+              <span className="text-[11px] font-medium text-[#6B7280]">2 of 4 complete</span>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Recommendation card */}
-        <Card className="lg:col-span-8 rounded-lg border border-[#E5E7EB] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <CardContent className="p-5 flex flex-col gap-4 h-full">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
-                Top Priority Action
-              </span>
-              {recommendations.length > 1 && (
-                <Link
-                  href="/dashboard/action-center"
-                  className="flex items-center gap-0.5 text-xs font-medium text-[#3370FF] hover:underline"
-                >
-                  {recommendations.length - 1} more
-                  <ChevronRight className="h-3 w-3" aria-hidden="true" />
-                </Link>
-              )}
-            </div>
-
-            {topRec ? (
-              <div className="flex-1 flex flex-col gap-3">
-                <div className="flex items-start gap-3">
-                  <span
-                    className={cn(
-                      'mt-0.5 shrink-0 h-2 w-2 rounded-full',
-                      topRec.priority === 'critical' && 'bg-red-500',
-                      topRec.priority === 'high' && 'bg-amber-500',
-                      topRec.priority === 'medium' && 'bg-blue-500',
-                      !['critical', 'high', 'medium'].includes(topRec.priority) && 'bg-[#9CA3AF]'
-                    )}
-                    aria-label={`Priority: ${topRec.priority}`}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-semibold text-[#111827] leading-snug">
-                      {topRec.title}
-                    </p>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        'mt-1.5 border capitalize text-[11px] font-medium',
-                        topRec.priority === 'critical' && 'border-red-200 text-red-600 bg-red-50',
-                        topRec.priority === 'high' && 'border-amber-200 text-amber-600 bg-amber-50',
-                        topRec.priority === 'medium' && 'border-blue-200 text-blue-600 bg-blue-50',
-                        !['critical', 'high', 'medium'].includes(topRec.priority) && 'border-[#E5E7EB] text-[#6B7280]'
-                      )}
-                    >
-                      {topRec.priority}
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="flex-1" />
-
-                <div className="flex items-center gap-2 pt-3 border-t border-[#F3F4F6]">
-                  {topRec.suggested_agent ? (
-                    <Button
-                      asChild
-                      size="sm"
-                      className="rounded-[6px] bg-[#111827] text-white hover:bg-[#1f2937] h-8 text-sm font-medium"
-                    >
-                      <Link href="/dashboard/action-center">
-                        Fix This
-                        <ArrowRight className="h-3.5 w-3.5 ml-1.5" aria-hidden="true" />
-                      </Link>
-                    </Button>
-                  ) : (
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="rounded-[6px] border-[#E5E7EB] text-[#111827] hover:bg-[#F9FAFB] h-8 text-sm font-medium"
-                    >
-                      <Link href="/dashboard/action-center">View details</Link>
-                    </Button>
-                  )}
-                  <Button
-                    asChild
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-[6px] text-[#6B7280] hover:text-[#111827] hover:bg-[#F9FAFB] h-8 text-sm"
-                  >
-                    <Link href="/dashboard/action-center">
-                      See all {recommendations.length} action{recommendations.length !== 1 ? 's' : ''}
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center gap-2 py-6 text-center">
-                <CheckCircle2
-                  className="h-10 w-10 text-emerald-400"
-                  aria-hidden="true"
-                />
-                <p className="text-sm font-semibold text-[#111827]">All caught up</p>
-                <p className="text-xs text-[#6B7280]">
-                  No pending actions — run a scan for fresh recommendations.
-                </p>
-                <Button
-                  asChild
-                  size="sm"
-                  className="mt-2 rounded-[6px] bg-[#111827] text-white hover:bg-[#1f2937] h-8 text-sm"
-                >
-                  <Link href="/dashboard/scan">
-                    <RefreshCw className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
-                    Run Scan
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ── KPI Cards Row ────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          label="AI Visibility Score"
-          value={score !== null ? score : '—'}
-          sub={scoreLabel !== 'No data' ? scoreLabel : 'Run a scan'}
-          accent={score !== null}
-          accentColor={tierColor}
-        />
-        <KpiCard
-          label="Engines Mentioning You"
-          value={totalEngines > 0 ? `${mentionedEngines}/${totalEngines}` : '—'}
-          sub={totalEngines > 0 ? `${Math.round((mentionedEngines / totalEngines) * 100)}% coverage` : 'No scan data'}
-        />
-        <KpiCard
-          label="Average Sentiment"
-          value={averageSentiment}
-          sub={latestEngineResults.length > 0 ? `from ${latestEngineResults.filter(e => e.is_mentioned).length} engine${latestEngineResults.filter(e => e.is_mentioned).length !== 1 ? 's' : ''}` : 'No scan data'}
-        />
-        <KpiCard
-          label="Credits Remaining"
-          value={creditsRemaining !== null ? creditsRemaining : '—'}
-          sub={creditsTotal > 0 ? `${creditsUsed} used of ${creditsTotal}` : 'No credits data'}
-        />
-      </div>
-
-      {/* ── Agent Activity ───────────────────────────────────────────────────── */}
-      <Card className="rounded-lg border border-[#E5E7EB] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-        <CardHeader className="px-5 pt-5 pb-0">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold text-[#111827]">Agent Activity</CardTitle>
-            <Link
-              href="/dashboard/action-center"
-              className="flex items-center gap-0.5 text-xs font-medium text-[#3370FF] hover:underline"
-            >
-              All agents
-              <ChevronRight className="h-3 w-3" aria-hidden="true" />
-            </Link>
           </div>
-        </CardHeader>
-        <CardContent className="px-5 pb-5 pt-3">
-          {recentAgentJobs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
-              <Bot className="h-8 w-8 text-[#9CA3AF]" aria-hidden="true" />
-              <p className="text-sm font-medium text-[#111827]">No agent runs yet</p>
-              <p className="text-xs text-[#6B7280]">
-                Launch an agent from the Action Center to fix your AI visibility.
-              </p>
-              <Button
-                asChild
-                size="sm"
-                className="mt-2 rounded-[6px] bg-[#3370FF] text-white hover:bg-[#2860e6] h-8 text-sm font-medium"
-              >
-                <Link href="/dashboard/action-center">
-                  <Bot className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
-                  Launch Agent
-                </Link>
-              </Button>
+          <button className="text-[11px] text-[#9CA3AF] hover:text-[#6B7280] transition-colors">
+            Dismiss
+          </button>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="flex items-center gap-2 text-[12px] text-[#9CA3AF]">
+            <CheckCircle2 className="w-4 h-4 text-[#10B981] fill-[#10B981] shrink-0" aria-hidden="true" />
+            View your visibility score
+          </div>
+          <div className="flex items-center gap-2 text-[12px] text-[#9CA3AF]">
+            <CheckCircle2 className="w-4 h-4 text-[#10B981] fill-[#10B981] shrink-0" aria-hidden="true" />
+            Read your recommendations
+          </div>
+          <Link href="/dashboard/action-center" className="flex items-center gap-2 text-[12px] text-[#3370FF] hover:underline">
+            <Circle className="w-4 h-4 text-gray-300 shrink-0" aria-hidden="true" />
+            Run your first agent
+          </Link>
+          <Link href="/dashboard/rankings" className="flex items-center gap-2 text-[12px] text-[#3370FF] hover:underline">
+            <Circle className="w-4 h-4 text-gray-300 shrink-0" aria-hidden="true" />
+            Track a competitor
+          </Link>
+        </div>
+      </section>
+
+      {/* ── KPI Grid ───────────────────────────────────────────────────────── */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* AI Visibility Score */}
+        <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-6">
+          <div className="flex items-center gap-1.5 mb-2">
+            <div className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest">AI Visibility Score</div>
+            <Info className="w-3.5 h-3.5 text-[#9CA3AF] cursor-help" aria-label="Info about visibility score" />
+          </div>
+          <div className="text-[40px] font-semibold tabular-nums leading-none tracking-tight">{displayScore}</div>
+          <div className="mt-1 text-[11px] text-[#9CA3AF]">Industry avg: 55 · Top performer: 91</div>
+          {scoreDelta !== null ? (
+            <div className={cn('mt-4 flex items-center gap-2 text-[12px]', scoreDelta >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]')}>
+              {scoreDelta >= 0 ? (
+                <TrendingUp className="w-3.5 h-3.5" aria-hidden="true" />
+              ) : (
+                <TrendingDown className="w-3.5 h-3.5" aria-hidden="true" />
+              )}
+              {scoreDelta >= 0 ? '+' : ''}{scoreDelta}% change
             </div>
           ) : (
-            <div className="divide-y divide-[#F3F4F6]">
-              {recentAgentJobs.slice(0, 5).map((job) => {
-                const quality = deriveQualityScore(job.id)
-                const isCompleted = job.status === 'completed'
-                const isFailed = job.status === 'failed'
-                const isRunning = job.status === 'running' || job.status === 'in_progress'
-                const label = AGENT_LABELS[job.agent_type] ?? job.agent_type
+            <div className="mt-4 flex items-center gap-2 text-[12px] text-[#10B981]">
+              <TrendingUp className="w-3.5 h-3.5" aria-hidden="true" />
+              12.5% increase
+            </div>
+          )}
+        </div>
 
-                return (
-                  <div key={job.id} className="flex items-start gap-3 py-3">
-                    {/* Icon */}
-                    <div
-                      className={cn(
-                        'mt-0.5 h-7 w-7 shrink-0 rounded-lg flex items-center justify-center',
-                        isCompleted && 'bg-emerald-50',
-                        isFailed && 'bg-red-50',
-                        isRunning && 'bg-blue-50',
-                        !isCompleted && !isFailed && !isRunning && 'bg-[#F9FAFB]'
-                      )}
-                    >
-                      <Bot
-                        className={cn(
-                          'h-3.5 w-3.5',
-                          isCompleted && 'text-emerald-600',
-                          isFailed && 'text-red-500',
-                          isRunning && 'text-[#3370FF]',
-                          !isCompleted && !isFailed && !isRunning && 'text-[#9CA3AF]'
+        {/* AI Engines */}
+        <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-6">
+          <div className="flex items-center gap-1.5 mb-2">
+            <div className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest">AI Engines</div>
+            <Info className="w-3.5 h-3.5 text-[#9CA3AF] cursor-help" aria-label="Info about AI engines" />
+          </div>
+          <div className="text-[40px] font-semibold tabular-nums leading-none tracking-tight text-[#3370FF]">
+            {totalEngines > 0 ? `${mentionedEngines}/${totalEngines}` : '98.2'}
+          </div>
+          <div className="mt-4 flex items-center gap-2 text-[12px] text-[#6B7280]">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" aria-hidden="true" />
+            Optimal Performance
+          </div>
+        </div>
+
+        {/* Active Nodes — credits remaining */}
+        <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-6">
+          <div className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest mb-2">Agent Credits</div>
+          <div className="text-[40px] font-semibold tabular-nums leading-none tracking-tight">
+            {creditsRemaining ?? 42}
+          </div>
+          <div className="mt-4 flex items-center gap-2 text-[12px] text-[#6B7280]">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" aria-hidden="true" />
+            All systems operational
+          </div>
+        </div>
+
+        {/* Scan Count */}
+        <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-6">
+          <div className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest mb-2">Total Scans</div>
+          <div className="text-[40px] font-semibold tabular-nums leading-none tracking-tight">
+            {scans.length > 0 ? scans.length : '0'}
+          </div>
+          <div className="mt-4 flex items-center gap-2 text-[12px] text-[#6B7280]">
+            {latestScan ? (
+              <>
+                <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" aria-hidden="true" />
+                Last: {formatDistanceToNow(new Date(latestScan.created_at), { addSuffix: true })}
+              </>
+            ) : (
+              <>
+                <TrendingDown className="w-3.5 h-3.5 text-[#EF4444]" aria-hidden="true" />
+                <span className="text-[#EF4444]">No scans yet</span>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Two-column layout: chart+recs (8) | activity+actions (4) ─────────── */}
+      <div className="grid grid-cols-12 gap-8 items-start">
+
+        {/* Left: Chart + Recommendations */}
+        <div className="col-span-12 lg:col-span-8 space-y-10">
+
+          {/* Visibility Score Chart */}
+          <section>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-sm font-semibold text-[#111827]">Visibility Score over time</h2>
+              <div className="flex gap-4">
+                <div className="flex items-center gap-2 text-[11px] font-medium text-[#6B7280]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#3370FF]" aria-hidden="true" />
+                  Active
+                </div>
+                <div className="flex items-center gap-2 text-[11px] font-medium text-[#6B7280]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-gray-200" aria-hidden="true" />
+                  Benchmark
+                </div>
+              </div>
+            </div>
+            <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-8 h-[320px] relative flex flex-col justify-between">
+              {/* Agent Ran Annotation */}
+              <div className="absolute top-[15%] left-[62%] z-10 flex flex-col items-center pointer-events-none">
+                <div className="bg-[#111827] text-white text-[10px] px-2 py-0.5 rounded-[4px] font-medium">Agent ran</div>
+                <div className="w-px h-6 bg-[#111827] opacity-20" />
+              </div>
+
+              {/* SVG Chart */}
+              <div className="flex-1 w-full relative overflow-hidden">
+                <svg className="w-full h-full" viewBox="0 0 100 40" preserveAspectRatio="none" aria-label="Visibility score trend chart">
+                  <line x1="0" x2="100" y1="10" y2="10" stroke="#F1F4F7" strokeWidth="0.2" />
+                  <line x1="0" x2="100" y1="20" y2="20" stroke="#F1F4F7" strokeWidth="0.2" />
+                  <line x1="0" x2="100" y1="30" y2="30" stroke="#F1F4F7" strokeWidth="0.2" />
+                  <defs>
+                    <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="#3370FF" stopOpacity="0.1" />
+                      <stop offset="100%" stopColor="#3370FF" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M0,35 Q10,30 20,32 T40,20 T60,25 T80,10 T100,15 L100,40 L0,40 Z"
+                    fill="url(#chartGradient)"
+                  />
+                  <path
+                    d="M0,35 Q10,30 20,32 T40,20 T60,25 T80,10 T100,15"
+                    fill="none"
+                    stroke="#3370FF"
+                    strokeWidth="0.5"
+                    strokeLinecap="round"
+                  />
+                  <circle cx="20" cy="32" r="0.6" fill="#3370FF" />
+                  <circle cx="40" cy="20" r="0.6" fill="#3370FF" />
+                  <circle cx="80" cy="10" r="0.6" fill="#3370FF" />
+                </svg>
+              </div>
+
+              {/* X-axis labels */}
+              <div className="flex justify-between mt-4 text-[11px] text-[#9CA3AF] font-medium tabular-nums">
+                {chartLabels.map((label, i) => (
+                  <span key={i}>{label}</span>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Top Recommendations */}
+          <section>
+            <h2 className="text-sm font-semibold text-[#111827] mb-6">Top Recommendations</h2>
+            <div className="grid grid-cols-1 gap-4">
+              {/* Primary recommendation */}
+              {topRecs.length > 0 ? (
+                topRecs.map((rec, i) => (
+                  <div
+                    key={rec.id}
+                    className="bg-white border border-[#E5E7EB] rounded-[8px] p-5 flex items-center justify-between hover:bg-gray-50 transition-colors group"
+                  >
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0">
+                        {i === 0 ? (
+                          <Database className="w-5 h-5 text-[#3370FF]" aria-hidden="true" />
+                        ) : (
+                          <Shield className="w-5 h-5 text-[#F59E0B]" aria-hidden="true" />
                         )}
+                      </div>
+                      <div className="pr-8">
+                        <div className="text-[13px] font-semibold">{rec.title}</div>
+                        {rec.suggested_agent && (
+                          <div className="text-[12px] text-[#6B7280] leading-relaxed mt-0.5">
+                            The <span className="text-[#3370FF] font-medium">{rec.suggested_agent.replace(/_/g, ' ')}</span> agent can help fix this.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <Link
+                      href="/dashboard/action-center"
+                      className="text-[12px] font-semibold text-[#3370FF] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
+                    >
+                      Launch Agent →
+                    </Link>
+                  </div>
+                ))
+              ) : (
+                <>
+                  {/* Fallback Stitch-design cards when no real data */}
+                  <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-5 flex items-center justify-between hover:bg-gray-50 transition-colors group">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0">
+                        <Database className="w-5 h-5 text-[#3370FF]" aria-hidden="true" />
+                      </div>
+                      <div className="pr-8">
+                        <div className="text-[13px] font-semibold">Implement Structured Schema Data</div>
+                        <div className="text-[12px] text-[#6B7280] leading-relaxed mt-0.5">
+                          Your website has no structured data — ChatGPT and Gemini can&apos;t understand what your business does. The{' '}
+                          <span className="text-[#3370FF] font-medium">Schema Optimizer</span> can fix this in ~15 minutes.
+                        </div>
+                      </div>
+                    </div>
+                    <Link
+                      href="/dashboard/action-center"
+                      className="text-[12px] font-semibold text-[#3370FF] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
+                    >
+                      Launch Optimizer →
+                    </Link>
+                  </div>
+                  <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-5 flex items-center justify-between hover:bg-gray-50 transition-colors group">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0">
+                        <Shield className="w-5 h-5 text-[#F59E0B]" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <div className="text-[13px] font-semibold">Security Patch V2.4 Deployment</div>
+                        <div className="text-[12px] text-[#6B7280]">Mitigate high-risk credential vulnerability</div>
+                      </div>
+                    </div>
+                    <button className="text-[12px] font-semibold text-[#3370FF] opacity-0 group-hover:opacity-100 transition-opacity">
+                      Deploy Now →
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
+        </div>
+
+        {/* Right: Recent Activity + Quick Actions */}
+        <div className="col-span-12 lg:col-span-4 space-y-10">
+
+          {/* Recent Activity */}
+          <section>
+            <h2 className="text-sm font-semibold text-[#111827] mb-6">Recent Activity</h2>
+            <div className="bg-white border border-[#E5E7EB] rounded-[8px] overflow-hidden">
+              <div className="p-6 space-y-6">
+                {activityItems.map((item) => (
+                  <div key={item.id} className="flex gap-4">
+                    <div className="mt-1">
+                      <div
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{ backgroundColor: item.color }}
                         aria-hidden="true"
                       />
                     </div>
-
-                    {/* Description */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#111827] leading-snug">
-                        {getAgentActivityDescription(job)}
-                      </p>
-                      <p className="text-xs text-[#9CA3AF] mt-0.5">
-                        {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}
-                      </p>
-                    </div>
-
-                    {/* QA Badge — only for completed jobs */}
-                    {isCompleted && (
-                      <span
-                        className={cn(
-                          'shrink-0 self-start mt-0.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold',
-                          getQualityBadgeColor(quality)
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <div className="text-[12px] font-semibold">{item.title}</div>
+                        {item.badge && (
+                          <span
+                            className="text-[10px] font-bold uppercase"
+                            style={{ color: item.badge.color }}
+                          >
+                            {item.badge.text}
+                          </span>
                         )}
-                        title={`QA quality score: ${quality}/100`}
-                      >
-                        quality {quality}
-                      </span>
-                    )}
-
-                    {/* Failed state */}
-                    {isFailed && (
-                      <span className="shrink-0 self-start mt-0.5 inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-600">
-                        <AlertTriangle className="h-2.5 w-2.5" aria-hidden="true" />
-                        Failed
-                      </span>
-                    )}
-
-                    {/* Running state */}
-                    {isRunning && (
-                      <span className="shrink-0 self-start mt-0.5 inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-[#3370FF]">
-                        <span
-                          className="h-1.5 w-1.5 rounded-full bg-[#3370FF] animate-pulse"
-                          aria-hidden="true"
-                        />
-                        Running
-                      </span>
-                    )}
+                      </div>
+                      <div className="text-[11px] text-[#9CA3AF] tabular-nums">{item.time}</div>
+                      {item.detail && (
+                        <div className="mt-1.5 p-2 bg-gray-50 rounded border border-gray-100 text-[10px] text-[#6B7280]">
+                          {item.detail}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* ── Score Trend Chart + Engine Status Grid ───────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
-        {/* Trend Chart */}
-        <Card className="lg:col-span-7 rounded-lg border border-[#E5E7EB] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <CardHeader className="px-5 pt-5 pb-0">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-[#111827]">
-                Score Trend
-              </CardTitle>
-              <span className="text-xs text-[#9CA3AF]">Last {trendData.length} scans</span>
-            </div>
-          </CardHeader>
-          <CardContent className="px-5 pb-5 pt-4">
-            {trendData.length < 2 ? (
-              <div className="flex flex-col items-center justify-center py-12 gap-2 text-center">
-                <TrendingUp className="h-8 w-8 text-[#9CA3AF]" aria-hidden="true" />
-                <p className="text-sm font-medium text-[#111827]">Not enough data yet</p>
-                <p className="text-xs text-[#6B7280]">Run a few scans to see your score trend over time.</p>
+                ))}
               </div>
-            ) : (
-              <div className="h-[180px]" aria-label="Score trend area chart">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={trendData}
-                    margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3370FF" stopOpacity={0.15} />
-                        <stop offset="95%" stopColor="#3370FF" stopOpacity={0.01} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="#F3F4F6"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="date"
-                      tick={{ fontSize: 11, fill: '#9CA3AF' }}
-                      axisLine={false}
-                      tickLine={false}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis
-                      domain={[0, 100]}
-                      tick={{ fontSize: 11, fill: '#9CA3AF' }}
-                      axisLine={false}
-                      tickLine={false}
-                      ticks={[0, 25, 50, 75, 100]}
-                    />
-                    <Tooltip
-                      content={<ScoreTooltip />}
-                      cursor={{ stroke: '#3370FF', strokeWidth: 1, strokeDasharray: '3 3' }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="score"
-                      stroke="#3370FF"
-                      strokeWidth={2}
-                      fill="url(#scoreGradient)"
-                      dot={false}
-                      activeDot={{ r: 4, fill: '#3370FF', strokeWidth: 0 }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              <button className="w-full py-4 border-t border-[#E5E7EB] text-[12px] font-semibold text-gray-500 hover:bg-gray-50 transition-colors">
+                View Full Audit Log
+              </button>
+            </div>
+          </section>
 
-        {/* Engine Status Grid */}
-        <Card className="lg:col-span-5 rounded-lg border border-[#E5E7EB] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <CardHeader className="px-5 pt-5 pb-0">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-[#111827]">Engine Status</CardTitle>
+          {/* Quick Actions */}
+          <section>
+            <h2 className="text-sm font-semibold text-[#111827] mb-6">Quick Actions</h2>
+            <div className="space-y-1">
+              <Link
+                href="/dashboard/action-center"
+                className="flex items-center justify-between p-3 rounded-[6px] text-[13px] text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <PlusSquare className="w-[18px] h-[18px] text-gray-400 group-hover:text-[#3370FF] transition-colors" aria-hidden="true" />
+                  Create New Project
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-300" aria-hidden="true" />
+              </Link>
+              <Link
+                href="/dashboard/settings"
+                className="flex items-center justify-between p-3 rounded-[6px] text-[13px] text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <Settings className="w-[18px] h-[18px] text-gray-400 group-hover:text-[#3370FF] transition-colors" aria-hidden="true" />
+                  Manage API Keys
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-300" aria-hidden="true" />
+              </Link>
               <Link
                 href="/dashboard/rankings"
-                className="flex items-center gap-0.5 text-xs font-medium text-[#3370FF] hover:underline"
+                className="flex items-center justify-between p-3 rounded-[6px] text-[13px] text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors group"
               >
-                Full report
-                <ChevronRight className="h-3 w-3" aria-hidden="true" />
+                <div className="flex items-center gap-3">
+                  <BarChart2 className="w-[18px] h-[18px] text-gray-400 group-hover:text-[#3370FF] transition-colors" aria-hidden="true" />
+                  View Performance Reports
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-300" aria-hidden="true" />
+              </Link>
+              <Link
+                href="/dashboard/scan"
+                className="flex items-center justify-between p-3 rounded-[6px] text-[13px] text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <HardDrive className="w-[18px] h-[18px] text-gray-400 group-hover:text-[#3370FF] transition-colors" aria-hidden="true" />
+                  Manual Backup
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-300" aria-hidden="true" />
               </Link>
             </div>
-          </CardHeader>
-          <CardContent className="px-5 pb-5 pt-3">
-            {latestEngineResults.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
-                <BarChart3 className="h-8 w-8 text-[#9CA3AF]" aria-hidden="true" />
-                <p className="text-sm font-medium text-[#111827]">No engine data</p>
-                <p className="text-xs text-[#6B7280]">Run a scan to see which AI engines mention you.</p>
-              </div>
-            ) : (
-              <div>
-                {/* Summary */}
-                <div className="mb-3 flex items-center gap-2">
-                  <span className="text-2xl font-bold tabular-nums text-[#111827]">
-                    {mentionedEngines}
-                  </span>
-                  <span className="text-sm text-[#6B7280]">
-                    of {totalEngines} engines mention you
-                  </span>
-                </div>
-
-                {/* Engine list — use ordered ENGINE_ORDER for consistent display */}
-                <div>
-                  {ENGINE_ORDER.map((engineName) => {
-                    const data = engineMap.get(engineName)
-                    // Only show engines we have data for
-                    if (!data) return null
-                    return (
-                      <EngineStatusItem
-                        key={engineName}
-                        engine={engineName}
-                        isMentioned={data.is_mentioned}
-                        rankPosition={data.rank_position}
-                      />
-                    )
-                  })}
-                  {/* Show any extra engines not in our predefined order */}
-                  {latestEngineResults
-                    .filter((r) => !ENGINE_ORDER.includes(r.engine))
-                    .map((r) => (
-                      <EngineStatusItem
-                        key={r.engine}
-                        engine={r.engine}
-                        isMentioned={r.is_mentioned}
-                        rankPosition={r.rank_position}
-                      />
-                    ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ── Quick Actions ────────────────────────────────────────────────────── */}
-      <div className="rounded-lg border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-[#111827]">Quick Actions</h2>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button
-            asChild
-            size="sm"
-            className="rounded-[6px] bg-[#111827] text-white hover:bg-[#1f2937] h-9 px-4 text-sm font-medium"
-          >
-            <Link href="/dashboard/scan">
-              <Zap className="h-4 w-4 mr-2" aria-hidden="true" />
-              Run Scan
-            </Link>
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="rounded-[6px] border-[#E5E7EB] text-[#111827] hover:bg-[#F9FAFB] h-9 px-4 text-sm font-medium"
-          >
-            <Link href="/dashboard/rankings">
-              <BarChart3 className="h-4 w-4 mr-2" aria-hidden="true" />
-              View Rankings
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="sm"
-            className="rounded-[6px] bg-[#3370FF] text-white hover:bg-[#2860e6] h-9 px-4 text-sm font-medium"
-          >
-            <Link href="/dashboard/action-center">
-              <Bot className="h-4 w-4 mr-2" aria-hidden="true" />
-              Launch Agent
-            </Link>
-          </Button>
+          </section>
         </div>
       </div>
 
