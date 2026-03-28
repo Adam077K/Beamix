@@ -10,25 +10,14 @@ export default async function ContentPage() {
 
   if (!user) redirect('/login')
 
-  const [contentResult, outputsResult] = await Promise.all([
-    supabase
-      .from('content_items')
-      .select('id, agent_type, title, content_format, word_count, quality_score, is_favorited, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(50),
-    supabase
-      .from('agent_jobs')
-      .select('id, agent_type, status, created_at, completed_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(50),
-  ])
+  const { data: items } = await supabase
+    .from('content_items')
+    .select('id, title, content, agent_type, status, quality_score, created_at')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(100)
 
   return (
-    <ContentLibraryView
-      content={contentResult.data ?? []}
-      outputs={outputsResult.data ?? []}
-    />
+    <ContentLibraryView items={items ?? []} />
   )
 }

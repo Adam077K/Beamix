@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 
 interface ScoreRingProps {
   score: number | null
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   showLabel?: boolean
   animate?: boolean
   className?: string
@@ -16,12 +16,14 @@ interface ScoreRingProps {
   - Size sm: 80px  (sidebar compact display)
   - Size md: 120px (rankings cards)
   - Size lg: 160px (hero score on overview)
+  - Size xl: 140px (overview hero — dashboard redesign spec)
 */
 
 const SIZE_MAP = {
   sm:  { outer: 80,  stroke: 6,  fontSize: 'text-xl' },
   md:  { outer: 120, stroke: 8,  fontSize: 'text-3xl' },
   lg:  { outer: 160, stroke: 10, fontSize: 'text-5xl' },
+  xl:  { outer: 140, stroke: 8,  fontSize: 'text-4xl' },
 } as const
 
 function getScoreColor(score: number | null): string {
@@ -163,24 +165,26 @@ interface CountUpNumberProps {
 
 function CountUpNumber({ value, className, style }: CountUpNumberProps) {
   const ref = useRef<HTMLSpanElement>(null)
+  const rafRef = useRef<number>(0)
 
   useEffect(() => {
     if (!ref.current) return
+    cancelAnimationFrame(rafRef.current)
     const el = ref.current
     const end = value
-    const duration = 1000 // ms — matches ring animation
+    const duration = 1000
     const startTime = performance.now()
 
     function update(now: number) {
       const elapsed = now - startTime
       const progress = Math.min(elapsed / duration, 1)
-      // Ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3)
       el.textContent = String(Math.round(eased * end))
-      if (progress < 1) requestAnimationFrame(update)
+      if (progress < 1) rafRef.current = requestAnimationFrame(update)
     }
 
-    requestAnimationFrame(update)
+    rafRef.current = requestAnimationFrame(update)
+    return () => cancelAnimationFrame(rafRef.current)
   }, [value])
 
   return (

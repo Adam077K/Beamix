@@ -30,10 +30,10 @@ export default async function AgentChatPage({
 
   if (!user) redirect('/login')
 
-  const [businessResult, creditsResult] = await Promise.all([
+  const [businessResult, creditsResult, existingJobResult] = await Promise.all([
     supabase
       .from('businesses')
-      .select('id, name, website_url, industry, location')
+      .select('id, name, website_url, industry, services')
       .eq('user_id', user.id)
       .eq('is_primary', true)
       .single(),
@@ -42,14 +42,33 @@ export default async function AgentChatPage({
       .select('base_allocation, topup_amount, rollover_amount, used_amount')
       .eq('user_id', user.id)
       .single(),
+    supabase
+      .from('agent_jobs')
+      .select('id, status, agent_type, created_at')
+      .eq('user_id', user.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .eq('agent_type', agent_id as any)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ])
+
+  const business = businessResult.data
+  const credits = creditsResult.data
+  const totalCredits = credits
+    ? credits.base_allocation + credits.topup_amount + credits.rollover_amount - credits.used_amount
+    : 0
 
   return (
     <AgentChatView
       agentType={agent_id}
-      businessName={businessResult.data?.name ?? 'My Business'}
-      businessId={businessResult.data?.id ?? ''}
-      totalCredits={creditsResult.data ? (creditsResult.data.base_allocation + creditsResult.data.topup_amount + creditsResult.data.rollover_amount - creditsResult.data.used_amount) : 0}
+      agentId={agent_id}
+      businessName={business?.name ?? 'My Business'}
+      businessUrl={business?.website_url ?? null}
+      industry={business?.industry ?? null}
+      services={Array.isArray(business?.services) ? (business.services as string[]) : []}
+      existingJob={existingJobResult.data ?? null}
+      totalCredits={totalCredits}
     />
   )
 }

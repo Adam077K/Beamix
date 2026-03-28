@@ -8,12 +8,9 @@ import { cn } from '@/lib/utils'
 const ROUTE_LABELS: Record<string, string> = {
   dashboard: 'Dashboard',
   rankings: 'Rankings',
-  'ai-readiness': 'AI Readiness',
-  competitors: 'Competitors',
+  'action-center': 'Action Center',
   agents: 'AI Agents',
   content: 'Content',
-  recommendations: 'Recommendations',
-  notifications: 'Notifications',
   settings: 'Settings',
 }
 

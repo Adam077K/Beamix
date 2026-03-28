@@ -10,109 +10,88 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/login')
 
-  // Real data path — fetch all parallel queries
+  // Fetch all dashboard data in parallel
   const [
     businessResult,
     creditsResult,
     latestScansResult,
     recommendationsResult,
-    recentAgentsResult,
+    recentAgentJobsResult,
+    subscriptionResult,
   ] = await Promise.all([
     supabase
       .from('businesses')
-      .select('id, name, website_url, industry, location')
+      .select('name, website_url, industry')
       .eq('user_id', user.id)
       .eq('is_primary', true)
       .single(),
     supabase
       .from('credit_pools')
-      .select('base_allocation, used_amount, held_amount, rollover_amount, topup_amount, pool_type')
+      .select('base_allocation, used_amount, rollover_amount, topup_amount')
       .eq('user_id', user.id)
       .order('period_end', { ascending: false })
       .limit(1)
       .single(),
     supabase
       .from('scans')
-      .select('id, overall_score, mentions_count, created_at')
+      .select('id, overall_score, mentions_count, created_at, scan_type')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(20),
     supabase
       .from('recommendations')
-      .select('id, title, description, priority, recommendation_type, status, suggested_agent, credits_cost')
+      .select('id, title, priority, status, suggested_agent')
       .eq('user_id', user.id)
       .in('status', ['new', 'in_progress'])
       .order('priority', { ascending: true })
-      .limit(5),
+      .limit(10),
     supabase
       .from('agent_jobs')
-      .select('id, agent_type, status, credits_cost, created_at, completed_at')
+      .select('id, agent_type, status, created_at, completed_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(5),
+    supabase
+      .from('subscriptions')
+      .select('plan_tier, status, trial_ends_at')
+      .eq('user_id', user.id)
+      .single(),
   ])
 
-  const business = businessResult.data
-  const credits = creditsResult.data
+  const business = businessResult.data ?? null
+  const credits = creditsResult.data ?? null
   const scans = latestScansResult.data ?? []
   const recommendations = recommendationsResult.data ?? []
-  const recentAgents = recentAgentsResult.data ?? []
-  const latestScan = scans[0] ?? null
-  const previousScan = scans[1] ?? null
-
-  const scoreDelta =
-    latestScan?.overall_score !== null &&
-    latestScan?.overall_score !== undefined &&
-    previousScan?.overall_score !== null &&
-    previousScan?.overall_score !== undefined
-      ? latestScan.overall_score - previousScan.overall_score
-      : null
-
-  const mentionDelta =
-    latestScan !== null && previousScan !== null
-      ? latestScan.mentions_count - previousScan.mentions_count
-      : null
+  const recentAgentJobs = recentAgentJobsResult.data ?? []
+  const subscription = subscriptionResult.data ?? null
 
   // Fetch engine results for the latest scan
-  let enginesMentioning: number | null = null
-  let totalEngines: number | null = null
+  const latestScan = scans[0] ?? null
+  let latestEngineResults: Array<{
+    engine: string
+    is_mentioned: boolean
+    rank_position: number | null
+    sentiment: string | null
+  }> = []
 
   if (latestScan?.id) {
     const { data: engineData } = await supabase
       .from('scan_engine_results')
-      .select('is_mentioned')
+      .select('engine, is_mentioned, rank_position, sentiment')
       .eq('scan_id', latestScan.id)
 
-    if (engineData) {
-      totalEngines = engineData.length
-      enginesMentioning = engineData.filter((r) => r.is_mentioned).length
-    }
+    latestEngineResults = engineData ?? []
   }
-
-  // Build trend data from scans (oldest → newest) for sparklines
-  const trendData = scans
-    .filter((s) => s.overall_score !== null)
-    .map((s) => ({ score: s.overall_score as number }))
-    .reverse()
 
   return (
     <DashboardOverview
-      businessName={business?.name ?? 'My Business'}
-      businessUrl={business?.website_url ?? null}
-      score={latestScan?.overall_score ?? null}
-      scoreDelta={scoreDelta}
-      mentionCount={latestScan?.mentions_count ?? 0}
-      mentionDelta={mentionDelta}
-      lastScanned={latestScan?.created_at ?? null}
-      totalCredits={credits ? (credits.base_allocation + credits.rollover_amount + credits.topup_amount - credits.used_amount - (credits.held_amount ?? 0)) : 0}
-      monthlyCredits={credits?.base_allocation ?? 0}
-      usedCredits={credits?.used_amount ?? 0}
-      enginesMentioning={enginesMentioning}
-      totalEngines={totalEngines}
-      trendData={trendData}
+      business={business}
+      credits={credits}
+      scans={scans}
+      latestEngineResults={latestEngineResults}
       recommendations={recommendations}
-      recentAgents={recentAgents}
-      recentScans={scans}
+      recentAgentJobs={recentAgentJobs}
+      subscription={subscription}
     />
   )
 }

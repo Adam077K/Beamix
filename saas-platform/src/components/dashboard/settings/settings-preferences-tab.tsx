@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { Save, Moon, Sun, Globe, Clock, Bell } from 'lucide-react'
+import { Moon, Sun, Globe, Clock, Bell } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -16,7 +15,7 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
-// ── Timezones ──────────────────────────────────────────────
+// ── Timezones ───────────────────────────────────────────────
 
 const TIMEZONES = [
   { value: 'Asia/Jerusalem', label: 'Israel (GMT+2)' },
@@ -33,7 +32,7 @@ const TIMEZONES = [
   { value: 'Australia/Sydney', label: 'Sydney (GMT+11)' },
 ]
 
-// ── Notification items ─────────────────────────────────────
+// ── Notification items ──────────────────────────────────────
 
 type NotificationKey =
   | 'weeklyDigest'
@@ -70,21 +69,21 @@ const NOTIFICATION_PREFS: NotificationPrefItem[] = [
   },
 ]
 
-// ── Loading skeleton ───────────────────────────────────────
+// ── Loading skeleton ────────────────────────────────────────
 
 function PreferencesSkeleton() {
   return (
-    <div className="space-y-5 animate-pulse" aria-label="Loading preferences">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="h-36 rounded-[20px] bg-muted" />
+    <div className="space-y-4 animate-pulse" aria-label="Loading preferences">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="h-32 rounded-lg bg-[#F3F4F6]" />
       ))}
     </div>
   )
 }
 
-// ── Section card wrapper ───────────────────────────────────
+// ── Section wrapper ─────────────────────────────────────────
 
-function SectionCard({
+function Section({
   icon: Icon,
   title,
   children,
@@ -94,32 +93,58 @@ function SectionCard({
   children: React.ReactNode
 }) {
   return (
-    <Card className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">
-      <CardHeader className="pb-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted">
-            <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-          </div>
-          <CardTitle className="text-base font-semibold text-foreground">
-            {title}
-          </CardTitle>
+    <div className="bg-white rounded-lg border border-[#E5E7EB] p-5">
+      <div className="flex items-center gap-2.5 mb-4">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F3F4F6]">
+          <Icon className="h-4 w-4 text-[#6B7280]" aria-hidden="true" />
         </div>
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
+        <h2 className="text-base font-semibold text-[#111827]">{title}</h2>
+      </div>
+      {children}
+    </div>
   )
 }
 
-// ── Preferences Tab ────────────────────────────────────────
+// ── Language toggle ─────────────────────────────────────────
+
+function LangToggle({
+  value,
+  onChange,
+}: {
+  value: 'en' | 'he'
+  onChange: (v: 'en' | 'he') => void
+}) {
+  return (
+    <div className="flex gap-2">
+      {(['en', 'he'] as const).map((lang) => (
+        <button
+          key={lang}
+          type="button"
+          onClick={() => onChange(lang)}
+          className={cn(
+            'rounded-lg border px-4 py-2 text-sm font-medium transition-all duration-150',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF]/40',
+            value === lang
+              ? 'border-[#3370FF] bg-[#EBF0FF] text-[#3370FF]'
+              : 'border-[#E5E7EB] text-[#6B7280] hover:border-[#3370FF]/40 hover:text-[#111827]',
+          )}
+          aria-pressed={value === lang}
+        >
+          {lang === 'en' ? 'English' : 'Hebrew'}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ── Preferences Tab ─────────────────────────────────────────
 
 export function SettingsPreferencesTab() {
   const { theme, setTheme } = useTheme()
   const [interfaceLanguage, setInterfaceLanguage] = useState<'en' | 'he'>('en')
   const [contentLanguage, setContentLanguage] = useState<'en' | 'he'>('en')
   const [timezone, setTimezone] = useState('Asia/Jerusalem')
-  const [notifications, setNotifications] = useState<
-    Record<NotificationKey, boolean>
-  >({
+  const [notifications, setNotifications] = useState<Record<NotificationKey, boolean>>({
     weeklyDigest: true,
     rankingDrop: true,
     competitorMovement: false,
@@ -127,6 +152,7 @@ export function SettingsPreferencesTab() {
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -169,6 +195,7 @@ export function SettingsPreferencesTab() {
   const handleSave = useCallback(async () => {
     setSaving(true)
     setSaved(false)
+    setError(null)
     try {
       const res = await fetch('/api/preferences', {
         method: 'PATCH',
@@ -186,7 +213,11 @@ export function SettingsPreferencesTab() {
       if (res.ok) {
         setSaved(true)
         setTimeout(() => setSaved(false), 3000)
+      } else {
+        setError('Failed to save preferences. Please try again.')
       }
+    } catch {
+      setError('Network error. Please check your connection and try again.')
     } finally {
       setSaving(false)
     }
@@ -195,22 +226,32 @@ export function SettingsPreferencesTab() {
   if (loading) return <PreferencesSkeleton />
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
+
+      {/* Error state */}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          {error}
+        </div>
+      )}
 
       {/* Appearance */}
-      <SectionCard icon={Sun} title="Appearance">
-        <div className="flex items-center justify-between rounded-xl border border-border bg-muted/20 px-4 py-3.5">
+      <Section icon={Sun} title="Appearance">
+        <div className="flex items-center justify-between rounded-lg border border-[#E5E7EB] bg-[#F6F7F9] px-4 py-3.5">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white border border-[#E5E7EB]">
               {theme === 'dark' ? (
-                <Moon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                <Moon className="h-3.5 w-3.5 text-[#6B7280]" aria-hidden="true" />
               ) : (
-                <Sun className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+                <Sun className="h-3.5 w-3.5 text-[#6B7280]" aria-hidden="true" />
               )}
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">Dark Mode</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-sm font-medium text-[#111827]">Dark Mode</p>
+              <p className="text-xs text-[#6B7280] mt-0.5">
                 Switch between light and dark theme
               </p>
             </div>
@@ -222,68 +263,39 @@ export function SettingsPreferencesTab() {
             aria-label="Toggle dark mode"
           />
         </div>
-      </SectionCard>
+      </Section>
 
       {/* Language */}
-      <SectionCard icon={Globe} title="Language">
+      <Section icon={Globe} title="Language">
         <div className="space-y-5">
-          {/* Interface Language */}
+
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Interface Language</Label>
-            <div className="flex gap-2">
-              {(['en', 'he'] as const).map((lang) => (
-                <button
-                  key={lang}
-                  type="button"
-                  onClick={() => setInterfaceLanguage(lang)}
-                  className={cn(
-                    'rounded-xl border px-5 py-2 text-sm font-medium transition-all duration-150',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    interfaceLanguage === lang
-                      ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                      : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
-                  )}
-                  aria-pressed={interfaceLanguage === lang}
-                >
-                  {lang === 'en' ? 'English' : 'Hebrew'}
-                </button>
-              ))}
-            </div>
+            <Label className="text-sm font-medium text-[#6B7280]">
+              Interface Language
+            </Label>
+            <LangToggle value={interfaceLanguage} onChange={setInterfaceLanguage} />
           </div>
 
-          {/* Content Language */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Content Language</Label>
-            <p className="text-xs text-muted-foreground">
+            <Label className="text-sm font-medium text-[#6B7280]">
+              Content Language
+            </Label>
+            <p className="text-xs text-[#9CA3AF]">
               Language used when agents write content for you
             </p>
-            <div className="flex gap-2">
-              {(['en', 'he'] as const).map((lang) => (
-                <button
-                  key={lang}
-                  type="button"
-                  onClick={() => setContentLanguage(lang)}
-                  className={cn(
-                    'rounded-xl border px-5 py-2 text-sm font-medium transition-all duration-150',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    contentLanguage === lang
-                      ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                      : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
-                  )}
-                  aria-pressed={contentLanguage === lang}
-                >
-                  {lang === 'en' ? 'English' : 'Hebrew'}
-                </button>
-              ))}
-            </div>
+            <LangToggle value={contentLanguage} onChange={setContentLanguage} />
           </div>
+
         </div>
-      </SectionCard>
+      </Section>
 
       {/* Timezone */}
-      <SectionCard icon={Clock} title="Timezone">
+      <Section icon={Clock} title="Timezone">
         <Select value={timezone} onValueChange={setTimezone}>
-          <SelectTrigger className="w-full" aria-label="Select timezone">
+          <SelectTrigger
+            className="w-full border-[#E5E7EB] bg-white text-[#111827] rounded-lg focus:ring-[#3370FF]/40"
+            aria-label="Select timezone"
+          >
             <SelectValue placeholder="Select timezone" />
           </SelectTrigger>
           <SelectContent>
@@ -294,23 +306,19 @@ export function SettingsPreferencesTab() {
             ))}
           </SelectContent>
         </Select>
-      </SectionCard>
+      </Section>
 
       {/* Email Notifications */}
-      <SectionCard icon={Bell} title="Email Notifications">
-        <div className="rounded-xl border border-border overflow-hidden divide-y divide-border/60">
+      <Section icon={Bell} title="Email Notifications">
+        <div className="rounded-lg border border-[#E5E7EB] overflow-hidden divide-y divide-[#F3F4F6]">
           {NOTIFICATION_PREFS.map((pref) => (
             <div
               key={pref.key}
-              className="flex items-center justify-between px-4 py-3.5 hover:bg-muted/20 transition-colors"
+              className="flex items-center justify-between px-4 py-3.5 hover:bg-[#F6F7F9] transition-colors"
             >
               <div className="flex-1 min-w-0 pr-4">
-                <p className="text-sm font-medium text-foreground">
-                  {pref.label}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {pref.description}
-                </p>
+                <p className="text-sm font-medium text-[#111827]">{pref.label}</p>
+                <p className="text-xs text-[#6B7280] mt-0.5">{pref.description}</p>
               </div>
               <Switch
                 checked={notifications[pref.key]}
@@ -320,25 +328,26 @@ export function SettingsPreferencesTab() {
             </div>
           ))}
         </div>
-      </SectionCard>
+      </Section>
 
-      {/* Save */}
+      {/* Save footer */}
       <div className="flex items-center justify-between gap-3 pt-1">
-        {saved && (
-          <span className="text-sm font-medium text-emerald-600">
-            Preferences saved successfully
-          </span>
-        )}
-        {!saved && <span />}
+        <div>
+          {saved && (
+            <span className="text-sm font-medium text-[#10B981]">
+              Preferences saved successfully
+            </span>
+          )}
+        </div>
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="gap-2 btn-primary-lift"
+          className="rounded-lg bg-[#111827] text-white hover:bg-[#1f2937] focus-visible:ring-[#3370FF]/40"
         >
-          <Save className="h-4 w-4" />
           {saving ? 'Saving...' : 'Save Preferences'}
         </Button>
       </div>
+
     </div>
   )
 }

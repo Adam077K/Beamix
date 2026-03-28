@@ -1,35 +1,27 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import type { ScanResults, LLMEngine } from '@/lib/types'
-import { ENGINE_LABELS, PROVIDER_COLORS } from '@/constants/engines'
-import type { LlmProvider } from '@/constants/engines'
+import { ScoreRing } from '@/components/ui/score-ring'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { Separator } from '@/components/ui/separator'
 import { cn, getScoreColor } from '@/lib/utils'
 import {
   Loader2,
   CheckCircle2,
   XCircle,
-  TrendingUp,
-  Trophy,
-  Zap,
   ArrowRight,
   AlertTriangle,
-  ThumbsUp,
-  Minus,
-  ThumbsDown,
-  Share2,
-  Link2,
   Lock,
-  ChevronRight,
-  Download,
+  TrendingUp,
+  Zap,
+  FileText,
+  BarChart2,
+  Clock,
 } from 'lucide-react'
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type ScanPageStatus = 'loading' | 'processing' | 'completed' | 'error'
 
@@ -44,10 +36,7 @@ interface ScanData {
   results: ScanResults
 }
 
-// --- Utility functions ---
-
-// getScoreColorHex: alias for the shared getScoreColor from @/lib/utils
-const getScoreColorHex = (score: number): string => getScoreColor(score)
+// ─── Utilities ────────────────────────────────────────────────────────────────
 
 function getScoreLabel(score: number): string {
   if (score >= 75) return 'Excellent'
@@ -56,29 +45,32 @@ function getScoreLabel(score: number): string {
   return 'Critical'
 }
 
-function getScoreBadgeClasses(score: number): string {
-  if (score >= 75) return 'bg-cyan-50 text-[#06B6D4]'
-  if (score >= 50) return 'bg-green-50 text-[#10B981]'
-  if (score >= 25) return 'bg-amber-50 text-[#F59E0B]'
-  return 'bg-red-50 text-[#EF4444]'
+function getScoreBadgeStyle(score: number): { bg: string; text: string } {
+  if (score >= 75) return { bg: 'bg-cyan-50', text: 'text-[#06B6D4]' }
+  if (score >= 50) return { bg: 'bg-emerald-50', text: 'text-[#10B981]' }
+  if (score >= 25) return { bg: 'bg-amber-50', text: 'text-[#F59E0B]' }
+  return { bg: 'bg-red-50', text: 'text-[#EF4444]' }
 }
 
-// --- Animation variants ---
+function daysUntilExpiry(expiresAt: string | null | undefined): number | null {
+  if (!expiresAt) return null
+  const diff = new Date(expiresAt).getTime() - Date.now()
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+}
+
+// ─── Animation variants ───────────────────────────────────────────────────────
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.15, delayChildren: 0.2 },
-  },
+  visible: { opacity: 1, transition: { staggerChildren: 0.12, delayChildren: 0.1 } },
 }
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: 'easeOut' as const } },
 }
 
-// --- Processing State with per-engine indicators ---
+// ─── Processing State ─────────────────────────────────────────────────────────
 
 interface EngineStatus {
   engine: LLMEngine
@@ -96,77 +88,49 @@ function ProcessingState() {
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
-
     engineStatuses.forEach((_, i) => {
-      timers.push(
-        setTimeout(() => {
-          setEngineStatuses((prev) =>
-            prev.map((e, idx) => (idx === i ? { ...e, status: 'checking' } : e))
-          )
-        }, i * 3000)
-      )
-      timers.push(
-        setTimeout(() => {
-          setEngineStatuses((prev) =>
-            prev.map((e, idx) => (idx === i ? { ...e, status: 'done' } : e))
-          )
-        }, i * 3000 + 2000)
-      )
+      timers.push(setTimeout(() => {
+        setEngineStatuses(prev => prev.map((e, idx) => idx === i ? { ...e, status: 'checking' } : e))
+      }, i * 3000))
+      timers.push(setTimeout(() => {
+        setEngineStatuses(prev => prev.map((e, idx) => idx === i ? { ...e, status: 'done' } : e))
+      }, i * 3000 + 2000))
     })
-
-    timers.push(
-      setTimeout(() => {
-        setPhase('analyzing')
-      }, engineStatuses.length * 3000 + 1000)
-    )
-
+    timers.push(setTimeout(() => setPhase('analyzing'), engineStatuses.length * 3000 + 1000))
     return () => timers.forEach(clearTimeout)
-    // Only run on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const completedCount = engineStatuses.filter((e) => e.status === 'done').length
-  const progressPercent =
-    phase === 'analyzing'
-      ? 95
-      : (completedCount / engineStatuses.length) * 80
-
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md text-center"
-      >
-        <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary" />
-        <h2 className="mt-6 font-sans font-medium text-2xl text-foreground">
-          Scanning your business
-        </h2>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
+      <div className="w-full max-w-sm text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FFF5F2]">
+          <Loader2 className="h-7 w-7 animate-spin text-[#FF3C00]" />
+        </div>
+        <h2 className="mt-5 text-xl font-medium text-[#111827]">Scanning your business</h2>
+        <p className="mt-1 text-sm text-[#6B7280]">Checking 3 AI engines — this takes about 30 seconds</p>
 
-        {/* Per-engine status indicators */}
-        <div className="mt-8 space-y-3">
+        <div className="mt-8 space-y-2.5">
           {engineStatuses.map((engine) => (
             <div
               key={engine.engine}
-              className="flex items-center gap-3 rounded-xl bg-card p-3 shadow-sm border border-border"
+              className="flex items-center gap-3 rounded-lg border border-[#E5E7EB] bg-white p-3 text-left"
             >
               {engine.status === 'waiting' && (
-                <div className="h-5 w-5 rounded-full border-2 border-border" />
+                <div className="h-5 w-5 shrink-0 rounded-full border-2 border-[#E5E7EB]" />
               )}
               {engine.status === 'checking' && (
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                <Loader2 className="h-5 w-5 shrink-0 animate-spin text-[#FF3C00]" />
               )}
               {engine.status === 'done' && (
-                <CheckCircle2 className="h-5 w-5 text-[#10B981]" />
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-[#10B981]" />
               )}
-              <span
-                className={cn(
-                  'text-sm font-medium',
-                  engine.status === 'checking' && 'text-primary',
-                  engine.status === 'done' && 'text-[#10B981]',
-                  engine.status === 'waiting' && 'text-muted-foreground'
-                )}
-              >
+              <span className={cn(
+                'text-sm font-medium',
+                engine.status === 'checking' && 'text-[#FF3C00]',
+                engine.status === 'done' && 'text-[#10B981]',
+                engine.status === 'waiting' && 'text-[#9CA3AF]'
+              )}>
                 {engine.status === 'checking'
                   ? `Asking ${engine.label}...`
                   : engine.status === 'done'
@@ -181,598 +145,363 @@ function ProcessingState() {
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mt-4 text-sm text-muted-foreground"
+            className="mt-4 text-sm text-[#6B7280]"
           >
             Analyzing results and calculating your score...
           </motion.p>
         )}
-
-        <Progress value={progressPercent} className="mx-auto mt-6 w-full" />
-      </motion.div>
-    </div>
-  )
-}
-
-// --- DotsIndicator: 10 dots filled by score ---
-
-function DotsIndicator({ score, size = 'md' }: { score: number; size?: 'sm' | 'md' }) {
-  const filledDots = Math.round(score / 10)
-  const dotSize = size === 'sm' ? 'h-2 w-2' : 'h-3 w-3'
-
-  return (
-    <div className="flex items-center gap-1.5">
-      {Array.from({ length: 10 }, (_, i) => (
-        <div
-          key={i}
-          className={cn(`rounded-full ${dotSize} transition-colors`, i >= filledDots && 'bg-border')}
-          style={i < filledDots ? { backgroundColor: getScoreColorHex(score) } : undefined}
-        />
-      ))}
-    </div>
-  )
-}
-
-// --- Score Reveal with animated counter ---
-
-function ScoreReveal({ score }: { score: number }) {
-  const [displayScore, setDisplayScore] = useState(0)
-
-  useEffect(() => {
-    const duration = 1500
-    const steps = 60
-    const increment = score / steps
-    let current = 0
-    const timer = setInterval(() => {
-      current += increment
-      if (current >= score) {
-        setDisplayScore(score)
-        clearInterval(timer)
-      } else {
-        setDisplayScore(Math.round(current))
-      }
-    }, duration / steps)
-    return () => clearInterval(timer)
-  }, [score])
-
-  return (
-    <motion.div
-      initial={{ scale: 0.5, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-      className="flex flex-col items-center"
-    >
-      <div
-        className="relative flex h-40 w-40 flex-col items-center justify-center rounded-full border-4"
-        style={{ borderColor: getScoreColorHex(score) }}
-      >
-        <span
-          className="font-sans font-bold text-5xl"
-          style={{ color: getScoreColorHex(score) }}
-        >
-          {displayScore}
-        </span>
-        <span className="text-sm text-muted-foreground font-normal">/100</span>
-      </div>
-      <span
-        className={cn(
-          'mt-3 inline-flex items-center rounded-full px-3 py-1 text-sm font-medium',
-          getScoreBadgeClasses(score)
-        )}
-      >
-        {getScoreLabel(score)}
-      </span>
-      <div className="mt-4">
-        <DotsIndicator score={score} />
-      </div>
-    </motion.div>
-  )
-}
-
-// --- Score Breakdown Gradient Bar ---
-
-function ScoreBreakdownBar({ score }: { score: number }) {
-  return (
-    <div className="space-y-2">
-      <div className="flex justify-between text-xs text-muted-foreground">
-        <span>Critical</span>
-        <span>Fair</span>
-        <span>Good</span>
-        <span>Excellent</span>
-      </div>
-      <div className="relative h-3 w-full overflow-hidden rounded-full bg-gradient-to-r from-red-400 via-amber-400 via-60% to-emerald-400">
-        <motion.div
-          initial={{ left: '0%' }}
-          animate={{ left: `${Math.min(score, 100)}%` }}
-          transition={{ duration: 1.5, ease: 'easeOut' as const }}
-          className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
-        >
-          <div
-            className="h-5 w-5 rounded-full border-2 border-white shadow-md"
-            style={{ backgroundColor: getScoreColorHex(score) }}
-          />
-        </motion.div>
-      </div>
-      <div className="flex justify-between text-xs font-medium text-muted-foreground">
-        <span>0</span>
-        <span>25</span>
-        <span>50</span>
-        <span>75</span>
-        <span>100</span>
       </div>
     </div>
   )
 }
 
-// --- Engine Card ---
+// ─── Error State ──────────────────────────────────────────────────────────────
 
-function EngineCard({
-  engine,
-  result,
-}: {
-  engine: LLMEngine
-  result: ScanResults['engines'][number]
+function ErrorState({ message }: { message: string | null }) {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
+      <div className="w-full max-w-sm text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+          <XCircle className="h-7 w-7 text-[#EF4444]" />
+        </div>
+        <h2 className="mt-5 text-xl font-medium text-[#111827]">Something went wrong</h2>
+        <p className="mt-2 text-sm text-[#6B7280]">{message ?? 'Unable to load scan results.'}</p>
+        <Link href="/scan" className="mt-6 inline-block">
+          <Button className="rounded-lg bg-[#FF3C00] text-white hover:bg-[#e63600] focus-visible:ring-2 focus-visible:ring-[#FF3C00] focus-visible:ring-offset-2">
+            Try again
+          </Button>
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+// ─── Engine Row (free — shown) ────────────────────────────────────────────────
+
+const ENGINE_LABELS: Record<string, string> = {
+  chatgpt: 'ChatGPT',
+  gemini: 'Gemini',
+  perplexity: 'Perplexity',
+}
+
+const SENTIMENT_LABEL: Record<string, string> = {
+  positive: 'Positive',
+  neutral: 'Neutral',
+  negative: 'Negative',
+}
+
+function EngineRow({ engineKey, result }: {
+  engineKey: string
+  result: { is_mentioned: boolean; mention_position: number | null; sentiment: string | null }
 }) {
-  const providerColor =
-    engine in PROVIDER_COLORS
-      ? PROVIDER_COLORS[engine as LlmProvider]
-      : 'bg-muted text-muted-foreground'
-
+  const label = ENGINE_LABELS[engineKey] ?? engineKey
   return (
-    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', providerColor)}>
-              {ENGINE_LABELS[engine]}
-            </span>
+    <div className="flex items-center gap-4 rounded-lg border border-[#E5E7EB] bg-white px-4 py-3">
+      {/* Mention indicator — filled vs empty circle (color-blind safe) */}
+      <div className="shrink-0">
+        {result.is_mentioned ? (
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#10B981]" aria-label="Mentioned">
+            <span className="text-[10px] font-bold text-white">●</span>
           </div>
-          {result.is_mentioned ? (
-            <Badge className="bg-green-100 text-green-700">
-              <CheckCircle2 className="me-1 h-3 w-3" />
+        ) : (
+          <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#E5E7EB]" aria-label="Not mentioned">
+            <span className="text-[10px] text-[#9CA3AF]">○</span>
+          </div>
+        )}
+      </div>
+
+      {/* Engine name */}
+      <span className="w-24 shrink-0 text-sm font-medium text-[#111827]">{label}</span>
+
+      {/* Status */}
+      <div className="flex flex-1 flex-wrap items-center gap-3">
+        {result.is_mentioned ? (
+          <>
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-[#10B981]">
               Mentioned
-            </Badge>
-          ) : (
-            <Badge variant="secondary" className="bg-red-50 text-red-600">
-              <XCircle className="me-1 h-3 w-3" />
-              Not found
-            </Badge>
-          )}
-        </div>
-
-        {result.is_mentioned && (
-          <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
-            <span>
-              Position:{' '}
-              <strong className="text-foreground">#{result.mention_position}</strong>
             </span>
-            <span className="flex items-center gap-1">
-              Sentiment:{' '}
-              {result.sentiment === 'positive' && (
-                <ThumbsUp className="h-3.5 w-3.5 text-[#10B981]" />
-              )}
-              {result.sentiment === 'neutral' && (
-                <Minus className="h-3.5 w-3.5 text-[#F59E0B]" />
-              )}
-              {result.sentiment === 'negative' && (
-                <ThumbsDown className="h-3.5 w-3.5 text-[#EF4444]" />
-              )}
-              <strong className="capitalize text-foreground">{result.sentiment}</strong>
-            </span>
-          </div>
-        )}
-
-        {result.is_mentioned && result.response_snippet && (
-          <div className="mt-3 rounded-lg bg-green-50 border border-green-200 p-3">
-            <p className="text-sm text-green-800 italic">&ldquo;{result.response_snippet}&rdquo;</p>
-          </div>
-        )}
-        {!result.is_mentioned && (
-          <div className="mt-3 rounded-lg bg-red-50 border border-red-200 p-3">
-            <p className="text-sm text-red-700">Not mentioned in responses for your industry queries.</p>
-          </div>
-        )}
-
-        {result.competitors_mentioned.length > 0 && (
-          <div className="mt-3">
-            <span className="text-xs text-muted-foreground">Also mentioned:</span>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {result.competitors_mentioned.map((comp) => (
-                <Badge key={comp} variant="outline" className="text-xs">
-                  {comp}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-// --- Top Competitor Callout ---
-
-function TopCompetitorCallout({
-  competitor,
-  competitorScore,
-  userScore,
-}: {
-  competitor: string
-  competitorScore: number
-  userScore: number
-}) {
-  const gap = Math.round(competitorScore - userScore)
-
-  return (
-    <Card className="rounded-[20px] border border-amber-200 bg-amber-50">
-      <CardContent className="p-6">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0 text-amber-600" />
-          <div className="flex-1">
-            <h3 className="font-sans font-bold text-lg text-amber-900">
-              Top Competitor Threat
-            </h3>
-            <p className="mt-2 text-sm text-amber-800">
-              <strong>{competitor}</strong> scores{' '}
-              <strong>{competitorScore}</strong> in AI visibility — that&apos;s{' '}
-              <strong>{gap} points</strong> above your score of{' '}
-              <strong>{userScore}</strong>.
-            </p>
-            <p className="mt-2 text-sm text-amber-700">
-              When potential customers ask AI about your industry, {competitor} is more likely to
-              be recommended. Every day without optimization is a day they capture leads that
-              should be yours.
-            </p>
-            <div className="mt-4 flex items-center gap-4">
-              <div className="text-center">
-                <span className="block text-2xl font-bold text-amber-900">{userScore}</span>
-                <span className="text-xs text-amber-600">Your score</span>
-              </div>
-              <div className="flex-1">
-                <div className="relative h-2 rounded-full bg-amber-200">
-                  <div
-                    className="absolute start-0 top-0 h-full rounded-full bg-amber-400"
-                    style={{ width: `${userScore}%` }}
-                  />
-                </div>
-              </div>
-              <div className="text-center">
-                <span className="block text-2xl font-bold text-amber-900">{competitorScore}</span>
-                <span className="text-xs text-amber-600">{competitor}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// --- Leaderboard ---
-
-function LeaderboardSection({
-  leaderboard,
-}: {
-  leaderboard: ScanResults['leaderboard']
-}) {
-  return (
-    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-sans text-lg">
-          <Trophy className="h-5 w-5 text-primary" />
-          AI Visibility Leaderboard
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {leaderboard.map((entry) => (
-          <div
-            key={entry.name}
-            className={cn(
-              'flex items-center gap-3 rounded-xl p-3',
-              entry.is_user
-                ? 'bg-[#FFF5F2] ring-1 ring-primary'
-                : 'bg-background'
-            )}
-          >
-            <span
-              className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold',
-                entry.rank <= 3
-                  ? 'bg-primary text-white'
-                  : 'bg-border text-muted-foreground'
-              )}
-            >
-              {entry.rank}
-            </span>
-            <span
-              className={cn(
-                'flex-1 text-sm font-medium',
-                entry.is_user && 'text-primary'
-              )}
-            >
-              {entry.name}
-              {entry.is_user && (
-                <span className="ms-2 text-xs text-muted-foreground">(You)</span>
-              )}
-            </span>
-            <div className="flex items-center gap-2">
-              <DotsIndicator score={entry.score} size="sm" />
-              <span className="w-10 text-end text-sm font-semibold">
-                {Math.round(entry.score)}
+            {result.mention_position && (
+              <span className="text-xs text-[#6B7280]">
+                Rank <strong className="text-[#111827]">#{result.mention_position}</strong>
               </span>
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
+            )}
+            {result.sentiment && (
+              <span className={cn(
+                'rounded-full px-2 py-0.5 text-xs font-medium',
+                result.sentiment === 'positive' && 'bg-emerald-50 text-[#10B981]',
+                result.sentiment === 'neutral' && 'bg-amber-50 text-[#F59E0B]',
+                result.sentiment === 'negative' && 'bg-red-50 text-[#EF4444]'
+              )}>
+                {SENTIMENT_LABEL[result.sentiment] ?? result.sentiment}
+              </span>
+            )}
+          </>
+        ) : (
+          <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-[#EF4444]">
+            Not found
+          </span>
+        )}
+      </div>
+    </div>
   )
 }
 
-// --- Quick Wins (show first 3 free) ---
+// ─── Locked Engine Row ────────────────────────────────────────────────────────
 
-function QuickWinsSection({
-  quickWins,
-}: {
-  quickWins: ScanResults['quick_wins']
-}) {
-  const impactColors = {
-    high: { bg: 'bg-red-50', text: 'text-red-700', icon: AlertTriangle },
-    medium: { bg: 'bg-amber-50', text: 'text-amber-700', icon: TrendingUp },
-    low: { bg: 'bg-blue-50', text: 'text-blue-700', icon: Zap },
-  }
+const LOCKED_ENGINES = [
+  { key: 'claude', label: 'Claude' },
+  { key: 'google_ai_overviews', label: 'Google AI Overviews' },
+  { key: 'grok', label: 'Grok (X)' },
+  { key: 'you_com', label: 'You.com' },
+]
 
-  const freeWins = quickWins.slice(0, 3)
+function LockedEngineRow({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-4 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 opacity-60">
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-[#E5E7EB] bg-white">
+        <Lock className="h-3 w-3 text-[#9CA3AF]" aria-hidden="true" />
+      </div>
+      <span className="w-24 shrink-0 text-sm font-medium text-[#9CA3AF]">{label}</span>
+      <span className="text-xs text-[#9CA3AF]">Unlock with free trial</span>
+    </div>
+  )
+}
+
+// ─── Teaser Recommendations ───────────────────────────────────────────────────
+
+const TEASER_RECS = [
+  {
+    title: 'Add an FAQ page optimized for AI queries',
+    description: 'AI engines favor structured Q&A content. A targeted FAQ page can get you mentioned in 2–3 more engines.',
+    impact: 'High impact',
+    impactColor: 'text-[#EF4444]',
+    impactBg: 'bg-red-50',
+  },
+  {
+    title: 'Claim and optimize your business description',
+    description: 'Consistent, keyword-rich descriptions across directories help AI engines build a clear picture of your business.',
+    impact: 'Medium impact',
+    impactColor: 'text-[#F59E0B]',
+    impactBg: 'bg-amber-50',
+  },
+]
+
+function TeaserRecommendations({ lockedCount }: { lockedCount: number }) {
+  return (
+    <div className="space-y-3">
+      {TEASER_RECS.map((rec, i) => (
+        <div key={i} className="rounded-lg border border-[#E5E7EB] bg-white p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1">
+              <h4 className="text-sm font-medium text-[#111827]">{rec.title}</h4>
+              <p className="mt-1 text-sm text-[#6B7280]">{rec.description}</p>
+            </div>
+            <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-xs font-medium', rec.impactBg, rec.impactColor)}>
+              {rec.impact}
+            </span>
+          </div>
+        </div>
+      ))}
+
+      {/* Locked count teaser */}
+      {lockedCount > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-dashed border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3">
+          <Lock className="h-4 w-4 shrink-0 text-[#9CA3AF]" aria-hidden="true" />
+          <span className="text-sm text-[#6B7280]">
+            Unlock <strong className="text-[#111827]">{lockedCount} more</strong> personalized recommendations
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Agent Preview Cards ("What our agents would fix") ───────────────────────
+
+interface AgentPreview {
+  icon: React.ComponentType<{ className?: string }>
+  name: string
+  action: string
+  estimatedGain: number
+  accent: string
+  accentBg: string
+}
+
+function buildAgentPreviews(score: number): AgentPreview[] {
+  return [
+    {
+      icon: FileText,
+      name: 'Content Writer',
+      action: 'Create an AI-optimized FAQ + About page targeting your top missed queries',
+      estimatedGain: score < 50 ? 12 : 8,
+      accent: 'text-[#3370FF]',
+      accentBg: 'bg-[#EBF0FF]',
+    },
+    {
+      icon: BarChart2,
+      name: 'Schema Optimizer',
+      action: 'Add structured data markup (JSON-LD) so AI engines can parse your business details',
+      estimatedGain: score < 50 ? 8 : 5,
+      accent: 'text-[#10B981]',
+      accentBg: 'bg-emerald-50',
+    },
+    {
+      icon: TrendingUp,
+      name: 'Competitor Intelligence',
+      action: 'Identify the exact phrases your competitors rank for and create content to compete',
+      estimatedGain: score < 50 ? 7 : 4,
+      accent: 'text-[#F59E0B]',
+      accentBg: 'bg-amber-50',
+    },
+  ]
+}
+
+function AgentPreviewSection({ score }: { score: number }) {
+  const agents = buildAgentPreviews(score)
+  const totalGain = agents.reduce((sum, a) => sum + a.estimatedGain, 0)
+  const projectedScore = Math.min(100, score + totalGain)
 
   return (
-    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-sans text-lg">
-          <Zap className="h-5 w-5 text-primary" />
-          Quick Wins to Improve Your Score
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {freeWins.map((win, i) => {
-          const style = impactColors[win.impact]
-          const ImpactIcon = style.icon
+    <section aria-labelledby="agents-heading">
+      <h2 id="agents-heading" className="text-lg font-medium text-[#111827]">
+        What our agents would fix
+      </h2>
+      <p className="mt-1 text-sm text-[#6B7280]">
+        Start a trial and these agents get to work automatically.
+      </p>
+
+      <div className="mt-4 space-y-3">
+        {agents.map((agent, i) => {
+          const Icon = agent.icon
           return (
-            <div key={i} className={cn('rounded-xl p-4', style.bg)}>
+            <div key={i} className="rounded-lg border border-[#E5E7EB] bg-white p-4">
               <div className="flex items-start gap-3">
-                <ImpactIcon className={cn('mt-0.5 h-5 w-5 shrink-0', style.text)} />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-foreground">{win.title}</h4>
-                  <p className="mt-1 text-sm text-muted-foreground">{win.description}</p>
-                  {win.engine_benefit && (
-                    <p className="mt-2 text-xs font-medium text-primary">{win.engine_benefit}</p>
-                  )}
+                <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg', agent.accentBg)}>
+                  <Icon className={cn('h-4 w-4', agent.accent)} aria-hidden="true" />
                 </div>
-                <Badge
-                  variant="outline"
-                  className={cn('shrink-0 capitalize', style.text)}
-                >
-                  {win.impact} impact
-                </Badge>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-[#111827]">{agent.name}</span>
+                    <span className="shrink-0 text-xs font-medium text-[#10B981]">
+                      +{agent.estimatedGain} pts
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-[#6B7280]">{agent.action}</p>
+                </div>
               </div>
             </div>
           )
         })}
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Total improvement estimate */}
+      <div className="mt-4 rounded-lg border border-[#E5E7EB] bg-[#F6F7F9] px-4 py-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-[#6B7280]">Total estimated improvement</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-[#9CA3AF] line-through">{score}</span>
+            <ArrowRight className="h-3 w-3 text-[#9CA3AF]" aria-hidden="true" />
+            <span className="text-sm font-semibold text-[#10B981]">
+              {projectedScore}{' '}
+              <span className="text-[#10B981]">(+{totalGain} points)</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
   )
 }
 
-// --- Gated/Blurred CTA ---
+// ─── Social Proof ─────────────────────────────────────────────────────────────
 
-function GatedCTA({ scanId, email }: { scanId: string; email?: string | null }) {
-  const signupHref = email
+function SocialProof({ industry }: { industry: string | null }) {
+  const industryLabel = industry ?? 'your industry'
+  return (
+    <div className="rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3 text-center">
+      <p className="text-sm text-[#6B7280]">
+        <Zap className="inline-block h-4 w-4 text-[#FF3C00] mr-1 align-text-bottom" aria-hidden="true" />
+        Built for businesses like yours in{' '}
+        <strong className="text-[#111827]">{industryLabel}</strong>
+      </p>
+    </div>
+  )
+}
+
+// ─── Data Expiry Notice ───────────────────────────────────────────────────────
+
+function ExpiryNotice({ expiresAt }: { expiresAt: string | null | undefined }) {
+  const days = daysUntilExpiry(expiresAt)
+  if (days === null) return null
+
+  return (
+    <div className="flex items-center justify-center gap-2 text-sm text-[#9CA3AF]">
+      <Clock className="h-4 w-4 shrink-0" aria-hidden="true" />
+      <span>
+        Results expire in{' '}
+        <strong className={cn(days <= 7 ? 'text-[#EF4444]' : 'text-[#6B7280]')}>{days} days</strong>
+      </span>
+    </div>
+  )
+}
+
+// ─── Upgrade CTA Card ─────────────────────────────────────────────────────────
+
+function UpgradeCTA({ scanId, email }: { scanId: string; email?: string | null }) {
+  const isValidEmail = email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  const signupHref = isValidEmail
     ? `/signup?scan_id=${scanId}&email=${encodeURIComponent(email)}`
     : `/signup?scan_id=${scanId}`
 
   return (
-    <div className="relative">
-      {/* Blurred placeholder content */}
-      <Card className="select-none rounded-[20px] border border-border bg-card shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 font-sans text-lg">
-            <Zap className="h-5 w-5 text-primary" />
-            5 More Personalized Fixes
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="rounded-xl bg-muted p-4 blur-sm">
-              <div className="flex items-start gap-3">
-                <div className="h-5 w-5 rounded bg-border" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-3/4 rounded bg-border" />
-                  <div className="h-3 w-full rounded bg-border" />
-                  <div className="h-3 w-2/3 rounded bg-border" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+    <div className="rounded-xl border-2 border-[#3370FF] bg-white p-6 text-center">
+      <h3 className="text-xl font-medium text-[#111827]">
+        Ready to fix your AI visibility?
+      </h3>
+      <p className="mx-auto mt-2 max-w-xs text-sm text-[#6B7280]">
+        Beamix agents implement these fixes automatically. Start your 7-day free trial — no credit card required.
+      </p>
 
-      {/* Overlay CTA */}
-      <div className="absolute inset-0 flex items-center justify-center rounded-[20px] bg-card/80 backdrop-blur-sm">
-        <div className="px-6 text-center">
-          <Lock className="mx-auto h-10 w-10 text-primary" />
-          <h3 className="mt-4 font-sans font-bold text-xl text-foreground">
-            Unlock 5 More Personalized Fixes
-          </h3>
-          <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-            Sign up for a free 7-day trial to get detailed, AI-generated action items tailored to
-            your business.
-          </p>
-          <Link href={signupHref}>
-            <Button
-              size="lg"
-              className="mt-4 rounded-full bg-primary text-white hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            >
-              Start free trial
-              <ArrowRight className="ms-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
+      <Link href={signupHref} className="mt-5 inline-block">
+        <Button
+          size="lg"
+          className="rounded-lg bg-[#FF3C00] px-8 text-white hover:bg-[#e63600] focus-visible:ring-2 focus-visible:ring-[#FF3C00] focus-visible:ring-offset-2"
+        >
+          Start 7-day free trial
+          <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+        </Button>
+      </Link>
+
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-[#9CA3AF]">
+        <span className="flex items-center gap-1">
+          <CheckCircle2 className="h-3.5 w-3.5 text-[#10B981]" aria-hidden="true" />
+          7-day free trial
+        </span>
+        <span className="flex items-center gap-1">
+          <CheckCircle2 className="h-3.5 w-3.5 text-[#10B981]" aria-hidden="true" />
+          No credit card
+        </span>
+        <span className="flex items-center gap-1">
+          <CheckCircle2 className="h-3.5 w-3.5 text-[#10B981]" aria-hidden="true" />
+          Cancel anytime
+        </span>
       </div>
     </div>
   )
 }
 
-// --- Share Section ---
-
-function ShareSection({ scanId, businessName, score }: { scanId: string; businessName: string; score: number }) {
-  const [copied, setCopied] = useState(false)
-
-  const rawShareUrl = typeof window !== 'undefined' ? `${window.location.origin}/scan/${scanId}` : `/scan/${scanId}`
-
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(rawShareUrl)
-      setCopied(true)
-    } catch {
-      // Clipboard API unavailable (e.g. non-HTTPS) — show manual copy prompt
-      window.prompt('Copy this link:', rawShareUrl)
-      setCopied(true)
-    }
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  const shareUrl = encodeURIComponent(rawShareUrl)
-  const shareText = encodeURIComponent('Check out my AI visibility score from Beamix!')
-
-  return (
-    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
-      <CardContent className="p-6">
-        <div className="flex items-center gap-3">
-          <Share2 className="h-5 w-5 text-primary" />
-          <h3 className="font-sans font-semibold text-lg text-foreground">
-            Share your results
-          </h3>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-3">
-          {typeof navigator !== 'undefined' && 'share' in navigator && (
-            <Button
-              variant="default"
-              size="sm"
-              className="w-full sm:w-auto bg-primary text-white"
-              onClick={async () => {
-                try {
-                  await navigator.share({
-                    title: `AI Visibility Report — ${businessName}`,
-                    text: `${businessName} scored ${score}/100 in AI visibility. See the full report:`,
-                    url: rawShareUrl,
-                  })
-                } catch {
-                  // User cancelled or share failed — ignore
-                }
-              }}
-            >
-              <Share2 className="h-4 w-4 mr-1.5" />
-              Share Report
-            </Button>
-          )}
-          <Button variant="outline" size="sm" onClick={copyLink} className="gap-2">
-            <Link2 className="h-4 w-4" />
-            {copied ? 'Copied!' : 'Copy link'}
-          </Button>
-          <a
-            href={`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Button variant="outline" size="sm" className="gap-2">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-              </svg>
-              LinkedIn
-            </Button>
-          </a>
-          <a
-            href={`https://x.com/intent/tweet?text=${shareText}&url=${shareUrl}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Button variant="outline" size="sm" className="gap-2">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-              Post on X
-            </Button>
-          </a>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// --- Conversion CTA ---
-
-function ConversionCTA({ scanId, email }: { scanId: string; email?: string | null }) {
-  const signupHref = email
-    ? `/signup?scan_id=${scanId}&email=${encodeURIComponent(email)}`
-    : `/signup?scan_id=${scanId}`
-
-  return (
-    <Card className="rounded-[20px] border-2 border-primary bg-gradient-to-br from-[#FFF5F2] to-card">
-      <CardContent className="p-8 text-center">
-        <h3 className="font-sans font-bold text-2xl text-foreground">
-          Ready to fix your AI visibility?
-        </h3>
-        <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-          Beamix AI agents can implement these fixes automatically. Start your 7-day free trial —
-          no credit card required.
-        </p>
-        <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <Link href={signupHref}>
-            <Button
-              size="lg"
-              className="rounded-full bg-primary text-white hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            >
-              Start fixing now
-              <ArrowRight className="ms-2 h-4 w-4" />
-            </Button>
-          </Link>
-          <Link href="/pricing">
-            <Button variant="outline" size="lg">
-              See pricing
-            </Button>
-          </Link>
-        </div>
-
-        {/* Value props */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-4 w-4 text-[#10B981]" />
-            7-day free trial
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-4 w-4 text-[#10B981]" />
-            No credit card
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-4 w-4 text-[#10B981]" />
-            Cancel anytime
-          </span>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// --- Main Component ---
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export function ScanResultsClient({ scanId }: { scanId: string }) {
   const [status, setStatus] = useState<ScanPageStatus>('loading')
   const [scanData, setScanData] = useState<ScanData | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const scanEmail = scanData?.email ?? null
   const statusRef = useRef(status)
   useEffect(() => { statusRef.current = status }, [status])
 
+  // Derived values from scan data (used in results view)
+  const scanEmail = scanData?.email ?? null
+
   const pollStatus = useCallback(async () => {
-    // No timeout — keep polling until scan completes or fails.
-    // Scans can take 30s-2min depending on engine response times.
     try {
       const res = await fetch(`/api/scan/${scanId}/status`)
       if (!res.ok) {
@@ -800,7 +529,7 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
       }
     } catch {
       setStatus('error')
-      setErrorMsg('Network error')
+      setErrorMsg('Network error. Please check your connection.')
     }
   }, [scanId])
 
@@ -810,403 +539,225 @@ export function ScanResultsClient({ scanId }: { scanId: string }) {
         pollStatus()
       }
     }, 2000)
-    // Initial poll — run on next tick to satisfy react-hooks/set-state-in-effect
     const timeout = setTimeout(() => pollStatus(), 0)
     return () => { clearInterval(interval); clearTimeout(timeout) }
   }, [pollStatus])
 
+  // ── Loading / Processing ───────────────────────────────────────────────────
   if (status === 'loading' || status === 'processing') {
     return <ProcessingState />
   }
 
+  // ── Error ──────────────────────────────────────────────────────────────────
   if (status === 'error') {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-        <XCircle className="h-12 w-12 text-destructive" />
-        <h2 className="mt-4 font-sans font-bold text-2xl text-foreground">
-          Something went wrong
-        </h2>
-        <p className="mt-2 text-muted-foreground">{errorMsg}</p>
-        <Link href="/scan" className="mt-6">
-          <Button>Try again</Button>
-        </Link>
-      </div>
-    )
+    return <ErrorState message={errorMsg} />
   }
 
+  // ── Empty results ──────────────────────────────────────────────────────────
   if (!scanData?.results) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-        <AlertTriangle className="h-12 w-12 text-amber-500" />
-        <h2 className="mt-4 font-sans font-bold text-2xl text-foreground">
-          Results unavailable
-        </h2>
-        <p className="mt-2 text-muted-foreground">
-          This scan may still be processing or has expired.
-        </p>
-        <Link href="/scan" className="mt-6">
-          <Button>Run a new scan</Button>
-        </Link>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-50">
+            <AlertTriangle className="h-7 w-7 text-[#F59E0B]" />
+          </div>
+          <h2 className="mt-5 text-xl font-medium text-[#111827]">Results unavailable</h2>
+          <p className="mt-2 text-sm text-[#6B7280]">
+            This scan may still be processing or has expired.
+          </p>
+          <Link href="/scan" className="mt-6 inline-block">
+            <Button className="rounded-lg bg-[#FF3C00] text-white hover:bg-[#e63600]">
+              Run a new scan
+            </Button>
+          </Link>
+        </div>
       </div>
     )
   }
 
+  // ── Success ────────────────────────────────────────────────────────────────
   const { results, business_name } = scanData
-  const mentionedCount = results.engines.filter((e) => e.is_mentioned).length
+  const score = results.visibility_score
+  const scoreBadge = getScoreBadgeStyle(score)
+  const scoreColor = getScoreColor(score)
+
+  // Parse free engine results (chatgpt, gemini, perplexity)
+  const FREE_ENGINE_KEYS = ['chatgpt', 'gemini', 'perplexity'] as const
+  const freeEngineResults = FREE_ENGINE_KEYS.map((key) => {
+    const match = results.engines.find((e) => e.engine === key)
+    return {
+      key,
+      result: match ?? { is_mentioned: false, mention_position: null, sentiment: null },
+    }
+  })
+
+  const mentionedFreeCount = freeEngineResults.filter((e) => e.result.is_mentioned).length
+
+  // Locked recommendation count (total - 2 teaser shown)
+  const lockedRecCount = Math.max(0, (results.quick_wins?.length ?? 5) - 2)
+
+  // Expiry date from scanData (may come from API)
+  const expiresAt = (scanData as { expires_at?: string | null }).expires_at
+
+  const signupHref = scanEmail
+    ? `/signup?scan_id=${scanId}&email=${encodeURIComponent(scanEmail)}`
+    : `/signup?scan_id=${scanId}`
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Nav */}
-      <div className="border-b border-border bg-card print:hidden">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4 h-14">
-          <Link href="/">
-            <span className="font-sans font-bold text-xl text-foreground">
-              Beam<span className="text-primary">ix</span>
+    <div className="min-h-screen bg-[#F7F7F7]">
+      {/* ── Header ── */}
+      <header className="border-b border-[#E5E7EB] bg-white">
+        <div className="mx-auto flex h-14 max-w-2xl items-center justify-between px-4">
+          <Link href="/" aria-label="Beamix home">
+            <span className="text-lg font-semibold text-[#111827]">
+              Beam<span className="text-[#FF3C00]">ix</span>
             </span>
           </Link>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.print()}
-              className="hidden sm:inline-flex"
-              aria-label="Download report as PDF"
-            >
-              <Download className="h-4 w-4 mr-1.5" />
-              Download PDF
-            </Button>
-            <Link href="/scan">
-              <Button variant="outline" size="sm">
-                New scan
-              </Button>
-            </Link>
-            <Link
-              href={
-                scanEmail
-                  ? `/signup?scan_id=${scanId}&email=${encodeURIComponent(scanEmail)}`
-                  : `/signup?scan_id=${scanId}`
-              }
-            >
-              <Button
-                size="sm"
-                className="bg-primary text-white hover:bg-primary/90"
-              >
-                Sign up free
-              </Button>
-            </Link>
-          </div>
+          <Link
+            href={signupHref}
+            className="text-sm font-medium text-[#6B7280] hover:text-[#111827] transition-colors focus-visible:rounded focus-visible:outline-2 focus-visible:outline-[#FF3C00]"
+          >
+            Sign in
+          </Link>
         </div>
-      </div>
+      </header>
 
-      {/* Results */}
-      <motion.div
+      {/* ── Page body ── */}
+      <motion.main
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="mx-auto max-w-4xl px-4 py-8"
+        className="mx-auto max-w-2xl space-y-6 px-4 py-8"
+        aria-label="Scan results"
       >
-        {/* Hero: Score */}
-        <motion.div variants={itemVariants} className="text-center">
-          <h1 className="font-sans font-medium text-3xl text-foreground">
-            AI Visibility Report
-          </h1>
-          <p className="mt-2 text-lg text-muted-foreground">{business_name}</p>
-          {scanData.created_at && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Scanned on {new Date(scanData.created_at).toLocaleDateString('en-US', {
-                year: 'numeric', month: 'long', day: 'numeric'
-              })}
-            </p>
-          )}
-        </motion.div>
-
-        <motion.div
+        {/* ── Score Hero ── */}
+        <motion.section
           variants={itemVariants}
-          className="mt-8 flex flex-col items-center"
+          className="rounded-xl border border-[#E5E7EB] bg-white px-6 py-8 text-center"
+          aria-labelledby="score-heading"
         >
-          <ScoreReveal score={results.visibility_score} />
-          <p className="mt-4 text-center text-muted-foreground">
-            Your business is mentioned in{' '}
-            <strong className="text-foreground">
-              {mentionedCount} of {results.engines.length}
+          <p className="text-sm font-medium text-[#6B7280]">Your AI Visibility Score</p>
+          <h1 id="score-heading" className="mt-1 text-lg font-medium text-[#111827]">
+            {business_name}
+          </h1>
+
+          <div className="mt-6 flex justify-center">
+            <ScoreRing score={score} size="lg" animate showLabel />
+          </div>
+
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <span
+              className={cn('rounded-full px-3 py-1 text-sm font-medium', scoreBadge.bg, scoreBadge.text)}
+            >
+              {getScoreLabel(score)}
+            </span>
+          </div>
+
+          <p className="mt-3 text-sm text-[#6B7280]">
+            Mentioned in{' '}
+            <strong style={{ color: scoreColor }} className="tabular-nums">
+              {mentionedFreeCount} of 3
             </strong>{' '}
-            AI engines
+            free engines checked
           </p>
-        </motion.div>
+        </motion.section>
 
-        {/* Score Breakdown Bar */}
-        <motion.div variants={itemVariants} className="mx-auto mt-6 max-w-md">
-          <ScoreBreakdownBar score={results.visibility_score} />
-        </motion.div>
+        {/* ── Engine Results ── */}
+        <motion.section variants={itemVariants} aria-labelledby="engines-heading">
+          <h2 id="engines-heading" className="mb-3 text-base font-medium text-[#111827]">
+            Engine Results
+          </h2>
 
-        <Separator className="my-8" />
+          {/* Free engines */}
+          <div className="space-y-2">
+            {freeEngineResults.map(({ key, result }) => (
+              <EngineRow key={key} engineKey={key} result={result} />
+            ))}
+          </div>
 
-        {/* Top Competitor Callout */}
+          {/* Locked engines */}
+          <div className="mt-2 space-y-2">
+            {LOCKED_ENGINES.map((eng) => (
+              <LockedEngineRow key={eng.key} label={eng.label} />
+            ))}
+          </div>
+
+          <p className="mt-3 text-center text-xs text-[#9CA3AF]">
+            4 additional engines unlocked with free trial
+          </p>
+        </motion.section>
+
+        {/* ── Teaser Recommendations ── */}
+        <motion.section variants={itemVariants} aria-labelledby="recs-heading">
+          <h2 id="recs-heading" className="mb-3 text-base font-medium text-[#111827]">
+            Top Recommendations
+          </h2>
+          <TeaserRecommendations lockedCount={lockedRecCount} />
+        </motion.section>
+
+        {/* ── Agent Previews ── */}
         <motion.div variants={itemVariants}>
-          <TopCompetitorCallout
-            competitor={results.top_competitor}
-            competitorScore={results.top_competitor_score}
-            userScore={results.visibility_score}
-          />
+          <AgentPreviewSection score={score} />
         </motion.div>
 
-        <Separator className="my-8" />
+        {/* ── Inline mid-page CTA ── */}
+        <motion.div variants={itemVariants} className="text-center">
+          <Link href={signupHref}>
+            <Button
+              size="lg"
+              className="w-full rounded-lg bg-[#FF3C00] text-white hover:bg-[#e63600] focus-visible:ring-2 focus-visible:ring-[#FF3C00] focus-visible:ring-offset-2 sm:w-auto sm:px-10"
+            >
+              Start 7-day free trial
+              <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+            </Button>
+          </Link>
+          <p className="mt-2 text-xs text-[#9CA3AF]">No credit card required</p>
+        </motion.div>
 
-        {/* Visibility Summary */}
-        {results.visibility_summary && (
+        {/* ── Social Proof ── */}
+        <motion.div variants={itemVariants}>
+          <SocialProof industry={scanData.sector ?? null} />
+        </motion.div>
+
+        {/* ── Data Expiry ── */}
+        {expiresAt && (
           <motion.div variants={itemVariants}>
-            <div className="rounded-xl border border-border bg-muted/30 p-4 text-center">
-              <p className="text-sm text-muted-foreground">{results.visibility_summary}</p>
-            </div>
+            <ExpiryNotice expiresAt={expiresAt} />
           </motion.div>
         )}
 
-        {/* Share of Voice */}
-        {results.share_of_voice !== undefined && (
-          <>
-            <Separator className="my-8" />
-            <motion.div variants={itemVariants}>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-xl border border-border p-4 text-center">
-                  <p className="text-3xl font-bold text-primary">{results.share_of_voice}%</p>
-                  <p className="mt-1 text-sm text-muted-foreground">Your AI Share of Voice</p>
-                </div>
-                <div className="rounded-xl border border-border p-4 text-center">
-                  <p className="text-3xl font-bold text-foreground">
-                    {results.top_competitor_score > 0
-                      ? Math.round(results.top_competitor_score / (results.top_competitor_score + results.visibility_score) * 100)
-                      : '\u2014'}%
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">{results.top_competitor}&apos;s Share</p>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-
-        <Separator className="my-8" />
-
-        {/* Engine Breakdown */}
+        {/* ── Upgrade CTA Card ── */}
         <motion.div variants={itemVariants}>
-          <h2 className="font-sans font-bold text-xl text-foreground">
-            Per-Engine Breakdown
-          </h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {results.engines.map((result) => (
-              <EngineCard
-                key={result.engine}
-                engine={result.engine}
-                result={result}
-              />
-            ))}
-          </div>
+          <UpgradeCTA scanId={scanId} email={scanEmail} />
         </motion.div>
 
-        {/* Queries Used */}
-        {results.queries_used && results.queries_used.length > 0 && (
-          <>
-            <Separator className="my-8" />
-            <motion.div variants={itemVariants} className="print:hidden">
-              <details className="group">
-                <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                  <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" />
-                  What we searched for
-                </summary>
-                <div className="mt-3 space-y-2 pl-6">
-                  {results.queries_used.map((query, i) => (
-                    <div key={i} className="flex items-start gap-2 text-sm">
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-                        {i + 1}
-                      </span>
-                      <span className="text-muted-foreground italic">&quot;{query}&quot;</span>
-                    </div>
-                  ))}
-                </div>
-              </details>
-            </motion.div>
-          </>
-        )}
-
-        {/* Business Context — how we understood the business */}
-        {results.business_context && (
-          <>
-            <Separator className="my-8" />
-            <motion.div variants={itemVariants} className="print:hidden">
-              <details className="group">
-                <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                  <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" />
-                  How we understood your business
-                </summary>
-                <div className="mt-3 rounded-xl border border-border bg-muted/20 p-4 space-y-2 text-sm">
-                  <div>
-                    <span className="font-medium text-foreground">Industry: </span>
-                    <span className="text-muted-foreground">{results.business_context.detected_industry}</span>
-                  </div>
-                  {results.business_context.description && (
-                    <div>
-                      <span className="font-medium text-foreground">About: </span>
-                      <span className="text-muted-foreground">{results.business_context.description}</span>
-                    </div>
-                  )}
-                  {results.business_context.services.length > 0 && (
-                    <div>
-                      <span className="font-medium text-foreground">Services: </span>
-                      <span className="text-muted-foreground">{results.business_context.services.join(', ')}</span>
-                    </div>
-                  )}
-                  {results.business_context.website_title && (
-                    <div>
-                      <span className="font-medium text-foreground">Website title: </span>
-                      <span className="text-muted-foreground">{results.business_context.website_title}</span>
-                    </div>
-                  )}
-                  {results.business_context.website_description && (
-                    <div>
-                      <span className="font-medium text-foreground">Website description: </span>
-                      <span className="text-muted-foreground">{results.business_context.website_description}</span>
-                    </div>
-                  )}
-                </div>
-              </details>
-            </motion.div>
-          </>
-        )}
-
-        {/* Per-Query Breakdown */}
-        {results.per_query_breakdown && results.per_query_breakdown.length > 0 && (
-          <>
-            <Separator className="my-8" />
-            <motion.div variants={itemVariants}>
-              <h2 className="font-sans font-bold text-xl text-foreground">
-                Per-Query Breakdown
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                How you appear for each type of search
-              </p>
-              <div className="mt-4 space-y-4">
-                {results.per_query_breakdown.map((q, i) => (
-                  <div key={i} className="rounded-xl border border-border p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground mb-1">
-                          {q.query_type === 'category' ? 'Industry Search' : q.query_type === 'brand' ? 'Brand Search' : 'Expert Search'}
-                        </span>
-                        <p className="text-sm text-foreground italic">&ldquo;{q.query}&rdquo;</p>
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        {['chatgpt', 'gemini', 'perplexity'].map((eng) => (
-                          <span
-                            key={eng}
-                            className={cn(
-                              'inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium',
-                              q.engines_mentioning.includes(eng)
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-red-100 text-red-600'
-                            )}
-                            title={`${eng}: ${q.engines_mentioning.includes(eng) ? 'Found' : 'Not found'}`}
-                          >
-                            {q.engines_mentioning.includes(eng) ? '\u2713' : '\u2717'}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    {q.user_finding && (
-                      <p className="mt-2 text-sm text-muted-foreground">{q.user_finding}</p>
-                    )}
-                    {q.competitor_highlights.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {q.competitor_highlights.slice(0, 3).map((c, ci) => (
-                          <span key={ci} className="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-800">
-                            <Trophy className="h-3 w-3 mr-1" />
-                            {c.name}: {c.praised_for}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </>
-        )}
-
-        <Separator className="my-8" />
-
-        {/* Leaderboard */}
-        <motion.div variants={itemVariants}>
-          <LeaderboardSection leaderboard={results.leaderboard} />
-        </motion.div>
-
-        {/* Why Competitors Rank Higher */}
-        {results.brand_attributes && results.brand_attributes.competitor_advantages.length > 0 && (
-          <>
-            <Separator className="my-8" />
-            <motion.div variants={itemVariants}>
-              <h2 className="font-sans font-bold text-xl text-foreground">
-                Why Competitors Rank Higher
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                What AI engines associate with your competitors that they don&apos;t associate with you
-              </p>
-              <div className="mt-4 space-y-3">
-                {results.brand_attributes.competitor_advantages.map((ca, i) => (
-                  <div key={i} className="rounded-xl border border-red-100 bg-red-50/50 p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100">
-                        <TrendingUp className="h-3.5 w-3.5 text-red-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground text-sm">{ca.competitor}</p>
-                        <p className="text-sm text-muted-foreground mt-0.5">{ca.advantage}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {results.brand_attributes.missing_qualities.length > 0 && (
-                <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50/50 p-4">
-                  <p className="text-sm font-medium text-foreground mb-2">Qualities you&apos;re missing:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {results.brand_attributes.missing_qualities.map((q, i) => (
-                      <span key={i} className="inline-flex items-center rounded-full border border-amber-200 bg-white px-2.5 py-1 text-xs text-amber-800">
-                        {q}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </>
-        )}
-
-        <Separator className="my-8" />
-
-        {/* Quick Wins (free — first 3) */}
-        <motion.div variants={itemVariants}>
-          <QuickWinsSection quickWins={results.quick_wins} />
-        </motion.div>
-
-        <Separator className="my-8" />
-
-        {/* Gated CTA — blurred additional fixes */}
-        <motion.div variants={itemVariants} className="print:hidden">
-          <GatedCTA scanId={scanId} email={scanEmail} />
-        </motion.div>
-
-        <Separator className="my-8 print:hidden" />
-
-        {/* Share Section */}
-        <motion.div variants={itemVariants} className="print:hidden">
-          <ShareSection scanId={scanId} businessName={business_name} score={results.visibility_score} />
-        </motion.div>
-
-        <Separator className="my-8 print:hidden" />
-
-        {/* Conversion CTA */}
-        <motion.div variants={itemVariants} className="print:hidden">
-          <ConversionCTA scanId={scanId} email={scanEmail} />
-        </motion.div>
-      </motion.div>
+        {/* ── Footer ── */}
+        <motion.footer
+          variants={itemVariants}
+          className="border-t border-[#F3F4F6] pt-6 text-center text-xs text-[#9CA3AF]"
+        >
+          <Link
+            href="/"
+            className="font-medium text-[#6B7280] hover:text-[#111827] transition-colors focus-visible:rounded focus-visible:outline-2 focus-visible:outline-[#FF3C00]"
+          >
+            Beamix
+          </Link>
+          {' · '}
+          <Link
+            href="/privacy"
+            className="hover:text-[#6B7280] transition-colors focus-visible:rounded focus-visible:outline-2 focus-visible:outline-[#FF3C00]"
+          >
+            Privacy
+          </Link>
+          {' · '}
+          <Link
+            href="/terms"
+            className="hover:text-[#6B7280] transition-colors focus-visible:rounded focus-visible:outline-2 focus-visible:outline-[#FF3C00]"
+          >
+            Terms
+          </Link>
+        </motion.footer>
+      </motion.main>
     </div>
   )
 }

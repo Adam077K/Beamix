@@ -11,9 +11,6 @@ export default async function DashboardLayout({
 }) {
   const supabase = await createClient()
 
-  // getUser() validates the token server-side against Supabase Auth,
-  // unlike getSession() which only reads the JWT from the cookie without
-  // verification. Always use getUser() for auth decisions.
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -24,8 +21,7 @@ export default async function DashboardLayout({
 
   const userId = user.id
 
-  // Check if onboarding is completed, and fetch sidebar data in one batch
-  const [profileResult, businessResult, subscriptionResult] = await Promise.all([
+  const [profileResult, businessResult, subscriptionResult, notificationsResult] = await Promise.all([
     supabase
       .from('user_profiles')
       .select('onboarding_completed_at')
@@ -42,9 +38,20 @@ export default async function DashboardLayout({
       .select('status, trial_ends_at, plan_tier')
       .eq('user_id', userId)
       .single(),
+    supabase
+      .from('notifications')
+      .select('id, title, body, type, is_read, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(20),
   ])
 
-  if (!profileResult.data?.onboarding_completed_at) {
+  // Only redirect to onboarding if we have a profile row AND onboarding is not completed.
+  // If the query errored (e.g. network issue), do NOT redirect — let the user see the dashboard.
+  if (profileResult.data && !profileResult.data.onboarding_completed_at) {
+    redirect('/onboarding')
+  }
+  if (!profileResult.data && !profileResult.error) {
     redirect('/onboarding')
   }
 
@@ -56,17 +63,25 @@ export default async function DashboardLayout({
 
   let trialDaysLeft: number | null = null
   if (isTrialing && trialEnd) {
-    // Server component — Date.now() is safe here (runs once per request)
-    // eslint-disable-next-line react-hooks/purity
     const diff = new Date(trialEnd).getTime() - Date.now()
     trialDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
   }
 
+  const notifications = (notificationsResult.data ?? []).map((n) => ({
+    id: n.id,
+    title: n.title,
+    body: n.body,
+    type: n.type,
+    is_read: n.is_read,
+    created_at: n.created_at,
+  }))
+
   return (
     <DashboardShell
       businessName={businessName}
-      planTier={planTier ?? 'free'}
+      planTier={planTier ?? (isTrialing ? 'trial' : 'free')}
       trialDaysLeft={trialDaysLeft}
+      notifications={notifications}
     >
       {children}
     </DashboardShell>

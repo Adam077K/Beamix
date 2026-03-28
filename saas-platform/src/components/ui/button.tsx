@@ -21,6 +21,9 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         pill: "bg-primary text-primary-foreground rounded-full px-6 py-3 font-medium hover:bg-primary/90",
         "pill-secondary": "bg-secondary text-secondary-foreground rounded-full px-6 py-3 font-medium hover:bg-secondary/90",
+        "dashboard": "bg-[#111827] text-white rounded-[6px] hover:bg-[#111827]/90",
+        "dashboard-accent": "bg-[#3370FF] text-white rounded-[6px] hover:bg-[#3370FF]/90",
+        "dashboard-outline": "border border-[#E5E7EB] bg-white text-[#111827] rounded-[6px] hover:bg-[#F6F7F9]",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

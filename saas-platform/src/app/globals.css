@@ -55,27 +55,21 @@
   --color-score-fair: #F59E0B;
   --color-score-good: #10B981;
   --color-score-excellent: #06B6D4;
-  --radius-card: 20px;
+  --radius-card: 8px;
 
-  /* Shadow scale — layered approach for genuine depth */
-  --shadow-xs:    0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-sm:    0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md:    0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
-  --shadow-lg:    0 10px 30px rgba(0, 0, 0, 0.10), 0 4px 8px rgba(0, 0, 0, 0.04);
-  --shadow-xl:    0 20px 48px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.06);
+  /* Shadow scale — minimal, flat design */
+  --shadow-xs:    0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md:    0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-lg:    0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-xl:    0 4px 16px rgba(0, 0, 0, 0.10);
 
   /* Component-specific shadows */
-  --shadow-card:       0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
-  --shadow-card-hover: 0 10px 30px rgba(0, 0, 0, 0.10), 0 4px 8px rgba(0, 0, 0, 0.04);
-  --shadow-sidebar:    2px 0 16px rgba(0, 0, 0, 0.06);
-  --shadow-modal:      0 20px 48px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.06);
-  --shadow-toast:      0 10px 30px rgba(0, 0, 0, 0.10), 0 4px 8px rgba(0, 0, 0, 0.04);
-
-  /* Score glow shadows */
-  --shadow-score-excellent: 0 0 48px rgba(6, 182, 212, 0.15),  0 8px 24px rgba(0, 0, 0, 0.06);
-  --shadow-score-good:      0 0 48px rgba(16, 185, 129, 0.15), 0 8px 24px rgba(0, 0, 0, 0.06);
-  --shadow-score-fair:      0 0 48px rgba(245, 158, 11, 0.15), 0 8px 24px rgba(0, 0, 0, 0.06);
-  --shadow-score-critical:  0 0 48px rgba(239, 68, 68, 0.15),  0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-card:       0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-sidebar:    none;
+  --shadow-modal:      0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-toast:      0 2px 8px rgba(0, 0, 0, 0.10);
 }
 
 :root {
@@ -207,7 +201,48 @@
 
   /* Dark shadow adjustments */
   --shadow-card:       0 1px 3px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15);
-  --shadow-card-hover: 0 10px 30px rgba(0, 0, 0, 0.40), 0 4px 8px rgba(0, 0, 0, 0.20);
+  --shadow-card-hover: 0 2px 8px rgba(0, 0, 0, 0.30);
+}
+
+/* ─── Dashboard theme scope (blue primary, flat design) ──────────────── */
+.dashboard-theme {
+  --background: #F6F7F9;
+  --foreground: #111827;
+  --card: #FFFFFF;
+  --card-foreground: #111827;
+  --primary: #3370FF;
+  --primary-foreground: #FFFFFF;
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+  --accent: #3370FF;
+  --accent-foreground: #FFFFFF;
+  --border: #E5E7EB;
+  --input: #E5E7EB;
+  --ring: #3370FF;
+  --popover: #FFFFFF;
+  --popover-foreground: #111827;
+
+  /* Dashboard sidebar */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #6B7280;
+  --sidebar-primary: #3370FF;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #EBF0FF;
+  --sidebar-accent-foreground: #3370FF;
+  --sidebar-border: #E5E7EB;
+  --sidebar-ring: #3370FF;
+
+  /* Dashboard chart colors */
+  --chart-1: #3370FF;
+  --chart-2: #10B981;
+  --chart-3: #8B5CF6;
+  --chart-4: #F59E0B;
+  --chart-5: #06B6D4;
+  --chart-6: #EC4899;
+
+  /* Text tertiary for dashboard */
+  --color-text-tertiary: #9CA3AF;
+  --color-divider: #F3F4F6;
 }
 
 @layer base {
@@ -367,14 +402,7 @@
 
   /* ─── Dashboard page background ──────────────────────────────────── */
   .dashboard-bg {
-    background-color: #F7F7F7;
-    background-image:
-      radial-gradient(ellipse 120% 40% at 60% -5%, rgba(255,60,0,0.025) 0%, transparent 60%);
-  }
-  .dark .dashboard-bg {
-    background-color: #0A0A0A;
-    background-image:
-      radial-gradient(ellipse 100% 30% at 50% -10%, rgba(255,60,0,0.04) 0%, transparent 60%);
+    background-color: var(--background);
   }
 
   /* ─── Input enhanced ─────────────────────────────────────────────── */
@@ -384,7 +412,7 @@
     @apply transition-all duration-200;
     @apply focus:outline-none focus:ring-2 focus:ring-ring/60 focus:ring-offset-1;
     @apply focus:border-ring/80;
-    @apply focus:shadow-[0_0_0_4px_rgba(255,60,0,0.08)];
+    @apply focus:shadow-[0_0_0_4px_rgba(51,112,255,0.08)];
   }
   .input-enhanced.error {
     @apply border-destructive focus:ring-destructive/60;
