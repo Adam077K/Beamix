@@ -3,12 +3,26 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, Menu, X } from 'lucide-react'
+import {
+  LayoutDashboard,
+  BarChart3,
+  Bot,
+  FileText,
+  Settings,
+  Users,
+  Bell,
+  Lightbulb,
+  ScanSearch,
+  Shield,
+  Menu,
+  X,
+} from 'lucide-react'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { UserMenu } from '@/components/dashboard/user-menu'
 import { LanguageToggle } from '@/components/ui/language-toggle'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { SidebarProvider, useSidebar } from '@/components/dashboard/sidebar-context'
 
 interface DashboardShellProps {
   children: React.ReactNode
@@ -17,51 +31,20 @@ interface DashboardShellProps {
   trialDaysLeft: number | null
 }
 
-const TOP_NAV_TABS = [
-  { href: '/dashboard',                   label: 'Overview' },
-  { href: '/dashboard/rankings',          label: 'Rankings' },
-  { href: '/dashboard/agents',            label: 'Agents' },
-  { href: '/dashboard/content',           label: 'Content' },
-  { href: '/dashboard/competitors',       label: 'Competitors' },
-  { href: '/dashboard/recommendations',   label: 'Recommendations' },
-  { href: '/dashboard/notifications',     label: 'Notifications' },
-  { href: '/dashboard/settings',          label: 'Settings' },
-]
-
 const MOBILE_NAV_ITEMS = [
-  { href: '/dashboard',                    label: 'Overview' },
-  { href: '/dashboard/rankings',           label: 'Rankings' },
-  { href: '/dashboard/competitors',        label: 'Competitors' },
-  { href: '/dashboard/agents',             label: 'AI Agents' },
-  { href: '/dashboard/content',            label: 'Content' },
-  { href: '/dashboard/recommendations',   label: 'Recommendations' },
-  { href: '/dashboard/notifications',      label: 'Notifications' },
-  { href: '/dashboard/settings',           label: 'Settings' },
+  { href: '/dashboard',                  label: 'Overview',          icon: LayoutDashboard },
+  { href: '/dashboard/rankings',         label: 'Rankings',          icon: BarChart3 },
+  { href: '/dashboard/ai-readiness',     label: 'AI Readiness',      icon: Shield },
+  { href: '/dashboard/competitors',      label: 'Competitors',       icon: Users },
+  { href: '/dashboard/scan',             label: 'Scan',              icon: ScanSearch },
+  { href: '/dashboard/agents',           label: 'AI Agents',         icon: Bot },
+  { href: '/dashboard/recommendations',  label: 'Recommendations',   icon: Lightbulb },
+  { href: '/dashboard/content',          label: 'Content Library',   icon: FileText },
+  { href: '/dashboard/notifications',    label: 'Notifications',     icon: Bell },
+  { href: '/dashboard/settings',         label: 'Settings',          icon: Settings },
 ]
 
-function TopNavTab({ href, label }: { href: string; label: string }) {
-  const pathname = usePathname()
-  const isActive =
-    href === '/dashboard'
-      ? pathname === '/dashboard'
-      : pathname.startsWith(href)
-
-  return (
-    <Link
-      href={href}
-      className={cn(
-        'rounded-full px-3.5 py-1.5 text-sm transition-colors duration-150',
-        isActive
-          ? 'bg-primary text-white font-medium'
-          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-      )}
-    >
-      {label}
-    </Link>
-  )
-}
-
-export function DashboardShell({
+function ShellContent({
   children,
   businessName,
   planTier,
@@ -69,6 +52,7 @@ export function DashboardShell({
 }: DashboardShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
+  const { collapsed } = useSidebar()
 
   useEffect(() => {
     if (!mobileOpen) return
@@ -84,10 +68,12 @@ export function DashboardShell({
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Icon sidebar — desktop only */}
+      {/* Collapsible sidebar — desktop only */}
       <div className="hidden md:block">
         <Sidebar
           businessName={businessName}
+          planTier={planTier}
+          trialDaysLeft={trialDaysLeft ?? undefined}
         />
       </div>
 
@@ -128,12 +114,13 @@ export function DashboardShell({
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
                     className={cn(
-                      'flex items-center rounded-lg px-3 py-2.5 text-sm transition-colors duration-150',
+                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors duration-150',
                       isActive
                         ? 'bg-primary/10 text-primary font-medium'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     )}
                   >
+                    <item.icon className="h-4 w-4 shrink-0" />
                     {item.label}
                   </Link>
                 )
@@ -163,12 +150,18 @@ export function DashboardShell({
       )}
 
       {/* Main content area */}
-      <div className="flex flex-1 flex-col ltr:md:pl-[60px] rtl:md:pr-[60px]">{/* Matches sidebar width */}
-        {/* Top navigation bar */}
+      <div
+        className={cn(
+          'flex flex-1 flex-col transition-all duration-300',
+          collapsed
+            ? 'ltr:md:pl-16 rtl:md:pr-16'
+            : 'ltr:md:pl-60 rtl:md:pr-60'
+        )}
+      >
+        {/* Top header bar */}
         <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-card/95 backdrop-blur-sm px-4 md:px-6">
-          {/* Left: Logo + nav tabs */}
-          <div className="flex items-center gap-6">
-            {/* Mobile: hamburger only */}
+          {/* Left: Mobile hamburger */}
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(true)}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors md:hidden"
@@ -177,33 +170,13 @@ export function DashboardShell({
               <Menu className="h-4 w-4" />
             </button>
 
-            {/* Logo — desktop */}
-            <Link
-              href="/dashboard"
-              className="hidden md:flex items-center gap-2 shrink-0"
-            >
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
-                <span className="text-xs font-bold text-white">B</span>
-              </div>
-              <span className="text-sm font-semibold tracking-tight">
-                Beam<span className="text-primary">ix</span>
-              </span>
-            </Link>
-
-            {/* Logo — mobile (centered in header) */}
+            {/* Mobile logo */}
             <span className="text-sm font-semibold tracking-tight md:hidden">
               Beam<span className="text-primary">ix</span>
             </span>
-
-            {/* Horizontal nav tabs — desktop */}
-            <nav className="hidden md:flex items-center gap-1" aria-label="Top navigation">
-              {TOP_NAV_TABS.map((tab) => (
-                <TopNavTab key={tab.href} href={tab.href} label={tab.label} />
-              ))}
-            </nav>
           </div>
 
-          {/* Right: Language toggle + notifications + trial + user menu */}
+          {/* Right: Language toggle + notifications + trial badge + user menu */}
           <div className="flex items-center gap-2">
             <LanguageToggle />
             <Link
@@ -241,5 +214,13 @@ export function DashboardShell({
         </main>
       </div>
     </div>
+  )
+}
+
+export function DashboardShell(props: DashboardShellProps) {
+  return (
+    <SidebarProvider>
+      <ShellContent {...props} />
+    </SidebarProvider>
   )
 }
