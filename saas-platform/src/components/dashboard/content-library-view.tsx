@@ -288,14 +288,14 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
           label="Published"
           value={publishedCount}
           subtitle="ready to use"
-          scoreColor="#10B981"
+          scoreColor="var(--color-score-good)"
           icon={<Eye />}
         />
         <StatCard
           label="Drafts"
           value={draftCount}
           subtitle="awaiting review"
-          scoreColor="#F59E0B"
+          scoreColor="var(--color-score-fair)"
           icon={<Pencil />}
         />
       </div>

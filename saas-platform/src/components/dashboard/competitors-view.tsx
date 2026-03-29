@@ -346,7 +346,7 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
           label="Average Gap"
           value={trackedCount > 0 ? (gap >= 0 ? `+${gap}` : `${gap}`) : '—'}
           subtitle={trackedCount > 0 ? 'pts vs competitors avg' : 'add competitors to compare'}
-          scoreColor={gap > 0 ? '#EF4444' : gap < 0 ? '#10B981' : undefined}
+          scoreColor={gap > 0 ? 'var(--color-score-critical)' : gap < 0 ? 'var(--color-score-good)' : undefined}
           icon={<BarChart2 />}
         />
       </div>

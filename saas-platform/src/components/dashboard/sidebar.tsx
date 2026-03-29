@@ -137,7 +137,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, className }: Si
                   className={cn(
                     'flex h-9 w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150',
                     active
-                      ? 'bg-primary/8 text-primary font-medium ltr:border-l-2 rtl:border-r-2 border-primary ltr:rounded-l-none rtl:rounded-r-none'
+                      ? 'bg-primary/10 text-primary font-medium ltr:border-l-2 rtl:border-r-2 border-primary ltr:rounded-l-none rtl:rounded-r-none'
                       : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                   )}
                 >
@@ -168,7 +168,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, className }: Si
                   className={cn(
                     'flex h-9 w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150',
                     active
-                      ? 'bg-primary/8 text-primary font-medium ltr:border-l-2 rtl:border-r-2 border-primary ltr:rounded-l-none rtl:rounded-r-none'
+                      ? 'bg-primary/10 text-primary font-medium ltr:border-l-2 rtl:border-r-2 border-primary ltr:rounded-l-none rtl:rounded-r-none'
                       : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                   )}
                 >
@@ -209,7 +209,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, className }: Si
           className={cn(
             'flex h-9 w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150',
             pathname.startsWith('/dashboard/notifications')
-              ? 'bg-primary/8 text-primary font-medium'
+              ? 'bg-primary/10 text-primary font-medium'
               : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
           )}
         >
@@ -224,7 +224,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, className }: Si
           className={cn(
             'flex h-9 w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150',
             pathname.startsWith('/dashboard/settings')
-              ? 'bg-primary/8 text-primary font-medium'
+              ? 'bg-primary/10 text-primary font-medium'
               : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
           )}
         >

@@ -770,7 +770,7 @@ export function DashboardOverview({
                     engine={engine}
                     isMentioned={data?.is_mentioned ?? false}
                     rankPosition={data?.rank_position ?? null}
-                    color={ENGINE_COLORS[engine] ?? '#9CA3AF'}
+                    color={ENGINE_COLORS[engine] ?? 'var(--color-muted-foreground)'}
                     index={i}
                   />
                 )
