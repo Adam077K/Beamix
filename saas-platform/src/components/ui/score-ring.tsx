@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { cn } from '@/lib/utils'
+import { cn, getScoreColor } from '@/lib/utils'
 
 interface ScoreRingProps {
   score: number | null
@@ -23,14 +23,6 @@ const SIZE_MAP = {
   md:  { outer: 120, stroke: 8,  fontSize: 'text-3xl' },
   lg:  { outer: 160, stroke: 10, fontSize: 'text-5xl' },
 } as const
-
-function getScoreColor(score: number | null): string {
-  if (score === null) return '#E5E7EB'
-  if (score >= 75) return '#06B6D4' // score-excellent
-  if (score >= 50) return '#10B981' // score-good
-  if (score >= 25) return '#F59E0B' // score-fair
-  return '#EF4444'                   // score-critical
-}
 
 function getScoreGlowClass(score: number | null): string {
   if (score === null) return ''
