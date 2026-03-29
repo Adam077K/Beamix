@@ -136,7 +136,7 @@ export function ContentEditorView({ item }: ContentEditorViewProps) {
 
         <div className="flex items-center gap-3">
           {saveStatus === 'saved' && (
-            <span className="text-[#10B981] text-sm font-medium">Saved</span>
+            <span className="text-[var(--color-score-good)] text-sm font-medium">Saved</span>
           )}
           {saveStatus === 'error' && (
             <span className="text-destructive text-sm">Failed to save</span>
