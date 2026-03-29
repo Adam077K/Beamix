@@ -94,13 +94,15 @@ export function DashboardShell({
       {/* Mobile overlay menu */}
       {mobileOpen && (
         <>
+          {/* Backdrop — fades in */}
           <div
-            className="fixed inset-0 z-40 bg-black/40 md:hidden"
+            className="fixed inset-0 z-40 bg-black/40 md:hidden animate-fade-in"
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
+          {/* Drawer — slides in from left */}
           <div
-            className="fixed inset-y-0 ltr:left-0 rtl:right-0 z-50 w-[260px] bg-white ltr:border-r rtl:border-l border-border flex flex-col md:hidden"
+            className="fixed inset-y-0 ltr:left-0 rtl:right-0 z-50 w-[260px] bg-white ltr:border-r rtl:border-l border-border flex flex-col md:hidden animate-slide-in-left"
             role="dialog"
             aria-modal="true"
           >
@@ -115,14 +117,14 @@ export function DashboardShell({
               </Link>
               <button
                 onClick={() => setMobileOpen(false)}
-                className="p-1.5 rounded-md text-muted-foreground hover:bg-muted transition-colors"
+                className="p-1.5 rounded-md text-muted-foreground hover:bg-muted transition-colors duration-150"
                 aria-label="Close menu"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
             <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5" aria-label="Main navigation">
-              {MOBILE_NAV.map((item) => {
+              {MOBILE_NAV.map((item, index) => {
                 const active = isActive(item.href)
                 const Icon = item.icon
                 return (
@@ -130,14 +132,16 @@ export function DashboardShell({
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
+                    style={{ animationDelay: `${index * 50}ms` }}
                     className={cn(
-                      'flex items-center gap-3 rounded-md px-3 py-2.5 text-[13px] font-medium transition-colors',
+                      'flex items-center gap-3 rounded-md px-3 py-2.5 text-[13px] font-medium',
+                      'transition-colors duration-150 animate-fade-up',
                       active
                         ? 'bg-[#EBF0FF] text-[#3370FF]'
                         : 'text-[#6B7280] hover:bg-[#F6F7F9] hover:text-[#111827]'
                     )}
                   >
-                    <Icon className={cn('size-[18px]', active ? 'text-[#3370FF]' : 'text-[#9CA3AF]')} />
+                    <Icon className={cn('size-[16px] shrink-0', active ? 'text-[#3370FF]' : 'text-[#9CA3AF]')} />
                     {item.label}
                   </Link>
                 )
@@ -157,7 +161,7 @@ export function DashboardShell({
               </div>
               <button
                 onClick={() => { setMobileOpen(false); handleSignOut() }}
-                className="mt-3 flex w-full items-center gap-2 rounded-md px-1 py-1.5 text-xs text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
+                className="mt-3 flex w-full items-center gap-2 rounded-md px-1 py-1.5 text-xs text-[#9CA3AF] hover:text-[#6B7280] transition-colors duration-150"
               >
                 <LogOut className="size-3.5" />
                 Sign out
@@ -169,13 +173,13 @@ export function DashboardShell({
 
       {/* Main content area */}
       <div className="flex flex-1 flex-col ltr:md:pl-[220px] rtl:md:pr-[220px]">
-        {/* Top bar — clean, minimal */}
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-white px-4 md:px-6">
+        {/* Top bar — subtle bottom border shadow */}
+        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border/40 bg-white/95 backdrop-blur-sm px-4 md:px-6 shadow-[0_1px_0_rgba(0,0,0,0.04)]">
           {/* Left: hamburger (mobile) */}
           <div className="flex items-center gap-4">
             <button
               onClick={() => setMobileOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors md:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-150 md:hidden"
               aria-label="Open menu"
             >
               <Menu className="size-[18px]" />
@@ -197,7 +201,7 @@ export function DashboardShell({
             {trialDaysLeft !== null && trialDaysLeft > 0 && (
               <Link
                 href="/pricing"
-                className="hidden sm:inline-flex items-center rounded-md bg-[#EBF0FF] px-2.5 py-1 text-xs font-medium text-[#3370FF] hover:bg-[#EBF0FF]/80 transition-colors"
+                className="hidden sm:inline-flex items-center rounded-md bg-[#EBF0FF] px-2.5 py-1 text-xs font-medium text-[#3370FF] hover:bg-[#EBF0FF]/80 transition-colors duration-150"
               >
                 {trialDaysLeft}d trial left
               </Link>
@@ -205,7 +209,7 @@ export function DashboardShell({
             {trialDaysLeft !== null && trialDaysLeft <= 0 && (
               <Link
                 href="/pricing"
-                className="hidden sm:inline-flex items-center rounded-md bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors"
+                className="hidden sm:inline-flex items-center rounded-md bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors duration-150"
               >
                 Trial expired
               </Link>
@@ -215,12 +219,12 @@ export function DashboardShell({
           </div>
         </header>
 
-        {/* Page content */}
+        {/* Page content — fade up on mount */}
         <main className="flex-1 overflow-y-auto dashboard-bg">
           {isAgentChat ? (
             children
           ) : (
-            <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8 lg:py-8">
+            <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8 lg:py-8 animate-fade-up">
               {children}
             </div>
           )}

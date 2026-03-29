@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Bell, Zap, BarChart3, AlertTriangle, Info, Star, Bot } from 'lucide-react'
+import { Bell, Zap, BarChart3, AlertTriangle, Info, Star, Bot, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Notification {
@@ -41,6 +41,8 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`
 }
 
+const VIEW_ALL_THRESHOLD = 8
+
 export function NotificationDropdown({
   notifications,
   onMarkRead,
@@ -51,7 +53,8 @@ export function NotificationDropdown({
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const unreadCount = notifications.filter((n) => !n.is_read).length
-  const recent = notifications.slice(0, 8)
+  const hasMore = notifications.length > VIEW_ALL_THRESHOLD
+  const recent = notifications.slice(0, VIEW_ALL_THRESHOLD)
 
   const close = useCallback(() => {
     setOpen(false)
@@ -83,14 +86,16 @@ export function NotificationDropdown({
       <button
         ref={triggerRef}
         onClick={() => setOpen(!open)}
-        className="relative flex h-9 w-9 items-center justify-center rounded-[6px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        className="relative flex h-9 w-9 items-center justify-center rounded-[6px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-150"
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
         aria-expanded={open}
         aria-haspopup="dialog"
       >
         <Bell className="size-[18px]" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#3370FF] px-1 text-[10px] font-medium text-white">
+          <span
+            className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#3370FF] px-1 text-[10px] font-medium text-white animate-badge-pulse"
+          >
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -103,25 +108,27 @@ export function NotificationDropdown({
           aria-modal="true"
           aria-label="Notifications"
           tabIndex={-1}
-          className="absolute right-0 top-full mt-2 w-[360px] rounded-lg border border-border bg-card shadow-[0_4px_16px_rgba(0,0,0,0.10)] z-50 animate-fade-in outline-none"
+          className="absolute right-0 top-full mt-2 w-[360px] rounded-lg border border-border bg-card shadow-[0_4px_16px_rgba(0,0,0,0.10)] z-50 animate-slide-in-down outline-none"
         >
+          {/* Header */}
           <div className="flex items-center justify-between border-b border-[#F3F4F6] px-4 py-3">
             <span className="text-sm font-medium text-foreground">Notifications</span>
             {unreadCount > 0 && (
               <button
                 onClick={() => onMarkAllRead?.()}
-                className="text-xs text-[#3370FF] hover:text-[#3370FF]/80 font-medium"
+                className="text-xs text-[#3370FF] hover:text-[#3370FF]/80 font-medium transition-colors duration-150"
               >
                 Mark all read
               </button>
             )}
           </div>
 
+          {/* List */}
           <div className="max-h-[380px] overflow-y-auto">
             {recent.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-sm text-muted-foreground">
-                <Bell className="mb-2 size-5 opacity-40" />
-                All caught up
+              <div className="flex flex-col items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+                <CheckCircle2 className="size-5 text-[#10B981] opacity-70" />
+                <span>All caught up</span>
               </div>
             ) : (
               recent.map((n) => {
@@ -134,7 +141,7 @@ export function NotificationDropdown({
                       setOpen(false)
                     }}
                     className={cn(
-                      'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-[#F6F7F9]',
+                      'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-[#F6F7F9]',
                       !n.is_read && 'bg-[#EBF0FF]/40'
                     )}
                   >
@@ -158,6 +165,19 @@ export function NotificationDropdown({
               })
             )}
           </div>
+
+          {/* View all footer */}
+          {hasMore && (
+            <div className="border-t border-[#F3F4F6] px-4 py-2.5">
+              <a
+                href="/dashboard/notifications"
+                onClick={() => setOpen(false)}
+                className="block text-center text-xs font-medium text-[#3370FF] hover:text-[#3370FF]/80 transition-colors duration-150"
+              >
+                View all notifications
+              </a>
+            </div>
+          )}
         </div>
       )}
     </div>

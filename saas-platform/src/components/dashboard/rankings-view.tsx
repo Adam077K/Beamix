@@ -26,6 +26,7 @@ import { format } from 'date-fns'
 import type { LlmProvider } from '@/constants/engines'
 import { PROVIDER_LABELS } from '@/constants/engines'
 import { cn } from '@/lib/utils'
+import { formatNumber } from '@/lib/format'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { formatNumber } from '@/lib/format'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -145,8 +146,8 @@ export function DashboardOverview({
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <section className="flex justify-between items-end">
         <div>
-          <h1 className="text-[22px] font-semibold tracking-tight text-[#111827]">Overview Dashboard</h1>
-          <p className="text-sm text-[#6B7280] mt-1">Real-time precision metrics for active OS nodes.</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-[#111827]">Overview</h1>
+          <p className="mt-1 text-[13px] text-[#6B7280]">Your AI search visibility at a glance.</p>
         </div>
         <div className="flex gap-3">
           <button className="px-4 py-2 bg-white border border-[#E5E7EB] rounded-[6px] text-xs font-semibold hover:bg-gray-50 transition-colors flex items-center gap-2">
@@ -242,7 +243,7 @@ export function DashboardOverview({
         <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-6">
           <div className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest mb-2">Agent Credits</div>
           <div className="text-[40px] font-semibold tabular-nums leading-none tracking-tight">
-            {creditsRemaining ?? 42}
+            {formatNumber(creditsRemaining ?? 42)}
           </div>
           <div className="mt-4 flex items-center gap-2 text-[12px] text-[#6B7280]">
             <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" aria-hidden="true" />
@@ -254,7 +255,7 @@ export function DashboardOverview({
         <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-6">
           <div className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest mb-2">Total Scans</div>
           <div className="text-[40px] font-semibold tabular-nums leading-none tracking-tight">
-            {scans.length > 0 ? scans.length : '0'}
+            {formatNumber(scans.length)}
           </div>
           <div className="mt-4 flex items-center gap-2 text-[12px] text-[#6B7280]">
             {latestScan ? (

@@ -72,7 +72,7 @@ export function ScoreRing({
     el.style.transition = 'none'
     // Force reflow
     el.getBoundingClientRect()
-    el.style.transition = 'stroke-dashoffset 1200ms cubic-bezier(0.22, 1, 0.36, 1)'
+    el.style.transition = 'stroke-dashoffset 1200ms cubic-bezier(0.16, 1, 0.3, 1)'
     el.style.strokeDashoffset = String(strokeDashoffset)
   }, [score, circumference, strokeDashoffset, animate])
 
@@ -146,7 +146,10 @@ export function ScoreRing({
             )}
           </>
         ) : (
-          <span className={cn('font-mono font-bold tabular-nums text-muted-foreground/40', config.fontSize)}>
+          <span
+            className={cn('font-mono font-bold tabular-nums text-muted-foreground/40', config.fontSize)}
+            aria-hidden="true"
+          >
             --
           </span>
         )}

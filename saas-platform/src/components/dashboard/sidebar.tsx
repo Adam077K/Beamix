@@ -75,14 +75,30 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, className }: Si
             <Link
               key={item.href}
               href={item.href}
+              title={item.label}
               className={cn(
-                'group flex items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium transition-colors duration-150',
+                'group relative flex items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium',
+                'transition-colors duration-150',
                 active
-                  ? 'bg-[#EBF0FF] text-[#3370FF] border-l-2 border-[#3370FF] -ml-px'
+                  ? 'bg-[#EBF0FF] text-[#3370FF]'
                   : 'text-[#6B7280] hover:bg-[#F6F7F9] hover:text-[#111827]'
               )}
             >
-              <Icon className={cn('size-[18px]', active ? 'text-[#3370FF]' : 'text-[#9CA3AF] group-hover:text-[#6B7280]')} />
+              {/* Active left border accent */}
+              <span
+                className={cn(
+                  'absolute ltr:left-0 rtl:right-0 top-1 bottom-1 w-0.5 rounded-r-full',
+                  'transition-all duration-150',
+                  active ? 'bg-[#3370FF] opacity-100' : 'opacity-0'
+                )}
+                aria-hidden="true"
+              />
+              <Icon
+                className={cn(
+                  'size-[16px] shrink-0 transition-colors duration-150',
+                  active ? 'text-[#3370FF]' : 'text-[#9CA3AF] group-hover:text-[#6B7280]'
+                )}
+              />
               {item.label}
             </Link>
           )
@@ -97,7 +113,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, className }: Si
             <p className="text-xs font-medium text-[#3370FF]">
               {trialDaysLeft} days left in trial
             </p>
-            <Link href="/pricing" className="mt-1 block text-[11px] text-[#3370FF]/70 hover:text-[#3370FF] underline">
+            <Link href="/pricing" className="mt-1 block text-[11px] text-[#3370FF]/70 hover:text-[#3370FF] underline transition-colors duration-150">
               Upgrade now
             </Link>
           </div>
@@ -117,7 +133,7 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, className }: Si
         {/* Sign out */}
         <button
           onClick={handleSignOut}
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-[13px] text-[#9CA3AF] hover:bg-[#F6F7F9] hover:text-[#6B7280] transition-colors"
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-[13px] text-[#9CA3AF] hover:bg-[#F6F7F9] hover:text-[#6B7280] transition-colors duration-150"
         >
           <LogOut className="size-[16px]" />
           Sign out
