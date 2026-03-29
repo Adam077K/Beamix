@@ -86,19 +86,19 @@
   --card-foreground: #0A0A0A;
   --popover: #FFFFFF;
   --popover-foreground: #0A0A0A;
-  --primary: #FF3C00;
+  --primary: #6366F1;
   --primary-foreground: #FFFFFF;
   --secondary: #0A0A0A;
   --secondary-foreground: #FFFFFF;
   --muted: #F5F5F4;
   --muted-foreground: #6B7280;
-  --accent: #FF3C00;
+  --accent: #6366F1;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
   --border: #E5E7EB;
   --input: #E5E7EB;
-  --ring: #FF3C00;
-  --chart-1: #FF3C00;
+  --ring: #6366F1;
+  --chart-1: #6366F1;
   --chart-2: #0EA5E9;
   --chart-3: #8B5CF6;
   --chart-4: #10B981;
@@ -106,12 +106,12 @@
   --chart-6: #EC4899;
   --sidebar: #F7F7F7;
   --sidebar-foreground: #0A0A0A;
-  --sidebar-primary: #FF3C00;
+  --sidebar-primary: #6366F1;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #F5F5F4;
   --sidebar-accent-foreground: #0A0A0A;
   --sidebar-border: #E5E7EB;
-  --sidebar-ring: #FF3C00;
+  --sidebar-ring: #6366F1;
 
   /* New glass overlay tokens */
   --glass-bg: rgba(255, 255, 255, 0.72);
@@ -125,8 +125,8 @@
   --surface-sunken: #F0F0F0;
 
   /* Primary glow */
-  --glow-primary: rgba(255, 60, 0, 0.12);
-  --glow-primary-strong: rgba(255, 60, 0, 0.20);
+  --glow-primary: rgba(99, 102, 241, 0.12);
+  --glow-primary-strong: rgba(99, 102, 241, 0.20);
 
   /* Score glow tokens */
   --glow-excellent: rgba(6, 182, 212, 0.12);
@@ -135,7 +135,7 @@
   --glow-critical: rgba(239, 68, 68, 0.12);
 
   /* Chart gradient fills (for area/bar fills) */
-  --chart-fill-1: rgba(255, 60, 0, 0.15);
+  --chart-fill-1: rgba(99, 102, 241, 0.15);
   --chart-fill-2: rgba(14, 165, 233, 0.15);
   --chart-fill-3: rgba(139, 92, 246, 0.15);
   --chart-fill-4: rgba(16, 185, 129, 0.15);
@@ -164,19 +164,19 @@
   --card-foreground: #F7F7F7;
   --popover: #171717;
   --popover-foreground: #F7F7F7;
-  --primary: #FF3C00;
+  --primary: #818CF8;
   --primary-foreground: #FFFFFF;
   --secondary: #0A0A0A;
   --secondary-foreground: #FFFFFF;
   --muted: #262626;
   --muted-foreground: #A3A3A3;
-  --accent: #FF3C00;
+  --accent: #818CF8;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
   --border: rgba(255,255,255,0.1);
   --input: rgba(255,255,255,0.15);
-  --ring: #FF3C00;
-  --chart-1: #FF6B3D;
+  --ring: #818CF8;
+  --chart-1: #A5B4FC;
   --chart-2: #38BDF8;
   --chart-3: #A78BFA;
   --chart-4: #34D399;
@@ -184,12 +184,12 @@
   --chart-6: #F472B6;
   --sidebar: #171717;
   --sidebar-foreground: #F7F7F7;
-  --sidebar-primary: #FF3C00;
+  --sidebar-primary: #818CF8;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #262626;
   --sidebar-accent-foreground: #F7F7F7;
   --sidebar-border: rgba(255,255,255,0.1);
-  --sidebar-ring: #FF3C00;
+  --sidebar-ring: #818CF8;
 
   /* Dark glass overlay tokens */
   --glass-bg: rgba(23, 23, 23, 0.80);
@@ -202,8 +202,8 @@
   --surface-sunken: #080808;
 
   /* Primary glow (persists in dark) */
-  --glow-primary: rgba(255, 60, 0, 0.15);
-  --glow-primary-strong: rgba(255, 60, 0, 0.25);
+  --glow-primary: rgba(99, 102, 241, 0.15);
+  --glow-primary-strong: rgba(99, 102, 241, 0.25);
 
   /* Dark shadow adjustments */
   --shadow-card:       0 1px 3px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15);
@@ -261,7 +261,7 @@
     @apply transition-all duration-200;
   }
   .input-focus-enhance:focus-within {
-    @apply shadow-[0_0_0_3px_rgba(255,60,0,0.1)];
+    @apply shadow-[0_0_0_3px_rgba(99,102,241,0.1)];
   }
 
   /* ─── Glass card variants ────────────────────────────────────────── */
@@ -298,10 +298,10 @@
 
   /* ─── Glow utilities ─────────────────────────────────────────────── */
   .glow-primary {
-    box-shadow: 0 0 20px rgba(255, 60, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
   }
   .glow-primary-strong {
-    box-shadow: 0 0 40px rgba(255, 60, 0, 0.20), 0 8px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.20), 0 8px 24px rgba(0, 0, 0, 0.08);
   }
   .glow-excellent {
     box-shadow: 0 0 40px rgba(6, 182, 212, 0.15), 0 8px 24px rgba(0, 0, 0, 0.06);
@@ -318,13 +318,13 @@
 
   /* ─── Gradient utilities ─────────────────────────────────────────── */
   .gradient-score-hero {
-    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(255,60,0,0.07) 0%, transparent 70%);
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,102,241,0.07) 0%, transparent 70%);
   }
   .gradient-upgrade-card {
-    background: linear-gradient(135deg, #FFF5F2 0%, #FFF0E8 50%, #FFFAF8 100%);
+    background: linear-gradient(135deg, #F0F1FF 0%, #ECEEFF 50%, #F5F6FF 100%);
   }
   .dark .gradient-upgrade-card {
-    background: linear-gradient(135deg, rgba(255,60,0,0.12) 0%, rgba(255,60,0,0.06) 100%);
+    background: linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(99,102,241,0.06) 100%);
   }
   .gradient-positive {
     background: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.04) 100%);
@@ -333,8 +333,8 @@
     background: linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.04) 100%);
   }
   .gradient-action-cta {
-    background: linear-gradient(135deg, rgba(255,60,0,0.06) 0%, transparent 60%);
-    border: 1px solid rgba(255,60,0,0.15);
+    background: linear-gradient(135deg, rgba(99,102,241,0.06) 0%, transparent 60%);
+    border: 1px solid rgba(99,102,241,0.15);
   }
 
   /* ─── Score insight typography (Fraunces italic) ─────────────────── */
@@ -369,12 +369,12 @@
   .dashboard-bg {
     background-color: #F7F7F7;
     background-image:
-      radial-gradient(ellipse 120% 40% at 60% -5%, rgba(255,60,0,0.025) 0%, transparent 60%);
+      radial-gradient(ellipse 120% 40% at 60% -5%, rgba(99,102,241,0.025) 0%, transparent 60%);
   }
   .dark .dashboard-bg {
     background-color: #0A0A0A;
     background-image:
-      radial-gradient(ellipse 100% 30% at 50% -10%, rgba(255,60,0,0.04) 0%, transparent 60%);
+      radial-gradient(ellipse 100% 30% at 50% -10%, rgba(99,102,241,0.04) 0%, transparent 60%);
   }
 
   /* ─── Input enhanced ─────────────────────────────────────────────── */
@@ -384,7 +384,7 @@
     @apply transition-all duration-200;
     @apply focus:outline-none focus:ring-2 focus:ring-ring/60 focus:ring-offset-1;
     @apply focus:border-ring/80;
-    @apply focus:shadow-[0_0_0_4px_rgba(255,60,0,0.08)];
+    @apply focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)];
   }
   .input-enhanced.error {
     @apply border-destructive focus:ring-destructive/60;
@@ -464,11 +464,11 @@
 
   /* ─── Button improvements ────────────────────────────────────────── */
   .btn-primary-lift {
-    @apply shadow-[0_2px_8px_rgba(255,60,0,0.20)];
-    @apply hover:shadow-[0_4px_16px_rgba(255,60,0,0.30)];
+    @apply shadow-[0_2px_8px_rgba(99,102,241,0.20)];
+    @apply hover:shadow-[0_4px_16px_rgba(99,102,241,0.30)];
     @apply hover:-translate-y-px;
     @apply active:translate-y-0 active:scale-[0.98];
-    @apply active:shadow-[0_1px_4px_rgba(255,60,0,0.15)];
+    @apply active:shadow-[0_1px_4px_rgba(99,102,241,0.15)];
     @apply transition-all duration-150 ease-out;
   }
 }

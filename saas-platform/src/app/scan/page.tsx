@@ -87,9 +87,9 @@ function ProgressDots({
           transition={{ duration: 0.2, ease: 'easeOut' }}
           className={`rounded-full transition-colors duration-300 ${
             i === active
-              ? 'h-2.5 w-2.5 bg-[#FF3C00]'
+              ? 'h-2.5 w-2.5 bg-[#6366F1]'
               : i < active
-              ? 'h-2 w-2 bg-[#FF3C00]/40'
+              ? 'h-2 w-2 bg-[#6366F1]/40'
               : 'h-2 w-2 bg-black/15'
           }`}
         />
@@ -245,7 +245,7 @@ function ScanWizard() {
   if (stepIndex === null) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
-        <Loader2 className="h-6 w-6 animate-spin text-[#FF3C00]" />
+        <Loader2 className="h-6 w-6 animate-spin text-[#6366F1]" />
       </div>
     )
   }
@@ -263,7 +263,7 @@ function ScanWizard() {
       {/* Logo */}
       <div className="mb-10">
         <span className="font-bold text-2xl text-black">
-          Beam<span className="text-[#FF3C00]">ix</span>
+          Beam<span className="text-[#6366F1]">ix</span>
         </span>
       </div>
 
@@ -290,8 +290,8 @@ function ScanWizard() {
               transition={{ duration: 0.3, ease: 'easeInOut' }}
             >
               <div className="mb-8 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF3C00]/10">
-                  <Globe className="h-7 w-7 text-[#FF3C00]" />
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#6366F1]/10">
+                  <Globe className="h-7 w-7 text-[#6366F1]" />
                 </div>
                 <h1 className="text-2xl font-medium text-black">
                   What&apos;s your website URL?
@@ -305,7 +305,7 @@ function ScanWizard() {
                 <Input
                   type="text"
                   placeholder="yourbusiness.com"
-                  className="h-12 rounded-xl border-black/15 text-base placeholder:text-black/30 focus-visible:ring-[#FF3C00]"
+                  className="h-12 rounded-xl border-black/15 text-base placeholder:text-black/30 focus-visible:ring-[#6366F1]"
                   {...urlForm.register('url')}
                 />
                 {urlForm.formState.errors.url && (
@@ -313,7 +313,7 @@ function ScanWizard() {
                 )}
                 <Button
                   type="submit"
-                  className="h-12 w-full rounded-full bg-[#FF3C00] text-white hover:bg-[#FF3C00]/90 text-base font-medium"
+                  className="h-12 w-full rounded-full bg-[#6366F1] text-white hover:bg-[#6366F1]/90 text-base font-medium"
                 >
                   Continue
                   <ArrowRight className="ms-1.5 h-4 w-4" />
@@ -333,8 +333,8 @@ function ScanWizard() {
               transition={{ duration: 0.3, ease: 'easeInOut' }}
             >
               <div className="mb-8 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF3C00]/10">
-                  <Mail className="h-7 w-7 text-[#FF3C00]" />
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#6366F1]/10">
+                  <Mail className="h-7 w-7 text-[#6366F1]" />
                 </div>
                 <h1 className="text-2xl font-medium text-black">
                   What&apos;s your email?
@@ -346,7 +346,7 @@ function ScanWizard() {
 
               {displayedUrl && (
                 <div className="mb-6 flex justify-center">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FF3C00]/10 px-3 py-1 text-xs font-medium text-[#FF3C00]">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6366F1]/10 px-3 py-1 text-xs font-medium text-[#6366F1]">
                     <CheckCircle2 className="h-3 w-3" />
                     Scanning: {displayedUrl}
                   </span>
@@ -357,7 +357,7 @@ function ScanWizard() {
                 <Input
                   type="email"
                   placeholder="you@company.com"
-                  className="h-12 rounded-xl border-black/15 text-base placeholder:text-black/30 focus-visible:ring-[#FF3C00]"
+                  className="h-12 rounded-xl border-black/15 text-base placeholder:text-black/30 focus-visible:ring-[#6366F1]"
                   {...emailForm.register('email')}
                 />
                 {emailForm.formState.errors.email && (
@@ -371,7 +371,7 @@ function ScanWizard() {
                   )}
                 <Button
                   type="submit"
-                  className="h-12 w-full rounded-full bg-[#FF3C00] text-white hover:bg-[#FF3C00]/90 text-base font-medium"
+                  className="h-12 w-full rounded-full bg-[#6366F1] text-white hover:bg-[#6366F1]/90 text-base font-medium"
                 >
                   Continue
                   <ArrowRight className="ms-1.5 h-4 w-4" />
@@ -392,8 +392,8 @@ function ScanWizard() {
               transition={{ duration: 0.3, ease: 'easeInOut' }}
             >
               <div className="mb-8 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF3C00]/10">
-                  <Building2 className="h-7 w-7 text-[#FF3C00]" />
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#6366F1]/10">
+                  <Building2 className="h-7 w-7 text-[#6366F1]" />
                 </div>
                 <h1 className="text-2xl font-medium text-black">
                   What&apos;s your business name?
@@ -408,7 +408,7 @@ function ScanWizard() {
                   type="text"
                   placeholder="Your Business Name"
                   defaultValue={businessName}
-                  className="h-12 rounded-xl border-black/15 text-base placeholder:text-black/30 focus-visible:ring-[#FF3C00]"
+                  className="h-12 rounded-xl border-black/15 text-base placeholder:text-black/30 focus-visible:ring-[#6366F1]"
                   {...businessNameForm.register('business_name')}
                 />
                 {businessNameForm.formState.errors.business_name && (
@@ -422,7 +422,7 @@ function ScanWizard() {
                   </Button>
                   <Button
                     type="submit"
-                    className="h-12 w-full rounded-full bg-[#FF3C00] text-white hover:bg-[#FF3C00]/90 text-base font-medium"
+                    className="h-12 w-full rounded-full bg-[#6366F1] text-white hover:bg-[#6366F1]/90 text-base font-medium"
                   >
                     Continue
                     <ArrowRight className="ms-1.5 h-4 w-4" />
@@ -443,8 +443,8 @@ function ScanWizard() {
               transition={{ duration: 0.3, ease: 'easeInOut' }}
             >
               <div className="mb-8 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF3C00]/10">
-                  <MapPin className="h-7 w-7 text-[#FF3C00]" />
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#6366F1]/10">
+                  <MapPin className="h-7 w-7 text-[#6366F1]" />
                 </div>
                 <h1 className="text-2xl font-medium text-black">
                   Where are you located?
@@ -464,7 +464,7 @@ function ScanWizard() {
                 <Input
                   type="text"
                   placeholder="Tel Aviv, Israel"
-                  className="h-12 rounded-xl border-black/15 text-base placeholder:text-black/30 focus-visible:ring-[#FF3C00]"
+                  className="h-12 rounded-xl border-black/15 text-base placeholder:text-black/30 focus-visible:ring-[#6366F1]"
                   {...locationForm.register('location')}
                 />
                 {locationForm.formState.errors.location && (
@@ -491,7 +491,7 @@ function ScanWizard() {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="h-12 w-full rounded-full bg-[#FF3C00] text-white hover:bg-[#FF3C00]/90 text-base font-medium disabled:opacity-60"
+                    className="h-12 w-full rounded-full bg-[#6366F1] text-white hover:bg-[#6366F1]/90 text-base font-medium disabled:opacity-60"
                   >
                     {isSubmitting ? (
                       <>

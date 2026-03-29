@@ -183,9 +183,9 @@ export function Sidebar({ businessName, planTier, trialDaysLeft, className }: Si
 
       {/* Trial banner */}
       {showTrialBanner && (
-        <div className="mx-2 mb-3 rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 p-3">
-          <p className="text-[11px] font-medium text-orange-800 mb-1">{trialDaysLeft} days left in trial</p>
-          <div className="h-1 w-full rounded-full bg-orange-100 mb-2">
+        <div className="mx-2 mb-3 rounded-lg bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 p-3">
+          <p className="text-[11px] font-medium text-indigo-800 mb-1">{trialDaysLeft} days left in trial</p>
+          <div className="h-1 w-full rounded-full bg-indigo-100 mb-2">
             <div
               className="h-1 rounded-full bg-primary transition-all"
               style={{ width: `${trialProgress}%` }}

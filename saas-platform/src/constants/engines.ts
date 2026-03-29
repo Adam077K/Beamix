@@ -24,6 +24,6 @@ export const PROVIDER_COLORS: Record<LlmProvider, string> = {
   chatgpt: 'bg-green-100 text-green-700',
   gemini: 'bg-blue-100 text-blue-700',
   perplexity: 'bg-purple-100 text-purple-700',
-  claude: 'bg-orange-100 text-orange-700',
+  claude: 'bg-amber-100 text-amber-700',
   google_ai_overviews: 'bg-red-100 text-red-700',
 }

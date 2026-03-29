@@ -202,7 +202,7 @@ function ShellContent({
               <Bell className="h-4 w-4" />
             </Link>
             {trialDaysLeft !== null && trialDaysLeft > 0 && (
-              <Badge className="hidden sm:inline-flex bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100">
+              <Badge className="hidden sm:inline-flex bg-indigo-100 text-indigo-700 border-indigo-200 hover:bg-indigo-100">
                 Trial: {trialDaysLeft}d left
               </Badge>
             )}
