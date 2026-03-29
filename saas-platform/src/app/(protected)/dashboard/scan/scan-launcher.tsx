@@ -62,7 +62,7 @@ export function ScanLauncher({
         description="Scan your business across AI search engines to check your visibility"
       />
 
-      <Card className="rounded-[20px]">
+      <Card className="rounded-lg">
         <CardHeader>
           <CardTitle className="text-base font-semibold">Business Details</CardTitle>
         </CardHeader>

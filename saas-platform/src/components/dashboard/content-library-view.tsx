@@ -29,31 +29,31 @@ const CONTENT_TYPE_META: Record<
   string,
   { label: string; icon: React.ComponentType<{ className?: string }>; colorIcon: string; colorBg: string }
 > = {
-  blog_post:           { label: 'Blog',    icon: BookOpen,     colorIcon: 'text-violet-600',  colorBg: 'bg-violet-50'  },
-  article:             { label: 'Article', icon: FileText,     colorIcon: 'text-[#FF3C00]',   colorBg: 'bg-[#FF3C00]/10' },
-  faq:                 { label: 'FAQ',     icon: MessageSquare, colorIcon: 'text-emerald-600', colorBg: 'bg-emerald-50' },
-  product_description: { label: 'Product', icon: FileText,     colorIcon: 'text-amber-600',   colorBg: 'bg-amber-50'   },
-  landing_page:        { label: 'Landing', icon: FileText,     colorIcon: 'text-purple-600',  colorBg: 'bg-purple-50'  },
-  schema_markup:       { label: 'Schema',  icon: Code2,        colorIcon: 'text-[#FF3C00]',   colorBg: 'bg-[#FF3C00]/10' },
-  social_post:         { label: 'Social',  icon: Share2,       colorIcon: 'text-pink-600',    colorBg: 'bg-pink-50'    },
-  review_response:     { label: 'Review',  icon: Star,         colorIcon: 'text-amber-600',   colorBg: 'bg-amber-50'   },
-  competitor_report:   { label: 'Report',  icon: BarChart3,    colorIcon: 'text-[#FF3C00]',   colorBg: 'bg-[#FF3C00]/10' },
-  query_suggestions:   { label: 'Queries', icon: Search,       colorIcon: 'text-emerald-600', colorBg: 'bg-emerald-50' },
-  review_analysis:     { label: 'Analysis', icon: Star,        colorIcon: 'text-amber-600',   colorBg: 'bg-amber-50'   },
-  social_strategy:     { label: 'Social',  icon: Share2,       colorIcon: 'text-pink-600',    colorBg: 'bg-pink-50'    },
-  schema_recommendations: { label: 'Schema', icon: Code2,      colorIcon: 'text-purple-600',  colorBg: 'bg-purple-50'  },
+  blog_post:           { label: 'Blog',    icon: BookOpen,     colorIcon: 'text-[var(--color-chart-3)]',  colorBg: 'bg-[var(--color-chart-3)]/10'  },
+  article:             { label: 'Article', icon: FileText,     colorIcon: 'text-primary',                colorBg: 'bg-primary/10' },
+  faq:                 { label: 'FAQ',     icon: MessageSquare, colorIcon: 'text-[var(--color-chart-2)]', colorBg: 'bg-[var(--color-chart-2)]/10' },
+  product_description: { label: 'Product', icon: FileText,     colorIcon: 'text-[var(--color-chart-4)]', colorBg: 'bg-[var(--color-chart-4)]/10' },
+  landing_page:        { label: 'Landing', icon: FileText,     colorIcon: 'text-[var(--color-chart-3)]', colorBg: 'bg-[var(--color-chart-3)]/10' },
+  schema_markup:       { label: 'Schema',  icon: Code2,        colorIcon: 'text-primary',                colorBg: 'bg-primary/10' },
+  social_post:         { label: 'Social',  icon: Share2,       colorIcon: 'text-[var(--color-chart-6)]', colorBg: 'bg-[var(--color-chart-6)]/10' },
+  review_response:     { label: 'Review',  icon: Star,         colorIcon: 'text-[var(--color-chart-4)]', colorBg: 'bg-[var(--color-chart-4)]/10' },
+  competitor_report:   { label: 'Report',  icon: BarChart3,    colorIcon: 'text-primary',                colorBg: 'bg-primary/10' },
+  query_suggestions:   { label: 'Queries', icon: Search,       colorIcon: 'text-[var(--color-chart-2)]', colorBg: 'bg-[var(--color-chart-2)]/10' },
+  review_analysis:     { label: 'Analysis', icon: Star,        colorIcon: 'text-[var(--color-chart-4)]', colorBg: 'bg-[var(--color-chart-4)]/10' },
+  social_strategy:     { label: 'Social',  icon: Share2,       colorIcon: 'text-[var(--color-chart-6)]', colorBg: 'bg-[var(--color-chart-6)]/10' },
+  schema_recommendations: { label: 'Schema', icon: Code2,      colorIcon: 'text-[var(--color-chart-3)]', colorBg: 'bg-[var(--color-chart-3)]/10' },
 }
 
 // ─── Status badge config ──────────────────────────────────────────────────────
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   draft:     { label: 'Draft',     className: 'bg-muted text-muted-foreground border-0' },
-  ready:     { label: 'Ready',     className: 'bg-amber-100 text-amber-700 border-0' },
-  published: { label: 'Published', className: 'bg-emerald-100 text-emerald-700 border-0' },
-  completed: { label: 'Completed', className: 'bg-emerald-100 text-emerald-700 border-0' },
-  failed:    { label: 'Failed',    className: 'bg-red-100 text-red-700 border-0' },
-  running:   { label: 'Running',   className: 'bg-amber-100 text-amber-700 border-0' },
-  archived:  { label: 'Archived',  className: 'bg-gray-100 text-gray-500 border-0' },
+  ready:     { label: 'Ready',     className: 'bg-[var(--color-score-fair)]/10 text-[var(--color-score-fair)] border-0' },
+  published: { label: 'Published', className: 'bg-[var(--color-score-good)]/10 text-[var(--color-score-good)] border-0' },
+  completed: { label: 'Completed', className: 'bg-[var(--color-score-good)]/10 text-[var(--color-score-good)] border-0' },
+  failed:    { label: 'Failed',    className: 'bg-[var(--color-score-critical)]/10 text-[var(--color-score-critical)] border-0' },
+  running:   { label: 'Running',   className: 'bg-[var(--color-score-fair)]/10 text-[var(--color-score-fair)] border-0' },
+  archived:  { label: 'Archived',  className: 'bg-muted text-muted-foreground border-0' },
 }
 
 // ─── Filter tabs ──────────────────────────────────────────────────────────────
@@ -301,7 +301,7 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
       </div>
 
       {/* ── Row 3: Filter bar ──────────────────────────────────────────────── */}
-      <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:160ms]">
+      <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:160ms]">
         <CardContent className="p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {/* Pill toggle buttons */}
@@ -347,7 +347,7 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
       </Card>
 
       {/* ── Row 4: Content table ───────────────────────────────────────────── */}
-      <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:240ms]">
+      <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:240ms]">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-semibold">

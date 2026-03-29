@@ -318,7 +318,7 @@ function EngineCard({
       : 'bg-muted text-muted-foreground'
 
   return (
-    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
+    <Card className="rounded-lg border border-border bg-card shadow-sm">
       <CardContent className="p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -403,7 +403,7 @@ function TopCompetitorCallout({
   const gap = Math.round(competitorScore - userScore)
 
   return (
-    <Card className="rounded-[20px] border border-amber-200 bg-amber-50">
+    <Card className="rounded-lg border border-amber-200 bg-amber-50">
       <CardContent className="p-6">
         <div className="flex items-start gap-3">
           <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0 text-amber-600" />
@@ -455,7 +455,7 @@ function LeaderboardSection({
   leaderboard: ScanResults['leaderboard']
 }) {
   return (
-    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
+    <Card className="rounded-lg border border-border bg-card shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-sans text-lg">
           <Trophy className="h-5 w-5 text-primary" />
@@ -523,7 +523,7 @@ function QuickWinsSection({
   const freeWins = quickWins.slice(0, 3)
 
   return (
-    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
+    <Card className="rounded-lg border border-border bg-card shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-sans text-lg">
           <Zap className="h-5 w-5 text-primary" />
@@ -570,7 +570,7 @@ function GatedCTA({ scanId, email }: { scanId: string; email?: string | null }) 
   return (
     <div className="relative">
       {/* Blurred placeholder content */}
-      <Card className="select-none rounded-[20px] border border-border bg-card shadow-sm">
+      <Card className="select-none rounded-lg border border-border bg-card shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-sans text-lg">
             <Zap className="h-5 w-5 text-primary" />
@@ -594,7 +594,7 @@ function GatedCTA({ scanId, email }: { scanId: string; email?: string | null }) 
       </Card>
 
       {/* Overlay CTA */}
-      <div className="absolute inset-0 flex items-center justify-center rounded-[20px] bg-card/80 backdrop-blur-sm">
+      <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-card/80 backdrop-blur-sm">
         <div className="px-6 text-center">
           <Lock className="mx-auto h-10 w-10 text-primary" />
           <h3 className="mt-4 font-sans font-bold text-xl text-foreground">
@@ -642,7 +642,7 @@ function ShareSection({ scanId, businessName, score }: { scanId: string; busines
   const shareText = encodeURIComponent('Check out my AI visibility score from Beamix!')
 
   return (
-    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
+    <Card className="rounded-lg border border-border bg-card shadow-sm">
       <CardContent className="p-6">
         <div className="flex items-center gap-3">
           <Share2 className="h-5 w-5 text-primary" />
@@ -714,7 +714,7 @@ function ConversionCTA({ scanId, email }: { scanId: string; email?: string | nul
     : `/signup?scan_id=${scanId}`
 
   return (
-    <Card className="rounded-[20px] border-2 border-primary bg-gradient-to-br from-[#FFF5F2] to-card">
+    <Card className="rounded-lg border-2 border-primary bg-gradient-to-br from-[#FFF5F2] to-card">
       <CardContent className="p-8 text-center">
         <h3 className="font-sans font-bold text-2xl text-foreground">
           Ready to fix your AI visibility?

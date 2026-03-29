@@ -265,7 +265,7 @@ export function OnboardingFlow() {
   }
 
   return (
-    <div className="w-full max-w-lg rounded-[20px] border border-border bg-card p-8 shadow-sm">
+    <div className="w-full max-w-lg rounded-lg border border-border bg-card p-8 shadow-sm">
       {/* Step indicator */}
       <div className="mb-8 flex flex-col items-center gap-2">
         <DotIndicator activeIndex={getDotIndex()} />

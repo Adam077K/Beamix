@@ -185,7 +185,7 @@ export function SettingsBusinessTab() {
   }, [businessName, websiteUrl, industry, location, description, services, competitors])
 
   return (
-    <Card className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">
+    <Card className="bg-card rounded-lg border border-border shadow-[var(--shadow-card)]">
       <CardHeader className="pb-5">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">

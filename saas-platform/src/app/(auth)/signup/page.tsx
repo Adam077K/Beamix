@@ -4,7 +4,7 @@ import { SignupForm } from './signup-form'
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-[600px] w-full rounded-[20px]" />}>
+    <Suspense fallback={<Skeleton className="h-[600px] w-full rounded-lg" />}>
       <SignupForm />
     </Suspense>
   )

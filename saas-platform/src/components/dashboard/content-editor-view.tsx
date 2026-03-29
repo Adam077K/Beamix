@@ -167,7 +167,7 @@ export function ContentEditorView({ item }: ContentEditorViewProps) {
       )}
 
       {/* Editor card */}
-      <div className="bg-card rounded-[20px] border border-border shadow-sm overflow-hidden">
+      <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
         {/* Title + meta */}
         <div className="border-b border-border p-6">
           <input

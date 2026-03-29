@@ -48,7 +48,7 @@ export function SettingsBillingTab() {
       </div>
 
       {/* Current Plan */}
-      <Card className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">
+      <Card className="bg-card rounded-lg border border-border shadow-[var(--shadow-card)]">
         <CardHeader className="pb-4">
           <CardTitle className="text-base font-semibold text-foreground">
             Current Plan
@@ -122,7 +122,7 @@ export function SettingsBillingTab() {
       </Card>
 
       {/* Agent Top-Ups */}
-      <Card className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">
+      <Card className="bg-card rounded-lg border border-border shadow-[var(--shadow-card)]">
         <CardHeader className="pb-4">
           <CardTitle className="text-base font-semibold text-foreground">
             Agent Top-Ups
@@ -164,7 +164,7 @@ export function SettingsBillingTab() {
       </Card>
 
       {/* Billing History */}
-      <Card className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">
+      <Card className="bg-card rounded-lg border border-border shadow-[var(--shadow-card)]">
         <CardHeader className="pb-4">
           <CardTitle className="text-base font-semibold text-foreground">
             Billing History
@@ -214,7 +214,7 @@ export function SettingsBillingTab() {
       </Card>
 
       {/* Payment Method + Actions */}
-      <Card className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">
+      <Card className="bg-card rounded-lg border border-border shadow-[var(--shadow-card)]">
         <CardHeader className="pb-4">
           <CardTitle className="text-base font-semibold text-foreground">
             Payment Method

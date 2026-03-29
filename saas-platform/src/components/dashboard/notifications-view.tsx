@@ -52,20 +52,20 @@ const TYPE_META: Record<
   },
   scan_complete: {
     icon: BarChart3,
-    bgColor: 'bg-emerald-100',
-    iconColor: 'text-emerald-600',
+    bgColor: 'bg-[var(--color-score-good)]/10',
+    iconColor: 'text-[var(--color-score-good)]',
     category: 'scans',
   },
   warning: {
     icon: AlertTriangle,
-    bgColor: 'bg-amber-100',
-    iconColor: 'text-amber-600',
+    bgColor: 'bg-[var(--color-score-fair)]/10',
+    iconColor: 'text-[var(--color-score-fair)]',
     category: 'system',
   },
   error: {
     icon: AlertTriangle,
-    bgColor: 'bg-red-100',
-    iconColor: 'text-red-500',
+    bgColor: 'bg-[var(--color-score-critical)]/10',
+    iconColor: 'text-[var(--color-score-critical)]',
     category: 'system',
   },
   info: {
@@ -332,7 +332,7 @@ export function NotificationsView({ notifications }: NotificationsViewProps) {
 
       {/* ── Row 3: Notification list ─────────────────────────────── */}
       {filtered.length === 0 ? (
-        <div className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">
+        <div className="bg-card rounded-lg border border-border shadow-[var(--shadow-card)]">
           <EmptyState
             icon={Bell}
             title={
@@ -357,7 +357,7 @@ export function NotificationsView({ notifications }: NotificationsViewProps) {
               </p>
 
               {/* Group card */}
-              <div className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)] overflow-hidden divide-y divide-border/50">
+              <div className="bg-card rounded-lg border border-border shadow-[var(--shadow-card)] overflow-hidden divide-y divide-border/50">
                 {grouped[group].map((notification) => (
                   <NotificationItem
                     key={notification.id}

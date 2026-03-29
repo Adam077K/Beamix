@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <Card className="rounded-[20px] border border-border bg-card shadow-sm">
+      <Card className="rounded-lg border border-border bg-card shadow-sm">
         <CardHeader className="text-center">
           <CardTitle className="font-sans text-2xl font-medium">Password updated</CardTitle>
           <CardDescription>
@@ -99,7 +99,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
+    <Card className="rounded-lg border border-border bg-card shadow-sm">
       <CardHeader className="text-center">
         <CardTitle className="font-sans text-2xl font-medium">Set new password</CardTitle>
         <CardDescription>

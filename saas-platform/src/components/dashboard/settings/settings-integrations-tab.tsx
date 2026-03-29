@@ -77,7 +77,7 @@ function IntegrationCard({ integration }: { integration: Integration }) {
   return (
     <div
       className={cn(
-        'group relative flex flex-col gap-4 rounded-[20px] border border-border bg-card p-5',
+        'group relative flex flex-col gap-4 rounded-lg border border-border bg-card p-5',
         'shadow-[var(--shadow-card)] transition-all duration-200',
         integration.comingSoon
           ? 'opacity-70'
@@ -161,7 +161,7 @@ export function SettingsIntegrationsTab() {
       </div>
 
       {/* Request an integration */}
-      <div className="rounded-[20px] border border-dashed border-border bg-muted/20 px-6 py-8 text-center">
+      <div className="rounded-lg border border-dashed border-border bg-muted/20 px-6 py-8 text-center">
         <p className="text-sm font-medium text-foreground">
           Missing an integration?
         </p>

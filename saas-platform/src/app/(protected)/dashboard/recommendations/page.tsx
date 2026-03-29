@@ -38,15 +38,15 @@ export default async function RecommendationsPage() {
     subscription.status !== 'cancelled'
 
   const impactClass = (impact: string | null) => {
-    if (impact === 'high') return 'bg-red-100 text-red-700'
-    if (impact === 'medium') return 'bg-amber-100 text-amber-700'
-    return 'bg-green-100 text-green-700'
+    if (impact === 'high') return 'bg-[var(--color-score-critical)]/10 text-[var(--color-score-critical)]'
+    if (impact === 'medium') return 'bg-[var(--color-score-fair)]/10 text-[var(--color-score-fair)]'
+    return 'bg-[var(--color-score-good)]/10 text-[var(--color-score-good)]'
   }
 
   const statusClass = (status: string | null) => {
     if (status === 'pending' || status === 'new') return 'bg-muted text-muted-foreground'
-    if (status === 'in_progress') return 'bg-amber-50 text-amber-700'
-    if (status === 'done' || status === 'completed') return 'bg-green-50 text-[#10B981]'
+    if (status === 'in_progress') return 'bg-[var(--color-score-fair)]/10 text-[var(--color-score-fair)]'
+    if (status === 'done' || status === 'completed') return 'bg-[var(--color-score-good)]/10 text-[var(--color-score-good)]'
     return 'bg-muted text-muted-foreground'
   }
 
@@ -58,9 +58,9 @@ export default async function RecommendationsPage() {
       />
 
       {!hasAccess && (
-        <div className="flex items-center justify-between gap-4 rounded-[20px] border border-[#FF3C00]/20 bg-[#FF3C00]/5 px-5 py-4">
+        <div className="flex items-center justify-between gap-4 rounded-lg border border-primary/20 bg-primary/5 px-5 py-4">
           <div className="flex items-center gap-3 min-w-0">
-            <Sparkles className="h-5 w-5 shrink-0 text-[#FF3C00]" aria-hidden="true" />
+            <Sparkles className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
             <p className="text-sm text-foreground">
               <span className="font-medium">Unlock more recommendations and AI agents</span>
               {' '}to improve your visibility — upgrade to a paid plan to run agents and get deeper insights.
@@ -68,7 +68,7 @@ export default async function RecommendationsPage() {
           </div>
           <Link
             href="/pricing"
-            className="shrink-0 px-4 py-1.5 rounded-lg bg-[#FF3C00] text-white text-sm font-medium hover:bg-[#e03500] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF3C00] focus-visible:ring-offset-2"
+            className="shrink-0 px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Upgrade
           </Link>
@@ -76,7 +76,7 @@ export default async function RecommendationsPage() {
       )}
 
       {items.length === 0 ? (
-        <div className="bg-card rounded-[20px] border border-border">
+        <div className="bg-card rounded-lg border border-border">
           <EmptyState
             icon={Lightbulb}
             title="No recommendations yet"
@@ -88,7 +88,7 @@ export default async function RecommendationsPage() {
           {items.map((rec) => (
             <div
               key={rec.id}
-              className="bg-card rounded-[20px] border border-border shadow-sm p-5 hover:shadow-md transition-shadow duration-200"
+              className="bg-card rounded-lg border border-border shadow-sm p-5 hover:shadow-md transition-shadow duration-200"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">

@@ -83,10 +83,12 @@ function VisBar({ label, score, maxScore, isUser, index }: VisBarProps) {
       {/* Bar */}
       <div className="relative flex-1 h-2.5 overflow-hidden rounded-full bg-muted/60">
         <div
-          className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
+          className={cn(
+            'absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out',
+            isUser ? 'bg-primary' : 'bg-muted-foreground/30',
+          )}
           style={{
             width: `${width}%`,
-            backgroundColor: isUser ? '#FF3C00' : '#D1D5DB',
             transitionDelay: `${index * 60}ms`,
           }}
         />
@@ -234,11 +236,8 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
         <span className="flex items-center justify-end gap-2">
           <div className="w-14 h-1.5 overflow-hidden rounded-full bg-muted/60">
             <div
-              className="h-full rounded-full"
-              style={{
-                width: `${row.original.score}%`,
-                backgroundColor: '#D1D5DB',
-              }}
+              className="h-full rounded-full bg-muted-foreground/40"
+              style={{ width: `${row.original.score}%` }}
             />
           </div>
           <span className="text-xs font-semibold tabular-nums text-foreground w-7 text-right">
@@ -353,7 +352,7 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
       </div>
 
       {/* ── Row 3: Add competitor ──────────────────────────────────────────── */}
-      <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:160ms]">
+      <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:160ms] hover-lift">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold">Add Competitor</CardTitle>
         </CardHeader>
@@ -399,7 +398,7 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
 
       {/* ── Row 4: Visibility comparison bars ─────────────────────────────── */}
       {competitors.length > 0 && (
-        <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:240ms]">
+        <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:240ms]">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold">Visibility Comparison</CardTitle>
@@ -408,12 +407,12 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
                 className="text-[10px] font-medium text-muted-foreground border-border"
               >
                 <span
-                  className="inline-block h-2 w-2 rounded-full mr-1 bg-[#FF3C00]"
+                  className="inline-block h-2 w-2 rounded-full mr-1 bg-primary"
                   aria-hidden="true"
                 />
                 You
                 <span
-                  className="inline-block h-2 w-2 rounded-full mx-1 bg-gray-300"
+                  className="inline-block h-2 w-2 rounded-full mx-1 bg-muted-foreground/30"
                   aria-hidden="true"
                 />
                 Competitors
@@ -438,7 +437,7 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
       )}
 
       {/* ── Row 5: Competitor table ────────────────────────────────────────── */}
-      <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:320ms]">
+      <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:320ms]">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-semibold">Competitor Overview</CardTitle>
         </CardHeader>

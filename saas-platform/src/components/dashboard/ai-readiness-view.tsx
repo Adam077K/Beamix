@@ -167,9 +167,9 @@ function StatusIcon({ status }: { status: 'pass' | 'fail' | 'warning' }) {
 
 function PriorityBadge({ priority }: { priority: RecommendationItem['priority'] }) {
   const config = {
-    critical: 'bg-red-50 text-red-700 border-red-200',
-    high:     'bg-orange-50 text-orange-700 border-orange-200',
-    medium:   'bg-amber-50 text-amber-700 border-amber-200',
+    critical: 'bg-[var(--color-score-critical)]/10 text-[var(--color-score-critical)] border-[var(--color-score-critical)]/20',
+    high:     'bg-primary/10 text-primary border-primary/20',
+    medium:   'bg-[var(--color-score-fair)]/10 text-[var(--color-score-fair)] border-[var(--color-score-fair)]/20',
     low:      'bg-muted text-muted-foreground border-border',
   }[priority]
   return (
@@ -221,7 +221,7 @@ export function AiReadinessView({ readiness, websiteUrl }: AiReadinessViewProps)
       {/* ── Empty state ─────────────────────────────────────────────────────── */}
       {!readiness && (
         <div className="animate-fade-up [animation-delay:80ms]">
-          <Card className="rounded-[20px] shadow-[var(--shadow-card)]">
+          <Card className="rounded-lg shadow-[var(--shadow-card)]">
             <CardContent className="p-0">
               <EmptyState
                 icon={ShieldCheck}
@@ -240,7 +240,7 @@ export function AiReadinessView({ readiness, websiteUrl }: AiReadinessViewProps)
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
               {/* Score ring hero */}
-              <Card className="lg:col-span-5 rounded-[20px] shadow-[var(--shadow-card)]">
+              <Card className="lg:col-span-5 rounded-lg shadow-[var(--shadow-card)]">
                 <CardContent className="p-6 flex flex-col items-center gap-4 text-center">
                   <span className="section-eyebrow">Overall AI Readiness</span>
                   <ScoreRing score={readiness.overall_score} size="lg" showLabel={false} animate />
@@ -277,7 +277,7 @@ export function AiReadinessView({ readiness, websiteUrl }: AiReadinessViewProps)
                     <Card
                       key={key}
                       className={cn(
-                        'rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up card-hover',
+                        'rounded-lg shadow-[var(--shadow-card)] animate-fade-up card-hover',
                         levelBg,
                       )}
                       style={{ animationDelay: `${120 + i * 60}ms` }}
@@ -310,7 +310,7 @@ export function AiReadinessView({ readiness, websiteUrl }: AiReadinessViewProps)
           </div>
 
           {/* ── Row 4: Detailed Assessment ────────────────────────────────────── */}
-          <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:400ms]">
+          <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:400ms]">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -359,7 +359,7 @@ export function AiReadinessView({ readiness, websiteUrl }: AiReadinessViewProps)
                       {item.status !== 'pass' && (
                         <Link
                           href={item.agentLink ?? '/dashboard/agents'}
-                          className="shrink-0 flex items-center gap-0.5 text-xs font-semibold text-primary hover:underline whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF3C00] focus-visible:ring-offset-2 rounded"
+                          className="shrink-0 flex items-center gap-0.5 text-xs font-semibold text-primary hover:underline whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
                         >
                           Fix <ArrowRight className="h-3 w-3" aria-hidden="true" />
                         </Link>
@@ -376,7 +376,7 @@ export function AiReadinessView({ readiness, websiteUrl }: AiReadinessViewProps)
 
           {/* ── Row 5: Recommendations ────────────────────────────────────────── */}
           {recommendations.length > 0 && (
-            <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:480ms]">
+            <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:480ms]">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -439,7 +439,7 @@ export function AiReadinessView({ readiness, websiteUrl }: AiReadinessViewProps)
                       {/* Run agent link */}
                       <Link
                         href={rec.agentLink}
-                        className="shrink-0 flex items-center gap-0.5 text-xs font-semibold text-primary hover:underline whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF3C00] focus-visible:ring-offset-2 rounded"
+                        className="shrink-0 flex items-center gap-0.5 text-xs font-semibold text-primary hover:underline whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
                       >
                         Run Agent <ArrowRight className="h-3 w-3" aria-hidden="true" />
                       </Link>
@@ -452,7 +452,7 @@ export function AiReadinessView({ readiness, websiteUrl }: AiReadinessViewProps)
 
           {/* All-pass state */}
           {recommendations.length === 0 && (
-            <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:480ms]">
+            <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:480ms]">
               <CardContent className="p-8 flex flex-col items-center gap-3 text-center">
                 <CheckCircle2 className="h-10 w-10 text-emerald-500" aria-hidden="true" />
                 <h3 className="text-sm font-semibold text-foreground">You&apos;re fully optimized!</h3>

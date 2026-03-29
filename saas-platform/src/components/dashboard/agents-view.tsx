@@ -29,6 +29,22 @@ import { AgentModal, type AgentExecuteParams } from './agent-modal'
 import { agentTypeToSlug } from '@/lib/agents/config'
 import { cn } from '@/lib/utils'
 
+// ─── Agent color palette (token-based, one per agent type) ───────────────────
+
+const AGENT_COLORS: Record<string, { text: string; bg: string }> = {
+  content_writer:         { text: 'text-primary',                         bg: 'bg-primary/10' },
+  blog_writer:            { text: 'text-[var(--color-chart-3)]',          bg: 'bg-[var(--color-chart-3)]/10' },
+  review_analyzer:        { text: 'text-[var(--color-chart-4)]',          bg: 'bg-[var(--color-chart-4)]/10' },
+  schema_optimizer:       { text: 'text-[var(--color-chart-2)]',          bg: 'bg-[var(--color-chart-2)]/10' },
+  social_strategy:        { text: 'text-[var(--color-chart-5)]',          bg: 'bg-[var(--color-chart-5)]/10' },
+  competitor_intelligence:{ text: 'text-[var(--color-chart-4)]',          bg: 'bg-[var(--color-chart-4)]/10' },
+  faq_agent:              { text: 'text-[var(--color-chart-2)]',          bg: 'bg-[var(--color-chart-2)]/10' },
+}
+
+function agentColors(type: string): { text: string; bg: string } {
+  return AGENT_COLORS[type] ?? { text: 'text-muted-foreground', bg: 'bg-muted' }
+}
+
 // ─── Agent definitions ────────────────────────────────────────────────────────
 
 interface AgentDef {
@@ -50,8 +66,8 @@ const AGENTS: AgentDef[] = [
     icon: FileText,
     credits: 1,
     isUnlimited: false,
-    colorIcon: 'text-[#FF3C00]',
-    colorBg: 'bg-[#FF3C00]/10',
+    colorIcon: agentColors('content_writer').text,
+    colorBg: agentColors('content_writer').bg,
   },
   {
     type: 'blog_writer',
@@ -60,8 +76,8 @@ const AGENTS: AgentDef[] = [
     icon: BookOpen,
     credits: 1,
     isUnlimited: false,
-    colorIcon: 'text-violet-600',
-    colorBg: 'bg-violet-50',
+    colorIcon: agentColors('blog_writer').text,
+    colorBg: agentColors('blog_writer').bg,
   },
   {
     type: 'review_analyzer',
@@ -70,8 +86,8 @@ const AGENTS: AgentDef[] = [
     icon: Star,
     credits: 0,
     isUnlimited: true,
-    colorIcon: 'text-amber-600',
-    colorBg: 'bg-amber-50',
+    colorIcon: agentColors('review_analyzer').text,
+    colorBg: agentColors('review_analyzer').bg,
   },
   {
     type: 'schema_optimizer',
@@ -80,8 +96,8 @@ const AGENTS: AgentDef[] = [
     icon: Code2,
     credits: 0,
     isUnlimited: true,
-    colorIcon: 'text-emerald-600',
-    colorBg: 'bg-emerald-50',
+    colorIcon: agentColors('schema_optimizer').text,
+    colorBg: agentColors('schema_optimizer').bg,
   },
   {
     type: 'social_strategy',
@@ -90,8 +106,8 @@ const AGENTS: AgentDef[] = [
     icon: Share2,
     credits: 1,
     isUnlimited: false,
-    colorIcon: 'text-pink-600',
-    colorBg: 'bg-pink-50',
+    colorIcon: agentColors('social_strategy').text,
+    colorBg: agentColors('social_strategy').bg,
   },
   {
     type: 'competitor_intelligence',
@@ -100,8 +116,8 @@ const AGENTS: AgentDef[] = [
     icon: Search,
     credits: 1,
     isUnlimited: false,
-    colorIcon: 'text-[#FF3C00]',
-    colorBg: 'bg-[#FF3C00]/10',
+    colorIcon: agentColors('competitor_intelligence').text,
+    colorBg: agentColors('competitor_intelligence').bg,
   },
   {
     type: 'faq_agent',
@@ -110,8 +126,8 @@ const AGENTS: AgentDef[] = [
     icon: MessageSquare,
     credits: 0,
     isUnlimited: true,
-    colorIcon: 'text-sky-600',
-    colorBg: 'bg-sky-50',
+    colorIcon: agentColors('faq_agent').text,
+    colorBg: agentColors('faq_agent').bg,
   },
 ]
 
@@ -272,10 +288,10 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
       cell: ({ row }) => {
         const cost = row.original.credits_cost
         return cost === 0 ? (
-          <span className="text-xs text-emerald-600 font-medium">Free</span>
+          <span className="text-xs text-[var(--color-chart-2)] font-medium">Free</span>
         ) : (
           <span className="flex items-center justify-end gap-1 text-xs text-muted-foreground tabular-nums">
-            <Zap className="h-3 w-3 text-[#FF3C00]" aria-hidden="true" />
+            <Zap className="h-3 w-3 text-primary" aria-hidden="true" />
             {cost} Run
           </span>
         )
@@ -342,9 +358,9 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
               <span className="section-eyebrow truncate">AI Runs Used</span>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="metric-value text-3xl">
+              <span className="metric-value text-3xl tabular-nums">
                 {creditsUsed}
-                <span className="text-lg font-medium text-muted-foreground ml-1">/ {monthlyCredits}</span>
+                <span className="text-lg font-medium text-muted-foreground ml-1 tabular-nums">/ {monthlyCredits}</span>
               </span>
               <div className="mt-2">
                 <Progress
@@ -353,7 +369,7 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
                   aria-label={`${creditsPercent}% credits used`}
                 />
               </div>
-              <span className="text-sm text-muted-foreground leading-snug mt-1">{creditsPercent}% used</span>
+              <span className="text-sm text-muted-foreground leading-snug mt-1 tabular-nums">{creditsPercent}% used</span>
             </div>
           </div>
         </Card>
@@ -381,8 +397,8 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
             <div
               key={agent.type}
               className={cn(
-                'group relative rounded-[20px] border border-border bg-card p-5',
-                'shadow-[var(--shadow-card)] card-hover',
+                'group relative rounded-lg border border-border bg-card p-5',
+                'shadow-[var(--shadow-card)] card-hover hover-lift',
                 'transition-all duration-200 ease-out cursor-pointer overflow-hidden',
               )}
               style={{ animationDelay: `${160 + i * 40}ms` }}
@@ -408,18 +424,18 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
                     className={cn(
                       'text-[10px] font-medium border-border',
                       agent.isUnlimited
-                        ? 'text-emerald-600 border-emerald-200 bg-emerald-50'
+                        ? 'text-[var(--color-chart-2)] border-[var(--color-chart-2)]/30 bg-[var(--color-chart-2)]/10'
                         : 'text-muted-foreground',
                     )}
                   >
                     {agent.isUnlimited ? (
                       <>
-                        <Sparkles className="h-2.5 w-2.5 mr-0.5 text-emerald-500" aria-hidden="true" />
+                        <Sparkles className="h-2.5 w-2.5 mr-0.5 text-[var(--color-chart-2)]" aria-hidden="true" />
                         Unlimited
                       </>
                     ) : (
                       <>
-                        <Zap className="h-2.5 w-2.5 mr-0.5 text-[#FF3C00]" aria-hidden="true" />
+                        <Zap className="h-2.5 w-2.5 mr-0.5 text-primary" aria-hidden="true" />
                         1 AI Run
                       </>
                     )}
@@ -469,7 +485,7 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
       </div>
 
       {/* ── Row 4: Execution history ───────────────────────────────────────── */}
-      <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:320ms]">
+      <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:320ms]">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <CardTitle className="text-base font-semibold">Execution History</CardTitle>

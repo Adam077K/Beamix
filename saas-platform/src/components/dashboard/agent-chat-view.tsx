@@ -43,7 +43,7 @@ const AGENT_META: Record<
     description: 'Generate AI-optimized website content',
     icon: FileText,
     credits: 1,
-    color: 'bg-[#FFF5F2] text-[#FF3C00]',
+    color: 'bg-primary/5 text-primary',
     prompts: [
       'Write a homepage hero section',
       'Create an about page',
@@ -55,7 +55,7 @@ const AGENT_META: Record<
     description: 'Write AI-optimized blog posts',
     icon: BookOpen,
     credits: 1,
-    color: 'bg-violet-50 text-violet-600',
+    color: 'bg-[var(--color-chart-3)]/10 text-[var(--color-chart-3)]',
     prompts: [
       'Write a how-to guide for my industry',
       'Create a comparison article',
@@ -67,7 +67,7 @@ const AGENT_META: Record<
     description: 'Analyze reviews and generate responses',
     icon: Star,
     credits: 0,
-    color: 'bg-amber-50 text-amber-600',
+    color: 'bg-[var(--color-chart-4)]/10 text-[var(--color-chart-4)]',
     prompts: [
       'Analyze my Google reviews',
       'Generate review response templates',
@@ -79,7 +79,7 @@ const AGENT_META: Record<
     description: 'Generate JSON-LD structured data',
     icon: Code2,
     credits: 0,
-    color: 'bg-purple-50 text-purple-600',
+    color: 'bg-[var(--color-chart-2)]/10 text-[var(--color-chart-2)]',
     prompts: [
       'Generate LocalBusiness schema',
       'Create FAQ schema markup',
@@ -91,7 +91,7 @@ const AGENT_META: Record<
     description: 'Build authority-building social strategy',
     icon: Share2,
     credits: 1,
-    color: 'bg-pink-50 text-pink-600',
+    color: 'bg-[var(--color-chart-5)]/10 text-[var(--color-chart-5)]',
     prompts: [
       'Create a content calendar',
       'Write LinkedIn posts',
@@ -103,7 +103,7 @@ const AGENT_META: Record<
     description: 'Analyze competitor AI visibility',
     icon: Search,
     credits: 1,
-    color: 'bg-[#FFF5F2] text-[#FF3C00]',
+    color: 'bg-[var(--color-chart-4)]/10 text-[var(--color-chart-4)]',
     prompts: [
       'Analyze my top 3 competitors',
       'Find their content strategy',
@@ -115,7 +115,7 @@ const AGENT_META: Record<
     description: 'Generate FAQ content that AI engines love to cite',
     icon: MessageSquare,
     credits: 0,
-    color: 'bg-green-50 text-green-600',
+    color: 'bg-[var(--color-chart-2)]/10 text-[var(--color-chart-2)]',
     prompts: [
       'Find popular queries in my industry',
       'Discover local search patterns',
@@ -337,7 +337,7 @@ export function AgentChatView({
             </Badge>
           )}
           {!isRunning && messages.some((m) => m.role === 'agent' && !m.error) && (
-            <Badge className="bg-green-50 text-green-700 border-0 text-xs">
+            <Badge className="bg-[var(--color-chart-2)]/10 text-[var(--color-chart-2)] border-0 text-xs">
               Completed
             </Badge>
           )}
@@ -398,14 +398,14 @@ export function AgentChatView({
                     msg.role === 'user'
                       ? [
                           'max-w-[88%] sm:max-w-[75%] ms-auto',
-                          'rounded-[16px] rounded-te-[4px]',
+                          'rounded-lg',
                           'bg-foreground text-background px-4 py-3',
                           'leading-relaxed',
                         ]
                       : msg.error
                         ? [
                             'max-w-[85%]',
-                            'rounded-[16px] rounded-ts-[4px]',
+                            'rounded-lg',
                             'bg-red-50 border border-red-200 text-destructive px-4 py-3',
                             'leading-relaxed',
                           ]
@@ -441,7 +441,7 @@ export function AgentChatView({
                           className="opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           {copiedIndex === i ? (
-                            <Check className="h-3.5 w-3.5 text-green-600" />
+                            <Check className="h-3.5 w-3.5 text-[var(--color-chart-2)]" />
                           ) : (
                             <Copy className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
                           )}
@@ -494,7 +494,7 @@ export function AgentChatView({
             {/* Typing indicator */}
             {isRunning && (
               <div className="flex justify-start">
-                <div className="rounded-[16px] rounded-ts-[4px] bg-muted/60 border border-border/50">
+                <div className="rounded-lg bg-muted/60 border border-border/50">
                   <TypingIndicator />
                 </div>
               </div>

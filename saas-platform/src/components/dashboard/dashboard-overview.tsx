@@ -25,6 +25,7 @@ import { DataTable } from '@/components/ui/data-table'
 import { ScoreRing } from '@/components/ui/score-ring'
 import { format } from 'date-fns'
 import { cn, getScoreColor } from '@/lib/utils'
+import { ENGINE_COLORS } from '@/constants/engine-colors'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -41,15 +42,6 @@ const AGENT_LABELS: Record<string, string> = {
   free_scan: 'Free Scan',
 }
 
-const ENGINE_COLORS: Record<string, string> = {
-  ChatGPT:    '#10B981',
-  Gemini:     '#0EA5E9',
-  Perplexity: '#8B5CF6',
-  Claude:     '#F97316',
-  'Google AI': '#FBBF24',
-  Grok:       '#EC4899',
-  'You.com':  '#06B6D4',
-}
 
 const MOCK_COMPETITORS = [
   { name: 'Competitor A', score: 72, position: 1 },
@@ -195,7 +187,7 @@ function EngineBar({ engine, isMentioned, rankPosition, color, index }: EngineBa
           className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
           style={{
             width: `${barWidth}%`,
-            backgroundColor: isMentioned ? color : '#E5E7EB',
+            backgroundColor: isMentioned ? color : 'var(--border)',
             transitionDelay: `${index * 60}ms`,
           }}
         />
@@ -412,7 +404,7 @@ export function DashboardOverview({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 animate-fade-up [animation-delay:80ms]">
 
         {/* LEFT col-span-5: Hero Visibility Card */}
-        <Card className="lg:col-span-5 rounded-[20px] shadow-[var(--shadow-card)] overflow-hidden">
+        <Card className="lg:col-span-5 rounded-lg shadow-[var(--shadow-card)] overflow-hidden">
           <CardContent className="p-6 flex flex-col gap-5 h-full">
 
             {/* Score section */}
@@ -515,7 +507,7 @@ export function DashboardOverview({
         <div className="lg:col-span-4 flex flex-col gap-3">
 
           {/* Top: Total Mentions — orange accent */}
-          <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-br from-primary/90 to-primary p-5 text-white shadow-[var(--shadow-card)]">
+          <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-primary/90 to-primary p-5 text-white shadow-[var(--shadow-card)]">
             {/* Background icon decoration */}
             <Globe
               className="absolute right-4 top-4 h-10 w-10 opacity-20"
@@ -537,7 +529,7 @@ export function DashboardOverview({
           </div>
 
           {/* Bottom: Recommendations */}
-          <Card className="rounded-[20px] shadow-[var(--shadow-card)] flex-1">
+          <Card className="rounded-lg shadow-[var(--shadow-card)] flex-1">
             <CardContent className="p-5 flex flex-col gap-2">
               <span className="section-eyebrow">Recommendations</span>
               <div className="flex items-end gap-2">
@@ -557,7 +549,7 @@ export function DashboardOverview({
 
           {/* Two small cards side by side */}
           <div className="grid grid-cols-2 gap-3">
-            <Card className="rounded-[20px] shadow-[var(--shadow-card)]">
+            <Card className="rounded-lg shadow-[var(--shadow-card)]">
               <CardContent className="p-4 flex flex-col gap-1">
                 <span className="section-eyebrow">Content</span>
                 <span className="metric-value text-2xl font-bold text-foreground leading-none">
@@ -568,7 +560,7 @@ export function DashboardOverview({
                 </span>
               </CardContent>
             </Card>
-            <Card className="rounded-[20px] shadow-[var(--shadow-card)]">
+            <Card className="rounded-lg shadow-[var(--shadow-card)]">
               <CardContent className="p-4 flex flex-col gap-2">
                 <span className="section-eyebrow">AI Runs</span>
                 <span className="metric-value text-2xl font-bold text-foreground leading-none">
@@ -586,7 +578,7 @@ export function DashboardOverview({
         </div>
 
         {/* RIGHT col-span-3: Sentiment Gauge */}
-        <Card className="lg:col-span-3 rounded-[20px] shadow-[var(--shadow-card)]">
+        <Card className="lg:col-span-3 rounded-lg shadow-[var(--shadow-card)]">
           <CardContent className="p-5 flex flex-col items-center gap-4 h-full justify-between">
             <div className="w-full flex items-center justify-between">
               <span className="section-eyebrow">Sentiment Balance</span>
@@ -645,7 +637,7 @@ export function DashboardOverview({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fade-up [animation-delay:160ms]">
 
         {/* Credit Usage */}
-        <Card className="rounded-[20px] shadow-[var(--shadow-card)]">
+        <Card className="rounded-lg shadow-[var(--shadow-card)]">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold">AI Run Usage</CardTitle>
           </CardHeader>
@@ -702,7 +694,7 @@ export function DashboardOverview({
         </Card>
 
         {/* Recent Activity */}
-        <Card className="rounded-[20px] shadow-[var(--shadow-card)]">
+        <Card className="rounded-lg shadow-[var(--shadow-card)]">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between gap-3">
               <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
@@ -751,7 +743,7 @@ export function DashboardOverview({
       </div>
 
       {/* ── Row 4: Engine Performance ────────────────────────────────────────── */}
-      <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:240ms]">
+      <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:240ms]">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-semibold">Engine Performance</CardTitle>
@@ -792,7 +784,7 @@ export function DashboardOverview({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fade-up [animation-delay:320ms]">
 
         {/* Recommended Actions */}
-        <Card className="rounded-[20px] shadow-[var(--shadow-card)]">
+        <Card className="rounded-lg shadow-[var(--shadow-card)]">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold">Recommended Actions</CardTitle>
@@ -852,7 +844,7 @@ export function DashboardOverview({
         </Card>
 
         {/* Industry Ranking */}
-        <Card className="rounded-[20px] shadow-[var(--shadow-card)]">
+        <Card className="rounded-lg shadow-[var(--shadow-card)]">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold">Industry Ranking</CardTitle>

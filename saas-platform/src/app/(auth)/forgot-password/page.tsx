@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <Card className="rounded-[20px] border border-border bg-card shadow-sm">
+      <Card className="rounded-lg border border-border bg-card shadow-sm">
         <CardHeader className="text-center">
           <CardTitle className="font-sans text-2xl font-medium">Check your email</CardTitle>
           <CardDescription>
@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <Card className="rounded-[20px] border border-border bg-card shadow-sm">
+    <Card className="rounded-lg border border-border bg-card shadow-sm">
       <CardHeader className="text-center">
         <CardTitle className="font-sans text-2xl font-medium">Reset password</CardTitle>
         <CardDescription>

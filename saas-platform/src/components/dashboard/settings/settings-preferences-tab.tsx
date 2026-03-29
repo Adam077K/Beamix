@@ -76,7 +76,7 @@ function PreferencesSkeleton() {
   return (
     <div className="space-y-5 animate-pulse" aria-label="Loading preferences">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="h-36 rounded-[20px] bg-muted" />
+        <div key={i} className="h-36 rounded-lg bg-muted" />
       ))}
     </div>
   )
@@ -94,7 +94,7 @@ function SectionCard({
   children: React.ReactNode
 }) {
   return (
-    <Card className="bg-card rounded-[20px] border border-border shadow-[var(--shadow-card)]">
+    <Card className="bg-card rounded-lg border border-border shadow-[var(--shadow-card)]">
       <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted">

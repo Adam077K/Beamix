@@ -79,15 +79,15 @@ interface RankingsViewProps {
 // ─── Engine bar colors ────────────────────────────────────────────────────────
 
 const ENGINE_BAR_COLORS: Record<string, string> = {
-  chatgpt: '#10B981',
-  gemini: '#0EA5E9',
-  perplexity: '#8B5CF6',
-  claude: '#FF3C00',
-  google_ai_overviews: '#FBBF24',
+  chatgpt: 'var(--color-chart-2)',
+  gemini: 'var(--color-chart-5)',
+  perplexity: 'var(--color-chart-3)',
+  claude: 'var(--color-chart-1)',
+  google_ai_overviews: 'var(--color-chart-4)',
 }
 
 function getEngineBarColor(engine: string): string {
-  return ENGINE_BAR_COLORS[engine] ?? '#6B7280'
+  return ENGINE_BAR_COLORS[engine] ?? 'var(--color-muted-foreground)'
 }
 
 function rankToBarScore(rank: number | null): number {
@@ -184,7 +184,7 @@ function EnginePerformanceBar({
             className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
             style={{
               width: `${barWidth}%`,
-              backgroundColor: isMentioned ? color : '#E5E7EB',
+              backgroundColor: isMentioned ? color : 'var(--color-border)',
               transitionDelay: `${index * 60}ms`,
             }}
           />
@@ -396,8 +396,8 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
   const mentionedCount = latestDetails.filter((d) => d.is_mentioned).length
   const notMentionedCount = latestDetails.length - mentionedCount
   const donutData = [
-    { name: 'Mentioned', value: mentionedCount, color: '#10B981' },
-    { name: 'Not Mentioned', value: notMentionedCount, color: '#E5E7EB' },
+    { name: 'Mentioned', value: mentionedCount, color: 'var(--color-score-good)' },
+    { name: 'Not Mentioned', value: notMentionedCount, color: 'var(--color-border)' },
   ]
 
   // ── Engine rows ───────────────────────────────────────────────────────────
@@ -464,7 +464,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
       {/* ── Empty state ─────────────────────────────────────────────────────── */}
       {!hasData && (
         <div className="animate-fade-up [animation-delay:80ms]">
-          <Card className="rounded-[20px] shadow-[var(--shadow-card)]">
+          <Card className="rounded-lg shadow-[var(--shadow-card)]">
             <CardContent className="p-0">
               <EmptyState
                 icon={ScanSearch}
@@ -485,7 +485,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 animate-fade-up [animation-delay:80ms]">
 
           {/* LEFT col-span-4: Large Visibility Score */}
-          <Card className="lg:col-span-4 rounded-[20px] shadow-[var(--shadow-card)]">
+          <Card className="lg:col-span-4 rounded-lg shadow-[var(--shadow-card)]">
             <CardContent className="p-6 flex flex-col gap-4 h-full">
               <div className="flex items-center justify-between">
                 <span className="section-eyebrow">Visibility Score</span>
@@ -521,7 +521,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
           <div className="lg:col-span-4 flex flex-col gap-4">
 
             {/* Engines Mentioning */}
-            <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-br from-primary/90 to-primary p-5 text-white shadow-[var(--shadow-card)] flex-1">
+            <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-primary/90 to-primary p-5 text-white shadow-[var(--shadow-card)] flex-1">
               <BarChart3 className="absolute right-4 top-4 h-10 w-10 opacity-20" aria-hidden="true" />
               <div className="flex flex-col gap-2">
                 <span className="text-[11px] font-semibold uppercase tracking-widest text-white/70">
@@ -554,7 +554,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
             </div>
 
             {/* Average Position */}
-            <Card className="rounded-[20px] shadow-[var(--shadow-card)] flex-1">
+            <Card className="rounded-lg shadow-[var(--shadow-card)] flex-1">
               <CardContent className="p-5 flex flex-col gap-2">
                 <span className="section-eyebrow">Average Position</span>
                 <div className="flex items-end gap-2">
@@ -572,7 +572,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
           </div>
 
           {/* RIGHT col-span-4: Sentiment Gauge */}
-          <Card className="lg:col-span-4 rounded-[20px] shadow-[var(--shadow-card)]">
+          <Card className="lg:col-span-4 rounded-lg shadow-[var(--shadow-card)]">
             <CardContent className="p-5 flex flex-col items-center gap-4 h-full justify-between">
               <div className="w-full flex items-center justify-between">
                 <span className="section-eyebrow">Sentiment Balance</span>
@@ -625,7 +625,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
 
       {/* ── Row 3: Engine Performance ────────────────────────────────────────── */}
       {hasData && (
-        <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:160ms]">
+        <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:160ms]">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -785,7 +785,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
 
       {/* ── Row 5: Tracked Queries ───────────────────────────────────────────── */}
       {hasData && (
-        <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:320ms]">
+        <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:320ms]">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -821,7 +821,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
 
       {/* ── Row 6: Scan History ──────────────────────────────────────────────── */}
       {hasData && (
-        <Card className="rounded-[20px] shadow-[var(--shadow-card)] animate-fade-up [animation-delay:400ms]">
+        <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:400ms]">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between gap-3">
               <div>

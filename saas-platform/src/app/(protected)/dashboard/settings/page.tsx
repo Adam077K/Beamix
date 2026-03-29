@@ -1,82 +1,69 @@
 'use client'
 
+import { useState } from 'react'
 import {
   Building2,
   CreditCard,
-  Settings2,
+  SlidersHorizontal,
   Puzzle,
 } from 'lucide-react'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { SettingsBusinessTab } from '@/components/dashboard/settings/settings-business-tab'
 import { SettingsBillingTab } from '@/components/dashboard/settings/settings-billing-tab'
 import { SettingsPreferencesTab } from '@/components/dashboard/settings/settings-preferences-tab'
 import { SettingsIntegrationsTab } from '@/components/dashboard/settings/settings-integrations-tab'
+import { cn } from '@/lib/utils'
+
+const SETTINGS_TABS = [
+  { id: 'business', label: 'Business Profile', icon: Building2 },
+  { id: 'billing', label: 'Billing & Plan', icon: CreditCard },
+  { id: 'preferences', label: 'Preferences', icon: SlidersHorizontal },
+  { id: 'integrations', label: 'Integrations', icon: Puzzle },
+] as const
+
+type TabId = (typeof SETTINGS_TABS)[number]['id']
 
 export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState<TabId>('business')
+
   return (
     <div className="space-y-6 animate-fade-up">
-
       {/* Page header */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Settings
-        </h1>
+        <h1 className="text-display text-foreground">Settings</h1>
         <p className="mt-0.5 text-sm text-muted-foreground">
           Manage your account, billing, and preferences
         </p>
       </div>
 
-      <Tabs defaultValue="business" className="space-y-6">
-        {/* Pill-style tab navigation */}
-        <div className="flex gap-1 bg-muted rounded-xl p-1 w-fit">
-          <TabsList className="bg-transparent p-0 gap-1 h-auto">
-            <TabsTrigger
-              value="business"
-              className="gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all duration-150 h-auto"
+      {/* Two-column layout: vertical nav + content */}
+      <div className="flex flex-col md:flex-row gap-8">
+        {/* Vertical settings nav */}
+        <nav className="md:w-56 shrink-0 flex md:flex-col gap-1 overflow-x-auto md:overflow-visible border-b md:border-b-0 pb-2 md:pb-0">
+          {SETTINGS_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm whitespace-nowrap transition-colors',
+                activeTab === tab.id
+                  ? 'bg-primary/10 text-primary font-medium'
+                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+              )}
             >
-              <Building2 className="h-3.5 w-3.5" />
-              Business
-            </TabsTrigger>
-            <TabsTrigger
-              value="billing"
-              className="gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all duration-150 h-auto"
-            >
-              <CreditCard className="h-3.5 w-3.5" />
-              Billing
-            </TabsTrigger>
-            <TabsTrigger
-              value="preferences"
-              className="gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all duration-150 h-auto"
-            >
-              <Settings2 className="h-3.5 w-3.5" />
-              Preferences
-            </TabsTrigger>
-            <TabsTrigger
-              value="integrations"
-              className="gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all duration-150 h-auto"
-            >
-              <Puzzle className="h-3.5 w-3.5" />
-              Integrations
-            </TabsTrigger>
-          </TabsList>
+              <tab.icon className="h-4 w-4 shrink-0" />
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Content area */}
+        <div className="flex-1 max-w-2xl">
+          {activeTab === 'business' && <SettingsBusinessTab />}
+          {activeTab === 'billing' && <SettingsBillingTab />}
+          {activeTab === 'preferences' && <SettingsPreferencesTab />}
+          {activeTab === 'integrations' && <SettingsIntegrationsTab />}
         </div>
-
-        <TabsContent value="business">
-          <SettingsBusinessTab />
-        </TabsContent>
-
-        <TabsContent value="billing">
-          <SettingsBillingTab />
-        </TabsContent>
-
-        <TabsContent value="preferences">
-          <SettingsPreferencesTab />
-        </TabsContent>
-
-        <TabsContent value="integrations">
-          <SettingsIntegrationsTab />
-        </TabsContent>
-      </Tabs>
+      </div>
     </div>
   )
 }
