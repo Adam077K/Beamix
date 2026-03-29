@@ -16,11 +16,13 @@ import {
   Shield,
   Menu,
   X,
+  Search,
 } from 'lucide-react'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { UserMenu } from '@/components/dashboard/user-menu'
 import { LanguageToggle } from '@/components/ui/language-toggle'
 import { Badge } from '@/components/ui/badge'
+import { CommandPalette } from '@/components/dashboard/command-palette'
 import { cn } from '@/lib/utils'
 import { SidebarProvider, useSidebar } from '@/components/dashboard/sidebar-context'
 
@@ -176,6 +178,19 @@ function ShellContent({
             </span>
           </div>
 
+          {/* Center: Command palette trigger — desktop only */}
+          <button
+            onClick={() => {
+              document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }))
+            }}
+            className="hidden md:flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
+            aria-label="Open command palette (⌘K)"
+          >
+            <Search className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Search...</span>
+            <kbd className="text-[10px] font-mono bg-card px-1.5 py-0.5 rounded border border-border">⌘K</kbd>
+          </button>
+
           {/* Right: Language toggle + notifications + trial badge + user menu */}
           <div className="flex items-center gap-2">
             <LanguageToggle />
@@ -203,7 +218,7 @@ function ShellContent({
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto dashboard-bg">
+        <main id="main-content" className="flex-1 overflow-y-auto dashboard-bg">
           {isAgentChat ? (
             children
           ) : (
@@ -220,6 +235,7 @@ function ShellContent({
 export function DashboardShell(props: DashboardShellProps) {
   return (
     <SidebarProvider>
+      <CommandPalette />
       <ShellContent {...props} />
     </SidebarProvider>
   )
