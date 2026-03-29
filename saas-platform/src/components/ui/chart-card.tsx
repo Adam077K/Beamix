@@ -42,7 +42,7 @@ function PeriodPill({ label, selected, onClick }: PeriodPillProps) {
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        'rounded-full px-2.5 py-1 text-xs font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
+        'rounded-full px-2.5 py-1 text-xs font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 active:scale-[0.97]',
         selected
           ? 'bg-foreground text-background'
           : 'bg-transparent text-muted-foreground hover:bg-muted'

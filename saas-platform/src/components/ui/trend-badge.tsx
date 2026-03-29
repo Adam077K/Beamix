@@ -33,7 +33,7 @@ function TrendBadge({ value, suffix = "", size = "sm", className }: TrendBadgePr
   return (
     <span
       className={cn(
-        "rounded-full px-2 py-0.5 inline-flex items-center gap-1 font-medium",
+        "rounded-full px-2 py-0.5 inline-flex items-center gap-1 font-medium transition-colors duration-150",
         sizeClass,
         colorClass,
         className
@@ -41,7 +41,7 @@ function TrendBadge({ value, suffix = "", size = "sm", className }: TrendBadgePr
       aria-label={label}
     >
       <Icon className="w-3 h-3 shrink-0" aria-hidden="true" />
-      <span>
+      <span className="tabular-nums">
         {isNeutral ? "—" : `${isPositive ? "+" : ""}${value}${suffix}`}
       </span>
     </span>

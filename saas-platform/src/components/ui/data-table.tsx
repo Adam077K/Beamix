@@ -71,7 +71,7 @@ export function DataTable<TData, TValue>({
                     key={header.id}
                     scope="col"
                     className={cn(
-                      'bg-muted/50 px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground whitespace-nowrap',
+                      'bg-muted/50 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap',
                       'first:rounded-tl-md last:rounded-tr-md',
                       align === 'right' && 'text-right',
                       align === 'center' && 'text-center',

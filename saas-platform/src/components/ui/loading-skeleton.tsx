@@ -99,6 +99,33 @@ export function TableSkeleton({
   )
 }
 
+// ─── PageHeaderSkeleton ─────────────────────────────────────────────────────
+
+export function PageHeaderSkeleton() {
+  return (
+    <div className="mb-8 space-y-2">
+      <div className="h-4 w-24 rounded bg-muted animate-pulse" />
+      <div className="h-8 w-48 rounded bg-muted animate-pulse" />
+      <div className="h-4 w-64 rounded bg-muted animate-pulse" />
+    </div>
+  )
+}
+
+// ─── SidebarSkeleton ────────────────────────────────────────────────────────
+
+export function SidebarSkeleton() {
+  return (
+    <div className="flex h-screen w-60 flex-col gap-2 border-r border-border bg-card p-3">
+      <div className="h-9 w-9 rounded-full bg-muted animate-pulse" />
+      <div className="mt-4 space-y-1">
+        {Array.from({ length: 7 }).map((_, i) => (
+          <div key={i} className="h-9 rounded-lg bg-muted animate-pulse" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── ListSkeleton ───────────────────────────────────────────────────────────
 
 export function ListSkeleton({

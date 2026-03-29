@@ -11,7 +11,7 @@ interface SparklineProps {
   className?: string
 }
 
-function Sparkline({ data, color = "#10B981", className }: SparklineProps) {
+function Sparkline({ data, color = "var(--color-score-good)", className }: SparklineProps) {
   if (data.length < 2) return null
 
   const height = 32
@@ -111,7 +111,7 @@ function StatCard({
     <Card
       className={cn(
         "gap-0 py-0",
-        interactive && "card-hover cursor-pointer",
+        interactive && "hover-lift active-press cursor-pointer",
         className
       )}
     >

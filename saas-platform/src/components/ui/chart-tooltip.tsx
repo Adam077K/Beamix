@@ -81,8 +81,8 @@ export function ChartTooltipContent({
   return (
     <div
       className={cn(
-        'pointer-events-none z-50 overflow-hidden rounded-lg border border-border',
-        'bg-card/95 px-3 py-2 text-sm shadow-lg backdrop-blur-sm',
+        'pointer-events-none z-50 overflow-hidden rounded-xl border border-border/50',
+        'bg-card/95 px-3 py-2 shadow-md backdrop-blur-sm',
         'animate-in fade-in-0 zoom-in-95 duration-150',
         className
       )}
@@ -108,9 +108,9 @@ export function ChartTooltipContent({
                 {indicator === 'dot' && <IndicatorDot color={color} />}
                 {indicator === 'line' && <IndicatorLine color={color} />}
                 {indicator === 'dashed' && <IndicatorDashed color={color} />}
-                <span className="text-muted-foreground">{String(name)}</span>
+                <span className="text-xs text-muted-foreground">{String(name)}</span>
               </div>
-              <span className="font-medium tabular-nums text-foreground">
+              <span className="text-sm font-medium tabular-nums text-foreground">
                 {formattedValue}
               </span>
             </div>

@@ -1,14 +1,20 @@
 import { cn } from '@/lib/utils'
 import { Button } from './button'
+import { Card } from './card'
 import type { LucideIcon } from 'lucide-react'
 
-type EmptyStateVariant = 'default' | 'fullPage' | 'inline'
+type EmptyStateVariant = 'default' | 'fullPage' | 'inline' | 'card'
 
 interface EmptyStateProps {
-  icon: LucideIcon
+  icon?: LucideIcon
+  illustration?: React.ReactNode
   title: string
   description: string
   action?: {
+    label: string
+    onClick: () => void
+  }
+  secondaryAction?: {
     label: string
     onClick: () => void
   }
@@ -20,13 +26,16 @@ const variantStyles: Record<EmptyStateVariant, string> = {
   default: 'py-16',
   fullPage: 'py-24',
   inline: 'py-6',
+  card: 'py-12',
 }
 
-export function EmptyState({
+function EmptyStateInner({
   icon: Icon,
+  illustration,
   title,
   description,
   action,
+  secondaryAction,
   variant = 'default',
   className,
 }: EmptyStateProps) {
@@ -40,9 +49,15 @@ export function EmptyState({
         className
       )}
     >
-      {!isInline && (
-        <div className="mb-4 rounded-full bg-muted p-4">
-          <Icon className="h-8 w-8 text-muted-foreground" />
+      {!isInline && (illustration || Icon) && (
+        <div className="mb-4">
+          {illustration ?? (
+            Icon && (
+              <div className="rounded-full bg-gradient-to-br from-muted to-muted/50 p-4">
+                <Icon className="h-8 w-8 text-muted-foreground" />
+              </div>
+            )
+          )}
         </div>
       )}
       <h3
@@ -76,6 +91,28 @@ export function EmptyState({
           {action.label}
         </Button>
       )}
+      {secondaryAction && !isInline && (
+        <Button
+          onClick={secondaryAction.onClick}
+          variant="ghost"
+          size="sm"
+          className="mt-2"
+        >
+          {secondaryAction.label}
+        </Button>
+      )}
     </div>
   )
+}
+
+export function EmptyState(props: EmptyStateProps) {
+  if (props.variant === 'card') {
+    return (
+      <Card className={cn('border-dashed', props.className)}>
+        <EmptyStateInner {...props} className={undefined} />
+      </Card>
+    )
+  }
+
+  return <EmptyStateInner {...props} />
 }

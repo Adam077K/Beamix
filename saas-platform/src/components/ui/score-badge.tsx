@@ -10,10 +10,10 @@ interface ScoreBadgeProps {
 }
 
 function getScoreLevel(score: number) {
-  if (score >= 75) return { level: 'excellent' as const, label: 'Excellent', color: 'text-[#06B6D4]', bg: 'bg-cyan-50 dark:bg-cyan-950' }
-  if (score >= 50) return { level: 'good' as const, label: 'Good', color: 'text-[#10B981]', bg: 'bg-green-50 dark:bg-green-950' }
-  if (score >= 25) return { level: 'fair' as const, label: 'Fair', color: 'text-[#F59E0B]', bg: 'bg-amber-50 dark:bg-amber-950' }
-  return { level: 'critical' as const, label: 'Critical', color: 'text-[#EF4444]', bg: 'bg-red-50 dark:bg-red-950' }
+  if (score >= 75) return { level: 'excellent' as const, label: 'Excellent', color: 'text-[var(--color-score-excellent)]', bg: 'bg-[var(--color-score-excellent)]/10' }
+  if (score >= 50) return { level: 'good' as const, label: 'Good', color: 'text-[var(--color-score-good)]', bg: 'bg-[var(--color-score-good)]/10' }
+  if (score >= 25) return { level: 'fair' as const, label: 'Fair', color: 'text-[var(--color-score-fair)]', bg: 'bg-[var(--color-score-fair)]/10' }
+  return { level: 'critical' as const, label: 'Critical', color: 'text-[var(--color-score-critical)]', bg: 'bg-[var(--color-score-critical)]/10' }
 }
 
 const sizeClasses = {
