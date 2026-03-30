@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Lock } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, type TooltipProps } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts'
 import { Button } from '@/components/ui/button'
 
 interface CompetitorBarData {
@@ -24,7 +24,7 @@ const MOCK_DATA: CompetitorBarData[] = [
   { name: 'Competitor D', score: 38 },
 ]
 
-function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
+function CustomTooltip({ active, payload }: any) {
   if (!active || !payload || payload.length === 0) return null
   const item = payload[0]
   return (
