@@ -21,18 +21,18 @@ import { DashboardOverview } from '@/components/dashboard/dashboard-overview'
  * DELETE THIS FILE before merging to main.
  */
 
-const NAV_MAIN = [
+const NAV_MAIN: Array<{ icon: typeof LayoutDashboard; label: string; href: string; active?: boolean; badge?: string }> = [
   { icon: LayoutDashboard, label: 'Overview', href: '/dashboard', active: true },
   { icon: BarChart3, label: 'Rankings', href: '/dashboard/rankings' },
   { icon: Bot, label: 'Agents', href: '/dashboard/agents', badge: '3' },
   { icon: FileText, label: 'Content', href: '/dashboard/content' },
   { icon: ScanSearch, label: 'Scan', href: '/dashboard/scan' },
-] as const
+]
 
-const NAV_BOTTOM = [
+const NAV_BOTTOM: Array<{ icon: typeof Settings; label: string; href: string }> = [
   { icon: Settings, label: 'Settings', href: '/dashboard/settings' },
   { icon: HelpCircle, label: 'Help & Support', href: '#' },
-] as const
+]
 
 export default function PreviewDashboardPage() {
   return (
