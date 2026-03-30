@@ -52,10 +52,10 @@ const AGENT_LABELS: Record<string, string> = {
 }
 
 const MOCK_COMPETITORS = [
-  { name: 'Competitor A', score: 72, position: 1 },
-  { name: 'Competitor B', score: 61, position: 2 },
-  { name: 'Competitor C', score: 44, position: 4 },
-  { name: 'Competitor D', score: 38, position: 5 },
+  { name: 'Clay', score: 72, position: 1 },
+  { name: 'Ramotion', score: 61, position: 2 },
+  { name: 'Cieden', score: 44, position: 4 },
+  { name: 'Frog Design', score: 38, position: 5 },
 ] as const
 
 // Demo scan history for empty-state sparklines / charts
@@ -287,115 +287,13 @@ function OverviewTab({
   ].sort((a, b) => a.position - b.position)
 
   return (
-    <div className="space-y-5">
-      {/* ── AI Visibility Score hero header ─── */}
-      <div className="flex items-center justify-between pt-1">
-        <div>
-          <h3 className="text-base font-semibold text-slate-900">AI visibility score</h3>
-          <p className="text-xs text-slate-500 mt-0.5">Performance over time across all AI engines</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {demoMode && (
-            <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-200 bg-amber-50">
-              Sample data
-            </Badge>
-          )}
-          <span className="text-3xl font-bold tabular-nums text-slate-900 dark:text-white">{displayScore}%</span>
-          {scoreDelta != null && (
-            <span className={cn('text-sm font-semibold tabular-nums', scoreDelta >= 0 ? 'text-emerald-500' : 'text-red-500')}>
-              {scoreDelta >= 0 ? '↑' : '↓'} {Math.abs(scoreDelta)}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* ── Row 2: 65/35 — trend chart + ranking table ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.85fr_1fr] gap-4">
-        {/* Left: Visibility trend chart */}
-        <Card className="rounded-xl border border-slate-200 shadow-none min-w-0">
-          <CardContent className="px-3 pb-2 pt-3">
-            <VisibilityTrendChart data={scanHistory} />
-          </CardContent>
-        </Card>
-
-        {/* Right: Industry ranking table — Wavespace style */}
-        <div className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
-          <div className="flex items-start justify-between px-4 pt-4 pb-2">
-            <div>
-              <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Industry Ranking</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">Brands with highest visibility</p>
-            </div>
-            <div className="text-right">
-              <span className="text-lg font-bold tabular-nums text-slate-900 dark:text-white">{displayScore > 0 ? `${(displayScore * 0.4).toFixed(1)}%` : '--'}</span>
-              <p className="text-[10px] text-slate-400">Avg. visibility 7d</p>
-            </div>
-          </div>
-          {/* Table header */}
-          <div className="grid grid-cols-[18px_1fr_52px_36px_44px_48px] gap-1 px-4 py-1.5 border-y border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30">
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">#</span>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Brand</span>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Mentions</span>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Pos</span>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Change</span>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Visibility</span>
-          </div>
-          {/* Table rows */}
-          <div className="flex flex-col">
-            {rankingRows.map((row) => {
-              const mentionMap: Record<number, number> = { 72: 142, 61: 139, 44: 164, 38: 98 }
-              const changeMap: Record<number, number> = { 72: -2.6, 61: -1.4, 44: 3.3, 38: 3.3 }
-              const demoMentions = row.isUser ? 534 : (mentionMap[row.numericScore] ?? row.numericScore * 2)
-              const demoChange = row.isUser ? -3.3 : (changeMap[row.numericScore] ?? 0)
-              const demoVisibility = (row.numericScore * 0.42).toFixed(1)
-              const brandColors = ['bg-[#3370FF]', 'bg-slate-800', 'bg-blue-500', 'bg-emerald-500', 'bg-rose-500']
-              const colorIdx = rankingRows.indexOf(row)
-              return (
-                <div
-                  key={row.name}
-                  className={cn(
-                    'grid grid-cols-[18px_1fr_52px_36px_44px_48px] gap-1 items-center px-4 py-2 border-b border-slate-50 dark:border-slate-800/50 last:border-0',
-                    row.isUser && 'bg-blue-50/30 dark:bg-blue-950/20'
-                  )}
-                >
-                  <span className="text-[11px] text-slate-400 tabular-nums">{row.position}</span>
-                  <span className="flex items-center gap-1.5 min-w-0">
-                    <span className={cn('h-5 w-5 rounded-md flex items-center justify-center text-[9px] font-bold text-white shrink-0', brandColors[colorIdx % brandColors.length])}>
-                      {row.name.charAt(0)}
-                    </span>
-                    <span className={cn('text-[11px] truncate', row.isUser ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400')}>
-                      {row.name}
-                    </span>
-                    {row.isUser && (
-                      <span className="shrink-0 rounded bg-slate-100 dark:bg-slate-800 px-1 py-0 text-[9px] font-semibold text-slate-500">You</span>
-                    )}
-                  </span>
-                  <span className="text-[11px] tabular-nums text-slate-600 dark:text-slate-400 text-right">{demoMentions}</span>
-                  <span className="text-[11px] tabular-nums text-slate-600 dark:text-slate-400 text-right">{(row.position + 2.5).toFixed(1)}</span>
-                  <span className={cn('text-[11px] tabular-nums text-right font-medium', demoChange > 0 ? 'text-emerald-500' : 'text-red-500')}>
-                    {demoChange > 0 ? '+' : ''}{demoChange}%
-                  </span>
-                  <span className="text-[11px] tabular-nums text-slate-900 dark:text-white text-right font-medium">{demoVisibility}%</span>
-                </div>
-              )
-            })}
-          </div>
-          <div className="px-4 py-2 border-t border-slate-100 dark:border-slate-800">
-            <Link
-              href="/dashboard?tab=rankings"
-              className="text-[11px] font-medium text-[#3370FF] hover:underline flex items-center gap-0.5"
-            >
-              View full rankings <ChevronRight className="h-3 w-3" aria-hidden="true" />
-            </Link>
-          </div>
-        </div>
-      </div>
-
+    <div className="space-y-3">
       {/* ── Performance stat cards ─── */}
-      <div>
-        <h2 className="text-base font-semibold text-slate-900 dark:text-white">Performance</h2>
-        <p className="text-xs text-slate-500 mt-0.5">Track brand performance with AI insights and metrics</p>
-      </div>
       <div className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-2 border-b border-slate-100 dark:border-slate-800">
+          <span className="text-[12px] font-semibold text-slate-900 dark:text-white">Performance</span>
+          <span className="text-[11px] text-slate-400">Track brand performance with AI insights and metrics</span>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800">
           {/* Brand Presence */}
           <div className="px-5 py-4">
@@ -404,6 +302,15 @@ function OverviewTab({
               <div>
                 <span className="text-[11px] text-slate-400">Visibility</span>
                 <div className="flex items-center gap-2 mt-1">
+                  <svg className="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M2 10 A6 6 0 0 1 14 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <path d="M8 10 L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <circle cx="8" cy="10" r="1.5" fill="currentColor" />
+                  </svg>
+                  <svg className="h-5 w-5 shrink-0" viewBox="0 0 20 20" aria-hidden="true">
+                    <circle cx="10" cy="10" r="8" fill="none" stroke="#E2E8F0" strokeWidth="2.5" />
+                    <circle cx="10" cy="10" r="8" fill="none" stroke={displayScore >= 70 ? '#10B981' : displayScore >= 40 ? '#F59E0B' : '#EF4444'} strokeWidth="2.5" strokeDasharray={`${(displayScore / 100) * 50.3} 50.3`} strokeLinecap="round" transform="rotate(-90 10 10)" />
+                  </svg>
                   <span className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">{displayScore > 0 ? `${displayScore}%` : '--'}</span>
                   {scoreDelta != null && (
                     <span className={cn('text-xs font-semibold tabular-nums flex items-center gap-0.5', scoreDelta >= 0 ? 'text-emerald-500' : 'text-red-500')}>
@@ -415,6 +322,7 @@ function OverviewTab({
               <div>
                 <span className="text-[11px] text-slate-400">Answers mentioning me</span>
                 <div className="flex items-center gap-2 mt-1">
+                  <TrendingUp className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
                   <span className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">{displayMentionCount.toLocaleString()}</span>
                   {mentionDelta != null && (
                     <span className={cn('text-xs font-semibold tabular-nums flex items-center gap-0.5', mentionDelta >= 0 ? 'text-emerald-500' : 'text-red-500')}>
@@ -473,89 +381,168 @@ function OverviewTab({
         </div>
       </div>
 
-      {/* ── Row 3: Recommended Actions + Engine Mentions donut ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.85fr_1fr] gap-4">
-        {/* Left: Recommended Actions */}
-        <Card className="rounded-xl border border-slate-200 shadow-none">
-          <CardHeader className="pb-2 pt-4 px-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-sm font-semibold text-slate-900">Recommended Actions</CardTitle>
-                <p className="text-xs text-slate-500 mt-0.5">AI-prioritized fixes to boost your visibility</p>
+      {/* ── 2-Column Master Layout ─── */}
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-3">
+        {/* ═══ LEFT COLUMN ═══ */}
+        <div className="flex flex-col gap-3">
+        {/* Chart card with score header */}
+        <div className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+          <div className="flex items-center justify-between px-4 pt-3 pb-1">
+            <h3 className="text-[13px] font-semibold text-slate-900 dark:text-white">AI visibility score</h3>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 mr-1">
+                <button type="button" className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-slate-900 text-white dark:bg-white dark:text-slate-900">Weekly</button>
+                <button type="button" className="px-2 py-0.5 text-[10px] font-medium rounded-md text-slate-400 hover:text-slate-600 transition-colors">Monthly</button>
               </div>
-              <Link
-                href="/dashboard/recommendations"
-                className="text-xs font-medium text-[#3370FF] hover:underline flex items-center gap-0.5 shrink-0"
-              >
-                View all <ChevronRight className="h-3 w-3" aria-hidden="true" />
-              </Link>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-lg font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">{displayScore > 0 ? `${displayScore}.48%` : '--'}</span>
+                {scoreDelta != null && <span className={cn('text-[11px] font-semibold tabular-nums', scoreDelta >= 0 ? 'text-emerald-600' : 'text-red-500')}>↑ {demoMode ? '2479' : Math.abs(scoreDelta)}</span>}
+              </div>
             </div>
-          </CardHeader>
-          <CardContent className="px-5 pb-4 pt-0 flex flex-col gap-0">
+          </div>
+          <div className="px-2 pb-1">
+            <VisibilityTrendChart data={scanHistory} />
+          </div>
+        </div>
+
+        {/* Recommended Actions — compact */}
+        <div className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+          <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            <h4 className="text-[13px] font-semibold text-slate-900 dark:text-white">Recommended Actions</h4>
+            <Link href="/dashboard/recommendations" className="text-[11px] font-medium text-[#3370FF] hover:underline flex items-center gap-0.5">View all <ChevronRight className="h-3 w-3" /></Link>
+          </div>
+          <div className="px-4 pb-3">
             {recommendations.length === 0 ? (
-              <div className="py-8 text-center flex flex-col items-center gap-2">
-                <CheckCircle2 className="h-8 w-8 text-emerald-500/60" aria-hidden="true" />
-                <p className="text-sm text-slate-500">All caught up!</p>
-              </div>
+              <div className="py-4 text-center"><p className="text-xs text-slate-400">All caught up!</p></div>
             ) : (
-              recommendations.slice(0, 4).map((rec, i) => {
-                const isTop = i === 0
-                const priorityStatus = getPriorityStatus(rec.priority)
-                const priorityColors: Record<string, string> = {
-                  critical: 'bg-red-500',
-                  high: 'bg-amber-500',
-                  medium: 'bg-slate-300',
-                  low: 'bg-slate-200',
-                }
-                const dotColor = priorityColors[rec.priority] ?? 'bg-slate-300'
+              recommendations.slice(0, 3).map((rec) => {
+                const priorityColors: Record<string, string> = { critical: 'bg-red-500', high: 'bg-amber-500', medium: 'bg-slate-300', low: 'bg-slate-200' }
                 return (
-                  <div
-                    key={rec.id}
-                    className="flex items-start gap-3 py-3 border-b border-slate-100 last:border-0"
-                  >
-                    <span className={cn('mt-1.5 h-2 w-2 rounded-full shrink-0', dotColor)} aria-hidden="true" />
-                    <div className="flex-1 min-w-0">
-                      <p className={cn('font-medium text-slate-900 leading-snug', isTop ? 'text-sm' : 'text-xs')}>
-                        {rec.title}
-                      </p>
-                      <p className="mt-0.5 text-xs text-slate-500 leading-snug line-clamp-2">
-                        {rec.description}
-                      </p>
-                    </div>
-                    {rec.suggested_agent && (
-                      <Link
-                        href="/dashboard/agents"
-                        className="shrink-0 flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-[#3370FF] hover:bg-blue-100 transition-colors whitespace-nowrap dark:bg-blue-950/30 dark:text-blue-400"
-                      >
-                        Fix <ArrowRight className="h-3 w-3" aria-hidden="true" />
-                      </Link>
-                    )}
+                  <div key={rec.id} className="flex items-center gap-2.5 py-2 border-b border-slate-50 last:border-0">
+                    <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', priorityColors[rec.priority] ?? 'bg-slate-300')} />
+                    <p className="flex-1 text-[12px] font-medium text-slate-800 dark:text-white truncate">{rec.title}</p>
+                    {rec.suggested_agent && <Link href="/dashboard/agents" className="shrink-0 text-[11px] font-semibold text-[#3370FF] hover:underline">Fix →</Link>}
                   </div>
                 )
               })
             )}
-          </CardContent>
-        </Card>
-
-        {/* Right: Engine Mentions donut */}
-        <div className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden flex flex-col">
-          <div className="px-4 pt-4 pb-2">
-            <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Engine Mentions</h4>
-            <p className="text-[11px] text-slate-400 mt-0.5">Which AI engines mention your brand</p>
           </div>
-          <div className="px-4 pb-4">
+        </div>
+
+        </div>{/* end left column */}
+
+        {/* ═══ RIGHT COLUMN ═══ */}
+        <div className="flex flex-col gap-3">
+
+        {/* Industry ranking table */}
+        <div className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+          <div className="flex items-start justify-between px-4 pt-4 pb-2">
+            <div>
+              <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Industry Ranking</h4>
+              <p className="text-[11px] text-slate-400 mt-0.5">Brands with highest visibility</p>
+            </div>
+            <div className="text-right">
+              <span className="text-lg font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">{displayScore > 0 ? `${(displayScore * 0.4).toFixed(1)}%` : '--'}</span>
+              <p className="text-[10px] text-slate-400">Average visibility score 7 daily</p>
+            </div>
+          </div>
+          {/* Table header */}
+          <div className="grid grid-cols-[18px_1fr_52px_36px_44px_48px] gap-1 px-4 py-1.5 border-y border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30">
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">#</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Brand</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Mentions</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Pos</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Change</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Visibility</span>
+          </div>
+          {/* Table rows */}
+          <div className="flex flex-col">
+            {rankingRows.map((row) => {
+              const mentionMap: Record<number, number> = { 72: 142, 61: 139, 44: 164, 38: 98 }
+              const changeMap: Record<number, number> = { 72: -2.6, 61: -1.4, 44: 3.3, 38: 3.3 }
+              const demoMentions = row.isUser ? 534 : (mentionMap[row.numericScore] ?? row.numericScore * 2)
+              const demoChange = row.isUser ? -3.3 : (changeMap[row.numericScore] ?? 0)
+              const demoVisibility = (row.numericScore * 0.42).toFixed(1)
+              const brandColors = ['bg-[#3370FF]', 'bg-slate-800', 'bg-blue-500', 'bg-emerald-500', 'bg-rose-500']
+              const colorIdx = rankingRows.indexOf(row)
+              return (
+                <div
+                  key={row.name}
+                  className={cn(
+                    'grid grid-cols-[18px_1fr_52px_36px_44px_48px] gap-1 items-center px-4 py-2 border-b border-slate-50 dark:border-slate-800/50 last:border-0',
+                    row.isUser && 'bg-blue-50/30 dark:bg-blue-950/20'
+                  )}
+                >
+                  <span className="text-[11px] text-slate-400 tabular-nums">{row.position}</span>
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    <span className={cn('h-5 w-5 rounded-md flex items-center justify-center text-[9px] font-bold text-white shrink-0', brandColors[colorIdx % brandColors.length])}>
+                      {row.name.charAt(0)}
+                    </span>
+                    <span className={cn('text-[11px] truncate', row.isUser ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400')}>
+                      {row.name}
+                    </span>
+                    {row.isUser && (
+                      <span className="shrink-0 rounded bg-slate-100 dark:bg-slate-800 px-1 py-0 text-[9px] font-semibold text-slate-500">You</span>
+                    )}
+                  </span>
+                  <span className="text-[11px] tabular-nums text-slate-600 dark:text-slate-400 text-right">{demoMentions}</span>
+                  <span className="text-[11px] tabular-nums text-slate-600 dark:text-slate-400 text-right">{(row.position + 2.5).toFixed(1)}</span>
+                  <span className={cn('text-[11px] tabular-nums text-right font-medium', demoChange > 0 ? 'text-emerald-500' : 'text-red-500')}>
+                    {demoChange > 0 ? '+' : ''}{demoChange}%
+                  </span>
+                  <span className="text-[11px] tabular-nums text-slate-900 dark:text-white text-right font-medium">{demoVisibility}%</span>
+                </div>
+              )
+            })}
+          </div>
+          <div className="px-4 py-1.5 border-t border-slate-100 dark:border-slate-800">
+            <Link href="/dashboard?tab=rankings" className="text-[10px] font-medium text-[#3370FF] hover:underline flex items-center gap-0.5">View full rankings <ChevronRight className="h-2.5 w-2.5" /></Link>
+          </div>
+        </div>
+
+        {/* Engine Mentions */}
+        <div className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+          <div className="px-4 pt-3 pb-1">
+            <h4 className="text-[13px] font-semibold text-slate-900 dark:text-white">Engine Mentions</h4>
+            <p className="text-[10px] text-slate-400 mt-0.5">Which AI engines mention your brand</p>
+          </div>
+          <div className="px-4 pb-2">
             <EngineDonutChart data={engineDonutData} />
           </div>
-          <div className="px-4 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800 mt-auto">
-            <Link
-              href="/dashboard/agents"
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-[#2B5FDB] hover:bg-blue-100 transition-colors dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-400"
-            >
-              <Zap className="h-3.5 w-3.5" />
-              Run AI agent
+          <div className="px-4 pb-3 border-t border-slate-100 dark:border-slate-800">
+            <Link href="/dashboard/agents" className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">
+              <Zap className="h-3 w-3" /> Run AI agent
             </Link>
           </div>
         </div>
+
+        </div>{/* end right column */}
+      </div>{/* end 2-col grid */}
+
+      {/* ── Topic Breakdown ─── */}
+      <div className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
+        <div className="grid grid-cols-[1fr_100px_80px_90px] gap-2 px-4 py-2 border-b border-slate-100 bg-slate-50/60 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+          <span>Topic</span>
+          <span className="text-right">Count number</span>
+          <span className="text-right">Visibility</span>
+          <span className="text-right">Citation Share</span>
+        </div>
+        {[
+          { topic: 'AI Search Optimization for SMBs', count: 12, visibility: '5.5%', citation: '0.5%', expandable: true },
+          { topic: 'Local Business AI Visibility', count: 6, visibility: '5.5%', citation: '0.5%', expandable: true },
+          { topic: 'GEO Strategy for Coffee Shops', count: 8, visibility: '3.2%', citation: '0.3%', expandable: false },
+        ].map((row) => (
+          <div key={row.topic} className="grid grid-cols-[1fr_100px_80px_90px] gap-2 items-center px-4 py-2.5 border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
+            <span className="flex items-center gap-2 text-[12px] font-medium text-slate-800 dark:text-white">
+              <ChevronRight className="h-3 w-3 text-slate-400 shrink-0" aria-hidden="true" />
+              {row.topic}
+            </span>
+            <span className="text-[12px] tabular-nums text-slate-600 text-right">{row.count}</span>
+            <span className="text-[12px] tabular-nums text-slate-600 text-right">{row.visibility}</span>
+            <span className="text-[12px] tabular-nums text-slate-600 text-right">{row.citation}</span>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -1029,43 +1016,10 @@ export function DashboardOverview(props: DashboardOverviewProps) {
   const creditsUsed = props.usedCredits ?? 0
 
   return (
-    <div className="space-y-5">
-      {/* Demo banner */}
-      {demoMode && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950/30">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-            <p className="text-sm text-amber-800 dark:text-amber-200">
-              You&apos;re viewing sample data. Run your first scan to unlock real insights.
-            </p>
-          </div>
-          <Button
-            asChild
-            size="sm"
-            className="rounded-lg bg-[#3370FF] text-white hover:bg-[#2B5FDB] shrink-0"
-          >
-            <Link href="/dashboard/scan">
-              <Zap className="h-3.5 w-3.5 mr-1.5" />
-              Run Scan
-            </Link>
-          </Button>
-        </div>
-      )}
-
-      {/* Greeting */}
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
-          {getGreeting()}{props.businessName ? `, ${props.businessName}` : ''}
-        </h1>
-        <p className="text-xs text-slate-400">
-          Last updated {demoMode ? 'just now' : (props.lastScanned ? format(new Date(props.lastScanned), 'MMM d, h:mm a') : 'never')}
-        </p>
-      </div>
-
-      {/* Tab bar */}
-      <div>
-        {/* Desktop tabs */}
-        <div className="hidden sm:flex items-center gap-0.5 border-b border-border">
+    <div className="space-y-4">
+      {/* Compact tab bar — inline, no vertical waste */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-0.5 border-b border-slate-200 dark:border-slate-800">
           {TABS.map((tab) => {
             const Icon = tab.icon
             return (
@@ -1073,44 +1027,22 @@ export function DashboardOverview(props: DashboardOverviewProps) {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors rounded-t-lg -mb-px',
+                  'flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium transition-colors -mb-px',
                   activeTab === tab.id
-                    ? 'text-[#3370FF] border-b-[3px] border-[#3370FF] dark:text-blue-400 dark:border-blue-400'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+                    ? 'text-slate-900 border-b-2 border-slate-900 dark:text-white dark:border-white'
+                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 )}
               >
-                <Icon className="h-4 w-4" aria-hidden="true" />
+                <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                 {tab.label}
               </button>
             )
           })}
         </div>
-
-        {/* Mobile dropdown */}
-        <div className="sm:hidden">
-          <select
-            value={activeTab}
-            onChange={(e) => setActiveTab(e.target.value as DashboardTab)}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-[#3370FF]/50"
-          >
-            {TABS.map((tab) => (
-              <option key={tab.id} value={tab.id}>
-                {tab.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <p className="text-[11px] text-slate-400 shrink-0">
+          {demoMode ? 'Sample data' : `Last updated ${props.lastScanned ? format(new Date(props.lastScanned), 'MMM d, h:mm a') : 'never'}`}
+        </p>
       </div>
-
-      {/* Filter bar — shown on overview tab */}
-      {activeTab === 'overview' && (
-        <div className="flex flex-wrap items-center gap-2">
-          <FilterButton icon={Calendar} label="Last 30 days" />
-          <FilterButton icon={Globe} label="All engines" />
-          <FilterButton icon={MapPin} label="All locations" />
-          <FilterButton icon={Tag} label="All topics" />
-        </div>
-      )}
 
       {/* Tab content */}
       {activeTab === 'overview' && (
