@@ -1024,8 +1024,8 @@ export function DashboardOverview(props: DashboardOverviewProps) {
 
   return (
     <div className="space-y-5">
-      {/* Demo banner — temporarily hidden for screenshot */}
-      {/* {demoMode && (
+      {/* Demo banner */}
+      {demoMode && (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950/30">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
@@ -1044,7 +1044,7 @@ export function DashboardOverview(props: DashboardOverviewProps) {
             </Link>
           </Button>
         </div>
-      )} */}
+      )}
 
       {/* Greeting */}
       <div className="flex items-baseline justify-between">

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { PieChart, Pie, Cell, Tooltip, type TooltipProps } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip } from 'recharts'
 
 interface EngineDonutData {
   engine: string
@@ -29,7 +29,7 @@ function getEngineColor(engine: string, index: number): string {
   return ENGINE_CHART_COLORS[engine] ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length]
 }
 
-function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
+function CustomTooltip({ active, payload }: any) {
   if (!active || !payload || payload.length === 0) return null
   const item = payload[0]
   return (
