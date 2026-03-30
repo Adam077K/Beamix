@@ -40,9 +40,9 @@ export function SettingsBillingTab() {
     <div className="space-y-5">
 
       {/* Placeholder notice */}
-      <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-800">
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
         <p className="font-medium">Billing integration in progress</p>
-        <p className="mt-1 text-indigo-600">
+        <p className="mt-1 text-[#3370FF]">
           Subscription details and payment history will appear here once your plan is active.
         </p>
       </div>

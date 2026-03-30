@@ -36,14 +36,14 @@
 | Primary Text | `#0A0A0A` | All headings and body copy |
 | Muted Text | `#6B7280` | Descriptions, captions, secondary labels |
 | Card Border | `#E5E7EB` | Card and input borders |
-| Primary Accent | `#FF3C00` | CTAs, links, logo mark, active states, sparkle icons, progress rings |
+| Primary Accent | `#3370FF` | CTAs, links, logo mark, active states, sparkle icons, progress rings |
 | Secondary CTA | `#0A0A0A` | "Scan →" button, secondary action buttons |
 
 ### Gradient System (Marketing — Framer only)
 
 | Gradient | Stops | Use |
 |---|---|---|
-| Hero mesh | `#FF3C00` → coral → pink → lavender | Hero bg, primary CTA strips |
+| Hero mesh | `#3370FF` → sky → periwinkle → lavender | Hero bg, primary CTA strips |
 | Pro plan | Peach → salmon | Pro pricing card highlight |
 | Dark section | `#0A0A0A` solid | Testimonials, dark full-bleed CTA |
 
@@ -60,7 +60,7 @@ Gradient sections are narrative moments — not decorative filler. Max one per c
 
 ### Retired Colors — Do Not Use
 
-Navy `#023C65`, Yale Blue `#25426A`, Blue Slate `#536D84`, Old orange `#F97316`, Old background `#FAFAF9`.
+Navy `#023C65`, Yale Blue `#25426A`, Blue Slate `#536D84`, Old orange `#F97316`, Old indigo `#6366F1`, Old orange accent `#FF3C00`, Old background `#FAFAF9`.
 
 ---
 
@@ -95,7 +95,7 @@ Navy `#023C65`, Yale Blue `#25426A`, Blue Slate `#536D84`, Old orange `#F97316`,
 
 | Type | Shape | Background | Text |
 |---|---|---|---|
-| Primary marketing | Pill (999px) | `#FF3C00` | White |
+| Primary marketing | Pill (999px) | `#3370FF` | White |
 | Secondary marketing | Pill (999px) | `#0A0A0A` | White |
 | Product utility | Rounded-lg (8px) | Context | Context |
 | Ghost / outline | Rounded-lg (8px) | Transparent | `#0A0A0A` hover:bg-muted |
@@ -123,9 +123,11 @@ Pill shape for marketing only. Never apply pill to product utility buttons.
 
 ## 6. Logo
 
-**Mark:** Orange star/cross `#FF3C00` + "Beamix" wordmark in black Inter.
+**Mark:** Blue star/cross `#3370FF` + "Beamix" wordmark in black Inter.
 
-Light bg: orange mark + black wordmark. Dark bg: orange mark + white wordmark.
+Light bg: blue mark + black wordmark. Dark bg: blue mark + white wordmark.
+
+Logo files: `saas-platform/public/logo/beamix_logo_blue_Primary.svg` (primary), `beamix_logo_black.svg` (monochrome).
 
 Never recolor the mark. No stretching. No opacity below 80%. Clear space = 1× logo height all sides. Min width: 100px. Files: `saas-platform/public/logo/` (new files pending).
 
@@ -133,7 +135,7 @@ Never recolor the mark. No stretching. No opacity below 80%. Clear space = 1× l
 
 ## 7. Iconography
 
-**Library: Lucide React only.** Accent icons: `#FF3C00`. Muted/inactive: `#6B7280`. Score-excellent: `#06B6D4` (data only). Icon-only buttons must have `aria-label`.
+**Library: Lucide React only.** Accent icons: `#3370FF`. Muted/inactive: `#6B7280`. Score-excellent: `#06B6D4` (data only). Icon-only buttons must have `aria-label`.
 
 Sizes: Inline 12px · Button 14–16px · Sidebar nav 16px · Card/feature 20px · Section 24px · Illustrative 28–32px.
 
@@ -203,7 +205,7 @@ Hebrew and English built simultaneously — not sequential translation. Hebrew v
 
 **Colors**
 - [ ] Background is `#FFFFFF` or `#F7F7F7` — not old `#FAFAF9`
-- [ ] Primary CTA is `#FF3C00` pill (marketing) or `#0A0A0A` (secondary)
+- [ ] Primary CTA is `#3370FF` pill (marketing) or `#0A0A0A` (secondary)
 - [ ] Navy `#023C65` is absent — retired
 - [ ] Cyan `#06B6D4` only in score data/charts — never button or link
 - [ ] Text on dark sections is white `#FFFFFF`

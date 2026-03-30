@@ -17,6 +17,7 @@ export default async function DashboardPage() {
     latestScansResult,
     recommendationsResult,
     recentAgentsResult,
+    contentStatsResult,
   ] = await Promise.all([
     supabase
       .from('businesses')
@@ -49,7 +50,11 @@ export default async function DashboardPage() {
       .select('id, agent_type, status, credits_cost, created_at, completed_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(5),
+      .limit(20),
+    supabase
+      .from('content_items')
+      .select('id, agent_type')
+      .eq('user_id', user.id),
   ])
 
   const business = businessResult.data
@@ -57,6 +62,7 @@ export default async function DashboardPage() {
   const scans = latestScansResult.data ?? []
   const recommendations = recommendationsResult.data ?? []
   const recentAgents = recentAgentsResult.data ?? []
+  const contentItems = contentStatsResult.data ?? []
   const latestScan = scans[0] ?? null
   const previousScan = scans[1] ?? null
 
@@ -73,20 +79,47 @@ export default async function DashboardPage() {
       ? latestScan.mentions_count - previousScan.mentions_count
       : null
 
-  // Fetch engine results for the latest scan
+  // Fetch engine results for the latest scan — full columns
   let enginesMentioning: number | null = null
   let totalEngines: number | null = null
+  let engineResults: Array<{
+    engine: string
+    is_mentioned: boolean
+    rank_position: number | null
+    sentiment: string | null
+  }> = []
+  let sentimentSummary: { positive: number; neutral: number; negative: number } | undefined
 
   if (latestScan?.id) {
     const { data: engineData } = await supabase
       .from('scan_engine_results')
-      .select('is_mentioned')
+      .select('engine, is_mentioned, rank_position, sentiment')
       .eq('scan_id', latestScan.id)
 
-    if (engineData) {
+    if (engineData && engineData.length > 0) {
+      engineResults = engineData.map((r) => ({
+        engine: r.engine,
+        is_mentioned: r.is_mentioned,
+        rank_position: r.rank_position,
+        sentiment: r.sentiment,
+      }))
       totalEngines = engineData.length
       enginesMentioning = engineData.filter((r) => r.is_mentioned).length
+
+      // Compute sentiment summary from engine results
+      const positive = engineData.filter((r) => r.sentiment === 'positive').length
+      const negative = engineData.filter((r) => r.sentiment === 'negative').length
+      const neutral = engineData.filter(
+        (r) => r.is_mentioned && r.sentiment !== 'positive' && r.sentiment !== 'negative'
+      ).length
+      sentimentSummary = { positive, neutral, negative }
     }
+  }
+
+  // Content stats
+  const contentStats = {
+    total: contentItems.length,
+    published: contentItems.length, // all items are considered published
   }
 
   // Build trend data from scans (oldest → newest) for sparklines
@@ -104,7 +137,15 @@ export default async function DashboardPage() {
       mentionCount={latestScan?.mentions_count ?? 0}
       mentionDelta={mentionDelta}
       lastScanned={latestScan?.created_at ?? null}
-      totalCredits={credits ? (credits.base_allocation + credits.rollover_amount + credits.topup_amount - credits.used_amount - (credits.held_amount ?? 0)) : 0}
+      totalCredits={
+        credits
+          ? credits.base_allocation +
+            credits.rollover_amount +
+            credits.topup_amount -
+            credits.used_amount -
+            (credits.held_amount ?? 0)
+          : 0
+      }
       monthlyCredits={credits?.base_allocation ?? 0}
       usedCredits={credits?.used_amount ?? 0}
       enginesMentioning={enginesMentioning}
@@ -113,6 +154,9 @@ export default async function DashboardPage() {
       recommendations={recommendations}
       recentAgents={recentAgents}
       recentScans={scans}
+      engineResults={engineResults}
+      sentimentSummary={sentimentSummary}
+      contentStats={contentStats}
     />
   )
 }
