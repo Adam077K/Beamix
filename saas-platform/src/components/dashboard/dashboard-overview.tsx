@@ -187,7 +187,13 @@ interface RankingRow {
 interface OverviewTabProps {
   props: DashboardOverviewProps
   demoMode: boolean
-  scanHistory: typeof DEMO_SCAN_HISTORY
+  scanHistory: Array<{
+    created_at: string
+    overall_score: number
+    mentions_count: number
+    avg_position: number | null
+    sentiment_positive_pct: number | null
+  }>
   positivePct: number
   userScore: number
   recommendations: DashboardOverviewProps['recommendations']
