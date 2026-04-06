@@ -28,18 +28,18 @@ const GLOSSY_STATS = [
 // ─── Shared glass card class ──────────────────────────────────────────────────
 
 const GLASS_CARD =
-  'rounded-2xl border border-white/30 bg-white/60 backdrop-blur-xl shadow-[0_8px_32px_rgba(51,112,255,0.08),inset_0_1px_0_rgba(255,255,255,0.6)] p-6'
+  'rounded-2xl border border-white/15 bg-white/10 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] p-6'
 
 // ─── Glossy Before/After ──────────────────────────────────────────────────────
 
 function GlossyBeforeAfter() {
   return (
     <div className={GLASS_CARD}>
-      <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground mb-6">Before &amp; After Beamix</p>
+      <p className="text-[13px] font-medium tracking-[-0.01em] text-white mb-6">Before &amp; After Beamix</p>
       <div className="flex items-center justify-center gap-6">
         {/* Before */}
         <div className="flex flex-col items-center gap-2">
-          <span className="text-xs text-muted-foreground">Before</span>
+          <span className="text-xs text-white/50">Before</span>
           <div className="relative flex items-center justify-center">
             <div
               className="absolute rounded-full"
@@ -52,7 +52,7 @@ function GlossyBeforeAfter() {
             />
             <BlueScoreRing score={23} size="md" showLabel animate={false} />
           </div>
-          <span className="text-sm font-medium text-muted-foreground">Invisible</span>
+          <span className="text-sm font-medium text-white/50">Invisible</span>
         </div>
 
         {/* Connector */}
@@ -64,12 +64,12 @@ function GlossyBeforeAfter() {
             </span>
             <div className="h-px w-6 bg-border" aria-hidden="true" />
           </div>
-          <span className="text-[10px] text-muted-foreground">points gained</span>
+          <span className="text-[10px] text-white/50">points gained</span>
         </div>
 
         {/* After */}
         <div className="flex flex-col items-center gap-2">
-          <span className="text-xs text-muted-foreground">After</span>
+          <span className="text-xs text-white/50">After</span>
           <div className="relative flex items-center justify-center">
             <div
               className="absolute rounded-full"
@@ -99,16 +99,16 @@ function GlossyStatRow() {
           key={stat.label}
           className="rounded-2xl border border-white/30 bg-white/60 backdrop-blur-xl shadow-[0_8px_32px_rgba(51,112,255,0.08),inset_0_1px_0_rgba(255,255,255,0.6)] p-5"
         >
-          <p className="text-xs text-muted-foreground">{stat.label}</p>
+          <p className="text-xs text-white/50">{stat.label}</p>
           <div className="flex items-baseline gap-1.5 mt-1">
-            <span className="text-3xl font-semibold tracking-[-0.02em] tabular-nums text-foreground">
+            <span className="text-3xl font-semibold tracking-[-0.02em] tabular-nums text-white">
               {stat.value}
             </span>
             {stat.delta && (
               <span className="text-xs font-medium text-[#3370FF]">{stat.delta}</span>
             )}
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1">{stat.sublabel}</p>
+          <p className="text-[11px] text-white/50 mt-1">{stat.sublabel}</p>
         </div>
       ))}
     </div>
@@ -221,12 +221,12 @@ function GlossyDarkHero() {
 
 export function GroupGlossy() {
   return (
-    <div className="relative rounded-2xl bg-gradient-to-br from-[#EEF2FF] via-[#E0EAFF] to-[#F0F4FF] p-8 -mx-2 overflow-hidden">
-      {/* Background gradient blobs — vivid enough to show glass */}
+    <div className="relative rounded-2xl bg-[#0F1629] p-8 -mx-2 overflow-hidden">
+      {/* Background gradient blobs on dark — glass becomes visible */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute -top-10 -left-10 w-80 h-80 rounded-full bg-[#3370FF]/20 blur-[80px]" />
-        <div className="absolute top-20 right-0 w-[400px] h-[400px] rounded-full bg-[#5A8FFF]/15 blur-[100px]" />
-        <div className="absolute bottom-0 left-1/4 w-96 h-96 rounded-full bg-[#93B4FF]/20 blur-[80px]" />
+        <div className="absolute -top-10 -left-10 w-80 h-80 rounded-full bg-[#3370FF]/30 blur-[80px]" />
+        <div className="absolute top-20 right-0 w-[400px] h-[400px] rounded-full bg-[#5A8FFF]/20 blur-[100px]" />
+        <div className="absolute bottom-0 left-1/4 w-96 h-96 rounded-full bg-[#93B4FF]/25 blur-[80px]" />
       </div>
 
       <div className="relative z-10 space-y-4">
