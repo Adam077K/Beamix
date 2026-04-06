@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
       { key: "X-DNS-Prefetch-Control", value: "on" },
       {
         key: "Content-Security-Policy",
-        value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://*.supabase.co https://avatars.githubusercontent.com https://lh3.googleusercontent.com; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://cdn.paddle.com https://*.paddle.com; frame-src https://cdn.paddle.com https://*.paddle.com; object-src 'none'; base-uri 'self'; form-action 'self';",
+        value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://*.supabase.co https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://img.logo.dev; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://cdn.paddle.com https://*.paddle.com; frame-src https://cdn.paddle.com https://*.paddle.com; object-src 'none'; base-uri 'self'; form-action 'self';",
       },
     ];
 

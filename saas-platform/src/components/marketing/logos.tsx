@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils'
 
 const LOGO_DEV_KEY = 'pk_Zl-VsfExQ8Ou_bmqOwe1sA'
 
-function logoDevUrl(name: string, size: number = 64): string {
-  return `https://img.logo.dev/${name}?token=${LOGO_DEV_KEY}&size=${size}&format=png`
+function logoDevUrl(domain: string, size: number = 64): string {
+  return `https://img.logo.dev/${domain}?token=${LOGO_DEV_KEY}&size=${size}&format=png`
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
