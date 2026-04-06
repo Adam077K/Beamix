@@ -22,12 +22,12 @@ export default function MarketingShowcasePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#FAFAF9]">
 
       {/* Sticky nav */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="max-w-7xl mx-auto px-8 py-3 flex items-center gap-3 overflow-x-auto">
-          <span className="text-sm font-semibold text-foreground shrink-0 mr-2">
+      <div className="sticky top-0 z-50 bg-[#FAFAF9]/95 backdrop-blur-sm border-b border-border/40">
+        <div className="max-w-7xl mx-auto px-8 py-3 flex items-center gap-4 overflow-x-auto">
+          <span className="text-sm font-medium text-foreground shrink-0 mr-2">
             Beamix
           </span>
           {GROUPS.map((group) => (
@@ -35,7 +35,7 @@ export default function MarketingShowcasePage() {
               key={group.id}
               type="button"
               onClick={() => scrollToSection(group.id)}
-              className="shrink-0 rounded-full px-4 py-1.5 text-xs font-medium bg-muted hover:bg-[#3370FF] hover:text-white text-muted-foreground transition-colors duration-150"
+              className="shrink-0 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors duration-150 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
             >
               {group.label}
             </button>
@@ -43,18 +43,8 @@ export default function MarketingShowcasePage() {
         </div>
       </div>
 
-      {/* Page header */}
-      <div className="max-w-7xl mx-auto px-8 pt-12 pb-8">
-        <h1 className="text-3xl font-semibold text-foreground mb-1.5">
-          Component Showcase
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Dashboard components with polished demo data — for marketing screenshots.
-        </p>
-      </div>
-
       {/* Sections */}
-      <div className="max-w-7xl mx-auto px-8 pb-24 space-y-16">
+      <div className="max-w-7xl mx-auto px-8 pt-10 pb-24 space-y-12">
 
         <section id="see-your-score">
           <SectionHeader
@@ -103,9 +93,9 @@ export default function MarketingShowcasePage() {
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div className="mb-6">
-      <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
-      <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
+    <div className="mb-5">
+      <h2 className="text-lg font-medium text-foreground">{title}</h2>
+      <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
     </div>
   )
 }

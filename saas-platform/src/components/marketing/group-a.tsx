@@ -1,8 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { ScoreRing } from '@/components/ui/score-ring'
 
 // ─── Demo data ────────────────────────────────────────────────────────────────
@@ -17,9 +16,11 @@ const SCORE_BREAKDOWN = [
 ]
 
 const ENGINE_RESULTS = [
-  { engine: 'ChatGPT', mentioned: true, position: 2, sentiment: 'positive' as const, color: '#10B981' },
+  { engine: 'ChatGPT', mentioned: true, position: 2, sentiment: 'Positive' as const, color: '#10B981' },
   { engine: 'Gemini', mentioned: false, position: null, sentiment: null, color: '#3370FF' },
-  { engine: 'Perplexity', mentioned: true, position: 4, sentiment: 'neutral' as const, color: '#8B5CF6' },
+  { engine: 'Perplexity', mentioned: true, position: 4, sentiment: 'Neutral' as const, color: '#8B5CF6' },
+  { engine: 'Google AI', mentioned: true, position: 3, sentiment: 'Positive' as const, color: '#3B82F6' },
+  { engine: 'Claude', mentioned: false, position: null, sentiment: null, color: '#F59E0B' },
 ]
 
 // ─── Score gradient bar ───────────────────────────────────────────────────────
@@ -28,18 +29,18 @@ function ScoreGradientBar({ score }: { score: number }) {
   return (
     <div className="w-full">
       <div
-        className="relative h-3 rounded-full overflow-hidden"
+        className="relative h-2 rounded-full overflow-hidden"
         style={{ background: 'linear-gradient(to right, #EF4444 0%, #F59E0B 33%, #10B981 66%, #06B6D4 100%)' }}
       >
         <div
-          className="absolute top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-white border-2 border-slate-800 shadow-md z-10"
-          style={{ left: `calc(${score}% - 8px)` }}
+          className="absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 rounded-full bg-white border-2 border-slate-700 shadow-sm z-10"
+          style={{ left: `calc(${score}% - 7px)` }}
           aria-hidden="true"
         />
       </div>
-      <div className="flex justify-between mt-1.5">
+      <div className="flex justify-between mt-1">
         {['Critical', 'Fair', 'Good', 'Excellent'].map((label) => (
-          <span key={label} className="text-[9px] text-muted-foreground">{label}</span>
+          <span key={label} className="text-[9px] text-muted-foreground/70">{label}</span>
         ))}
       </div>
     </div>
@@ -52,41 +53,36 @@ export function GroupA() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-      {/* A1: Score Ring */}
-      <Card className="flex flex-col items-center gap-5 py-8 px-6">
+      {/* A1: Score Ring — clean centered layout, no badge noise */}
+      <Card className="flex flex-col items-center justify-center gap-4 py-8 px-6 border-border/40 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <ScoreRing score={DEMO_SCORE} size="lg" showLabel animate />
-        <div className="text-center space-y-1">
-          <Badge
-            className="text-xs font-semibold"
-            style={{ backgroundColor: '#06B6D420', color: '#06B6D4', border: '1px solid #06B6D440' }}
-          >
-            Excellent
-          </Badge>
-          <p className="text-xs text-muted-foreground mt-1.5">Above 67% of businesses in your category</p>
+        <div className="text-center space-y-0.5">
+          <p className="text-sm font-medium text-foreground">Excellent</p>
+          <p className="text-xs text-muted-foreground">Above 67% of businesses in your category</p>
         </div>
       </Card>
 
-      {/* A2: Score Breakdown — mini AI readiness audit */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">AI Readiness Audit</CardTitle>
+      {/* A2: AI Readiness Audit — subtle gradient bar + minimal item rows */}
+      <Card className="border-border/40 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <CardHeader className="pb-3 pt-5 px-5">
+          <p className="text-sm font-medium text-foreground">AI Readiness</p>
           <p className="text-xs text-muted-foreground">How well your site is optimized for AI search</p>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="px-5 pb-5 space-y-4">
           <ScoreGradientBar score={DEMO_SCORE} />
           <div className="space-y-3">
             {SCORE_BREAKDOWN.map(({ label, score, color }) => (
               <div key={label} className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[12px] text-slate-700 dark:text-slate-300 font-medium">{label}</span>
+                  <span className="text-xs text-foreground">{label}</span>
                   <span
-                    className="text-[11px] font-bold tabular-nums"
+                    className="text-xs font-medium tabular-nums"
                     style={{ color }}
                   >
                     {score}
                   </span>
                 </div>
-                <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{ width: `${score}%`, backgroundColor: color }}
@@ -98,69 +94,67 @@ export function GroupA() {
         </CardContent>
       </Card>
 
-      {/* A3: Engine Scan Results — horizontal layout matching dashboard rankings */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Engine Scan Results</CardTitle>
+      {/* A3: Engine Scan Results — Attio-style table, no pill badges */}
+      <Card className="border-border/40 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <CardHeader className="pb-0 pt-5 px-5">
+          <p className="text-sm font-medium text-foreground">Engine Results</p>
           <p className="text-xs text-muted-foreground">Where your brand appears in AI responses</p>
         </CardHeader>
-        <CardContent className="space-y-0">
+        <CardContent className="px-5 pb-4 pt-3">
           {/* Table header */}
-          <div className="grid grid-cols-[1fr_80px_60px_60px] gap-1 py-1.5 border-b border-slate-100 dark:border-slate-800">
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Engine</span>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground text-center">Status</span>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Pos</span>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Sentiment</span>
+          <div className="grid grid-cols-[1fr_72px_44px_64px] gap-1 pb-2 border-b border-border/40">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Engine</span>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Status</span>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground text-right">Pos</span>
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground text-right">Sentiment</span>
           </div>
-          {ENGINE_RESULTS.map(({ engine, mentioned, position, sentiment, color }) => (
-            <div
-              key={engine}
-              className="grid grid-cols-[1fr_80px_60px_60px] gap-1 items-center py-3 border-b border-slate-50 dark:border-slate-800/50 last:border-0"
-            >
-              {/* Engine name with colored dot */}
-              <span className="flex items-center gap-2">
-                <span
-                  className="h-2 w-2 rounded-full shrink-0"
-                  style={{ backgroundColor: color }}
-                  aria-hidden="true"
-                />
-                <span className="text-[12px] font-medium text-slate-800 dark:text-white">{engine}</span>
-              </span>
+          <div className="divide-y divide-border/40">
+            {ENGINE_RESULTS.map(({ engine, mentioned, position, sentiment, color }) => (
+              <div
+                key={engine}
+                className="grid grid-cols-[1fr_72px_44px_64px] gap-1 items-center py-2.5"
+              >
+                {/* Engine name with colored dot */}
+                <span className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full shrink-0"
+                    style={{ backgroundColor: color }}
+                    aria-hidden="true"
+                  />
+                  <span className="text-xs font-medium text-foreground">{engine}</span>
+                </span>
 
-              {/* Mention status pill */}
-              <div className="flex justify-center">
+                {/* Mention status — plain colored text, no badges */}
                 <span
                   className={cn(
-                    'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold',
-                    mentioned
-                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
-                      : 'bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400'
+                    'text-xs font-medium',
+                    mentioned ? 'text-emerald-600' : 'text-muted-foreground'
                   )}
                 >
-                  {mentioned ? 'Mentioned' : 'Not Found'}
+                  {mentioned ? 'Mentioned' : 'Not found'}
+                </span>
+
+                {/* Position */}
+                <span className="text-xs tabular-nums text-muted-foreground text-right">
+                  {position != null ? `#${position}` : '—'}
+                </span>
+
+                {/* Sentiment */}
+                <span
+                  className={cn(
+                    'text-xs tabular-nums text-right',
+                    sentiment === 'Positive'
+                      ? 'text-emerald-600'
+                      : sentiment === 'Neutral'
+                        ? 'text-muted-foreground'
+                        : 'text-muted-foreground/50'
+                  )}
+                >
+                  {sentiment ?? '—'}
                 </span>
               </div>
-
-              {/* Position */}
-              <span className="text-[11px] tabular-nums text-slate-600 dark:text-slate-400 text-right font-medium">
-                {position != null ? `#${position}` : '—'}
-              </span>
-
-              {/* Sentiment */}
-              <span
-                className={cn(
-                  'text-[10px] tabular-nums text-right font-medium capitalize',
-                  sentiment === 'positive'
-                    ? 'text-emerald-600'
-                    : sentiment === 'neutral'
-                      ? 'text-slate-500'
-                      : 'text-muted-foreground'
-                )}
-              >
-                {sentiment ?? '—'}
-              </span>
-            </div>
-          ))}
+            ))}
+          </div>
         </CardContent>
       </Card>
 
