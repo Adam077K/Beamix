@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import NumberFlow from '@number-flow/react'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { BlueScoreRing } from '@/components/marketing/charts/blue-score-ring'
@@ -59,7 +60,11 @@ function HeroOverview() {
                     transform="rotate(-90 10 10)"
                   />
                 </svg>
-                <span className="text-3xl font-semibold tracking-[-0.02em] tabular-nums text-foreground">{DISPLAY_SCORE}%</span>
+                <NumberFlow
+                  value={DISPLAY_SCORE}
+                  suffix="%"
+                  className="text-3xl font-semibold tracking-[-0.02em] tabular-nums text-foreground"
+                />
                 <span className="text-xs font-medium text-[#3370FF]">+{SCORE_DELTA}%</span>
               </div>
             </div>
@@ -67,7 +72,10 @@ function HeroOverview() {
               <span className="text-xs text-muted-foreground">Answers mentioning me</span>
               <div className="flex items-center gap-2 mt-1">
                 <TrendingUp className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-                <span className="text-3xl font-semibold tracking-[-0.02em] tabular-nums text-foreground">28</span>
+                <NumberFlow
+                  value={28}
+                  className="text-3xl font-semibold tracking-[-0.02em] tabular-nums text-foreground"
+                />
                 <span className="text-xs font-medium text-[#3370FF]">+20</span>
               </div>
             </div>
@@ -81,7 +89,11 @@ function HeroOverview() {
             <div>
               <span className="text-xs text-muted-foreground">Total pages cited</span>
               <div className="mt-1">
-                <span className="text-xl font-semibold tracking-[-0.02em] tabular-nums text-foreground">14,808</span>
+                <NumberFlow
+                  value={14808}
+                  format={{ notation: 'standard' }}
+                  className="text-xl font-semibold tracking-[-0.02em] tabular-nums text-foreground"
+                />
                 <div className="text-xs font-medium text-[#3370FF] mt-0.5">+2,479</div>
               </div>
             </div>

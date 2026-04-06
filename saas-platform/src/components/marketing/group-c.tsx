@@ -1,5 +1,6 @@
 'use client'
 
+import NumberFlow from '@number-flow/react'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { CompetitorBarChart } from '@/components/dashboard/charts/competitor-bar-chart'
@@ -46,7 +47,12 @@ export function GroupC() {
         <div className="flex items-start justify-between px-5 pt-5 pb-3">
           <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">Industry Ranking</p>
           <div className="text-right">
-            <span className="text-lg font-semibold tracking-[-0.02em] tabular-nums text-foreground">31.5%</span>
+            <NumberFlow
+              value={31.5}
+              suffix="%"
+              format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+              className="text-lg font-semibold tracking-[-0.02em] tabular-nums text-foreground"
+            />
             <p className="text-xs text-muted-foreground mt-0.5">Average visibility score</p>
           </div>
         </div>

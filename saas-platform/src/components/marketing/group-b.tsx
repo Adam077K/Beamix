@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import NumberFlow from '@number-flow/react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { BlueTrendChart } from '@/components/marketing/charts/blue-trend-chart'
-import { BlueDonutChart } from '@/components/marketing/charts/blue-donut-chart'
+import { NivoDonutChart } from '@/components/marketing/charts/nivo-donut-chart'
 import { cn } from '@/lib/utils'
 
 // ─── Demo data ────────────────────────────────────────────────────────────────
@@ -65,7 +66,12 @@ export function GroupB() {
               </div>
               {/* Score display */}
               <div className="flex items-baseline gap-1.5">
-                <span className="text-lg font-semibold tracking-[-0.02em] tabular-nums text-foreground">75.48%</span>
+                <NumberFlow
+                  value={75.48}
+                  suffix="%"
+                  format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+                  className="text-lg font-semibold tracking-[-0.02em] tabular-nums text-foreground"
+                />
                 <span className="text-xs font-medium text-[#3370FF]">+52</span>
               </div>
             </div>
@@ -76,35 +82,58 @@ export function GroupB() {
         </CardContent>
       </Card>
 
-      {/* B2: Engine Donut — full width */}
+      {/* B2: Engine Donut — full width (nivo/pie with spring animations) */}
       <Card className="overflow-hidden rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
         <CardHeader className="pb-0 pt-5 px-5">
           <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">Engine Mentions</p>
         </CardHeader>
         <CardContent className="px-5 pb-5 pt-3">
-          <BlueDonutChart data={DEMO_ENGINE_DATA} />
+          <NivoDonutChart data={DEMO_ENGINE_DATA} />
         </CardContent>
       </Card>
 
       {/* B3: Custom stat cards — no uppercase labels */}
       <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: 'Visibility Score', value: '75', delta: '+52', sublabel: 'out of 100' },
-          { label: 'AI Mentions', value: '28', delta: '+20', sublabel: 'across 7 engines' },
-          { label: 'Avg Position', value: '#2.5', delta: '+1.7', sublabel: 'in search results' },
-        ].map((stat) => (
-          <div
-            key={stat.label}
-            className="rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-5"
-          >
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-semibold tracking-[-0.02em] tabular-nums text-foreground">{stat.value}</span>
-              <span className="text-xs font-medium text-[#3370FF]">{stat.delta}</span>
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1">{stat.sublabel}</p>
+        {/* Visibility Score */}
+        <div className="rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-5">
+          <p className="text-xs text-muted-foreground">Visibility Score</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <NumberFlow
+              value={75}
+              className="text-3xl font-semibold tracking-[-0.02em] tabular-nums text-foreground"
+            />
+            <span className="text-xs font-medium text-[#3370FF]">+52</span>
           </div>
-        ))}
+          <p className="text-[11px] text-muted-foreground mt-1">out of 100</p>
+        </div>
+
+        {/* AI Mentions */}
+        <div className="rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-5">
+          <p className="text-xs text-muted-foreground">AI Mentions</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <NumberFlow
+              value={28}
+              className="text-3xl font-semibold tracking-[-0.02em] tabular-nums text-foreground"
+            />
+            <span className="text-xs font-medium text-[#3370FF]">+20</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1">across 7 engines</p>
+        </div>
+
+        {/* Avg Position */}
+        <div className="rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-5">
+          <p className="text-xs text-muted-foreground">Avg Position</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <NumberFlow
+              value={2.5}
+              prefix="#"
+              format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+              className="text-3xl font-semibold tracking-[-0.02em] tabular-nums text-foreground"
+            />
+            <span className="text-xs font-medium text-[#3370FF]">+1.7</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1">in search results</p>
+        </div>
       </div>
     </div>
   )

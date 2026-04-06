@@ -7,12 +7,14 @@ import { GroupD } from '@/components/marketing/group-d'
 import { GroupE } from '@/components/marketing/group-e'
 import { GroupNew } from '@/components/marketing/group-new'
 import { GroupGlossy } from '@/components/marketing/group-glossy'
+import { GroupPremium } from '@/components/marketing/group-premium'
 
 const GROUPS = [
   { id: 'track-your-growth', label: 'Track Your Growth' },
   { id: 'beat-competitors', label: 'Beat Competitors' },
   { id: 'feature-cards', label: 'Feature Cards' },
   { id: 'hero-visual', label: 'Hero Composites' },
+  { id: 'premium-charts', label: 'Premium Charts' },
   { id: 'glossy-variants', label: 'Glossy Variants' },
 ]
 
@@ -74,7 +76,13 @@ export default function MarketingShowcasePage() {
           <GroupE />
         </section>
 
-        {/* 5. Glossy Variants */}
+        {/* 5. Premium Charts (nivo + NumberFlow) */}
+        <section id="premium-charts">
+          <SectionHeader title="Premium Charts" />
+          <GroupPremium />
+        </section>
+
+        {/* 6. Glossy Variants */}
         <section id="glossy-variants">
           <SectionHeader title="Glossy Variants" />
           <GroupGlossy />
