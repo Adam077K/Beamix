@@ -44,13 +44,12 @@ function RunningDot() {
 
 export function GroupD() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
 
-      {/* D1: Agent activity — Bankio "Recent Activities" style */}
-      <Card className="overflow-hidden border-border/40 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      {/* D1: Agent activity */}
+      <Card className="overflow-hidden rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
         <CardHeader className="pb-0 pt-5 px-5">
-          <p className="text-sm font-medium text-foreground">Agent Activity</p>
-          <p className="text-xs text-muted-foreground">AI agents working on your visibility</p>
+          <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">Agent Activity</p>
         </CardHeader>
         <CardContent className="px-0 pb-0 pt-3">
           {/* Table header */}
@@ -74,7 +73,7 @@ export function GroupD() {
                   <span className="text-xs font-medium text-foreground truncate">{run.name}</span>
                 </span>
 
-                {/* Status — small dot + plain text, no pill badges */}
+                {/* Status */}
                 <span className="flex items-center gap-1.5">
                   {run.status === 'running' ? (
                     <>
@@ -104,11 +103,10 @@ export function GroupD() {
         </CardContent>
       </Card>
 
-      {/* D2: AI Readiness Score — clean list with thin progress bars */}
-      <Card className="overflow-hidden border-border/40 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      {/* D2: AI Readiness Score */}
+      <Card className="overflow-hidden rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
         <CardHeader className="pb-0 pt-5 px-5">
-          <p className="text-sm font-medium text-foreground">AI Readiness Score</p>
-          <p className="text-xs text-muted-foreground">How ready your site is for AI search engines</p>
+          <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">AI Readiness Score</p>
         </CardHeader>
         <CardContent className="px-5 pb-5 pt-3 space-y-3">
           {READINESS_ITEMS.map(({ label, icon: Icon, score, color }) => (

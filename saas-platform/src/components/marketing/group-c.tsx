@@ -28,29 +28,25 @@ const BRAND_COLORS = ['bg-[#3370FF]', 'bg-[#1E40AF]', 'bg-[#5A8FFF]', 'bg-[#93B4
 
 export function GroupC() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
 
       {/* C1: Competitor bar chart */}
-      <Card className="overflow-hidden border-border/40 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      <Card className="overflow-hidden rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
         <CardHeader className="pb-0 pt-5 px-5">
-          <p className="text-sm font-medium text-foreground">Competitor Comparison</p>
-          <p className="text-xs text-muted-foreground">AI visibility scores vs. top competitors</p>
+          <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">Competitor Comparison</p>
         </CardHeader>
         <CardContent className="px-5 pb-5 pt-3">
           <CompetitorBarChart data={DEMO_COMPETITORS} hasRealData />
         </CardContent>
       </Card>
 
-      {/* C2: Industry leaderboard — Wavespace "Industry Ranking" style */}
-      <Card className="overflow-hidden border-border/40 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      {/* C2: Industry leaderboard */}
+      <Card className="overflow-hidden rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
         {/* Card header */}
         <div className="flex items-start justify-between px-5 pt-5 pb-3">
-          <div>
-            <p className="text-sm font-medium text-foreground">Industry Ranking</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Coffee shops — AI search ranking</p>
-          </div>
+          <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">Industry Ranking</p>
           <div className="text-right">
-            <span className="text-lg font-semibold tabular-nums text-foreground">31.5%</span>
+            <span className="text-lg font-semibold tracking-[-0.02em] tabular-nums text-foreground">31.5%</span>
             <p className="text-xs text-muted-foreground mt-0.5">Average visibility score</p>
           </div>
         </div>

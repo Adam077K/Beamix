@@ -20,10 +20,10 @@ export default function MarketingShowcasePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9]">
+    <div className="min-h-screen bg-gradient-to-b from-[#F8FAFF] to-[#F5F5F5]">
 
       {/* Sticky nav */}
-      <div className="sticky top-0 z-50 bg-[#FAFAF9]/95 backdrop-blur-sm border-b border-border/40">
+      <div className="sticky top-0 z-50 bg-gradient-to-b from-[#F8FAFF]/95 to-[#F8FAFF]/90 backdrop-blur-sm border-b border-border/40">
         <div className="max-w-7xl mx-auto px-8 py-3 flex items-center gap-4 overflow-x-auto">
           <span className="text-sm font-medium text-foreground shrink-0 mr-2">
             Beamix
@@ -42,37 +42,25 @@ export default function MarketingShowcasePage() {
       </div>
 
       {/* Sections */}
-      <div className="max-w-7xl mx-auto px-8 pt-10 pb-24 space-y-12">
+      <div className="max-w-7xl mx-auto px-8 pt-10 pb-24 space-y-10">
 
         <section id="track-your-growth">
-          <SectionHeader
-            title="Track Your Growth"
-            subtitle="Visibility trend chart, engine mentions, sparkline metrics, and scan heatmap."
-          />
+          <SectionHeader title="Track Your Growth" />
           <GroupB />
         </section>
 
         <section id="beat-competitors">
-          <SectionHeader
-            title="Beat Competitors"
-            subtitle="Competitor bar chart and industry ranking leaderboard."
-          />
+          <SectionHeader title="Beat Competitors" />
           <GroupC />
         </section>
 
         <section id="agents-do-the-work">
-          <SectionHeader
-            title="AI Agents Do the Work"
-            subtitle="Agent activity feed and AI readiness audit report."
-          />
+          <SectionHeader title="AI Agents Do the Work" />
           <GroupD />
         </section>
 
         <section id="hero-visual">
-          <SectionHeader
-            title="Hero Visual & Composites"
-            subtitle="Performance overview, before/after comparison, engine coverage, and growth timeline."
-          />
+          <SectionHeader title="Hero Visual & Composites" />
           <GroupE />
         </section>
 
@@ -81,11 +69,10 @@ export default function MarketingShowcasePage() {
   )
 }
 
-function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
+function SectionHeader({ title }: { title: string }) {
   return (
-    <div className="mb-5">
-      <h2 className="text-lg font-medium text-foreground">{title}</h2>
-      <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+    <div className="mb-4">
+      <h2 className="text-xl font-medium tracking-[-0.02em] text-foreground">{title}</h2>
     </div>
   )
 }
