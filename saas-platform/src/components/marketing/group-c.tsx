@@ -1,7 +1,10 @@
 'use client'
 
-import { TrendingUp, TrendingDown } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CompetitorBarChart } from '@/components/dashboard/charts/competitor-bar-chart'
+
+// ─── Demo data ────────────────────────────────────────────────────────────────
 
 const DEMO_COMPETITORS = [
   { name: 'Acme Coffee', score: 75, isUser: true },
@@ -12,70 +15,88 @@ const DEMO_COMPETITORS = [
 ]
 
 const LEADERBOARD = [
-  { rank: 1, name: 'Acme Coffee', isUser: true, mentions: 28, position: 2.5, change: 12, visibility: 75 },
-  { rank: 2, name: 'Starbucks', isUser: false, mentions: 24, position: 3.1, change: 3, visibility: 68 },
-  { rank: 3, name: 'Blue Bottle', isUser: false, mentions: 18, position: 3.8, change: -2, visibility: 52 },
-  { rank: 4, name: "Peet's Coffee", isUser: false, mentions: 12, position: 4.5, change: -5, visibility: 44 },
-  { rank: 5, name: 'Intelligentsia', isUser: false, mentions: 9, position: 5.2, change: 1, visibility: 38 },
+  { rank: 1, name: 'Acme Coffee', isUser: true, mentions: 534, position: 3.5, change: -3.3, visibility: 31.5 },
+  { rank: 2, name: 'Starbucks', score: 68, mentions: 142, position: 4.7, change: -2.6, visibility: 28.6 },
+  { rank: 3, name: 'Blue Bottle', score: 52, mentions: 164, position: 5.8, change: 3.3, visibility: 18.5 },
+  { rank: 4, name: "Peet's Coffee", score: 44, mentions: 139, position: 6.5, change: -1.4, visibility: 16.0 },
+  { rank: 5, name: 'Intelligentsia', score: 38, mentions: 98, position: 7.5, change: 3.3, visibility: 13.4 },
 ]
+
+const BRAND_COLORS = ['bg-[#3370FF]', 'bg-slate-800', 'bg-blue-500', 'bg-emerald-500', 'bg-rose-500']
+
+// ─── Group C component ────────────────────────────────────────────────────────
 
 export function GroupC() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* C1: Competitor bar chart */}
-      <div className="bg-white border border-gray-100 rounded-[20px] shadow-lg p-8">
-        <p className="text-xs font-medium tracking-widest text-gray-400 uppercase mb-2">
-          Competitor Comparison
-        </p>
-        <p className="text-sm text-gray-500 mb-6">AI visibility scores vs. top competitors</p>
-        <CompetitorBarChart data={DEMO_COMPETITORS} hasRealData />
-      </div>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-      {/* C2: Industry leaderboard */}
-      <div className="bg-white border border-gray-100 rounded-[20px] shadow-lg p-8">
-        <p className="text-xs font-medium tracking-widest text-gray-400 uppercase mb-2">
-          Industry Leaderboard
-        </p>
-        <p className="text-sm text-gray-500 mb-6">Coffee shops — AI search ranking</p>
-        <div className="flex flex-col divide-y divide-gray-50">
-          {/* Header row */}
-          <div className="flex items-center gap-3 pb-2">
-            <span className="w-6 text-[10px] font-medium text-gray-400 uppercase">#</span>
-            <span className="flex-1 text-[10px] font-medium text-gray-400 uppercase">Business</span>
-            <span className="w-16 text-right text-[10px] font-medium text-gray-400 uppercase">Mentions</span>
-            <span className="w-16 text-right text-[10px] font-medium text-gray-400 uppercase">Position</span>
-            <span className="w-14 text-right text-[10px] font-medium text-gray-400 uppercase">Change</span>
-            <span className="w-16 text-right text-[10px] font-medium text-gray-400 uppercase">Score</span>
+      {/* C1: Competitor bar chart */}
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-1">
+          <CardTitle className="text-base font-semibold">Competitor Comparison</CardTitle>
+          <p className="text-xs text-muted-foreground">AI visibility scores vs. top competitors</p>
+        </CardHeader>
+        <CardContent className="px-4 pb-4 pt-0">
+          <CompetitorBarChart data={DEMO_COMPETITORS} hasRealData />
+        </CardContent>
+      </Card>
+
+      {/* C2: Industry leaderboard — exact dashboard pattern */}
+      <Card className="overflow-hidden">
+        <div className="flex items-start justify-between px-4 pt-4 pb-2">
+          <div>
+            <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Industry Ranking</h4>
+            <p className="text-[11px] text-slate-400 mt-0.5">Coffee shops — AI search ranking</p>
           </div>
-          {LEADERBOARD.map((row) => (
+          <div className="text-right">
+            <span className="text-lg font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">31.5%</span>
+            <p className="text-[10px] text-slate-400">Average visibility score</p>
+          </div>
+        </div>
+
+        {/* Table header */}
+        <div className="grid grid-cols-[18px_1fr_52px_36px_44px_48px] gap-1 px-4 py-1.5 border-y border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30">
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">#</span>
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Brand</span>
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Mentions</span>
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Pos</span>
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Change</span>
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Visibility</span>
+        </div>
+
+        {/* Table rows */}
+        <div className="flex flex-col">
+          {LEADERBOARD.map((row, idx) => (
             <div
               key={row.rank}
-              className={`flex items-center gap-3 py-3 ${row.isUser ? 'bg-blue-50/60 -mx-2 px-2 rounded-xl' : ''}`}
+              className={cn(
+                'grid grid-cols-[18px_1fr_52px_36px_44px_48px] gap-1 items-center px-4 py-2 border-b border-slate-50 dark:border-slate-800/50 last:border-0',
+                row.isUser && 'bg-blue-50/30 dark:bg-blue-950/20'
+              )}
             >
-              <span className={`w-6 text-sm font-bold tabular-nums ${row.isUser ? 'text-[#3370FF]' : 'text-gray-400'}`}>
-                {row.rank}
-              </span>
-              <span className={`flex-1 text-sm font-medium truncate ${row.isUser ? 'text-[#3370FF]' : 'text-gray-800'}`}>
-                {row.name}
+              <span className="text-[11px] text-slate-400 tabular-nums">{row.rank}</span>
+              <span className="flex items-center gap-1.5 min-w-0">
+                <span className={cn('h-5 w-5 rounded-md flex items-center justify-center text-[9px] font-bold text-white shrink-0', BRAND_COLORS[idx % BRAND_COLORS.length])}>
+                  {row.name.charAt(0)}
+                </span>
+                <span className={cn('text-[11px] truncate', row.isUser ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400')}>
+                  {row.name}
+                </span>
                 {row.isUser && (
-                  <span className="ml-1.5 text-[10px] bg-[#3370FF] text-white rounded-full px-1.5 py-0.5 font-semibold">You</span>
+                  <span className="shrink-0 rounded bg-slate-100 dark:bg-slate-800 px-1 py-0 text-[9px] font-semibold text-slate-500">You</span>
                 )}
               </span>
-              <span className="w-16 text-right text-sm tabular-nums text-gray-700">{row.mentions}</span>
-              <span className="w-16 text-right text-sm tabular-nums text-gray-700">{row.position}</span>
-              <span className="w-14 text-right">
-                <span className={`inline-flex items-center gap-0.5 text-xs font-medium tabular-nums ${row.change > 0 ? 'text-emerald-600' : row.change < 0 ? 'text-red-600' : 'text-gray-400'}`}>
-                  {row.change > 0 ? <TrendingUp className="h-3 w-3" /> : row.change < 0 ? <TrendingDown className="h-3 w-3" /> : null}
-                  {row.change > 0 ? '+' : ''}{row.change}%
-                </span>
+              <span className="text-[11px] tabular-nums text-slate-600 dark:text-slate-400 text-right">{row.mentions}</span>
+              <span className="text-[11px] tabular-nums text-slate-600 dark:text-slate-400 text-right">{row.position}</span>
+              <span className={cn('text-[11px] tabular-nums text-right font-medium', row.change > 0 ? 'text-emerald-500' : 'text-red-500')}>
+                {row.change > 0 ? '+' : ''}{row.change}%
               </span>
-              <span className="w-16 text-right text-sm font-bold tabular-nums" style={{ color: row.isUser ? '#3370FF' : '#6B7280' }}>
-                {row.visibility}
-              </span>
+              <span className="text-[11px] tabular-nums text-slate-900 dark:text-white text-right font-medium">{row.visibility}%</span>
             </div>
           ))}
         </div>
-      </div>
+      </Card>
+
     </div>
   )
 }

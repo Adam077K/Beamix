@@ -1,9 +1,13 @@
 'use client'
 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ChartCard } from '@/components/ui/chart-card'
 import { VisibilityTrendChart } from '@/components/dashboard/charts/visibility-trend-chart'
 import { EngineDonutChart } from '@/components/dashboard/charts/engine-donut-chart'
 import { SparklineCard } from '@/components/dashboard/charts/sparkline-card'
 import { ScanHeatmap } from '@/components/dashboard/charts/scan-heatmap'
+
+// ─── Demo data ────────────────────────────────────────────────────────────────
 
 const DEMO_SCAN_HISTORY = [
   { created_at: '2026-03-01', overall_score: 42, mentions_count: 8, avg_position: 4.2, sentiment_positive_pct: 55 },
@@ -24,7 +28,6 @@ const DEMO_ENGINE_DATA = [
   { engine: 'Claude', mentions: 3 },
 ]
 
-// Spread scan dates over last 3 months for heatmap
 const DEMO_SCAN_DATES = [
   '2026-01-05', '2026-01-12', '2026-01-19', '2026-01-26',
   '2026-02-02', '2026-02-09', '2026-02-16', '2026-02-23',
@@ -32,39 +35,52 @@ const DEMO_SCAN_DATES = [
   '2026-03-20', '2026-03-25', '2026-03-28', '2026-03-30',
 ]
 
+// ─── Group B component ────────────────────────────────────────────────────────
+
 export function GroupB() {
   const scoreSparkData = DEMO_SCAN_HISTORY.map((d) => d.overall_score ?? 0)
   const mentionsSparkData = DEMO_SCAN_HISTORY.map((d) => d.mentions_count)
   const positionSparkData = DEMO_SCAN_HISTORY.map((d) => d.avg_position ?? 0)
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* B1: Visibility trend chart */}
-      <div className="bg-white border border-gray-100 rounded-[20px] shadow-lg p-8">
-        <p className="text-xs font-medium tracking-widest text-gray-400 uppercase mb-4">
-          Visibility Trend
-        </p>
+    <div className="flex flex-col gap-4">
+
+      {/* B1: Visibility Trend — wrapped in ChartCard */}
+      <ChartCard
+        title="AI Visibility Score"
+        subtitle="Track your brand performance over time"
+        periods={['7d', '30d', '90d']}
+        period="30d"
+        contentClassName="px-4 pb-4"
+      >
         <VisibilityTrendChart data={DEMO_SCAN_HISTORY} />
-      </div>
+      </ChartCard>
 
       {/* B2 + B4: Donut + Heatmap */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-100 rounded-[20px] shadow-lg p-8">
-          <p className="text-xs font-medium tracking-widest text-gray-400 uppercase mb-4">
-            Mentions by Engine
-          </p>
-          <EngineDonutChart data={DEMO_ENGINE_DATA} />
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        <div className="bg-white border border-gray-100 rounded-[20px] shadow-lg p-8">
-          <p className="text-xs font-medium tracking-widest text-gray-400 uppercase mb-4">
-            Scan Activity
-          </p>
+        {/* B2: Engine Donut — Shadcn Card with proper header */}
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-base font-semibold">Engine Mentions</CardTitle>
+            <p className="text-xs text-muted-foreground">Which AI engines mention your brand</p>
+          </CardHeader>
+          <CardContent className="px-4 pb-4 pt-0">
+            <EngineDonutChart data={DEMO_ENGINE_DATA} />
+          </CardContent>
+        </Card>
+
+        {/* B4: Scan Heatmap — ChartCard */}
+        <ChartCard
+          title="Scan Activity"
+          subtitle="Your scanning consistency over 13 weeks"
+          contentClassName="px-4 pb-4"
+        >
           <ScanHeatmap scanDates={DEMO_SCAN_DATES} />
-        </div>
+        </ChartCard>
       </div>
 
-      {/* B3: Sparkline cards */}
+      {/* B3: Sparkline metric cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <SparklineCard
           label="Visibility Score"
