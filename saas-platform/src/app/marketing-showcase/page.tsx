@@ -1,0 +1,102 @@
+'use client'
+// dev-only showcase — no auth required
+
+import { GroupB } from '@/components/marketing/group-b'
+import { GroupC } from '@/components/marketing/group-c'
+import { GroupD } from '@/components/marketing/group-d'
+import { GroupE } from '@/components/marketing/group-e'
+import { GroupNew } from '@/components/marketing/group-new'
+import { GroupGlossy } from '@/components/marketing/group-glossy'
+import { GroupPremium } from '@/components/marketing/group-premium'
+
+const GROUPS = [
+  { id: 'track-your-growth', label: 'Track Your Growth' },
+  { id: 'beat-competitors', label: 'Beat Competitors' },
+  { id: 'feature-cards', label: 'Feature Cards' },
+  { id: 'hero-visual', label: 'Hero Composites' },
+  { id: 'premium-charts', label: 'Premium Charts' },
+  { id: 'glossy-variants', label: 'Glossy Variants' },
+]
+
+export default function MarketingShowcasePage() {
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#F8FAFF] to-[#F5F5F5]">
+
+      {/* Sticky nav */}
+      <div className="sticky top-0 z-50 bg-gradient-to-b from-[#F8FAFF]/95 to-[#F8FAFF]/90 backdrop-blur-sm border-b border-border/40">
+        <div className="max-w-7xl mx-auto px-8 py-3 flex items-center gap-4 overflow-x-auto">
+          <span className="text-sm font-medium text-foreground shrink-0 mr-2">
+            Beamix
+          </span>
+          {GROUPS.map((group) => (
+            <button
+              key={group.id}
+              type="button"
+              onClick={() => scrollToSection(group.id)}
+              className="shrink-0 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors duration-150 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+            >
+              {group.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Sections */}
+      <div className="max-w-7xl mx-auto px-8 pt-10 pb-24 space-y-10">
+
+        {/* 1. Track Your Growth */}
+        <section id="track-your-growth">
+          <SectionHeader title="Track Your Growth" />
+          <GroupB />
+        </section>
+
+        {/* 2. Beat Competitors */}
+        <section id="beat-competitors">
+          <SectionHeader title="Beat Competitors" />
+          <GroupC />
+        </section>
+
+        {/* 3. Feature Cards — trending topics, sources, queries, invisibility, models, dark donut */}
+        <section id="feature-cards">
+          <SectionHeader title="Feature Cards" />
+          <div className="flex flex-col gap-6">
+            <GroupNew />
+            <GroupD />
+          </div>
+        </section>
+
+        {/* 4. Hero Composites */}
+        <section id="hero-visual">
+          <SectionHeader title="Hero Composites" />
+          <GroupE />
+        </section>
+
+        {/* 5. Premium Charts (nivo + NumberFlow) */}
+        <section id="premium-charts">
+          <SectionHeader title="Premium Charts" />
+          <GroupPremium />
+        </section>
+
+        {/* 6. Glossy Variants */}
+        <section id="glossy-variants">
+          <SectionHeader title="Glossy Variants" />
+          <GroupGlossy />
+        </section>
+
+      </div>
+    </div>
+  )
+}
+
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <div className="pt-4 mb-3">
+      <h2 className="text-xl font-medium tracking-[-0.02em] text-foreground">{title}</h2>
+    </div>
+  )
+}
