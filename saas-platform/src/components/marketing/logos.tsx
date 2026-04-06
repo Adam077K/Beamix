@@ -75,13 +75,17 @@ function BrandMark({
   )
 }
 
-// ─── AI Engine logos (real logos via logo.dev) ────────────────────────────────
+// ─── AI Engine logos ─────────────────────────────────────────────────────────
+// Prefer local files in /public/logos/, fallback to logo.dev API.
+
+const ENGINE_LOCAL_FILES: Record<string, string> = {
+  Claude: '/logos/claude-logo.png',
+  Gemini: '/logos/gemini_logo.png',
+}
 
 const ENGINE_DOMAINS: Record<string, string> = {
   ChatGPT: 'openai.com',
-  Gemini: 'gemini.google.com',
   Perplexity: 'perplexity.ai',
-  Claude: 'anthropic.com',
   'Google AI': 'google.com',
   'Google AI Overviews': 'google.com',
   Grok: 'x.com',
@@ -89,6 +93,20 @@ const ENGINE_DOMAINS: Record<string, string> = {
 }
 
 function EngineLogo({ engine, size = 'md', className }: BrandMarkProps & { engine: string }) {
+  const s = SIZES[size]
+  const localFile = ENGINE_LOCAL_FILES[engine]
+  if (localFile) {
+    return (
+      <img
+        src={localFile}
+        alt={engine}
+        width={s}
+        height={s}
+        className={cn('shrink-0 object-contain', className)}
+        loading="lazy"
+      />
+    )
+  }
   const domain = ENGINE_DOMAINS[engine]
   if (domain) {
     return <LogoImg domain={domain} alt={engine} size={size} className={className} rounded="rounded-full" />
