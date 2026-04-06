@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   FileText,
   BookOpen,
@@ -17,6 +18,7 @@ import {
 import { type ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { StatCard } from '@/components/ui/stat-card'
 import { DataTable } from '@/components/ui/data-table'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -29,19 +31,19 @@ const CONTENT_TYPE_META: Record<
   string,
   { label: string; icon: React.ComponentType<{ className?: string }>; colorIcon: string; colorBg: string }
 > = {
-  blog_post:           { label: 'Blog',    icon: BookOpen,     colorIcon: 'text-[var(--color-chart-3)]',  colorBg: 'bg-[var(--color-chart-3)]/10'  },
-  article:             { label: 'Article', icon: FileText,     colorIcon: 'text-primary',                colorBg: 'bg-primary/10' },
-  faq:                 { label: 'FAQ',     icon: MessageSquare, colorIcon: 'text-[var(--color-chart-2)]', colorBg: 'bg-[var(--color-chart-2)]/10' },
-  product_description: { label: 'Product', icon: FileText,     colorIcon: 'text-[var(--color-chart-4)]', colorBg: 'bg-[var(--color-chart-4)]/10' },
-  landing_page:        { label: 'Landing', icon: FileText,     colorIcon: 'text-[var(--color-chart-3)]', colorBg: 'bg-[var(--color-chart-3)]/10' },
-  schema_markup:       { label: 'Schema',  icon: Code2,        colorIcon: 'text-primary',                colorBg: 'bg-primary/10' },
-  social_post:         { label: 'Social',  icon: Share2,       colorIcon: 'text-[var(--color-chart-6)]', colorBg: 'bg-[var(--color-chart-6)]/10' },
-  review_response:     { label: 'Review',  icon: Star,         colorIcon: 'text-[var(--color-chart-4)]', colorBg: 'bg-[var(--color-chart-4)]/10' },
-  competitor_report:   { label: 'Report',  icon: BarChart3,    colorIcon: 'text-primary',                colorBg: 'bg-primary/10' },
-  query_suggestions:   { label: 'Queries', icon: Search,       colorIcon: 'text-[var(--color-chart-2)]', colorBg: 'bg-[var(--color-chart-2)]/10' },
-  review_analysis:     { label: 'Analysis', icon: Star,        colorIcon: 'text-[var(--color-chart-4)]', colorBg: 'bg-[var(--color-chart-4)]/10' },
-  social_strategy:     { label: 'Social',  icon: Share2,       colorIcon: 'text-[var(--color-chart-6)]', colorBg: 'bg-[var(--color-chart-6)]/10' },
-  schema_recommendations: { label: 'Schema', icon: Code2,      colorIcon: 'text-[var(--color-chart-3)]', colorBg: 'bg-[var(--color-chart-3)]/10' },
+  blog_post:              { label: 'Blog',     icon: BookOpen,      colorIcon: 'text-[var(--color-chart-3)]',  colorBg: 'bg-[var(--color-chart-3)]/10' },
+  article:                { label: 'Article',  icon: FileText,      colorIcon: 'text-primary',                 colorBg: 'bg-primary/10' },
+  faq:                    { label: 'FAQ',      icon: MessageSquare, colorIcon: 'text-[var(--color-chart-2)]',  colorBg: 'bg-[var(--color-chart-2)]/10' },
+  product_description:    { label: 'Product',  icon: FileText,      colorIcon: 'text-[var(--color-chart-4)]', colorBg: 'bg-[var(--color-chart-4)]/10' },
+  landing_page:           { label: 'Landing',  icon: FileText,      colorIcon: 'text-[var(--color-chart-3)]', colorBg: 'bg-[var(--color-chart-3)]/10' },
+  schema_markup:          { label: 'Schema',   icon: Code2,         colorIcon: 'text-primary',                colorBg: 'bg-primary/10' },
+  social_post:            { label: 'Social',   icon: Share2,        colorIcon: 'text-[var(--color-chart-6)]', colorBg: 'bg-[var(--color-chart-6)]/10' },
+  review_response:        { label: 'Review',   icon: Star,          colorIcon: 'text-[var(--color-chart-4)]', colorBg: 'bg-[var(--color-chart-4)]/10' },
+  competitor_report:      { label: 'Report',   icon: BarChart3,     colorIcon: 'text-primary',                colorBg: 'bg-primary/10' },
+  query_suggestions:      { label: 'Queries',  icon: Search,        colorIcon: 'text-[var(--color-chart-2)]', colorBg: 'bg-[var(--color-chart-2)]/10' },
+  review_analysis:        { label: 'Analysis', icon: Star,          colorIcon: 'text-[var(--color-chart-4)]', colorBg: 'bg-[var(--color-chart-4)]/10' },
+  social_strategy:        { label: 'Social',   icon: Share2,        colorIcon: 'text-[var(--color-chart-6)]', colorBg: 'bg-[var(--color-chart-6)]/10' },
+  schema_recommendations: { label: 'Schema',   icon: Code2,         colorIcon: 'text-[var(--color-chart-3)]', colorBg: 'bg-[var(--color-chart-3)]/10' },
 }
 
 // ─── Status badge config ──────────────────────────────────────────────────────
@@ -106,14 +108,14 @@ interface ContentLibraryViewProps {
 
 // ─── Type filter helper ───────────────────────────────────────────────────────
 
-const BLOG_TYPES    = new Set(['blog_post', 'article'])
-const FAQ_TYPES     = new Set(['faq'])
-const SCHEMA_TYPES  = new Set(['schema_markup', 'schema_recommendations'])
-const SOCIAL_TYPES  = new Set(['social_post', 'social_strategy'])
-const REPORT_TYPES  = new Set(['competitor_report', 'query_suggestions', 'review_analysis', 'review_analyzer'])
+const BLOG_TYPES   = new Set(['blog_post', 'article'])
+const FAQ_TYPES    = new Set(['faq'])
+const SCHEMA_TYPES = new Set(['schema_markup', 'schema_recommendations'])
+const SOCIAL_TYPES = new Set(['social_post', 'social_strategy'])
+const REPORT_TYPES = new Set(['competitor_report', 'query_suggestions', 'review_analysis', 'review_analyzer'])
 
 function matchesFilter(type: string, filter: ContentFilter): boolean {
-  if (filter === 'all') return true
+  if (filter === 'all')     return true
   if (filter === 'blog')    return BLOG_TYPES.has(type)
   if (filter === 'faq')     return FAQ_TYPES.has(type)
   if (filter === 'schema')  return SCHEMA_TYPES.has(type)
@@ -122,9 +124,35 @@ function matchesFilter(type: string, filter: ContentFilter): boolean {
   return true
 }
 
+// ─── Quality score bar ────────────────────────────────────────────────────────
+
+function QualityBar({ score }: { score: number | null | undefined }) {
+  if (score === null || score === undefined) {
+    return <span className="text-xs text-muted-foreground">—</span>
+  }
+  const color =
+    score >= 80
+      ? 'var(--color-score-good)'
+      : score >= 50
+        ? 'var(--color-score-fair)'
+        : 'var(--color-score-critical)'
+  return (
+    <div className="flex items-center gap-2">
+      <div className="w-12 h-1.5 rounded-full bg-muted overflow-hidden" aria-hidden="true">
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${score}%`, backgroundColor: color }}
+        />
+      </div>
+      <span className="text-xs tabular-nums text-muted-foreground">{score}</span>
+    </div>
+  )
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps) {
+  const router = useRouter()
   const [filter, setFilter] = useState<ContentFilter>('all')
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -151,9 +179,9 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
   ]
 
   // ── KPI counts ──────────────────────────────────────────────────────────────
-  const totalItems    = allRows.length
+  const totalItems     = allRows.length
   const publishedCount = allRows.filter((r) => r.status === 'published' || r.status === 'completed').length
-  const draftCount    = allRows.filter((r) => r.status === 'draft').length
+  const draftCount     = allRows.filter((r) => r.status === 'draft').length
 
   // ── Filtered rows ───────────────────────────────────────────────────────────
   const filteredRows = allRows.filter((row) => {
@@ -164,8 +192,11 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
 
   // ── Table columns ───────────────────────────────────────────────────────────
   const columns: ColumnDef<LibraryRow>[] = [
+    // Title — icon + title text + word count subtitle
     {
-      header: 'Title',
+      header: () => (
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Title</span>
+      ),
       accessorKey: 'title',
       cell: ({ row }) => {
         const meta = CONTENT_TYPE_META[row.original.agent_type] ?? {
@@ -186,36 +217,52 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
             >
               <Icon className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
-            <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
-              {row.original.title}
+            <span className="flex flex-col min-w-0">
+              <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
+                {row.original.title}
+              </span>
+              {row.original.word_count != null && (
+                <span className="text-xs text-muted-foreground">
+                  {row.original.word_count.toLocaleString()} words
+                </span>
+              )}
             </span>
           </span>
         )
       },
     },
+
+    // Type — colored dot + label
     {
-      header: 'Type',
+      header: () => (
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Type</span>
+      ),
       accessorKey: 'agent_type',
       cell: ({ row }) => {
         const meta = CONTENT_TYPE_META[row.original.agent_type]
+        if (!meta) {
+          return (
+            <span className="text-xs text-muted-foreground capitalize">
+              {row.original.agent_type.replace(/_/g, ' ')}
+            </span>
+          )
+        }
+        // Derive solid dot color from colorBg (strip /10 opacity modifier)
+        const dotColor = meta.colorBg.replace('/10', '')
         return (
-          <span className="text-xs text-muted-foreground">
-            {meta?.label ?? row.original.agent_type}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={cn('h-2 w-2 rounded-full shrink-0', dotColor)} aria-hidden="true" />
+            <span className="text-xs font-medium text-foreground">{meta.label}</span>
+          </div>
         )
       },
     },
+
+    // Status
     {
-      header: 'Agent',
-      accessorKey: 'is_content',
-      cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground capitalize">
-          {row.original.agent_type.replace(/_/g, ' ')}
-        </span>
+      header: () => (
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</span>
       ),
-    },
-    {
-      header: 'Status',
       accessorKey: 'status',
       cell: ({ row }) => {
         const badge = STATUS_BADGE[row.original.status] ?? {
@@ -229,8 +276,21 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
         )
       },
     },
+
+    // Quality — mini progress bar + numeric score
     {
-      header: 'Created',
+      header: () => (
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Quality</span>
+      ),
+      accessorKey: 'quality_score',
+      cell: ({ row }) => <QualityBar score={row.original.quality_score} />,
+    },
+
+    // Created
+    {
+      header: () => (
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Created</span>
+      ),
       accessorKey: 'created_at',
       cell: ({ row }) => (
         <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
@@ -238,8 +298,10 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
         </span>
       ),
     },
+
+    // Actions
     {
-      header: 'Actions',
+      header: () => null,
       id: 'actions',
       meta: { align: 'right' },
       cell: ({ row }) => (
@@ -303,7 +365,7 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
       {/* ── Row 3: Filter bar ──────────────────────────────────────────────── */}
       <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:160ms]">
         <CardContent className="p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             {/* Pill toggle buttons */}
             <div
               className="flex gap-1 bg-muted rounded-lg p-1 w-fit flex-wrap"
@@ -327,18 +389,18 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
               ))}
             </div>
 
-            {/* Search input */}
-            <div className="relative max-w-xs w-full sm:w-auto">
+            {/* Search input — right-aligned */}
+            <div className="relative sm:ml-auto max-w-xs w-full sm:w-auto">
               <Search
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none"
                 aria-hidden="true"
               />
-              <input
+              <Input
                 type="search"
                 placeholder="Search content…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 w-full rounded-lg border border-border bg-background pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/60"
+                className="h-8 pl-8 pr-3 text-xs"
                 aria-label="Search content"
               />
             </div>
@@ -363,8 +425,12 @@ export function ContentLibraryView({ content, outputs }: ContentLibraryViewProps
             <div className="py-6">
               <EmptyState
                 icon={FileText}
-                title="No content yet"
-                description="Run an AI agent to generate your first piece of content."
+                title="Your content library is empty"
+                description="Content created by AI agents will appear here. Run a Content Writer or Blog Writer agent to get started."
+                action={{
+                  label: 'Run an Agent',
+                  onClick: () => router.push('/dashboard/agents'),
+                }}
               />
             </div>
           ) : filteredRows.length === 0 ? (

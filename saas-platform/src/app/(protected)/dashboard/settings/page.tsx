@@ -29,7 +29,7 @@ export default function SettingsPage() {
     <div className="space-y-6 animate-fade-up">
       {/* Page header */}
       <div>
-        <h1 className="text-display text-foreground">Settings</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
         <p className="mt-0.5 text-sm text-muted-foreground">
           Manage your account, billing, and preferences
         </p>

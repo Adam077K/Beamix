@@ -287,45 +287,35 @@ function OverviewTab({
   ].sort((a, b) => a.position - b.position)
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* ── Performance stat cards ─── */}
-      <div className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-2 border-b border-slate-100 dark:border-slate-800">
-          <span className="text-[12px] font-semibold text-slate-900 dark:text-white">Performance</span>
-          <span className="text-[11px] text-slate-400">Track brand performance with AI insights and metrics</span>
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-2.5 border-b border-border">
+          <span className="text-sm font-semibold text-foreground">Performance</span>
+          <span className="text-xs text-muted-foreground">Track brand performance with AI insights and metrics</span>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800">
+        <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-border">
           {/* Brand Presence */}
-          <div className="px-5 py-4">
-            <span className="text-[13px] font-semibold text-slate-900 dark:text-white">Brand presence</span>
-            <div className="grid grid-cols-2 gap-6 mt-3">
+          <div className="px-6 py-5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Brand presence</span>
+            <div className="grid grid-cols-2 gap-8 mt-4">
               <div>
-                <span className="text-[11px] text-slate-400">Visibility</span>
-                <div className="flex items-center gap-2 mt-1">
-                  <svg className="h-4 w-4 shrink-0 text-slate-400" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M2 10 A6 6 0 0 1 14 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M8 10 L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    <circle cx="8" cy="10" r="1.5" fill="currentColor" />
-                  </svg>
-                  <svg className="h-5 w-5 shrink-0" viewBox="0 0 20 20" aria-hidden="true">
-                    <circle cx="10" cy="10" r="8" fill="none" stroke="#E2E8F0" strokeWidth="2.5" />
-                    <circle cx="10" cy="10" r="8" fill="none" stroke={displayScore >= 70 ? '#10B981' : displayScore >= 40 ? '#F59E0B' : '#EF4444'} strokeWidth="2.5" strokeDasharray={`${(displayScore / 100) * 50.3} 50.3`} strokeLinecap="round" transform="rotate(-90 10 10)" />
-                  </svg>
-                  <span className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">{displayScore > 0 ? `${displayScore}%` : '--'}</span>
+                <span className="text-xs text-muted-foreground">Visibility</span>
+                <div className="flex items-center gap-2.5 mt-1.5">
+                  <span className="text-3xl font-bold tabular-nums text-foreground">{displayScore > 0 ? `${displayScore}%` : '--'}</span>
                   {scoreDelta != null && (
-                    <span className={cn('text-xs font-semibold tabular-nums flex items-center gap-0.5', scoreDelta >= 0 ? 'text-emerald-500' : 'text-red-500')}>
+                    <span className={cn('text-xs font-semibold tabular-nums', scoreDelta >= 0 ? 'text-emerald-500' : 'text-red-500')}>
                       {scoreDelta >= 0 ? '↑' : '↓'} {Math.abs(scoreDelta)}%
                     </span>
                   )}
                 </div>
               </div>
               <div>
-                <span className="text-[11px] text-slate-400">Answers mentioning me</span>
-                <div className="flex items-center gap-2 mt-1">
-                  <TrendingUp className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
-                  <span className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">{displayMentionCount.toLocaleString()}</span>
+                <span className="text-xs text-muted-foreground">Answers mentioning me</span>
+                <div className="flex items-center gap-2.5 mt-1.5">
+                  <span className="text-3xl font-bold tabular-nums text-foreground">{displayMentionCount.toLocaleString()}</span>
                   {mentionDelta != null && (
-                    <span className={cn('text-xs font-semibold tabular-nums flex items-center gap-0.5', mentionDelta >= 0 ? 'text-emerald-500' : 'text-red-500')}>
+                    <span className={cn('text-xs font-semibold tabular-nums', mentionDelta >= 0 ? 'text-emerald-500' : 'text-red-500')}>
                       {mentionDelta >= 0 ? '↑' : '↓'} {Math.abs(mentionDelta)}
                     </span>
                   )}
@@ -334,46 +324,46 @@ function OverviewTab({
             </div>
           </div>
           {/* Citations */}
-          <div className="px-5 py-4">
-            <span className="text-[13px] font-semibold text-slate-900 dark:text-white">Citations</span>
-            <div className="grid grid-cols-3 gap-3 mt-3">
+          <div className="px-6 py-5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Citations</span>
+            <div className="grid grid-cols-3 gap-4 mt-4">
               <div>
-                <span className="text-[11px] text-slate-400">Total pages cited</span>
-                <div className="mt-1">
-                  <span className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{(props.contentStats?.total ?? (demoMode ? 14808 : 0)).toLocaleString()}</span>
-                  {demoMode && <div className="text-[11px] font-semibold text-emerald-500 mt-0.5">↑ 2,479</div>}
+                <span className="text-xs text-muted-foreground">Total pages cited</span>
+                <div className="mt-1.5">
+                  <span className="text-2xl font-bold tabular-nums text-foreground">{(props.contentStats?.total ?? (demoMode ? 148 : 0)).toLocaleString()}</span>
+                  {demoMode && <div className="text-xs font-semibold text-emerald-500 mt-0.5">↑ 24</div>}
                 </div>
               </div>
               <div>
-                <span className="text-[11px] text-slate-400">My pages cited</span>
-                <div className="mt-1">
-                  <span className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{demoMode ? 156 : enginesMentioning}</span>
-                  {demoMode && <div className="text-[11px] font-semibold text-emerald-500 mt-0.5">↑ 18</div>}
+                <span className="text-xs text-muted-foreground">My pages cited</span>
+                <div className="mt-1.5">
+                  <span className="text-2xl font-bold tabular-nums text-foreground">{demoMode ? 156 : enginesMentioning}</span>
+                  {demoMode && <div className="text-xs font-semibold text-emerald-500 mt-0.5">↑ 18</div>}
                 </div>
               </div>
               <div>
-                <span className="text-[11px] text-slate-400">Pages mentioned</span>
-                <div className="mt-1">
-                  <span className="text-xl font-bold tabular-nums text-slate-900 dark:text-white">{demoMode ? '1,068' : displayPositivePct}</span>
-                  {demoMode && <div className="text-[11px] font-semibold text-emerald-500 mt-0.5">↑ 372</div>}
+                <span className="text-xs text-muted-foreground">Pages mentioned</span>
+                <div className="mt-1.5">
+                  <span className="text-2xl font-bold tabular-nums text-foreground">{demoMode ? '42' : displayPositivePct}</span>
+                  {demoMode && <div className="text-xs font-semibold text-emerald-500 mt-0.5">↑ 8</div>}
                 </div>
               </div>
             </div>
           </div>
           {/* Competitor Analysis */}
-          <div className="px-5 py-4">
-            <span className="text-[13px] font-semibold text-slate-900 dark:text-white">Competitor Analysis</span>
-            <div className="grid grid-cols-2 gap-6 mt-3">
+          <div className="px-6 py-5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Competitor Analysis</span>
+            <div className="grid grid-cols-2 gap-8 mt-4">
               <div>
-                <span className="text-[11px] text-slate-400">Market share</span>
-                <div className="flex items-baseline gap-1 mt-1">
-                  <span className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">14%</span>
+                <span className="text-xs text-muted-foreground">Market share</span>
+                <div className="flex items-baseline gap-1 mt-1.5">
+                  <span className="text-3xl font-bold tabular-nums text-foreground">14%</span>
                 </div>
               </div>
               <div>
-                <span className="text-[11px] text-slate-400">Market position</span>
-                <div className="flex items-baseline gap-1 mt-1">
-                  <span className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">#{marketPosition}</span>
+                <span className="text-xs text-muted-foreground">Market position</span>
+                <div className="flex items-baseline gap-1 mt-1.5">
+                  <span className="text-3xl font-bold tabular-nums text-foreground">#{marketPosition}</span>
                 </div>
               </div>
             </div>
@@ -383,46 +373,40 @@ function OverviewTab({
 
       {/* ── 2-Column Master Layout ─── */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4">
         {/* ═══ LEFT COLUMN ═══ */}
-        <div className="flex flex-col gap-3">
-        {/* Chart card with score header */}
-        <div className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
-          <div className="flex items-center justify-between px-4 pt-3 pb-1">
-            <h3 className="text-[13px] font-semibold text-slate-900 dark:text-white">AI visibility score</h3>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 mr-1">
-                <button type="button" className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-slate-900 text-white dark:bg-white dark:text-slate-900">Weekly</button>
-                <button type="button" className="px-2 py-0.5 text-[10px] font-medium rounded-md text-slate-400 hover:text-slate-600 transition-colors">Monthly</button>
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-lg font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">{displayScore > 0 ? `${displayScore}.48%` : '--'}</span>
-                {scoreDelta != null && <span className={cn('text-[11px] font-semibold tabular-nums', scoreDelta >= 0 ? 'text-emerald-600' : 'text-red-500')}>↑ {demoMode ? '2479' : Math.abs(scoreDelta)}</span>}
-              </div>
+        <div className="flex flex-col gap-4">
+        {/* Chart card */}
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="flex items-center justify-between px-5 pt-4 pb-1">
+            <h3 className="text-sm font-semibold text-foreground">AI visibility score</h3>
+            <div className="flex items-center gap-1">
+              <button type="button" className="px-2.5 py-1 text-xs font-medium rounded-md bg-foreground text-background">Weekly</button>
+              <button type="button" className="px-2.5 py-1 text-xs font-medium rounded-md text-muted-foreground hover:text-foreground transition-colors">Monthly</button>
             </div>
           </div>
-          <div className="px-2 pb-1">
+          <div className="px-2 pb-2">
             <VisibilityTrendChart data={scanHistory} />
           </div>
         </div>
 
-        {/* Recommended Actions — compact */}
-        <div className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
-          <div className="flex items-center justify-between px-4 pt-3 pb-2">
-            <h4 className="text-[13px] font-semibold text-slate-900 dark:text-white">Recommended Actions</h4>
-            <Link href="/dashboard/recommendations" className="text-[11px] font-medium text-[#3370FF] hover:underline flex items-center gap-0.5">View all <ChevronRight className="h-3 w-3" /></Link>
+        {/* Recommended Actions */}
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="flex items-center justify-between px-5 pt-4 pb-2">
+            <h4 className="text-sm font-semibold text-foreground">Recommended Actions</h4>
+            <Link href="/dashboard/recommendations" className="text-xs font-medium text-primary hover:underline flex items-center gap-0.5">View all <ChevronRight className="h-3 w-3" /></Link>
           </div>
-          <div className="px-4 pb-3">
+          <div className="px-5 pb-4">
             {recommendations.length === 0 ? (
-              <div className="py-4 text-center"><p className="text-xs text-slate-400">All caught up!</p></div>
+              <div className="py-4 text-center"><p className="text-xs text-muted-foreground">All caught up!</p></div>
             ) : (
               recommendations.slice(0, 3).map((rec) => {
-                const priorityColors: Record<string, string> = { critical: 'bg-red-500', high: 'bg-amber-500', medium: 'bg-slate-300', low: 'bg-slate-200' }
+                const priorityColors: Record<string, string> = { critical: 'bg-red-500', high: 'bg-amber-500', medium: 'bg-muted-foreground/40', low: 'bg-muted-foreground/20' }
                 return (
-                  <div key={rec.id} className="flex items-center gap-2.5 py-2 border-b border-slate-50 last:border-0">
-                    <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', priorityColors[rec.priority] ?? 'bg-slate-300')} />
-                    <p className="flex-1 text-[12px] font-medium text-slate-800 dark:text-white truncate">{rec.title}</p>
-                    {rec.suggested_agent && <Link href="/dashboard/agents" className="shrink-0 text-[11px] font-semibold text-[#3370FF] hover:underline">Fix →</Link>}
+                  <div key={rec.id} className="flex items-center gap-3 py-2.5 border-b border-border/50 last:border-0">
+                    <span className={cn('h-2 w-2 rounded-full shrink-0', priorityColors[rec.priority] ?? 'bg-muted-foreground/40')} />
+                    <p className="flex-1 text-sm text-foreground truncate">{rec.title}</p>
+                    {rec.suggested_agent && <Link href="/dashboard/agents" className="shrink-0 text-xs font-semibold text-primary hover:underline">Fix →</Link>}
                   </div>
                 )
               })
@@ -433,28 +417,28 @@ function OverviewTab({
         </div>{/* end left column */}
 
         {/* ═══ RIGHT COLUMN ═══ */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
 
         {/* Industry ranking table */}
-        <div className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
-          <div className="flex items-start justify-between px-4 pt-4 pb-2">
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="flex items-start justify-between px-5 pt-4 pb-2">
             <div>
-              <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Industry Ranking</h4>
-              <p className="text-[11px] text-slate-400 mt-0.5">Brands with highest visibility</p>
+              <h4 className="text-sm font-semibold text-foreground">Industry Ranking</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">Brands with highest visibility</p>
             </div>
             <div className="text-right">
-              <span className="text-lg font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">{displayScore > 0 ? `${(displayScore * 0.4).toFixed(1)}%` : '--'}</span>
-              <p className="text-[10px] text-slate-400">Average visibility score 7 daily</p>
+              <span className="text-lg font-bold tabular-nums tracking-tight text-foreground">{displayScore > 0 ? `${(displayScore * 0.4).toFixed(1)}%` : '--'}</span>
+              <p className="text-xs text-muted-foreground">7-day avg</p>
             </div>
           </div>
           {/* Table header */}
-          <div className="grid grid-cols-[18px_1fr_52px_36px_44px_48px] gap-1 px-4 py-1.5 border-y border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30">
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">#</span>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Brand</span>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Mentions</span>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Pos</span>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Change</span>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 text-right">Visibility</span>
+          <div className="grid grid-cols-[18px_1fr_52px_36px_44px_48px] gap-1 px-4 py-1.5 border-y border-border bg-muted/50">
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">#</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">Brand</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Mentions</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Pos</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Change</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Visibility</span>
           </div>
           {/* Table rows */}
           <div className="flex flex-col">
@@ -464,55 +448,55 @@ function OverviewTab({
               const demoMentions = row.isUser ? 534 : (mentionMap[row.numericScore] ?? row.numericScore * 2)
               const demoChange = row.isUser ? -3.3 : (changeMap[row.numericScore] ?? 0)
               const demoVisibility = (row.numericScore * 0.42).toFixed(1)
-              const brandColors = ['bg-[#3370FF]', 'bg-slate-800', 'bg-blue-500', 'bg-emerald-500', 'bg-rose-500']
+              const brandColors = ['bg-[#3370FF]', 'bg-foreground', 'bg-blue-500', 'bg-emerald-500', 'bg-rose-500']
               const colorIdx = rankingRows.indexOf(row)
               return (
                 <div
                   key={row.name}
                   className={cn(
-                    'grid grid-cols-[18px_1fr_52px_36px_44px_48px] gap-1 items-center px-4 py-2 border-b border-slate-50 dark:border-slate-800/50 last:border-0',
+                    'grid grid-cols-[18px_1fr_52px_36px_44px_48px] gap-1 items-center px-4 py-2 border-b border-border/50 last:border-0',
                     row.isUser && 'bg-blue-50/30 dark:bg-blue-950/20'
                   )}
                 >
-                  <span className="text-[11px] text-slate-400 tabular-nums">{row.position}</span>
+                  <span className="text-[11px] text-muted-foreground tabular-nums">{row.position}</span>
                   <span className="flex items-center gap-1.5 min-w-0">
                     <span className={cn('h-5 w-5 rounded-md flex items-center justify-center text-[9px] font-bold text-white shrink-0', brandColors[colorIdx % brandColors.length])}>
                       {row.name.charAt(0)}
                     </span>
-                    <span className={cn('text-[11px] truncate', row.isUser ? 'font-semibold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400')}>
+                    <span className={cn('text-[11px] truncate', row.isUser ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
                       {row.name}
                     </span>
                     {row.isUser && (
-                      <span className="shrink-0 rounded bg-slate-100 dark:bg-slate-800 px-1 py-0 text-[9px] font-semibold text-slate-500">You</span>
+                      <span className="shrink-0 rounded bg-muted px-1 py-0 text-[9px] font-semibold text-muted-foreground">You</span>
                     )}
                   </span>
-                  <span className="text-[11px] tabular-nums text-slate-600 dark:text-slate-400 text-right">{demoMentions}</span>
-                  <span className="text-[11px] tabular-nums text-slate-600 dark:text-slate-400 text-right">{(row.position + 2.5).toFixed(1)}</span>
+                  <span className="text-[11px] tabular-nums text-muted-foreground text-right">{demoMentions}</span>
+                  <span className="text-[11px] tabular-nums text-muted-foreground text-right">{(row.position + 2.5).toFixed(1)}</span>
                   <span className={cn('text-[11px] tabular-nums text-right font-medium', demoChange > 0 ? 'text-emerald-500' : 'text-red-500')}>
                     {demoChange > 0 ? '+' : ''}{demoChange}%
                   </span>
-                  <span className="text-[11px] tabular-nums text-slate-900 dark:text-white text-right font-medium">{demoVisibility}%</span>
+                  <span className="text-[11px] tabular-nums text-foreground text-right font-medium">{demoVisibility}%</span>
                 </div>
               )
             })}
           </div>
-          <div className="px-4 py-1.5 border-t border-slate-100 dark:border-slate-800">
+          <div className="px-4 py-1.5 border-t border-border">
             <Link href="/dashboard?tab=rankings" className="text-[10px] font-medium text-[#3370FF] hover:underline flex items-center gap-0.5">View full rankings <ChevronRight className="h-2.5 w-2.5" /></Link>
           </div>
         </div>
 
         {/* Engine Mentions */}
-        <div className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
-          <div className="px-4 pt-3 pb-1">
-            <h4 className="text-[13px] font-semibold text-slate-900 dark:text-white">Engine Mentions</h4>
-            <p className="text-[10px] text-slate-400 mt-0.5">Which AI engines mention your brand</p>
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="px-5 pt-4 pb-1">
+            <h4 className="text-sm font-semibold text-foreground">Engine Mentions</h4>
+            <p className="text-xs text-muted-foreground mt-0.5">Which AI engines mention your brand</p>
           </div>
           <div className="px-4 pb-2">
             <EngineDonutChart data={engineDonutData} />
           </div>
-          <div className="px-4 pb-3 border-t border-slate-100 dark:border-slate-800">
-            <Link href="/dashboard/agents" className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-              <Zap className="h-3 w-3" /> Run AI agent
+          <div className="px-5 pb-4 pt-2">
+            <Link href="/dashboard/agents" className="flex items-center justify-center gap-1.5 rounded-lg bg-primary/5 border border-primary/20 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/10 transition-colors">
+              <Zap className="h-3.5 w-3.5" /> Run AI agent
             </Link>
           </div>
         </div>
@@ -521,26 +505,26 @@ function OverviewTab({
       </div>{/* end 2-col grid */}
 
       {/* ── Topic Breakdown ─── */}
-      <div className="rounded-xl border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800 overflow-hidden">
-        <div className="grid grid-cols-[1fr_100px_80px_90px] gap-2 px-4 py-2 border-b border-slate-100 bg-slate-50/60 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="grid grid-cols-[1fr_100px_80px_100px] gap-3 px-5 py-2.5 border-b border-border bg-muted/50 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           <span>Topic</span>
-          <span className="text-right">Count number</span>
+          <span className="text-right">Count</span>
           <span className="text-right">Visibility</span>
           <span className="text-right">Citation Share</span>
         </div>
         {[
-          { topic: 'AI Search Optimization for SMBs', count: 12, visibility: '5.5%', citation: '0.5%', expandable: true },
-          { topic: 'Local Business AI Visibility', count: 6, visibility: '5.5%', citation: '0.5%', expandable: true },
-          { topic: 'GEO Strategy for Coffee Shops', count: 8, visibility: '3.2%', citation: '0.3%', expandable: false },
+          { topic: 'AI Search Optimization for SMBs', count: 12, visibility: '5.5%', citation: '0.5%' },
+          { topic: 'Local Business AI Visibility', count: 6, visibility: '5.5%', citation: '0.5%' },
+          { topic: 'GEO Strategy for Coffee Shops', count: 8, visibility: '3.2%', citation: '0.3%' },
         ].map((row) => (
-          <div key={row.topic} className="grid grid-cols-[1fr_100px_80px_90px] gap-2 items-center px-4 py-2.5 border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-            <span className="flex items-center gap-2 text-[12px] font-medium text-slate-800 dark:text-white">
-              <ChevronRight className="h-3 w-3 text-slate-400 shrink-0" aria-hidden="true" />
+          <div key={row.topic} className="grid grid-cols-[1fr_100px_80px_100px] gap-3 items-center px-5 py-3 border-b border-border/50 last:border-0 hover:bg-muted/50 transition-colors">
+            <span className="flex items-center gap-2 text-sm text-foreground">
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
               {row.topic}
             </span>
-            <span className="text-[12px] tabular-nums text-slate-600 text-right">{row.count}</span>
-            <span className="text-[12px] tabular-nums text-slate-600 text-right">{row.visibility}</span>
-            <span className="text-[12px] tabular-nums text-slate-600 text-right">{row.citation}</span>
+            <span className="text-sm tabular-nums text-muted-foreground text-right">{row.count}</span>
+            <span className="text-sm tabular-nums text-muted-foreground text-right">{row.visibility}</span>
+            <span className="text-sm tabular-nums text-muted-foreground text-right">{row.citation}</span>
           </div>
         ))}
       </div>
@@ -1019,7 +1003,7 @@ export function DashboardOverview(props: DashboardOverviewProps) {
     <div className="space-y-4">
       {/* Compact tab bar — inline, no vertical waste */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-0.5 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-0.5 border-b border-border">
           {TABS.map((tab) => {
             const Icon = tab.icon
             return (
@@ -1029,8 +1013,8 @@ export function DashboardOverview(props: DashboardOverviewProps) {
                 className={cn(
                   'flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium transition-colors -mb-px',
                   activeTab === tab.id
-                    ? 'text-slate-900 border-b-2 border-slate-900 dark:text-white dark:border-white'
-                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                    ? 'text-foreground border-b-2 border-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 <Icon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -1039,7 +1023,7 @@ export function DashboardOverview(props: DashboardOverviewProps) {
             )
           })}
         </div>
-        <p className="text-[11px] text-slate-400 shrink-0">
+        <p className="text-[11px] text-muted-foreground shrink-0">
           {demoMode ? 'Sample data' : `Last updated ${props.lastScanned ? format(new Date(props.lastScanned), 'MMM d, h:mm a') : 'never'}`}
         </p>
       </div>

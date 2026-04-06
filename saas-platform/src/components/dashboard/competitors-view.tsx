@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { type ColumnDef } from '@tanstack/react-table'
-import { Globe, Trash2, Users, TrendingUp, BarChart2, Plus } from 'lucide-react'
+import { Globe, Trash2, Users, TrendingUp, BarChart2, Plus, TrendingDown, Minus } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { StatCard } from '@/components/ui/stat-card'
 import { DataTable } from '@/components/ui/data-table'
-import { StatusDot } from '@/components/ui/status-dot'
 import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
 
@@ -27,6 +27,7 @@ interface Competitor {
 interface CompetitorsViewProps {
   competitors: Competitor[]
   businessId: string | null
+  businessName?: string | null
   /** Your current visibility score (0-100), optional */
   yourScore?: number | null
 }
@@ -36,8 +37,13 @@ interface CompetitorsViewProps {
 interface CompetitorRow extends Competitor {
   rank: number
   score: number
+  gap: number
   isUser?: boolean
 }
+
+// ─── Industry benchmark ───────────────────────────────────────────────────────
+
+const INDUSTRY_BENCHMARK = 45
 
 // ─── Mock scores per competitor (deterministic based on index) ────────────────
 
@@ -63,7 +69,6 @@ function VisBar({ label, score, maxScore, isUser, index }: VisBarProps) {
   useEffect(() => {
     const t = setTimeout(() => setWidth(pct), index * 80 + 200)
     return () => clearTimeout(t)
-     
   }, [pct, index])
 
   return (
@@ -74,7 +79,7 @@ function VisBar({ label, score, maxScore, isUser, index }: VisBarProps) {
           {label}
         </p>
         {isUser && (
-          <Badge className="mt-0.5 rounded-full bg-primary/10 px-1.5 py-0 text-[10px] font-semibold text-primary border-0 h-4">
+          <Badge className="mt-0.5 rounded-full bg-primary/10 px-1.5 py-0 text-xs font-semibold text-primary border-0 h-4">
             You
           </Badge>
         )}
@@ -107,9 +112,36 @@ function VisBar({ label, score, maxScore, isUser, index }: VisBarProps) {
   )
 }
 
+// ─── Gap badge ────────────────────────────────────────────────────────────────
+
+function GapBadge({ gap }: { gap: number }) {
+  if (gap === 0) {
+    return (
+      <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground tabular-nums">
+        <Minus className="h-3 w-3" aria-hidden="true" />
+        0
+      </span>
+    )
+  }
+  if (gap > 0) {
+    return (
+      <span className="inline-flex items-center gap-0.5 text-xs font-medium text-[var(--color-score-critical)] tabular-nums">
+        <TrendingUp className="h-3 w-3" aria-hidden="true" />
+        +{gap}
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-0.5 text-xs font-medium text-[var(--color-score-good)] tabular-nums">
+      <TrendingDown className="h-3 w-3" aria-hidden="true" />
+      {gap}
+    </span>
+  )
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function CompetitorsView({ competitors, businessId, yourScore = null }: CompetitorsViewProps) {
+export function CompetitorsView({ competitors, businessId, businessName, yourScore = null }: CompetitorsViewProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [name, setName] = useState('')
@@ -118,6 +150,7 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
   const [isAdding, setIsAdding] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const nameInputRef = useRef<HTMLInputElement>(null)
 
   // ── KPI calculations ────────────────────────────────────────────────────────
   const trackedCount = competitors.length
@@ -133,16 +166,17 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
 
   // ── Comparison data (you + competitors) ────────────────────────────────────
   const comparisonItems = [
-    { label: 'You', score: userScoreValue, isUser: true },
+    { label: businessName ?? 'You', score: userScoreValue, isUser: true },
     ...competitors.map((c, i) => ({ label: c.name, score: mockScore(i), isUser: false })),
   ].sort((a, b) => b.score - a.score)
-  const maxScore = Math.max(...comparisonItems.map((i) => i.score), 1)
+  const maxScore = Math.max(...comparisonItems.map((i) => i.score), INDUSTRY_BENCHMARK, 1)
 
   // ── Competitor table rows ───────────────────────────────────────────────────
   const tableRows: CompetitorRow[] = competitors.map((comp, i) => ({
     ...comp,
     rank: i + 1,
     score: mockScore(i),
+    gap: mockScore(i) - userScoreValue,
   }))
 
   // ── Handlers ────────────────────────────────────────────────────────────────
@@ -225,7 +259,7 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
             {row.original.domain}
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground/40">—</span>
+          <span className="text-xs text-muted-foreground/40">\u2014</span>
         ),
     },
     {
@@ -247,12 +281,12 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
       ),
     },
     {
-      header: 'Status',
-      accessorKey: 'source',
-      cell: ({ row: _ }) => (
-        <span className="flex items-center gap-1.5">
-          <StatusDot status="completed" size="sm" />
-          <span className="text-xs text-muted-foreground">Tracking</span>
+      header: 'Gap',
+      accessorKey: 'gap',
+      meta: { align: 'right' },
+      cell: ({ row }) => (
+        <span className="flex justify-end">
+          <GapBadge gap={row.original.gap} />
         </span>
       ),
     },
@@ -301,7 +335,7 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
                 disabled={deletingId === id || isPending}
                 className={cn(
                   'rounded-lg p-1.5 text-muted-foreground transition-colors duration-150',
-                  'hover:bg-red-50 hover:text-destructive',
+                  'hover:bg-destructive/10 hover:text-destructive',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                   'disabled:opacity-50 disabled:pointer-events-none',
                 )}
@@ -338,13 +372,13 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
         />
         <StatCard
           label="Your Rank"
-          value={trackedCount > 0 ? `#${yourRank}` : '—'}
+          value={trackedCount > 0 ? `#${yourRank}` : '\u2014'}
           subtitle={trackedCount > 0 ? `of ${trackedCount + 1} tracked` : 'add competitors to rank'}
           icon={<TrendingUp />}
         />
         <StatCard
           label="Average Gap"
-          value={trackedCount > 0 ? (gap >= 0 ? `+${gap}` : `${gap}`) : '—'}
+          value={trackedCount > 0 ? (gap >= 0 ? `+${gap}` : `${gap}`) : '\u2014'}
           subtitle={trackedCount > 0 ? 'pts vs competitors avg' : 'add competitors to compare'}
           scoreColor={gap > 0 ? 'var(--color-score-critical)' : gap < 0 ? 'var(--color-score-good)' : undefined}
           icon={<BarChart2 />}
@@ -352,59 +386,71 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
       </div>
 
       {/* ── Row 3: Add competitor ──────────────────────────────────────────── */}
-      <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:160ms] hover-lift">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold">Add Competitor</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <form onSubmit={handleAdd}>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <input
+      <Card className="rounded-xl border border-border shadow-[var(--shadow-card)] animate-fade-up [animation-delay:160ms] overflow-hidden">
+        <CardContent className="p-4">
+          <form onSubmit={handleAdd} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex-1 min-w-0">
+              <label className="text-xs font-medium text-muted-foreground mb-1 block" htmlFor="competitor-name">
+                Business Name
+              </label>
+              <Input
+                id="competitor-name"
+                ref={nameInputRef}
                 type="text"
-                placeholder="Company name"
+                placeholder="Competitor name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="input-enhanced flex-1"
+                className="h-9"
                 required
-                aria-label="Competitor company name"
+                aria-label="Competitor business name"
               />
-              <input
+            </div>
+            <div className="flex-1 min-w-0">
+              <label className="text-xs font-medium text-muted-foreground mb-1 block" htmlFor="competitor-domain">
+                Domain
+              </label>
+              <Input
+                id="competitor-domain"
                 type="text"
-                placeholder="domain.com"
+                placeholder="competitor.com"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
-                className="input-enhanced flex-1"
+                className="h-9"
                 required
                 aria-label="Competitor domain"
               />
-              <Button
-                type="submit"
-                disabled={isAdding || isPending}
-                className="shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 btn-primary-lift rounded-lg"
-                aria-label="Add competitor"
-              >
-                <Plus className="h-4 w-4 mr-1.5" aria-hidden="true" />
-                {isAdding ? 'Adding…' : 'Add Competitor'}
-              </Button>
             </div>
-            {error && (
-              <p className="mt-2 text-sm text-destructive" role="alert">
-                {error}
-              </p>
-            )}
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!name.trim() || !domain.trim() || isAdding || isPending}
+              className="h-9 px-4 shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg"
+              aria-label="Add competitor"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" aria-hidden="true" />
+              {isAdding ? 'Adding\u2026' : 'Add'}
+            </Button>
           </form>
+          {error && (
+            <p className="mt-2 text-xs text-destructive" role="alert">
+              {error}
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground mt-2">
+            We&apos;ll track their AI search visibility alongside yours.
+          </p>
         </CardContent>
       </Card>
 
       {/* ── Row 4: Visibility comparison bars ─────────────────────────────── */}
       {competitors.length > 0 && (
-        <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:240ms]">
+        <Card className="rounded-xl border border-border shadow-[var(--shadow-card)] animate-fade-up [animation-delay:240ms]">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold">Visibility Comparison</CardTitle>
+              <CardTitle className="text-sm font-semibold text-foreground">Visibility Comparison</CardTitle>
               <Badge
                 variant="outline"
-                className="text-[10px] font-medium text-muted-foreground border-border"
+                className="text-xs font-medium text-muted-foreground border-border"
               >
                 <span
                   className="inline-block h-2 w-2 rounded-full mr-1 bg-primary"
@@ -420,6 +466,28 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
             </div>
           </CardHeader>
           <CardContent className="pt-0">
+            {/* Industry average benchmark line */}
+            <div className="flex items-center gap-3 px-1 pt-1 pb-2 mb-1">
+              <span className="text-xs text-muted-foreground w-32 shrink-0">Industry avg</span>
+              <div className="flex-1 relative h-6">
+                <div
+                  className="absolute top-0 bottom-0 border-l-2 border-dashed border-muted-foreground/40"
+                  style={{ left: `${(INDUSTRY_BENCHMARK / maxScore) * 100}%` }}
+                  aria-hidden="true"
+                />
+                <span
+                  className="absolute text-xs text-muted-foreground/70 tabular-nums whitespace-nowrap"
+                  style={{
+                    left: `${(INDUSTRY_BENCHMARK / maxScore) * 100}%`,
+                    transform: 'translateX(-50%)',
+                    top: '0px',
+                  }}
+                  aria-label={`Industry average: ${INDUSTRY_BENCHMARK}`}
+                >
+                  {INDUSTRY_BENCHMARK}
+                </span>
+              </div>
+            </div>
             <div className="divide-y divide-border/20">
               {comparisonItems.map((item, i) => (
                 <VisBar
@@ -432,22 +500,30 @@ export function CompetitorsView({ competitors, businessId, yourScore = null }: C
                 />
               ))}
             </div>
+            <p className="text-xs text-muted-foreground mt-3 pt-2 border-t border-border/40">
+              Scores are estimated until a full scan is completed.
+            </p>
           </CardContent>
         </Card>
       )}
 
       {/* ── Row 5: Competitor table ────────────────────────────────────────── */}
-      <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:320ms]">
+      <Card className="rounded-xl border border-border shadow-[var(--shadow-card)] animate-fade-up [animation-delay:320ms]">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold">Competitor Overview</CardTitle>
+          <CardTitle className="text-sm font-semibold text-foreground">Competitor Overview</CardTitle>
         </CardHeader>
         <CardContent className="px-0 pb-0 pt-0">
           {competitors.length === 0 ? (
             <div className="py-6">
               <EmptyState
                 icon={Users}
-                title="No competitors tracked yet"
-                description="Add your first competitor above to start tracking their AI visibility and see how you compare."
+                title="Track your competitors"
+                description="Add competitors to see how your AI visibility compares. We recommend tracking 3\u20135 key competitors."
+                action={{
+                  label: 'Add your first competitor',
+                  onClick: () => nameInputRef.current?.focus(),
+                }}
+                variant="inline"
               />
             </div>
           ) : (

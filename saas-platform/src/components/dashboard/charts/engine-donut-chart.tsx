@@ -14,16 +14,16 @@ interface EngineDonutChartProps {
 
 // Fixed color map for Recharts — cannot use CSS variables in SVG fill attributes
 const ENGINE_CHART_COLORS: Record<string, string> = {
-  ChatGPT: '#10B981',
-  Gemini: '#3370FF',
-  Perplexity: '#8B5CF6',
-  Claude: '#F59E0B',
-  'Google AI': '#3B82F6',
-  Grok: '#EF4444',
-  'You.com': '#06B6D4',
+  ChatGPT: '#03045e',
+  Gemini: '#0077b6',
+  Perplexity: '#00b4d8',
+  Claude: '#023e8a',
+  'Google AI': '#48cae4',
+  Grok: '#0096c7',
+  'You.com': '#90e0ef',
 }
 
-const FALLBACK_COLORS = ['#3370FF', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#3B82F6']
+const FALLBACK_COLORS = ['#03045e', '#023e8a', '#0077b6', '#0096c7', '#00b4d8', '#48cae4', '#90e0ef']
 
 function getEngineColor(engine: string, index: number): string {
   return ENGINE_CHART_COLORS[engine] ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length]

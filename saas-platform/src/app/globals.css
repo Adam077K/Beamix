@@ -98,12 +98,12 @@
   --border: #E5E7EB;
   --input: #E5E7EB;
   --ring: #3370FF;
-  --chart-1: #3370FF;
-  --chart-2: #0EA5E9;
-  --chart-3: #8B5CF6;
-  --chart-4: #10B981;
-  --chart-5: #F59E0B;
-  --chart-6: #EC4899;
+  --chart-1: #03045e;
+  --chart-2: #0077b6;
+  --chart-3: #0096c7;
+  --chart-4: #00b4d8;
+  --chart-5: #48cae4;
+  --chart-6: #90e0ef;
   --sidebar: #F7F7F7;
   --sidebar-foreground: #0A0A0A;
   --sidebar-primary: #3370FF;
@@ -135,12 +135,12 @@
   --glow-critical: rgba(239, 68, 68, 0.12);
 
   /* Chart gradient fills (for area/bar fills) */
-  --chart-fill-1: rgba(51, 112, 255, 0.15);
-  --chart-fill-2: rgba(14, 165, 233, 0.15);
-  --chart-fill-3: rgba(139, 92, 246, 0.15);
-  --chart-fill-4: rgba(16, 185, 129, 0.15);
-  --chart-fill-5: rgba(245, 158, 11, 0.15);
-  --chart-fill-6: rgba(236, 72, 153, 0.15);
+  --chart-fill-1: rgba(3, 4, 94, 0.12);
+  --chart-fill-2: rgba(0, 119, 182, 0.12);
+  --chart-fill-3: rgba(0, 150, 199, 0.12);
+  --chart-fill-4: rgba(0, 180, 216, 0.12);
+  --chart-fill-5: rgba(72, 202, 228, 0.12);
+  --chart-fill-6: rgba(144, 224, 239, 0.12);
 
   /* Spacing scale */
   --spacing-page: 2rem;
@@ -176,12 +176,12 @@
   --border: rgba(255,255,255,0.1);
   --input: rgba(255,255,255,0.15);
   --ring: #5A8FFF;
-  --chart-1: #7AA8FF;
-  --chart-2: #38BDF8;
-  --chart-3: #A78BFA;
-  --chart-4: #34D399;
-  --chart-5: #FBBF24;
-  --chart-6: #F472B6;
+  --chart-1: #0096c7;
+  --chart-2: #00b4d8;
+  --chart-3: #48cae4;
+  --chart-4: #90e0ef;
+  --chart-5: #ade8f4;
+  --chart-6: #caf0f8;
   --sidebar: #171717;
   --sidebar-foreground: #F7F7F7;
   --sidebar-primary: #5A8FFF;

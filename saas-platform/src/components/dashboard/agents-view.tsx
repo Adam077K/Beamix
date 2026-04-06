@@ -15,6 +15,8 @@ import {
   Zap,
   Bot,
   Clock,
+  Activity,
+  RotateCcw,
 } from 'lucide-react'
 import { type ColumnDef } from '@tanstack/react-table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,8 +25,8 @@ import { Button } from '@/components/ui/button'
 import { StatCard } from '@/components/ui/stat-card'
 import { DataTable } from '@/components/ui/data-table'
 import { StatusDot, type StatusDotStatus } from '@/components/ui/status-dot'
-import { Progress } from '@/components/ui/progress'
-import { format } from 'date-fns'
+import { EmptyState } from '@/components/ui/empty-state'
+import { format, formatDistanceToNow } from 'date-fns'
 import { AgentModal, type AgentExecuteParams } from './agent-modal'
 import { agentTypeToSlug } from '@/lib/agents/config'
 import { cn } from '@/lib/utils'
@@ -140,7 +142,12 @@ interface ExecutionRow {
   credits_cost: number
   created_at: string
   completed_at: string | null
+  error_message?: string | null
 }
+
+// ─── Status filter type ───────────────────────────────────────────────────────
+
+type StatusFilter = 'all' | 'completed' | 'running' | 'failed'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -177,6 +184,7 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
   const [isExecuting, setIsExecuting] = useState(false)
   const [execSearch, setExecSearch] = useState('')
   const [executeError, setExecuteError] = useState<string | null>(null)
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
   // ── KPI calculations ────────────────────────────────────────────────────────
   const totalRuns = recentExecutions.length
@@ -186,10 +194,10 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
   const successRate = totalRuns > 0 ? Math.round((completedCount / totalRuns) * 100) : 0
   const activeAgentTypes = new Set(recentExecutions.map((e) => e.agent_type)).size
 
-  // ── Last status per agent type ──────────────────────────────────────────────
-  const lastStatusByType = recentExecutions.reduce<Record<string, StatusDotStatus>>((acc, exec) => {
+  // ── Last execution per agent type ───────────────────────────────────────────
+  const lastExecutionByType = recentExecutions.reduce<Record<string, ExecutionRow>>((acc, exec) => {
     if (!acc[exec.agent_type]) {
-      acc[exec.agent_type] = mapStatus(exec.status)
+      acc[exec.agent_type] = exec
     }
     return acc
   }, {})
@@ -225,15 +233,17 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
     }
   }
 
-  // ── Execution table ─────────────────────────────────────────────────────────
-  const filteredExecutions = execSearch
-    ? recentExecutions
-        .filter((e) => {
-          const label = AGENTS.find((a) => a.type === e.agent_type)?.name ?? e.agent_type
-          return label.toLowerCase().includes(execSearch.toLowerCase())
-        })
-        .slice(0, 50)
-    : recentExecutions.slice(0, 10)
+  // ── Execution table filtering ───────────────────────────────────────────────
+  const filteredExecutions = recentExecutions
+    .filter((e) => {
+      if (statusFilter !== 'all' && e.status !== statusFilter) return false
+      if (execSearch) {
+        const label = AGENTS.find((a) => a.type === e.agent_type)?.name ?? e.agent_type
+        return label.toLowerCase().includes(execSearch.toLowerCase())
+      }
+      return true
+    })
+    .slice(0, 50)
 
   const STATUS_LABELS: Record<StatusDotStatus, string> = {
     completed: 'Completed',
@@ -243,6 +253,13 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
     idle: 'Idle',
   }
 
+  const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
+    all: 'All',
+    completed: 'Completed',
+    running: 'Running',
+    failed: 'Failed',
+  }
+
   const executionColumns: ColumnDef<ExecutionRow>[] = [
     {
       header: 'Agent',
@@ -250,6 +267,8 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
       cell: ({ row }) => {
         const agentDef = AGENTS.find((a) => a.type === row.original.agent_type)
         const Icon = agentDef?.icon ?? Bot
+        const isFailed = row.original.status === 'failed'
+        const errorMsg = row.original.error_message
         return (
           <span className="flex items-center gap-2.5">
             <span
@@ -261,8 +280,15 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
             >
               <Icon className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
-            <span className="text-sm font-medium text-foreground">
-              {agentDef?.name ?? row.original.agent_type}
+            <span className="flex flex-col min-w-0">
+              <span className="text-sm font-medium text-foreground">
+                {agentDef?.name ?? row.original.agent_type}
+              </span>
+              {isFailed && errorMsg && (
+                <span className="text-xs text-destructive truncate max-w-[180px]" title={errorMsg}>
+                  {errorMsg.length > 40 ? errorMsg.slice(0, 40) + '\u2026' : errorMsg}
+                </span>
+              )}
             </span>
           </span>
         )
@@ -319,14 +345,30 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
       header: 'Actions',
       id: 'actions',
       meta: { align: 'right' },
-      cell: ({ row }) => (
-        <Link
-          href={`/dashboard/agents/${row.original.agent_type}`}
-          className="text-xs font-semibold text-primary hover:underline whitespace-nowrap"
-        >
-          View
-        </Link>
-      ),
+      cell: ({ row }) => {
+        const isFailed = row.original.status === 'failed'
+        const agentType = row.original.agent_type
+        return (
+          <span className="flex items-center justify-end gap-3">
+            {isFailed && (
+              <Link
+                href={`/dashboard/agents/${agentType}`}
+                className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={`Retry ${agentType} agent`}
+              >
+                <RotateCcw className="h-3 w-3" aria-hidden="true" />
+                Retry
+              </Link>
+            )}
+            <Link
+              href={`/dashboard/agents/${agentType}`}
+              className="text-xs font-semibold text-primary hover:underline whitespace-nowrap"
+            >
+              View
+            </Link>
+          </span>
+        )
+      },
     },
   ]
 
@@ -349,30 +391,12 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
           subtitle="all time executions"
           icon={<Bot />}
         />
-        <Card className="card-hover gap-0 py-0">
-          <div className="flex flex-col gap-3 p-5">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="shrink-0 text-muted-foreground [&>svg]:w-4 [&>svg]:h-4" aria-hidden="true">
-                <Zap />
-              </span>
-              <span className="section-eyebrow truncate">AI Runs Used</span>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="metric-value text-3xl tabular-nums">
-                {creditsUsed}
-                <span className="text-lg font-medium text-muted-foreground ml-1 tabular-nums">/ {monthlyCredits}</span>
-              </span>
-              <div className="mt-2">
-                <Progress
-                  value={creditsPercent}
-                  className="h-1.5 bg-primary/15 [&>div]:bg-primary"
-                  aria-label={`${creditsPercent}% credits used`}
-                />
-              </div>
-              <span className="text-sm text-muted-foreground leading-snug mt-1 tabular-nums">{creditsPercent}% used</span>
-            </div>
-          </div>
-        </Card>
+        <StatCard
+          label="AI Runs Used"
+          value={creditsUsed}
+          subtitle={`${creditsUsed} of ${monthlyCredits} credits (${creditsPercent}%)`}
+          icon={<Zap />}
+        />
         <StatCard
           label="Success Rate"
           value={totalRuns > 0 ? `${successRate}%` : '—'}
@@ -388,22 +412,22 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
       </div>
 
       {/* ── Row 3: Agent grid ──────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-up [animation-delay:160ms]">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 animate-fade-up [animation-delay:160ms]">
         {AGENTS.map((agent, i) => {
           const Icon = agent.icon
           const canAfford = agent.isUnlimited || totalCredits >= agent.credits
-          const lastStatus = lastStatusByType[agent.type]
+          const lastExecution = lastExecutionByType[agent.type]
           return (
             <div
               key={agent.type}
               className={cn(
-                'group relative rounded-lg border border-border bg-card p-5',
+                'group relative rounded-xl border border-border bg-card p-5',
                 'shadow-[var(--shadow-card)] card-hover hover-lift',
                 'transition-all duration-200 ease-out cursor-pointer overflow-hidden',
               )}
               style={{ animationDelay: `${160 + i * 40}ms` }}
             >
-              {/* Icon + status row */}
+              {/* Icon + credit badge row */}
               <div className="flex items-start justify-between mb-3">
                 <div
                   className={cn(
@@ -415,39 +439,46 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
                 >
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </div>
-                <div className="flex items-center gap-2">
-                  {lastStatus && lastStatus !== 'idle' && (
-                    <StatusDot status={lastStatus} size="sm" />
+                <Badge
+                  variant="outline"
+                  className="text-xs font-medium text-muted-foreground border-border bg-transparent"
+                >
+                  {agent.isUnlimited ? (
+                    <>
+                      <Sparkles className="h-2.5 w-2.5 mr-0.5 text-primary" aria-hidden="true" />
+                      <span className="text-primary">Unlimited</span>
+                    </>
+                  ) : (
+                    <>{agent.credits} credit{agent.credits !== 1 ? 's' : ''}</>
                   )}
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      'text-[10px] font-medium border-border',
-                      agent.isUnlimited
-                        ? 'text-[var(--color-chart-2)] border-[var(--color-chart-2)]/30 bg-[var(--color-chart-2)]/10'
-                        : 'text-muted-foreground',
-                    )}
-                  >
-                    {agent.isUnlimited ? (
-                      <>
-                        <Sparkles className="h-2.5 w-2.5 mr-0.5 text-[var(--color-chart-2)]" aria-hidden="true" />
-                        Unlimited
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="h-2.5 w-2.5 mr-0.5 text-primary" aria-hidden="true" />
-                        1 AI Run
-                      </>
-                    )}
-                  </Badge>
-                </div>
+                </Badge>
               </div>
 
               {/* Name + description */}
               <h3 className="text-sm font-semibold text-foreground mb-1">{agent.name}</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-4">
+              <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-2">
                 {agent.description}
               </p>
+
+              {/* Last execution status line */}
+              {lastExecution ? (
+                <div className="flex items-center gap-1.5 mb-3">
+                  <StatusDot status={mapStatus(lastExecution.status)} size="sm" />
+                  <span className="text-xs text-muted-foreground">
+                    {lastExecution.status === 'completed'
+                      ? 'Completed'
+                      : lastExecution.status === 'failed'
+                      ? 'Failed'
+                      : lastExecution.status === 'running'
+                      ? 'Running'
+                      : 'Pending'}
+                    {' \u00b7 '}
+                    {formatDistanceToNow(new Date(lastExecution.created_at), { addSuffix: true })}
+                  </span>
+                </div>
+              ) : (
+                <div className="mb-3" />
+              )}
 
               {/* Run button */}
               <Button
@@ -485,33 +516,67 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
       </div>
 
       {/* ── Row 4: Execution history ───────────────────────────────────────── */}
-      <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:320ms]">
-        <CardHeader className="pb-2">
+      <Card className="rounded-xl border border-border shadow-[var(--shadow-card)] animate-fade-up [animation-delay:320ms]">
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <CardTitle className="text-base font-semibold">Execution History</CardTitle>
-            <div className="relative">
-              <Search
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <input
-                type="search"
-                placeholder="Search agents…"
-                value={execSearch}
-                onChange={(e) => setExecSearch(e.target.value)}
-                className="h-8 rounded-lg border border-border bg-muted/40 pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/60 w-36"
-                aria-label="Search executions"
-              />
+            <CardTitle className="text-sm font-semibold text-foreground">Execution History</CardTitle>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Status filter pills */}
+              <div className="flex gap-1 bg-muted rounded-lg p-1 w-fit">
+                {(['all', 'completed', 'running', 'failed'] as const).map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => setStatusFilter(status)}
+                    className={cn(
+                      'px-3 py-1 text-xs rounded-md font-medium transition-all',
+                      statusFilter === status
+                        ? 'bg-card text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
+                    aria-pressed={statusFilter === status}
+                    aria-label={`Filter by ${STATUS_FILTER_LABELS[status]}`}
+                  >
+                    {STATUS_FILTER_LABELS[status]}
+                  </button>
+                ))}
+              </div>
+              {/* Search input */}
+              <div className="relative">
+                <Search
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <input
+                  type="search"
+                  placeholder="Search agents\u2026"
+                  value={execSearch}
+                  onChange={(e) => setExecSearch(e.target.value)}
+                  className="h-8 rounded-lg border border-border bg-muted/40 pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/60 w-36"
+                  aria-label="Search executions"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
         <CardContent className="px-0 pb-0 pt-0">
           {recentExecutions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-14 text-center px-6">
-              <Bot className="h-9 w-9 text-muted-foreground/30 mb-3" aria-hidden="true" />
-              <p className="text-sm font-medium text-foreground">No executions yet</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Run your first agent to see execution history here.
+            <div className="py-6">
+              <EmptyState
+                icon={Activity}
+                title="No executions yet"
+                description="Run an AI agent to see execution history here."
+                variant="inline"
+              />
+            </div>
+          ) : filteredExecutions.length === 0 ? (
+            <div className="py-10 flex flex-col items-center text-center gap-1.5">
+              <p className="text-sm font-medium text-foreground">
+                No {statusFilter !== 'all' ? statusFilter : 'matching'} executions
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {statusFilter !== 'all'
+                  ? `No ${statusFilter} runs found.`
+                  : 'Try a different search term.'}
               </p>
             </div>
           ) : (
@@ -534,14 +599,13 @@ export function AgentsView({ totalCredits, recentExecutions, monthlyCredits = 50
               if (!open) setExecuteError(null)
             }}
             agentName={selectedAgent.name}
-
             creditCost={selectedAgent.credits}
             totalCredits={totalCredits}
             onExecute={handleExecute}
             isLoading={isExecuting}
           />
           {executeError && !modalOpen && (
-            <p className="text-sm text-red-500 mt-2">{executeError}</p>
+            <p className="text-sm text-destructive mt-2">{executeError}</p>
           )}
         </>
       )}

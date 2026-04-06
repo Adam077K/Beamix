@@ -28,6 +28,7 @@ export default async function AgentsPage() {
   return (
     <AgentsView
       totalCredits={creditsResult.data ? (creditsResult.data.base_allocation + creditsResult.data.topup_amount + creditsResult.data.rollover_amount - creditsResult.data.used_amount) : 0}
+      monthlyCredits={creditsResult.data ? (creditsResult.data.base_allocation + creditsResult.data.topup_amount + creditsResult.data.rollover_amount) : 0}
       recentExecutions={recentExecutionsResult.data ?? []}
     />
   )

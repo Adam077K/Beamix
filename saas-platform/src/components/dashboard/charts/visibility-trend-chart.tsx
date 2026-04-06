@@ -95,8 +95,8 @@ export function VisibilityTrendChart({ data }: VisibilityTrendChartProps) {
         >
           <defs>
             <linearGradient id="visibilityGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3370FF" stopOpacity={0.35} />
-              <stop offset="95%" stopColor="#3370FF" stopOpacity={0.03} />
+              <stop offset="5%" stopColor="#0077b6" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="#0077b6" stopOpacity={0.03} />
             </linearGradient>
           </defs>
           <CartesianGrid
@@ -126,10 +126,10 @@ export function VisibilityTrendChart({ data }: VisibilityTrendChartProps) {
           <Area
             type="monotone"
             dataKey="Visibility"
-            stroke="#3370FF"
+            stroke="#0077b6"
             strokeWidth={2.5}
             fill="url(#visibilityGrad)"
-            dot={{ r: 3.5, fill: '#3370FF', strokeWidth: 2, stroke: '#fff' }}
+            dot={{ r: 3.5, fill: '#0077b6', strokeWidth: 2, stroke: '#fff' }}
             activeDot={{ r: 5, strokeWidth: 0 }}
             connectNulls
             isAnimationActive={false}
@@ -137,9 +137,9 @@ export function VisibilityTrendChart({ data }: VisibilityTrendChartProps) {
           <Line
             type="monotone"
             dataKey="Sentiment"
-            stroke="#10B981"
+            stroke="#00b4d8"
             strokeWidth={2}
-            dot={{ r: 3, fill: '#10B981', strokeWidth: 2, stroke: '#fff' }}
+            dot={{ r: 3, fill: '#00b4d8', strokeWidth: 2, stroke: '#fff' }}
             activeDot={{ r: 5 }}
             connectNulls
             isAnimationActive={false}
@@ -147,10 +147,10 @@ export function VisibilityTrendChart({ data }: VisibilityTrendChartProps) {
           <Line
             type="monotone"
             dataKey="Position"
-            stroke="#F59E0B"
+            stroke="#48cae4"
             strokeWidth={1.5}
             strokeDasharray="5 3"
-            dot={{ r: 2.5, fill: '#F59E0B', strokeWidth: 2, stroke: '#fff' }}
+            dot={{ r: 2.5, fill: '#48cae4', strokeWidth: 2, stroke: '#fff' }}
             activeDot={{ r: 4 }}
             connectNulls
             isAnimationActive={false}

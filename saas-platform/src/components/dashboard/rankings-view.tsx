@@ -4,13 +4,15 @@ import * as React from 'react'
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import {
-  BarChart3,
   ScanSearch,
   Search,
   Activity,
-  ChevronRight,
   Clock,
   Zap,
+  Eye,
+  Cpu,
+  Trophy,
+  ThumbsUp,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -19,7 +21,7 @@ import { DataTable } from '@/components/ui/data-table'
 import { ChartCard } from '@/components/ui/chart-card'
 import { ChartTooltip } from '@/components/ui/chart-tooltip'
 import { StatusDot } from '@/components/ui/status-dot'
-import { ScoreRing } from '@/components/ui/score-ring'
+import { StatCard } from '@/components/ui/stat-card'
 import { TrendBadge } from '@/components/ui/trend-badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -101,9 +103,9 @@ function SentimentBadge({ sentiment }: { sentiment: MentionSentiment | null }) {
   if (!sentiment) return <span className="text-muted-foreground text-sm">—</span>
 
   const config = {
-    positive: { label: 'Positive', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    neutral:  { label: 'Neutral',  className: 'bg-amber-50 text-amber-700 border-amber-200' },
-    negative: { label: 'Negative', className: 'bg-red-50 text-red-700 border-red-200' },
+    positive: { label: 'Positive', className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400' },
+    neutral:  { label: 'Neutral',  className: 'bg-muted text-muted-foreground border-border' },
+    negative: { label: 'Negative', className: 'bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400' },
   }[sentiment]
 
   return (
@@ -144,7 +146,6 @@ function EnginePerformanceBar({
   useEffect(() => {
     const t = setTimeout(() => setBarWidth(fillPercent), index * 80 + 200)
     return () => clearTimeout(t)
-   
   }, [fillPercent, index])
 
   return (
@@ -152,7 +153,7 @@ function EnginePerformanceBar({
       {/* Engine name + dot */}
       <div className="flex items-center gap-2 w-32 shrink-0">
         <span
-          className={cn('h-2 w-2 rounded-full shrink-0', isMentioned ? 'bg-emerald-500' : 'bg-red-400')}
+          className={cn('h-2 w-2 rounded-full shrink-0', isMentioned ? 'bg-[var(--color-score-good)]' : 'bg-[var(--color-score-critical)]')}
           aria-hidden="true"
         />
         <span className="text-sm font-medium text-foreground truncate">{label}</span>
@@ -252,8 +253,8 @@ const queryColumns: ColumnDef<QueryRow>[] = [
     cell: ({ row }) => {
       const p = row.original.priority
       const cls =
-        p === 'high'   ? 'bg-red-50 text-red-700 border-red-200' :
-        p === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+        p === 'high'   ? 'bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400' :
+        p === 'medium' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400' :
         'bg-muted text-muted-foreground border-border'
       return (
         <Badge variant="outline" className={cn('text-xs capitalize', cls)}>
@@ -359,20 +360,18 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
     (d) => PROVIDER_LABELS[d.engine as LlmProvider] ?? d.engine,
   )
 
-  const scoreVal = latestScan?.overall_score ?? null
-  const scoreTrend =
+  const latestScore = latestScan?.overall_score ?? null
+  const scoreDelta =
     scans.length >= 2 && scans[0].overall_score !== null && scans[1].overall_score !== null
       ? scans[0].overall_score - scans[1].overall_score
-      : null
+      : 0
 
   const avgPosition =
     mentionedEngines.filter((e) => e.rank_position !== null).length > 0
-      ? Math.round(
-          mentionedEngines
-            .filter((e) => e.rank_position !== null)
-            .reduce((sum, e) => sum + (e.rank_position ?? 0), 0) /
-          mentionedEngines.filter((e) => e.rank_position !== null).length
-        )
+      ? mentionedEngines
+          .filter((e) => e.rank_position !== null)
+          .reduce((sum, e) => sum + (e.rank_position ?? 0), 0) /
+        mentionedEngines.filter((e) => e.rank_position !== null).length
       : null
 
   // ── Sentiment summary ─────────────────────────────────────────────────────
@@ -380,7 +379,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
   const neutralCount  = latestDetails.filter((d) => d.sentiment === 'neutral').length
   const negativeCount = latestDetails.filter((d) => d.sentiment === 'negative').length
   const sentimentTotal = positiveCount + neutralCount + negativeCount
-  const positivePct = sentimentTotal > 0 ? Math.round((positiveCount / sentimentTotal) * 100) : 0
+  const positivePercent = sentimentTotal > 0 ? Math.round((positiveCount / sentimentTotal) * 100) : 0
 
   // ── Chart data ────────────────────────────────────────────────────────────
   const chartData = scans
@@ -388,13 +387,15 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
     .reverse()
     .map((s) => ({
       date: format(new Date(s.created_at), 'MMM d'),
+      rawDate: s.created_at,
       score: s.overall_score ?? 0,
       mentions: s.mentions_count,
     }))
 
   // ── Donut chart data ──────────────────────────────────────────────────────
   const mentionedCount = latestDetails.filter((d) => d.is_mentioned).length
-  const notMentionedCount = latestDetails.length - mentionedCount
+  const totalEngines = latestDetails.length
+  const notMentionedCount = totalEngines - mentionedCount
   const donutData = [
     { name: 'Mentioned', value: mentionedCount, color: 'var(--color-score-good)' },
     { name: 'Not Mentioned', value: notMentionedCount, color: 'var(--color-border)' },
@@ -440,7 +441,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
     const days = chartPeriod === '7d' ? 7 : 30
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - days)
-    return chartData.filter(d => new Date(d.date) >= cutoff)
+    return chartData.filter(d => new Date(d.rawDate) >= cutoff)
   }, [chartData, chartPeriod])
 
   // ── Last scanned label ────────────────────────────────────────────────────
@@ -449,22 +450,40 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
     : null
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
 
       {/* ── Row 1: Page header ──────────────────────────────────────────────── */}
-      <div className="animate-fade-up">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Rankings &amp; Visibility
-        </h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          Track how your business appears across AI search engines.
-        </p>
+      <div className="flex items-start justify-between gap-4 animate-fade-up">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Rankings &amp; Visibility
+          </h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Track how your business appears across AI search engines.
+          </p>
+        </div>
+        {hasData && (
+          <div className="flex items-center gap-2 shrink-0">
+            {lastScannedLabel && (
+              <span className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                {lastScannedLabel}
+              </span>
+            )}
+            <Button asChild size="sm" className="rounded-lg bg-primary text-white hover:bg-primary/90 btn-primary-lift">
+              <Link href="/scan">
+                <Zap className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
+                Rescan Now
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* ── Empty state ─────────────────────────────────────────────────────── */}
       {!hasData && (
         <div className="animate-fade-up [animation-delay:80ms]">
-          <Card className="rounded-lg shadow-[var(--shadow-card)]">
+          <Card className="rounded-xl border border-border bg-card">
             <CardContent className="p-0">
               <EmptyState
                 icon={ScanSearch}
@@ -480,166 +499,65 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
         </div>
       )}
 
-      {/* ── Row 2: Hero Section ──────────────────────────────────────────────── */}
+      {/* ── Row 2: KPI Strip ────────────────────────────────────────────────── */}
       {hasData && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 animate-fade-up [animation-delay:80ms]">
-
-          {/* LEFT col-span-4: Large Visibility Score */}
-          <Card className="lg:col-span-4 rounded-lg shadow-[var(--shadow-card)]">
-            <CardContent className="p-6 flex flex-col gap-4 h-full">
-              <div className="flex items-center justify-between">
-                <span className="section-eyebrow">Visibility Score</span>
-                {scoreTrend !== null && (
-                  <TrendBadge value={scoreTrend} suffix=" pts" size="sm" />
-                )}
-              </div>
-
-              <div className="flex flex-col items-center gap-3 py-4">
-                <ScoreRing score={scoreVal} size="lg" showLabel={false} animate />
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground mt-1">out of 100</p>
-                </div>
-              </div>
-
-              {lastScannedLabel && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-auto">
-                  <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  <span>Last scanned {lastScannedLabel}</span>
-                </div>
-              )}
-
-              <Button asChild size="sm" className="w-full rounded-lg bg-primary text-white hover:bg-primary/90 btn-primary-lift">
-                <Link href="/scan">
-                  <Zap className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
-                  Rescan Now
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* CENTER col-span-4: Engines Mentioning + Average Position */}
-          <div className="lg:col-span-4 flex flex-col gap-4">
-
-            {/* Engines Mentioning */}
-            <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-primary/90 to-primary p-5 text-white shadow-[var(--shadow-card)] flex-1">
-              <BarChart3 className="absolute right-4 top-4 h-10 w-10 opacity-20" aria-hidden="true" />
-              <div className="flex flex-col gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-widest text-white/70">
-                  Engines Mentioning
-                </span>
-                <div className="flex items-end gap-2">
-                  <span className="metric-value text-5xl font-bold text-white leading-none">
-                    {mentionedEngines.length}
-                  </span>
-                  <span className="text-xl font-medium text-white/60 pb-0.5">
-                    / {latestDetails.length}
-                  </span>
-                </div>
-                {mentionedEngineLabels.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {mentionedEngineLabels.map((name) => (
-                      <span
-                        key={name}
-                        className="rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-medium text-white"
-                      >
-                        {name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {mentionedEngineLabels.length === 0 && (
-                  <p className="text-sm text-white/60">No engines mention you yet</p>
-                )}
-              </div>
-            </div>
-
-            {/* Average Position */}
-            <Card className="rounded-lg shadow-[var(--shadow-card)] flex-1">
-              <CardContent className="p-5 flex flex-col gap-2">
-                <span className="section-eyebrow">Average Position</span>
-                <div className="flex items-end gap-2">
-                  <span className="metric-value text-5xl font-bold text-foreground leading-none">
-                    {avgPosition !== null ? `#${avgPosition}` : '—'}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {avgPosition !== null
-                    ? `Across ${mentionedEngines.filter((e) => e.rank_position !== null).length} engines`
-                    : 'No position data available'}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* RIGHT col-span-4: Sentiment Gauge */}
-          <Card className="lg:col-span-4 rounded-lg shadow-[var(--shadow-card)]">
-            <CardContent className="p-5 flex flex-col items-center gap-4 h-full justify-between">
-              <div className="w-full flex items-center justify-between">
-                <span className="section-eyebrow">Sentiment Balance</span>
-                <Link
-                  href="/dashboard/rankings"
-                  className="text-xs font-medium text-primary hover:underline flex items-center gap-0.5"
-                >
-                  Details <ChevronRight className="h-3 w-3" aria-hidden="true" />
-                </Link>
-              </div>
-
-              <div className="flex flex-col items-center gap-1">
-                <ScoreRing
-                  score={positivePct}
-                  size="md"
-                  showLabel={false}
-                  animate
-                />
-                <span className="text-sm font-semibold text-foreground">{positivePct}%</span>
-                <span className="text-xs text-muted-foreground">Positive sentiment</span>
-              </div>
-
-              <div className="w-full flex flex-col gap-1.5 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
-                    Positive
-                  </span>
-                  <span className="tabular-nums font-medium">{positiveCount}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-gray-400" aria-hidden="true" />
-                    Neutral
-                  </span>
-                  <span className="tabular-nums font-medium">{neutralCount}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-red-400" aria-hidden="true" />
-                    Negative
-                  </span>
-                  <span className="tabular-nums font-medium">{negativeCount}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-fade-up [animation-delay:80ms]">
+          <StatCard
+            label="Visibility Score"
+            value={latestScore !== null ? `${latestScore}` : '—'}
+            subtitle="out of 100"
+            trend={scoreDelta !== 0 ? { value: scoreDelta, suffix: '' } : undefined}
+            icon={<Eye />}
+            scoreColor={getScoreColor(latestScore ?? 0)}
+          />
+          <StatCard
+            label="Engines Mentioning"
+            value={`${mentionedCount}/${totalEngines}`}
+            subtitle={
+              mentionedEngineLabels.length > 0
+                ? mentionedEngineLabels.slice(0, 2).join(', ')
+                : 'No mentions yet'
+            }
+            icon={<Cpu />}
+          />
+          <StatCard
+            label="Avg Position"
+            value={avgPosition !== null ? `#${avgPosition.toFixed(1)}` : '—'}
+            subtitle="across AI engines"
+            icon={<Trophy />}
+          />
+          <StatCard
+            label="Sentiment"
+            value={`${positivePercent}%`}
+            subtitle={`${positiveCount} positive, ${negativeCount} negative`}
+            icon={<ThumbsUp />}
+            scoreColor={
+              positivePercent >= 70
+                ? 'var(--color-score-good)'
+                : positivePercent >= 40
+                ? 'var(--color-score-fair)'
+                : 'var(--color-score-critical)'
+            }
+          />
         </div>
       )}
 
       {/* ── Row 3: Engine Performance ────────────────────────────────────────── */}
       {hasData && (
-        <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:160ms]">
+        <Card className="rounded-xl border border-border bg-card animate-fade-up [animation-delay:160ms]">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-base font-semibold">Performance by Engine</CardTitle>
+                <CardTitle className="text-base font-semibold">Engine Performance</CardTitle>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {latestDetails.length} engines scanned
+                  How each AI engine ranks your brand
+                  {latestDetails.length > 0 && (
+                    <span className="ml-1">
+                      &mdash; {mentionedCount} of {totalEngines} engines mentioning you
+                    </span>
+                  )}
                 </p>
               </div>
-              <Button asChild size="sm" variant="outline" className="rounded-lg border-border">
-                <Link href="/scan">
-                  <ScanSearch className="me-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                  Rescan
-                </Link>
-              </Button>
             </div>
           </CardHeader>
           <CardContent className="px-6 pb-5 pt-0">
@@ -701,32 +619,34 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
             periods={periodOptions}
             onPeriodChange={setChartPeriod}
           >
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={filteredChartData} margin={CHART_MARGINS.default}>
-                <defs>
-                  <linearGradient id="rankScoreGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor={CHART_COLORS.primary} stopOpacity={0.18} />
-                    <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid {...DEFAULT_GRID_PROPS} />
-                <XAxis dataKey="date" {...DEFAULT_XAXIS_PROPS} />
-                <YAxis {...DEFAULT_YAXIS_PROPS} domain={[0, 100]} />
-                <ChartTooltip valueFormatter={(v) => `${v}/100`} />
-                <Area
-                  type="monotone"
-                  dataKey="score"
-                  name="Score"
-                  stroke={CHART_COLORS.primary}
-                  strokeWidth={2}
-                  fill="url(#rankScoreGradient)"
-                  dot={false}
-                  activeDot={{ r: 4, strokeWidth: 0 }}
-                  animationDuration={CHART_ANIMATION.duration}
-                  animationEasing={CHART_ANIMATION.easing}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <div className="px-4 pb-4">
+              <ResponsiveContainer width="100%" height={220}>
+                <AreaChart data={filteredChartData} margin={CHART_MARGINS.default}>
+                  <defs>
+                    <linearGradient id="rankScoreGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor={CHART_COLORS.primary} stopOpacity={0.18} />
+                      <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid {...DEFAULT_GRID_PROPS} />
+                  <XAxis dataKey="date" {...DEFAULT_XAXIS_PROPS} />
+                  <YAxis {...DEFAULT_YAXIS_PROPS} domain={[0, 100]} />
+                  <ChartTooltip valueFormatter={(v) => `${v}/100`} />
+                  <Area
+                    type="monotone"
+                    dataKey="score"
+                    name="Score"
+                    stroke={CHART_COLORS.primary}
+                    strokeWidth={2}
+                    fill="url(#rankScoreGradient)"
+                    dot={false}
+                    activeDot={{ r: 4, strokeWidth: 0 }}
+                    animationDuration={CHART_ANIMATION.duration}
+                    animationEasing={CHART_ANIMATION.easing}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </ChartCard>
 
           {/* Right: Mention Breakdown donut */}
@@ -734,7 +654,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
             title="Mention Breakdown"
             subtitle="Mentioned vs. not mentioned per engine"
           >
-            <div className="flex items-center justify-center gap-8 h-[220px]">
+            <div className="flex items-center justify-center gap-8 h-[220px] px-4 pb-4">
               <ResponsiveContainer width={180} height={180}>
                 <PieChart>
                   <Pie
@@ -761,21 +681,31 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1">
                   <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500 shrink-0" aria-hidden="true" />
+                    <span className="h-2.5 w-2.5 rounded-sm bg-[var(--color-score-good)] shrink-0" aria-hidden="true" />
                     Mentioned
                   </span>
                   <span className="metric-value text-2xl font-bold text-foreground pl-4">
                     {mentionedCount}
                   </span>
+                  {totalEngines > 0 && (
+                    <span className="text-xs text-muted-foreground pl-4">
+                      {Math.round((mentionedCount / totalEngines) * 100)}% of engines
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="h-2.5 w-2.5 rounded-sm bg-gray-200 shrink-0" aria-hidden="true" />
+                    <span className="h-2.5 w-2.5 rounded-sm bg-muted shrink-0" aria-hidden="true" />
                     Not mentioned
                   </span>
                   <span className="metric-value text-2xl font-bold text-foreground pl-4">
                     {notMentionedCount}
                   </span>
+                  {totalEngines > 0 && (
+                    <span className="text-xs text-muted-foreground pl-4">
+                      {Math.round((notMentionedCount / totalEngines) * 100)}% of engines
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -785,7 +715,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
 
       {/* ── Row 5: Tracked Queries ───────────────────────────────────────────── */}
       {hasData && (
-        <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:320ms]">
+        <Card className="rounded-xl border border-border bg-card animate-fade-up [animation-delay:320ms]">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -821,7 +751,7 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
 
       {/* ── Row 6: Scan History ──────────────────────────────────────────────── */}
       {hasData && (
-        <Card className="rounded-lg shadow-[var(--shadow-card)] animate-fade-up [animation-delay:400ms]">
+        <Card className="rounded-xl border border-border bg-card animate-fade-up [animation-delay:400ms]">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -833,12 +763,6 @@ export function RankingsView({ scans, latestDetails, queries }: RankingsViewProp
                   Last {Math.min(scans.length, 10)} scans
                 </p>
               </div>
-              <Link
-                href="/dashboard/rankings"
-                className="text-xs font-medium text-primary hover:underline flex items-center gap-0.5"
-              >
-                View all <ChevronRight className="h-3 w-3" aria-hidden="true" />
-              </Link>
             </div>
           </CardHeader>
           <CardContent className="px-0 pb-0 pt-0">

@@ -325,7 +325,7 @@ export function SettingsPreferencesTab() {
       {/* Save */}
       <div className="flex items-center justify-between gap-3 pt-1">
         {saved && (
-          <span className="text-sm font-medium text-emerald-600">
+          <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
             Preferences saved successfully
           </span>
         )}

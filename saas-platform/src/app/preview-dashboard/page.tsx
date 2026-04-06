@@ -11,6 +11,11 @@ import {
   Zap,
   ChevronRight,
   Sparkles,
+  Calendar,
+  Globe,
+  MapPin,
+  Tag,
+  ChevronDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DashboardOverview } from '@/components/dashboard/dashboard-overview'
@@ -67,7 +72,7 @@ export default function PreviewDashboardPage() {
         {/* Main nav */}
         <nav className="flex-1 px-3 space-y-0.5">
           <span className="block px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            Menu
+            Insights
           </span>
           {NAV_MAIN.map((item) => (
             <div
@@ -98,7 +103,7 @@ export default function PreviewDashboardPage() {
           <div className="rounded-xl bg-gradient-to-br from-[#3370FF]/10 to-blue-50 border border-[#3370FF]/15 p-3.5 dark:from-blue-950/40 dark:to-blue-950/20 dark:border-blue-800/30">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Sparkles className="h-3.5 w-3.5 text-[#3370FF]" />
-              <span className="text-[11px] font-semibold text-[#3370FF]">5 days left in trial</span>
+              <span className="text-[11px] font-semibold text-[#3370FF]">5 days left to try all features</span>
             </div>
             <p className="text-[11px] text-slate-500 leading-relaxed mb-2.5 dark:text-slate-400">
               Upgrade to unlock all 7 AI engines and unlimited agent runs.
@@ -140,11 +145,28 @@ export default function PreviewDashboardPage() {
 
       {/* ── Top bar (above main content) ── */}
       <div className="flex-1 min-w-0 flex flex-col">
-        <header className="flex items-center justify-between px-6 py-3 border-b border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <span className="text-slate-900 font-medium dark:text-white">Dashboard</span>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <span>Overview</span>
+        <header className="flex items-center justify-between px-6 py-2 border-b border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <span className="text-[15px] font-semibold text-slate-900 dark:text-white">Overview</span>
+            <span className="h-4 w-px bg-slate-200 dark:bg-slate-700" />
+            <div className="flex items-center gap-1.5">
+              {[
+                { icon: Calendar, label: 'Last 7 days' },
+                { icon: Globe, label: 'All platforms' },
+                { icon: MapPin, label: 'Locations' },
+                { icon: Tag, label: 'All topics' },
+              ].map((f) => (
+                <button
+                  key={f.label}
+                  type="button"
+                  className="flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-500 hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                >
+                  <f.icon className="h-3 w-3" aria-hidden="true" />
+                  {f.label}
+                  <ChevronDown className="h-2.5 w-2.5 opacity-50" />
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex items-center gap-1">
             <button className="relative flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors dark:hover:bg-slate-800" aria-label="Notifications">
@@ -159,10 +181,11 @@ export default function PreviewDashboardPage() {
 
         {/* Main content */}
         <main className="flex-1 overflow-auto">
-          <div className="mx-auto max-w-6xl px-6 py-5">
+          <div className="mx-auto max-w-[1400px] px-8 py-3">
             <DashboardOverview
               businessName="Acme Coffee"
               businessUrl="https://acmecoffee.com"
+              demoMode={true}
               score={null}
               scoreDelta={null}
               mentionCount={0}

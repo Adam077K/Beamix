@@ -82,10 +82,20 @@ const TYPE_META: Record<
   },
 }
 
+// Navigation targets per notification type
+const NOTIFICATION_HREF: Record<string, string> = {
+  agent_complete: '/dashboard/agents',
+  scan_complete:  '/dashboard/rankings',
+  warning:        '/dashboard/rankings',
+  error:          '/dashboard/settings',
+  info:           '/dashboard',
+  milestone:      '/dashboard',
+}
+
 const CATEGORY_LABELS: Record<CategoryFilter, string> = {
-  all: 'All',
+  all:    'All',
   agents: 'Agents',
-  scans: 'Scans',
+  scans:  'Scans',
   system: 'System',
 }
 
@@ -101,10 +111,10 @@ function formatTimeAgo(dateStr: string): string {
   const diffHours = Math.floor(diffMs / 3600000)
   const diffDays = Math.floor(diffMs / 86400000)
 
-  if (diffMins < 1) return 'just now'
+  if (diffMins < 1)  return 'just now'
   if (diffMins < 60) return `${diffMins}m ago`
   if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 7) return `${diffDays}d ago`
+  if (diffDays < 7)  return `${diffDays}d ago`
   return date.toLocaleDateString()
 }
 
@@ -126,8 +136,8 @@ function getDateGroup(dateStr: string): string {
     date.getMonth() === yesterday.getMonth() &&
     date.getFullYear() === yesterday.getFullYear()
 
-  if (isToday) return 'Today'
-  if (isYesterday) return 'Yesterday'
+  if (isToday)      return 'Today'
+  if (isYesterday)  return 'Yesterday'
   if (diffDays <= 7) return 'Earlier this week'
   return 'Older'
 }
@@ -140,6 +150,8 @@ interface NotificationItemProps {
 }
 
 function NotificationItem({ notification, onMarkRead }: NotificationItemProps) {
+  const router = useRouter()
+
   const typeMeta = notification.type
     ? (TYPE_META[notification.type] ?? {
         icon: Info,
@@ -155,27 +167,40 @@ function NotificationItem({ notification, onMarkRead }: NotificationItemProps) {
       }
 
   const TypeIcon = typeMeta.icon
+  const href = notification.type ? (NOTIFICATION_HREF[notification.type] ?? '/dashboard') : '/dashboard'
+
+  function handleClick() {
+    // Mark as read on click, then navigate
+    if (!notification.is_read) {
+      onMarkRead(notification.id)
+    }
+    router.push(href)
+  }
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      onClick={handleClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}
       className={cn(
-        'group flex items-start gap-4 px-5 py-4 transition-colors duration-150',
+        'group flex items-start gap-4 px-5 py-4 transition-colors duration-150 cursor-pointer',
         'hover:bg-muted/40',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
         !notification.is_read && 'border-l-2 border-l-primary',
-        notification.is_read && 'border-l-2 border-l-transparent',
+        notification.is_read  && 'border-l-2 border-l-transparent',
       )}
+      aria-label={`${notification.title}${notification.is_read ? '' : ' (unread)'}`}
     >
-      {/* Icon circle */}
+      {/* Icon circle — consistent h-9 w-9 */}
       <div
         className={cn(
           'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
           typeMeta.bgColor,
         )}
+        aria-hidden="true"
       >
-        <TypeIcon
-          className={cn('h-4 w-4', typeMeta.iconColor)}
-          aria-hidden="true"
-        />
+        <TypeIcon className={cn('h-4 w-4', typeMeta.iconColor)} aria-hidden="true" />
       </div>
 
       {/* Content */}
@@ -192,10 +217,10 @@ function NotificationItem({ notification, onMarkRead }: NotificationItemProps) {
             {notification.title}
           </h3>
           <div className="flex items-center gap-2 shrink-0">
-            {/* Unread dot */}
+            {/* Unread dot — h-2 w-2 */}
             {!notification.is_read && (
               <span
-                className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"
+                className="h-2 w-2 rounded-full bg-primary shrink-0"
                 aria-label="Unread"
               />
             )}
@@ -212,14 +237,14 @@ function NotificationItem({ notification, onMarkRead }: NotificationItemProps) {
         )}
       </div>
 
-      {/* Mark read — appears on hover */}
+      {/* Mark read — always visible but subtle, revealed more on hover/focus */}
       {!notification.is_read && (
         <button
-          onClick={() => onMarkRead(notification.id)}
+          onClick={(e) => { e.stopPropagation(); onMarkRead(notification.id) }}
           className={cn(
-            'shrink-0 mt-0.5 text-xs text-muted-foreground hover:text-foreground transition-all duration-150',
+            'shrink-0 mt-0.5 text-xs text-muted-foreground hover:text-foreground transition-opacity duration-150',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded',
-            'opacity-0 group-hover:opacity-100',
+            'opacity-50 hover:opacity-100 focus-visible:opacity-100',
           )}
           aria-label="Mark as read"
         >
@@ -274,6 +299,19 @@ export function NotificationsView({ notifications }: NotificationsViewProps) {
     }
   }
 
+  async function handleMarkGroupRead(group: string) {
+    const groupNotifications = grouped[group] ?? []
+    const unreadIds = groupNotifications.filter((n) => !n.is_read).map((n) => n.id)
+    try {
+      await Promise.all(
+        unreadIds.map((id) => fetch(`/api/notifications/${id}/read`, { method: 'PATCH' })),
+      )
+      startTransition(() => router.refresh())
+    } catch {
+      // Silently fail
+    }
+  }
+
   return (
     <div className="space-y-6 animate-fade-up">
 
@@ -305,13 +343,13 @@ export function NotificationsView({ notifications }: NotificationsViewProps) {
       {/* ── Row 2: Filter pills + unread badge ──────────────────── */}
       <div className="flex items-center gap-3 flex-wrap">
         {/* Pill toggle group */}
-        <div className="flex gap-1 bg-muted rounded-xl p-1 w-fit">
+        <div className="flex gap-1 bg-muted rounded-lg p-1 w-fit">
           {(Object.keys(CATEGORY_LABELS) as CategoryFilter[]).map((cat) => (
             <button
               key={cat}
               onClick={() => setCategoryFilter(cat)}
               className={cn(
-                'px-4 py-1.5 text-sm rounded-lg font-medium transition-all duration-150',
+                'px-4 py-1.5 text-xs rounded-lg font-medium transition-all duration-150',
                 categoryFilter === cat
                   ? 'bg-card text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground',
@@ -349,25 +387,46 @@ export function NotificationsView({ notifications }: NotificationsViewProps) {
         </div>
       ) : (
         <div className="space-y-6">
-          {orderedGroups.map((group) => (
-            <div key={group} className="space-y-1">
-              {/* Date group label */}
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground px-1 mb-2">
-                {group}
-              </p>
+          {orderedGroups.map((group) => {
+            const groupNotifications = grouped[group]
+            const groupHasUnread = groupNotifications.some((n) => !n.is_read)
 
-              {/* Group card */}
-              <div className="bg-card rounded-lg border border-border shadow-[var(--shadow-card)] overflow-hidden divide-y divide-border/50">
-                {grouped[group].map((notification) => (
-                  <NotificationItem
-                    key={notification.id}
-                    notification={notification}
-                    onMarkRead={handleMarkRead}
-                  />
-                ))}
+            return (
+              <div key={group} className="space-y-2">
+                {/* Informative group header with count + per-group mark read */}
+                <div className="flex items-center justify-between px-1 mb-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {group}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground">
+                      {groupNotifications.length} notification{groupNotifications.length !== 1 ? 's' : ''}
+                    </span>
+                    {groupHasUnread && (
+                      <button
+                        onClick={() => handleMarkGroupRead(group)}
+                        disabled={isPending}
+                        className="text-xs text-primary hover:underline disabled:opacity-50 transition-opacity"
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Group card */}
+                <div className="bg-card rounded-lg border border-border shadow-[var(--shadow-card)] overflow-hidden divide-y divide-border/50">
+                  {groupNotifications.map((notification) => (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      onMarkRead={handleMarkRead}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
