@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { sendWelcomeEmail, sendTrialStartEmail } from '@/lib/email/events'
 import { generateAndStoreRecommendations } from '@/lib/recommendations'
 import type { Json } from '@/lib/types/database.types'
 import type { QuickWin } from '@/lib/types'
@@ -247,43 +246,6 @@ export async function POST(request: Request) {
   if (poolError) {
     // Non-fatal — user can still use the dashboard, credits just won't show
     console.error('Failed to create trial credit pool:', poolError.message)
-  }
-
-  // 5. Send welcome + trial-start emails (non-blocking, non-fatal)
-  const userName = (user.user_metadata?.full_name as string | undefined) ?? business_name
-  const userEmail = user.email
-
-  if (userEmail) {
-    // Fire both emails in parallel — failures are logged but do not block onboarding
-    const emailResults = await Promise.allSettled([
-      sendWelcomeEmail(userEmail, {
-        name: userName,
-        scanId: scan_id,
-      }),
-      sendTrialStartEmail(userEmail, {
-        name: userName,
-        planName: 'Starter',
-        trialEndDate: new Date(trialEnd).toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        }),
-        unlockedFeatures: [
-          'AI visibility scanning across 3 engines',
-          'Smart recommendations',
-          '5 AI agent credits',
-          'Weekly digest reports',
-        ],
-      }),
-    ])
-
-    for (const result of emailResults) {
-      if (result.status === 'rejected') {
-        console.error('[ONBOARDING] Email send failed:', result.reason)
-      } else if (!result.value.success) {
-        console.error('[ONBOARDING] Email send error:', result.value.error)
-      }
-    }
   }
 
   // Fire-and-forget: generate additional AI recommendations from scan data (non-blocking).

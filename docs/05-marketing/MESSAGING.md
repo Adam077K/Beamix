@@ -36,7 +36,7 @@
 
 **Input placeholder:** `Enter your website URL, e.g. mycompany.com`
 **Button:** `Scan for Free →`
-*(Dev note: white floating card, cyan glow on focus, beams in illustration intensify on typing)*
+*(Dev note: white floating card, #3370FF blue glow on focus, beams in illustration intensify on typing)*
 
 **Trust line:** `Free scan  ·  No account needed  ·  Results in 60 seconds`
 
@@ -68,7 +68,7 @@
 **Transition line:** `"The same thing is happening in your industry."`
 
 **Stat:** `40% of businesses lost leads to AI search last year. Most found out too late.`
-*(Dev note: "40%" highlighted in cyan)*
+*(Dev note: "40%" highlighted in blue #3370FF)*
 
 ---
 
@@ -246,7 +246,7 @@ Note: `7 days free · 5 agent credits included · No credit card required`
 ```
 Cinematic painterly illustration of a modern city skyline at night,
 viewed from slightly elevated angle, wide panoramic composition.
-Digital AI scan beams — cyan and electric blue rays of light —
+Digital AI scan beams — electric blue rays of light —
 descend from a star-filled deep purple sky onto the city below.
 Some buildings glow warmly where beams touch them, others remain
 in dark shadow.
@@ -265,7 +265,7 @@ Foreground: silhouettes of trees and rooftops. Mid-ground: dense
 urban skyline with lit windows. Background: vast night sky,
 scattered stars, deep indigo and violet aurora gradients.
 
-Color palette: midnight blue, deep purple, cyan teal beams,
+Color palette: midnight blue, deep purple, electric blue beams,
 warm amber window lights, soft white glow on the AI badge icons.
 Mood: technological wonder, hopeful, dramatic — not dystopian.
 Style: Studio Ghibli meets cyberpunk concept art, atmospheric

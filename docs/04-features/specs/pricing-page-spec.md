@@ -145,7 +145,7 @@ Four cards, side by side on desktop, stacked on mobile.
 
 ### Card 3 — Pro
 
-**Badge:** `Most Popular` (cyan pill, top right of card)
+**Badge:** `Most Popular` (blue pill (#3370FF), top right of card)
 **Price:** `$149/mo` (Annual: `$119/mo`)
 **Billing note (annual):** `billed $1,428/year`
 
@@ -375,8 +375,8 @@ Team seats are coming soon. Today, each account is single-user. We'll notify you
 ## Visual Design Notes
 
 **Theme:** Dark — matches dashboard and scan page. Not the light landing page style.
-**Background:** Subtle gradient (dark navy → near-black). No hero illustration needed — this is a utility page.
-**Tier cards:** Elevated dark cards with subtle border. Pro card has a distinct border (cyan) + "Most Popular" badge.
+**Background:** Subtle gradient (dark (#0A0A0A) → near-black). No hero illustration needed — this is a utility page.
+**Tier cards:** Elevated dark cards with subtle border. Pro card has a distinct #3370FF border + "Most Popular" badge.
 **Matrix table:** Alternating row shading (very subtle). Feature group headers are full-width with slightly lighter background.
 **Toggle:** Pill-style switch. Annual state shows a green "Save 20%" tag that appears with a small animation on switch.
 **Mobile:** Cards stack vertically in order: Free Scan → Starter → Pro → Business. Matrix becomes horizontally scrollable with feature column sticky.

@@ -699,7 +699,7 @@ Every dashboard page has an empty state shown when the user has no data for that
 
 **What the user sees:**
 - **Notification list** (newest first): each notification displays:
-  - Type icon (color-coded by severity): visibility drop (red down-arrow), improvement (green up-arrow), competitor (orange binoculars), sentiment (purple chart), scan/agent complete (blue check), credit warning (yellow coin), trial (red clock)
+  - Type icon (color-coded by severity): visibility drop (red down-arrow), improvement (green up-arrow), competitor (blue binoculars), sentiment (purple chart), scan/agent complete (blue check), credit warning (yellow coin), trial (red clock)
   - Title (e.g., "Visibility dropped 18% on ChatGPT")
   - Description (1-2 sentences of context, e.g., "Your visibility score for 'best plumber in Tel Aviv' dropped from 72 to 54 after last scan.")
   - Timestamp (relative: "2 hours ago", "Yesterday", "March 3")

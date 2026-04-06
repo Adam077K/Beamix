@@ -279,7 +279,7 @@ Beamix scans SMBs for AI search visibility, diagnoses why they rank (or don't), 
 
 - **Marketing site:** Framer (separate, live at average-product-525803.framer.app)
 - **Product:** Next.js dashboard in this repo
-- **Primary accent:** Orange #FF3C00 (NOT navy, NOT cyan)
+- **Primary accent:** Blue #3370FF (NOT orange, NOT navy, NOT cyan as UI accent)
 - **Fonts:** Inter + InterDisplay (headings), Fraunces (serif accent), Geist Mono (code)
 - **Guidelines:** `docs/BRAND_GUIDELINES.md` (v4.0) + `docs/PRODUCT_DESIGN_SYSTEM.md`
 - **Old docs:** archived in `docs/_archive/`

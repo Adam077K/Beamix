@@ -551,7 +551,7 @@ interface PriorityQueryBadgeProps {
 }
 ```
 
-**Behavior:** Shows a pulsing orange dot on priority queries. Tooltip: "Checked every 30 min. Last: 8 min ago." Delta shown as colored chip: green for positive, red for negative, gray for zero.
+**Behavior:** Shows a pulsing blue dot (#3370FF) on priority queries. Tooltip: "Checked every 30 min. Last: 8 min ago." Delta shown as colored chip: green for positive, red for negative, gray for zero.
 
 **RTL:** The pulsing dot uses `absolute` positioning with `start-0` (not `left-0`) to respect RTL layout direction. The tooltip renders on the inline-end side.
 

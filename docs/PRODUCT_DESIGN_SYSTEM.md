@@ -41,7 +41,7 @@
 --score-excellent: #06B6D4;   /* cyan stays for score-excellent only */
 
 --card-radius: 20px;
---shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+--shadow-card: 0 2px 8px rgba(0,0,0,0.08);
 ```
 
 ### Dark Mode (`.dark`)
@@ -101,7 +101,7 @@ Update `@theme inline`: change `--font-display: var(--font-inter)`.
   → rounded-lg (default), px-4 py-2
 
 // Primary pill — marketing-style CTAs inside product (upgrade banners, onboarding)
-className="bg-[#3370FF] text-white rounded-full px-6 py-3 font-medium hover:bg-[#e63600]"
+className="bg-[#3370FF] text-white rounded-full px-6 py-3 font-medium hover:bg-[#2960DB]"
 
 // Secondary — dark pill
 className="bg-[#0A0A0A] text-white rounded-full px-6 py-3 font-medium"
@@ -126,7 +126,7 @@ className="bg-card rounded-[20px] border border-border shadow-sm
            hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
 
 // Pro plan highlight card
-className="bg-gradient-to-br from-[#FFE5DB] to-[#FFF0EB] rounded-[20px] border border-[#FFCFC4]"
+className="bg-gradient-to-br from-[#EFF4FF] to-[#DBEAFE] rounded-[20px] border border-[#BFDBFE]"
 ```
 
 ### Sidebar
@@ -136,7 +136,7 @@ className="flex h-screen flex-col border-r border-border bg-white"
 // Expanded: w-60 / Collapsed: w-16
 
 // Active nav item
-className="bg-[#FFF5F2] text-[#3370FF] font-semibold border-l-2 border-[#3370FF]"
+className="bg-[#EFF4FF] text-[#3370FF] font-semibold border-l-2 border-[#3370FF]"
 // Was: cyan-50 bg + cyan border
 
 // Inactive nav item
@@ -146,7 +146,7 @@ className="text-muted-foreground hover:bg-muted hover:text-foreground"
 className="h-4 w-4 shrink-0 text-[#3370FF]"
 
 // Trial banner (sidebar)
-className="mx-3 mt-3 rounded-xl bg-gradient-to-r from-[#FFF5F2] to-[#FFF0EB] p-3"
+className="mx-3 mt-3 rounded-xl bg-gradient-to-r from-[#EFF4FF] to-[#DBEAFE] p-3"
 // Was: from-cyan-50 to-blue-50
 
 // Logo accent
@@ -214,7 +214,7 @@ const scoreColor = {
 
 - Toggle in `/dashboard/settings` → preferences tab
 - Implementation: `.dark` class on `<html>` via `next-themes`
-- Orange `#3370FF` accent persists unchanged in dark mode
+- Blue `#3370FF` accent persists unchanged in dark mode
 - Borders darken to `rgba(255,255,255,0.1)` — use `border-border` (resolves via CSS var)
 - Cards: `#171717` background — never use hardcoded `bg-white` inside dashboard
 
@@ -247,3 +247,63 @@ grep -r "06B6D4\|cyan-\|color-accent\b\|sidebar-ring.*cyan" saas-platform/src --
 - Shared brand identity, voice, image system: `docs/BRAND_GUIDELINES.md`
 - DB schema, API contracts: `docs/03-system-design/`
 - Component library: Shadcn/UI + Radix UI + Tailwind CSS v4
+
+---
+
+## 10. Interaction Patterns
+
+These are the standard interaction behaviors for all product UI. Implement consistently to achieve a cohesive, modern SaaS feel.
+
+### Card Hover Lift
+```tsx
+className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+```
+Cards lift 2px and deepen shadow on hover. Duration 200ms ease-in-out.
+
+### Button Press
+```tsx
+className="active:scale-[0.98] transition-transform duration-100"
+```
+All buttons compress slightly on click. 100ms linear.
+
+### Focus Ring (all interactive elements)
+```tsx
+className="focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2 outline-none"
+```
+
+### Skeleton Loading
+```tsx
+className="animate-pulse bg-muted rounded"
+```
+Use skeleton elements sized to match the content they replace. Never show a spinner alone for content-heavy layouts.
+
+### Score Ring Count-Up
+SVG stroke-dashoffset animated over 1200ms `cubic-bezier(0.22, 1, 0.36, 1)`. Score number counts up in sync.
+
+### Card Reveal Stagger (dashboard grids)
+Cards fade in with 80ms staggered delay per card:
+```tsx
+style={{ animationDelay: `${index * 80}ms` }}
+className="animate-in fade-in slide-in-from-bottom-2 duration-300"
+```
+
+### Sidebar Collapse / Expand
+Width transitions from 240px to 64px over 200ms ease-in-out. Icon labels fade out at 150ms. Never clip content abruptly.
+
+### Toast Notifications
+- Slide in from bottom-right: 300ms `cubic-bezier(0.22, 1, 0.36, 1)`
+- Auto-dismiss after 3 seconds
+- Success: `#10B981` left border. Error: `#EF4444` left border.
+
+### Page Transition
+Fade in at 300ms on route change. Use `animate-in fade-in duration-300` on the main content wrapper.
+
+### Reduced Motion
+Always wrap transforms in:
+```tsx
+// In CSS:
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+```
+Opacity fades are acceptable. All `translate`, `scale`, `rotate` transforms must be disabled.

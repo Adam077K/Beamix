@@ -185,7 +185,7 @@ Your AI Search Rank
 |------|-------|
 | #1-3 | Bright green |
 | #4-7 | Amber |
-| #8-15 | Red-orange |
+| #8-15 | Red |
 | Not ranked | Red |
 
 **Movement indicator logic:**
@@ -221,7 +221,7 @@ Insurance · Tel Aviv
 - Maximum 5 entries shown. Full list lives on `/dashboard/rankings`.
 
 **Visual treatment:**
-- User's row: cyan/primary border glow. Persistent. Never muted.
+- User's row: #3370FF blue border glow. Persistent. Never muted.
 - Competitor rows: dark muted cards. Slightly lower opacity than user row.
 - Dots indicator: 10 dots, filled proportionally to score (score/10 = dots filled).
 
@@ -254,7 +254,7 @@ Affects: ChatGPT, Gemini  ·  1 agent use
 ```
 
 **Card anatomy:**
-- `impact` badge: HIGH (red-orange), MEDIUM (amber), LOW (muted)
+- `impact` badge: HIGH (red), MEDIUM (amber), LOW (muted)
 - Title: specific action, never generic
 - Body: 2-3 sentences: what's missing, why it matters, which competitor has it
 - Affected engines: from `recommendations.evidence` data
@@ -416,7 +416,7 @@ function computeRankingCell(
 |------|-------|
 | #1-3 | Green |
 | #4-7 | Amber |
-| #8+ | Red-orange |
+| #8+ | Red |
 | — (not found) | Gray/muted |
 
 **Delta arrow:**

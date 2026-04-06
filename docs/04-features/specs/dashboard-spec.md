@@ -676,7 +676,7 @@ Tabs: [Business Profile]  [Billing]  [Preferences]  [Integrations]
 Key visual principles:
 - Rank number (#4): massive, bold, white. It's the hero.
 - Movement delta (▲ +2): green if positive, red if negative. Never ambiguous.
-- Competitor rows: muted dark cards. User's row: glows with cyan/primary border.
+- Competitor rows: muted dark cards. User's row: glows with #3370FF blue border.
 - Agent cards: consistent size, icon-driven, not text-heavy.
 - Status badges: pill-shaped. Colors: gray (Draft), amber (Pending), green (Published), red (Failed).
 - Empty states: never blank — always show a friendly message + action.
