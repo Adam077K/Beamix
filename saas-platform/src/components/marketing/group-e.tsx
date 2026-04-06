@@ -208,7 +208,15 @@ function BeforeAfterCard() {
           {/* After */}
           <div className="flex flex-col items-center gap-2">
             <span className="text-xs text-muted-foreground">After</span>
-            <BlueScoreRing score={75} size="md" showLabel animate />
+            <div className="relative flex items-center justify-center">
+              {/* Faint blue glow behind the ring to emphasize the improvement */}
+              <div
+                className="absolute rounded-full bg-blue-50"
+                style={{ width: 140, height: 140 }}
+                aria-hidden="true"
+              />
+              <BlueScoreRing score={75} size="md" showLabel animate />
+            </div>
             <span className="text-sm font-medium text-[#3370FF]">Excellent</span>
           </div>
         </div>

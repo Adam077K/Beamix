@@ -5,12 +5,14 @@ import { GroupB } from '@/components/marketing/group-b'
 import { GroupC } from '@/components/marketing/group-c'
 import { GroupD } from '@/components/marketing/group-d'
 import { GroupE } from '@/components/marketing/group-e'
+import { GroupNew } from '@/components/marketing/group-new'
 
 const GROUPS = [
   { id: 'track-your-growth', label: 'Track Your Growth' },
   { id: 'beat-competitors', label: 'Beat Competitors' },
   { id: 'agents-do-the-work', label: 'AI Agents Do the Work' },
   { id: 'hero-visual', label: 'Hero Visual' },
+  { id: 'new-cards', label: 'New Cards' },
 ]
 
 export default function MarketingShowcasePage() {
@@ -62,6 +64,11 @@ export default function MarketingShowcasePage() {
         <section id="hero-visual">
           <SectionHeader title="Hero Visual & Composites" />
           <GroupE />
+        </section>
+
+        <section id="new-cards">
+          <SectionHeader title="New Feature Cards" />
+          <GroupNew />
         </section>
 
       </div>
