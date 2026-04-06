@@ -6,6 +6,7 @@ import { ResponsiveBar } from '@nivo/bar'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { NivoDonutChart } from '@/components/marketing/charts/nivo-donut-chart'
 import { BlueDonutChart } from '@/components/marketing/charts/blue-donut-chart'
+import { MultiBrandChart } from '@/components/marketing/charts/multi-brand-chart'
 
 // ─── Demo data ────────────────────────────────────────────────────────────────
 
@@ -206,6 +207,23 @@ export function GroupPremium() {
 
       {/* Donut comparison: recharts vs nivo */}
       <DonutComparisonRow />
+
+      {/* Multi-brand visibility line chart */}
+      <Card className="overflow-hidden rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
+        <CardHeader className="pb-0 pt-5 px-5">
+          <div>
+            <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">
+              Visibility Over Time
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Compare your brand against competitors
+            </p>
+          </div>
+        </CardHeader>
+        <CardContent className="px-5 pb-5 pt-3">
+          <MultiBrandChart />
+        </CardContent>
+      </Card>
     </div>
   )
 }

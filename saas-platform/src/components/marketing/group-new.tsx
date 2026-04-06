@@ -1,10 +1,10 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
-import { PieChart, Pie, Cell, Tooltip } from 'recharts'
+import {} from 'react'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { DomainFavicon, ENGINE_LOGOS } from '@/components/marketing/logos'
+import { PremiumDarkDonut } from '@/components/marketing/charts/premium-dark-donut'
 
 // ─── Demo data ────────────────────────────────────────────────────────────────
 
@@ -70,19 +70,6 @@ const RECENT_QUERIES = [
   },
 ]
 
-const DARK_DONUT_DATA = [
-  { engine: 'ChatGPT', mentions: 8 },
-  { engine: 'Gemini', mentions: 5 },
-  { engine: 'Perplexity', mentions: 7 },
-  { engine: 'Google AI', mentions: 3 },
-  { engine: 'Claude', mentions: 3 },
-]
-
-const BLUE_COLORS = ['#3370FF', '#5A8FFF', '#1E40AF', '#93B4FF', '#60A5FA', '#2563EB']
-
-function getBlueColor(index: number): string {
-  return BLUE_COLORS[index % BLUE_COLORS.length]
-}
 
 // ─── Card 1: Trending Topics ──────────────────────────────────────────────────
 
@@ -250,106 +237,6 @@ function RecentAIQueriesCard() {
   )
 }
 
-// ─── Card 4: Dark Donut (Traffic by AI Engine) — full width ──────────────────
-
-function DarkDonutTooltip({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number }> }) {
-  if (!active || !payload || payload.length === 0) return null
-  const item = payload[0]
-  return (
-    <div className="rounded-xl border border-white/10 bg-[#1A1A1A] px-3 py-2 shadow-md text-xs">
-      <p className="font-semibold text-white">{item.name}</p>
-      <p className="text-gray-400 mt-0.5">
-        {item.value} mention{item.value !== 1 ? 's' : ''}
-      </p>
-    </div>
-  )
-}
-
-function DarkDonutCard() {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [chartWidth, setChartWidth] = useState(0)
-  const CHART_HEIGHT = 240
-  const DONUT_WIDTH = 180
-
-  useEffect(() => {
-    function measure() {
-      if (containerRef.current) {
-        setChartWidth(containerRef.current.clientWidth)
-      }
-    }
-    measure()
-    window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
-  }, [])
-
-  const totalMentions = DARK_DONUT_DATA.reduce((sum, d) => sum + d.mentions, 0)
-
-  // suppress unused var warning — chartWidth used for layout reference
-  void chartWidth
-
-  return (
-    <div className="rounded-xl bg-[#0A0A0A] border border-white/5 overflow-hidden">
-      <div className="px-5 pt-5 pb-2">
-        <p className="text-[13px] font-medium tracking-[-0.01em] text-white">Traffic by AI Engine</p>
-      </div>
-      <div className="px-5 pb-5">
-        <div ref={containerRef} className="flex items-center gap-4" style={{ height: CHART_HEIGHT }}>
-          {/* Donut chart */}
-          <div className="shrink-0 relative" style={{ width: DONUT_WIDTH, height: CHART_HEIGHT }}>
-            <PieChart width={DONUT_WIDTH} height={CHART_HEIGHT}>
-              <Pie
-                data={DARK_DONUT_DATA}
-                dataKey="mentions"
-                nameKey="engine"
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={82}
-                paddingAngle={2}
-                stroke="none"
-                isAnimationActive={false}
-              >
-                {DARK_DONUT_DATA.map((entry, index) => (
-                  <Cell
-                    key={entry.engine}
-                    fill={getBlueColor(index)}
-                  />
-                ))}
-              </Pie>
-              <Tooltip content={<DarkDonutTooltip />} />
-            </PieChart>
-            {/* Center label */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-semibold tracking-[-0.02em] tabular-nums text-white leading-none">
-                {totalMentions}
-              </span>
-              <span className="text-[10px] text-gray-500 mt-0.5">mentions</span>
-            </div>
-          </div>
-
-          {/* Legend */}
-          <div className="flex flex-col gap-2 flex-1 min-w-0">
-            {DARK_DONUT_DATA.map((entry, index) => (
-              <div key={entry.engine} className="flex items-center justify-between gap-2 min-w-0">
-                <span className="flex items-center gap-1.5 min-w-0">
-                  <span
-                    className="h-2 w-2 rounded-full shrink-0"
-                    style={{ backgroundColor: getBlueColor(index) }}
-                    aria-hidden="true"
-                  />
-                  <span className="text-xs text-gray-400 truncate">{entry.engine}</span>
-                </span>
-                <span className="text-xs font-medium tabular-nums text-white shrink-0">
-                  {entry.mentions}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ─── Card 5: Invisibility Card ────────────────────────────────────────────────
 
@@ -410,8 +297,8 @@ export function GroupNew() {
         <InvisibilityCard />
       </div>
 
-      {/* Row 3: Dark Donut — full width */}
-      <DarkDonutCard />
+      {/* Row 3: Premium Dark Donut — full width */}
+      <PremiumDarkDonut />
 
     </div>
   )
