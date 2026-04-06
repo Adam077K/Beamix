@@ -163,7 +163,7 @@ Landing, Free Scan, Scan Results, Login, Signup, Forgot Password, Onboarding, Da
 
 **Concept:** Beam of light — a ray of light lifting business rankings in AI search.
 
-**Design:** Warm, energetic, rounded. Reference: usebear.ai (light mode, rounded cards, serif+sans). Beamix adds warmth and energy. NOT cold/minimal.
+**Design:** Modern, clean, professional. Blue `#3370FF` accent, rounded 20px cards, Inter + Fraunces type system. Spacious and readable — minimal but not cold. NOT cluttered or decorative.
 
 **Languages:** Hebrew (RTL) + English (LTR) from day 1.
 

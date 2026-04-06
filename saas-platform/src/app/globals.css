@@ -55,7 +55,7 @@
   --color-score-fair: #F59E0B;
   --color-score-good: #10B981;
   --color-score-excellent: #06B6D4;
-  --radius-card: 8px;
+  --radius-card: 20px;
 
   /* Shadow scale — layered approach for genuine depth */
   --shadow-xs:    0 1px 2px rgba(0, 0, 0, 0.05);
@@ -65,7 +65,7 @@
   --shadow-xl:    0 20px 48px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.06);
 
   /* Component-specific shadows */
-  --shadow-card:       0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-card:       0 2px 8px rgba(0,0,0,0.08);
   --shadow-card-hover: 0 10px 30px rgba(0, 0, 0, 0.10), 0 4px 8px rgba(0, 0, 0, 0.04);
   --shadow-sidebar:    2px 0 16px rgba(0, 0, 0, 0.06);
   --shadow-modal:      0 20px 48px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.06);
@@ -261,7 +261,7 @@
     @apply transition-all duration-200;
   }
   .input-focus-enhance:focus-within {
-    @apply shadow-[0_0_0_3px_rgba(99,102,241,0.1)];
+    @apply shadow-[0_0_0_3px_rgba(51,112,255,0.1)];
   }
 
   /* ─── Glass card variants ────────────────────────────────────────── */
@@ -298,10 +298,10 @@
 
   /* ─── Glow utilities ─────────────────────────────────────────────── */
   .glow-primary {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 0 20px rgba(51, 112, 255, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
   }
   .glow-primary-strong {
-    box-shadow: 0 0 40px rgba(99, 102, 241, 0.20), 0 8px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0 40px rgba(51, 112, 255, 0.20), 0 8px 24px rgba(0, 0, 0, 0.08);
   }
   .glow-excellent {
     box-shadow: 0 0 40px rgba(6, 182, 212, 0.15), 0 8px 24px rgba(0, 0, 0, 0.06);
@@ -318,13 +318,13 @@
 
   /* ─── Gradient utilities ─────────────────────────────────────────── */
   .gradient-score-hero {
-    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,102,241,0.07) 0%, transparent 70%);
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(51,112,255,0.07) 0%, transparent 70%);
   }
   .gradient-upgrade-card {
-    background: linear-gradient(135deg, #F0F1FF 0%, #ECEEFF 50%, #F5F6FF 100%);
+    background: linear-gradient(135deg, #EFF4FF 0%, #E0EDFF 50%, #F0F6FF 100%);
   }
   .dark .gradient-upgrade-card {
-    background: linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(99,102,241,0.06) 100%);
+    background: linear-gradient(135deg, rgba(51,112,255,0.12) 0%, rgba(51,112,255,0.06) 100%);
   }
   .gradient-positive {
     background: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.04) 100%);
@@ -333,8 +333,8 @@
     background: linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.04) 100%);
   }
   .gradient-action-cta {
-    background: linear-gradient(135deg, rgba(99,102,241,0.06) 0%, transparent 60%);
-    border: 1px solid rgba(99,102,241,0.15);
+    background: linear-gradient(135deg, rgba(51,112,255,0.06) 0%, transparent 60%);
+    border: 1px solid rgba(51,112,255,0.15);
   }
 
   /* ─── Score insight typography (Fraunces italic) ─────────────────── */
@@ -369,12 +369,12 @@
   .dashboard-bg {
     background-color: #F7F7F7;
     background-image:
-      radial-gradient(ellipse 120% 40% at 60% -5%, rgba(99,102,241,0.025) 0%, transparent 60%);
+      radial-gradient(ellipse 120% 40% at 60% -5%, rgba(51,112,255,0.025) 0%, transparent 60%);
   }
   .dark .dashboard-bg {
     background-color: #0A0A0A;
     background-image:
-      radial-gradient(ellipse 100% 30% at 50% -10%, rgba(99,102,241,0.04) 0%, transparent 60%);
+      radial-gradient(ellipse 100% 30% at 50% -10%, rgba(51,112,255,0.04) 0%, transparent 60%);
   }
 
   /* ─── Input enhanced ─────────────────────────────────────────────── */
@@ -384,7 +384,7 @@
     @apply transition-all duration-200;
     @apply focus:outline-none focus:ring-2 focus:ring-ring/60 focus:ring-offset-1;
     @apply focus:border-ring/80;
-    @apply focus:shadow-[0_0_0_4px_rgba(99,102,241,0.08)];
+    @apply focus:shadow-[0_0_0_4px_rgba(51,112,255,0.08)];
   }
   .input-enhanced.error {
     @apply border-destructive focus:ring-destructive/60;
@@ -464,11 +464,11 @@
 
   /* ─── Button improvements ────────────────────────────────────────── */
   .btn-primary-lift {
-    @apply shadow-[0_2px_8px_rgba(99,102,241,0.20)];
-    @apply hover:shadow-[0_4px_16px_rgba(99,102,241,0.30)];
+    @apply shadow-[0_2px_8px_rgba(51,112,255,0.20)];
+    @apply hover:shadow-[0_4px_16px_rgba(51,112,255,0.30)];
     @apply hover:-translate-y-px;
     @apply active:translate-y-0 active:scale-[0.98];
-    @apply active:shadow-[0_1px_4px_rgba(99,102,241,0.15)];
+    @apply active:shadow-[0_1px_4px_rgba(51,112,255,0.15)];
     @apply transition-all duration-150 ease-out;
   }
 }

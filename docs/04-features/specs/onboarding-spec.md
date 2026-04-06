@@ -393,7 +393,7 @@ Small pill at top of the form area:
 ┌──────────────────────────────────┐
 │  🔍  Scanning: yoursite.com      │
 └──────────────────────────────────┘
-Subtle cyan border, semi-transparent background. Read-only.
+Subtle #3370FF blue border, semi-transparent background. Read-only.
 ```
 
 ---

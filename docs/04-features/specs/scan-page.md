@@ -128,7 +128,7 @@ Before the animation begins, a ranking table is visible but dimmed/blurred:
 **Table design:**
 - Each row is a solid card/block — not a thin table row. Chunky, visible, has weight.
 - Competitor blocks: dark background, muted — they are the "before" state
-- User's business block: distinctive color — cyan/primary glow, slightly larger than competitors
+- User's business block: distinctive color — #3370FF blue glow, slightly larger than competitors
 - The user's block starts at the BOTTOM of the visible list
 
 **Combined score:** One score per business, aggregated across all AI engines scanned. Not per-engine in this view.
@@ -142,8 +142,8 @@ Before the animation begins, a ranking table is visible but dimmed/blurred:
 The user's business block, sitting at the bottom, begins to charge.
 
 - **Shake/tremble:** The block vibrates horizontally — subtle at first (±2px), intensifying to ±6px over 1.5 seconds. Frequency increases as it charges.
-- **Light beams converge:** From the four corners and sides of the screen, thin rays of cyan/white light travel INWARD toward the business block. They converge into the block like energy being absorbed.
-- **Block glow intensifies:** The block's border glow brightens from dim → bright cyan. An inner pulse expands outward from the block center.
+- **Light beams converge:** From the four corners and sides of the screen, thin rays of blue/white light travel INWARD toward the business block. They converge into the block like energy being absorbed.
+- **Block glow intensifies:** The block's border glow brightens from dim → bright #3370FF blue. An inner pulse expands outward from the block center.
 - **Sound design note (future):** A low rising hum, like powering up. Not required for v1.
 
 **Timing:**
@@ -161,8 +161,8 @@ The user's business block, sitting at the bottom, begins to charge.
 The block launches upward through the ranking table.
 
 - **Launch:** After the charge flash, the block begins moving upward. Not floating — it MOVES. Accelerates quickly, then slightly decelerates as it passes each competitor.
-- **Passing competitors:** As the user's block passes each competitor row, the competitor block briefly illuminates (cyan tinge) then dims back to muted. Like a shockwave passing through them.
-- **Trail:** A faint cyan trail/streak follows the block as it ascends. Fades within 0.3s.
+- **Passing competitors:** As the user's block passes each competitor row, the competitor block briefly illuminates (blue tinge) then dims back to muted. Like a shockwave passing through them.
+- **Trail:** A faint blue trail/streak follows the block as it ascends. Fades within 0.3s.
 - **Competitors displaced:** Competitor blocks subtly shift downward as the user's block passes them — they yield position.
 
 **Timing per position:**
@@ -179,7 +179,7 @@ The block launches upward through the ranking table.
 The block arrives at the business's actual current position and settles.
 
 - **Deceleration:** Block slows dramatically in the last 0.5 positions, like a car braking.
-- **Settlement:** Block lands with a subtle bounce (spring physics). The cyan glow pulses once — a "locked in" feeling.
+- **Settlement:** Block lands with a subtle bounce (spring physics). The blue glow pulses once — a "locked in" feeling.
 - **Score reveal:** The business's AI Visibility Score counts up from 0 to actual score. Duration: 1.0s. Number font is large, bold.
 - **Position badge:** A badge appears on the block: `#[N] across AI search`
 - **Status label:** Color-coded label appears below score:

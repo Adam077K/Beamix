@@ -1,10 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import {
-  sendTrialDay7Email,
-  sendTrialDay12Email,
-  sendTrialExpiredEmail,
-} from '@/lib/email/events'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -23,16 +18,10 @@ export async function GET(request: Request) {
 
   const supabase = await createServiceClient()
 
-  // Get all trialing subscriptions
+  // Get all trialing subscriptions (LEFT join — no !inner so orphaned users aren't excluded)
   const { data: trialingSubs, error } = await supabase
     .from('subscriptions')
-    .select(`
-      user_id,
-      plan_tier,
-      trial_ends_at,
-      created_at,
-      user_profiles!inner(email, full_name)
-    `)
+    .select('user_id, trial_ends_at')
     .eq('status', 'trialing')
     .not('trial_ends_at', 'is', null)
 
@@ -42,104 +31,28 @@ export async function GET(request: Request) {
   }
 
   const now = new Date()
-  let sent = 0
-  let failed = 0
+  let expired = 0
 
   for (const sub of trialingSubs ?? []) {
     const trialEnd = new Date(sub.trial_ends_at!)
-    const trialStart = new Date(sub.created_at)
-    const daysSinceStart = Math.floor(
-      (now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24)
-    )
     const daysUntilEnd = Math.floor(
       (trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     )
 
-    const user = sub.user_profiles as unknown as { email: string; full_name: string | null }
-    const userName = user.full_name ?? 'there'
-
-    // Check expiration FIRST — skip day 7/12 nudges for expired trials
+    // Mark expired trials as cancelled
     if (daysUntilEnd <= 0) {
-      // Update subscription status
       await supabase
         .from('subscriptions')
         .update({ status: 'cancelled', updated_at: new Date().toISOString() })
         .eq('user_id', sub.user_id)
         .eq('status', 'trialing')
 
-      const planName = sub.plan_tier === 'pro' ? 'Pro' : sub.plan_tier === 'starter' ? 'Starter' : 'Business'
-
-      const result = await sendTrialExpiredEmail(user.email, {
-        name: userName,
-        planName,
-      })
-
-      if (result.success) sent++
-      else failed++
-      continue
-    }
-
-    // Day 7 nudge
-    if (daysSinceStart === 7) {
-      const { data: business } = await supabase
-        .from('businesses')
-        .select('id')
-        .eq('user_id', sub.user_id)
-        .eq('is_primary', true)
-        .single()
-
-      let currentScore = 0
-      if (business) {
-        const { data: latestScan } = await supabase
-          .from('scans')
-          .select('overall_score')
-          .eq('user_id', sub.user_id)
-          .eq('business_id', business.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single()
-
-        currentScore = latestScan?.overall_score ?? 0
-      }
-
-      const { count: contentCount } = await supabase
-        .from('content_items')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', sub.user_id)
-
-      const result = await sendTrialDay7Email(user.email, {
-        name: userName,
-        currentScore,
-        contentGenerated: contentCount ?? 0,
-        daysLeft: daysUntilEnd,
-      })
-
-      if (result.success) sent++
-      else failed++
-    }
-
-    // Day 12 nudge (2 days left)
-    if (daysSinceStart === 12) {
-      const result = await sendTrialDay12Email(user.email, {
-        name: userName,
-        daysLeft: daysUntilEnd,
-        featuresAtRisk: [
-          'AI-powered scan agents',
-          'Content generation',
-          'Competitor tracking',
-          'Weekly ranking reports',
-          'Priority recommendations',
-        ],
-      })
-
-      if (result.success) sent++
-      else failed++
+      expired++
     }
   }
 
   return NextResponse.json({
-    sent,
-    failed,
+    expired,
     total: (trialingSubs ?? []).length,
   })
 }

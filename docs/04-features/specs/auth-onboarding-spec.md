@@ -474,7 +474,7 @@ BEAMIX // SETUP        ●○○  (user on dot 1)
 
 **Smart pre-fill:** Attempt to extract business name from URL domain. `yael-insurance.co.il` → pre-fill "Yael Insurance". Logic: strip TLD, strip hyphen/underscore, title-case. Do NOT pre-fill if the domain is generic (numbers-only, single word that could be anything, common words).
 
-**URL confirmation pill:** Shows the URL from localStorage at the top of the form. Subtle cyan border, semi-transparent background. Read-only — clicking does nothing. Gives the user confidence their URL was saved.
+**URL confirmation pill:** Shows the URL from localStorage at the top of the form. Subtle #3370FF blue border, semi-transparent background. Read-only — clicking does nothing. Gives the user confidence their URL was saved.
 
 **Copy:**
 - Title: "What's the name of your business?"
