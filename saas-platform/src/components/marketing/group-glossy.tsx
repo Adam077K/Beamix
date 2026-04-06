@@ -221,12 +221,12 @@ function GlossyDarkHero() {
 
 export function GroupGlossy() {
   return (
-    <div className="relative">
-      {/* Background gradient blobs — make the glass visible */}
+    <div className="relative rounded-2xl bg-gradient-to-br from-[#EEF2FF] via-[#E0EAFF] to-[#F0F4FF] p-8 -mx-2 overflow-hidden">
+      {/* Background gradient blobs — vivid enough to show glass */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-[#3370FF]/10 blur-3xl" />
-        <div className="absolute top-40 -right-10 w-96 h-96 rounded-full bg-[#5A8FFF]/8 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 w-80 h-80 rounded-full bg-[#93B4FF]/10 blur-3xl" />
+        <div className="absolute -top-10 -left-10 w-80 h-80 rounded-full bg-[#3370FF]/20 blur-[80px]" />
+        <div className="absolute top-20 right-0 w-[400px] h-[400px] rounded-full bg-[#5A8FFF]/15 blur-[100px]" />
+        <div className="absolute bottom-0 left-1/4 w-96 h-96 rounded-full bg-[#93B4FF]/20 blur-[80px]" />
       </div>
 
       <div className="relative z-10 space-y-4">
