@@ -179,56 +179,59 @@ function BeforeAfterCard() {
       <CardHeader className="pb-3 pt-5 px-5">
         <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">Before &amp; After</p>
       </CardHeader>
-      <CardContent className="px-5 pb-6">
-        <div className="flex items-center justify-center gap-6">
+      <CardContent className="px-5 pb-8">
+        <div className="flex items-center justify-center gap-10">
           {/* Before */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs text-muted-foreground">Before</span>
+          <div className="flex flex-col items-center gap-3">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Before</span>
             <div className="relative flex items-center justify-center">
               {/* Subtle blue glow */}
               <div
                 className="absolute rounded-full"
                 style={{
-                  width: 140,
-                  height: 140,
-                  background: 'radial-gradient(circle, rgba(51,112,255,0.08) 0%, transparent 70%)',
+                  width: 160,
+                  height: 160,
+                  background: 'radial-gradient(circle, rgba(51,112,255,0.06) 0%, transparent 70%)',
                 }}
                 aria-hidden="true"
               />
               <BlueScoreRing score={23} size="md" showLabel animate={false} />
             </div>
-            <span className="text-sm font-medium text-muted-foreground">Invisible</span>
+            <span className="text-sm font-semibold text-muted-foreground">Invisible</span>
           </div>
 
-          {/* Connector */}
-          <div className="flex flex-col items-center gap-1.5 pb-5">
-            <div className="flex items-center gap-2">
-              <div className="h-px w-6 bg-border" aria-hidden="true" />
-              <span className="rounded-full bg-foreground text-background text-xs font-medium px-2 py-0.5 tabular-nums">
-                +52
-              </span>
-              <div className="h-px w-6 bg-border" aria-hidden="true" />
+          {/* Connector — more impactful */}
+          <div className="flex flex-col items-center gap-1.5 pb-6">
+            <div className="flex items-center gap-3">
+              <div className="h-px w-8 bg-border/60" aria-hidden="true" />
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="rounded-full bg-[#3370FF] text-white text-sm font-bold px-3 py-1 tabular-nums shadow-[0_2px_12px_rgba(51,112,255,0.35)]">
+                  +52
+                </span>
+              </div>
+              <div className="h-px w-8 bg-border/60" aria-hidden="true" />
             </div>
-            <span className="text-[10px] text-muted-foreground">points gained</span>
+            <span className="text-[11px] font-medium text-muted-foreground">points gained</span>
           </div>
 
           {/* After */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs text-muted-foreground">After</span>
+          <div className="flex flex-col items-center gap-3">
+            <span className="text-xs font-medium text-[#3370FF] uppercase tracking-wider">After</span>
             <div className="relative flex items-center justify-center">
-              {/* Brighter blue glow on the After side */}
+              {/* Stronger blue glow on the After side */}
               <div
                 className="absolute rounded-full"
                 style={{
-                  width: 140,
-                  height: 140,
-                  background: 'radial-gradient(circle, rgba(51,112,255,0.18) 0%, transparent 70%)',
+                  width: 180,
+                  height: 180,
+                  background: 'radial-gradient(circle, rgba(51,112,255,0.25) 0%, rgba(51,112,255,0.10) 40%, transparent 70%)',
+                  filter: 'blur(4px)',
                 }}
                 aria-hidden="true"
               />
               <BlueScoreRing score={75} size="md" showLabel animate />
             </div>
-            <span className="text-sm font-medium text-[#3370FF]">Visible</span>
+            <span className="text-sm font-semibold text-[#3370FF]">Visible</span>
           </div>
         </div>
       </CardContent>

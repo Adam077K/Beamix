@@ -73,11 +73,11 @@ export function GroupC() {
             <div
               key={row.rank}
               className={cn(
-                'grid grid-cols-[18px_1fr_52px_36px_44px_52px] gap-1 items-center px-5 py-2.5',
-                row.isUser && 'bg-[#3370FF]/8'
+                'grid grid-cols-[18px_1fr_52px_36px_44px_52px] gap-1 items-center px-5 py-3',
+                row.isUser && 'bg-[#3370FF]/[0.06]'
               )}
             >
-              <span className="text-xs text-muted-foreground tabular-nums">{row.rank}</span>
+              <span className={cn('text-xs tabular-nums', row.isUser ? 'font-bold text-[#3370FF]' : 'text-muted-foreground')}>{row.rank}</span>
 
               {/* Brand cell */}
               <span className="flex items-center gap-1.5 min-w-0">
@@ -90,7 +90,7 @@ export function GroupC() {
                   {row.name}
                 </span>
                 {row.isUser && (
-                  <span className="shrink-0 rounded bg-[#3370FF] px-1 py-0 text-[9px] font-medium text-white">You</span>
+                  <span className="shrink-0 rounded-md bg-[#3370FF] px-1.5 py-0.5 text-[9px] font-bold text-white leading-none">You</span>
                 )}
               </span>
 
@@ -102,7 +102,7 @@ export function GroupC() {
                 {row.change > 0 ? '+' : ''}{row.change}%
               </span>
 
-              <span className="text-xs tabular-nums text-foreground text-right font-medium">{row.visibility}%</span>
+              <span className={cn('text-xs tabular-nums text-right font-semibold', row.isUser ? 'text-foreground' : 'text-muted-foreground')}>{row.visibility}%</span>
             </div>
           ))}
         </div>

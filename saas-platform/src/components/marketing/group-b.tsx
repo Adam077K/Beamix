@@ -87,52 +87,54 @@ export function GroupB() {
         <CardHeader className="pb-0 pt-5 px-5">
           <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">Engine Mentions</p>
         </CardHeader>
-        <CardContent className="px-5 pb-5 pt-3">
+        <CardContent className="px-5 pb-6 pt-4">
           <NivoDonutChart data={DEMO_ENGINE_DATA} />
         </CardContent>
       </Card>
 
-      {/* B3: Custom stat cards — no uppercase labels */}
-      <div className="grid grid-cols-3 gap-3">
-        {/* Visibility Score */}
-        <div className="rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-5">
-          <p className="text-xs text-muted-foreground">Visibility Score</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <NumberFlow
-              value={75}
-              className="text-3xl font-semibold tracking-[-0.02em] tabular-nums text-foreground"
-            />
-            <span className="text-xs font-medium text-[#3370FF]">+52</span>
+      {/* B3: Stat cards — unified background strip */}
+      <div className="rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] overflow-hidden">
+        <div className="grid grid-cols-3 divide-x divide-border/40">
+          {/* Visibility Score */}
+          <div className="p-5">
+            <p className="text-xs text-muted-foreground">Visibility Score</p>
+            <div className="flex items-baseline gap-2 mt-1.5">
+              <NumberFlow
+                value={75}
+                className="text-[2rem] font-semibold tracking-[-0.02em] tabular-nums text-foreground leading-none"
+              />
+              <span className="text-sm font-semibold text-[#3370FF]">+52</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1.5">out of 100</p>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1">out of 100</p>
-        </div>
 
-        {/* AI Mentions */}
-        <div className="rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-5">
-          <p className="text-xs text-muted-foreground">AI Mentions</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <NumberFlow
-              value={28}
-              className="text-3xl font-semibold tracking-[-0.02em] tabular-nums text-foreground"
-            />
-            <span className="text-xs font-medium text-[#3370FF]">+20</span>
+          {/* AI Mentions */}
+          <div className="p-5">
+            <p className="text-xs text-muted-foreground">AI Mentions</p>
+            <div className="flex items-baseline gap-2 mt-1.5">
+              <NumberFlow
+                value={28}
+                className="text-[2rem] font-semibold tracking-[-0.02em] tabular-nums text-foreground leading-none"
+              />
+              <span className="text-sm font-semibold text-[#3370FF]">+20</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1.5">across 7 engines</p>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1">across 7 engines</p>
-        </div>
 
-        {/* Avg Position */}
-        <div className="rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-5">
-          <p className="text-xs text-muted-foreground">Avg Position</p>
-          <div className="flex items-baseline gap-2 mt-1">
-            <NumberFlow
-              value={2.5}
-              prefix="#"
-              format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
-              className="text-3xl font-semibold tracking-[-0.02em] tabular-nums text-foreground"
-            />
-            <span className="text-xs font-medium text-[#3370FF]">+1.7</span>
+          {/* Avg Position */}
+          <div className="p-5">
+            <p className="text-xs text-muted-foreground">Avg Position</p>
+            <div className="flex items-baseline gap-2 mt-1.5">
+              <NumberFlow
+                value={2.5}
+                prefix="#"
+                format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+                className="text-[2rem] font-semibold tracking-[-0.02em] tabular-nums text-foreground leading-none"
+              />
+              <span className="text-sm font-semibold text-[#3370FF]">+1.7</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1.5">in search results</p>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1">in search results</p>
         </div>
       </div>
     </div>

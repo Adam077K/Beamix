@@ -74,7 +74,8 @@ export function BlueTrendChart({ data }: BlueTrendChartProps) {
         >
           <defs>
             <linearGradient id="blueVisibilityGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3370FF" stopOpacity={0.15} />
+              <stop offset="5%" stopColor="#3370FF" stopOpacity={0.22} />
+              <stop offset="60%" stopColor="#3370FF" stopOpacity={0.08} />
               <stop offset="95%" stopColor="#3370FF" stopOpacity={0} />
             </linearGradient>
           </defs>
@@ -93,7 +94,7 @@ export function BlueTrendChart({ data }: BlueTrendChartProps) {
             tick={{ fontSize: 11, fill: '#94A3B8' }}
             axisLine={false}
             tickLine={false}
-            domain={['auto', 'auto']}
+            domain={[0, 100]}
           />
           <Tooltip content={<CustomTooltip />} />
           <Area

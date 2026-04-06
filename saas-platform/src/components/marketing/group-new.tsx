@@ -95,13 +95,13 @@ function TrendingTopicsCard() {
           {TRENDING_TOPICS.map((row) => (
             <div
               key={row.rank}
-              className="grid grid-cols-[24px_1fr_64px_72px] gap-1 items-center px-5 py-2.5"
+              className="grid grid-cols-[24px_1fr_64px_72px] gap-1 items-center px-5 py-3"
             >
               <span className="text-xs text-muted-foreground tabular-nums">{row.rank}</span>
 
               {/* Topic + optional Hot badge */}
               <span className="flex items-center gap-1.5 min-w-0">
-                <span className="text-xs text-foreground truncate">{row.topic}</span>
+                <span className="text-xs text-foreground truncate font-medium">{row.topic}</span>
                 {row.hot && (
                   <span className="shrink-0 rounded-full bg-[#EEF3FF] text-[#3370FF] text-[10px] font-semibold px-1.5 py-0.5 leading-none">
                     Hot
@@ -112,15 +112,15 @@ function TrendingTopicsCard() {
               {/* Trend */}
               <span
                 className={cn(
-                  'text-xs tabular-nums font-medium text-right',
+                  'text-xs tabular-nums font-semibold text-right',
                   row.trend > 0 ? 'text-[#3370FF]' : 'text-muted-foreground'
                 )}
               >
                 {row.trend > 0 ? '↑' : '↓'}{Math.abs(row.trend)}%
               </span>
 
-              {/* Volume */}
-              <span className="text-xs tabular-nums text-muted-foreground text-right">
+              {/* Volume — bolder */}
+              <span className="text-xs tabular-nums text-foreground font-semibold text-right">
                 {row.volume.toLocaleString()}
               </span>
             </div>
@@ -155,12 +155,12 @@ function TopAISourcesCard() {
           {AI_SOURCES.map((row) => (
             <div
               key={row.domain}
-              className="grid grid-cols-[1fr_76px_52px_60px] gap-1 items-center px-5 py-2.5"
+              className="grid grid-cols-[1fr_76px_52px_60px] gap-1 items-center px-5 py-3"
             >
-              {/* Domain with favicon mark */}
-              <span className="flex items-center gap-2 min-w-0">
-                <DomainFavicon domain={row.domain} size="sm" />
-                <span className="text-xs text-foreground truncate">{row.domain}</span>
+              {/* Domain with favicon mark — slightly larger */}
+              <span className="flex items-center gap-2.5 min-w-0">
+                <DomainFavicon domain={row.domain} size="md" />
+                <span className="text-xs text-foreground truncate font-medium">{row.domain}</span>
               </span>
 
               {/* Type badge */}
@@ -195,19 +195,19 @@ function RecentAIQueriesCard() {
         <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">Recent AI Queries</p>
       </CardHeader>
       <CardContent className="px-5 pb-5 pt-3">
-        <div className="divide-y divide-border/40">
-          {RECENT_QUERIES.map((item) => (
-            <div key={item.id} className="py-3 first:pt-0">
-              <div className="flex items-start gap-2.5">
+        <div>
+          {RECENT_QUERIES.map((item, i) => (
+            <div key={item.id} className={cn('py-3.5', i < RECENT_QUERIES.length - 1 && 'border-b border-border/50')}>
+              <div className="flex items-start gap-3">
                 {/* Colored dot */}
                 <span
-                  className="mt-1 h-1.5 w-1.5 rounded-full shrink-0"
+                  className="mt-1.5 h-2 w-2 rounded-full shrink-0"
                   style={{ backgroundColor: item.color }}
                   aria-hidden="true"
                 />
                 <div className="flex-1 min-w-0">
                   {/* Query text */}
-                  <p className="text-xs font-medium text-foreground leading-snug truncate">
+                  <p className="text-xs font-semibold text-foreground leading-snug truncate">
                     {item.query}
                   </p>
                   {/* Snippet */}
@@ -215,16 +215,16 @@ function RecentAIQueriesCard() {
                     {item.snippet}
                   </p>
                   {/* Footer row */}
-                  <div className="mt-1.5 flex items-center gap-2">
-                    {/* Engine logo marks */}
-                    <div className="flex items-center gap-1">
+                  <div className="mt-2 flex items-center gap-2">
+                    {/* Engine logo marks — slightly larger */}
+                    <div className="flex items-center gap-1.5">
                       {item.engines.map((name) => {
                         const Logo = ENGINE_LOGOS[name]
-                        return Logo ? <Logo key={name} size="sm" /> : null
+                        return Logo ? <Logo key={name} size="md" /> : null
                       })}
                     </div>
-                    <span className="text-[10px] text-muted-foreground">|</span>
-                    <span className="text-[10px] font-medium tabular-nums text-foreground">{item.score}</span>
+                    <span className="text-[10px] text-muted-foreground">·</span>
+                    <span className="text-[11px] font-semibold tabular-nums text-foreground">{item.score}</span>
                     <span className="text-[10px] text-muted-foreground ml-auto">{item.time}</span>
                   </div>
                 </div>
@@ -243,17 +243,17 @@ function RecentAIQueriesCard() {
 function InvisibilityCard() {
   return (
     <div className="rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-6">
-      <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground mb-4">What AI says when customers search for you</p>
+      <p className="text-[13px] font-semibold tracking-[-0.01em] text-foreground mb-4">What AI says when customers search for you</p>
 
-      {/* Simulated AI response */}
-      <div className="rounded-lg bg-[#F8F8F8] p-4 space-y-3">
-        <div className="flex items-start gap-2">
-          <div className="h-5 w-5 rounded-full bg-[#0A0A0A] flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
+      {/* Simulated AI response — differentiated background */}
+      <div className="rounded-xl border border-border/60 bg-[#F5F7FF] p-4 space-y-3">
+        <div className="flex items-start gap-2.5">
+          <div className="h-6 w-6 rounded-full bg-[#0A0A0A] flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
             <span className="text-[8px] text-white font-bold">AI</span>
           </div>
-          <div className="space-y-2 text-sm text-foreground/80 leading-relaxed">
-            <p>&quot;Here are the best coffee shops near downtown:&quot;</p>
-            <div className="space-y-1.5">
+          <div className="space-y-2.5 text-sm text-foreground/80 leading-relaxed flex-1">
+            <p className="text-xs font-medium text-foreground">&quot;Here are the best coffee shops near downtown:&quot;</p>
+            <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-foreground">1. The Daily Grind</span>
                 <span className="text-[10px] text-muted-foreground">— Highly rated for specialty lattes</span>
@@ -267,14 +267,14 @@ function InvisibilityCard() {
                 <span className="text-[10px] text-muted-foreground">— Popular for cold brew</span>
               </div>
             </div>
-            <div className="pt-2 border-t border-border/40">
-              <p className="text-xs text-red-500/80 italic">Your business isn&apos;t mentioned.</p>
+            <div className="pt-2.5 border-t border-border/60">
+              <p className="text-sm font-semibold text-red-500 italic">Your business isn&apos;t mentioned.</p>
             </div>
           </div>
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground mt-3 text-center">This is what your customers see — without Beamix.</p>
+      <p className="text-xs text-muted-foreground mt-3.5 text-center">This is what your customers see — without Beamix.</p>
     </div>
   )
 }
