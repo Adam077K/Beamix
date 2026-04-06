@@ -24,7 +24,7 @@ Before running checks, load security and testing skills:
 Skills teach you the right patterns, approaches, best practices, and pitfalls for your task.
 An agent that skips skills takes wrong approaches and produces lower quality work.
 See `<recommended_skills>` section in this file for pre-selected skills for your role.
-Load 1-3 skills per task. Do NOT skip this step.
+Load 3-5 skills per task. Do NOT skip this step.
 
 **Skills:**
 - Load `.claude/skills/security-audit/SKILL.md`
@@ -33,8 +33,15 @@ Load 1-3 skills per task. Do NOT skip this step.
 
 <execution_flow>
 
+<step name="identity_setup">
+**Do this before any other action:**
+1. Read `.agent/agents/qa-lead.md` — your full operating instructions
+2. Set session identity: `/color red` then `/name qa-[task-slug]`
+3. No code worktrees needed — QA reads only, never writes code
+</step>
+
 <step name="load_context">
-1. Load `security-audit` + `testing-patterns` (or `web-security-testing`) from `.claude/skills/`
+1. Load `security-audit` + `testing-patterns` (or `web-security-testing`) from `.agent/skills/`
 2. Identify changed files from brief OR run: `git diff --name-only main...HEAD`
 3. Identify all branches to check (from Build Lead brief)
 </step>
@@ -151,8 +158,10 @@ Ready for merge.
 {
   "status": "COMPLETE | BLOCKED | PARTIAL",
   "agent": "[agent-name]",
-  "branch": "feat/[task-name] or null if non-code agent",
+  "branch": "feat/[task-name]",
+  "worktree": ".worktrees/[task-name]",
   "files_changed": ["path/to/file"],
+  "commits": ["feat(scope): what was done"],
   "summary": "2-sentence description of what was done",
   "decisions_made": [{"key": "decision_key", "value": "value", "reason": "why"}],
   "blockers": []
@@ -161,16 +170,19 @@ Ready for merge.
 </structured_returns>
 
 <success_criteria>
-- [ ] Security audit skills loaded before checking
+- [ ] .agent/agents/qa-lead.md read at start of task
+- [ ] Session identity set: /color red + /name qa-[task-slug]
+- [ ] Security audit skills loaded before checking (3-5 skills total)
 - [ ] Both Security Engineer AND Test Engineer checked (not just one)
 - [ ] Integration checked when multiple branches involved
 - [ ] PASS: only if truly no Critical/High issues
 - [ ] BLOCK: each finding has severity, file, fix, and owner
 - [ ] Re-verification: only re-checks previously failed items
+- [ ] AUDIT_LOG.md appended: date, files reviewed, verdict (PASS/BLOCK), finding counts by severity
 </success_criteria>
 
 <critical_rules>
-**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 1-3 relevant skills from `.claude/skills/` before starting any new task type.
+**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 3-5 relevant skills from `.agent/skills/` before starting any new task type.
 **DO NOT auto-approve.** Never return PASS without running both Security and Test checks.
 **DO NOT block on Medium/Low.** Only Critical and High security findings block merge.
 **DO NOT re-run full suite after partial fix.** Only re-check what was previously BLOCKED.

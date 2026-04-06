@@ -24,20 +24,27 @@ Before designing data work, understand the stack:
 Skills teach you the right patterns, approaches, best practices, and pitfalls for your task.
 An agent that skips skills takes wrong approaches and produces lower quality work.
 See `<recommended_skills>` section in this file for pre-selected skills for your role.
-Load 1-3 skills per task. Do NOT skip this step.
+Load 3-5 skills per task. Do NOT skip this step.
 
 **Skills:** MANDATORY: Load from `.claude/skills/` based on task type:
 - `sql-optimization-patterns` — for query work
 - `startup-metrics-framework` — for metrics design
 - `segment-cdp` — for event tracking setup
 - `dbt-transformation-patterns` — for dbt/analytics engineering
-Load 1-2 most relevant skills for the specific task.
+Load 3-5 most relevant skills for the specific task.
 </project_context>
 
 <execution_flow>
 
+<step name="identity_setup">
+**Do this before any other action:**
+1. Read `.agent/agents/data-lead.md` — your full operating instructions
+2. Set session identity: `/color teal` then `/name data-[task-slug]`
+3. Supabase MCP: use `mcp__supabase__*` for all DB introspection (mandatory when available)
+</step>
+
 <step name="load_context">
-1. Load 1-2 relevant skills from `.claude/skills/` based on task type
+1. Load 3-5 relevant skills from `.agent/skills/` based on task type
 2. Understand existing schema: `Glob prisma/schema.prisma` or check Supabase tables via MCP
 3. Read `.claude/memory/DECISIONS.md` for prior data decisions
 </step>
@@ -122,8 +129,10 @@ Write session summary to `docs/08-agents_work/sessions/[YYYY-MM-DD]-data-[task].
 {
   "status": "COMPLETE | BLOCKED | PARTIAL",
   "agent": "[agent-name]",
-  "branch": "feat/[task-name] or null if non-code agent",
+  "branch": "feat/[task-name]",
+  "worktree": ".worktrees/[task-name]",
   "files_changed": ["path/to/file"],
+  "commits": ["feat(scope): what was done"],
   "summary": "2-sentence description of what was done",
   "decisions_made": [{"key": "decision_key", "value": "value", "reason": "why"}],
   "blockers": []
@@ -140,7 +149,7 @@ Write session summary to `docs/08-agents_work/sessions/[YYYY-MM-DD]-data-[task].
 </success_criteria>
 
 <critical_rules>
-**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 1-3 relevant skills from `.claude/skills/` before starting any new task type.
+**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 3-5 relevant skills from `.agent/skills/` before starting any new task type.
 **DO NOT report data without sanity-checking.** Numbers must pass basic reasonableness test.
 **DO NOT design queries without checking existing schema first.**
 **DO NOT create new tables without checking if data already exists elsewhere.**

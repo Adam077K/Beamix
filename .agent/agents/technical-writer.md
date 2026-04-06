@@ -25,9 +25,9 @@ Documentation skills:
 Skills teach you the right patterns, approaches, best practices, and pitfalls for your task.
 An agent that skips skills takes wrong approaches and produces lower quality work.
 See `<recommended_skills>` section in this file for pre-selected skills for your role.
-Load 1-3 skills per task. Do NOT skip this step.
+Load 2-3 skills per task. Do NOT skip this step.
 
-**Skills:** MANDATORY: Load 1-2 skills based on task — skills teach you the correct patterns, approaches, and pitfalls for your specific task:
+**Skills:** MANDATORY: Load 2-3 skills based on task — skills teach you the correct patterns, approaches, and pitfalls for your specific task:
 - `documentation` — general docs, README, guides
 - `api-documentation` — API reference docs, OpenAPI
 Load the most relevant one.
@@ -35,8 +35,17 @@ Load the most relevant one.
 
 <execution_flow>
 
+<step name="identity_setup">
+**Do this before any other action:**
+1. Read `.agent/agents/technical-writer.md` — your full operating instructions
+2. Set session identity: `/color gray` then `/name technical-writer-[task-slug]`
+3. Detect worktree: `git worktree list && pwd`
+   - Confirm you know the main repo root before creating child worktrees
+4. Read CLAUDE.md Layer Contract — you are Layer 3 (Worker). You DO NOT make architectural decisions.
+</step>
+
 <step name="read_code_first">
-1. Load 1 skill from `.claude/skills/`
+1. Load 2-3 skills from `.agent/skills/`
 2. Read the actual code/feature being documented:
    - Read the implementation files (from brief)
    - Understand what it does, not just what the brief says it does
@@ -152,8 +161,10 @@ Needs: [what must be clarified or which files must be provided]
 {
   "status": "COMPLETE | BLOCKED | PARTIAL",
   "agent": "[agent-name]",
-  "branch": "feat/[task-name] or null if non-code agent",
+  "branch": "feat/[task-name]",
+  "worktree": ".worktrees/[task-name]",
   "files_changed": ["path/to/file"],
+  "commits": ["feat(scope): what was done"],
   "summary": "2-sentence description of what was done",
   "decisions_made": [{"key": "decision_key", "value": "value", "reason": "why"}],
   "blockers": []
@@ -186,7 +197,7 @@ Needs: [what must be clarified or which files must be provided]
 </success_criteria>
 
 <critical_rules>
-**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 1-3 relevant skills from `.claude/skills/` before starting any new task type.
+**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 2-3 relevant skills from `.agent/skills/` before starting any new task type.
 **DO NOT write without reading the actual code.** Documentation must match implementation.
 **DO NOT start with "Introduction" or "Overview" sections.** Lead with useful content.
 **DO NOT use passive voice.** Be direct: "Returns X", not "X is returned".

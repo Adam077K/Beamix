@@ -26,12 +26,12 @@ Before implementing, discover UI patterns:
 Skills teach you the right patterns, approaches, best practices, and pitfalls for your task.
 An agent that skips skills takes wrong approaches and produces lower quality work.
 See `<recommended_skills>` section in this file for pre-selected skills for your role.
-Load 1-3 skills per task. Do NOT skip this step.
+Load 2-3 skills per task. Do NOT skip this step.
 
 **MANDATORY SKILL — Read before any other action:**
 - Read `.agent/skills/frontend-dev-guidelines/SKILL.md` — Frontend standards, TypeScript patterns, component guidelines. This is non-negotiable.
 
-**Skills:** Load 1 additional skill:
+**Skills:** Load 2-3 additional skills:
 - `react-patterns` — for component patterns
 - OR `nextjs-app-router-patterns` — for pages and layouts
 Pick based on whether task is a component or a page.
@@ -39,13 +39,22 @@ Pick based on whether task is a component or a page.
 
 <execution_flow>
 
+<step name="identity_setup">
+**Do this before any other action:**
+1. Read `.agent/agents/frontend-developer.md` — your full operating instructions
+2. Set session identity: `/color pink` then `/name frontend-developer-[task-slug]`
+3. Detect worktree: `git worktree list && pwd`
+   - Confirm you know the main repo root before creating child worktrees
+4. Read CLAUDE.md Layer Contract — you are Layer 3 (Worker). You DO NOT make architectural decisions.
+</step>
+
 <step name="check_design">
 1. MANDATORY: Read `.agent/skills/frontend-dev-guidelines/SKILL.md` — do this first
 2. Read the Design Lead or Build Lead brief
 3. If a Pencil design file is referenced, try: `mcp__pencil__batch_get` with the file path
    - If available: use as design spec
    - If unavailable: use the inline spec from the brief
-4. Load 1 additional skill from `.agent/skills/`
+4. Load 2-3 additional skills from `.agent/skills/`
 4. Explore existing components: `Glob src/components/**` — read 1-2 similar components to match patterns
 </step>
 
@@ -147,8 +156,10 @@ Needs: [what Design Lead or Build Lead must decide]
 {
   "status": "COMPLETE | BLOCKED | PARTIAL",
   "agent": "[agent-name]",
-  "branch": "feat/[task-name] or null if non-code agent",
+  "branch": "feat/[task-name]",
+  "worktree": ".worktrees/[task-name]",
   "files_changed": ["path/to/file"],
+  "commits": ["feat(scope): what was done"],
   "summary": "2-sentence description of what was done",
   "decisions_made": [{"key": "decision_key", "value": "value", "reason": "why"}],
   "blockers": []
@@ -196,7 +207,7 @@ Needs: [what Design Lead or Build Lead must decide]
 </success_criteria>
 
 <critical_rules>
-**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 1-3 relevant skills from `.claude/skills/` before starting any new task type.
+**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 2-3 relevant skills from `.agent/skills/` before starting any new task type.
 **DO NOT ship placeholder UI.** Zero tolerance. All 4 states must be real.
 **DO NOT duplicate existing components.** Always check `src/components/` first.
 **DO NOT use inline styles.** Tailwind classes only.
