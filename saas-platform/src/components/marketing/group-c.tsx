@@ -7,19 +7,19 @@ import { CompetitorBarChart } from '@/components/dashboard/charts/competitor-bar
 // ─── Demo data ────────────────────────────────────────────────────────────────
 
 const DEMO_COMPETITORS = [
-  { name: 'Acme Coffee', score: 75, isUser: true },
-  { name: 'Starbucks', score: 68, isUser: false },
-  { name: 'Blue Bottle', score: 52, isUser: false },
-  { name: "Peet's Coffee", score: 44, isUser: false },
-  { name: 'Intelligentsia', score: 38, isUser: false },
+  { name: 'Brew & Bean', score: 75, isUser: true },
+  { name: 'The Daily Grind', score: 68, isUser: false },
+  { name: 'Morning Roast Co', score: 52, isUser: false },
+  { name: 'Bean Scene', score: 44, isUser: false },
+  { name: 'Espresso Lab', score: 38, isUser: false },
 ]
 
 const LEADERBOARD = [
-  { rank: 1, name: 'Acme Coffee', isUser: true, mentions: 534, position: 3.5, change: -3.3, visibility: 31.5 },
-  { rank: 2, name: 'Starbucks', mentions: 142, position: 4.7, change: -2.6, visibility: 28.6 },
-  { rank: 3, name: 'Blue Bottle', mentions: 164, position: 5.8, change: 3.3, visibility: 18.5 },
-  { rank: 4, name: "Peet's Coffee", mentions: 139, position: 6.5, change: -1.4, visibility: 16.0 },
-  { rank: 5, name: 'Intelligentsia', mentions: 98, position: 7.5, change: 3.3, visibility: 13.4 },
+  { rank: 1, name: 'Brew & Bean', isUser: true, mentions: 534, position: 3.5, change: -3.3, visibility: 31.5 },
+  { rank: 2, name: 'The Daily Grind', mentions: 142, position: 4.7, change: -2.6, visibility: 28.6 },
+  { rank: 3, name: 'Morning Roast Co', mentions: 164, position: 5.8, change: 3.3, visibility: 18.5 },
+  { rank: 4, name: 'Bean Scene', mentions: 139, position: 6.5, change: -1.4, visibility: 16.0 },
+  { rank: 5, name: 'Espresso Lab', mentions: 98, position: 7.5, change: 3.3, visibility: 13.4 },
 ]
 
 const BRAND_COLORS = ['bg-[#3370FF]', 'bg-[#1E40AF]', 'bg-[#5A8FFF]', 'bg-[#93B4FF]', 'bg-[#2563EB]']
@@ -68,7 +68,7 @@ export function GroupC() {
               key={row.rank}
               className={cn(
                 'grid grid-cols-[18px_1fr_52px_36px_44px_52px] gap-1 items-center px-5 py-2.5',
-                row.isUser && 'bg-primary/5'
+                row.isUser && 'bg-[#3370FF]/8'
               )}
             >
               <span className="text-xs text-muted-foreground tabular-nums">{row.rank}</span>
@@ -82,7 +82,7 @@ export function GroupC() {
                   {row.name}
                 </span>
                 {row.isUser && (
-                  <span className="shrink-0 rounded bg-muted px-1 py-0 text-[9px] font-medium text-muted-foreground">You</span>
+                  <span className="shrink-0 rounded bg-[#3370FF] px-1 py-0 text-[9px] font-medium text-white">You</span>
                 )}
               </span>
 

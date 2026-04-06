@@ -30,40 +30,13 @@ const TYPE_BADGE_STYLES: Record<string, string> = {
   Editorial: 'bg-[#EEF3FF] text-[#5A8FFF]',
 }
 
-interface BrandDot {
-  name: string
-  initials: string
-  color: string
-  x: number // 0-100 (left = 0, right = 100)
-  y: number // 0-100 (top = 0 = high sentiment, bottom = low sentiment)
-  isUser?: boolean
-}
-
-const BRAND_DOTS: BrandDot[] = [
-  { name: 'Acme Coffee', initials: 'AC', color: '#3370FF', x: 70, y: 25, isUser: true },
-  { name: 'Starbucks', initials: 'SB', color: '#2563EB', x: 82, y: 30 },
-  { name: 'Blue Bottle', initials: 'BB', color: '#93B4FF', x: 50, y: 48 },
-  { name: "Peet's Coffee", initials: 'PC', color: '#C5D7FF', x: 30, y: 72 },
-  { name: 'Intelligentsia', initials: 'IN', color: '#5A8FFF', x: 18, y: 28 },
-]
-
-const AI_MODELS = [
-  { name: 'ChatGPT', checked: true, plan: null },
-  { name: 'Gemini', checked: true, plan: null },
-  { name: 'Perplexity', checked: true, plan: null },
-  { name: 'Claude', checked: false, plan: 'Pro' as const },
-  { name: 'Google AI Overviews', checked: false, plan: 'Pro' as const },
-  { name: 'Grok', checked: false, plan: 'Business' as const },
-  { name: 'DeepSeek', checked: false, plan: 'Business' as const },
-]
-
 const RECENT_QUERIES = [
   {
     id: 1,
     color: '#3370FF',
     query: "What's the best coffee shop near downtown?",
-    snippet: 'Acme Coffee is highly recommended for its specialty roasts and relaxed atmosphere...',
-    engines: ['#3370FF', '#2563EB', '#5A8FFF'],
+    snippet: 'Brew & Bean is highly recommended for its specialty roasts and relaxed atmosphere...',
+    engineNames: 'ChatGPT, Gemini, Perplexity',
     score: 80,
     time: '1d ago',
   },
@@ -71,8 +44,8 @@ const RECENT_QUERIES = [
     id: 2,
     color: '#5A8FFF',
     query: 'Which coffee shops have good AI search visibility?',
-    snippet: 'Acme Coffee ranks top for AI mentions across ChatGPT and Perplexity...',
-    engines: ['#3370FF', '#1E40AF', '#5A8FFF', '#60A5FA'],
+    snippet: 'Brew & Bean ranks top for AI mentions across ChatGPT and Perplexity...',
+    engineNames: 'ChatGPT, Claude, Perplexity',
     score: 74,
     time: '2d ago',
   },
@@ -80,8 +53,8 @@ const RECENT_QUERIES = [
     id: 3,
     color: '#93B4FF',
     query: 'Best specialty coffee near me with organic options',
-    snippet: 'Acme Coffee and Blue Bottle are frequently mentioned in AI answers about organic...',
-    engines: ['#3370FF', '#2563EB'],
+    snippet: 'Brew & Bean and Morning Roast Co are frequently mentioned in AI answers about organic...',
+    engineNames: 'ChatGPT, Gemini',
     score: 68,
     time: '3d ago',
   },
@@ -89,8 +62,8 @@ const RECENT_QUERIES = [
     id: 4,
     color: '#60A5FA',
     query: 'Coffee shop open late night with good wifi?',
-    snippet: 'Several users point to Acme Coffee as the go-to for late-night work sessions...',
-    engines: ['#3370FF', '#5A8FFF', '#1E40AF'],
+    snippet: 'Several users point to Brew & Bean as the go-to for late-night work sessions...',
+    engineNames: 'ChatGPT, Perplexity, Claude',
     score: 61,
     time: '4d ago',
   },
@@ -142,7 +115,7 @@ function TrendingTopicsCard() {
               <span className="flex items-center gap-1.5 min-w-0">
                 <span className="text-xs text-foreground truncate">{row.topic}</span>
                 {row.hot && (
-                  <span className="shrink-0 rounded-full bg-[#EEF3FF] text-[#3370FF] text-[9px] font-semibold px-1.5 py-0.5 leading-none">
+                  <span className="shrink-0 rounded-full bg-[#EEF3FF] text-[#3370FF] text-[10px] font-semibold px-1.5 py-0.5 leading-none">
                     Hot
                   </span>
                 )}
@@ -231,186 +204,7 @@ function TopAISourcesCard() {
   )
 }
 
-// ─── Card 3: Brand Position Map ───────────────────────────────────────────────
-
-function BrandPositionMapCard() {
-  return (
-    <Card className="overflow-hidden rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
-      <CardHeader className="pb-1 pt-5 px-5">
-        <div>
-          <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">Brand Positioning</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Visibility vs Sentiment</p>
-        </div>
-      </CardHeader>
-      <CardContent className="px-5 pb-5 pt-2">
-        <div className="relative">
-          {/* Y-axis label */}
-          <div className="absolute -left-1 top-1/2 -translate-y-1/2 -rotate-90 text-[9px] text-muted-foreground tracking-wide whitespace-nowrap select-none" aria-hidden="true">
-            Sentiment →
-          </div>
-
-          {/* Quadrant container */}
-          <div className="ml-5 relative" style={{ paddingBottom: '20px' }}>
-            <div
-              className="relative w-full rounded-lg overflow-hidden"
-              style={{ height: 180 }}
-              role="img"
-              aria-label="Brand positioning quadrant chart showing brands by visibility and sentiment"
-            >
-              {/* Quadrant backgrounds */}
-              <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
-                <div className="border-r border-b border-border/30 bg-[#F8FAFF]/60" />
-                <div className="border-b border-border/30 bg-[#EEF3FF]/40" />
-                <div className="border-r border-border/30 bg-[#FAFAFA]/40" />
-                <div className="bg-[#F5F8FF]/40" />
-              </div>
-
-              {/* Quadrant labels */}
-              <span className="absolute top-2 left-3 text-[9px] font-medium text-[#93B4FF] select-none">Niche Players</span>
-              <span className="absolute top-2 right-3 text-[9px] font-medium text-[#3370FF] select-none">Leaders</span>
-              <span className="absolute bottom-2 left-3 text-[9px] font-medium text-muted-foreground select-none">Laggers</span>
-              <span className="absolute bottom-2 right-3 text-[9px] font-medium text-muted-foreground select-none">Controversial</span>
-
-              {/* Center crosshairs */}
-              <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-                <div className="absolute top-0 bottom-0 left-1/2 w-px bg-border/40" />
-                <div className="absolute left-0 right-0 top-1/2 h-px bg-border/40" />
-              </div>
-
-              {/* Brand dots */}
-              {BRAND_DOTS.map((dot) => (
-                <div
-                  key={dot.name}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
-                  style={{
-                    left: `${dot.x}%`,
-                    top: `${dot.y}%`,
-                    zIndex: dot.isUser ? 10 : 5,
-                  }}
-                  title={dot.name}
-                >
-                  {dot.isUser && (
-                    <span
-                      className="absolute h-7 w-7 rounded-md opacity-20"
-                      style={{ backgroundColor: dot.color }}
-                      aria-hidden="true"
-                    />
-                  )}
-                  <span
-                    className={cn(
-                      'h-5 w-5 rounded-md flex items-center justify-center text-[8px] font-bold text-white',
-                      dot.isUser && 'ring-2 ring-offset-1 ring-[#3370FF]'
-                    )}
-                    style={{ backgroundColor: dot.color }}
-                  >
-                    {dot.initials}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* X-axis label */}
-            <div className="text-center mt-1 text-[9px] text-muted-foreground tracking-wide select-none" aria-hidden="true">
-              Visibility →
-            </div>
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="mt-2 flex flex-wrap gap-2">
-          {BRAND_DOTS.map((dot) => (
-            <span key={dot.name} className="flex items-center gap-1">
-              <span
-                className="h-2 w-2 rounded-sm shrink-0"
-                style={{ backgroundColor: dot.color }}
-                aria-hidden="true"
-              />
-              <span className={cn('text-[10px]', dot.isUser ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
-                {dot.name}
-              </span>
-            </span>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// ─── Card 4: AI Models Scanned ────────────────────────────────────────────────
-
-function CheckIcon({ checked }: { checked: boolean }) {
-  if (checked) {
-    return (
-      <svg
-        className="h-4 w-4 shrink-0"
-        viewBox="0 0 16 16"
-        fill="none"
-        aria-hidden="true"
-      >
-        <rect x="1" y="1" width="14" height="14" rx="4" fill="#3370FF" />
-        <path d="M4.5 8L7 10.5L11.5 5.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    )
-  }
-  return (
-    <svg
-      className="h-4 w-4 shrink-0"
-      viewBox="0 0 16 16"
-      fill="none"
-      aria-hidden="true"
-    >
-      <rect x="1" y="1" width="14" height="14" rx="4" stroke="#D1D5DB" strokeWidth="1.5" fill="none" />
-    </svg>
-  )
-}
-
-const PLAN_BADGE_STYLES: Record<'Pro' | 'Business', string> = {
-  Pro: 'bg-[#EEF3FF] text-[#3370FF]',
-  Business: 'bg-[#E8EEFB] text-[#1E40AF]',
-}
-
-function AIModelsScanCard() {
-  return (
-    <Card className="overflow-hidden rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
-      <CardHeader className="pb-0 pt-5 px-5">
-        <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">AI Models Scanned</p>
-      </CardHeader>
-      <CardContent className="px-5 pb-5 pt-3">
-        <div className="space-y-2.5">
-          {AI_MODELS.map((model) => (
-            <div key={model.name} className="flex items-center gap-2.5">
-              <CheckIcon checked={model.checked} />
-              <span
-                className={cn(
-                  'flex-1 text-xs',
-                  model.checked ? 'text-foreground font-medium' : 'text-muted-foreground'
-                )}
-              >
-                {model.name}
-              </span>
-              {model.plan && (
-                <span
-                  className={cn(
-                    'rounded-full text-[9px] font-semibold px-1.5 py-0.5 leading-none shrink-0',
-                    PLAN_BADGE_STYLES[model.plan]
-                  )}
-                >
-                  {model.plan}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <p className="mt-4 text-[11px] text-muted-foreground">
-          Upgrade to Pro to unlock 4 more AI engines.
-        </p>
-      </CardContent>
-    </Card>
-  )
-}
-
-// ─── Card 5: Recent AI Queries ────────────────────────────────────────────────
+// ─── Card 3: Recent AI Queries ────────────────────────────────────────────────
 
 function RecentAIQueriesCard() {
   return (
@@ -440,17 +234,8 @@ function RecentAIQueriesCard() {
                   </p>
                   {/* Footer row */}
                   <div className="mt-1.5 flex items-center gap-2">
-                    {/* Engine dots */}
-                    <div className="flex items-center gap-0.5" aria-label="AI engines that answered">
-                      {item.engines.map((eng, i) => (
-                        <span
-                          key={i}
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: eng }}
-                          aria-hidden="true"
-                        />
-                      ))}
-                    </div>
+                    {/* Engine names instead of cryptic dots */}
+                    <span className="text-[10px] text-muted-foreground">{item.engineNames}</span>
                     <span className="text-[10px] text-muted-foreground">|</span>
                     <span className="text-[10px] font-medium tabular-nums text-foreground">{item.score}</span>
                     <span className="text-[10px] text-muted-foreground ml-auto">{item.time}</span>
@@ -465,7 +250,7 @@ function RecentAIQueriesCard() {
   )
 }
 
-// ─── Card 6: Dark Donut (Traffic by AI Engine) ────────────────────────────────
+// ─── Card 4: Dark Donut (Traffic by AI Engine) — full width ──────────────────
 
 function DarkDonutTooltip({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number }> }) {
   if (!active || !payload || payload.length === 0) return null
@@ -483,8 +268,8 @@ function DarkDonutTooltip({ active, payload }: { active?: boolean; payload?: Arr
 function DarkDonutCard() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [chartWidth, setChartWidth] = useState(0)
-  const CHART_HEIGHT = 200
-  const DONUT_WIDTH = 160
+  const CHART_HEIGHT = 240
+  const DONUT_WIDTH = 180
 
   useEffect(() => {
     function measure() {
@@ -518,8 +303,8 @@ function DarkDonutCard() {
                 nameKey="engine"
                 cx="50%"
                 cy="50%"
-                innerRadius={52}
-                outerRadius={72}
+                innerRadius={60}
+                outerRadius={82}
                 paddingAngle={2}
                 stroke="none"
                 isAnimationActive={false}
@@ -566,6 +351,47 @@ function DarkDonutCard() {
   )
 }
 
+// ─── Card 5: Invisibility Card ────────────────────────────────────────────────
+
+function InvisibilityCard() {
+  return (
+    <div className="rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] p-6">
+      <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground mb-4">What AI says when customers search for you</p>
+
+      {/* Simulated AI response */}
+      <div className="rounded-lg bg-[#F8F8F8] p-4 space-y-3">
+        <div className="flex items-start gap-2">
+          <div className="h-5 w-5 rounded-full bg-[#0A0A0A] flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
+            <span className="text-[8px] text-white font-bold">AI</span>
+          </div>
+          <div className="space-y-2 text-sm text-foreground/80 leading-relaxed">
+            <p>&quot;Here are the best coffee shops near downtown:&quot;</p>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-foreground">1. The Daily Grind</span>
+                <span className="text-[10px] text-muted-foreground">— Highly rated for specialty lattes</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-foreground">2. Morning Roast Co</span>
+                <span className="text-[10px] text-muted-foreground">— Known for organic blends</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-foreground">3. Espresso Lab</span>
+                <span className="text-[10px] text-muted-foreground">— Popular for cold brew</span>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-border/40">
+              <p className="text-xs text-red-500/80 italic">Your business isn&apos;t mentioned.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-xs text-muted-foreground mt-3 text-center">This is what your customers see — without Beamix.</p>
+    </div>
+  )
+}
+
 // ─── Group New export ─────────────────────────────────────────────────────────
 
 export function GroupNew() {
@@ -578,17 +404,14 @@ export function GroupNew() {
         <TopAISourcesCard />
       </div>
 
-      {/* Row 2: Brand Position Map + AI Models Scanned */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <BrandPositionMapCard />
-        <AIModelsScanCard />
-      </div>
-
-      {/* Row 3: Recent AI Queries + Dark Donut */}
+      {/* Row 2: Recent AI Queries + Invisibility Card */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <RecentAIQueriesCard />
-        <DarkDonutCard />
+        <InvisibilityCard />
       </div>
+
+      {/* Row 3: Dark Donut — full width */}
+      <DarkDonutCard />
 
     </div>
   )
