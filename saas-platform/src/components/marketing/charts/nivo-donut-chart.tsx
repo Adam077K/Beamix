@@ -35,7 +35,7 @@ export function NivoDonutChart({ data }: NivoDonutChartProps) {
   return (
     <div className="flex items-center gap-6">
       {/* Donut */}
-      <div className="relative shrink-0" style={{ width: 180, height: 180 }}>
+      <div className="relative shrink-0" style={{ width: 220, height: 220 }}>
         <ResponsivePie
           data={nivoData}
           margin={{ top: 10, right: 10, bottom: 10, left: 10 }}

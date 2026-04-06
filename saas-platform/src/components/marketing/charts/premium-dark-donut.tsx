@@ -47,7 +47,7 @@ function DonutPanel({ label, engines }: { label: string; engines: EngineEntry[] 
       <p className="text-xs font-medium text-white/60 mb-3">{label}</p>
 
       {/* Donut */}
-      <div className="relative mx-auto" style={{ width: 160, height: 160 }}>
+      <div className="relative mx-auto" style={{ width: 220, height: 220 }}>
         <ResponsivePie
           data={nivoData}
           margin={{ top: 8, right: 8, bottom: 8, left: 8 }}
@@ -65,7 +65,7 @@ function DonutPanel({ label, engines }: { label: string; engines: EngineEntry[] 
         />
         {/* Center number */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-xl font-semibold tracking-[-0.02em] tabular-nums text-white leading-none">
+          <span className="text-2xl font-bold tracking-[-0.02em] tabular-nums text-white leading-none">
             {total.toLocaleString()}
           </span>
           <span className="text-[9px] text-white/40 mt-0.5 uppercase tracking-wide">{label}</span>
