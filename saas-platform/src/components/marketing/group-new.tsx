@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from 'react'
 import { PieChart, Pie, Cell, Tooltip } from 'recharts'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { DomainFavicon, ENGINE_LOGOS } from '@/components/marketing/logos'
 
 // ─── Demo data ────────────────────────────────────────────────────────────────
 
@@ -36,7 +37,7 @@ const RECENT_QUERIES = [
     color: '#3370FF',
     query: "What's the best coffee shop near downtown?",
     snippet: 'Brew & Bean is highly recommended for its specialty roasts and relaxed atmosphere...',
-    engineNames: 'ChatGPT, Gemini, Perplexity',
+    engines: ['ChatGPT', 'Gemini', 'Perplexity'],
     score: 80,
     time: '1d ago',
   },
@@ -45,7 +46,7 @@ const RECENT_QUERIES = [
     color: '#5A8FFF',
     query: 'Which coffee shops have good AI search visibility?',
     snippet: 'Brew & Bean ranks top for AI mentions across ChatGPT and Perplexity...',
-    engineNames: 'ChatGPT, Claude, Perplexity',
+    engines: ['ChatGPT', 'Claude', 'Perplexity'],
     score: 74,
     time: '2d ago',
   },
@@ -54,7 +55,7 @@ const RECENT_QUERIES = [
     color: '#93B4FF',
     query: 'Best specialty coffee near me with organic options',
     snippet: 'Brew & Bean and Morning Roast Co are frequently mentioned in AI answers about organic...',
-    engineNames: 'ChatGPT, Gemini',
+    engines: ['ChatGPT', 'Gemini'],
     score: 68,
     time: '3d ago',
   },
@@ -63,7 +64,7 @@ const RECENT_QUERIES = [
     color: '#60A5FA',
     query: 'Coffee shop open late night with good wifi?',
     snippet: 'Several users point to Brew & Bean as the go-to for late-night work sessions...',
-    engineNames: 'ChatGPT, Perplexity, Claude',
+    engines: ['ChatGPT', 'Perplexity', 'Claude'],
     score: 61,
     time: '4d ago',
   },
@@ -169,15 +170,9 @@ function TopAISourcesCard() {
               key={row.domain}
               className="grid grid-cols-[1fr_76px_52px_60px] gap-1 items-center px-5 py-2.5"
             >
-              {/* Domain with avatar */}
+              {/* Domain with favicon mark */}
               <span className="flex items-center gap-2 min-w-0">
-                <span
-                  className="h-5 w-5 rounded-md flex items-center justify-center text-[9px] font-bold text-white shrink-0"
-                  style={{ backgroundColor: row.color }}
-                  aria-hidden="true"
-                >
-                  {row.letter}
-                </span>
+                <DomainFavicon domain={row.domain} size="sm" />
                 <span className="text-xs text-foreground truncate">{row.domain}</span>
               </span>
 
@@ -234,8 +229,13 @@ function RecentAIQueriesCard() {
                   </p>
                   {/* Footer row */}
                   <div className="mt-1.5 flex items-center gap-2">
-                    {/* Engine names instead of cryptic dots */}
-                    <span className="text-[10px] text-muted-foreground">{item.engineNames}</span>
+                    {/* Engine logo marks */}
+                    <div className="flex items-center gap-1">
+                      {item.engines.map((name) => {
+                        const Logo = ENGINE_LOGOS[name]
+                        return Logo ? <Logo key={name} size="sm" /> : null
+                      })}
+                    </div>
                     <span className="text-[10px] text-muted-foreground">|</span>
                     <span className="text-[10px] font-medium tabular-nums text-foreground">{item.score}</span>
                     <span className="text-[10px] text-muted-foreground ml-auto">{item.time}</span>

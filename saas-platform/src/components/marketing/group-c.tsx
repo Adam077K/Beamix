@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { CompetitorBarChart } from '@/components/dashboard/charts/competitor-bar-chart'
+import { BrewBeanMark, CompetitorMark } from '@/components/marketing/logos'
 
 // ─── Demo data ────────────────────────────────────────────────────────────────
 
@@ -22,7 +23,6 @@ const LEADERBOARD = [
   { rank: 5, name: 'Espresso Lab', mentions: 98, position: 7.5, change: 3.3, visibility: 13.4 },
 ]
 
-const BRAND_COLORS = ['bg-[#3370FF]', 'bg-[#1E40AF]', 'bg-[#5A8FFF]', 'bg-[#93B4FF]', 'bg-[#2563EB]']
 
 // ─── Group C component ────────────────────────────────────────────────────────
 
@@ -75,9 +75,11 @@ export function GroupC() {
 
               {/* Brand cell */}
               <span className="flex items-center gap-1.5 min-w-0">
-                <span className={cn('h-5 w-5 rounded-md flex items-center justify-center text-[9px] font-bold text-white shrink-0', BRAND_COLORS[idx % BRAND_COLORS.length])}>
-                  {row.name.charAt(0)}
-                </span>
+                {row.isUser ? (
+                  <BrewBeanMark size="sm" />
+                ) : (
+                  <CompetitorMark name={row.name} index={idx - 1} size="sm" />
+                )}
                 <span className={cn('text-xs truncate', row.isUser ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
                   {row.name}
                 </span>

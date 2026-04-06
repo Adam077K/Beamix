@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import { PieChart, Pie, Cell, Tooltip } from 'recharts'
+import { ENGINE_LOGOS } from '@/components/marketing/logos'
 
 interface EngineDonutData {
   engine: string
@@ -98,21 +99,24 @@ export function BlueDonutChart({ data }: BlueDonutChartProps) {
 
       {/* Right-side legend */}
       <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-        {chartData.slice(0, 6).map((entry, index) => (
-          <div key={entry.engine} className="flex items-center justify-between gap-2 min-w-0">
-            <span className="flex items-center gap-1.5 min-w-0">
-              <span
-                className="h-2 w-2 rounded-full shrink-0"
-                style={{ backgroundColor: getBlueColor(index) }}
-                aria-hidden="true"
-              />
-              <span className="text-xs text-slate-500 truncate">{entry.engine}</span>
-            </span>
-            <span className="text-xs font-medium tabular-nums text-foreground shrink-0">
-              {entry.mentions}
-            </span>
-          </div>
-        ))}
+        {chartData.slice(0, 6).map((entry) => {
+          const Logo = ENGINE_LOGOS[entry.engine]
+          return (
+            <div key={entry.engine} className="flex items-center justify-between gap-2 min-w-0">
+              <span className="flex items-center gap-1.5 min-w-0">
+                {Logo ? (
+                  <Logo size="sm" />
+                ) : (
+                  <span className="h-4 w-4 rounded-md bg-muted shrink-0" />
+                )}
+                <span className="text-xs text-slate-500 truncate">{entry.engine}</span>
+              </span>
+              <span className="text-xs font-medium tabular-nums text-foreground shrink-0">
+                {entry.mentions}
+              </span>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

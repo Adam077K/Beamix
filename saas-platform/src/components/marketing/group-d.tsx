@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { ENGINE_LOGOS } from '@/components/marketing/logos'
 
 // ─── Demo data ────────────────────────────────────────────────────────────────
 
@@ -60,9 +61,16 @@ export function GroupD() {
         </CardHeader>
         <CardContent className="px-5 pb-5 pt-3">
           <div className="space-y-2.5">
-            {AI_MODELS.map((model) => (
+            {AI_MODELS.map((model) => {
+              const Logo = ENGINE_LOGOS[model.name]
+              return (
               <div key={model.name} className="flex items-center gap-2.5">
                 <CheckIcon checked={model.checked} />
+                {Logo ? (
+                  <Logo size="sm" />
+                ) : (
+                  <div className="h-5 w-5 rounded-md bg-muted shrink-0" />
+                )}
                 <span
                   className={cn(
                     'flex-1 text-xs',
@@ -82,7 +90,8 @@ export function GroupD() {
                   </span>
                 )}
               </div>
-            ))}
+            )
+            })}
           </div>
 
           <p className="mt-4 text-[11px] text-muted-foreground">
