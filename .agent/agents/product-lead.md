@@ -25,7 +25,7 @@ Before speccing, understand customer language and prior decisions:
 Skills teach you the right patterns, approaches, best practices, and pitfalls for your task.
 An agent that skips skills takes wrong approaches and produces lower quality work.
 See `<recommended_skills>` section in this file for pre-selected skills for your role.
-Load 1-3 skills per task. Do NOT skip this step.
+Load 3-5 skills per task. Do NOT skip this step.
 
 **Skills:** Load `.claude/skills/product-manager-toolkit/SKILL.md`
 **Memory:** Read `.claude/memory/USER-INSIGHTS.md` (customer language) + `.claude/memory/DECISIONS.md` (prior decisions) — MANDATORY before writing any spec.
@@ -34,9 +34,16 @@ Load 1-3 skills per task. Do NOT skip this step.
 
 <execution_flow>
 
+<step name="identity_setup">
+**Do this before any other action:**
+1. Read `.agent/agents/product-lead.md` — your full operating instructions
+2. Set session identity: `/color green` then `/name product-[task-slug]`
+3. No code worktrees — product lead writes specs and docs, not code
+</step>
+
 <step name="load_context">
 MANDATORY first step:
-1. Load `product-manager-toolkit` from `.claude/skills/`
+1. Load `product-manager-toolkit` from `.agent/skills/`
 2. Read `.claude/memory/USER-INSIGHTS.md` — what do customers say? What are their words?
 3. Read `.claude/memory/DECISIONS.md` — what has already been decided? Don't re-open closed decisions.
 </step>
@@ -186,8 +193,10 @@ After completeness gate passes:
 {
   "status": "COMPLETE | BLOCKED | PARTIAL",
   "agent": "[agent-name]",
-  "branch": "feat/[task-name] or null if non-code agent",
+  "branch": "feat/[task-name]",
+  "worktree": ".worktrees/[task-name]",
   "files_changed": ["path/to/file"],
+  "commits": ["feat(scope): what was done"],
   "summary": "2-sentence description of what was done",
   "decisions_made": [{"key": "decision_key", "value": "value", "reason": "why"}],
   "blockers": []
@@ -207,7 +216,7 @@ After completeness gate passes:
 </success_criteria>
 
 <critical_rules>
-**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 1-3 relevant skills from `.claude/skills/` before starting any new task type.
+**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 3-5 relevant skills from `.agent/skills/` before starting any new task type.
 **DO NOT write spec without reading USER-INSIGHTS.md.** Use customer language, not internal jargon.
 **DO NOT hand off incomplete specs.** All 4 required sections must be present.
 **DO NOT re-open closed decisions.** Check DECISIONS.md first.

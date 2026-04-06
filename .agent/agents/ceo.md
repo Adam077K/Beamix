@@ -26,11 +26,11 @@ Skills teach you the right patterns, approaches, best practices, and pitfalls fo
 
 ```bash
 # Step 1: Read .agent/skills/MANIFEST.json — filter by tags matching the task domain
-# Step 2: Load 1-2 matching .agent/skills/[name]/SKILL.md files only
+# Step 2: Load 3-5 matching .agent/skills/[name]/SKILL.md files only
 # Never use ls | grep directly — use the MANIFEST for reliable discovery
 ```
 
-Load 1-2 skills per task. See `<recommended_skills>` below for pre-selected options.
+Load 3-5 skills per task. See `<recommended_skills>` below for pre-selected options.
 Do NOT load AGENTS.md (too large). Do NOT skip this step.
 </project_context>
 
@@ -52,15 +52,38 @@ If LONG-TERM.md is missing, create it:
 ```
 </step>
 
+<step name="identity_and_worktree">
+**Set session identity first — before any other action:**
+
+1. Check if running inside a worktree:
+```bash
+git worktree list
+pwd
+```
+If you are in a worktree (more than one path listed), note the main repo root (first line).
+
+2. Set session color and name based on your worktree number:
+   - Primary CEO (worktrees/ceo-1-*): `/color gold`, `/name ceo-[task-slug]`
+   - Second parallel CEO: `/color orange`, `/name ceo-[task-slug]`
+   - Third parallel CEO: `/color teal`, `/name ceo-[task-slug]`
+   Use colors from the Agent Identity table in CLAUDE.md.
+
+3. When briefing code workers, always include:
+   ```
+   Worktree context: You are being spawned from [main-repo-path]. 
+   Create your child worktree using: git -C [main-repo-path] worktree add [main-repo-path]/.worktrees/[task] -b feat/[task]
+   ```
+</step>
+
 <step name="skill_discovery">
 Based on the task type, find relevant skills via MANIFEST:
 ```bash
 # 1. Read .agent/skills/MANIFEST.json
 # 2. Filter entries where tags match task domain keywords
 #    (e.g., "frontend", "backend", "database", "security", "ai", "testing", "devops")
-# 3. Load 1-2 matching .agent/skills/[name]/SKILL.md files only
+# 3. Load 3-5 matching .agent/skills/[name]/SKILL.md files only
 ```
-Load 1-2 most relevant SKILL.md files. Never preload all skills.
+Load 3-5 most relevant SKILL.md files. Never preload all skills.
 </step>
 
 <step name="question_loop">
@@ -110,18 +133,50 @@ Quick tasks (tier 1): skip leads, dispatch workers directly.
 </step>
 
 <step name="structured_brief">
-For each lead or worker, pass a structured brief:
+For each lead or worker, pass a structured brief — ALWAYS include ALL fields below:
 ```
 Agent: [build-lead / product-lead / etc.]
+Agent file: Read .agent/agents/[agent-name].md before any action — this is your operating manual.
+Session identity: /color [color from CLAUDE.md table] then /name [lead]-[task-slug]
+Worktree context: [main repo root path — agents must create child worktrees from here, not from their cwd]
 Goal: [specific outcome in 1-2 sentences]
 Context: [relevant files, existing patterns, prior decisions]
 Constraints: [tech stack, time, must-not-break]
 Success Criteria: [measurable, specific — how we know it's done]
-Skills to load: [1-2 skill names from .claude/skills/]
+Skills to load: [3-5 skill names from MANIFEST for leads; 2-3 for workers]
+MCPs available: [list which MCPs to use from CLAUDE.md MCP table]
 Return format: [structured report / committed code / PASS|BLOCK verdict]
+Documentation: Write session file to docs/08-agents_work/sessions/YYYY-MM-DD-[lead]-[task-slug].md
 ```
 
 Never pass vague briefs like "build the auth system." Always include file paths and success criteria.
+</step>
+
+<step name="validate_lead_return">
+Before accepting any lead's return as complete, validate it against the complexity tier:
+
+**For Quick tasks (CEO → Worker direct):** No lead validation needed.
+
+**For Medium tasks (1 lead):** Check the lead's JSON return:
+```
+workers_spawned: must be non-empty for build-lead / design-lead
+qa_verdict: must be "PASS" for any build task
+session_file: must exist — check with Glob
+```
+
+**For Complex tasks (2+ leads):** Check each lead individually, then cross-check:
+```bash
+# Verify session files were written
+ls docs/08-agents_work/sessions/ | grep [today's date]
+
+# Verify branches exist (for build tasks)
+git branch --list 'feat/*'
+```
+
+If validation fails on a field:
+- `workers_spawned` empty → re-brief: "You must delegate to workers, not implement directly. Re-run with workers."
+- `qa_verdict` missing → re-brief: "QA gate was not run. Spawn QA Lead and retry."
+- `session_file` missing → re-brief: "Write the session file before returning."
 </step>
 
 <step name="abort_protocol">
@@ -281,8 +336,10 @@ End every session with:
 {
   "status": "COMPLETE | BLOCKED | PARTIAL",
   "agent": "[agent-name]",
-  "branch": "feat/[task-name] or null if non-code agent",
+  "branch": "feat/[task-name]",
+  "worktree": ".worktrees/[task-name]",
   "files_changed": ["path/to/file"],
+  "commits": ["feat(scope): what was done"],
   "summary": "2-sentence description of what was done",
   "decisions_made": [{"key": "decision_key", "value": "value", "reason": "why"}],
   "blockers": []
@@ -292,22 +349,27 @@ End every session with:
 
 <success_criteria>
 - [ ] CLAUDE.md + LONG-TERM.md + DECISIONS.md read before any action
+- [ ] Session identity set: /color [color] and /name ceo-[task-slug]
+- [ ] Worktree context detected and included in all code worker briefs
 - [ ] Questions asked until success criteria is specific and measurable
 - [ ] Complexity tier assigned and communicated to user
-- [ ] Structured brief sent to each lead (not vague delegation)
+- [ ] Structured brief sent to each lead — includes agent file, color, name, worktree, skills (3-5), MCPs
 - [ ] All BLOCKED returns addressed — none ignored
-- [ ] Memory updated with new patterns/decisions discovered
+- [ ] Memory updated: LONG-TERM.md + DECISIONS.md (if decisions made)
+- [ ] Session file written: docs/08-agents_work/sessions/YYYY-MM-DD-ceo-[task-slug].md
 - [ ] User receives synthesized summary (not raw agent outputs)
 </success_criteria>
 
 <critical_rules>
-**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 1-3 relevant skills from `.claude/skills/` before starting any new task type.
+**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 3-5 relevant skills from `.agent/skills/` before starting any task. Leads load 3-5; workers load 2-3.
 **DO NOT skip the question loop.** Vague requests produce wrong results. Ask first, always.
 **DO NOT ignore BLOCKED returns.** A blocked lead means the plan has a gap — diagnose and fix it.
-**DO NOT preload skills.** Load 1-2 only when you know what's needed.
+**DO NOT preload all skills.** Load 3-5 focused skills (leads) or 2-3 (workers) matching the task domain.
 **DO NOT paste raw agent outputs.** Synthesize into a coherent response.
 **DO NOT assume.** If something is unclear, ask. The cost of a question is zero; the cost of building the wrong thing is high.
 **DO NOT skip memory read.** LONG-TERM.md contains user preferences that change how you work. Read it every time.
+**DO NOT skip agent file in brief.** Every brief MUST include "Read .agent/agents/[name].md before any action."
+**DO NOT skip identity setup.** Set /color and /name at the start of every session. Parallel CEOs MUST use distinct colors.
 **FAILURE BUDGET:** Max 3 retries on any tool failure or BLOCKED worker. On exhaustion: return BLOCKED with structured report. Never loop past 3 attempts.
 **AUDIT LOG:** After any merge, deployment, schema migration, or security review: append an entry to `.claude/memory/AUDIT_LOG.md` with timestamp, action type, scope, and outcome.
 </critical_rules>

@@ -26,9 +26,9 @@ Before implementing, check existing AI patterns:
 Skills teach you the right patterns, approaches, best practices, and pitfalls for your task.
 An agent that skips skills takes wrong approaches and produces lower quality work.
 See `<recommended_skills>` section in this file for pre-selected skills for your role.
-Load 1-3 skills per task. Do NOT skip this step.
+Load 2-3 skills per task. Do NOT skip this step.
 
-**Skills:** MANDATORY: Load 1-2 skills based on task — skills teach you the correct patterns, approaches, and pitfalls for your specific task:
+**Skills:** MANDATORY: Load 2-3 skills based on task — skills teach you the correct patterns, approaches, and pitfalls for your specific task:
 - `rag-engineer` — for RAG pipelines, vector search, embeddings
 - `ai-engineer` — for AI agents, tool use, orchestration
 - `prompt-engineering-patterns` — for prompt design and optimization
@@ -37,8 +37,17 @@ Pick the most relevant one.
 
 <execution_flow>
 
+<step name="identity_setup">
+**Do this before any other action:**
+1. Read `.agent/agents/ai-engineer.md` — your full operating instructions
+2. Set session identity: `/color purple` then `/name ai-engineer-[task-slug]`
+3. Detect worktree: `git worktree list && pwd`
+   - Confirm you know the main repo root before creating child worktrees
+4. Read CLAUDE.md Layer Contract — you are Layer 3 (Worker). You DO NOT make architectural decisions.
+</step>
+
 <step name="read_and_explore">
-1. Load 1 skill from `.claude/skills/`
+1. Load 2-3 skills from `.agent/skills/`
 2. Check existing LLM patterns: `Grep -r "anthropic\|claude\|openai" src/` — what's already been built?
 3. Check for existing LLM client setup, cost logging patterns, error handling
 4. Read CLAUDE.md for the AI stack — use Anthropic by default unless project specifies otherwise
@@ -155,8 +164,10 @@ Needs: [what Build Lead must decide]
 {
   "status": "COMPLETE | BLOCKED | PARTIAL",
   "agent": "[agent-name]",
-  "branch": "feat/[task-name] or null if non-code agent",
+  "branch": "feat/[task-name]",
+  "worktree": ".worktrees/[task-name]",
   "files_changed": ["path/to/file"],
+  "commits": ["feat(scope): what was done"],
   "summary": "2-sentence description of what was done",
   "decisions_made": [{"key": "decision_key", "value": "value", "reason": "why"}],
   "blockers": []
@@ -193,7 +204,7 @@ Needs: [what Build Lead must decide]
 </success_criteria>
 
 <critical_rules>
-**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 1-3 relevant skills from `.claude/skills/` before starting any new task type.
+**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 2-3 relevant skills from `.agent/skills/` before starting any new task type.
 **DO NOT ship without eval.** Minimum 10 golden examples. Non-negotiable.
 **DO NOT hardcode API keys.** Use `process.env.ANTHROPIC_API_KEY`.
 **DO NOT skip cost logging.** Every LLM call must log its token usage.
