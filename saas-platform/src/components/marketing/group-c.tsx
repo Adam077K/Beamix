@@ -22,7 +22,7 @@ const LEADERBOARD = [
   { rank: 5, name: 'Intelligentsia', mentions: 98, position: 7.5, change: 3.3, visibility: 13.4 },
 ]
 
-const BRAND_COLORS = ['bg-[#3370FF]', 'bg-slate-800', 'bg-blue-500', 'bg-emerald-500', 'bg-rose-500']
+const BRAND_COLORS = ['bg-[#3370FF]', 'bg-[#1E40AF]', 'bg-[#5A8FFF]', 'bg-[#93B4FF]', 'bg-[#2563EB]']
 
 // ─── Group C component ────────────────────────────────────────────────────────
 
@@ -94,7 +94,7 @@ export function GroupC() {
               <span className="text-xs tabular-nums text-muted-foreground text-right">{row.position}</span>
 
               {/* Change — colored text only, no badges */}
-              <span className={cn('text-xs tabular-nums text-right font-medium', row.change > 0 ? 'text-emerald-600' : 'text-red-500')}>
+              <span className={cn('text-xs tabular-nums text-right font-medium', row.change > 0 ? 'text-[#3370FF]' : 'text-muted-foreground')}>
                 {row.change > 0 ? '+' : ''}{row.change}%
               </span>
 

@@ -81,7 +81,7 @@ export function GroupB() {
               {/* Score display */}
               <div className="flex items-baseline gap-1.5">
                 <span className="text-lg font-semibold tabular-nums text-foreground">75.48%</span>
-                <span className="text-xs font-medium text-emerald-600">+33</span>
+                <span className="text-xs font-medium text-[#3370FF]">+33</span>
               </div>
             </div>
           </div>
@@ -131,14 +131,14 @@ export function GroupB() {
           value={28}
           delta={20}
           sparkData={mentionsSparkData}
-          accentColor="#10B981"
+          accentColor="#5A8FFF"
         />
         <SparklineCard
           label="Avg Position"
           value="2.5"
           delta={-1.7}
           sparkData={positionSparkData}
-          accentColor="#F59E0B"
+          accentColor="#1E40AF"
           inverseDelta
         />
       </div>

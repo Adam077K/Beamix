@@ -21,20 +21,20 @@ const DEMO_SCAN_HISTORY = [
 ]
 
 const ENGINES_COVERAGE = [
-  { name: 'ChatGPT', mentioned: true, color: '#10B981' },
-  { name: 'Gemini', mentioned: true, color: '#3370FF' },
-  { name: 'Perplexity', mentioned: true, color: '#8B5CF6' },
-  { name: 'Google AI', mentioned: false, color: '#94A3B8' },
-  { name: 'Claude', mentioned: true, color: '#F59E0B' },
-  { name: 'Grok', mentioned: false, color: '#94A3B8' },
-  { name: 'You.com', mentioned: true, color: '#06B6D4' },
+  { name: 'ChatGPT', mentioned: true, color: '#3370FF' },
+  { name: 'Gemini', mentioned: true, color: '#2563EB' },
+  { name: 'Perplexity', mentioned: true, color: '#1E40AF' },
+  { name: 'Google AI', mentioned: false, color: '#D1D5DB' },
+  { name: 'Claude', mentioned: true, color: '#5A8FFF' },
+  { name: 'Grok', mentioned: false, color: '#D1D5DB' },
+  { name: 'You.com', mentioned: true, color: '#60A5FA' },
 ]
 
 const MILESTONES = [
-  { label: 'First scan', score: 42, color: '#EF4444' },
-  { label: 'Content Agent', score: 55, color: '#F59E0B' },
+  { label: 'First scan', score: 42, color: '#93B4FF' },
+  { label: 'Content Agent', score: 55, color: '#5A8FFF' },
   { label: 'Schema Fixed', score: 67, color: '#3370FF' },
-  { label: 'FAQ Added', score: 75, color: '#10B981' },
+  { label: 'FAQ Added', score: 75, color: '#1E40AF' },
 ]
 
 const DISPLAY_SCORE = 75
@@ -69,7 +69,7 @@ function HeroOverview() {
                   <circle cx="10" cy="10" r="8" fill="none" stroke="#E2E8F0" strokeWidth="2.5" />
                   <circle
                     cx="10" cy="10" r="8" fill="none"
-                    stroke="#06B6D4"
+                    stroke="#3370FF"
                     strokeWidth="2.5"
                     strokeDasharray={`${(DISPLAY_SCORE / 100) * 50.3} 50.3`}
                     strokeLinecap="round"
@@ -77,7 +77,7 @@ function HeroOverview() {
                   />
                 </svg>
                 <span className="text-2xl font-semibold tabular-nums text-foreground">{DISPLAY_SCORE}%</span>
-                <span className="text-xs font-medium text-emerald-600">+{SCORE_DELTA}%</span>
+                <span className="text-xs font-medium text-[#3370FF]">+{SCORE_DELTA}%</span>
               </div>
             </div>
             <div>
@@ -85,7 +85,7 @@ function HeroOverview() {
               <div className="flex items-center gap-2 mt-1">
                 <TrendingUp className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
                 <span className="text-2xl font-semibold tabular-nums text-foreground">28</span>
-                <span className="text-xs font-medium text-emerald-600">+20</span>
+                <span className="text-xs font-medium text-[#3370FF]">+20</span>
               </div>
             </div>
           </div>
@@ -99,21 +99,21 @@ function HeroOverview() {
               <span className="text-xs text-muted-foreground">Total pages cited</span>
               <div className="mt-1">
                 <span className="text-xl font-semibold tabular-nums text-foreground">14,808</span>
-                <div className="text-xs font-medium text-emerald-600 mt-0.5">+2,479</div>
+                <div className="text-xs font-medium text-[#3370FF] mt-0.5">+2,479</div>
               </div>
             </div>
             <div>
               <span className="text-xs text-muted-foreground">My pages cited</span>
               <div className="mt-1">
                 <span className="text-xl font-semibold tabular-nums text-foreground">156</span>
-                <div className="text-xs font-medium text-emerald-600 mt-0.5">+18</div>
+                <div className="text-xs font-medium text-[#3370FF] mt-0.5">+18</div>
               </div>
             </div>
             <div>
               <span className="text-xs text-muted-foreground">Pages mentioned</span>
               <div className="mt-1">
                 <span className="text-xl font-semibold tabular-nums text-foreground">1,068</span>
-                <div className="text-xs font-medium text-emerald-600 mt-0.5">+372</div>
+                <div className="text-xs font-medium text-[#3370FF] mt-0.5">+372</div>
               </div>
             </div>
           </div>
@@ -164,7 +164,7 @@ function HeroOverview() {
             </div>
             <div className="flex items-baseline gap-1.5">
               <span className="text-base font-semibold tabular-nums text-foreground">75.48%</span>
-              <span className="text-xs font-medium text-emerald-600">+33</span>
+              <span className="text-xs font-medium text-[#3370FF]">+33</span>
             </div>
           </div>
         </div>
@@ -191,7 +191,7 @@ function BeforeAfterCard() {
           <div className="flex flex-col items-center gap-2">
             <span className="text-xs text-muted-foreground">Before</span>
             <ScoreRing score={42} size="md" showLabel animate={false} />
-            <span className="text-sm font-medium text-amber-500">Fair</span>
+            <span className="text-sm font-medium text-[#93B4FF]">Fair</span>
           </div>
 
           {/* Connector */}
@@ -210,7 +210,7 @@ function BeforeAfterCard() {
           <div className="flex flex-col items-center gap-2">
             <span className="text-xs text-muted-foreground">After</span>
             <ScoreRing score={75} size="md" showLabel animate />
-            <span className="text-sm font-medium text-cyan-500">Excellent</span>
+            <span className="text-sm font-medium text-[#3370FF]">Excellent</span>
           </div>
         </div>
 
@@ -258,7 +258,7 @@ function EngineCoverageCard() {
               <span
                 className={cn(
                   'text-xs text-right',
-                  mentioned ? 'text-emerald-600' : 'text-muted-foreground'
+                  mentioned ? 'text-[#3370FF]' : 'text-muted-foreground'
                 )}
               >
                 {mentioned ? 'Covered' : 'Not covered'}

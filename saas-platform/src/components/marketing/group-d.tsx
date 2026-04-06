@@ -22,11 +22,11 @@ interface ReadinessItem {
 }
 
 const READINESS_ITEMS: ReadinessItem[] = [
-  { label: 'Schema Markup', icon: FileCode2, score: 90, color: '#06B6D4' },
-  { label: 'FAQ Coverage', icon: HelpCircle, score: 35, color: '#EF4444' },
-  { label: 'Content Quality', icon: FileText, score: 61, color: '#F59E0B' },
-  { label: 'Crawlability', icon: Globe, score: 88, color: '#06B6D4' },
-  { label: 'llms.txt Present', icon: Bot, score: 0, color: '#EF4444' },
+  { label: 'Schema Markup', icon: FileCode2, score: 90, color: '#3370FF' },
+  { label: 'FAQ Coverage', icon: HelpCircle, score: 35, color: '#93B4FF' },
+  { label: 'Content Quality', icon: FileText, score: 61, color: '#5A8FFF' },
+  { label: 'Crawlability', icon: Globe, score: 88, color: '#3370FF' },
+  { label: 'llms.txt Present', icon: Bot, score: 0, color: '#C5D7FF' },
 ]
 
 // ─── Running status dot ───────────────────────────────────────────────────────
@@ -83,8 +83,8 @@ export function GroupD() {
                     </>
                   ) : (
                     <>
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
-                      <span className="text-xs font-medium text-emerald-600">Done</span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#3370FF] shrink-0" aria-hidden="true" />
+                      <span className="text-xs font-medium text-[#3370FF]">Done</span>
                     </>
                   )}
                 </span>

@@ -1,14 +1,12 @@
 'use client'
 // dev-only showcase — no auth required
 
-import { GroupA } from '@/components/marketing/group-a'
 import { GroupB } from '@/components/marketing/group-b'
 import { GroupC } from '@/components/marketing/group-c'
 import { GroupD } from '@/components/marketing/group-d'
 import { GroupE } from '@/components/marketing/group-e'
 
 const GROUPS = [
-  { id: 'see-your-score', label: 'See Your Score' },
   { id: 'track-your-growth', label: 'Track Your Growth' },
   { id: 'beat-competitors', label: 'Beat Competitors' },
   { id: 'agents-do-the-work', label: 'AI Agents Do the Work' },
@@ -45,14 +43,6 @@ export default function MarketingShowcasePage() {
 
       {/* Sections */}
       <div className="max-w-7xl mx-auto px-8 pt-10 pb-24 space-y-12">
-
-        <section id="see-your-score">
-          <SectionHeader
-            title="See Your Score"
-            subtitle="Score ring, AI readiness audit, and engine scan results."
-          />
-          <GroupA />
-        </section>
 
         <section id="track-your-growth">
           <SectionHeader
