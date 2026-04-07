@@ -16,12 +16,9 @@ import {
   Shield,
   Menu,
   X,
-  Search,
 } from 'lucide-react'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { UserMenu } from '@/components/dashboard/user-menu'
-import { LanguageToggle } from '@/components/ui/language-toggle'
-import { Badge } from '@/components/ui/badge'
 import { CommandPalette } from '@/components/dashboard/command-palette'
 import { cn } from '@/lib/utils'
 import { SidebarProvider, useSidebar } from '@/components/dashboard/sidebar-context'
@@ -154,7 +151,7 @@ function ShellContent({
       {/* Main content area */}
       <div
         className={cn(
-          'flex flex-1 flex-col transition-all duration-300',
+          'flex flex-1 flex-col transition-all duration-200 ease-in-out',
           collapsed
             ? 'ltr:md:pl-16 rtl:md:pr-16'
             : 'ltr:md:pl-60 rtl:md:pr-60'
@@ -178,22 +175,8 @@ function ShellContent({
             </span>
           </div>
 
-          {/* Center: Command palette trigger — desktop only */}
-          <button
-            onClick={() => {
-              document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }))
-            }}
-            className="hidden md:flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
-            aria-label="Open command palette (⌘K)"
-          >
-            <Search className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>Search...</span>
-            <kbd className="text-[10px] font-mono bg-card px-1.5 py-0.5 rounded border border-border">⌘K</kbd>
-          </button>
-
-          {/* Right: Language toggle + notifications + trial badge + user menu */}
+          {/* Right: notifications + user menu */}
           <div className="flex items-center gap-2">
-            <LanguageToggle />
             <Link
               href="/dashboard/notifications"
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -201,18 +184,6 @@ function ShellContent({
             >
               <Bell className="h-4 w-4" />
             </Link>
-            {trialDaysLeft !== null && trialDaysLeft > 0 && (
-              <Badge className="hidden sm:inline-flex bg-blue-100 text-[#2B5FDB] border-blue-200 hover:bg-blue-100">
-                Trial: {trialDaysLeft}d left
-              </Badge>
-            )}
-            {trialDaysLeft !== null && trialDaysLeft <= 0 && (
-              <Link href="/pricing">
-                <Badge className="hidden sm:inline-flex bg-red-100 text-red-700 border-red-200 hover:bg-red-200 cursor-pointer">
-                  Trial expired · Upgrade
-                </Badge>
-              </Link>
-            )}
             <UserMenu businessName={businessName} planTier={planTier} />
           </div>
         </header>

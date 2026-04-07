@@ -90,9 +90,10 @@ const ENGINE_DOMAINS: Record<string, string> = {
   'Google AI Overviews': 'google.com',
   Grok: 'x.com',
   DeepSeek: 'deepseek.com',
+  'You.com': 'you.com',
 }
 
-function EngineLogo({ engine, size = 'md', className }: BrandMarkProps & { engine: string }) {
+export function EngineLogo({ engine, size = 'md', className }: BrandMarkProps & { engine: string }) {
   const s = SIZES[size]
   const localFile = ENGINE_LOCAL_FILES[engine]
   if (localFile) {
