@@ -71,6 +71,8 @@ export function pickQueriesForEngine(
   _engine: ScanEngine,
   allQueries: string[],
 ): string[] {
+  // Guard: no queries generated (research step failed)
+  if (!allQueries.length) return []
   // All engines receive the same first query — clean, deterministic, parallel-safe
   return [allQueries[0]]
 }
