@@ -15,9 +15,11 @@ import { GroupScanLive } from '@/components/marketing/group-scan-live'
 import { GroupDarkAnalytics } from '@/components/marketing/group-dark-analytics'
 import { GroupAgentMarketing } from '@/components/marketing/group-agent-marketing'
 import { GroupAgentLight } from '@/components/marketing/group-agent-light'
+import { GroupAgentCursors } from '@/components/marketing/group-agent-cursors'
 import { GroupMarketingCards } from '@/components/marketing/group-marketing-cards'
 
 const GROUPS = [
+  { id: 'agent-cursors', label: 'Cursors' },
   { id: 'marketing-cards', label: 'Score & KPIs' },
   { id: 'agent-light', label: 'Agents (Light)' },
   { id: 'agent-dark', label: 'Agents (Dark)' },
@@ -83,6 +85,12 @@ export default function MarketingShowcasePage() {
             Screenshot-ready dashboard components for the Framer marketing website. Each section is a self-contained visual asset.
           </p>
         </div>
+
+        {/* Glass cursor pills — light version of the reference image */}
+        <section id="agent-cursors">
+          <SectionHeader title="Agent Cursors" subtitle="Glassy floating pills — 3 agents, clean spacing, light background" />
+          <GroupAgentCursors />
+        </section>
 
         {/* Marketing Cards: Score, KPIs, Agent Automation */}
         <section id="marketing-cards">
