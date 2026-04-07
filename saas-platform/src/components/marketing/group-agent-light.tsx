@@ -27,7 +27,7 @@ const AGENTS: Agent[] = [
     verb: 'Getting you mentioned',
     result: 'Added to 3 AI answers',
     progress: 100,
-    x: 58, y: 10,
+    x: 72, y: 20,
     delay: 0.4,
   },
   {
@@ -47,7 +47,7 @@ const AGENTS: Agent[] = [
     verb: 'Finding opportunities',
     result: '5 quick wins found',
     progress: 100,
-    x: 65, y: 52,
+    x: 50, y: 48,
     delay: 1.0,
   },
   {
@@ -216,17 +216,26 @@ export function GroupAgentLight() {
             aria-hidden="true"
           />
 
-          {/* Task cards — positioned in a readable flow */}
-          <div className="relative z-10 grid grid-cols-2 gap-4 p-6">
-            {/* Left column tasks */}
-            <div className="flex flex-col gap-4 pt-8">
+          {/* Task cards — scattered layout for natural feel */}
+          <div className="relative z-10 p-6" style={{ minHeight: 380 }}>
+            {/* Top right: Brand */}
+            <div className="absolute right-8 top-6">
+              <TaskCard agent={AGENTS[0]} side="right" />
+            </div>
+            {/* Left: Writer */}
+            <div className="absolute left-6 top-14">
               <TaskCard agent={AGENTS[1]} side="left" />
+            </div>
+            {/* Center: Scanner — moved toward middle */}
+            <div className="absolute left-1/2 -translate-x-1/2 top-[45%]">
+              <TaskCard agent={AGENTS[2]} side="left" />
+            </div>
+            {/* Bottom left: Q&A */}
+            <div className="absolute left-8 bottom-8">
               <TaskCard agent={AGENTS[3]} side="left" />
             </div>
-            {/* Right column tasks */}
-            <div className="flex flex-col gap-4 pt-2">
-              <TaskCard agent={AGENTS[0]} side="right" />
-              <TaskCard agent={AGENTS[2]} side="right" />
+            {/* Bottom right: Monitor */}
+            <div className="absolute right-10 bottom-10">
               <TaskCard agent={AGENTS[4]} side="right" />
             </div>
           </div>

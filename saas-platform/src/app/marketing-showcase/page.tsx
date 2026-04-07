@@ -15,8 +15,10 @@ import { GroupScanLive } from '@/components/marketing/group-scan-live'
 import { GroupDarkAnalytics } from '@/components/marketing/group-dark-analytics'
 import { GroupAgentMarketing } from '@/components/marketing/group-agent-marketing'
 import { GroupAgentLight } from '@/components/marketing/group-agent-light'
+import { GroupMarketingCards } from '@/components/marketing/group-marketing-cards'
 
 const GROUPS = [
+  { id: 'marketing-cards', label: 'Score & KPIs' },
   { id: 'agent-light', label: 'Agents (Light)' },
   { id: 'agent-dark', label: 'Agents (Dark)' },
   { id: 'command-center', label: 'Command Center' },
@@ -81,6 +83,12 @@ export default function MarketingShowcasePage() {
             Screenshot-ready dashboard components for the Framer marketing website. Each section is a self-contained visual asset.
           </p>
         </div>
+
+        {/* Marketing Cards: Score, KPIs, Agent Automation */}
+        <section id="marketing-cards">
+          <SectionHeader title="Score, KPIs & Automation" subtitle="Three standalone cards for Framer — Visibility Score, Performance KPIs, Agent Activity" />
+          <GroupMarketingCards />
+        </section>
 
         {/* Light agent canvas — clean, business-friendly */}
         <section id="agent-light">
