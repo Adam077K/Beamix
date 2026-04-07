@@ -180,6 +180,7 @@ After user confirms:
 - `requesting-code-review` — How to request review with full context
 
 ### Code Quality
+- `.claude/skills/full-output-enforcement/SKILL.md` — Prevents LLM truncation. Include in ALL worker briefs. Workers must never write "// rest remains the same".
 - `code-review-excellence` — What to look for in reviews
 - `production-code-audit` — Deep scan for production readiness
 - `cc-skill-coding-standards` — Universal coding standards to enforce

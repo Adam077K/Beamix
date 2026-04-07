@@ -25,19 +25,28 @@ Before planning, discover project context:
 Skills teach you the right patterns, approaches, best practices, and pitfalls for your task.
 An agent that skips skills takes wrong approaches and produces lower quality work.
 See `<recommended_skills>` section in this file for pre-selected skills for your role.
-Load 1-3 skills per task. Do NOT skip this step.
+Load 3-5 skills per task. Do NOT skip this step.
 
 **Skills:** MANDATORY: Load via MANIFEST on-demand:
 1. Read `.agent/skills/MANIFEST.json` — filter by tags: "backend", "frontend", "api", "nextjs"
-2. Load 1-2 matching `.agent/skills/[name]/SKILL.md` files only
+2. Load 3-5 matching `.agent/skills/[name]/SKILL.md` files only
 **Docs:** Read `docs/ENGINEERING_PRINCIPLES.md` + `docs/03-system-design/ARCHITECTURE.md` before planning. Update `docs/03-system-design/` and `docs/06-codebase/` after significant changes.
 </project_context>
 
 <execution_flow>
 
+<step name="identity_setup">
+**Do this before any other action:**
+1. Read `.agent/agents/build-lead.md` — your full operating instructions
+2. Set session identity: `/color blue` then `/name build-[task-slug]`
+3. Detect worktree: `git worktree list && pwd`
+   - If inside a worktree, note the main repo root (first line of `git worktree list`)
+   - Pass that path to all code workers so they create child worktrees correctly
+</step>
+
 <step name="read_and_explore">
 1. Load the CEO brief (all `<files_to_read>` content)
-2. Load 1-2 relevant skills from `.claude/skills/`
+2. Load 3-5 relevant skills from `.agent/skills/`
 3. Explore codebase BEFORE planning:
    - `Glob src/**/*.ts` to understand file structure
    - Read 1-2 existing similar files to match patterns
@@ -78,15 +87,30 @@ Return format: TASK COMPLETE / Branch / Files / Summary
 </step>
 
 <step name="collect_signals">
-After each wave completes, verify worker returns:
-- Branch exists? (`git branch --list feat/[task-name]`)
-- Files committed? (`git log --oneline feat/[task-name]`)
-- Summary makes sense?
+After each wave completes, verify worker returns — **never trust summaries alone**:
+
+```bash
+# 1. Branch exists?
+git branch --list feat/[task-name]
+
+# 2. Worktree created?
+git worktree list | grep [task-name]
+
+# 3. Commits exist on branch?
+git log --oneline feat/[task-name] | head -5
+
+# 4. Expected files actually changed?
+git diff main...feat/[task-name] --name-only
+```
+
+All four checks must pass before marking a worker COMPLETE. If any check fails:
+- Re-brief the worker with the specific gap ("branch feat/X not found — did you create the worktree?")
+- Max 2 re-briefs before escalating to CEO with BLOCKED
 
 If a worker returns BLOCKED:
-1. Read the block reason
-2. Re-brief with missing context, OR
-3. Escalate to CEO if architectural decision needed
+1. Read the block reason carefully
+2. Re-brief with missing context (most common fix), OR
+3. Escalate to CEO if it's an architectural decision
 </step>
 
 <step name="qa_gate">
@@ -156,6 +180,7 @@ After user confirms:
 - `requesting-code-review` — How to request review with full context
 
 ### Code Quality
+- `.claude/skills/full-output-enforcement/SKILL.md` — Prevents LLM truncation. Include in ALL worker briefs. Workers must never write "// rest remains the same".
 - `code-review-excellence` — What to look for in reviews
 - `production-code-audit` — Deep scan for production readiness
 - `cc-skill-coding-standards` — Universal coding standards to enforce
@@ -200,8 +225,13 @@ After user confirms:
 {
   "status": "COMPLETE | BLOCKED | PARTIAL",
   "agent": "[agent-name]",
-  "branch": "feat/[task-name] or null if non-code agent",
+  "branch": "feat/[task-name]",
+  "worktree": ".worktrees/[task-name]",
+  "workers_spawned": ["backend-developer/feat/task-api", "frontend-developer/feat/task-ui"],
   "files_changed": ["path/to/file"],
+  "commits": ["feat(scope): what was done"],
+  "qa_verdict": "PASS | BLOCK",
+  "session_file": "docs/08-agents_work/sessions/YYYY-MM-DD-build-[task].md",
   "summary": "2-sentence description of what was done",
   "decisions_made": [{"key": "decision_key", "value": "value", "reason": "why"}],
   "blockers": []
@@ -221,7 +251,7 @@ After user confirms:
 </success_criteria>
 
 <critical_rules>
-**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 1-3 relevant skills from `.claude/skills/` before starting any new task type.
+**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 3-5 relevant skills from `.agent/skills/` before starting any new task type.
 **DO NOT merge without QA Lead PASS.** No exceptions. Ever.
 **DO NOT merge without user confirmation.** Show the table and wait.
 **DO NOT let workers share branches.** Each worker gets their own worktree.

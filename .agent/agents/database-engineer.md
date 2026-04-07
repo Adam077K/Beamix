@@ -28,6 +28,9 @@ An agent that skips skills takes wrong approaches and produces lower quality wor
 See `<recommended_skills>` section in this file for pre-selected skills for your role.
 Load 2-3 skills per task. Do NOT skip this step.
 
+**Code completeness (MANDATORY):**
+- Read `.claude/skills/full-output-enforcement/SKILL.md` — prevents truncated code. Never write "// rest remains the same".
+
 **Skills:** Load 1 skill:
 - `postgresql` — for Supabase/raw SQL work
 - OR `prisma-expert` — for Prisma ORM work

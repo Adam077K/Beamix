@@ -27,6 +27,9 @@ An agent that skips skills takes wrong approaches and produces lower quality wor
 See `<recommended_skills>` section in this file for pre-selected skills for your role.
 Load 2-3 skills per task. Do NOT skip this step.
 
+**Code completeness (MANDATORY):**
+- Read `.claude/skills/full-output-enforcement/SKILL.md` — prevents truncated code. Never write "// rest remains the same".
+
 **Skills:** MANDATORY: Load via MANIFEST — 1 skill based on task:
 - Read `.agent/skills/MANIFEST.json` — filter by tags: "backend", "api", "nextjs"
 - Load 1 matching skill (e.g., `nodejs-backend-patterns`, `nextjs-app-router-patterns`)

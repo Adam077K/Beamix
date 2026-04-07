@@ -25,19 +25,31 @@ Before implementing, discover project conventions:
 Skills teach you the right patterns, approaches, best practices, and pitfalls for your task.
 An agent that skips skills takes wrong approaches and produces lower quality work.
 See `<recommended_skills>` section in this file for pre-selected skills for your role.
-Load 1-3 skills per task. Do NOT skip this step.
+Load 2-3 skills per task. Do NOT skip this step.
+
+**Code completeness (MANDATORY):**
+- Read `.claude/skills/full-output-enforcement/SKILL.md` — prevents truncated code. Never write "// rest remains the same".
 
 **Skills:** MANDATORY: Load via MANIFEST — 1 skill based on task:
 - Read `.agent/skills/MANIFEST.json` — filter by tags: "backend", "api", "nextjs"
 - Load 1 matching skill (e.g., `nodejs-backend-patterns`, `nextjs-app-router-patterns`)
-Do NOT preload all skills. Load exactly 1.
+Do NOT preload all skills. Load 2-3 most relevant.
 </project_context>
 
 <execution_flow>
 
+<step name="identity_setup">
+**Do this before any other action:**
+1. Read `.agent/agents/backend-developer.md` — your full operating instructions
+2. Set session identity: `/color blue` then `/name backend-developer-[task-slug]`
+3. Detect worktree: `git worktree list && pwd`
+   - Confirm you know the main repo root before creating child worktrees
+4. Read CLAUDE.md Layer Contract — you are Layer 3 (Worker). You DO NOT make architectural decisions.
+</step>
+
 <step name="read_and_explore">
 1. Read the Build Lead brief (all `<files_to_read>` content)
-2. Load 1 skill from `.claude/skills/`
+2. Load 2-3 skills from `.agent/skills/`
 3. Explore existing API patterns:
    - `Glob app/api/**/*.ts` — find existing routes
    - Read 1-2 similar existing routes to match patterns exactly
@@ -137,8 +149,10 @@ Needs: [what Build Lead or user must decide]
 {
   "status": "COMPLETE | BLOCKED | PARTIAL",
   "agent": "[agent-name]",
-  "branch": "feat/[task-name] or null if non-code agent",
+  "branch": "feat/[task-name]",
+  "worktree": ".worktrees/[task-name]",
   "files_changed": ["path/to/file"],
+  "commits": ["feat(scope): what was done"],
   "summary": "2-sentence description of what was done",
   "decisions_made": [{"key": "decision_key", "value": "value", "reason": "why"}],
   "blockers": []
@@ -181,7 +195,7 @@ Needs: [what Build Lead or user must decide]
 </success_criteria>
 
 <critical_rules>
-**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 1-3 relevant skills from `.claude/skills/` before starting any new task type.
+**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 2-3 relevant skills from `.agent/skills/` before starting any new task type.
 **DO NOT write code without reading existing patterns first.** Match codebase style.
 **DO NOT skip Zod validation on any external input.** Every API route input is validated.
 **DO NOT commit multiple logical changes in one commit.** One commit per logical unit.
