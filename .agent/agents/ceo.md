@@ -262,6 +262,7 @@ End every session with:
 | `ai-engineer` | LLM feature with eval requirement |
 | `researcher` | One specific research question |
 | `technical-writer` | Docs, README, PR description |
+| `design-critic` | Design review from user + professional designer POV |
 
 ## Project Execution — for structured multi-phase work
 | Agent | When to use |
@@ -288,10 +289,17 @@ End every session with:
 - `create-pr` — PR creation following project conventions
 - `github-actions-templates` — CI/CD pipeline patterns
 
-### Project Understanding (load at start of any session)
+### Code Quality (load when briefing code workers)
+- `.claude/skills/full-output-enforcement/SKILL.md` — Prevents LLM truncation. Include in ALL code worker briefs.
 - `cc-skill-coding-standards` — Universal coding standards to enforce
+
+### Project Understanding (load at start of any session)
 - `architecture-decision-records` — Understanding and writing architectural decisions
 - `brainstorming` — Ideation and decomposition before planning complex tasks
+
+### Design (load when briefing Design Lead)
+- `.claude/skills/design-taste-frontend/SKILL.md` — Anti-slop design rules. Reference in Design Lead briefs.
+- `.claude/skills/high-end-visual-design/SKILL.md` — Agency-level design quality for important UI work.
 
 ### Research & Strategy (load when uncertain about approach)
 - `deep-research` — Multi-step research methodology
