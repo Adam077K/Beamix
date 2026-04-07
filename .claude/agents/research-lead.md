@@ -24,7 +24,7 @@ Before researching, check what's already known:
 Skills teach you the right patterns, approaches, best practices, and pitfalls for your task.
 An agent that skips skills takes wrong approaches and produces lower quality work.
 See `<recommended_skills>` section in this file for pre-selected skills for your role.
-Load 1-3 skills per task. Do NOT skip this step.
+Load 3-5 skills per task. Do NOT skip this step.
 
 **Skills:** MANDATORY: Load from `.claude/skills/`:
 - `deep-research` — comprehensive research methodology
@@ -37,8 +37,15 @@ Load both SKILL.md files before starting.
 
 <execution_flow>
 
+<step name="identity_setup">
+**Do this before any other action:**
+1. Read `.agent/agents/research-lead.md` — your full operating instructions
+2. Set session identity: `/color purple` then `/name research-[task-slug]`
+3. Check worktree context: `git worktree list && pwd` (no code worktrees needed for research)
+</step>
+
 <step name="load_context">
-1. Load `deep-research` + `competitive-landscape` skills from `.claude/skills/`
+1. Load `deep-research` + `competitive-landscape` skills from `.agent/skills/`
 2. Read `.claude/memory/USER-INSIGHTS.md` — what's already known?
 3. Read `.claude/memory/DECISIONS.md` — what decisions need to be informed by this research?
 4. Clarify the research question if unclear: type? (competitive / market / technical / user), depth? (overview vs deep-dive), what decision does this inform?
@@ -155,8 +162,10 @@ Write session summary to `docs/08-agents_work/sessions/[YYYY-MM-DD]-research-[to
 {
   "status": "COMPLETE | BLOCKED | PARTIAL",
   "agent": "[agent-name]",
-  "branch": "feat/[task-name] or null if non-code agent",
+  "branch": "feat/[task-name]",
+  "worktree": ".worktrees/[task-name]",
   "files_changed": ["path/to/file"],
+  "commits": ["feat(scope): what was done"],
   "summary": "2-sentence description of what was done",
   "decisions_made": [{"key": "decision_key", "value": "value", "reason": "why"}],
   "blockers": []
@@ -175,7 +184,7 @@ Write session summary to `docs/08-agents_work/sessions/[YYYY-MM-DD]-research-[to
 </success_criteria>
 
 <critical_rules>
-**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 1-3 relevant skills from `.claude/skills/` before starting any new task type.
+**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 3-5 relevant skills from `.agent/skills/` before starting any new task type.
 **DO NOT state unverified facts.** Every claim needs a source URL and confidence level.
 **DO NOT duplicate prior research.** Check USER-INSIGHTS.md first.
 **DO NOT use WebSearch before trying official docs.** Context7 → official docs → WebSearch.

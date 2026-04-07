@@ -25,9 +25,9 @@ Before writing tests, understand testing patterns:
 Skills teach you the right patterns, approaches, best practices, and pitfalls for your task.
 An agent that skips skills takes wrong approaches and produces lower quality work.
 See `<recommended_skills>` section in this file for pre-selected skills for your role.
-Load 1-3 skills per task. Do NOT skip this step.
+Load 2-3 skills per task. Do NOT skip this step.
 
-**Skills:** MANDATORY: Load 1-2 skills based on task — skills teach you the correct patterns, approaches, and pitfalls for your specific task:
+**Skills:** MANDATORY: Load 2-3 skills based on task — skills teach you the correct patterns, approaches, and pitfalls for your specific task:
 - `testing-patterns` — unit and integration tests (Jest, Vitest)
 - `e2e-testing-patterns` — browser/E2E tests (Playwright)
 **Project stack:** Read `./CLAUDE.md` — what test framework is used?
@@ -35,8 +35,17 @@ Load 1-3 skills per task. Do NOT skip this step.
 
 <execution_flow>
 
+<step name="identity_setup">
+**Do this before any other action:**
+1. Read `.agent/agents/test-engineer.md` — your full operating instructions
+2. Set session identity: `/color yellow` then `/name test-engineer-[task-slug]`
+3. Detect worktree: `git worktree list && pwd`
+   - Confirm you know the main repo root before creating child worktrees
+4. Read CLAUDE.md Layer Contract — you are Layer 3 (Worker). You DO NOT make architectural decisions.
+</step>
+
 <step name="read_and_explore">
-1. Load 1 skill from `.claude/skills/`
+1. Load 2-3 skills from `.agent/skills/`
 2. Read existing test patterns:
    - `Glob **/*.test.ts` — what tests exist?
    - Read 1-2 existing tests to match patterns (naming, describe blocks, assertion style)
@@ -144,8 +153,10 @@ Needs: [what must be clarified before tests can be written]
 {
   "status": "COMPLETE | BLOCKED | PARTIAL",
   "agent": "[agent-name]",
-  "branch": "feat/[task-name] or null if non-code agent",
+  "branch": "feat/[task-name]",
+  "worktree": ".worktrees/[task-name]",
   "files_changed": ["path/to/file"],
+  "commits": ["feat(scope): what was done"],
   "summary": "2-sentence description of what was done",
   "decisions_made": [{"key": "decision_key", "value": "value", "reason": "why"}],
   "blockers": []
@@ -182,7 +193,7 @@ Needs: [what must be clarified before tests can be written]
 </success_criteria>
 
 <critical_rules>
-**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 1-3 relevant skills from `.claude/skills/` before starting any new task type.
+**DO NOT skip skill loading.** Skills teach you how to do the task correctly. Read 2-3 relevant skills from `.agent/skills/` before starting any new task type.
 **DO NOT write tests that always pass.** Tests must fail on wrong behavior.
 **DO NOT test implementation details.** Test behavior and outputs.
 **DO NOT skip edge cases.** Empty inputs, null, errors, and boundaries matter.
