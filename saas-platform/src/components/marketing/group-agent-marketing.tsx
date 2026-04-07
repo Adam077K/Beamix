@@ -19,11 +19,11 @@ interface AgentCursor {
 }
 
 const CURSORS: AgentCursor[] = [
-  { name: 'Brand Agent', color: '#3370FF', x: 62, y: 14, delay: 0.3, task: 'Optimizing brand mentions', progress: 100 },
-  { name: 'Content Writer', color: '#10B981', x: 18, y: 38, delay: 0.6, task: 'Writing FAQ page', progress: 78 },
-  { name: 'SEO Scanner', color: '#F59E0B', x: 72, y: 56, delay: 0.9, task: 'Fixing schema markup', progress: 100 },
+  { name: 'Brand Agent', color: '#10B981', x: 62, y: 14, delay: 0.3, task: 'Optimizing brand mentions', progress: 100 },
+  { name: 'Content Writer', color: '#D4A574', x: 18, y: 38, delay: 0.6, task: 'Writing FAQ page', progress: 78 },
+  { name: 'SEO Scanner', color: '#4285F4', x: 72, y: 56, delay: 0.9, task: 'Fixing schema markup', progress: 100 },
   { name: 'FAQ Agent', color: '#8B5CF6', x: 28, y: 72, delay: 1.2, task: 'Generating Q&As', progress: 45 },
-  { name: 'Competitor Intel', color: '#EC4899', x: 68, y: 82, delay: 1.5, task: 'Monitoring 4 competitors', progress: 62 },
+  { name: 'Competitor Intel', color: '#EA4335', x: 68, y: 82, delay: 1.5, task: 'Monitoring 4 competitors', progress: 62 },
 ]
 
 // ─── Work items appearing in the "canvas" ────────────────────────────────────

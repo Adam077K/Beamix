@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { DomainFavicon, ENGINE_LOGOS } from '@/components/marketing/logos'
 import { PremiumDarkDonut } from '@/components/marketing/charts/premium-dark-donut'
+import { PremiumLightDonut } from '@/components/marketing/charts/premium-light-donut'
 import { AnimatedCard } from '@/components/marketing/card'
 import { FadeUp, Stagger, StaggerItem } from '@/components/marketing/motion'
 
@@ -259,6 +260,9 @@ export function GroupNew() {
         <RecentAIQueriesCard />
         <InvisibilityCard />
       </div>
+      {/* Light version */}
+      <PremiumLightDonut />
+      {/* Dark version */}
       <FadeUp>
         <PremiumDarkDonut />
       </FadeUp>

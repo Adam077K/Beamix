@@ -251,21 +251,21 @@ export function PerformanceKPIsCard() {
 const AGENT_TASKS = [
   {
     agent: 'Brand Agent',
-    color: '#3370FF',
+    color: '#10B981',
     action: 'Got you mentioned in a ChatGPT answer about local coffee shops',
     time: '2 hours ago',
     done: true,
   },
   {
     agent: 'Content Writer',
-    color: '#10B981',
+    color: '#D4A574',
     action: 'Published an optimized FAQ page targeting 8 common AI queries',
     time: '5 hours ago',
     done: true,
   },
   {
     agent: 'SEO Scanner',
-    color: '#F59E0B',
+    color: '#4285F4',
     action: 'Added schema markup to your About page — AI engines can now read it',
     time: '1 day ago',
     done: true,

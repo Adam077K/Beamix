@@ -7,15 +7,15 @@ import { FadeUp } from '@/components/marketing/motion'
 // ─── Agent types — structured left/right clusters ────────────────────────────
 
 const LEFT_AGENTS = [
-  { name: 'Brand Agent', icon: Sparkles, color: '#3370FF', delay: 0.4 },
-  { name: 'Analytics Agent', icon: BarChart3, color: '#2563EB', delay: 0.6 },
-  { name: 'SEO Scanner', icon: Search, color: '#93B4FF', delay: 0.8 },
+  { name: 'Brand Agent', icon: Sparkles, color: '#10B981', delay: 0.4 },
+  { name: 'Analytics Agent', icon: BarChart3, color: '#4285F4', delay: 0.6 },
+  { name: 'SEO Scanner', icon: Search, color: '#8B5CF6', delay: 0.8 },
 ]
 
 const RIGHT_AGENTS = [
-  { name: 'Content Writer', icon: FileText, color: '#5A8FFF', delay: 0.5 },
-  { name: 'FAQ Agent', icon: MessageSquare, color: '#60A5FA', delay: 0.7 },
-  { name: 'Competitor Intel', icon: Shield, color: '#1E40AF', delay: 0.9 },
+  { name: 'Content Writer', icon: FileText, color: '#D4A574', delay: 0.5 },
+  { name: 'FAQ Agent', icon: MessageSquare, color: '#EA4335', delay: 0.7 },
+  { name: 'Competitor Intel', icon: Shield, color: '#6B7280', delay: 0.9 },
 ]
 
 // ─── Agent pill — professional style ─────────────────────────────────────────

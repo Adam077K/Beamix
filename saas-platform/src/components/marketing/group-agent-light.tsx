@@ -1,29 +1,19 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Check, Sparkles, FileText, Search, MessageSquare, Shield, TrendingUp } from 'lucide-react'
+import { Check, Sparkles, FileText, Search, MessageSquare, Shield } from 'lucide-react'
+import { ENGINE_LOGOS } from '@/components/marketing/logos'
 import { CARD } from '@/components/marketing/card'
 import { FadeUp } from '@/components/marketing/motion'
 
-// ─── Agent definitions — business-friendly language ──────────────────────────
+// ─── Engine colors from "Traffic by AI Engine" donut ─────────────────────────
 
-interface Agent {
-  name: string
-  icon: typeof Sparkles
-  color: string
-  verb: string       // what it's doing right now (plain English)
-  result: string     // the tangible outcome
-  progress: number
-  x: number          // cursor position %
-  y: number
-  delay: number
-}
-
-const AGENTS: Agent[] = [
+const AGENTS = [
   {
     name: 'Brand',
     icon: Sparkles,
-    color: '#3370FF',
+    engine: 'ChatGPT',
+    color: '#10B981',
     verb: 'Getting you mentioned',
     result: 'Added to 3 AI answers',
     progress: 100,
@@ -33,7 +23,8 @@ const AGENTS: Agent[] = [
   {
     name: 'Writer',
     icon: FileText,
-    color: '#10B981',
+    engine: 'Claude',
+    color: '#D4A574',
     verb: 'Writing your content',
     result: 'FAQ page ready to publish',
     progress: 82,
@@ -43,7 +34,8 @@ const AGENTS: Agent[] = [
   {
     name: 'Scanner',
     icon: Search,
-    color: '#F59E0B',
+    engine: 'Gemini',
+    color: '#4285F4',
     verb: 'Finding opportunities',
     result: '5 quick wins found',
     progress: 100,
@@ -53,6 +45,7 @@ const AGENTS: Agent[] = [
   {
     name: 'Q&A',
     icon: MessageSquare,
+    engine: 'Perplexity',
     color: '#8B5CF6',
     verb: 'Answering for you',
     result: '6 of 8 answers ready',
@@ -63,7 +56,8 @@ const AGENTS: Agent[] = [
   {
     name: 'Monitor',
     icon: Shield,
-    color: '#EC4899',
+    engine: 'Google AI',
+    color: '#EA4335',
     verb: 'Watching competitors',
     result: '4 competitors tracked',
     progress: 100,
@@ -77,22 +71,15 @@ const AGENTS: Agent[] = [
 function CursorArrow({ color }: { color: string }) {
   return (
     <svg width="12" height="16" viewBox="0 0 12 16" fill="none" className="shrink-0 drop-shadow-sm">
-      <path
-        d="M1 1L11 8.5L6 9.5L4 15L1 1Z"
-        fill={color}
-        stroke="white"
-        strokeWidth="1"
-        strokeLinejoin="round"
-      />
+      <path d="M1 1L11 8.5L6 9.5L4 15L1 1Z" fill={color} stroke="white" strokeWidth="1" strokeLinejoin="round" />
     </svg>
   )
 }
 
-// ─── Agent cursor with name pill ─────────────────────────────────────────────
+// ─── Agent cursor pill ───────────────────────────────────────────────────────
 
-function AgentCursor({ agent }: { agent: Agent }) {
-  const Icon = agent.icon
-  const isDone = agent.progress === 100
+function AgentCursor({ agent }: { agent: typeof AGENTS[0] }) {
+  const Logo = ENGINE_LOGOS[agent.engine]
 
   return (
     <motion.div
@@ -107,17 +94,18 @@ function AgentCursor({ agent }: { agent: Agent }) {
         animate={{ y: [0, -2.5, 0], x: [0, 1, 0] }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: agent.delay * 0.7 }}
       >
-        {/* Arrow */}
         <CursorArrow color={agent.color} />
 
-        {/* Name pill */}
+        {/* Pill with engine logo + name */}
         <div
-          className="absolute left-2.5 top-3 flex items-center gap-1.5 rounded-full pl-1.5 pr-2.5 py-1 shadow-md"
+          className="absolute left-2.5 top-3 flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-1 shadow-md"
           style={{ backgroundColor: agent.color }}
         >
-          <div className="size-4 rounded-full bg-white/20 flex items-center justify-center">
-            <Icon className="size-2.5 text-white" strokeWidth={2.5} />
-          </div>
+          {Logo && (
+            <div className="size-5 rounded-full bg-white flex items-center justify-center shrink-0">
+              <Logo size="sm" />
+            </div>
+          )}
           <span className="text-[11px] font-semibold text-white whitespace-nowrap">{agent.name}</span>
         </div>
       </motion.div>
@@ -125,33 +113,24 @@ function AgentCursor({ agent }: { agent: Agent }) {
   )
 }
 
-// ─── Task cards that appear on the workspace ─────────────────────────────────
+// ─── Task card ───────────────────────────────────────────────────────────────
 
-function TaskCard({ agent, side }: { agent: Agent; side: 'left' | 'right' }) {
+function TaskCard({ agent }: { agent: typeof AGENTS[0] }) {
   const isDone = agent.progress === 100
 
   return (
     <motion.div
-      className={`flex items-start gap-3 ${side === 'right' ? 'justify-end' : ''}`}
       initial={{ opacity: 0, y: 8 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.35, delay: agent.delay + 0.5, ease: 'easeOut' }}
     >
       <div className="bg-white rounded-xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.04)] p-4 max-w-[260px]">
-        {/* Status line */}
         <div className="flex items-center gap-2 mb-2">
-          <div
-            className="size-1.5 rounded-full"
-            style={{ backgroundColor: isDone ? agent.color : agent.color }}
-          />
+          <div className="size-1.5 rounded-full" style={{ backgroundColor: agent.color }} />
           <span className="text-[11px] font-medium" style={{ color: agent.color }}>{agent.verb}</span>
         </div>
-
-        {/* Result */}
         <p className="text-sm font-medium text-gray-900 text-pretty">{agent.result}</p>
-
-        {/* Progress bar */}
         <div className="mt-3 flex items-center gap-2">
           <div className="flex-1 h-1 rounded-full bg-gray-100 overflow-hidden">
             <motion.div
@@ -182,7 +161,7 @@ export function GroupAgentLight() {
   return (
     <FadeUp>
       <div className={`${CARD} overflow-hidden`}>
-        {/* Header — friendly, non-technical */}
+        {/* Header */}
         <div className="px-8 pt-8 pb-6">
           <div className="flex items-start justify-between">
             <div className="max-w-md">
@@ -204,9 +183,8 @@ export function GroupAgentLight() {
           </div>
         </div>
 
-        {/* Canvas area — white workspace with cursors and task cards */}
+        {/* Canvas */}
         <div className="relative mx-6 mb-6 rounded-xl border border-gray-100 bg-[#FAFBFC] overflow-hidden" style={{ minHeight: 420 }}>
-          {/* Subtle dot grid */}
           <div
             className="absolute inset-0 opacity-[0.4]"
             style={{
@@ -216,37 +194,32 @@ export function GroupAgentLight() {
             aria-hidden="true"
           />
 
-          {/* Task cards — scattered layout for natural feel */}
+          {/* Task cards — scattered */}
           <div className="relative z-10 p-6" style={{ minHeight: 380 }}>
-            {/* Top right: Brand */}
             <div className="absolute right-8 top-6">
-              <TaskCard agent={AGENTS[0]} side="right" />
+              <TaskCard agent={AGENTS[0]} />
             </div>
-            {/* Left: Writer */}
             <div className="absolute left-6 top-14">
-              <TaskCard agent={AGENTS[1]} side="left" />
+              <TaskCard agent={AGENTS[1]} />
             </div>
-            {/* Center: Scanner — moved toward middle */}
             <div className="absolute left-1/2 -translate-x-1/2 top-[45%]">
-              <TaskCard agent={AGENTS[2]} side="left" />
+              <TaskCard agent={AGENTS[2]} />
             </div>
-            {/* Bottom left: Q&A */}
             <div className="absolute left-8 bottom-8">
-              <TaskCard agent={AGENTS[3]} side="left" />
+              <TaskCard agent={AGENTS[3]} />
             </div>
-            {/* Bottom right: Monitor */}
             <div className="absolute right-10 bottom-10">
-              <TaskCard agent={AGENTS[4]} side="right" />
+              <TaskCard agent={AGENTS[4]} />
             </div>
           </div>
 
-          {/* Floating cursor arrows — on top of everything */}
+          {/* Cursors */}
           {AGENTS.map(agent => (
             <AgentCursor key={agent.name} agent={agent} />
           ))}
         </div>
 
-        {/* Bottom summary — friendly metrics */}
+        {/* Footer */}
         <div className="border-t border-gray-100 px-8 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8">
@@ -261,8 +234,6 @@ export function GroupAgentLight() {
                 </div>
               ))}
             </div>
-
-            {/* Agent avatars */}
             <div className="flex items-center">
               {AGENTS.map((a, i) => (
                 <div
