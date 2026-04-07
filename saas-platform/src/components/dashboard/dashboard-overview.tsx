@@ -56,12 +56,19 @@ const MOCK_COMPETITORS = [
 ] as const
 
 const DEMO_SCAN_HISTORY = [
-  { created_at: '2026-01-15', overall_score: 42, mentions_count: 8, avg_position: 4.2, sentiment_positive_pct: 55 },
-  { created_at: '2026-02-01', overall_score: 48, mentions_count: 12, avg_position: 3.8, sentiment_positive_pct: 62 },
-  { created_at: '2026-02-15', overall_score: 55, mentions_count: 15, avg_position: 3.5, sentiment_positive_pct: 68 },
-  { created_at: '2026-03-01', overall_score: 52, mentions_count: 14, avg_position: 3.6, sentiment_positive_pct: 65 },
-  { created_at: '2026-03-15', overall_score: 61, mentions_count: 18, avg_position: 3.2, sentiment_positive_pct: 71 },
-  { created_at: '2026-03-25', overall_score: 67, mentions_count: 22, avg_position: 2.9, sentiment_positive_pct: 75 },
+  { created_at: '2025-12-01', overall_score: 28, mentions_count: 4, avg_position: 6.1, sentiment_positive_pct: 40 },
+  { created_at: '2025-12-15', overall_score: 32, mentions_count: 5, avg_position: 5.8, sentiment_positive_pct: 42 },
+  { created_at: '2026-01-01', overall_score: 35, mentions_count: 6, avg_position: 5.4, sentiment_positive_pct: 45 },
+  { created_at: '2026-01-15', overall_score: 42, mentions_count: 8, avg_position: 4.9, sentiment_positive_pct: 50 },
+  { created_at: '2026-01-25', overall_score: 38, mentions_count: 7, avg_position: 5.1, sentiment_positive_pct: 48 },
+  { created_at: '2026-02-05', overall_score: 46, mentions_count: 10, avg_position: 4.5, sentiment_positive_pct: 55 },
+  { created_at: '2026-02-15', overall_score: 52, mentions_count: 13, avg_position: 4.0, sentiment_positive_pct: 60 },
+  { created_at: '2026-02-25', overall_score: 48, mentions_count: 11, avg_position: 4.2, sentiment_positive_pct: 57 },
+  { created_at: '2026-03-05', overall_score: 55, mentions_count: 15, avg_position: 3.7, sentiment_positive_pct: 63 },
+  { created_at: '2026-03-12', overall_score: 61, mentions_count: 18, avg_position: 3.4, sentiment_positive_pct: 68 },
+  { created_at: '2026-03-18', overall_score: 58, mentions_count: 16, avg_position: 3.5, sentiment_positive_pct: 65 },
+  { created_at: '2026-03-22', overall_score: 65, mentions_count: 20, avg_position: 3.1, sentiment_positive_pct: 72 },
+  { created_at: '2026-03-26', overall_score: 70, mentions_count: 24, avg_position: 2.8, sentiment_positive_pct: 76 },
   { created_at: '2026-03-28', overall_score: 72, mentions_count: 26, avg_position: 2.7, sentiment_positive_pct: 78 },
   { created_at: '2026-03-30', overall_score: 75, mentions_count: 28, avg_position: 2.5, sentiment_positive_pct: 81 },
 ]
@@ -88,7 +95,7 @@ const ENGINE_TYPES: Record<string, { label: string; color: string; bg: string }>
   Gemini: { label: 'LLM', color: 'text-[#3370FF]', bg: 'bg-[#3370FF]/10' },
   Claude: { label: 'LLM', color: 'text-[#3370FF]', bg: 'bg-[#3370FF]/10' },
   Perplexity: { label: 'Search', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
-  'Google AI': { label: 'AI Overview', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10' },
+  'Google AI': { label: 'Overview', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10' },
   Grok: { label: 'LLM', color: 'text-[#3370FF]', bg: 'bg-[#3370FF]/10' },
   'You.com': { label: 'Search', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
 }
@@ -387,57 +394,6 @@ export function DashboardOverview(props: DashboardOverviewProps) {
   return (
     <div className="space-y-0">
 
-      {/* ── Filter Bar (Attio-style pill selectors) ─── */}
-      <div className="flex items-center gap-2 flex-wrap pb-4">
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/15 bg-card px-2.5 py-1 text-xs text-foreground hover:bg-muted/50 transition-colors"
-        >
-          <img
-            src={businessLogoUrl}
-            alt={props.businessName || 'Beamix'}
-            width={16}
-            height={16}
-            className="shrink-0 rounded object-contain"
-            loading="lazy"
-          />
-          <span className="truncate max-w-[140px]">{props.businessName || 'Beamix'}</span>
-          <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" aria-hidden="true" />
-        </button>
-
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted/50 transition-colors"
-        >
-          Last 7 days
-          <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
-        </button>
-
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted/50 transition-colors"
-        >
-          All Engines
-          <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
-        </button>
-
-        {demoMode && (
-          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground/50 bg-muted/60 px-2 py-0.5 rounded-full">Sample data</span>
-        )}
-
-        <div className="ml-auto flex items-center gap-2">
-          <Button
-            asChild
-            size="sm"
-            className="rounded-lg h-8 px-3 text-xs bg-[#3370FF] text-white hover:bg-[#2960DB] border-0"
-          >
-            <Link href="/dashboard/scan">
-              <RefreshCw className="h-3 w-3 mr-1.5" aria-hidden="true" />
-              Run Scan
-            </Link>
-          </Button>
-        </div>
-      </div>
 
       {/* ── Two-Column Layout (60/40 split like Attio) ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-5">

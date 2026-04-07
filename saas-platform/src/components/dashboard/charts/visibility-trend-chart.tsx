@@ -139,7 +139,7 @@ export function VisibilityTrendChart({ data }: VisibilityTrendChartProps) {
             cursor={{ stroke: 'var(--color-border, #E5E7EB)', strokeWidth: 1 }}
           />
           <Area
-            type="monotone"
+            type="natural"
             dataKey="score"
             stroke="#3370FF"
             strokeWidth={1.5}

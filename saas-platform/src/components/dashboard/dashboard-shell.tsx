@@ -16,6 +16,7 @@ import {
   Shield,
   Menu,
   X,
+  ChevronDown,
 } from 'lucide-react'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { UserMenu } from '@/components/dashboard/user-menu'
@@ -158,9 +159,9 @@ function ShellContent({
         )}
       >
         {/* Top header bar */}
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-card/95 backdrop-blur-sm px-4 md:px-6">
-          {/* Left: Mobile hamburger */}
-          <div className="flex items-center gap-3">
+        <header className="sticky top-0 z-20 flex h-12 items-center justify-between border-b border-border bg-card/95 backdrop-blur-sm px-4 md:px-6">
+          {/* Left: Mobile hamburger + filter pills */}
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setMobileOpen(true)}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors md:hidden"
@@ -173,10 +174,50 @@ function ShellContent({
             <span className="text-sm font-semibold tracking-tight md:hidden">
               Beam<span className="text-primary">ix</span>
             </span>
+
+            {/* Filter pills — desktop */}
+            <div className="hidden md:flex items-center gap-2">
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/15 bg-card px-2.5 py-1 text-xs text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <img
+                  src="/logo/beamix_logo_blue_Primary.svg"
+                  alt={businessName}
+                  width={14}
+                  height={14}
+                  className="shrink-0 rounded object-contain"
+                />
+                <span className="truncate max-w-[120px]">{businessName}</span>
+                <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted/50 transition-colors"
+              >
+                Last 7 days
+                <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted/50 transition-colors"
+              >
+                All Engines
+                <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
+              </button>
+            </div>
           </div>
 
-          {/* Right: notifications + user menu */}
+          {/* Right: Run Scan + notifications + user menu */}
           <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/scan"
+              className="hidden md:inline-flex items-center gap-1.5 rounded-lg h-7 px-3 text-xs bg-[#3370FF] text-white hover:bg-[#2960DB] transition-colors"
+            >
+              Run Scan
+            </Link>
             <Link
               href="/dashboard/notifications"
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
