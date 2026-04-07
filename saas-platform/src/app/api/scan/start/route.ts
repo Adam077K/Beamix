@@ -18,6 +18,15 @@ import type { RawEngineResponse } from '@/lib/scan/analyzer'
 export const maxDuration = 300
 
 export async function POST(request: Request) {
+  // Hard fail if OpenRouter is not configured — never silently return mock data in production
+  if (!process.env.OPENROUTER_SCAN_KEY && !process.env.OPENROUTER_API_KEY) {
+    console.error('[scan/start] CRITICAL: No OpenRouter API key configured. Set OPENROUTER_SCAN_KEY.')
+    return NextResponse.json(
+      { error: 'Scan service temporarily unavailable' },
+      { status: 503 }
+    )
+  }
+
   try {
     const body = await request.json()
     const parsed = scanStartSchema.safeParse(body)
@@ -98,14 +107,18 @@ export async function POST(request: Request) {
       const allResponses: RawEngineResponse[] = []
       const mockEngines: string[] = []
 
-      for (const engine of tierConfig.engines) {
-        const engineQueryCount = tierConfig.queriesPerEngine[engine] ?? 2
-        // Perplexity gets all 3 queries, ChatGPT/Gemini get 2 random (seeded by scanId)
-        const engineQueries = pickQueriesForEngine(engine, queries, engineQueryCount, scanId)
-        const result = await queryEngineStep(engine, engineQueries, engineQueries.length)
+      // All engines receive 1 query each — run in parallel for speed
+      const parallelResults = await Promise.all(
+        tierConfig.engines.map(async (engine) => {
+          const engineQueries = pickQueriesForEngine(engine, queries)
+          const result = await queryEngineStep(engine, engineQueries, engineQueries.length)
+          console.log(`[scan] ${scanId} — ${engine}: ${result.responses.length} responses, mock=${result.hasMock}`)
+          return result
+        })
+      )
+      for (const result of parallelResults) {
         allResponses.push(...result.responses)
-        if (result.hasMock) mockEngines.push(engine)
-        console.log(`[scan] ${scanId} — ${engine}: ${result.responses.length} responses (${engineQueries.length} queries), mock=${result.hasMock}`)
+        if (result.hasMock) mockEngines.push(result.engine)
       }
 
       const realResponses = allResponses.filter((r) => !r.isMock)

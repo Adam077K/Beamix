@@ -22,8 +22,9 @@ export const SCAN_TIER_CONFIG: Record<string, ScanTierConfig> = {
   free: {
     queryCount: 3,
     engines: ['chatgpt', 'gemini', 'perplexity'],
-    queriesPerEngine: { chatgpt: 2, gemini: 2, perplexity: 3 },
-    totalCalls: 7,
+    // 1 query per engine = 3 total parallel API calls (clean, cost-efficient)
+    queriesPerEngine: { chatgpt: 1, gemini: 1, perplexity: 1 },
+    totalCalls: 3,
   },
   starter: {
     queryCount: 4,
