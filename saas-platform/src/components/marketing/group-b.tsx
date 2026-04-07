@@ -1,11 +1,10 @@
 'use client'
 
-import { useState } from 'react'
 import NumberFlow from '@number-flow/react'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { BlueTrendChart } from '@/components/marketing/charts/blue-trend-chart'
 import { NivoDonutChart } from '@/components/marketing/charts/nivo-donut-chart'
-import { cn } from '@/lib/utils'
+import { AnimatedCard, CARD } from '@/components/marketing/card'
+import { Stagger, StaggerItem } from '@/components/marketing/motion'
 
 // ─── Demo data ────────────────────────────────────────────────────────────────
 
@@ -28,115 +27,79 @@ const DEMO_ENGINE_DATA = [
   { engine: 'Claude', mentions: 3 },
 ]
 
-const PERIODS = ['7d', '30d', '90d'] as const
-type Period = (typeof PERIODS)[number]
-
 // ─── Group B component ────────────────────────────────────────────────────────
 
 export function GroupB() {
-  const [period, setPeriod] = useState<Period>('30d')
-
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
 
-      {/* B1: Visibility Trend */}
-      <Card className="overflow-hidden rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
-        <CardHeader className="pb-0 pt-5 px-5">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">AI visibility score</p>
-            <div className="flex items-center gap-3 shrink-0">
-              {/* Period toggle */}
-              <div className="flex items-center gap-0.5" role="group" aria-label="Select time period">
-                {PERIODS.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPeriod(p)}
-                    aria-pressed={period === p}
-                    className={cn(
-                      'rounded-md px-2 py-0.5 text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
-                      period === p
-                        ? 'bg-foreground text-background'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-              {/* Score display */}
-              <div className="flex items-baseline gap-1.5">
-                <NumberFlow
-                  value={75.48}
-                  suffix="%"
-                  format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }}
-                  className="text-lg font-semibold tracking-[-0.02em] tabular-nums text-foreground"
-                />
-                <span className="text-xs font-medium text-[#3370FF]">+52</span>
-              </div>
-            </div>
+      {/* B1: Visibility Trend — chart presentation recipe */}
+      <AnimatedCard className="overflow-hidden">
+        <div className="flex items-baseline justify-between px-6 pt-6 pb-1">
+          <div>
+            <p className="text-sm font-medium text-gray-500">AI Visibility Score</p>
+            <p className="mt-0.5 text-2xl font-semibold tracking-tight tabular-nums text-gray-900">
+              75.48%
+            </p>
           </div>
-        </CardHeader>
-        <CardContent className="px-4 pb-4 pt-2">
-          <BlueTrendChart data={DEMO_SCAN_HISTORY} />
-        </CardContent>
-      </Card>
-
-      {/* B2: Engine Donut — full width (nivo/pie with spring animations) */}
-      <Card className="overflow-hidden rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
-        <CardHeader className="pb-0 pt-5 px-5">
-          <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">Engine Mentions</p>
-        </CardHeader>
-        <CardContent className="px-5 pb-6 pt-4">
-          <NivoDonutChart data={DEMO_ENGINE_DATA} />
-        </CardContent>
-      </Card>
-
-      {/* B3: Stat cards — unified background strip */}
-      <div className="rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)] overflow-hidden">
-        <div className="grid grid-cols-3 divide-x divide-border/40">
-          {/* Visibility Score */}
-          <div className="p-5">
-            <p className="text-xs text-muted-foreground">Visibility Score</p>
-            <div className="flex items-baseline gap-2 mt-1.5">
-              <NumberFlow
-                value={75}
-                className="text-[2rem] font-semibold tracking-[-0.02em] tabular-nums text-foreground leading-none"
-              />
-              <span className="text-sm font-semibold text-[#3370FF]">+52</span>
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1.5">out of 100</p>
-          </div>
-
-          {/* AI Mentions */}
-          <div className="p-5">
-            <p className="text-xs text-muted-foreground">AI Mentions</p>
-            <div className="flex items-baseline gap-2 mt-1.5">
-              <NumberFlow
-                value={28}
-                className="text-[2rem] font-semibold tracking-[-0.02em] tabular-nums text-foreground leading-none"
-              />
-              <span className="text-sm font-semibold text-[#3370FF]">+20</span>
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1.5">across 7 engines</p>
-          </div>
-
-          {/* Avg Position */}
-          <div className="p-5">
-            <p className="text-xs text-muted-foreground">Avg Position</p>
-            <div className="flex items-baseline gap-2 mt-1.5">
-              <NumberFlow
-                value={2.5}
-                prefix="#"
-                format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
-                className="text-[2rem] font-semibold tracking-[-0.02em] tabular-nums text-foreground leading-none"
-              />
-              <span className="text-sm font-semibold text-[#3370FF]">+1.7</span>
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1.5">in search results</p>
-          </div>
+          <span className="inline-flex items-center gap-1 text-sm font-medium text-[#3370FF]">
+            +52 pts
+          </span>
         </div>
-      </div>
+        <div className="px-4 pb-4 pt-2">
+          <BlueTrendChart data={DEMO_SCAN_HISTORY} />
+        </div>
+      </AnimatedCard>
+
+      {/* B2: Engine Donut */}
+      <AnimatedCard className="p-6" delay={0.1}>
+        <p className="text-sm font-medium text-gray-500 mb-5">Engine Mentions</p>
+        <NivoDonutChart data={DEMO_ENGINE_DATA} />
+      </AnimatedCard>
+
+      {/* B3: Metric cards — unique data (not duplicating hero) */}
+      <Stagger className="grid grid-cols-3 gap-4">
+        <StaggerItem>
+          <div className={`${CARD} p-6`}>
+            <p className="text-xs text-gray-400">Share of Voice</p>
+            <div className="flex items-baseline gap-2 mt-2">
+              <NumberFlow
+                value={8.2}
+                suffix="%"
+                format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+                className="text-[28px] font-semibold tracking-tight tabular-nums text-gray-900 leading-none"
+              />
+              <span className="text-xs font-medium text-[#3370FF]">+3.1%</span>
+            </div>
+            <p className="text-xs text-gray-400 mt-2">of AI answers</p>
+          </div>
+        </StaggerItem>
+
+        <StaggerItem>
+          <div className={`${CARD} p-6`}>
+            <p className="text-xs text-gray-400">Top Engine</p>
+            <div className="mt-2">
+              <span className="text-[28px] font-semibold tracking-tight text-gray-900 leading-none">ChatGPT</span>
+            </div>
+            <p className="text-xs text-gray-400 mt-2">38% of mentions</p>
+          </div>
+        </StaggerItem>
+
+        <StaggerItem>
+          <div className={`${CARD} p-6`}>
+            <p className="text-xs text-gray-400">Weekly Trend</p>
+            <div className="mt-2">
+              <NumberFlow
+                value={12}
+                suffix="%"
+                prefix="+"
+                className="text-[28px] font-semibold tracking-tight tabular-nums text-[#3370FF] leading-none"
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-2">vs previous week</p>
+          </div>
+        </StaggerItem>
+      </Stagger>
     </div>
   )
 }

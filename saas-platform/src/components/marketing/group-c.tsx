@@ -2,9 +2,10 @@
 
 import NumberFlow from '@number-flow/react'
 import { cn } from '@/lib/utils'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { CompetitorBarChart } from '@/components/dashboard/charts/competitor-bar-chart'
 import { BrewBeanMark, CompetitorMark } from '@/components/marketing/logos'
+import { CompetitorBarChart } from '@/components/dashboard/charts/competitor-bar-chart'
+import { AnimatedCard, CARD } from '@/components/marketing/card'
+import { Stagger, StaggerItem } from '@/components/marketing/motion'
 
 // ─── Demo data ────────────────────────────────────────────────────────────────
 
@@ -24,90 +25,112 @@ const LEADERBOARD = [
   { rank: 5, name: 'Espresso Lab', mentions: 98, position: 7.5, change: 3.3, visibility: 13.4 },
 ]
 
+const MAX_VIS = Math.max(...LEADERBOARD.map(r => r.visibility))
 
 // ─── Group C component ────────────────────────────────────────────────────────
 
 export function GroupC() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
       {/* C1: Competitor bar chart */}
-      <Card className="overflow-hidden rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
-        <CardHeader className="pb-0 pt-5 px-5">
-          <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">Competitor Comparison</p>
-        </CardHeader>
-        <CardContent className="px-5 pb-5 pt-3">
+      <AnimatedCard className="overflow-hidden">
+        <div className="px-6 pt-6 pb-1">
+          <p className="text-sm font-medium text-gray-500">Competitor Comparison</p>
+        </div>
+        <div className="px-6 pb-6 pt-3">
           <CompetitorBarChart data={DEMO_COMPETITORS} hasRealData />
-        </CardContent>
-      </Card>
+        </div>
+      </AnimatedCard>
 
-      {/* C2: Industry leaderboard */}
-      <Card className="overflow-hidden rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
-        {/* Card header */}
-        <div className="flex items-start justify-between px-5 pt-5 pb-3">
-          <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">Industry Ranking</p>
+      {/* C2: Industry leaderboard — Attio table recipe */}
+      <AnimatedCard className="overflow-hidden" delay={0.1}>
+        <div className="flex items-start justify-between px-6 pt-6 pb-4">
+          <p className="text-sm font-medium text-gray-500">Industry Ranking</p>
           <div className="text-right">
             <NumberFlow
               value={31.5}
               suffix="%"
               format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
-              className="text-lg font-semibold tracking-[-0.02em] tabular-nums text-foreground"
+              className="text-xl font-semibold tracking-tight tabular-nums text-gray-900"
             />
-            <p className="text-xs text-muted-foreground mt-0.5">Average visibility score</p>
+            <p className="text-xs text-gray-400 mt-0.5">avg visibility</p>
           </div>
         </div>
 
-        {/* Table header */}
-        <div className="grid grid-cols-[18px_1fr_52px_36px_44px_52px] gap-1 px-5 py-2 border-y border-border/40 bg-muted/30">
-          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">#</span>
-          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Brand</span>
-          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground text-right">Mentions</span>
-          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground text-right">Pos</span>
-          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground text-right">Change</span>
-          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground text-right">Score</span>
+        {/* Header — clean, no uppercase */}
+        <div className="grid grid-cols-[20px_1fr_56px_40px_48px_72px] gap-1 px-6 py-3 border-t border-gray-100">
+          <span className="text-xs font-medium text-gray-400">#</span>
+          <span className="text-xs font-medium text-gray-400">Brand</span>
+          <span className="text-xs font-medium text-gray-400 text-right">Mentions</span>
+          <span className="text-xs font-medium text-gray-400 text-right">Pos</span>
+          <span className="text-xs font-medium text-gray-400 text-right">Change</span>
+          <span className="text-xs font-medium text-gray-400 text-right">Score</span>
         </div>
 
-        {/* Table rows */}
-        <div className="divide-y divide-border/40">
+        {/* Rows — 52px height, divide-gray-50 */}
+        <Stagger>
           {LEADERBOARD.map((row, idx) => (
-            <div
-              key={row.rank}
-              className={cn(
-                'grid grid-cols-[18px_1fr_52px_36px_44px_52px] gap-1 items-center px-5 py-3',
-                row.isUser && 'bg-[#3370FF]/[0.06]'
-              )}
-            >
-              <span className={cn('text-xs tabular-nums', row.isUser ? 'font-bold text-[#3370FF]' : 'text-muted-foreground')}>{row.rank}</span>
-
-              {/* Brand cell */}
-              <span className="flex items-center gap-1.5 min-w-0">
-                {row.isUser ? (
-                  <BrewBeanMark size="sm" />
-                ) : (
-                  <CompetitorMark name={row.name} index={idx - 1} size="sm" />
+            <StaggerItem key={row.rank}>
+              <div
+                className={cn(
+                  'grid grid-cols-[20px_1fr_56px_40px_48px_72px] gap-1 items-center px-6 py-4',
+                  'border-t border-gray-50 transition-colors duration-150 hover:bg-gray-50/50',
+                  row.isUser && 'bg-[#3370FF]/[0.02]'
                 )}
-                <span className={cn('text-xs truncate', row.isUser ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
-                  {row.name}
+              >
+                <span className="text-sm tabular-nums text-gray-300">{row.rank}</span>
+
+                <span className="flex items-center gap-2 min-w-0">
+                  {row.isUser ? (
+                    <BrewBeanMark size="sm" />
+                  ) : (
+                    <CompetitorMark name={row.name} index={idx - 1} size="sm" />
+                  )}
+                  <span className={cn(
+                    'text-sm truncate',
+                    row.isUser ? 'font-medium text-gray-900' : 'text-gray-600'
+                  )}>
+                    {row.name}
+                  </span>
+                  {row.isUser && (
+                    <span className="shrink-0 bg-[#3370FF] text-white text-[10px] font-medium px-1.5 py-0.5 rounded-full leading-none">You</span>
+                  )}
                 </span>
-                {row.isUser && (
-                  <span className="shrink-0 rounded-md bg-[#3370FF] px-1.5 py-0.5 text-[9px] font-bold text-white leading-none">You</span>
-                )}
-              </span>
 
-              <span className="text-xs tabular-nums text-muted-foreground text-right">{row.mentions}</span>
-              <span className="text-xs tabular-nums text-muted-foreground text-right">{row.position}</span>
+                <span className="text-sm tabular-nums text-gray-500 text-right">{row.mentions}</span>
+                <span className="text-sm tabular-nums text-gray-500 text-right">{row.position}</span>
 
-              {/* Change — colored text only, no badges */}
-              <span className={cn('text-xs tabular-nums text-right font-medium', row.change > 0 ? 'text-[#3370FF]' : 'text-muted-foreground')}>
-                {row.change > 0 ? '+' : ''}{row.change}%
-              </span>
+                <span className={cn(
+                  'text-sm tabular-nums text-right font-medium',
+                  row.change > 0 ? 'text-[#3370FF]' : 'text-gray-400'
+                )}>
+                  {row.change > 0 ? '+' : ''}{row.change}%
+                </span>
 
-              <span className={cn('text-xs tabular-nums text-right font-semibold', row.isUser ? 'text-foreground' : 'text-muted-foreground')}>{row.visibility}%</span>
-            </div>
+                {/* Score with proportional bar */}
+                <div className="flex items-center justify-end gap-2">
+                  <div className="w-12 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{
+                        width: `${(row.visibility / MAX_VIS) * 100}%`,
+                        backgroundColor: row.isUser ? '#3370FF' : '#D1D5DB',
+                      }}
+                    />
+                  </div>
+                  <span className={cn(
+                    'text-sm tabular-nums font-medium min-w-[36px] text-right',
+                    row.isUser ? 'text-gray-900' : 'text-gray-500'
+                  )}>
+                    {row.visibility}%
+                  </span>
+                </div>
+              </div>
+            </StaggerItem>
           ))}
-        </div>
-      </Card>
-
+        </Stagger>
+      </AnimatedCard>
     </div>
   )
 }

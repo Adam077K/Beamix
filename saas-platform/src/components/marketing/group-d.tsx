@@ -1,104 +1,108 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { ENGINE_LOGOS } from '@/components/marketing/logos'
+import { ArrowRight } from 'lucide-react'
+import { FadeUp, Stagger, StaggerItem } from '@/components/marketing/motion'
 
 // ─── Demo data ────────────────────────────────────────────────────────────────
 
 const AI_MODELS = [
-  { name: 'ChatGPT', checked: true, plan: null },
-  { name: 'Gemini', checked: true, plan: null },
-  { name: 'Perplexity', checked: true, plan: null },
-  { name: 'Claude', checked: false, plan: 'Pro' as const },
-  { name: 'Google AI Overviews', checked: false, plan: 'Pro' as const },
-  { name: 'Grok', checked: false, plan: 'Business' as const },
-  { name: 'DeepSeek', checked: false, plan: 'Business' as const },
+  { name: 'ChatGPT', active: true, plan: null },
+  { name: 'Gemini', active: true, plan: null },
+  { name: 'Perplexity', active: true, plan: null },
+  { name: 'Claude', active: false, plan: 'Pro' as const },
+  { name: 'Google AI Overviews', active: false, plan: 'Pro' as const },
+  { name: 'Grok', active: false, plan: 'Business' as const },
+  { name: 'DeepSeek', active: false, plan: 'Business' as const },
 ]
 
-const PLAN_BADGE_STYLES: Record<'Pro' | 'Business', string> = {
-  Pro: 'bg-[#EEF3FF] text-[#3370FF]',
-  Business: 'bg-[#E8EEFB] text-[#1E40AF]',
+const PLAN_STYLES: Record<string, string> = {
+  Pro: 'bg-[#3370FF]/[0.06] text-[#3370FF]',
+  Business: 'bg-[#1E40AF]/[0.06] text-[#1E40AF]',
 }
 
-// ─── Check icon ───────────────────────────────────────────────────────────────
+import { CARD, CARD_ACCENT } from '@/components/marketing/card'
 
-function CheckIcon({ checked }: { checked: boolean }) {
-  if (checked) {
-    return (
-      <svg
-        className="h-4 w-4 shrink-0"
-        viewBox="0 0 16 16"
-        fill="none"
-        aria-hidden="true"
-      >
-        <rect x="1" y="1" width="14" height="14" rx="4" fill="#3370FF" />
-        <path d="M4.5 8L7 10.5L11.5 5.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    )
-  }
-  return (
-    <svg
-      className="h-4 w-4 shrink-0"
-      viewBox="0 0 16 16"
-      fill="none"
-      aria-hidden="true"
-    >
-      <rect x="1" y="1" width="14" height="14" rx="4" stroke="#D1D5DB" strokeWidth="1.5" fill="none" />
-    </svg>
-  )
-}
-
-// ─── Group D component ────────────────────────────────────────────────────────
+// ─── Group D — Grid layout redesign ──────────────────────────────────────────
 
 export function GroupD() {
+  const activeCount = AI_MODELS.filter(m => m.active).length
+
   return (
-    <div className="max-w-sm">
-      {/* AI Models Scanned */}
-      <Card className="overflow-hidden rounded-xl border border-white/60 bg-white/70 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_12px_rgba(0,0,0,0.03)]">
-        <CardHeader className="pb-0 pt-5 px-5">
-          <p className="text-[13px] font-medium tracking-[-0.01em] text-foreground">AI Models Scanned</p>
-        </CardHeader>
-        <CardContent className="px-5 pb-5 pt-3">
-          <div className="space-y-2.5">
+    <FadeUp>
+      <div className={`${CARD_ACCENT} overflow-hidden`}>
+        {/* Header with count */}
+        <div className="flex items-center justify-between px-6 pt-6 pb-4">
+          <div>
+            <p className="text-sm font-medium text-gray-900">AI Models Scanned</p>
+            <p className="text-[11px] text-gray-400 mt-1">
+              <span className="text-[#3370FF] font-medium">{activeCount} active</span> · {AI_MODELS.length} total engines
+            </p>
+          </div>
+          <button
+            type="button"
+            className="text-xs text-[#3370FF] font-medium hover:underline inline-flex items-center gap-1 transition-colors"
+          >
+            Upgrade to Pro
+            <ArrowRight className="h-3 w-3" />
+          </button>
+        </div>
+
+        {/* Grid of engine cards */}
+        <div className="border-t border-gray-100 p-4">
+          <Stagger className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5" stagger={0.06}>
             {AI_MODELS.map((model) => {
               const Logo = ENGINE_LOGOS[model.name]
               return (
-              <div key={model.name} className="flex items-center gap-2.5">
-                <CheckIcon checked={model.checked} />
-                {Logo ? (
-                  <Logo size="sm" />
-                ) : (
-                  <div className="h-5 w-5 rounded-md bg-muted shrink-0" />
-                )}
-                <span
-                  className={cn(
-                    'flex-1 text-xs',
-                    model.checked ? 'text-foreground font-medium' : 'text-muted-foreground'
-                  )}
-                >
-                  {model.name}
-                </span>
-                {model.plan && (
-                  <span
-                    className={cn(
-                      'rounded-full text-[9px] font-semibold px-1.5 py-0.5 leading-none shrink-0',
-                      PLAN_BADGE_STYLES[model.plan]
-                    )}
-                  >
-                    {model.plan}
-                  </span>
-                )}
-              </div>
-            )
-            })}
-          </div>
+                <StaggerItem key={model.name}>
+                  <div className={cn(
+                    'relative flex items-center gap-3 rounded-lg border p-3.5 transition-colors',
+                    model.active
+                      ? 'border-gray-100 hover:bg-gray-50/50 bg-white'
+                      : 'border-dashed border-gray-200 bg-gray-50/30'
+                  )}>
+                    {/* Logo */}
+                    <div className="shrink-0">
+                      {Logo ? (
+                        <Logo size="lg" />
+                      ) : (
+                        <div className="size-7 rounded-lg bg-gray-100" />
+                      )}
+                    </div>
 
-          <p className="mt-4 text-[11px] text-muted-foreground">
-            Upgrade to Pro to unlock 4 more AI engines.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+                    {/* Name + status */}
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        'text-sm font-medium truncate',
+                        model.active ? 'text-gray-900' : 'text-gray-400'
+                      )}>
+                        {model.name}
+                      </p>
+                      {model.plan ? (
+                        <span className={cn(
+                          'text-[10px] font-medium px-1.5 py-0.5 rounded-full leading-none inline-block mt-1',
+                          PLAN_STYLES[model.plan]
+                        )}>
+                          {model.plan}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-gray-400 mt-0.5 block">Active</span>
+                      )}
+                    </div>
+
+                    {/* Status indicator */}
+                    <div className={cn(
+                      'absolute top-2.5 right-2.5 size-2 rounded-full shrink-0',
+                      model.active ? 'bg-[#3370FF]' : 'border border-gray-300'
+                    )} />
+                  </div>
+                </StaggerItem>
+              )
+            })}
+          </Stagger>
+        </div>
+      </div>
+    </FadeUp>
   )
 }

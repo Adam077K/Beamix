@@ -86,7 +86,7 @@ function DonutPanel({ label, engines }: { label: string; engines: EngineEntry[] 
                 </div>
               ) : (
                 <div
-                  className="h-5 w-5 rounded-full shrink-0"
+                  className="size-5 rounded-full shrink-0"
                   style={{ backgroundColor: e.color }}
                   aria-label={e.id}
                 />

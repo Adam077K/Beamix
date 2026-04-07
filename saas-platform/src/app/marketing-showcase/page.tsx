@@ -8,14 +8,24 @@ import { GroupE } from '@/components/marketing/group-e'
 import { GroupNew } from '@/components/marketing/group-new'
 import { GroupGlossy } from '@/components/marketing/group-glossy'
 import { GroupPremium } from '@/components/marketing/group-premium'
+import { GroupDarkKPI } from '@/components/marketing/group-dark-kpi'
+import { GroupQuadrant } from '@/components/marketing/group-quadrant'
+import { GroupAgentHero } from '@/components/marketing/group-agent-hero'
+import { GroupScanLive } from '@/components/marketing/group-scan-live'
+import { GroupDarkAnalytics } from '@/components/marketing/group-dark-analytics'
 
 const GROUPS = [
-  { id: 'track-your-growth', label: 'Track Your Growth' },
-  { id: 'beat-competitors', label: 'Beat Competitors' },
-  { id: 'feature-cards', label: 'Feature Cards' },
-  { id: 'hero-visual', label: 'Hero Composites' },
-  { id: 'premium-charts', label: 'Premium Charts' },
-  { id: 'glossy-variants', label: 'Glossy Variants' },
+  { id: 'command-center', label: 'Command Center' },
+  { id: 'agent-hero', label: 'Agent Hero' },
+  { id: 'scan-demo', label: 'Scan Demo' },
+  { id: 'track-your-growth', label: 'Track Growth' },
+  { id: 'beat-competitors', label: 'Competitors' },
+  { id: 'landscape', label: 'Landscape' },
+  { id: 'feature-cards', label: 'Features' },
+  { id: 'hero-visual', label: 'Hero' },
+  { id: 'analytics', label: 'Analytics' },
+  { id: 'premium-charts', label: 'Premium' },
+  { id: 'glossy-variants', label: 'Glossy' },
 ]
 
 export default function MarketingShowcasePage() {
@@ -25,12 +35,20 @@ export default function MarketingShowcasePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F8FAFF] to-[#F5F5F5]">
+    <div className="min-h-dvh bg-[#F9FAFB] relative">
+      {/* Subtle noise texture overlay — premium background treatment */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0 opacity-[0.015]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+        }}
+        aria-hidden="true"
+      />
 
       {/* Sticky nav */}
-      <div className="sticky top-0 z-50 bg-gradient-to-b from-[#F8FAFF]/95 to-[#F8FAFF]/90 backdrop-blur-sm border-b border-border/40">
-        <div className="max-w-7xl mx-auto px-8 py-3 flex items-center gap-4 overflow-x-auto">
-          <span className="text-sm font-medium text-foreground shrink-0 mr-2">
+      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-black/[0.04]">
+        <div className="max-w-7xl mx-auto px-8 py-3 flex items-center gap-5 overflow-x-auto">
+          <span className="text-sm font-semibold text-gray-900 shrink-0 mr-3 tracking-tight">
             Beamix
           </span>
           {GROUPS.map((group) => (
@@ -38,7 +56,7 @@ export default function MarketingShowcasePage() {
               key={group.id}
               type="button"
               onClick={() => scrollToSection(group.id)}
-              className="shrink-0 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors duration-150 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+              className="shrink-0 text-[11px] font-medium text-gray-400 hover:text-gray-900 transition-colors duration-150 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF]/30 rounded-sm px-0.5"
             >
               {group.label}
             </button>
@@ -47,42 +65,72 @@ export default function MarketingShowcasePage() {
       </div>
 
       {/* Sections */}
-      <div className="max-w-7xl mx-auto px-8 pt-10 pb-24 space-y-10">
+      <div className="relative z-10 max-w-7xl mx-auto px-8 pt-12 pb-24 space-y-20">
 
-        {/* 1. Track Your Growth */}
+        {/* Page intro — establishes context */}
+        <div className="text-center max-w-2xl mx-auto pt-4 pb-4">
+          <p className="text-xs font-medium text-[#3370FF] mb-3">Marketing Visual Assets</p>
+          <h1 className="text-2xl font-semibold text-gray-900 text-balance">
+            Beamix Product Components
+          </h1>
+          <p className="text-sm text-gray-500 mt-3 text-pretty leading-relaxed">
+            Screenshot-ready dashboard components for the Framer marketing website. Each section is a self-contained visual asset.
+          </p>
+        </div>
+
+        <section id="command-center">
+          <SectionHeader title="Command Center" subtitle="Dark mission-control dashboard with live metrics" />
+          <GroupDarkKPI />
+        </section>
+
+        <section id="agent-hero">
+          <SectionHeader title="Agent Showcase" subtitle="Promotional hero with AI agent positioning" />
+          <GroupAgentHero />
+        </section>
+
+        <section id="scan-demo">
+          <SectionHeader title="Live Scan Demo" subtitle="Animated scan sequence with score reveal" />
+          <GroupScanLive />
+        </section>
+
         <section id="track-your-growth">
           <SectionHeader title="Track Your Growth" />
           <GroupB />
         </section>
 
-        {/* 2. Beat Competitors */}
         <section id="beat-competitors">
           <SectionHeader title="Beat Competitors" />
           <GroupC />
         </section>
 
-        {/* 3. Feature Cards — trending topics, sources, queries, invisibility, models, dark donut */}
+        <section id="landscape">
+          <SectionHeader title="Competitive Landscape" subtitle="Brand positioning on Visibility vs Sentiment" />
+          <GroupQuadrant />
+        </section>
+
         <section id="feature-cards">
           <SectionHeader title="Feature Cards" />
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
             <GroupNew />
             <GroupD />
           </div>
         </section>
 
-        {/* 4. Hero Composites */}
         <section id="hero-visual">
           <SectionHeader title="Hero Composites" />
           <GroupE />
         </section>
 
-        {/* 5. Premium Charts (nivo + NumberFlow) */}
+        <section id="analytics">
+          <SectionHeader title="Audience Analytics" subtitle="Dark multi-line persona tracking" />
+          <GroupDarkAnalytics />
+        </section>
+
         <section id="premium-charts">
           <SectionHeader title="Premium Charts" />
           <GroupPremium />
         </section>
 
-        {/* 6. Glossy Variants */}
         <section id="glossy-variants">
           <SectionHeader title="Glossy Variants" />
           <GroupGlossy />
@@ -93,10 +141,11 @@ export default function MarketingShowcasePage() {
   )
 }
 
-function SectionHeader({ title }: { title: string }) {
+function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="pt-4 mb-3">
-      <h2 className="text-xl font-medium tracking-[-0.02em] text-foreground">{title}</h2>
+    <div className="mb-8">
+      <h2 className="text-lg font-semibold text-gray-900 text-balance">{title}</h2>
+      {subtitle && <p className="text-xs text-gray-400 mt-1 text-pretty">{subtitle}</p>}
     </div>
   )
 }

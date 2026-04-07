@@ -175,7 +175,7 @@ export function MultiBrandChart() {
         {BRANDS.map((b) => (
           <div key={b.key} className="flex items-center gap-1.5">
             <div
-              className="h-2 w-2 rounded-full shrink-0"
+              className="size-2 rounded-full shrink-0"
               style={{ backgroundColor: b.color }}
               aria-hidden="true"
             />
