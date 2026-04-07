@@ -13,8 +13,10 @@ import { GroupQuadrant } from '@/components/marketing/group-quadrant'
 import { GroupAgentHero } from '@/components/marketing/group-agent-hero'
 import { GroupScanLive } from '@/components/marketing/group-scan-live'
 import { GroupDarkAnalytics } from '@/components/marketing/group-dark-analytics'
+import { GroupAgentMarketing } from '@/components/marketing/group-agent-marketing'
 
 const GROUPS = [
+  { id: 'agent-marketing', label: 'Agents' },
   { id: 'command-center', label: 'Command Center' },
   { id: 'agent-hero', label: 'Agent Hero' },
   { id: 'scan-demo', label: 'Scan Demo' },
@@ -77,6 +79,12 @@ export default function MarketingShowcasePage() {
             Screenshot-ready dashboard components for the Framer marketing website. Each section is a self-contained visual asset.
           </p>
         </div>
+
+        {/* HERO: Agent Marketing — the main Framer visual */}
+        <section id="agent-marketing">
+          <SectionHeader title="AI Agents at Work" subtitle="Hero marketing visual — an agent actively generating content with results grid" />
+          <GroupAgentMarketing />
+        </section>
 
         <section id="command-center">
           <SectionHeader title="Command Center" subtitle="Dark mission-control dashboard with live metrics" />
