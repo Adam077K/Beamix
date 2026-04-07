@@ -14,9 +14,11 @@ import { GroupAgentHero } from '@/components/marketing/group-agent-hero'
 import { GroupScanLive } from '@/components/marketing/group-scan-live'
 import { GroupDarkAnalytics } from '@/components/marketing/group-dark-analytics'
 import { GroupAgentMarketing } from '@/components/marketing/group-agent-marketing'
+import { GroupAgentLight } from '@/components/marketing/group-agent-light'
 
 const GROUPS = [
-  { id: 'agent-marketing', label: 'Agents' },
+  { id: 'agent-light', label: 'Agents (Light)' },
+  { id: 'agent-dark', label: 'Agents (Dark)' },
   { id: 'command-center', label: 'Command Center' },
   { id: 'agent-hero', label: 'Agent Hero' },
   { id: 'scan-demo', label: 'Scan Demo' },
@@ -80,9 +82,15 @@ export default function MarketingShowcasePage() {
           </p>
         </div>
 
-        {/* HERO: Agent Marketing — the main Framer visual */}
-        <section id="agent-marketing">
-          <SectionHeader title="AI Agents at Work" subtitle="Hero marketing visual — an agent actively generating content with results grid" />
+        {/* Light agent canvas — clean, business-friendly */}
+        <section id="agent-light">
+          <SectionHeader title="AI Agents — Light" subtitle="Clean white version for business users. Friendly language, task cards with progress." />
+          <GroupAgentLight />
+        </section>
+
+        {/* Dark agent canvas — multiplayer cursor style */}
+        <section id="agent-dark">
+          <SectionHeader title="AI Agents — Dark" subtitle="Multiplayer cursor canvas with work outputs appearing in real-time." />
           <GroupAgentMarketing />
         </section>
 
