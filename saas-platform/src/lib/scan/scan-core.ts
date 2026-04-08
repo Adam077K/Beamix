@@ -60,47 +60,21 @@ export function generateQueriesStep(
 /**
  * Pick which queries to send to a specific engine.
  *
- * - Perplexity: gets ALL 3 queries (best at finding businesses, native web search)
- * - ChatGPT & Gemini: get 2 RANDOM queries out of 3 (saves cost, adds variety)
+ * Free tier: each engine gets exactly 1 query (query[0]) — 3 total API calls,
+ * all parallel. We still generate 3 queries in the research step for quality,
+ * but only send the first to each engine for cost efficiency.
  *
- * The randomization is seeded by scanId so the same scan always produces
- * the same query assignment (reproducible results).
+ * Paid tiers (starter/pro/business) handle their own multi-query distribution
+ * in their respective Inngest functions and are not affected by this function.
  */
 export function pickQueriesForEngine(
-  engine: ScanEngine,
+  _engine: ScanEngine,
   allQueries: string[],
-  queriesPerEngine: number,
-  scanId: string,
 ): string[] {
-  // Perplexity gets all queries
-  if (engine === 'perplexity') {
-    return allQueries
-  }
-
-  // For other engines: pick N random queries seeded by scanId + engine name
-  if (queriesPerEngine >= allQueries.length) {
-    return allQueries
-  }
-
-  // Simple seeded shuffle: hash scanId+engine to get a stable starting index
-  const seed = hashString(`${scanId}-${engine}`)
-  const indices = allQueries.map((_, i) => i)
-
-  // Fisher-Yates shuffle with seed
-  for (let i = indices.length - 1; i > 0; i--) {
-    const j = Math.abs((seed + i * 31) % (i + 1))
-    ;[indices[i], indices[j]] = [indices[j], indices[i]]
-  }
-
-  return indices.slice(0, queriesPerEngine).sort().map((i) => allQueries[i])
-}
-
-function hashString(str: string): number {
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0
-  }
-  return Math.abs(hash)
+  // Guard: no queries generated (research step failed)
+  if (!allQueries.length) return []
+  // All engines receive the same first query — clean, deterministic, parallel-safe
+  return [allQueries[0]]
 }
 
 /**
