@@ -16,12 +16,10 @@ import {
   Shield,
   Menu,
   X,
-  Search,
+  ChevronDown,
 } from 'lucide-react'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { UserMenu } from '@/components/dashboard/user-menu'
-import { LanguageToggle } from '@/components/ui/language-toggle'
-import { Badge } from '@/components/ui/badge'
 import { CommandPalette } from '@/components/dashboard/command-palette'
 import { cn } from '@/lib/utils'
 import { SidebarProvider, useSidebar } from '@/components/dashboard/sidebar-context'
@@ -154,16 +152,16 @@ function ShellContent({
       {/* Main content area */}
       <div
         className={cn(
-          'flex flex-1 flex-col transition-all duration-300',
+          'flex flex-1 flex-col transition-all duration-200 ease-in-out',
           collapsed
             ? 'ltr:md:pl-16 rtl:md:pr-16'
             : 'ltr:md:pl-60 rtl:md:pr-60'
         )}
       >
         {/* Top header bar */}
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-card/95 backdrop-blur-sm px-4 md:px-6">
-          {/* Left: Mobile hamburger */}
-          <div className="flex items-center gap-3">
+        <header className="sticky top-0 z-20 flex h-12 items-center justify-between border-b border-border bg-card/95 backdrop-blur-sm px-4 md:px-6">
+          {/* Left: Mobile hamburger + filter pills */}
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setMobileOpen(true)}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors md:hidden"
@@ -176,24 +174,50 @@ function ShellContent({
             <span className="text-sm font-semibold tracking-tight md:hidden">
               Beam<span className="text-primary">ix</span>
             </span>
+
+            {/* Filter pills — desktop */}
+            <div className="hidden md:flex items-center gap-2">
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/15 bg-card px-2.5 py-1 text-xs text-foreground hover:bg-muted/50 transition-colors"
+              >
+                <img
+                  src="/logo/beamix_logo_blue_Primary.svg"
+                  alt={businessName}
+                  width={14}
+                  height={14}
+                  className="shrink-0 rounded object-contain"
+                />
+                <span className="truncate max-w-[120px]">{businessName}</span>
+                <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted/50 transition-colors"
+              >
+                Last 7 days
+                <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted/50 transition-colors"
+              >
+                All Engines
+                <ChevronDown className="h-3 w-3 shrink-0" aria-hidden="true" />
+              </button>
+            </div>
           </div>
 
-          {/* Center: Command palette trigger — desktop only */}
-          <button
-            onClick={() => {
-              document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }))
-            }}
-            className="hidden md:flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
-            aria-label="Open command palette (⌘K)"
-          >
-            <Search className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>Search...</span>
-            <kbd className="text-[10px] font-mono bg-card px-1.5 py-0.5 rounded border border-border">⌘K</kbd>
-          </button>
-
-          {/* Right: Language toggle + notifications + trial badge + user menu */}
+          {/* Right: Run Scan + notifications + user menu */}
           <div className="flex items-center gap-2">
-            <LanguageToggle />
+            <Link
+              href="/dashboard/scan"
+              className="hidden md:inline-flex items-center gap-1.5 rounded-lg h-7 px-3 text-xs bg-[#3370FF] text-white hover:bg-[#2960DB] transition-colors"
+            >
+              Run Scan
+            </Link>
             <Link
               href="/dashboard/notifications"
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -201,18 +225,6 @@ function ShellContent({
             >
               <Bell className="h-4 w-4" />
             </Link>
-            {trialDaysLeft !== null && trialDaysLeft > 0 && (
-              <Badge className="hidden sm:inline-flex bg-blue-100 text-[#2B5FDB] border-blue-200 hover:bg-blue-100">
-                Trial: {trialDaysLeft}d left
-              </Badge>
-            )}
-            {trialDaysLeft !== null && trialDaysLeft <= 0 && (
-              <Link href="/pricing">
-                <Badge className="hidden sm:inline-flex bg-red-100 text-red-700 border-red-200 hover:bg-red-200 cursor-pointer">
-                  Trial expired · Upgrade
-                </Badge>
-              </Link>
-            )}
             <UserMenu businessName={businessName} planTier={planTier} />
           </div>
         </header>
