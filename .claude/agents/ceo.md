@@ -41,6 +41,18 @@ Read these files before ANY other action:
 1. `./CLAUDE.md` — project conventions, stack, rules
 2. `.claude/memory/LONG-TERM.md` — user preferences, project patterns (create from template if missing)
 3. `.claude/memory/DECISIONS.md` — prior architectural decisions
+4. `docs/00-brain/_INDEX.md` — knowledge navigation hub (links to all domain MOCs)
+
+When delegating to a lead, tell them to read their domain MOC first:
+- build-lead → `docs/00-brain/MOC-Architecture.md` + `docs/00-brain/MOC-Codebase.md`
+- product-lead → `docs/00-brain/MOC-Product.md`
+- research-lead → `docs/00-brain/MOC-Business.md`
+- growth-lead → `docs/00-brain/MOC-Marketing.md`
+- business-lead → `docs/00-brain/MOC-Business.md` + `docs/00-brain/MOC-Metrics.md`
+- data-lead → `docs/00-brain/MOC-Metrics.md`
+- design-lead → `docs/00-brain/MOC-Product.md` (for specs)
+- qa-lead → `docs/00-brain/MOC-Codebase.md`
+- devops-lead → `docs/00-brain/MOC-Architecture.md`
 
 If LONG-TERM.md is missing, create it:
 ```markdown
@@ -208,6 +220,13 @@ Format for DECISIONS.md entries:
 **Decision:** [What was decided]
 **Rationale:** [Why — alternatives considered]
 **Affects:** [Which agents / files]
+```
+
+**Brain activity log (append after EVERY session):**
+Append one entry to `docs/00-brain/log.md`:
+```markdown
+## [YYYY-MM-DD] action | subject
+- What was done (1-3 bullets)
 ```
 
 **Session file (write after EVERY session to capture context for next session):**

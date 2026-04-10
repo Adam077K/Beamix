@@ -87,12 +87,42 @@ AI:         OpenAI, Claude, Gemini, Perplexity (direct API integration)
 | `.claude/memory/sessions/` | Team lead session summaries (YYYY-MM-DD-[lead]-[task].md) | Each team lead |
 | `.claude/memory/specs/` | Product specs written by Product Lead | Product Lead |
 
+## Brain — Knowledge Navigation (docs/00-brain/)
+
+**Before searching the full docs tree, read the relevant MOC in `docs/00-brain/`.** MOCs (Maps of Content) are navigation hubs that link to every document by domain. They save agents from blindly scanning 95+ files.
+
+**Navigation flow:** `_INDEX.md` → domain MOC → specific document
+
+| MOC File | Domain | Who reads it |
+|----------|--------|-------------|
+| `docs/00-brain/_INDEX.md` | Master hub — links to all 8 MOCs | CEO (every session) |
+| `docs/00-brain/MOC-Product.md` | PRD, roadmap, 28 feature specs | product-lead, ceo |
+| `docs/00-brain/MOC-Architecture.md` | System design, DB, APIs, tech stack | build-lead, backend-developer |
+| `docs/00-brain/MOC-Business.md` | Vision, market, competitive, pricing | business-lead, research-lead |
+| `docs/00-brain/MOC-Marketing.md` | GTM, messaging, SEO, channels | growth-lead |
+| `docs/00-brain/MOC-Codebase.md` | Code map, patterns, conventions, tech debt | build-lead, code-reviewer |
+| `docs/00-brain/MOC-History.md` | Changelog, decisions, audits, session logs | ceo, all leads |
+| `docs/00-brain/MOC-Metrics.md` | North star, unit economics, growth | business-lead, data-lead |
+| `docs/00-brain/MOC-Agents.md` | 32 agent definitions, commands, memory | ceo |
+| `docs/00-brain/log.md` | Chronological activity record (append-only) | ceo, all leads |
+
+**Rules:**
+1. CEO reads `_INDEX.md` during pre-flight (after CLAUDE.md + memory)
+2. Leads read their domain MOC before starting work
+3. After significant work, CEO appends a line to `log.md`
+4. MOCs are the source of truth for "what docs exist and where"
+
+**Obsidian vault:** These same files power the Beamix Brain Obsidian vault at `~/BeamixBrain/` with 3D graph visualization.
+
+---
+
 ## Project Documentation (docs/)
 
 All startup project documentation lives in `docs/`. Agents **must** read and update the relevant file for their domain.
 
 | Folder / File | Purpose | Owner |
 |---------------|---------|-------|
+| `docs/00-brain/` | Knowledge navigation MOCs + activity log | ceo, all leads |
 | `docs/PRD.md` | Master product requirements | product-lead |
 | `docs/BACKLOG.md` | Prioritized task backlog | product-lead, ceo |
 | `docs/ENGINEERING_PRINCIPLES.md` | Code conventions + tech decisions | build-lead |
