@@ -15,7 +15,7 @@
 ## Page Meta (SEO)
 
 **Title:** `Beamix Pricing — AI Search Visibility Plans for SMBs`
-**Meta description:** `Start free. Upgrade when you see results. Beamix plans from $49/mo — weekly scans, AI agents, competitor tracking, no credit card needed to start.`
+**Meta description:** `Start free. Upgrade when you see results. Beamix plans from $79/mo — weekly scans, AI agents, competitor tracking, no credit card needed to start.`
 **Canonical:** `https://beamix.io/pricing`
 
 ---
@@ -118,11 +118,11 @@ Four cards, side by side on desktop, stacked on mobile.
 
 ---
 
-### Card 2 — Starter
+### Card 2 — Discover
 
 **Badge:** (none)
-**Price:** `$49/mo` (Annual: `$39/mo`)
-**Billing note (annual):** `billed $468/year`
+**Price:** `$79/mo` (Annual: `$63/mo`)
+**Billing note (annual):** `billed $756/year`
 
 **Description:**
 `For small businesses ready to fix their AI visibility and start ranking.`
@@ -131,7 +131,7 @@ Four cards, side by side on desktop, stacked on mobile.
 - 4 AI engines scanned
 - 10 tracked queries
 - Weekly scans
-- 5 agent uses/month
+- 25 AI Runs/month
 - 3 competitors tracked
 - 4 agents: A1 Content Writer, A2 Blog Writer, A3 Schema Optimizer, A5 FAQ Agent
 - Markdown + HTML output
@@ -143,11 +143,11 @@ Four cards, side by side on desktop, stacked on mobile.
 
 ---
 
-### Card 3 — Pro
+### Card 3 — Build
 
 **Badge:** `Most Popular` (blue pill (#3370FF), top right of card)
-**Price:** `$149/mo` (Annual: `$119/mo`)
-**Billing note (annual):** `billed $1,428/year`
+**Price:** `$189/mo` (Annual: `$151/mo`)
+**Billing note (annual):** `billed $1,812/year`
 
 **Description:**
 `For growing businesses serious about AI search visibility and consistent content output.`
@@ -156,10 +156,10 @@ Four cards, side by side on desktop, stacked on mobile.
 - 8 AI engines scanned
 - 25 tracked queries
 - Scans every 3 days
-- 15 agent uses/month
+- 90 AI Runs/month
 - 5 competitors tracked
-- 15 agents: A1-A15 (all except A16 Brand Narrative Analyst)
-  - Includes: Review Analyzer, Social Strategy, Competitor Intelligence, Citation Builder, Ask Beamix, AI Readiness Auditor, Content Voice Trainer, Content Pattern Analyzer, Content Refresh Agent
+- 10 agents
+  - Includes: Review Analyzer, Social Strategy, Competitor Intelligence, Citation Builder, Ask Beamix, AI Readiness Auditor
 - Markdown + HTML + JSON-LD output
 - 12 weeks trend history
 - Export: PDF + CSV
@@ -171,11 +171,11 @@ Four cards, side by side on desktop, stacked on mobile.
 
 ---
 
-### Card 4 — Business
+### Card 4 — Scale
 
 **Badge:** (none)
-**Price:** `$349/mo` (Annual: `$279/mo`)
-**Billing note (annual):** `billed $3,348/year`
+**Price:** `$499/mo` (Annual: `$399/mo`)
+**Billing note (annual):** `billed $4,788/year`
 
 **Description:**
 `For businesses that want daily intelligence, maximum output, and a serious competitive edge.`
@@ -184,16 +184,16 @@ Four cards, side by side on desktop, stacked on mobile.
 - 10+ AI engines scanned
 - 75 tracked queries
 - Daily scans
-- 50 agent uses/month
+- 300 AI Runs/month
 - 10 competitors tracked
-- All 16 agents incl. A16 Brand Narrative Analyst (Business-exclusive)
+- All 11 agents
 - Markdown + HTML + JSON-LD output
 - Google AI Overviews tracking
 - 52 weeks trend history
 - Export: PDF + CSV
 - Email digest: daily + ranking alerts
 - Support: priority email + onboarding call
-- Top-up: 5 uses/$15 or 15 uses/$35
+- Top-up: 25 runs/$15 or 90 runs/$35
 
 **CTA Button:** `Start Free Trial`
 **Note below button:** `7 days free · 5 agent credits included · No credit card required`
@@ -209,13 +209,13 @@ Four cards, side by side on desktop, stacked on mobile.
 
 Full-width table. Sticky column headers on scroll (desktop). Horizontally scrollable on mobile.
 
-**Columns:** Feature | Free Scan | Starter | Pro | Business
+**Columns:** Feature | Free Scan | Discover | Build | Scale
 
 ---
 
 ### Group: AI Coverage
 
-| Feature | Free Scan | Starter | Pro | Business |
+| Feature | Free Scan | Discover | Build | Scale |
 |---|---|---|---|---|
 | AI engines scanned | 4 engines | 4 engines | 7 engines | 10 engines |
 | Google AI Overviews tracking | — | — | — | Phase 3 (deferred — browser simulation) |
@@ -224,18 +224,18 @@ Full-width table. Sticky column headers on scroll (desktop). Horizontally scroll
 
 ### Group: Tracking
 
-| Feature | Free Scan | Starter | Pro | Business |
+| Feature | Free Scan | Discover | Build | Scale |
 |---|---|---|---|---|
 | Tracked queries | — | 10 | 25 | 75 |
 | Competitors tracked | 1 (top only) | 3 | 5 | 10 |
 | Trend history | — | 4 weeks | 12 weeks | 52 weeks |
 
-### Group: AI Agents (16 Total — A1 through A16)
+### Group: AI Agents (11 Launch Roster)
 
-| Feature | Free Scan | Starter | Pro | Business |
+| Feature | Free Scan | Discover | Build | Scale |
 |---|---|---|---|---|
-| Agent uses per month | — | 5 | 15 | 50 |
-| Agent use top-up | — | Available | Available | Available |
+| AI Runs per month | — | 25 | 90 | 300 |
+| AI Runs top-up | — | Available | Available | Available |
 | Content Writer (A1) | — | Included | Included | Included |
 | Blog Writer (A2) | — | Included | Included | Included |
 | Schema Optimizer (A3) | — | Included | Included | Included |
@@ -255,7 +255,7 @@ Full-width table. Sticky column headers on scroll (desktop). Horizontally scroll
 
 ### Group: Content Output
 
-| Feature | Free Scan | Starter | Pro | Business |
+| Feature | Free Scan | Discover | Build | Scale |
 |---|---|---|---|---|
 | Markdown output | — | Included | Included | Included |
 | HTML output | — | Included | Included | Included |
@@ -265,7 +265,7 @@ Full-width table. Sticky column headers on scroll (desktop). Horizontally scroll
 
 ### Group: Reporting
 
-| Feature | Free Scan | Starter | Pro | Business |
+| Feature | Free Scan | Discover | Build | Scale |
 |---|---|---|---|---|
 | Visibility Score | Included | Included | Included | Included |
 | Competitive leaderboard | Included | Included | Included | Included |
@@ -276,7 +276,7 @@ Full-width table. Sticky column headers on scroll (desktop). Horizontally scroll
 
 ### Group: Support
 
-| Feature | Free Scan | Starter | Pro | Business |
+| Feature | Free Scan | Discover | Build | Scale |
 |---|---|---|---|---|
 | Support | — | Email | Priority email | Priority + onboarding call |
 | Team seats | — | Coming soon | Coming soon | Coming soon |
@@ -300,7 +300,7 @@ Full-width table. Sticky column headers on scroll (desktop). Horizontally scroll
 
 ```
 ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
-│   Starter        │  │   Pro            │  │   Business       │
+│   Discover       │  │   Build          │  │   Scale          │
 │                  │  │                  │  │                  │
 │  4 Engines       │  │  7 Engines       │  │  10+ Engines     │
 │                  │  │                  │  │                  │
@@ -313,7 +313,7 @@ Full-width table. Sticky column headers on scroll (desktop). Horizontally scroll
 ```
 
 **Note below blocks:**
-`Exact engine list is finalized based on coverage at launch. All major AI engines are included at Business tier.`
+`Exact engine list is finalized based on coverage at launch. All major AI engines are included at Scale tier.`
 
 **Dev note:** Logo placeholders — use gray rounded squares with engine initial until real logos are confirmed. When engine list is finalized, update this section and the scan-page.md. The Free Scan tier scans all major engines too — the difference is that paid plans track specific queries over time across those engines.
 
@@ -329,11 +329,11 @@ Full-width table. Sticky column headers on scroll (desktop). Horizontally scroll
 **Q1: What is a "free scan"?**
 The free scan is a one-time analysis of your business across all major AI engines. Enter your website URL — no account required — and we'll show you your AI Visibility Score, how you rank against competitors, and 3 specific things you can do to improve. Results are ready in about 60 seconds.
 
-**Q2: What is an "agent use"?**
-One agent use = one execution of any AI agent. Run the Blog Writer and get one blog post — that's one use. Run the FAQ Agent and get a full FAQ page — that's one use. It doesn't matter which agent you run or how long the output is: one run, one use. Agent uses reset at the start of each billing period.
+**Q2: What is an "AI Run"?**
+One AI Run = one execution of any AI agent. Run the Blog Writer and get one blog post — that's one AI Run. Run the FAQ Agent and get a full FAQ page — that's one AI Run. It doesn't matter which agent you run or how long the output is: one run, one AI Run. AI Runs reset at the start of each billing period.
 
-**Q3: Do unused agent uses roll over?**
-Yes — up to 20% of your monthly allocation rolls over each month. If you're on Pro (15 uses) and only use 10, 1 use carries forward. We don't penalize a slow month.
+**Q3: Do unused AI Runs roll over?**
+Yes — up to 20% of your monthly allocation rolls over each month. If you're on Build (90 runs) and only use 70, 18 runs carry forward. We don't penalize a slow month.
 
 **Q4: Can I change plans anytime?**
 Yes. Upgrade anytime — your new plan activates immediately. Downgrade anytime — the lower plan takes effect at the end of your current billing period. No lock-in, no fees.
@@ -376,10 +376,10 @@ Team seats are coming soon. Today, each account is single-user. We'll notify you
 
 **Theme:** Dark — matches dashboard and scan page. Not the light landing page style.
 **Background:** Subtle gradient (dark (#0A0A0A) → near-black). No hero illustration needed — this is a utility page.
-**Tier cards:** Elevated dark cards with subtle border. Pro card has a distinct #3370FF border + "Most Popular" badge.
+**Tier cards:** Elevated dark cards with subtle border. Build card has a distinct #3370FF border + "Most Popular" badge.
 **Matrix table:** Alternating row shading (very subtle). Feature group headers are full-width with slightly lighter background.
 **Toggle:** Pill-style switch. Annual state shows a green "Save 20%" tag that appears with a small animation on switch.
-**Mobile:** Cards stack vertically in order: Free Scan → Starter → Pro → Business. Matrix becomes horizontally scrollable with feature column sticky.
+**Mobile:** Cards stack vertically in order: Free Scan → Discover → Build → Scale. Matrix becomes horizontally scrollable with feature column sticky.
 
 ---
 
