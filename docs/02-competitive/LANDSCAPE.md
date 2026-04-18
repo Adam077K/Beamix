@@ -12,7 +12,7 @@
 
 שוק ה-GEO (Generative Engine Optimization) צומח ב-34% CAGR ל-$7.3B עד 2031. ניתחנו 15 מתחרים לעומק וזיהינו:
 
-1. **אף מתחרה לא משלב תמחור SMB ($49) + סוכני AI שעושים עבודה + סריקה חינמית + עברית** — Beamix היחידה
+1. **אף מתחרה לא משלב תמחור SMB ($79) + סוכני AI שעושים עבודה + סריקה חינמית + עברית** — Beamix היחידה
 2. **Enterprise dominates**: Profound ($99-Enterprise), AthenaHQ ($295+), Goodie ($495+), Bear ($200+), Scrunch ($100-500) — כולם יקרים מדי ל-SMB
 3. **Budget tools = monitoring only**: Otterly ($29), Airefs ($24), RankPrompt ($29) — רק מעקב, בלי פעולה
 4. **Content generation נדיר**: רק Profound Agents, Bear AI, Gauge, ו-RankPrompt מייצרים תוכן — כולם ב-enterprise pricing (חוץ מ-RankPrompt)
@@ -651,7 +651,7 @@ Google AI Overviews, ChatGPT, Perplexity (3 AI + YouTube/TikTok/Reddit/Web)
 
 | מתחרה | Entry Price | AI Engines | Content Gen | Agents | Free Scan/Trial | SMB-Friendly | Hebrew |
 |--------|------------|------------|-------------|--------|-----------------|--------------|--------|
-| **Beamix** | **$49/mo** | **4-10** | **AI Agents** | **6 agents** | **Free scan** | **כן** | **כן** |
+| **Beamix** | **$79/mo** | **4-10** | **AI Agents** | **11 agents** | **Free scan** | **כן** | **כן** |
 | Profound | $99/mo | 10+ | Agents | כן | לא | לא | לא |
 | AthenaHQ | $295/mo | 6 | Recommendations | לא | לא | לא | לא |
 | Gauge | $100/mo | 7 | Content Engine | לא | לא | לא | לא |
@@ -673,10 +673,10 @@ Google AI Overviews, ChatGPT, Perplexity (3 AI + YouTube/TikTok/Reddit/Web)
 ## ניתוח SWOT ל-Beamix מול כל המתחרים
 
 ### Strengths (חוזקות Beamix)
-1. **תמחור SMB ($49/mo) + agents שעושים עבודה** — שילוב שאף מתחרה לא מציע
+1. **תמחור SMB ($79/mo) + agents שעושים עבודה** — שילוב שאף מתחרה לא מציע
 2. **Free scan כ-viral hook** — day-1 value, אף מתחרה Enterprise לא מציע
 3. **עברית RTL** — zero competition בישראל
-4. **6 AI agents** — Content, Blog, Review, Schema, Social, Recommendations
+4. **11 AI agents** — Content, Blog, Review, Schema, Social, Recommendations
 5. **UX ל-non-technical** — בעל עסק, לא SEO professional
 
 ### Weaknesses (חולשות Beamix)
@@ -687,11 +687,11 @@ Google AI Overviews, ChatGPT, Perplexity (3 AI + YouTube/TikTok/Reddit/Web)
 5. No enterprise features (SSO, SOC2, API)
 
 ### Opportunities (הזדמנויות)
-1. **SMB gap** — אין כלי ב-$49 שעושה monitoring + content + agents
+1. **SMB gap** — אין כלי ב-$79 שעושה monitoring + content + agents
 2. **Israel first mover** — שוק ישראלי פתוח לחלוטין
 3. **"Does the work" positioning** — ברור, פשוט, differentiated
 4. **Free scan viral loop** — כל SMB owner רוצה לדעת אם הוא "נראה ב-AI"
-5. **Rank Prompt as model** — $29/mo + content works, Beamix can do it better at $49
+5. **Rank Prompt as model** — $29/mo + content works, Beamix can do it better at $79
 
 ### Threats (איומים)
 1. Profound Agents coming down-market
@@ -705,22 +705,22 @@ Google AI Overviews, ChatGPT, Perplexity (3 AI + YouTube/TikTok/Reddit/Web)
 ## המלצות אסטרטגיות (Updated March 2026)
 
 ### 1. Positioning Statement
-> "כל הכלים האחרים מראים לך שאתה לא נמצא ב-ChatGPT. Beamix מתקנת את זה בשבילך — ב-$49 לחודש."
+> "כל הכלים האחרים מראים לך שאתה לא נמצא ב-ChatGPT. Beamix מתקנת את זה בשבילך — ב-$79 לחודש."
 
 ### 2. Competitive Battlecards
 
 | כשלקוח אומר... | התשובה שלנו |
 |----------------|-------------|
-| "Profound יותר טוב" | "Profound מתחיל ב-$99 רק ל-ChatGPT. ב-$49 אתה מקבל 4 engines + agents שכותבים תוכן" |
+| "Profound יותר טוב" | "Profound מתחיל ב-$99 רק ל-ChatGPT. ב-$79 אתה מקבל 4 engines + agents שכותבים תוכן" |
 | "Otterly רק $29" | "Otterly מראה data. Beamix כותבת לך את התוכן שמתקן את הבעיה" |
-| "Writesonic ב-$49" | "GEO features ב-Writesonic מתחילים ב-$249. ב-$49 שלנו אתה מקבל GEO + agents" |
+| "Writesonic ב-$49" | "GEO features ב-Writesonic מתחילים ב-$249. ב-$79 שלנו אתה מקבל GEO + agents" |
 | "Ahrefs כבר יש לי" | "Brand Radar דיווח 3 mentions מתוך 123 בבדיקה. ויש לו בעיות accuracy חמורות" |
-| "Bear AI יפה יותר" | "Bear מתחיל ב-$200. אנחנו ב-$49 עם אותם agents" |
+| "Bear AI יפה יותר" | "Bear מתחיל ב-$200. אנחנו ב-$79 עם אותם agents" |
 | "RankPrompt ב-$29" | "RankPrompt מצוין ל-monitoring. אנחנו agents שכותבים ומפרסמים — לא רק מראים" |
 
 ### 3. 3 Features שנותנים Beamix unfair advantage
 1. **Free Scan** — viral, zero friction, day-1 value (Profound/AthenaHQ/Goodie/Bear = אין)
-2. **AI Agents at SMB price** — Profound Agents = Enterprise, Bear = $200, Gauge = $599. Beamix = $49
+2. **AI Agents at SMB price** — Profound Agents = Enterprise, Bear = $200, Gauge = $599. Beamix = $79
 3. **Hebrew RTL** — 0 competition. 100% of Israeli SMB market available
 
 ---
@@ -1760,7 +1760,7 @@ Otterly, SE Visible, Peec, Airefs, Ahrefs Brand Radar
 | **Free Scan → Instant AI Readiness Score** | Scan any business URL → get 0-100% AI readiness score + specific improvements. Shareable card. Viral loop. | Nobody combines free scan + readiness score + immediate agent fix |
 | **Hebrew/RTL First** | Full Hebrew interface, RTL layout, Israeli business context | Zero competitors offer Hebrew |
 | **Agent-First Architecture** | Agents don't just suggest — they DO the work. Write content, fix schema, build citations, optimize pages | Most competitors stop at "here's what you should do" |
-| **SMB-Priced Agent Access** | Full agent capabilities at $49/mo instead of $200-500+ | No competitor offers agents + monitoring under $100 |
+| **SMB-Priced Agent Access** | Full agent capabilities at $79/mo instead of $200-500+ | No competitor offers agents + monitoring under $100 |
 | **Scan-to-Fix Pipeline** | Free scan → onboard → agent fixes everything found in scan → dashboard tracks progress | End-to-end: find problems → fix problems → track improvements |
 | **Agent Chat UX** | Interactive real-time streaming chat with agents — user guides the agent, sees output live | Most competitors have batch/async content generation, not interactive |
 | **Cross-Agent Intelligence** | Agents share context — Citation Builder knows what Content Agent wrote, Schema Agent knows what Competitor Agent found | Competitors' features are siloed, agents don't communicate |
@@ -1811,7 +1811,7 @@ Based on analyzing all 15 competitors, the ideal system combines:
 29. Real-time alerts (Slack, email, in-app)
 30. Free scan as viral acquisition hook
 
-**Beamix's unique advantage: The ONLY platform that combines ALL of the above at SMB pricing ($49) with Hebrew support and agents that DO the work instead of just recommending it.**
+**Beamix's unique advantage: The ONLY platform that combines ALL of the above at SMB pricing ($79) with Hebrew support and agents that DO the work instead of just recommending it.**
 
 ---
 

@@ -302,7 +302,7 @@ Sitemap: https://beamix.com/sitemap.xml
 
 ## Core pages
 - [How It Works](https://beamix.com/how-it-works): Three-step product overview — scan, diagnose, fix
-- [Pricing](https://beamix.com/pricing): Three plans starting $49/mo
+- [Pricing](https://beamix.com/pricing): Three plans starting $79/mo
 - [Free Scan](https://beamix.com): Anonymous AI search audit, results in 60 seconds
 
 ## Blog
