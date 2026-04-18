@@ -44,7 +44,7 @@
 | Gradient | Stops | Use |
 |---|---|---|
 | Hero mesh | `#3370FF` → sky → periwinkle → lavender | Hero bg, primary CTA strips |
-| Pro plan | Peach → salmon | Pro pricing card highlight |
+| Build plan | Peach → salmon | Build pricing card highlight |
 | Dark section | `#0A0A0A` solid | Testimonials, dark full-bleed CTA |
 
 Gradient sections are narrative moments — not decorative filler. Max one per consecutive page area. Never stack. Text on dark sections: white `#FFFFFF`.
@@ -177,7 +177,7 @@ Always respect `prefers-reduced-motion`. Animation reveals hierarchy — never d
 
 **Oxford comma** always. **Em dashes** for pauses — preferred over colons in headlines. **Exclamation points** max one per piece.
 
-**Numbers:** Spell out one–nine in prose. Numerals for 10+. Always numerals for metrics/prices: 7 AI Engines, $49/mo.
+**Numbers:** Spell out one–nine in prose. Numerals for 10+. Always numerals for metrics/prices: 7 AI Engines, $79/mo.
 
 **Words we use:** scan, diagnose, fix, agents, visibility, rank, show up, done for you, AI search, GEO.
 
@@ -195,9 +195,9 @@ Hebrew and English built simultaneously — not sequential translation. Hebrew v
 
 | Plan | Monthly | Annual |
 |---|---|---|
-| Starter | $49/mo | $39/mo |
-| Pro | $149/mo | $119/mo |
-| Business | $349/mo | $279/mo |
+| Discover | $79/mo | $63/mo |
+| Build | $189/mo | $151/mo |
+| Scale | $499/mo | $399/mo |
 
 ---
 
