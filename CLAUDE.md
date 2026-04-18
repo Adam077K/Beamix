@@ -380,7 +380,7 @@ Workers return structured results to their lead — the lead writes the session 
 - **Current focus:** Product rethink complete. Building MVP with new 11-agent GEO roster + proactive automation model.
 - **Active sprint:** 2-week MVP build (target launch: early May 2026)
 - **Product rethink:** Approved April 15, 2026. See `docs/product-rethink-2026-04-09/` for all decisions.
-- **Pricing:** Discover $79 / Build $199 / Scale $499 (was $49/$149/$349)
+- **Pricing:** Discover $79 / Build $189 / Scale $499 (was $49/$149/$349)
 - **Agents:** 11 MVP-1 + 1 MVP-2 GEO-specialized agents (was 7 generic agents)
 - **UX:** Proactive automation model — suggestions → approve → agents run → review in Inbox (was Agent Hub)
 - **Source of truth:** `docs/product-rethink-2026-04-09/` folder (9 files)
@@ -445,7 +445,7 @@ Beamix scans SMBs for AI search visibility, diagnoses why they rank (or don't), 
 | Tier | Monthly | Annual |
 |------|---------|--------|
 | Discover | $79/mo | $63/mo |
-| Build | $199/mo | $159/mo |
+| Build | $189/mo | $151/mo |
 | Scale | $499/mo | $399/mo |
 
 Trial model: 14-day money-back guarantee (7-day trial is retired). Free one-time scan remains.

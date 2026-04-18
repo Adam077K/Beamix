@@ -103,9 +103,9 @@
 
 ---
 
-### [2026-04-15] — Pricing v2: $79/$199/$499 (Discover/Build/Scale)
-**Decision:** Replace $49/$149/$349 pricing. New tiers: Discover $79, Build $199, Scale $499. Annual: $63/$159/$399. Kill 7-day trial. Keep free one-time scan. 14-day money-back guarantee.
-**Rationale:** $49 is below "real work" perception. Build at $199 stays under Yael's $200 self-approval ceiling. Scale $499 anchors. Research-backed: agencies $1,500-$30,000.
+### [2026-04-15] — Pricing v2: $79/$189/$499 (Discover/Build/Scale)
+**Decision:** Replace $49/$149/$349 pricing. New tiers: Discover $79, Build $189, Scale $499. Annual: $63/$151/$399. Kill 7-day trial. Keep free one-time scan. 14-day money-back guarantee.
+**Rationale:** $49 is below "real work" perception. Build at $189 stays under Yael's NIS 700 approval ceiling ($189 = NIS 680). Scale $499 anchors. Research-backed: agencies $1,500-$30,000.
 **Decided by:** CEO + Business Lead (board meeting)
 **Affects:** Paddle price IDs, pricing page, onboarding, all tier-gated features
 **Reversible?** Yes (config change)

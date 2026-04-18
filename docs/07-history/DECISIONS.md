@@ -21,16 +21,16 @@ Each entry answers three questions: **What** was decided, **why** this over alte
 ---
 
 ### [2026-04-15] — Board Meeting: Full Product Rethink Approved
-**Decision:** Complete product overhaul approved. New pricing ($79/$199/$499), new agent roster (11+1), proactive automation model, dashboard restructure, YMYL safety policy.
+**Decision:** Complete product overhaul approved. New pricing ($79/$189/$499), new agent roster (11+1), proactive automation model, dashboard restructure, YMYL safety policy.
 **Context:** 2-day board meeting (Apr 14-15) with Adam. Full agent board participated: Business Lead, Product Lead, Design Lead, AI Engineer, Research Lead, Growth Lead, Build Lead. Research-backed from GEO paper + 680M citations study + competitive landscape.
 **Made by:** CEO (Adam) with full agent board
 **Status:** Active — supersedes all prior pricing, agent, and UX decisions
 
 ---
 
-### [2026-04-15] — Pricing v2: Discover $79 / Build $199 / Scale $499
+### [2026-04-15] — Pricing v2: Discover $79 / Build $189 / Scale $499
 **Context:** $49 Starter priced below "real work" perception. Agencies charge $1,500-$30K for equivalent work. Yael persona (primary buyer) has $200 self-approval ceiling.
-**Decision:** New tiers Discover/Build/Scale at $79/$199/$499. Annual: $63/$159/$399. Kill 7-day trial. Free scan stays. 14-day money-back guarantee replaces trial.
+**Decision:** New tiers Discover/Build/Scale at $79/$189/$499. Annual: $63/$151/$399. Kill 7-day trial. Free scan stays. 14-day money-back guarantee replaces trial.
 **Made by:** CEO + Business Lead
 **Status:** Active — supersedes [2026-03-06] pricing
 
