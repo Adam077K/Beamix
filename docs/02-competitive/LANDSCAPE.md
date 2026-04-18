@@ -651,7 +651,7 @@ Google AI Overviews, ChatGPT, Perplexity (3 AI + YouTube/TikTok/Reddit/Web)
 
 | מתחרה | Entry Price | AI Engines | Content Gen | Agents | Free Scan/Trial | SMB-Friendly | Hebrew |
 |--------|------------|------------|-------------|--------|-----------------|--------------|--------|
-| **Beamix** | **$79/mo** | **4-10** | **AI Agents** | **11 agents** | **Free scan** | **כן** | **כן** |
+| **Beamix** | **$79/mo** | **3-9+** | **AI Agents** | **11 agents** | **Free scan** | **כן** | **כן** |
 | Profound | $99/mo | 10+ | Agents | כן | לא | לא | לא |
 | AthenaHQ | $295/mo | 6 | Recommendations | לא | לא | לא | לא |
 | Gauge | $100/mo | 7 | Content Engine | לא | לא | לא | לא |
