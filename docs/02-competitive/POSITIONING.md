@@ -171,16 +171,16 @@ Ranked by competitive necessity, user demand, and revenue impact.
 
 | Rank | Integration | Competitors Offering | User Demand Signal | Revenue Impact | Build Cost | Tier Placement | Competitive Necessity |
 |------|------------|----------------------|-------------------|---------------|------------|----------------|----------------------|
-| 1 | **WordPress** | 6/15 (Profound, Bear, Writesonic, Airefs, Spotlight, RankPrompt) | Very High: 40%+ of websites run WordPress. SMBs need one-click publish. | High: reduces churn by eliminating manual copy-paste friction | 2-3 weeks (REST API + OAuth) | Starter+ (all paid tiers) | **Critical**: Every content-generating competitor offers this. Without it, agent output requires manual action. |
-| 2 | **Google Analytics 4 (GA4)** | 6/15 (Profound, AthenaHQ, Gauge, Goodie, Scrunch, Spotlight) | High: SMBs already use GA4. Want to see AI impact on traffic. | High: proves ROI, reduces churn ("AI visibility grew and traffic followed") | 2-3 weeks (GA4 API + consent flow) | Pro+ | **High**: Needed for revenue attribution story. Without GA4, ROI is theoretical. |
-| 3 | **Google Search Console (GSC)** | 3/15 (AthenaHQ, Gauge, Goodie) | Medium-High: SEO-aware SMBs use GSC alongside GEO tools | Medium: enriches data, shows SEO vs GEO performance | 1-2 weeks (GSC API) | Pro+ | **Medium**: Nice complement to GA4 but not blocking. |
-| 4 | **Slack** | 3/15 (Profound, AthenaHQ, Gauge) | Medium: larger SMBs and agencies use Slack | Low: convenience feature, not revenue driver | 1 week (Slack webhook + OAuth) | Pro+ | **Low**: Email alerts serve same purpose for most SMBs. Quick to build if prioritized. |
-| 5 | **Shopify** | 1/15 (AthenaHQ only) | Low-Medium: only relevant for e-commerce SMBs | Medium: product-level AI visibility is valuable for shops | 3-4 weeks (Shopify API + product sync) | Business | **Low**: Only AthenaHQ offers this. Niche. Defer to V3. |
-| 6 | **Looker Studio** | 3/15 (Otterly, SE Visible, Peec) | Low: agency/advanced user feature | Low: agencies value it, core SMBs do not know what it is | 2-3 weeks (connector development) | Business/Agency | **Low**: Skip unless building agency tier. |
+| 1 | **WordPress** | 6/15 (Profound, Bear, Writesonic, Airefs, Spotlight, RankPrompt) | Very High: 40%+ of websites run WordPress. SMBs need one-click publish. | High: reduces churn by eliminating manual copy-paste friction | 2-3 weeks (REST API + OAuth) | Discover+ (all paid tiers) | **Critical**: Every content-generating competitor offers this. Without it, agent output requires manual action. |
+| 2 | **Google Analytics 4 (GA4)** | 6/15 (Profound, AthenaHQ, Gauge, Goodie, Scrunch, Spotlight) | High: SMBs already use GA4. Want to see AI impact on traffic. | High: proves ROI, reduces churn ("AI visibility grew and traffic followed") | 2-3 weeks (GA4 API + consent flow) | Build+ | **High**: Needed for revenue attribution story. Without GA4, ROI is theoretical. |
+| 3 | **Google Search Console (GSC)** | 3/15 (AthenaHQ, Gauge, Goodie) | Medium-High: SEO-aware SMBs use GSC alongside GEO tools | Medium: enriches data, shows SEO vs GEO performance | 1-2 weeks (GSC API) | Build+ | **Medium**: Nice complement to GA4 but not blocking. |
+| 4 | **Slack** | 3/15 (Profound, AthenaHQ, Gauge) | Medium: larger SMBs and agencies use Slack | Low: convenience feature, not revenue driver | 1 week (Slack webhook + OAuth) | Build+ | **Low**: Email alerts serve same purpose for most SMBs. Quick to build if prioritized. |
+| 5 | **Shopify** | 1/15 (AthenaHQ only) | Low-Medium: only relevant for e-commerce SMBs | Medium: product-level AI visibility is valuable for shops | 3-4 weeks (Shopify API + product sync) | Scale | **Low**: Only AthenaHQ offers this. Niche. Defer to V3. |
+| 6 | **Looker Studio** | 3/15 (Otterly, SE Visible, Peec) | Low: agency/advanced user feature | Low: agencies value it, core SMBs do not know what it is | 2-3 weeks (connector development) | Scale/Agency | **Low**: Skip unless building agency tier. |
 | 7 | **Webflow** | 1/15 (AthenaHQ only) | Low: small percentage of SMB market | Low | 2-3 weeks | Future | **Skip**: Only one competitor. Not enough demand. |
 | 8 | **Contentful/Sanity/Gamma** | 1/15 (Profound only) | Very Low: headless CMS for enterprise/dev teams | Low: not SMB relevant | 3-4 weeks each | Future | **Skip**: Enterprise CMS. Not our market. |
-| 9 | **CDN (Cloudflare/Vercel)** | 3/15 (Profound, Writesonic, Scrunch) | Low: technical feature, not user-facing value | Medium: enables AI crawler analytics | 3-4 weeks | Business | **Medium**: Enables AI crawler detection feature. Defer to V2. |
-| 10 | **API Access** | 3/15 (Profound, Peec, Airefs) | Low: developer/agency feature | Medium: unlocks agency/developer channel | 2-3 weeks | Business | **Low**: Build when agency demand materializes. |
+| 9 | **CDN (Cloudflare/Vercel)** | 3/15 (Profound, Writesonic, Scrunch) | Low: technical feature, not user-facing value | Medium: enables AI crawler analytics | 3-4 weeks | Scale | **Medium**: Enables AI crawler detection feature. Defer to V2. |
+| 10 | **API Access** | 3/15 (Profound, Peec, Airefs) | Low: developer/agency feature | Medium: unlocks agency/developer channel | 2-3 weeks | Scale | **Low**: Build when agency demand materializes. |
 
 ### Implementation Roadmap
 
@@ -220,7 +220,7 @@ Ranked by competitive necessity, user demand, and revenue impact.
      MONITORING               |         MONITORING + ACTION
      ONLY                     |
                               |
-         Otterly ($29)        |       ** BEAMIX ($49) **
+         Otterly ($29)        |       ** BEAMIX ($79) **
                               |       [Agents + Content
          RankScale ($20)      |        + Free Scan + Hebrew]
                               |
@@ -232,7 +232,7 @@ Ranked by competitive necessity, user demand, and revenue impact.
 
 ### Market Gaps Identified
 
-1. **Primary Gap (Beamix occupies this):** Affordable ($49) + agents that do the work + free scan hook. NO other competitor fills this exact space.
+1. **Primary Gap (Beamix occupies this):** Affordable ($79) + agents that do the work + free scan hook. NO other competitor fills this exact space.
 
 2. **Secondary Gap:** Hebrew/RTL GEO tool. Zero competitors. 100% of Israeli SMB market available.
 
@@ -242,7 +242,7 @@ Ranked by competitive necessity, user demand, and revenue impact.
 
 Beamix is the ONLY platform in the bottom-right quadrant (Low Price + High Action) that combines:
 - AI agents that produce content (not just recommendations)
-- SMB-accessible pricing ($49/mo)
+- SMB-accessible pricing ($79/mo)
 - Free scan viral hook
 - Non-technical UX
 - Hebrew/RTL support
@@ -276,7 +276,7 @@ These are the competitors whose features Beamix should progressively match, but 
 | **Bear AI** | $200/mo | YC-backed, excellent UI (our design reference), Blog Agent + PR Outreach automation. Content + monitoring combo done right. | Blog Agent approach: analyze cited content then create same-structure articles. PR Outreach automation: find cited source authors then generate outreach. LLMS.txt support. UI/UX excellence. | $200/mo pricing. No free scan. Still early stage. |
 | **Gauge** | $100/mo | Content Engine + AI Analyst (conversational). Research-backed prompt strategy (pain points, not just keywords). | AI Analyst conversational interface. Content Engine: analyze all data then create content for AI + SEO. Research-backed prompts: map search intent to pain points. | $100 entry with only ChatGPT. $599 for full coverage. No free trial. |
 
-**Strategy for Tier 2:** Cherry-pick their best features and deliver at 1/4 the price. "Profound's agents at $49, not $99+." Track their feature releases and match at SMB tier within 2-3 months.
+**Strategy for Tier 2:** Cherry-pick their best features and deliver at 1/4 the price. "Profound's agents at $79, not $99+." Track their feature releases and match at SMB tier within 2-3 months.
 
 ### Tier 3 -- Adjacent Competitors (Different Market, Overlapping Features)
 
@@ -333,7 +333,7 @@ These close critical feature gaps and prevent churn.
 |------|---------|---------------|---------------|
 | 14 | **Source-Level Citation Tracking** | 2-3 weeks | Airefs unique at budget tier. Transforms abstract "visibility" into concrete "these URLs outrank you." |
 | 15 | **WordPress One-Click Publish** | 2-3 weeks | 6/15 competitors offer WordPress. Essential for agent-generated content to have friction-free publishing. |
-| 16 | **Content Type Expansion (6 types)** | 3-4 weeks | RankPrompt offers 6 types at $29. Beamix must match or exceed at $49. Comparison articles, FAQs, location pages, etc. |
+| 16 | **Content Type Expansion (6 types)** | 3-4 weeks | RankPrompt offers 6 types at $29. Beamix must match or exceed at $79. Comparison articles, FAQs, location pages, etc. |
 | 17 | **Website AI Readiness Audit** | 2-3 weeks | 4/15 competitors offer site audits. Extends value beyond "are you mentioned" to "is your site ready." |
 | 18 | **GA4 Integration** | 2-3 weeks | 6/15 competitors offer GA4. Proves ROI: "your AI visibility went up AND traffic followed." |
 | 19 | **Citation Builder Agent** | 3-4 weeks | Bear AI's unique PR outreach concept. Identifies cited sources, generates outreach templates. High SMB value. |
@@ -381,7 +381,7 @@ These close critical feature gaps and prevent churn.
 - **Tier 2 (Content Generators):** Writesonic, Goodie, Spotlight, RankPrompt: 4/15 generate content but are not autonomous agents
 - **Tier 1 (Autonomous Agents):** Only Profound, Bear AI, Gauge: 3/15 have true agents, ALL at $100-$599+/mo
 
-**Beamix position:** 6 autonomous agents at $49/mo. The ONLY platform offering agents below $100/mo.
+**Beamix position:** 11 autonomous agents at $79/mo. The ONLY platform offering agents below $100/mo.
 
 **How to exploit:**
 - Messaging: "They show you the problem. We fix it."
@@ -401,7 +401,7 @@ These close critical feature gaps and prevent churn.
 | Goodie AI | AEO Content Writer | $495/mo |
 | Spotlight | Content drafts | Custom (likely $200+) |
 | RankPrompt | 6 content types | $29/mo (closest competitor on price) |
-| **Beamix** | **6 AI agents** | **$49/mo** |
+| **Beamix** | **11 AI agents** | **$79/mo** |
 
 Beamix is 2-10x cheaper than every content-generating competitor except RankPrompt. RankPrompt offers content generation but not autonomous agents with interactive chat UX.
 
@@ -530,7 +530,7 @@ This creates compounding value: each agent's output improves the next agent's wo
 - Historical trend: LLM costs have decreased significantly (GPT-4 pricing dropped ~90% from launch to 2025) (medium confidence)
 - Counter-risk: providers could change pricing models, add rate limits, or deprecate budget models
 
-**Scenario:** If LLM API costs rise significantly, agent execution at $49/mo becomes unprofitable. Each agent interaction may cost $0.10-0.50 in API calls [?]. At 50-100 agent uses per user per month, that is $5-50 in COGS.
+**Scenario:** If LLM API costs rise significantly, agent execution at $79/mo becomes unprofitable. Each agent interaction may cost $0.10-0.50 in API calls [?]. At 50-100 agent uses per user per month, that is $5-50 in COGS.
 
 **Mitigation:**
 - Multi-LLM architecture: switch between providers based on cost/quality
