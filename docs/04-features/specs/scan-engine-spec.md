@@ -73,7 +73,7 @@ The scan engine is the foundation of Beamix. Every other feature — the dashboa
 
 ### In Scope — Phase 2 (Growth)
 
-- Pro tier: +3 engines (Grok, DeepSeek, You.com) = 7 engines total
+- Build tier: +3 engines (Grok, DeepSeek, You.com) = 7 engines total
 - Extended prompt volume per scan
 
 ### Explicitly Deferred — Phase 3
@@ -129,7 +129,7 @@ For paying users who want an on-demand scan outside the scheduled cadence.
 1. User clicks "Scan Now" button in dashboard (Engine Status zone or Rankings page)
 2. Client POSTs to /api/scan/manual with { business_id }
 3. API validates auth, verifies user owns business
-4. API checks rate limit for user's tier (Starter: 1/week, Pro: 1/day, Business: 1/hour)
+4. API checks rate limit for user's tier (Discover: 1/week, Build: 1/day, Scale: 1/hour)
 5. If rate limit exceeded: return 429 with Retry-After header showing next available time
 6. API creates scans row (status: 'pending', scan_type: 'manual')
 7. API sends Inngest event scan/manual.start
@@ -157,9 +157,9 @@ Automated scanning that runs per-tier cadence without user action.
 
 **Cadence by tier:**
 - Free: No scheduled scans
-- Starter: Monthly (scan_frequency_days = 30)
-- Pro: Daily (scan_frequency_days = 1)
-- Business: Every 4 hours (scan_frequency_days = 0.17, effectively 6/day)
+- Discover: Monthly (scan_frequency_days = 30)
+- Build: Daily (scan_frequency_days = 1)
+- Scale: Every 4 hours (scan_frequency_days = 0.17, effectively 6/day)
 
 ---
 
@@ -338,7 +338,7 @@ DO UPDATE SET
 
 Key columns: `id`, `prompt_text`, `industry`, `category`, `language`, `estimated_volume`, `trending_direction`.
 
-**`tracked_queries`** — Per-business queries to monitor. The scheduled scan engine reads these to know what to scan. Tier limits: Starter 10, Pro 25, Business 75.
+**`tracked_queries`** — Per-business queries to monitor. The scheduled scan engine reads these to know what to scan. Tier limits: Discover 10, Build 25, Scale 75.
 
 Key columns: `id`, `business_id`, `user_id`, `query_text`, `category`, `is_active`.
 
@@ -625,7 +625,7 @@ Scan quality depends entirely on prompt quality. The prompt generator runs as th
 | Scheduled scan (per tracked query) | 5 per query | All 5 categories |
 | Manual scan | 5 per tracked query | All 5 categories |
 
-For a Starter user with 10 tracked queries on a manual scan: 10 queries × 5 prompts = 50 prompts sent across 4 engines = 200 engine API calls per scan.
+For a Discover user with 10 tracked queries on a manual scan: 10 queries × 5 prompts = 50 prompts sent across 4 engines = 200 engine API calls per scan.
 
 ### 7.3 Prompt Generation Logic
 
@@ -969,7 +969,7 @@ The Inngest serve endpoint is at `/api/inngest`. All scan functions are register
 
 **On failure:** UPDATE free_scans SET status='failed', completed_at=NOW(). No retry on the entire function — individual steps may retry via Inngest step retry (1 retry per step by default).
 
-**Free scan engines note:** Free scan uses 3 engines, not 4. Per the current spec: ChatGPT, Gemini, Perplexity. Claude is phase1 but reserved for Starter+ paid tiers. (Verify this against the final pricing decision before implementation — `scan-page.md` says free uses 4 engines including Claude.)
+**Free scan engines note:** Free scan uses 3 engines, not 4. Per the current spec: ChatGPT, Gemini, Perplexity. Claude is phase1 but reserved for Discover+ paid tiers. (Verify this against the final pricing decision before implementation — `scan-page.md` says free uses 4 engines including Claude.)
 
 ### 10.2 `scan.scheduled.run`
 
@@ -1103,7 +1103,7 @@ const ManualScanSchema = z.object({
 
 **Process:**
 1. Validate auth. Verify `businesses.user_id = auth.uid()`.
-2. Check tier rate limit (Starter 1/week, Pro 1/day, Business 1/hour) against `scans` table.
+2. Check tier rate limit (Discover 1/week, Build 1/day, Scale 1/hour) against `scans` table.
 3. INSERT into `scans` (status: 'pending', scan_type: 'manual').
 4. Send event `scan/manual.start` with `{ business_id, user_id, scan_id: scan.id }`.
 5. Return 202.
@@ -1143,26 +1143,26 @@ const HistoryQuerySchema = z.object({
 - Scan results accessible for 30 days
 - Engines: ChatGPT, Gemini, Perplexity (3 engines)
 
-### Starter ($49/mo)
+### Discover ($79/mo)
 - Manual rescan: 1 per week
 - Scheduled scans: Monthly (every 30 days)
 - Tracked queries: 10
 - Competitors tracked: 3
 - Engines: ChatGPT, Gemini, Perplexity, Claude (4 Phase 1 engines)
 
-### Pro ($149/mo)
+### Build ($189/mo)
 - Manual rescan: 1 per day
 - Scheduled scans: Daily
 - Tracked queries: 25
 - Competitors tracked: 5
 - Engines: 7 (Phase 1 × 4 + Phase 2 × 3: adds Grok, DeepSeek, You.com)
 
-### Business ($349/mo)
+### Scale ($499/mo)
 - Manual rescan: 1 per hour
 - Scheduled scans: Every 4 hours (6/day)
 - Tracked queries: 75
 - Competitors tracked: 10
-- Engines: 7 (same as Pro — Phase 3 not yet built)
+- Engines: 7 (same as Build — Phase 3 not yet built)
 
 ### Rate limit enforcement
 
@@ -1328,8 +1328,8 @@ Israeli businesses with Hebrew names require consistent Romanization in English-
 | Scan Type | Engine Calls | Haiku Calls | Estimated Cost |
 |-----------|-------------|-------------|----------------|
 | Free scan (3 engines, 3 prompts) | 9 | ~45 | ~$0.10-0.15 |
-| Starter scheduled (4 engines, 10 queries × 5 prompts) | 200 | ~1,000 | ~$1.50-2.00/month |
-| Pro scheduled daily (7 engines, 25 queries × 5 prompts) | 875/day | ~4,375/day | ~$3.00-4.00/day |
-| Business scheduled 6x/day (7 engines, 75 queries × 5 prompts) | 2,625 × 6/day | ~13,125 × 6/day | ~$8-12/day |
+| Discover scheduled (4 engines, 10 queries × 5 prompts) | 200 | ~1,000 | ~$1.50-2.00/month |
+| Build scheduled daily (7 engines, 25 queries × 5 prompts) | 875/day | ~4,375/day | ~$3.00-4.00/day |
+| Scale scheduled 6x/day (7 engines, 75 queries × 5 prompts) | 2,625 × 6/day | ~13,125 × 6/day | ~$8-12/day |
 
 Re-validate these estimates at 100, 500, and 1K paying customer milestones.
