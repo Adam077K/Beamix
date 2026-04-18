@@ -92,7 +92,7 @@ Files to review:
 [ ] No AI-generated summaries as sources
 
 ### Brand
-[ ] Pricing claims match locked values ($49/$149/$349)
+[ ] Pricing claims match locked values ($79/$189/$499)
 [ ] AI engine counts match locked values (3/7/9+ by tier)
 [ ] Trial length = 7 days, 5 credits
 [ ] Voice = Authoritative + Direct + Warm
