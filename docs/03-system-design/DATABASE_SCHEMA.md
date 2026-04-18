@@ -166,7 +166,6 @@ Reference table. Read-only for all users. Managed by service role.
 **RLS:** All authenticated users can SELECT. Only service role can INSERT/UPDATE.
 
 #### `subscriptions`
-
 One active subscription per user. Created by the `handle_new_user` trigger with null plan (free tier). Updated by Paddle webhooks.
 
 | Column | Type | Constraints | Purpose |
