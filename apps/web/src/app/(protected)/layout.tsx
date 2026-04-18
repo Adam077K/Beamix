@@ -1,8 +1,26 @@
-export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { DashboardShell } from '@/components/shell/DashboardShell'
+
+export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) redirect('/login')
+
+  const { data: sub } = await supabase
+    .from('subscriptions')
+    .select('plan_id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  const plan = (sub?.plan_id ?? null) as 'discover' | 'build' | 'scale' | null
+
   return (
-    <div className="flex min-h-screen">
-      {/* App shell — sidebar + main — Wave 1 placeholder */}
-      <main className="flex-1">{children}</main>
-    </div>
+    <DashboardShell user={{ email: user.email! }} plan={plan ?? undefined}>
+      {children}
+    </DashboardShell>
   )
 }
