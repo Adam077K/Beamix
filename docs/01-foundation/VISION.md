@@ -189,11 +189,11 @@ Each of these maps to a specific agent capability in the product.
 
 **Subscription tiers:**
 
-| | Free Scan | Starter | Pro | Business |
+| | Free Scan | Discover | Build | Scale |
 |---|---|---|---|---|
-| **Price** | $0 | $49/mo | $149/mo | $349/mo |
+| **Price** | $0 | $79/mo | $189/mo | $499/mo |
 | **Tracked queries** | 0 | 10 | 25 | 75 |
-| **Agent uses/month** | 0 | 5 | 15 | 50 |
+| **AI Runs/month** | 0 | 25 | 90 | 300 |
 | **Scan frequency** | One-time | Weekly | Every 3 days | Daily |
 | **AI engines** | 4 (Phase 1) | 4 | 7 | 10 |
 | **Competitors tracked** | 0 | 3 | 5 | 10 |
