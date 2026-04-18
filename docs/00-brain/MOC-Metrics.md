@@ -30,9 +30,9 @@ Note: `docs/09-metrics/` contains redirect stubs. Real content is in foundation 
 
 ## Pricing Quick Reference
 
-- Starter: $49/mo (annual: $39/mo) — 3 engines
-- Pro: $149/mo (annual: $119/mo) — 7 engines
-- Business: $349/mo (annual: $279/mo) — 9+ engines
+- Discover: $79/mo (annual: $63/mo) — 3 engines
+- Build: $189/mo (annual: $151/mo) — 7 engines
+- Scale: $499/mo (annual: $399/mo) — 9+ engines
 - Trial: 7 days free, 5 agent credits cap
 
 ## Key Targets (from BACKLOG.md)
