@@ -12,6 +12,38 @@ Each entry answers three questions: **What** was decided, **why** this over alte
 
 ---
 
+### [2026-04-17] Board Meeting Day 3: Final Decisions + Pre-Build Audit
+**Decision:** Locked remaining open items: no AI labels in content output, day-1 auto-trigger pipeline, $19 top-up pack, annual pricing at launch, Sonar citation verification, email domain (notify.beamix.tech). Assisted-vs-autopilot validated by research (97% prefer review). Pre-build audit completed by 5 agents.
+**Context:** Third day of board meeting. 5-agent stress test (product, tech, business, UX, research) found 7 P0 blockers + 5 spec contradictions — all resolved. Documentation cleanup complete (30+ docs updated, 14+ archived).
+**Made by:** CEO (Adam) with full agent board
+**Status:** Active
+
+---
+
+### [2026-04-15] — Board Meeting: Full Product Rethink Approved
+**Decision:** Complete product overhaul approved. New pricing ($79/$199/$499), new agent roster (11+1), proactive automation model, dashboard restructure, YMYL safety policy.
+**Context:** 2-day board meeting (Apr 14-15) with Adam. Full agent board participated: Business Lead, Product Lead, Design Lead, AI Engineer, Research Lead, Growth Lead, Build Lead. Research-backed from GEO paper + 680M citations study + competitive landscape.
+**Made by:** CEO (Adam) with full agent board
+**Status:** Active — supersedes all prior pricing, agent, and UX decisions
+
+---
+
+### [2026-04-15] — Pricing v2: Discover $79 / Build $199 / Scale $499
+**Context:** $49 Starter priced below "real work" perception. Agencies charge $1,500-$30K for equivalent work. Yael persona (primary buyer) has $200 self-approval ceiling.
+**Decision:** New tiers Discover/Build/Scale at $79/$199/$499. Annual: $63/$159/$399. Kill 7-day trial. Free scan stays. 14-day money-back guarantee replaces trial.
+**Made by:** CEO + Business Lead
+**Status:** Active — supersedes [2026-03-06] pricing
+
+---
+
+### [2026-04-15] — Agent Roster v2: 11+1 Research-Backed Agents
+**Context:** Old 7 agents were generic content tools, not GEO-specialized. Research proved 85% of AI mentions come from off-site sources (citations study, 680M citations). Reddit is Perplexity's #1 source (46.7%).
+**Decision:** Total rethink. 11 MVP-1 agents covering on-site + off-site + structural moats: Freshness Agent, Query Intelligence, Schema Optimizer, Off-Site Presence Builder, Review Velocity, Entity Authority, Reddit Presence, Blog Strategist (Build+ only), FAQ Engine, Competitor Gap, Local GEO. Video SEO in MVP-2.
+**Made by:** CEO + Research Lead + AI Engineer
+**Status:** Active — supersedes all prior agent definitions
+
+---
+
 ### [YYYY-MM-DD] — Example: Chose Supabase over PlanetScale for database
 
 **Decision:** Use Supabase (PostgreSQL) as the primary database for all structured data storage.
@@ -46,7 +78,7 @@ Each entry answers three questions: **What** was decided, **why** this over alte
 **Context:** D1 from backlog — trial duration was 14 days in archived build plan.
 **Decision:** Trial = 7 days (starts on first dashboard visit). Free scan data visible for 30 days from scan date for all users including non-paying.
 **Made by:** CEO
-**Status:** Active (FINAL)
+**Status:** Superseded — [2026-04-15] kills the trial entirely. Replaced by 14-day money-back guarantee. Free scan retention (30 days) remains active.
 
 ---
 
@@ -54,7 +86,7 @@ Each entry answers three questions: **What** was decided, **why** this over alte
 - Starter: $49/mo (annual: $39/mo)
 - Pro: $149/mo (annual: $119/mo)
 - Business: $349/mo (annual: $279/mo)
-**Made by:** CEO. **Status:** Active (FINAL — do not change without CEO sign-off)
+**Made by:** CEO. **Status:** Superseded — see [2026-04-15] Pricing v2
 
 ---
 
@@ -77,4 +109,4 @@ See [docs/BACKLOG.md](../BACKLOG.md) for unresolved product decisions and priori
 
 ---
 
-_Last updated: 2026-03-19 | Updated by: technical-writer_
+_Last updated: 2026-04-17 | Updated by: technical-writer_
