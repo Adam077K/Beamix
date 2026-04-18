@@ -157,7 +157,7 @@ From `research/COMPETITIVE_CONTENT_GAPS.md`:
 3. **Hebrew-language GEO content** — uncontested
 4. **Original citation data** — Profound owns this flywheel; we can share it with quarterly SMB reports
 5. **Tactical playbooks (step-by-step checklists)** — highest LLM-extractable format; under-covered
-6. **SMB-priced framing** — most competitor content targets enterprise ($2k+/mo); we own the $49–$349 price band narrative
+6. **SMB-priced framing** — most competitor content targets enterprise ($2k+/mo); we own the $79–$499 price band narrative
 
 ---
 
