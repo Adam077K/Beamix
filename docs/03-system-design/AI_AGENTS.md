@@ -185,7 +185,7 @@ Each AI engine is queried through an isolated adapter module. Adapters normalize
 
 #### You.com (You.com API)
 
-- **Access method:** You.com API. Included in Pro tier (8 engines).
+- **Access method:** You.com API. Included in Build tier (8 engines).
 - **Response format:** Structured responses with web citations. Similar to Perplexity in providing source URLs alongside answers.
 - **Parsing challenges:** You.com's responses tend to be more aggregation-focused, pulling from multiple sources. Business mentions may be indirect (citing an article that mentions the business rather than recommending directly).
 - **Reliability:** API is stable but less battle-tested than major providers. Rate limits and pricing are competitive.
@@ -876,7 +876,7 @@ This closes the gap against Profound Workflows' recurring content audits. Compet
 | 2. Research Update | Perplexity sonar-pro | For high-urgency items, gather latest data on the topic | Updated facts, new statistics, recent developments | 0.5 | 1,500 |
 | 3. Content Revision | Claude Sonnet 4.6 | Generate updated version of the content, preserving voice and structure while incorporating new data | Revised content with tracked changes (diff against original) | 0.6 | 4,000 |
 
-**Trigger:** Scheduled Inngest cron (monthly for Starter, bi-weekly for Pro, weekly for Business). Also triggered manually by user.
+**Trigger:** Scheduled Inngest cron (monthly for Discover, bi-weekly for Build, weekly for Scale). Also triggered manually by user.
 
 **Quality Gates:**
 - Only content with freshness score below 60 is flagged for update.
@@ -1356,7 +1356,7 @@ Perplexity's 40 RPM limit is the tightest bottleneck in the scan pipeline. At 1K
 
 **User-Level Limits:**
 - Max 3 concurrent agent executions per user
-- Scan rate limits enforced per tier (Starter: 1/week manual, Pro: 1/day, Business: 1/hour)
+- Scan rate limits enforced per tier (Discover: 1/week manual, Build: 1/day, Scale: 1/hour)
 - Ask Beamix: rate limited to 30 turns per hour to prevent abuse
 
 ### 8.5 Model Selection Decision Framework
@@ -1391,13 +1391,13 @@ Every new LLM integration must be logged in the model registry with: task name, 
 **Current state:** `cron.scheduled-scans` runs every 60 minutes. Each full sweep queries all active engines in parallel with 5 Haiku calls per engine response for parsing.
 
 **New state (Strategy D — Priority Rotation):**
-- Business tier only: cron interval reduced to 30 minutes
+- Scale tier only: cron interval reduced to 30 minutes
 - Each 30-min cycle scans a **priority queue** of 2-3 engines (not all engines)
 - Priority order rotates: ChatGPT → Gemini → Perplexity → Claude → Grok → (repeat)
 - Full 7-engine sweep completes every ~3.5 hours
 - **Model change:** Haiku replaces Sonnet for all priority-cycle parsing; Sonnet reserved for full-sweep cycles
 - **Cost impact:** Net flat vs. current hourly (rotation + Haiku tier offset the 2x frequency)
-- Starter/Pro remain on hourly cadence
+- Discover/Build remain on hourly cadence
 
 **Inngest changes:**
 - `cron.scheduled-scans` gets a `tier` discriminator: Business → 30-min cron, others → 60-min
@@ -1497,7 +1497,7 @@ Every new LLM integration must be logged in the model registry with: task name, 
 - Haiku extracts: mention URL, source type, linked vs. unlinked, sentiment
 - Stored in `web_mentions` (`id, business_id, mention_url, source_type, is_linked, sentiment, excerpt, found_at, scan_cycle_id`)
 
-**Cadence:** Starter: weekly | Pro: daily | Business: daily + on-demand trigger
+**Cadence:** Discover: weekly | Build: daily | Scale: daily + on-demand trigger
 
 **Alert integration:** Negative sentiment mention → `mention.negative-alert` event → row in `alerts` table
 
@@ -1506,7 +1506,7 @@ Every new LLM integration must be logged in the model registry with: task name, 
 
 ---
 
-### F10: City-Level / Multi-Region Scanning (Starter: 1, Pro: 5, Business: unlimited)
+### F10: City-Level / Multi-Region Scanning (Discover: 1, Build: 5, Scale: unlimited)
 
 **What it does:** Appends location modifiers to tracked queries; stores results per-location; enables visibility comparison across cities.
 
@@ -1521,7 +1521,7 @@ Every new LLM integration must be logged in the model registry with: task name, 
 
 **Hebrew context:** Location modifiers added in the query's language — Hebrew queries get Hebrew modifiers, English get English.
 
-**Tier limits:** Starter: 1 region (auto-set from business city in profile) | Pro: up to 5 | Business: unlimited (cap 20 recommended for cost control)
+**Tier limits:** Discover: 1 region (auto-set from business city in profile) | Build: up to 5 | Scale: unlimited (cap 20 recommended for cost control)
 **Cost:** ~$2.30/city/month per Pro user (mitigated cadence)
 
 ---
@@ -1551,11 +1551,11 @@ Every new LLM integration must be logged in the model registry with: task name, 
 
 | Tier | Baseline | F1 | F3 | F4 | F6 Browser | F7 Mentions | F9 Savings | F10/city | **Net Delta** |
 |------|---------|----|----|----|-----------|-----------|-----------|---------|--------------|
-| Starter | $5-8 | $0 | $0 | $0 | $0 | $0.03 | $0 | $0 (1 region) | **+$0.03** |
-| Pro | $15-20 | $0.02 | $0.05 | $0.10 | $6.30 | $0.15 | $0 | $2.30 × n | **+$6-9 + cities** |
-| Business | $20-25 | $0.02 | $0.05 | $0.20 | $6.30 | $0.25 | **−$15.30** | $2.30 × n (capped) | **−$8 net** |
+| Discover | $5-8 | $0 | $0 | $0 | $0 | $0.03 | $0 | $0 (1 region) | **+$0.03** |
+| Build | $15-20 | $0.02 | $0.05 | $0.10 | $6.30 | $0.15 | $0 | $2.30 × n | **+$6-9 + cities** |
+| Scale | $20-25 | $0.02 | $0.05 | $0.20 | $6.30 | $0.25 | **−$15.30** | $2.30 × n (capped) | **−$8 net** |
 
-**Key insight:** Business tier saves money after F9 rotation. Pro adds $6-9/month — well within Pro margin. Starter adds ~$0. Business price increase to $449 (from $349) is under evaluation for the F6+F9+F10 value unlock.
+**Key insight:** Scale tier saves money after F9 rotation. Build adds $6-9/month — well within Build margin. Discover adds ~$0. Pricing locked April 2026 at Discover $79 / Build $189 / Scale $499 absorbs all feature costs.
 
 ---
 
