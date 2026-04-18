@@ -61,13 +61,13 @@ All agents use Claude Sonnet via OpenRouter. Content agents get Perplexity pre-r
 
 | Agent | Type | Credit Cost | Plan Required |
 |-------|------|-------------|---------------|
-| Content Writer | Premium | 1 AI Run | Starter+ |
-| Blog Writer | Premium | 1 AI Run | Starter+ |
+| Content Writer | Premium | 1 AI Run | Discover+ |
+| Blog Writer | Premium | 1 AI Run | Discover+ |
 | FAQ Agent | Unlimited | 0 (daily limit) | Free+ |
 | Schema Optimizer | Unlimited | 0 (daily limit) | Free+ |
 | Review Analyzer | Unlimited | 0 (daily limit) | Free+ |
-| Social Strategy | Premium | 1 AI Run | Pro+ |
-| Competitor Intelligence | Premium | 1 AI Run | Pro+ |
+| Social Strategy | Premium | 1 AI Run | Build+ |
+| Competitor Intelligence | Premium | 1 AI Run | Build+ |
 
 - Agent chat UI: full streaming interface, markdown rendering, quick prompts, credit tracking
 - QA gate: Claude Haiku scores on 5 dimensions, warning-only (never blocks)
