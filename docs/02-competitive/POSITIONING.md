@@ -530,7 +530,7 @@ This creates compounding value: each agent's output improves the next agent's wo
 - Historical trend: LLM costs have decreased significantly (GPT-4 pricing dropped ~90% from launch to 2025) (medium confidence)
 - Counter-risk: providers could change pricing models, add rate limits, or deprecate budget models
 
-**Scenario:** If LLM API costs rise significantly, agent execution at $79/mo becomes unprofitable. Each agent interaction may cost $0.10-0.50 in API calls [?]. At 50-100 agent uses per user per month, that is $5-50 in COGS.
+**Scenario:** If LLM API costs rise significantly, agent execution at $79/mo becomes unprofitable. Each agent interaction may cost $0.04-0.15 per AI Run [?]. At 25-90 AI Runs per user per month, that is $5-50 in COGS.
 
 **Mitigation:**
 - Multi-LLM architecture: switch between providers based on cost/quality
