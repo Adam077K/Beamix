@@ -8,7 +8,7 @@ STATUS: PROPOSAL — Not yet approved by Adam. Requires review and decisions on 
 
 Beamix is NOT a dashboard. It's an **AI agency for SMBs** — a team of AI agents that does the GEO work for you, like professionals, but transparent and affordable.
 
-**The positioning no competitor occupies:** Full agentic GEO execution at SMB pricing ($49-$349/mo vs $1,500-$30,000/mo agencies).
+**The positioning no competitor occupies:** Full agentic GEO execution at SMB pricing ($79-$499/mo vs $1,500-$30,000/mo agencies).
 
 ---
 
@@ -139,13 +139,13 @@ Users should feel like they have a GEO team working for them:
 
 ## Proposed Pricing Alignment
 
-Current pricing ($49/$149/$349) maps to:
+Current pricing ($79/$189/$499) maps to:
 
 | Tier | Scan | On-Site Agents | Off-Site Agents | Intelligence |
 |------|------|---------------|----------------|-------------|
-| **Starter $49/mo** | 3 engines, weekly | Content Optimizer, FAQ Builder, Schema Gen | Citation Builder (guided) | Basic query tracking |
-| **Pro $149/mo** | 4+ engines, daily | All on-site + Content Refresher, Blog Strategist | All off-site agents | Full query intelligence |
-| **Business $349/mo** | All engines, unlimited | All agents, priority execution | All + dedicated strategy | Competitor tracking + performance |
+| **Discover $79/mo** | 3 engines, weekly | Content Optimizer, FAQ Builder, Schema Gen | Citation Builder (guided) | Basic query tracking |
+| **Build $189/mo** | 4+ engines, daily | All on-site + Content Refresher, Blog Strategist | All off-site agents | Full query intelligence |
+| **Scale $499/mo** | All engines, unlimited | All agents, priority execution | All + dedicated strategy | Competitor tracking + performance |
 
 ---
 
@@ -194,4 +194,4 @@ Current pricing ($49/$149/$349) maps to:
 | Automated publishing (no human review) | Legally risky, quality risk, ranking crash risk |
 | Content voice profiles (for now) | Nice-to-have moat builder, not launch priority |
 | Agent workflows / automation chains | Over-engineering — users need simple roadmap, not workflow builder |
-| API keys / developer access | Business tier feature, post-launch |
+| API keys / developer access | Scale tier feature, post-launch |

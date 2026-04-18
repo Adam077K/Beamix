@@ -1,5 +1,7 @@
 # Beamix — AI Crawler Feed Technical Spec
 
+> **2026-04 pricing update:** Canonical tier names/prices are now Discover $79 / Build $189 / Scale $499. Dollar figures referenced in this spec for cost analysis reflect the earlier $49/$149/$349 tier structure. Tier gating should be read as: Starter → Discover, Pro → Build, Business → Scale. Per-feature cost conclusions remain directionally valid.
+
 > **Author:** Atlas (CTO)
 > **Date:** 2026-03-08
 > **Status:** Ready for implementation

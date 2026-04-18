@@ -16,7 +16,7 @@ This system design is organized into four layers, each in its own detailed docum
 |-------|----------|--------|-------|
 | **Product** | `_SYSTEM_DESIGN_PRODUCT_LAYER.md` | Morgan (CPO) | Every page, feature, user journey, agent UX |
 | **Architecture** | `_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md` | Atlas (CTO) | Database (32 tables), APIs, data flow, security, infrastructure |
-| **Intelligence** | `_SYSTEM_DESIGN_INTELLIGENCE_LAYER.md` | Sage (AI Engineer) | LLM pipelines, 16 agents, scan engine, data intelligence |
+| **Intelligence** | `_SYSTEM_DESIGN_INTELLIGENCE_LAYER.md` | Sage (AI Engineer) | LLM pipelines, 11 agents, scan engine, data intelligence |
 | **Validation** | `_SYSTEM_DESIGN_VALIDATION.md` | Rex (Research) | Gap closure checklist, competitive parity, priority classification |
 
 ---
@@ -64,7 +64,7 @@ Scan (find problems) → Diagnose (prioritize) → Fix (agents execute) → Meas
 | Recommendations | `/dashboard/recommendations` | AI-generated action items with "Fix with Agent" buttons |
 | Content Library | `/dashboard/content` | All generated content, filterable, with performance tracking |
 | Content Editor | `/dashboard/content/[id]` | Markdown editor with preview, version history, publish-to-CMS |
-| Agent Hub | `/dashboard/agents` | All 16 agents, run history, workflow setup |
+| Agent Hub | `/dashboard/agents` | All 11 agents, run history, workflow setup |
 | Agent Chat | `/dashboard/agents/[agent_id]` | Agent execution UI with real-time step progress |
 | Competitive Intelligence | `/dashboard/competitors` | Share of voice, gap analysis, competitor profiles |
 | AI Readiness | `/dashboard/ai-readiness` | Website audit score with improvement roadmap |
@@ -74,7 +74,7 @@ Scan (find problems) → Diagnose (prioritize) → Fix (agents execute) → Meas
 | About | `/about` | Company story |
 | Terms | `/terms` | Terms of service |
 | Privacy | `/privacy` | Privacy policy |
-| API Docs | `/docs/api` | REST API documentation (Business tier) |
+| API Docs | `/docs/api` | REST API documentation (Scale tier) |
 | **AI Crawler Feed** *(Phase 2)* | `/dashboard/crawler-feed` | AI bot crawl tracking — which bots visit which pages (Pro+) |
 | **Conversation Explorer** *(Phase 2)* | `/dashboard/explore` | Browse what your industry niche asks across AI engines (Pro+) |
 
@@ -86,7 +86,7 @@ Scan (find problems) → Diagnose (prioritize) → Fix (agents execute) → Meas
 |--------|---------|-------------|-------|-----------------|
 | Scan Engine | 12 | +3 | 15 | 10 AI engines + browser sim, 30-min refresh (Business), city-level scanning |
 | Dashboard & Analytics | 14 | +3 | 17 | Visibility gauge, trends, rankings, query clustering, region filter, prompt volume |
-| Agent System | 16 agents | +0 | 16 agents | Content, schema, FAQ, citations, voice training, patterns, refresh, narrative |
+| Agent System | 11 agents | +0 | 11 agents | Content, schema, FAQ, citations, voice training, patterns, refresh, narrative |
 | Content Engine | 10 | +1 | 11 | Library, editor, versioning, comparison tool, voice profiles, CMS publish |
 | Competitive Intelligence | 6 | +2 | 8 | Share of voice, gap analysis, auto-suggest competitors, competitor monitoring |
 | Web Presence | 0 | +2 | 2 | AI crawler feed, web mention tracking |
@@ -115,7 +115,7 @@ Scan (find problems) → Diagnose (prioritize) → Fix (agents execute) → Meas
 | F11: Prompt Volume Data (GSC) | Pro+ | Medium | Spec complete |
 | F8: Social Monitoring | — | **REJECTED** | Out of scope |
 
-> Pricing review completed March 2026. Current pricing absorbs all new feature costs. Business tier increase to $449 under evaluation. → `docs/08-agents_work/AUDITS/PRICING-IMPACT-ANALYSIS.md`
+> Pricing locked April 2026: Discover $79 / Build $189 / Scale $499. Current pricing absorbs all new feature costs. → `docs/08-agents_work/AUDITS/PRICING-IMPACT-ANALYSIS.md`
 
 ---
 
@@ -207,7 +207,7 @@ RLS is enabled on every table. Service role key used only in Inngest functions a
 | `/api/competitors/*` | 3 | Required | CRUD, comparison data |
 | `/api/workflows/*` | 4 | Required | CRUD, trigger, run history |
 | `/api/analytics/*` | 4 | Required | Prompt volumes, citation sources, brand narrative, content performance |
-| `/api/v1/*` | 9 | API key | Public REST API (Business tier) |
+| `/api/v1/*` | 9 | API key | Public REST API (Scale tier) |
 | `/api/onboarding/*` | 1 | Required | Complete onboarding |
 | `/api/inngest` | 1 | Inngest key | Inngest serve endpoint |
 
@@ -328,7 +328,7 @@ Every gap from the CTO Gap Analysis (`_GAP_ANALYSIS_CTO.md`) is now addressed:
 | Persona-Based Tracking | `personas` table + prompt modifiers. Data model CLOSED. Scan pipeline does not query or use personas at launch. | Data Model CLOSED — Pipeline Integration DEFERRED (Phase 4) | Architecture + Product |
 | Customer Journey Stage Mapping | Haiku classification of queries into awareness/consideration/decision. Data model and classification logic fully designed in Intelligence Layer. Pipeline integration deferred to Phase 4. No `journey_stage` column on `scan_results` at launch. | SPEC ONLY — Phase 4 Implementation | Intelligence |
 | White-Label / Agency Mode | Intentional skip — enterprise scope, premature for MVP. Requires multi-tenant architecture not justified at current scale. | DEFERRED | — |
-| Looker Studio Connector | Intentional skip — agency-specific feature. REST API (Business tier) covers data export needs. Revisit when agency tier launches. | DEFERRED | — |
+| Looker Studio Connector | Intentional skip — agency-specific feature. REST API (Scale tier) covers data export needs. Revisit when agency tier launches. | DEFERRED | — |
 | CDN-Level Site Optimization (AXP) | Intentional skip — Scrunch-only feature, very high implementation effort, low competitive pressure. Revisit as Moat Builder. | DEFERRED | — |
 
 ### Previously PARTIAL (7 items) — All UPGRADED
@@ -374,7 +374,7 @@ From Rex's validation analysis:
 - Credit system (hold/confirm/release)
 - Onboarding 4-step flow
 - Content library with editor
-- WordPress integration (Pro tier)
+- WordPress integration (Build tier)
 - Alert system (email + in-app)
 - Settings (business, billing, preferences)
 - Paddle billing integration
@@ -488,7 +488,7 @@ Six complete data flows are documented in the Architecture Layer:
 | Document | Size | Content |
 |----------|------|---------|
 | **This file** (`BEAMIX_SYSTEM_DESIGN.md`) | Executive overview | Master index, summaries, gap closure status |
-| `_SYSTEM_DESIGN_PRODUCT_LAYER.md` | ~75KB | 23 pages, 90+ features, 4 user journeys, 16 agents (UX) |
+| `_SYSTEM_DESIGN_PRODUCT_LAYER.md` | ~75KB | 23 pages, 90+ features, 4 user journeys, 11 agents (UX) |
 | `_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md` | ~100KB | 32 tables, all APIs, 14 Inngest jobs, security, caching |
 | `_SYSTEM_DESIGN_INTELLIGENCE_LAYER.md` | ~80KB | 16 agent pipelines, scan engine, data intelligence, costs |
 | `_SYSTEM_DESIGN_VALIDATION.md` | ~55KB | 21 gap closures, 49 feature parity checks, 8 innovations |
@@ -629,7 +629,7 @@ RLS is enabled on every table. Service role key used only in Inngest functions a
 | `/api/competitors/*` | 3 | Required | CRUD, comparison data |
 | `/api/workflows/*` | 4 | Required | CRUD, trigger, run history |
 | `/api/analytics/*` | 4 | Required | Prompt volumes, citation sources, brand narrative, content performance |
-| `/api/v1/*` | 9 | API key | Public REST API (Business tier) |
+| `/api/v1/*` | 9 | API key | Public REST API (Scale tier) |
 | `/api/onboarding/*` | 1 | Required | Complete onboarding |
 | `/api/inngest` | 1 | Inngest key | Inngest serve endpoint |
 
@@ -663,7 +663,7 @@ RLS is enabled on every table. Service role key used only in Inngest functions a
 
 **Content Publish:**
 
-Agent output -> user review/edit -> CMS publish (WordPress REST API for Pro tier) -> performance baseline -> tracking via `content_performance` table
+Agent output -> user review/edit -> CMS publish (WordPress REST API for Build tier) -> performance baseline -> tracking via `content_performance` table
 
 **Alert Cycle:**
 
@@ -1758,9 +1758,9 @@ Every feature from the competitive blueprint, assessed for Beamix inclusion.
 |---------|-------------|-----------|---------------|
 | Content Generation | 7/15 (Profound, Gauge, Writesonic, Bear, Goodie, Spotlight, RankPrompt) | Yes -- P0 | Core differentiator. Already built. |
 | AI Agents (Autonomous) | 3/15 (Profound, Bear, Gauge) | Yes -- P0 | Beamix's #1 competitive advantage. Most comprehensive interactive autonomous agent suite with streaming chat UX under $100/month. (Note: Verify RankPrompt current pricing — as of research date they offered content generation + WP publishing at $29/month. Beamix differentiator is interactive streaming agent chat + multi-agent workflows, not just content generation.) |
-| CMS Auto-Publish (WordPress) | 6/15 | Yes -- Pro tier (Phase 2) | High impact. Eliminates copy-paste friction. 40%+ of websites are WordPress. Gated to Pro tier (not Business). |
+| CMS Auto-Publish (WordPress) | 6/15 | Yes -- Build tier (Phase 2) | High impact. Eliminates copy-paste friction. 40%+ of websites are WordPress. Gated to Build tier (not Scale). |
 | PR/Outreach Automation | 1/15 (Bear AI) | Yes -- Phase 3 | High SMB value (can't afford PR agencies). Citation Builder agent already designed. |
-| Content Type Variety (6+) | 2/15 (RankPrompt: 6 types, Writesonic: blogs/ads/social/landing) | Yes -- Phase 3 | RankPrompt offers this at $29. Must match at $49. |
+| Content Type Variety (6+) | 2/15 (RankPrompt: 6 types, Writesonic: blogs/ads/social/landing) | Yes -- Phase 3 | RankPrompt offers this at $29. Must match at $79. |
 | Content Voice Training | 1/15 (Goodie: Author Stamp) | Yes -- Phase 3 | Prevents generic-sounding output. High perceived value. |
 | Content Pattern Analysis | 1/15 (Spotlight) | Yes -- Phase 3 | Improves agent output quality. Competitive intelligence applied to content structure. |
 | Schema Recommendations | 2/15 (Goodie, RankPrompt) | Yes -- P0 | Already built (Schema Optimizer agent). |
@@ -1790,13 +1790,13 @@ Every feature from the competitive blueprint, assessed for Beamix inclusion.
 
 | Feature | Competitors | Required? | Justification |
 |---------|-------------|-----------|---------------|
-| WordPress | 6/15 | Yes -- Pro tier (Phase 2) | Most important CMS integration. High demand. Moved from Business to Pro tier — 6 competitors offer it at lower tiers. |
+| WordPress | 6/15 | Yes -- Build tier (Phase 2) | Most important CMS integration. High demand. Moved from Scale to Build tier — 6 competitors offer it at lower tiers. |
 | GA4 | 6/15 | Yes -- Phase 2 | Proves ROI. Widely expected. |
 | GSC | 3/15 (AthenaHQ, Gauge, Goodie) | Yes -- Phase 3 | Enriches data. Keyword-to-prompt correlation. |
 | Slack | 3/15 (Profound, AthenaHQ, Gauge) | Yes -- Phase 2 | Low effort. Pro+ feature. |
 | Shopify | 1/15 (AthenaHQ) | No -- Phase 4 | Only one competitor. Niche. |
 | Looker Studio | 3/15 (Otterly, SE Visible, Peec) | No -- Phase 4 | Agency feature. Not core SMB. |
-| API Access | 3/15 (Profound, Peec, Airefs) | Yes -- Phase 4 | Business tier. Already designed in Phase 10. |
+| API Access | 3/15 (Profound, Peec, Airefs) | Yes -- Phase 4 | Scale tier. Already designed in Phase 10. |
 | Contentful/Sanity | 1/15 (Profound) | No -- Skip | Enterprise headless CMS. Not our market. |
 | Webflow | 1/15 (AthenaHQ) | No -- Skip | Low demand. Only one competitor. |
 | CDN (Cloudflare/Vercel) | 3/15 | Yes -- Phase 3 | For crawler detection. Already designed in Phase 9. |
@@ -1809,7 +1809,7 @@ Every feature from the competitive blueprint, assessed for Beamix inclusion.
 | Multi-Workspace/Agency | 3/15 (Profound, Otterly, RankPrompt) | No -- Phase 4 | Requires data model changes. Defer to enterprise. |
 | YouTube/TikTok/Reddit Tracking | 2/15 (Ahrefs, Airefs-Reddit only) | No -- Skip | Outside core GEO. Ahrefs has infrastructure Beamix cannot match. |
 | Free Scan/Trial | 3/15 (Otterly trial, Airefs trial, RankPrompt credits) | Yes -- P0 | Beamix's instant free scan is the strongest version in the market. Already built. |
-| PDF/CSV Export | 5/15 | Yes -- Phase 2 | Business tier. Standard expectation. |
+| PDF/CSV Export | 5/15 | Yes -- Phase 2 | Scale tier. Standard expectation. |
 
 ---
 
@@ -1845,7 +1845,7 @@ Cross-cutting concerns and data flows that require coordination between agents w
 |---------|-----------|---------------------------|
 | **Free scan --> signup --> onboarding** | User scans, sees results, signs up 3 days later. Scan results must still be linkable to their new account. | Architecture (free_scans.scan_id must remain valid for 30 days), Product (onboarding must detect scan_id param and skip re-scan) |
 | **Agent generates content --> user edits --> republishes** | User modifies agent output in content library editor. Voice training must NOT overwrite user edits on re-generation. | Product (editor must save user version separately), Intelligence (re-generation should offer "update" not "replace") |
-| **Visibility drops --> automated workflow triggers --> user is on free tier** | Workflow triggers agent, but free tier has no agent uses. System must not burn credits the user doesn't have. | Architecture (workflow pre-checks credit balance before triggering), Product (notify user: "visibility dropped, upgrade to auto-fix") |
+| **Visibility drops --> automated workflow triggers --> user is on free tier** | Workflow triggers agent, but free tier has no AI Runs. System must not burn credits the user doesn't have. | Architecture (workflow pre-checks credit balance before triggering), Product (notify user: "visibility dropped, upgrade to auto-fix") |
 | **Competitor is also a Beamix user** | User A tracks User B as competitor. User B tracks User A. Neither should see each other's dashboard data. | Architecture (RLS ensures competitor tracking reads only public scan data, never dashboard data) |
 | **Content published to WordPress fails** | WordPress credentials expired or site is down. Content must not be marked as "published" if the push failed. | Architecture (WordPress adapter returns success/failure), Product (content status remains "Draft" on failure with retry option) |
 | **Multiple agents running simultaneously** | User launches Blog Writer while Content Writer is still running. Credit holds must not double-charge. | Architecture (credit hold is per-job, not per-user-session. Each job independently holds/confirms/releases.) |
@@ -1889,7 +1889,7 @@ Cross-cutting concerns and data flows that require coordination between agents w
 
 **Why Beamix can build it:** scan_results + content_items + timestamp correlation. Data already exists; needs a correlation query and display.
 
-**SMB value:** VERY HIGH. Answers "was this $49/mo worth it?" with concrete data.
+**SMB value:** VERY HIGH. Answers "was this $79/mo worth it?" with concrete data.
 
 **Effort:** MEDIUM. Requires correlation logic accounting for confounding variables (other factors that changed visibility).
 
@@ -2017,16 +2017,16 @@ Needed for retention, competitive parity, and preventing early churn.
 | **Sentiment Scoring (0-100)** | 7/15 competitors. Low effort to add. Drives urgency. |
 | **Source-Level Citation Tracking** | Highly actionable. Transforms "invisible" into "this URL beats you." |
 | **FAQ Agent** | Low-effort agent addition. Completes basic agent set. |
-| **Review Analyzer Agent** | Pro tier unlock. Differentiation at SMB price. |
-| **Social Strategy Agent** | Pro tier unlock. Content calendar is high perceived value. |
-| **WordPress Integration (Pro tier)** | 6/15 competitors. Eliminates copy-paste friction. Moved from Business to Pro tier. |
+| **Review Analyzer Agent** | Build tier unlock. Differentiation at SMB price. |
+| **Social Strategy Agent** | Build tier unlock. Content calendar is high perceived value. |
+| **WordPress Integration (Build tier)** | 6/15 competitors. Eliminates copy-paste friction. Moved from Scale to Build tier. |
 | **GA4 Integration** | 6/15 competitors. Proves ROI. Reduces churn. |
 | **Slack Integration** | 3/15 competitors. Low effort. |
 | **"Ask Beamix" Chat** | Reuses existing chat infrastructure. Gauge's differentiator brought to SMB price. |
 | **Visibility Drop Alerts (email)** | 13/15 competitors have alerts. Retention mechanism. |
 | **Weekly Digest Email** | Keeps non-daily-login users engaged. |
 | **Content Performance Tracking** | Proves agent ROI. "This blog post improved your visibility by +12." |
-| **PDF/CSV Export** | Business tier. Standard expectation. |
+| **PDF/CSV Export** | Scale tier. Standard expectation. |
 | **Gap Analysis Dashboard** | Shows WHERE brand is missing. Connects to agent triggers. |
 | **"Fix It" Buttons (Innovation 1)** | One-click agent launch from any gap. Low effort, high impact UX. |
 
@@ -2037,14 +2037,14 @@ Features that create competitive defensibility and lock-in.
 | Feature | Justification |
 |---------|---------------|
 | **Content Voice Training** | Prevents generic output. Lock-in: voice profile is effort to recreate elsewhere. |
-| **6+ Content Types** | Matches RankPrompt at $49. Comparison articles, location pages, case studies. |
+| **6+ Content Types** | Matches RankPrompt at $29. Comparison articles, location pages, case studies. |
 | **Content Pattern Analysis** | Improves agent quality. Spotlight's unique feature at SMB price. |
 | **Agent Workflows (event-triggered)** | "Visibility drop --> auto-fix." Reduces manual work. Profound's feature at SMB price. |
 | **Recurring Agent Execution** | Content freshness. Scheduled re-optimization. |
 | **Brand Narrative Analysis** | "Why AI says what it says." Only AthenaHQ and Spotlight have this. |
 | **Browser Simulation (Phase 2 engines)** | Grok, Copilot, AI Overviews, AI Mode. Expands to 8+ engines. |
-| **Competitor Intelligence Agent** | Business tier. Deep competitive analysis. |
-| **Citation Builder Agent** | Bear AI's PR outreach concept at $49. |
+| **Competitor Intelligence Agent** | Scale tier. Deep competitive analysis. |
+| **Citation Builder Agent** | Bear AI's PR outreach concept at SMB price. |
 | **AI Readiness Auditor (full)** | Deep site audit. Extends free scan value. |
 | **Multi-City Hebrew Scanning** | Tel Aviv, Haifa, Jerusalem, Be'er Sheva. Hebrew market moat. |
 | **Google Search Console Integration** | Keyword data feeds AI prompt optimization. |
@@ -2140,7 +2140,7 @@ The three agents (Morgan/Product, Atlas/Architecture, Sage/Intelligence) should 
 | Unlinked/web brand mention tracking | Ahrefs Brand Radar | F7: Web Mention Tracking | Spec complete — Phase 2 | All paid |
 | Social monitoring (YouTube/TikTok/Reddit) | Ahrefs Brand Radar | F8: Social Monitoring | **REJECTED** — out of scope | N/A |
 | 15-30 min scan refresh | RankPrompt (15 min) | F9: 30-Min Scan Refresh | Spec complete — High Priority | Business |
-| City/region-level scanning | Peec AI | F10: City-Level Scanning | Spec complete — Phase 2 | Starter/Pro/Business |
+| City/region-level scanning | Peec AI | F10: City-Level Scanning | Spec complete — Phase 2 | Discover/Build/Scale |
 | Real prompt volume data | Profound, Ahrefs | F11: Prompt Volume (GSC) | Spec complete — Phase 2 (GSC path only) | Pro+ |
 
 ### Deferred Gaps (Previously Noted) — Status Update
@@ -2154,9 +2154,9 @@ The three agents (Morgan/Product, Atlas/Architecture, Sage/Intelligence) should 
 ### Pricing Validation (March 2026)
 
 - Current pricing reviewed against new feature cost stack — see `docs/08-agents_work/AUDITS/PRICING-IMPACT-ANALYSIS.md`
-- **Verdict:** Current tiers (Starter $49, Pro $149, Business $349) absorb all new feature costs
-- **Under evaluation:** Business tier price increase to $449 — decision needed before F6 ships
-- Starter/Pro margins remain healthy post all 10 features
+- **Verdict:** Current tiers (Discover $79, Build $189, Scale $499) absorb all new feature costs
+- **Pricing locked April 2026** at Discover/Build/Scale; prior evaluation of a Scale increase to $449 is superseded.
+- Discover/Build margins remain healthy post all 10 features
 
 ### Remaining Intentional Gaps (Unchanged)
 

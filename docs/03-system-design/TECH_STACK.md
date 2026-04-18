@@ -182,7 +182,7 @@ The platform operates as a closed-loop optimization system:
 Scan (find problems) --> Diagnose (prioritize what matters) --> Fix (agents do the work) --> Measure (track impact) --> Repeat
 ```
 
-Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly, SE Visible, Peec) stop at "find problems." Dashboard-heavy tools (AthenaHQ, Gauge) stop at "prioritize." Only Profound and Bear AI attempt autonomous fixes, but at $200-400/month. Beamix completes the loop at $49-149/month.
+Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly, SE Visible, Peec) stop at "find problems." Dashboard-heavy tools (AthenaHQ, Gauge) stop at "prioritize." Only Profound and Bear AI attempt autonomous fixes, but at $200-400/month. Beamix completes the loop at $79-189/month.
 
 ### Seven Structural Advantages
 
@@ -409,7 +409,7 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 - **Brand Narrative Summary** (NEW -- gap closure) -- at the top: AI-generated summary of HOW AI describes your brand across all queries. "AI perceives you as [reliable/affordable/local expert] but rarely mentions your [unique value prop]."
 - **Persona Filter** (NEW -- gap closure) -- dropdown to filter rankings by buyer persona (e.g., "Budget-conscious buyer," "Enterprise decision-maker"). Shows how different personas experience your brand in AI.
 
-**User actions:** Sort table, filter, expand rows, click citation URLs, switch persona view, export CSV (Business tier).
+**User actions:** Sort table, filter, expand rows, click citation URLs, switch persona view, export CSV (Scale tier).
 **Data in:** `scan_results`, `scan_engine_results`, `tracked_queries`, citation data.
 **Data out:** Export triggers.
 **Connects to:** Agent Hub (from recommendation in expanded row), Content Library (content linked to specific queries).
@@ -466,7 +466,7 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 - **Bulk actions:** Checkbox on each content card. "Select all on page" checkbox in header. When 1+ items selected, bulk action bar appears above the list:
   - "Delete selected" (confirmation modal: "Delete X items? This cannot be undone.")
   - "Archive selected" (moves to Archived status)
-  - "Export selected" (downloads as ZIP of Markdown files, Business tier only)
+  - "Export selected" (downloads as ZIP of Markdown files, Scale tier only)
   - Selection count displayed: "3 items selected"
 
 **User actions:** Filter, search, paginate, select items, perform bulk actions, favorite, open content editor, change status, export/download, publish to WordPress, view performance metrics, review items in queue.
@@ -519,7 +519,7 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
     - **Content Voice Trainer** -- trains on business's existing website content to match their writing style
     - **Content Pattern Analyzer** -- analyzes top-cited content in your niche, extracts winning patterns
     - **Content Refresh Agent** -- audits published content for staleness, suggests or auto-applies updates
-- **Usage meter:** "8/15 agent uses this month" with bar + top-up CTA
+- **Usage meter:** "50/90 AI Runs this month" with bar + top-up CTA
 - **Recurring Executions Panel** (NEW -- gap closure): shows scheduled/recurring agent runs (e.g., "Content Refresh runs monthly on your published articles")
 - **Automation Toggles (MVP):** 4 pre-built workflow cards, each with ON/OFF toggle and simple config:
     1. "Visibility Drop Response" — trigger threshold: 10%/15%/20% dropdown
@@ -538,7 +538,7 @@ Every other GEO tool breaks this loop somewhere. Monitoring-only tools (Otterly,
 | **Completed** | Card shows green check + "Last run: 2 hours ago." "Run" button returns to available state. | "Run Again" button label |
 | **Error** | Card shows red warning icon + error message (1 line). Retry button appears. | "Something went wrong. [Retry]" |
 | **Unavailable** | Card shows gray overlay + clock icon. | "Agent temporarily unavailable. Usually back within a few minutes." |
-| **Locked (wrong tier)** | Card shows lock icon overlay. Description visible but dimmed. | "Available on Pro plan. [Upgrade]" |
+| **Locked (wrong tier)** | Card shows lock icon overlay. Description visible but dimmed. | "Available on Build plan. [Upgrade]" |
 
 **User actions:** Launch agent, view past runs, set up recurring schedules, toggle automations, upgrade tier for locked agents, buy top-ups.
 **Data in:** Agent configuration, `agent_jobs`, `credit_pools`, automation settings.
@@ -661,7 +661,7 @@ Every dashboard page has an empty state shown when the user has no data for that
 **Data:** `businesses` table.
 
 #### Tab 2: Billing
-**What the user sees:** Current plan name and tier, billing cycle (monthly/annual), next payment date, payment method, invoice history, usage stats (agent uses, scans, content items), upgrade/downgrade buttons, cancel subscription option.
+**What the user sees:** Current plan name and tier, billing cycle (monthly/annual), next payment date, payment method, invoice history, usage stats (AI Runs, scans, content items), upgrade/downgrade buttons, cancel subscription option.
 **User actions:** Change plan, update payment method, download invoices, cancel subscription.
 **Data:** Paddle subscription data, `subscriptions`, `credit_pools`.
 
@@ -671,21 +671,21 @@ Every dashboard page has an empty state shown when the user has no data for that
 **Data:** `user_profiles`, `notification_preferences`.
 
 #### Tab 4: Integrations
-**What the user sees:** Integration cards -- WordPress (Pro+), GA4 (Pro+), Google Search Console (Pro+), Slack (Pro+), Cloudflare (Business), Public API (Business). Each shows: connected/disconnected status, connect button, configuration options. Looker Studio card shows "Coming Soon — Growth Phase" with description: "Connect via REST API in the meantime."
+**What the user sees:** Integration cards -- WordPress (Build+), GA4 (Build+), Google Search Console (Build+), Slack (Build+), Cloudflare (Scale), Public API (Scale). Each shows: connected/disconnected status, connect button, configuration options. Looker Studio card shows "Coming Soon — Growth Phase" with description: "Connect via REST API in the meantime."
 
 **Integration readiness triggers:**
 
 | Integration | Shows as "Connected" when | Shows as "Not Connected" when | Shows as "Coming Soon" when |
 |-------------|--------------------------|-------------------------------|----------------------------|
-| GA4 | `integrations` row exists with `type = 'ga4'` and valid `ga4_credentials` for this business | Row missing or credentials expired/revoked | Never — always available for Pro+ |
-| Google Search Console | `integrations` row exists with `type = 'gsc'` and valid `gsc_credentials` for this business | Row missing or credentials expired | Never — always available for Pro+ |
-| WordPress | `integrations` row exists with `type = 'wordpress'` and valid `wordpress_credentials` for this business | Row missing or credentials invalid | Never — always available for Pro+ |
-| Slack | `integrations` row exists with `type = 'slack'` and valid `webhook_url` for this business | Row missing or webhook invalid | Never — always available for Pro+ |
-| Cloudflare | `integrations` row exists with `type = 'cloudflare'` and valid API token | Row missing or token invalid | Never — always available for Business |
-| Public API | At least one `api_keys` row exists for this user | No API keys generated | Never — always available for Business |
+| GA4 | `integrations` row exists with `type = 'ga4'` and valid `ga4_credentials` for this business | Row missing or credentials expired/revoked | Never — always available for Build+ |
+| Google Search Console | `integrations` row exists with `type = 'gsc'` and valid `gsc_credentials` for this business | Row missing or credentials expired | Never — always available for Build+ |
+| WordPress | `integrations` row exists with `type = 'wordpress'` and valid `wordpress_credentials` for this business | Row missing or credentials invalid | Never — always available for Build+ |
+| Slack | `integrations` row exists with `type = 'slack'` and valid `webhook_url` for this business | Row missing or webhook invalid | Never — always available for Build+ |
+| Cloudflare | `integrations` row exists with `type = 'cloudflare'` and valid API token | Row missing or token invalid | Never — always available for Scale |
+| Public API | At least one `api_keys` row exists for this user | No API keys generated | Never — always available for Scale |
 | Looker Studio | — | — | Always "Coming Soon" until native connector is built and deployed in Growth Phase |
 
-**User actions:** Connect/disconnect integrations, configure settings, generate API keys (Business tier).
+**User actions:** Connect/disconnect integrations, configure settings, generate API keys (Scale tier).
 **Data:** `integrations`, `api_keys`.
 
 **Connects to:** Billing (Paddle portal), all dashboard pages (settings affect display).
@@ -799,8 +799,8 @@ Every dashboard page has an empty state shown when the user has no data for that
 
 **What the user sees:**
 - Annual/Monthly toggle (20% annual discount)
-- 3-tier cards: Starter ($49), Pro ($149), Business ($349)
-- Feature comparison matrix: engines tracked, scan frequency, agent uses, competitors, content library size, integrations, support level
+- 3-tier cards: Discover ($79), Build ($189), Scale ($499)
+- Feature comparison matrix: engines tracked, scan frequency, AI Runs, competitors, content library size, integrations, support level
 - Per-agent availability by tier
 - FAQ section addressing common questions
 - CTA buttons: "Start Free Trial" (if not logged in) or "Upgrade" (if logged in)
@@ -863,10 +863,10 @@ Every dashboard page has an empty state shown when the user has no data for that
 ### 2.27 API Documentation (Future)
 
 **URL:** `/docs/api`
-**Purpose:** Public API reference for Business tier users.
+**Purpose:** Public API reference for Scale tier users.
 
 **Page structure:**
-1. **Overview** — What the Beamix API provides, who it's for (Business tier), base URL (`https://api.beamix.io/v1`), versioning policy.
+1. **Overview** — What the Beamix API provides, who it's for (Scale tier), base URL (`https://api.beamix.io/v1`), versioning policy.
 2. **Authentication** — API key in `Authorization: Bearer <api_key>` header. Key generation in Settings > Integrations. Scopes: `read` (GET endpoints), `write` (POST/PATCH), `execute` (agent triggers). Keys are shown once on creation and stored as hashed values.
 3. **Endpoints by category:**
    - **Scan** — `GET /v1/scans`, `GET /v1/scans/:id`, `POST /v1/scans` (trigger manual scan)
@@ -892,8 +892,8 @@ Every dashboard page has an empty state shown when the user has no data for that
 |---|---------|-------------|---------------|-------------|-------------|
 | S1 | Free Scan | URL + name + industry + location --> 3 engines (ChatGPT, Gemini, Perplexity) x 3 prompts --> visibility score, per-engine ranking, AI readiness score, competitor callout. Shareable URL 30 days. | `/scan`, `/scan/[scan_id]` | Business input, LLM responses | Signup (conversion), Onboarding (import) |
 | S2 | AI Readiness Score | 0-100% scoring across 5 categories. Computed as part of free scan. Shareable card. | Free scan results, AI Readiness dashboard | Website crawl data (cheerio) | Free Scan, AI Readiness page |
-| S3 | Multi-Engine Scanning | Query 4/8/10+ AI engines by tier. Free: ChatGPT, Gemini, Perplexity, Bing Copilot. Pro adds: Claude, Grok, You.com, Google AI Overviews (**Phase 3 — no stable API available at launch; will be added when browser simulation layer is built**). Business: all Pro engines + future engines. | Background (Inngest), Results in Rankings | Engine API responses | Rankings, Overview |
-| S4 | Scheduled Scans | Automated: weekly (Starter), every 3 days (Pro), daily (Business). Inngest cron. | Background | `businesses`, `tracked_queries`, `subscriptions` | Rankings, Alerts, Recommendations |
+| S3 | Multi-Engine Scanning | Query 4/8/10+ AI engines by tier. Free: ChatGPT, Gemini, Perplexity, Bing Copilot. Build adds: Claude, Grok, You.com, Google AI Overviews (**Phase 3 — no stable API available at launch; will be added when browser simulation layer is built**). Scale: all Build engines + future engines. | Background (Inngest), Results in Rankings | Engine API responses | Rankings, Overview |
+| S4 | Scheduled Scans | Automated: weekly (Discover), every 3 days (Build), daily (Scale). Inngest cron. | Background | `businesses`, `tracked_queries`, `subscriptions` | Rankings, Alerts, Recommendations |
 | S5 | Manual Scan Trigger | On-demand re-scan. Rate-limited per tier (1/week, 1/day, 1/hour). | Dashboard Overview (button) | Current scan data | Rankings |
 | S6 | Prompt Auto-Generation | Auto-generate 3-8 industry/location-specific prompts per business. **Auto-suggestions (suggesting prompts based on platform trends) is a Growth Phase feature** — requires ~500+ scans in a category before volume data is meaningful. Launch version uses rule-based generation from industry + location + services. | Scan pipeline (internal) | Business profile, industry, location | Scan execution |
 | S7 | Sentiment Scoring (0-100) | Numeric sentiment per engine per scan. Replaces enum with 0-100 scale for trend granularity. | Rankings table, Per-engine grid | LLM-parsed sentiment | Rankings, Trend charts, Alerts |
@@ -926,7 +926,7 @@ Every dashboard page has an empty state shown when the user has no data for that
 
 ---
 
-### 3.3 Agent System Module (16 agents)
+### 3.3 Agent System Module (11 agents)
 
 #### Existing Agents (12)
 
@@ -952,7 +952,7 @@ Every dashboard page has an empty state shown when the user has no data for that
 | A13 | Content Voice Trainer (NEW) | Analyzes business's existing website content + past edits to learn their writing voice. Produces a "voice profile" that all content agents use. Inspired by Goodie's Author Stamp. | Agent Hub, Settings (voice training section) | Website URL (crawl existing content), past content edits in Content Library | All content agents (A1, A2, A5, A7) use trained voice |
 | A14 | Content Pattern Analyzer (NEW) | Analyzes top-cited content in user's niche. Extracts structural/tonal patterns that make content get cited by AI. Produces a "citation playbook." Inspired by Spotlight. | Agent Hub, Agent Chat | Scan results (cited URLs), Perplexity research on top content | Content Writer, Blog Writer (use patterns in generation) |
 | A15 | Content Refresh Agent (NEW) | Audits existing published content for staleness. Identifies outdated facts, broken links, missing queries. Suggests updates or auto-generates refreshed versions. Can run on a schedule (monthly). Inspired by Profound Workflows. | Agent Hub, Content Library (refresh indicators) | `content_items` (published), latest scan results, current web data | Content Library, Content Editor |
-| A16 | Brand Narrative Analyst (NEW) | Analyzes WHY AI says what it says about the business. Deep narrative extraction across all engine responses: positioning themes, factual gaps, misperceptions, competitor framing. Produces a "Brand Narrative Report" with actionable reframing strategies. Pro+ tier. | Agent Hub (Intelligence category), Agent Chat, Rankings (narrative panel) | All raw LLM responses for business across scans, competitor scan data, business profile | Recommendations, Content Writer (narrative-aligned content), Competitive Intel |
+| A16 | Brand Narrative Analyst (NEW) | Analyzes WHY AI says what it says about the business. Deep narrative extraction across all engine responses: positioning themes, factual gaps, misperceptions, competitor framing. Produces a "Brand Narrative Report" with actionable reframing strategies. Build+ tier. | Agent Hub (Intelligence category), Agent Chat, Rankings (narrative panel) | All raw LLM responses for business across scans, competitor scan data, business profile | Recommendations, Content Writer (narrative-aligned content), Competitive Intel |
 
 #### A16: Brand Narrative Analyst (NEW) — Full Spec
 
@@ -1032,7 +1032,7 @@ Every dashboard page has an empty state shown when the user has no data for that
 | N8 | Credit Low | Agent uses below 20% remaining | Medium | Email | Notifications, Agent Hub |
 | N9 | Trial Ending | 3 days before trial expiry | High | Email | Notifications |
 
-**Alert delivery:** In-app notification bell (all tiers), email (configurable per alert type), Slack webhook (Pro+ if configured).
+**Alert delivery:** In-app notification bell (all tiers), email (configurable per alert type), Slack webhook (Build+ if configured).
 **Deduplication:** No duplicate alert of same type within 24 hours.
 
 ---
@@ -1041,13 +1041,13 @@ Every dashboard page has an empty state shown when the user has no data for that
 
 | # | Integration | What It Does | Tier | Data Flow |
 |---|------------|-------------|------|-----------|
-| I1 | WordPress | Publish content directly to WordPress as draft. REST API + Application Passwords. | Pro+ | Content Editor --> WP REST API --> WP post (draft) |
-| I2 | GA4 | AI traffic attribution. Identify visits from AI referral domains. Correlate visibility with traffic. | Pro+ | GA4 API --> daily fetch --> analytics_snapshots --> Attribution dashboard |
-| I3 | Google Search Console | Keyword ranking data from traditional search. Correlate with AI visibility. Feed into prompt generation. | Pro+ | GSC API --> keyword data --> scan prompt improvement, dual-visibility view |
-| I4 | Slack | Push alerts to Slack channel. Incoming webhook (Phase 1), full app (Phase 2). | Pro+ | Alert pipeline --> Slack webhook --> formatted Block Kit message |
-| I5 | Cloudflare/Vercel | AI crawler detection. Which AI bots visit which pages. | Business | CDN analytics API --> crawler data --> AI Readiness dashboard |
-| I6 | Looker Studio | **Intentionally deferred.** Native Looker Studio connector is a post-launch Growth Phase feature. Business tier users can connect via the Public REST API (I7) for custom reporting in the meantime. Deferred because: building a community connector requires maintaining a separate GCP project and data schema mapping that is not justified before validating Business tier demand. | Business (deferred) | — |
-| I7 | Public API | REST API for custom integrations. 12 endpoints, scoped API keys, rate-limited. | Business | API key auth --> read/write/execute scopes --> JSON responses |
+| I1 | WordPress | Publish content directly to WordPress as draft. REST API + Application Passwords. | Build+ | Content Editor --> WP REST API --> WP post (draft) |
+| I2 | GA4 | AI traffic attribution. Identify visits from AI referral domains. Correlate visibility with traffic. | Build+ | GA4 API --> daily fetch --> analytics_snapshots --> Attribution dashboard |
+| I3 | Google Search Console | Keyword ranking data from traditional search. Correlate with AI visibility. Feed into prompt generation. | Build+ | GSC API --> keyword data --> scan prompt improvement, dual-visibility view |
+| I4 | Slack | Push alerts to Slack channel. Incoming webhook (Phase 1), full app (Phase 2). | Build+ | Alert pipeline --> Slack webhook --> formatted Block Kit message |
+| I5 | Cloudflare/Vercel | AI crawler detection. Which AI bots visit which pages. | Scale | CDN analytics API --> crawler data --> AI Readiness dashboard |
+| I6 | Looker Studio | **Intentionally deferred.** Native Looker Studio connector is a post-launch Growth Phase feature. Scale tier users can connect via the Public REST API (I7) for custom reporting in the meantime. Deferred because: building a community connector requires maintaining a separate GCP project and data schema mapping that is not justified before validating Scale tier demand. | Scale (deferred) | — |
+| I7 | Public API | REST API for custom integrations. 12 endpoints, scoped API keys, rate-limited. | Scale | API key auth --> read/write/execute scopes --> JSON responses |
 
 ---
 
@@ -1072,7 +1072,7 @@ Every dashboard page has an empty state shown when the user has no data for that
 | U2 | Billing Management | Paddle: upgrade, downgrade, cancel, invoices, usage stats. | Settings > Billing |
 | U3 | Language Preference | Hebrew/English toggle. Affects all dashboard text. | Settings > Preferences |
 | U4 | Notification Preferences | Configure alert channels per type. Thresholds for visibility alerts. | Settings > Preferences |
-| U5 | Data Export | Download scan data, content, reports as CSV/PDF. | Settings (Business tier), Content Library |
+| U5 | Data Export | Download scan data, content, reports as CSV/PDF. | Settings (Scale tier), Content Library |
 | U6 | Account Deletion | GDPR-compliant account and data removal. | Settings > Account |
 
 ---
@@ -1081,9 +1081,9 @@ Every dashboard page has an empty state shown when the user has no data for that
 
 | # | Feature | What It Does | Where It Lives |
 |---|---------|-------------|---------------|
-| B1 | Plan Selection | Choose Starter/Pro/Business. Monthly or annual (20% discount). | Pricing page, Settings > Billing |
-| B2 | Trial Management | 7-day free trial with 5 agent credits. Clock starts on first dashboard visit. Full Pro features during trial. | Onboarding, Settings > Billing |
-| B3 | Agent Use Tracking | Track used/available agent uses. 20% rollover cap. Top-up purchases. | Agent Hub (meter), Overview (sidebar), Settings > Billing |
+| B1 | Plan Selection | Choose Discover/Build/Scale. Monthly or annual (20% discount). | Pricing page, Settings > Billing |
+| B2 | Trial Management | 7-day free trial with 5 agent credits. Clock starts on first dashboard visit. Full Build features during trial. | Onboarding, Settings > Billing |
+| B3 | AI Runs Tracking | Track used/available AI Runs. 20% rollover cap. Top-up purchases. | Agent Hub (meter), Overview (sidebar), Settings > Billing |
 | B4 | Paddle Checkout | Subscription creation, plan changes, cancellation. Paddle overlay. | Pricing page, Settings > Billing |
 | B5 | Webhook Processing | Handle Paddle events: subscription created/updated/cancelled, payment succeeded/failed. | Background (API route) |
 
@@ -1175,7 +1175,7 @@ Every dashboard page has an empty state shown when the user has no data for that
    --> Copies to clipboard, pastes into WordPress (or one-click publishes if integrated)
 
 5. TRACK IMPACT
-   --> Next scan cycle runs (3 days later for Pro)
+   --> Next scan cycle runs (3 days later for Build)
    --> Content Performance widget: "Comparison article published 3 days ago. Monitoring impact..."
    --> After 2 scan cycles: "Position improved from 'not mentioned' to #3 on ChatGPT for 'X vs Y'"
    --> Content item now shows performance badge
@@ -1237,8 +1237,8 @@ Every dashboard page has an empty state shown when the user has no data for that
 
 2. BILLING MANAGEMENT
    --> Settings > Billing
-   --> Reviews usage: 12/15 agent uses consumed
-   --> Sees top-up option: 5 uses for $15 (or upgrade to Business for more)
+   --> Reviews usage: 75/90 AI Runs consumed
+   --> Sees top-up option: 25 runs for $15 (or upgrade to Scale for more)
    --> Downloads last 3 invoices
    --> Switches from monthly to annual (20% savings)
 
@@ -1248,7 +1248,7 @@ Every dashboard page has an empty state shown when the user has no data for that
    --> Tests connection: "Connected! You can now publish directly."
    --> Connects GA4: OAuth flow, selects property
    --> Connects Slack: pastes webhook URL, tests with sample alert
-   --> Generates API key for custom dashboard (Business tier)
+   --> Generates API key for custom dashboard (Scale tier)
 
 4. NOTIFICATION TUNING
    --> Settings > Preferences
@@ -1580,7 +1580,7 @@ Ask Beamix is accessible from every dashboard page via a persistent floating cha
 **Purpose:** Schedule agents to run automatically on a cadence.
 
 **What the user sees:**
-- In Agent Hub, each agent has a "Schedule" option (Business tier)
+- In Agent Hub, each agent has a "Schedule" option (Scale tier)
 - Options: Weekly, Bi-weekly, Monthly
 - Configure: which content to audit, which topics to refresh, which competitors to analyze
 - Dashboard shows: "3 recurring agents configured. Next runs: Content Refresh (March 8), Competitor Intel (March 15)"
@@ -1596,7 +1596,7 @@ Ask Beamix is accessible from every dashboard page via a persistent floating cha
 |--------|------------------|-----------------------------|-------|
 | Scan Engine | 10 | 2 (Prompt Volume, Brand Narrative) | 12 |
 | Dashboard & Analytics | 12 | 2 (Content Performance, Prompt Trends) | 14 |
-| Agent System | 12 agents | 4 agents (Voice, Patterns, Refresh, Narrative) + Workflows + Recurring | 16 agents + 2 systems |
+| Agent System | 12 agents | 4 agents (Voice, Patterns, Refresh, Narrative) + Workflows + Recurring | 11 agents + 2 systems |
 | Content Engine | 4 | 6 (Voice Training, Typed Templates, Impact Tracking, WordPress, Editorial Queue, Pattern Library) | 10 |
 | Competitive Intelligence | 5 | 1 (Source-Level Citation Comparison) | 6 |
 | Alert System | 9 | 0 | 9 |
@@ -1604,7 +1604,7 @@ Ask Beamix is accessible from every dashboard page via a persistent floating cha
 | AI Readiness | 6 | 0 | 6 |
 | Settings | 6 | 0 | 6 |
 | Billing | 5 | 0 | 5 |
-| **Total** | **74** | **17** | **91+ features, 16 agents** |
+| **Total** | **74** | **17** | **91+ features, 11 agents** |
 
 Every gap identified in the CTO's analysis is addressed above. The product layer now covers: Content Performance Tracking (C7), Content Voice Training (A13/C5), Typed Content Templates (C6), Agent Workflows, Recurring Agent Execution, Prompt Volume Data (S11/D14), Source-Level Citation Analytics (S8/CI5), Brand Narrative Analysis (S12), Persona-Based Tracking (D3 persona filter), Customer Journey Stage Mapping (Recommendations journey tags), Content Pattern Analysis (A14/C10), and Editorial Queue (C9).
 
@@ -1626,16 +1626,16 @@ Every gap identified in the CTO's analysis is addressed above. The product layer
 |--------|--------------|-----------------|-------------|
 | Scan Engine | 12 | +3 (F9 refresh, F10 regions, F11 GSC) | 15 |
 | Dashboard & Analytics | 14 | +3 (F3 clustering, F4 explorer, F10 region filter) | 17 |
-| Agent System | 16 agents + 2 systems | +0 agents (existing handle new tasks) | 16 agents |
+| Agent System | 11 agents + 2 systems | +0 agents (existing handle new tasks) | 11 agents |
 | Content Engine | 10 | +1 (F2 comparison tool) | 11 |
 | Competitive Intelligence | 6 | +2 (F5 auto-suggest, F7 mentions) | 8 |
 | Web Presence | 0 | +2 (F1 crawler feed, F7 mention tracking) | 2 |
 | Browser Simulation | 0 | +1 (F6 — 3 new engines) | 3 engines |
-| **Total** | **91+ features** | **+12 new features** | **103+ features, 16 agents** |
+| **Total** | **91+ features** | **+12 new features** | **103+ features, 11 agents** |
 
 ---
 
-### F1: AI Crawler Feed (Pro+)
+### F1: AI Crawler Feed (Build+)
 
 **New page:** `/dashboard/crawler-feed`
 
@@ -1654,7 +1654,7 @@ Every gap identified in the CTO's analysis is addressed above. The product layer
 **Empty state:** "Connect your website to see which AI bots are discovering your content — and which pages they're missing."
 
 **Connections:** Alerts system, Settings → Integrations (shows connection status)
-**Tier gate:** Pro and Business. Starter sees a "Pro feature" lock with upgrade CTA.
+**Tier gate:** Build and Scale. Discover sees a "Build feature" lock with upgrade CTA.
 
 ---
 
@@ -1676,7 +1676,7 @@ Every gap identified in the CTO's analysis is addressed above. The product layer
 
 ---
 
-### F3: Topic/Query Clustering (Pro+)
+### F3: Topic/Query Clustering (Build+)
 
 **Added to:** Rankings page (`/dashboard/rankings`)
 
@@ -1694,11 +1694,11 @@ Every gap identified in the CTO's analysis is addressed above. The product layer
 **Empty state (< 5 queries tracked):** Clustering UI hidden; shown only when 5+ queries tracked.
 
 **Connections:** `tracked_queries` table, `query_clusters` table (new), Rankings filter system.
-**Tier:** Pro and Business. Starter sees standard list view (no clustering).
+**Tier:** Build and Scale. Discover sees standard list view (no clustering).
 
 ---
 
-### F4: Conversation Explorer (Pro+)
+### F4: Conversation Explorer (Build+)
 
 **New page:** `/dashboard/explore`
 
@@ -1706,15 +1706,15 @@ Every gap identified in the CTO's analysis is addressed above. The product layer
 - Industry query landscape: "What are people asking AI about [your industry] in [your city]?"
 - Grid of query cards with estimated relative volume (Low / Medium / High)
 - "+ Track This Query" button on each card → adds to `tracked_queries`
-- Pro tier: LLM-generated landscape, refreshed weekly
-- Business tier: Live exploration mode — enter any topic → real-time Perplexity results
+- Build tier: LLM-generated landscape, refreshed weekly
+- Scale tier: Live exploration mode — enter any topic → real-time Perplexity results
 
-**Pro tier UI:**
+**Build tier UI:**
 - Pre-loaded landscape of 20-30 queries based on business type + location
 - "Refresh landscape" button (limited: 4/month)
 - Last updated timestamp
 
-**Business tier UI:**
+**Scale tier UI:**
 - Live search bar: "What do people ask about ___?"
 - Real-time streaming results as Perplexity searches
 - Recent explorations history (last 10 sessions)
@@ -1724,7 +1724,7 @@ Every gap identified in the CTO's analysis is addressed above. The product layer
 **Empty state:** "Discover what potential customers are asking AI about your industry — and start tracking the queries that matter."
 
 **Connections:** `tracked_queries`, Rankings page (queries flow directly in), Recommendations page (new query discovery → new recommendations).
-**Tier:** Pro (LLM-generated), Business (live Perplexity mode)
+**Tier:** Build (LLM-generated), Scale (live Perplexity mode)
 
 ---
 
@@ -1745,18 +1745,18 @@ Every gap identified in the CTO's analysis is addressed above. The product layer
 **Implementation:** One Haiku call at onboarding step 3 load (not on button click) — preemptively generated to feel instant. Perplexity used for Israeli businesses (better local business awareness). Cached for 30 days per `(business_type, city)` pair.
 
 **Connections:** `competitors` table, Onboarding flow (Step 3), Settings tabs.
-**Tier:** All tiers (it's an onboarding feature). Starter, Pro, Business all benefit.
+**Tier:** All tiers (it's an onboarding feature). Discover, Build, Scale all benefit.
 
 ---
 
-### F6: Browser Simulation Engines (Pro+)
+### F6: Browser Simulation Engines (Build+)
 
 **Not a new UI page** — extends existing scan infrastructure. Results appear in existing Rankings and Recommendations pages.
 
 **What users see:**
 - Rankings page: 3 new engine columns: "Bing Copilot," "Google AI Overviews," "Google AI Mode"
-- These columns only visible to Pro/Business users
-- Starter users see these columns locked with "Pro feature" badge
+- These columns only visible to Build/Scale users
+- Discover users see these columns locked with "Build feature" badge
 
 **How results appear:**
 - Same format as API-based engines: visibility score, rank position, mention status, sentiment
@@ -1765,7 +1765,7 @@ Every gap identified in the CTO's analysis is addressed above. The product layer
 **Alert integration:** Visibility drop in Copilot/AI Overviews triggers same alert types as other engines.
 
 **Connections:** `scan_engine_results` (3 new engine rows), Rankings page, Recommendations (new action items based on these engines), Alert system.
-**Tier:** Pro and Business. Engines not available at Starter.
+**Tier:** Build and Scale. Engines not available at Discover.
 
 ---
 
@@ -1780,31 +1780,31 @@ Every gap identified in the CTO's analysis is addressed above. The product layer
 - "Claim unlinked mention" quick action: opens agent to draft outreach email requesting a link
 - Filter by: source type (news / blog / forum), date range, sentiment, linked status
 
-**Cadence display:** Shows when next mention scan runs ("Next scan in 2 hours" for Pro; "Updated daily" for Starter)
+**Cadence display:** Shows when next mention scan runs ("Next scan in 2 hours" for Build; "Updated daily" for Discover)
 
 **Alert integration:** New negative mention → "New Brand Mention" alert in notification bell with severity based on source authority.
 
 **Connections:** `web_mentions` table (new), `alerts` table, AI Readiness page, Alert system, Agent Hub (outreach email agent).
-**Tier:** All paid tiers. Cadence: Starter weekly, Pro daily, Business daily + on-demand.
+**Tier:** All paid tiers. Cadence: Discover weekly, Build daily, Scale daily + on-demand.
 
 ---
 
-### F9: 30-Minute Scan Refresh (Business Tier — scan cadence UI)
+### F9: 30-Minute Scan Refresh (Scale Tier — scan cadence UI)
 
 **Not a new page** — affects existing scan status displays across the dashboard.
 
-**What Business users see:**
-- Dashboard overview: "Last updated: 12 minutes ago" (vs. Starter/Pro: "Last updated: 45 minutes ago")
-- Rankings page: freshness badge shows "30-min refresh" for Business tier
-- Settings → Billing: scan frequency listed as "Every 30 minutes" under Business plan features
-- Pricing page: "30-min scan refresh" listed as a Business-only feature
+**What Scale users see:**
+- Dashboard overview: "Last updated: 12 minutes ago" (vs. Discover/Build: "Last updated: 45 minutes ago")
+- Rankings page: freshness badge shows "30-min refresh" for Scale tier
+- Settings → Billing: scan frequency listed as "Every 30 minutes" under Scale plan features
+- Pricing page: "30-min scan refresh" listed as a Scale-only feature
 
 **Connections:** Scan engine cron (backend), Dashboard overview "last updated" timestamp, Rankings freshness badge, Pricing page feature matrix.
-**Tier:** Business only.
+**Tier:** Scale only.
 
 ---
 
-### F10: City-Level Scanning (Starter: 1, Pro: 5, Business: unlimited)
+### F10: City-Level Scanning (Discover: 1, Build: 5, Scale: unlimited)
 
 **Added to:** Rankings page, Settings → Business Profile
 
@@ -1812,31 +1812,31 @@ Every gap identified in the CTO's analysis is addressed above. The product layer
 - New "Region" dropdown filter (appears when user has 2+ regions configured)
 - Default: shows primary region (business city)
 - Switching region: table refreshes to show that city's scan results
-- Multi-region comparison view: side-by-side columns (Pro/Business)
+- Multi-region comparison view: side-by-side columns (Build/Scale)
 
 **Settings → Business Profile — what users see:**
 - New "Scanning Regions" section: list of configured cities
 - "Add region" button (within tier limit)
 - Each region: label, location modifier, primary toggle, delete button
-- Starter: 1 region (shown as "Your primary city — upgrade to Pro to track more cities")
+- Discover: 1 region (shown as "Your primary city — upgrade to Build to track more cities")
 
 **Empty state for non-primary regions:** "Start tracking [Tel Aviv] — add it to your regions to see how AI engines rank you there."
 
 **Hebrew/RTL note:** City names and location modifiers shown in the UI language (Hebrew or English based on user preference). Location modifiers sent to AI engines in the query language.
 
 **Connections:** `scan_regions` table (new), `scan_engine_results.region_id` (new column), Rankings page, Settings.
-**Tier:** Starter 1 region, Pro 5 regions, Business unlimited (soft cap 20).
+**Tier:** Discover 1 region, Build 5 regions, Scale unlimited (soft cap 20).
 
 ---
 
-### F11: Prompt Volume Data (Pro+)
+### F11: Prompt Volume Data (Build+)
 
 **Added to:** Rankings page as a new column
 
 **What users see:**
 - "Prompt Volume" column in the Rankings table: shows estimated monthly query volume
-- Pro/Business (GSC connected): shows exact GSC search volume for matching queries
-- Pro/Business (no GSC): shows internal panel category — Low / Medium / High / Very High
+- Build/Scale (GSC connected): shows exact GSC search volume for matching queries
+- Build/Scale (no GSC): shows internal panel category — Low / Medium / High / Very High
 - All tiers: internal panel category visible (as a broad signal)
 
 **GSC connection prompt:**
@@ -1844,7 +1844,7 @@ Every gap identified in the CTO's analysis is addressed above. The product layer
 - Settings → Integrations: Google Search Console OAuth flow (already has an Integrations tab; GSC is a new integration card)
 
 **Connections:** `tracked_queries.prompt_volume_estimate` (new column), Rankings page, Settings → Integrations.
-**Tier:** Exact GSC volume: Pro+. Panel categories: all tiers.
+**Tier:** Exact GSC volume: Build+. Panel categories: all tiers.
 
 ---
 

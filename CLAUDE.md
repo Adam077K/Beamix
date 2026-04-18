@@ -136,6 +136,7 @@ All startup project documentation lives in `docs/`. Agents **must** read and upd
 | `docs/07-history/` | Changelog, decisions, pivots, milestones | ceo, all leads |
 | `docs/08-agents_work/` | Task index, session logs, handoffs | ceo, all leads |
 | `docs/09-metrics/` | North star, growth metrics, unit economics | business-lead, data-lead |
+| `docs/product-rethink-2026-04-09/` | **AUTHORITATIVE** — all decisions from April 2026 rethink | ceo, all leads |
 
 **Template files** (copy + rename before filling): `_TEMPLATE.md` in `competitors/`, `adr/`, `specs/`, `sessions/`, `handoffs/`.
 
@@ -376,12 +377,15 @@ Workers return structured results to their lead — the lead writes the session 
 
 ## Project State
 
-*[Update this section as the project evolves]*
-
-- **Current focus:** Building startups with the 3-layer agent system
-- **Active sprint:** Released — ready for public use
+- **Current focus:** Product rethink complete. Building MVP with new 11-agent GEO roster + proactive automation model.
+- **Active sprint:** 2-week MVP build (target launch: early May 2026)
+- **Product rethink:** Approved April 15, 2026. See `docs/product-rethink-2026-04-09/` for all decisions.
+- **Pricing:** Discover $79 / Build $189 / Scale $499 (was $49/$149/$349)
+- **Agents:** 11 MVP-1 + 1 MVP-2 GEO-specialized agents (was 7 generic agents)
+- **UX:** Proactive automation model — suggestions → approve → agents run → review in Inbox (was Agent Hub)
+- **Source of truth:** `docs/product-rethink-2026-04-09/` folder (9 files)
 - **Blockers:** None
-- **Next milestone:** Community feedback and iteration
+- **Next milestone:** 2-week MVP build sprint
 
 ---
 
@@ -420,6 +424,7 @@ Beamix scans SMBs for AI search visibility, diagnoses why they rank (or don't), 
 | `docs/` | PRD, architecture, specs, competitive research |
 | `saas-platform/` | Next.js product app (dashboard, API routes, agents) |
 | `docs/_archive/` | Archived old design docs (pre-2026-03-17) |
+| `docs/product-rethink-2026-04-09/` | **AUTHORITATIVE** — all decisions from April 2026 rethink |
 
 ## Default References
 
@@ -435,8 +440,15 @@ Beamix scans SMBs for AI search visibility, diagnoses why they rank (or don't), 
 - LLMs: OpenAI, Claude, Gemini, Perplexity (direct integration via Next.js API routes)
 - Hosting: Vercel
 
+## Pricing (CURRENT — as of April 15, 2026)
 
+| Tier | Monthly | Annual |
+|------|---------|--------|
+| Discover | $79/mo | $63/mo |
+| Build | $189/mo | $151/mo |
+| Scale | $499/mo | $399/mo |
 
+Trial model: 14-day money-back guarantee (7-day trial is retired). Free one-time scan remains.
 
 ## Brand & Design
 
@@ -452,3 +464,4 @@ Beamix scans SMBs for AI search visibility, diagnoses why they rank (or don't), 
 
 - Hebrew + English in planning/docs as needed
 - `docs/` is the source of truth for product and architecture
+- `docs/product-rethink-2026-04-09/` supersedes older specs for pricing, agents, and UX

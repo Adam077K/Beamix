@@ -54,16 +54,16 @@ Full voice rules → `CONTENT_STYLE_GUIDE.md`.
 
 From `.claude/memory/MEMORY.md`:
 
-**Pricing (2026-03-06 FINAL):**
-- Starter: $49/mo (annual: $39/mo)
-- Pro: $149/mo (annual: $119/mo)
-- Business: $349/mo (annual: $279/mo)
+**Pricing (2026-04 FINAL):**
+- Discover: $79/mo (annual: $63/mo)
+- Build: $189/mo (annual: $151/mo)
+- Scale: $499/mo (annual: $399/mo)
 - Free scan: $0, no account needed, 60-second results
 
 **AI engines scanned by tier:**
-- Free / Starter (3): ChatGPT, Gemini, Perplexity
-- Pro (7): + Claude, Google AI Overviews, Grok (X), You.com
-- Business (9+): TBD additions
+- Free / Discover (3): ChatGPT, Gemini, Perplexity
+- Build (7): + Claude, Google AI Overviews, Grok (X), You.com
+- Scale (9+): TBD additions
 
 **Trial:** 7 days, includes 5 agent credits, no credit card.
 

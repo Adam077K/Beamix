@@ -143,12 +143,12 @@ Yes. Beamix scans and optimizes web-based content — your website, blog, FAQ pa
 ---
 
 **Q16: How often does Beamix scan my business?**
-Scan frequency depends on your plan. Starter plan scans weekly. Pro plan scans every 3 days. Business plan scans daily. Each scan queries AI engines fresh so you see current ranking changes, not cached data. You can also trigger a manual scan between scheduled scans — Starter allows one manual scan per week, Pro allows one per day, Business allows unlimited manual scans.
+Scan frequency depends on your plan. Discover plan scans weekly. Build plan scans every 3 days. Scale plan scans daily. Each scan queries AI engines fresh so you see current ranking changes, not cached data. You can also trigger a manual scan between scheduled scans — Discover allows one manual scan per week, Build allows one per day, Scale allows unlimited manual scans.
 
 ---
 
 **Q17: Can I track my competitors with Beamix?**
-Yes. Each plan includes competitor tracking. Starter tracks 3 competitors, Pro tracks 5, and Business tracks 10. For each competitor, you see which AI engines mention them, which queries they appear for, and how their visibility score compares to yours over time. Competitor data appears in the same scan cycle as your own results.
+Yes. Each plan includes competitor tracking. Discover tracks 3 competitors, Build tracks 5, and Scale tracks 10. For each competitor, you see which AI engines mention them, which queries they appear for, and how their visibility score compares to yours over time. Competitor data appears in the same scan cycle as your own results.
 
 ---
 
@@ -157,38 +157,38 @@ The Beamix visibility score is a 0-100 number that measures how prominently your
 
 ---
 
-**Q19: How many agent uses do I get per month?**
-Starter plan includes 5 agent uses per month. Pro includes 15. Business includes 50. Unused agent uses roll over at up to 20% of your monthly allocation each month. Top-ups are available at any time: 5 uses for $15, or 15 uses for $35.
+**Q19: How many AI Runs do I get per month?**
+Discover plan includes 25 AI Runs per month. Build includes 90. Scale includes 300. Unused AI Runs roll over at up to 20% of your monthly allocation each month. Top-ups are available at any time: 25 runs for $15, or 90 runs for $35.
 
 *→ Blog cross-reference: Pricing page*
 
 ---
 
 **Q20: What languages does Beamix support?**
-Beamix currently produces content in English. Hebrew content generation is on the roadmap. The Beamix product interface supports both English and Hebrew — you can use the dashboard in Hebrew today. Hebrew AI search scanning (measuring your visibility in Hebrew-language AI queries) is available on Pro and Business plans.
+Beamix currently produces content in English. Hebrew content generation is on the roadmap. The Beamix product interface supports both English and Hebrew — you can use the dashboard in Hebrew today. Hebrew AI search scanning (measuring your visibility in Hebrew-language AI queries) is available on Build and Scale plans.
 
 ---
 
 ## Hub 3 — Pricing FAQ
 **Framer page:** `/faq/pricing`
-**Meta title:** "Beamix Pricing FAQ — Plans, Agent Uses, Trials | Beamix"
-**Meta description:** "8 pricing questions answered: what each plan includes, what an agent use is, how the free trial works, and how to cancel."
+**Meta title:** "Beamix Pricing FAQ — Plans, AI Runs, Trials | Beamix"
+**Meta description:** "8 pricing questions answered: what each plan includes, what an AI Run is, how the free trial works, and how to cancel."
 **Internal links to:** Pricing page, free scan
 
 ---
 
-**Q21: What is an "agent use" in Beamix?**
-An agent use is one execution of a Beamix AI agent — one blog post written, one schema file generated, one FAQ page produced, one review analysis run. Each time you run an agent and receive a deliverable, that counts as one agent use, regardless of which agent type you used. Agent uses reset monthly on your billing date.
+**Q21: What is an "AI Run" in Beamix?**
+An AI Run is one execution of a Beamix AI agent — one blog post written, one schema file generated, one FAQ page produced, one review analysis run. Each time you run an agent and receive a deliverable, that counts as one AI Run, regardless of which agent type you used. AI Runs reset monthly on your billing date.
 
 ---
 
-**Q22: What happens if I run out of agent uses?**
-If you use all your monthly agent uses before your billing date, you can purchase a top-up anytime: 5 uses for $15, or 15 uses for $35. Unused agent uses from your monthly plan roll over at up to 20% of your monthly allocation — so a Pro plan user with 15 uses who uses 10 carries 1 use forward (20% of 15 = 3, capped at unused amount). We don't penalize a slow month.
+**Q22: What happens if I run out of AI Runs?**
+If you use all your monthly AI Runs before your billing date, you can purchase a top-up anytime: 25 runs for $15, or 90 runs for $35. Unused AI Runs from your monthly plan roll over at up to 20% of your monthly allocation. We don't penalize a slow month.
 
 ---
 
 **Q23: How does the 7-day free trial work?**
-Every paid plan — Starter, Pro, and Business — includes a 7-day free trial. The trial starts on your first dashboard visit after signing up. During the trial you have full access to your plan's features plus 5 free agent credits to use on any agents in your plan. No credit card is required to start the trial. At day 7, Paddle bills your saved payment method if you choose to continue.
+Every paid plan — Discover, Build, and Scale — includes a 7-day free trial. The trial starts on your first dashboard visit after signing up. During the trial you have full access to your plan's features plus 5 free agent credits to use on any agents in your plan. No credit card is required to start the trial. At day 7, Paddle bills your saved payment method if you choose to continue.
 
 ---
 
@@ -203,7 +203,7 @@ Yes. Cancel in two clicks from your account settings under Billing. There is no 
 ---
 
 **Q26: What is the difference between monthly and annual pricing?**
-Annual billing saves 20% compared to monthly. Starter is $39/month on annual billing (vs $49/month). Pro is $119/month (vs $149/month). Business is $279/month (vs $349/month). Annual billing is charged as a single payment at the start of the year. You can switch between monthly and annual billing from your account settings.
+Annual billing saves 20% compared to monthly. Discover is $63/month on annual billing (vs $79/month). Build is $151/month (vs $189/month). Scale is $399/month (vs $499/month). Annual billing is charged as a single payment at the start of the year. You can switch between monthly and annual billing from your account settings.
 
 ---
 
@@ -212,8 +212,8 @@ Yes. Upgrade or downgrade at any time from your account settings. Upgrades take 
 
 ---
 
-**Q28: Does the Business plan include an onboarding call?**
-Yes. Business plan customers receive a 45-minute onboarding call with the Beamix team to configure their competitive tracking, identify priority agents for their industry, and set scan settings. The call is optional but recommended for Business plan customers managing more than 5 competitors or multiple locations.
+**Q28: Does the Scale plan include an onboarding call?**
+Yes. Scale plan customers receive a 45-minute onboarding call with the Beamix team to configure their competitive tracking, identify priority agents for their industry, and set scan settings. The call is optional but recommended for Scale plan customers managing more than 5 competitors or multiple locations.
 
 ---
 

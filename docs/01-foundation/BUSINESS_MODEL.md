@@ -14,9 +14,9 @@
 > **Source of truth:** `docs/01-foundation/PRODUCT_SPECIFICATION.md`
 > This document covers user journeys and high-level feature summary. For full page specs, data flows, and agent UX, defer to the system design.
 >
-> **Key numbers:** 23 pages, 90+ features across 10 modules, 16 AI agents (A1-A16), 10 AI scan engines (3 phases), 4 user journeys, 32 DB tables.
+> **Key numbers:** 23 pages, 90+ features across 10 modules, 11 AI agents, 10 AI scan engines (3 phases), 4 user journeys, 32 DB tables.
 > **Trial:** 7 days starting on first dashboard visit (not signup). Capped at 5 agent credits.
-> **Pricing tiers:** Starter ($49/mo) / Pro ($149/mo) / Business ($349/mo). No "Free" plan_tier in DB — free tier = null.
+> **Pricing tiers:** Discover ($79/mo) / Build ($189/mo) / Scale ($499/mo). No "Free" plan_tier in DB — free tier = null.
 
 ---
 
@@ -63,7 +63,7 @@
 
 ### Journey B: Paid User Daily Workflow
 
-**Persona:** Avi, owner of a moving company. Subscribed to Pro tier last week after his free scan showed he was invisible in 3 out of 4 LLMs.
+**Persona:** Avi, owner of a moving company. Subscribed to Build tier last week after his free scan showed he was invisible in 3 out of 4 LLMs.
 
 **Goal:** Check progress, approve agent-generated content, improve rankings.
 
@@ -85,7 +85,7 @@
 
 ### Journey C: Returning User -- Seeing Results
 
-**Persona:** Avi again, 6 weeks into his Pro subscription.
+**Persona:** Avi again, 6 weeks into his Build subscription.
 
 **Goal:** See that his investment is working. Decide whether to continue or expand.
 
@@ -95,9 +95,9 @@
 | C2 | Dashboard | Clicks on Visibility Score trend chart | Line chart: Week 1: 28, Week 2: 34, Week 3: 41, Week 4: 48, Week 5: 55, Week 6: 58. Annotations on chart show when content was published | Proof |
 | C3 | Rankings Detail (`/dashboard/rankings`) | Clicks "View All Rankings" | Table: Query | ChatGPT | Gemini | Perplexity | Claude | Trend. Rows show position numbers with color coding (green = top 3, yellow = 4-7, red = 8+ or not ranked) | Understanding |
 | C4 | Rankings Detail | Clicks on a specific query row | Drill-down: Historical rank per LLM over time, which content pieces affected this query, competitor positions for same query | Deep insight |
-| C5 | Dashboard | Notices "Usage: 8/15 agent uses this month" in sidebar | Considers upgrading. Clicks "See Plans" | Contemplating |
-| C6 | Pricing (`/pricing` or settings modal) | Views tier comparison | Current plan highlighted. Next tier shows: more agent uses, more tracked queries, competitor tracking. "Upgrade" button. | Evaluating ROI |
-| C7 | Settings | Clicks "Upgrade to Business" | Paddle checkout (pre-filled with existing payment method). Confirms. Immediate access to new features | Committed |
+| C5 | Dashboard | Notices "Usage: 50/90 AI Runs this month" in sidebar | Considers upgrading. Clicks "See Plans" | Contemplating |
+| C6 | Pricing (`/pricing` or settings modal) | Views tier comparison | Current plan highlighted. Next tier shows: more AI Runs, more tracked queries, competitor tracking. "Upgrade" button. | Evaluating ROI |
+| C7 | Settings | Clicks "Upgrade to Scale" | Paddle checkout (pre-filled with existing payment method). Confirms. Immediate access to new features | Committed |
 
 **Retention signal:** User who sees ranking improvement in first 30 days has 3x higher retention.
 
@@ -290,7 +290,7 @@ Total Visibility Score = Sum of all 4 LLM scores (max 100)
 - System automatically detects competitors from LLM responses (businesses ranked near user)
 
 **Acceptance Criteria:**
-- [ ] User can add up to 3 competitors (Starter) or 5 competitors (Pro) or 10 (Business)
+- [ ] User can add up to 3 competitors (Discover) or 5 competitors (Build) or 10 (Scale)
 - [ ] Auto-detected competitors shown as suggestions: "We noticed [X] ranks near you. Track them?"
 - [ ] Comparison table shows user's rank vs each competitor per query per LLM
 - [ ] Overall comparison card: "You outrank [Competitor] on 4/10 queries"
@@ -734,12 +734,12 @@ interface SocialStrategyOutput {
 **Actions:**
 - "Change Plan" -- opens plan comparison modal with upgrade/downgrade flow
 - "Update Payment Method" -- redirects to Paddle Customer Portal
-- "Cancel Subscription" -- cancellation flow with retention offer ("Switch to Starter instead?")
+- "Cancel Subscription" -- cancellation flow with retention offer ("Switch to Discover instead?")
 - "Download Invoice" -- per invoice row
 
 **Acceptance Criteria:**
 - [ ] Plan changes take effect immediately (prorated via Paddle)
-- [ ] Downgrade warns user if they exceed new plan limits (e.g., "You have 20 queries but Starter allows 10")
+- [ ] Downgrade warns user if they exceed new plan limits (e.g., "You have 20 queries but Discover allows 10")
 - [ ] Cancel flow includes retention step before confirming
 - [ ] Invoice download generates PDF via Paddle
 - [ ] Agent usage resets on billing date (shown clearly)
@@ -764,13 +764,13 @@ interface SocialStrategyOutput {
 
 | Integration | Plan | Purpose |
 |-------------|------|---------|
-| WordPress | Pro+ | Publish content directly from Content Library to WordPress |
-| Google Analytics 4 | Pro+ | Import traffic data for content performance attribution |
-| Google Search Console | Pro+ | Import organic rankings to correlate with AI visibility |
-| Slack | Pro+ | Alert notifications to Slack channel |
-| Cloudflare | Business | Analytics integration |
+| WordPress | Build+ | Publish content directly from Content Library to WordPress |
+| Google Analytics 4 | Build+ | Import traffic data for content performance attribution |
+| Google Search Console | Build+ | Import organic rankings to correlate with AI visibility |
+| Slack | Build+ | Alert notifications to Slack channel |
+| Cloudflare | Scale | Analytics integration |
 | Paddle | All paid | Billing portal access (auto-connected at signup) |
-| API Keys | Business | REST API access for custom integrations |
+| API Keys | Scale | REST API access for custom integrations |
 
 **OAuth flow:** WordPress, GA4, GSC, Slack use OAuth. Cloudflare uses API token. Credentials encrypted at rest (AES-256-GCM).
 
@@ -786,10 +786,10 @@ interface SocialStrategyOutput {
 
 ### Tier Structure
 
-| | Free Scan | Starter | Pro | Business |
+| | Free Scan | Discover | Build | Scale |
 |---|---|---|---|---|
-| **Price** | $0 | $49/mo | $149/mo | $349/mo |
-| **Annual price** | -- | $39/mo (billed $468/yr) | $119/mo (billed $1,428/yr) | $279/mo (billed $3,348/yr) |
+| **Price** | $0 | $79/mo | $189/mo | $499/mo |
+| **Annual price** | -- | $63/mo (billed $756/yr) | $151/mo (billed $1,812/yr) | $399/mo (billed $4,788/yr) |
 | **Trial** | N/A | 7-day free trial | 7-day free trial | 7-day free trial |
 | | | | | |
 | **Scanning** | | | | |
@@ -799,7 +799,7 @@ interface SocialStrategyOutput {
 | Scan frequency | One-time | Weekly | Every 3 days | Daily |
 | | | | | |
 | **AI Agents** | | | | |
-| Agent uses/month | 0 | 5 | 15 | 50 |
+| AI Runs/month | 0 | 25 | 90 | 300 |
 | Recommendations Agent | Preview (3 items) | Full access | Full access | Full access |
 | Content Writer Agent | -- | Yes | Yes | Yes |
 | Blog Writer Agent | -- | Yes | Yes | Yes |
@@ -825,19 +825,19 @@ interface SocialStrategyOutput {
 
 ### Pricing Rationale
 
-**Starter at $49/mo:** Below the psychological $50 barrier. Comparable to Mailchimp or Canva Pro -- tools SMBs already pay for. Provides enough value (10 queries, 5 agent uses/month) for a micro-business to see results.
+**Discover at $79/mo:** Priced for SMBs exploring GEO. Comparable to Mailchimp or Canva Pro -- tools SMBs already pay for. Provides enough value (10 queries, 25 AI Runs/month) for a micro-business to see results.
 
-**Pro at $149/mo:** The sweet spot for growing SMBs. 15 agent uses means ~3-4 content pieces per month plus analysis. Unlocks Review Analyzer and Social Strategy -- the agents that differentiate Beamix from "just another content tool." Under the $200 budget threshold most SMB marketing managers can approve without executive sign-off.
+**Build at $189/mo:** The sweet spot for growing SMBs. 90 AI Runs means ~3-4 content pieces per month plus analysis. Unlocks Review Analyzer and Social Strategy -- the agents that differentiate Beamix from "just another content tool." Under the $200 budget threshold most SMB marketing managers can approve without executive sign-off.
 
-**Business at $349/mo:** For businesses serious about AI visibility. Daily scanning, 50 agent uses, 75 queries, full export and reporting. Still 80% cheaper than enterprise competitors ($2K-5K). The 10-competitor tracking makes it valuable for competitive industries.
+**Scale at $499/mo:** For businesses serious about AI visibility. Daily scanning, 300 AI Runs, 75 queries, full export and reporting. Still far cheaper than enterprise competitors ($2K-5K). The 10-competitor tracking makes it valuable for competitive industries.
 
 **Annual discount (20%):** Reduces churn, improves cash flow. Clearly shown as monthly equivalent price.
 
-### Agent Usage Add-On
+### AI Runs Add-On
 
-For users who exhaust their monthly agent uses:
-- **5 additional agent uses:** $15 (one-time purchase)
-- **15 additional agent uses:** $35 (one-time purchase)
+For users who exhaust their monthly AI Runs:
+- **25 additional AI Runs:** $15 (one-time purchase)
+- **90 additional AI Runs:** $35 (one-time purchase)
 - Available from the "Agent Usage" card on dashboard when usage exceeds 80%
 
 ---
@@ -954,7 +954,7 @@ Dashboard | Rankings | Agents | Content | More (opens drawer with remaining item
 | Email templates | ~8 | Welcome email, scan results email, weekly digest |
 | Marketing pages | ~5 pages | Landing page, pricing page, about page |
 | Agent descriptions | ~6 | Description of each agent's purpose and capabilities |
-| Plan names & descriptions | ~4 | "Starter", "Pro", "Business" tier descriptions |
+| Plan names & descriptions | ~4 | "Discover", "Build", "Scale" tier descriptions |
 
 **Estimated total translatable strings:** ~210
 
@@ -968,7 +968,7 @@ Dashboard | Rankings | Agents | Content | More (opens drawer with remaining item
 | API endpoints | Technical |
 | Metric values (numbers, percentages) | Universal (with locale-aware formatting) |
 | Industry list | Translated (appears in dropdown) |
-| Plan tier names (Starter/Pro/Business) | Keep in English (internationally recognized) |
+| Plan tier names (Discover/Build/Scale) | Keep in English (internationally recognized) |
 
 ### 5.4 RTL Implementation Requirements
 
@@ -1001,7 +1001,7 @@ Agent-generated content respects the user's `content_language` preference:
 | Data Type | English (en) | Hebrew (he) |
 |-----------|-------------|-------------|
 | Numbers | 1,234.56 | 1,234.56 |
-| Currency | $49/mo | $49/mo (USD shown in both) |
+| Currency | $79/mo | $79/mo (USD shown in both) |
 | Dates | Feb 27, 2026 | 27 Feb 2026 (or Hebrew date format) |
 | Percentages | 42% | 42% |
 
@@ -1011,9 +1011,9 @@ Agent-generated content respects the user's `content_language` preference:
 
 | Decision | Rationale | Status |
 |----------|-----------|--------|
-| Agent uses (not credits) as usage model | Strategic Foundation says "no confusing credit systems." Flat agent uses are simpler to understand: "You get 15 uses/month." | Locked |
-| 4 tiers: Free Scan + Starter ($49) + Pro ($149) + Business ($349) | Must be affordable for SMBs, clear progression, under $250 for entry paid tier. $49 is under $50 psychological threshold. $349 is under competitor's $500+ entry. | Locked |
-| 16 agents (A1-A16) | Platform ships with 12 launch agents (A1-A12) and 4 Growth Phase agents (A13-A16). Content Writer and Blog Writer are separate because outputs differ (website pages vs blog posts). A12 Ask Beamix is 0-credit, Pro+. A4 Recommendations is 0-credit, auto-runs post-scan. | Locked |
+| AI Runs (not credits) as usage model | Strategic Foundation says "no confusing credit systems." Flat AI Runs are simpler to understand: "You get 90 runs/month." | Locked |
+| 4 tiers: Free Scan + Discover ($79) + Build ($189) + Scale ($499) | Must be affordable for SMBs, clear progression. Discover entry is accessible to SMBs; Scale is under competitor enterprise tiers. | Locked |
+| 11 agents (launch roster) | Platform ships with 11 launch agents. Content Writer and Blog Writer are separate because outputs differ (website pages vs blog posts). Ask Beamix is 0-credit, Build+. Recommendations is 0-credit, auto-runs post-scan. | Locked |
 | Hebrew + English from day 1 | Strategic Foundation explicitly states this. Old PRD had "Hebrew in Phase 2" -- overridden. | Locked |
 | Free scan requires no account | Strategic Foundation: "This is free for everyone. Top of funnel." Zero friction principle. | Locked |
 | Scan results shareable via URL for 30 days | Enables word-of-mouth sharing: "Look at this, my competitor ranks #2 and I'm invisible" | Locked |
@@ -1027,7 +1027,7 @@ Agent-generated content respects the user's `content_language` preference:
 | Exact industry list for dropdown (25+ options) -- needs validation with target market | Rex (research) | Before build |
 | Free scan rate limit: 3 per IP per 24h -- is this too restrictive? Could hurt organic sharing. | Morgan + Atlas | Before build |
 | Should annual plans show savings as dollar amount or percentage? | Nova (copy) | Before build |
-| Do we need a "Freemium" tier between Free Scan and Starter? (e.g., free account with limited dashboard but no agents) | Morgan | Week 2 decision |
+| Do we need a "Freemium" tier between Free Scan and Discover? (e.g., free account with limited dashboard but no agents) | Morgan | Week 2 decision |
 | Schema Optimizer: should it auto-detect existing schema or require user to paste current HTML? | Atlas | During build |
 | Review Analyzer: which review scraping method is legal and reliable? API vs scraping implications. | Atlas + Guardian | Before build |
 | Hebrew font: Is Inter sufficient or do we need Heebo/Rubik as fallback? | Lyra (design) | Before build |
@@ -1057,10 +1057,10 @@ Agent-generated content respects the user's `content_language` preference:
 
 ## Executive Summary
 
-- **Current margins are healthy and will remain healthy after all recommended new features ship.** Total cost per business/month increases by only $6-9 (30-45%) for Pro users and near-zero for Starter — well within acceptable gross margin ranges given current pricing.
-- **The current pricing structure does not need to change to remain profitable after the recommended feature set.** Pro at $149 and Business at $349 absorb all new feature costs comfortably. Starter at $49 is tight but defensible.
-- **One pricing option is worth serious consideration: raising Business to $449.** The Business-tier feature set after F9 (30-min refresh) + F10 (multi-region) + F6 (browser simulation) is a materially better product than competitors charging $399 (Profound). A $100 increase is supportable with a strong feature gate.
-- **Next action:** Decide within 2 weeks whether to hold pricing or raise Business tier. This decision should be made before F6 (Browser Simulation) ships, as that is the clearest value-unlock event that justifies a price increase to existing users.
+- **Current margins are healthy and will remain healthy after all recommended new features ship.** Total cost per business/month increases by only $6-9 (30-45%) for Build users and near-zero for Discover — well within acceptable gross margin ranges given current pricing.
+- **The current pricing structure (Discover $79 / Build $189 / Scale $499) absorbs all new feature costs comfortably.** Build at $189 and Scale at $499 handle the full feature set; Discover at $79 is tight but defensible.
+- **Pricing update (2026-04):** Tiers renamed and re-priced to Discover $79 / Build $189 / Scale $499 to better reflect value and positioning vs competitors.
+- **Next action:** Monitor adoption and margin post-launch of new tier pricing. Browser Simulation and multi-region remain the dominant new costs to watch.
 
 ---
 
@@ -1100,24 +1100,24 @@ All 11 features from Batches 1, 2, and 3. Costs sourced from Atlas engineering s
 
 The incremental cost per user depends on which features each tier accesses. The table below shows the cumulative add on top of the $20/month baseline.
 
-**Starter User ($49/mo)**
+**Discover User ($79/mo)**
 
 | Feature | Incremental Cost |
 |---------|----------------|
 | F2: Content Comparison | $0.00 |
 | F5: Auto-Suggest Competitors (one-time at signup, amortized) | ~$0.00 recurring |
-| F7: Web Mention Tracking (Starter cadence: 1 scan/month) | ~$0.03 |
+| F7: Web Mention Tracking (Discover cadence: 1 scan/month) | ~$0.03 |
 | F11: Internal prompt volume panel | $0.00 |
 | **Total new feature cost** | **~$0.03/month** |
-| **New total cost per Starter user** | **~$20.03/month** |
-| **Revenue: $49/month** | |
-| **Gross margin** | **59% (was 59%)** |
+| **New total cost per Discover user** | **~$20.03/month** |
+| **Revenue: $79/month** | |
+| **Gross margin** | **~75%** |
 
-Starter is unaffected. All new Starter-tier features are near-zero cost.
+Discover is unaffected by new feature costs. At the new $79 price point, gross margin improves materially vs the prior $49 tier.
 
 ---
 
-**Pro User ($149/mo)**
+**Build User ($189/mo)**
 
 | Feature | Incremental Cost |
 |---------|----------------|
@@ -1131,17 +1131,17 @@ Starter is unaffected. All new Starter-tier features are near-zero cost.
 | F10: Multi-Region, 3 cities × $2.30 (assume avg 3 cities used) | ~$6.90 |
 | F11: GSC integration | $0.00 |
 | **Total new feature cost** | **~$13.35/month** |
-| **New total cost per Pro user** | **~$33.35/month** |
-| **Revenue: $149/month** | |
-| **Gross margin** | **78% (was 87%)** |
+| **New total cost per Build user** | **~$33.35/month** |
+| **Revenue: $189/month** | |
+| **Gross margin** | **~82%** |
 
-Pro margin drops from ~87% to ~78% — still excellent. The $6.30 Browser Simulation and $6.90 multi-region are the dominant new costs. Both are gated features that users must actively enable; actual average cost will be lower than the max-usage scenario above.
+Build margin stays strong at the $189 price point. The $6.30 Browser Simulation and $6.90 multi-region are the dominant new costs. Both are gated features that users must actively enable; actual average cost will be lower than the max-usage scenario above.
 
-**Conservative Pro estimate (not all Pro users adopt F6+F10 at maximum):** Assume 40% adopt browser simulation and average 1.5 cities tracked: incremental cost ~$6.00/Pro user/month, for a total cost of ~$26/month and margin of ~83%.
+**Conservative Build estimate (not all Build users adopt F6+F10 at maximum):** Assume 40% adopt browser simulation and average 1.5 cities tracked: incremental cost ~$6.00/Build user/month, for a total cost of ~$26/month and margin of ~86%.
 
 ---
 
-**Business User ($349/mo)**
+**Scale User ($499/mo)**
 
 | Feature | Incremental Cost |
 |---------|----------------|
@@ -1156,16 +1156,16 @@ Pro margin drops from ~87% to ~78% — still excellent. The $6.30 Browser Simula
 | F10: Multi-Region, 10 cities × $2.30 | ~$23.00 |
 | F11: GSC integration | $0.00 |
 | **Net new feature cost** | **~$14.58/month** |
-| **Baseline scan cost pre-F9** | $229.50 (Business 4h cadence) |
+| **Baseline scan cost pre-F9** | $229.50 (Scale 4h cadence) |
 | **New scan cost post-F9** | $214.20 (F9 saves $15.30) |
 | **Total cost adjustment** | +$14.58 features - $15.30 scan savings = **-$0.72 net** |
-| **New total cost per Business user** | **~$19.28 + $214.20 = ~$233/month** |
-| **Revenue: $349/month** | |
-| **Gross margin** | **33%** |
+| **New total cost per Scale user** | **~$19.28 + $214.20 = ~$233/month** |
+| **Revenue: $499/month** | |
+| **Gross margin** | **~53%** |
 
-**Important context on Business-tier scan cost:** The $214/month scan cost per Business user reflects the cost of daily scans across 7 engines for 75 tracked queries. At early scale (50 Business users), this is the cost structure. As user count grows, economies of scale appear through query caching and prompt reuse — the Atlas spec estimates 40-60% cache hit rate at 1K businesses in the same industry, cutting scan costs nearly in half.
+**Important context on Scale-tier scan cost:** The $214/month scan cost per Scale user reflects the cost of daily scans across 7 engines for 75 tracked queries. At early scale (50 Scale users), this is the cost structure. As user count grows, economies of scale appear through query caching and prompt reuse — the Atlas spec estimates 40-60% cache hit rate at 1K businesses in the same industry, cutting scan costs nearly in half.
 
-**At 50% cache hit rate on Business scan costs:** $214 → ~$107/month. Total Business cost drops to ~$126/month. Gross margin improves to ~64%.
+**At 50% cache hit rate on Scale scan costs:** $214 → ~$107/month. Total Scale cost drops to ~$126/month. Gross margin improves to ~75%.
 
 ---
 
@@ -1173,17 +1173,19 @@ Pro margin drops from ~87% to ~78% — still excellent. The $6.30 Browser Simula
 
 | Tier | Price | Current Cost | Current Margin | Post-Feature Cost | Post-Feature Margin |
 |------|-------|-------------|----------------|-------------------|---------------------|
-| Starter | $49 | ~$20 | ~59% | ~$20 | ~59% |
-| Pro | $149 | ~$20 | ~87% | ~$26-33 | ~78-83% |
-| Business | $349 | ~$229 | ~34% | ~$233 (pre-cache) / ~$126 (50% cache) | ~33% / ~64% |
+| Discover | $79 | ~$20 | ~75% | ~$20 | ~75% |
+| Build | $189 | ~$20 | ~89% | ~$26-33 | ~82-86% |
+| Scale | $499 | ~$229 | ~54% | ~$233 (pre-cache) / ~$126 (50% cache) | ~53% / ~75% |
 
-**Takeaway:** Starter and Pro remain well above the 70% gross margin SaaS benchmark. Business is the margin pressure point — and the primary lever to fix it is scan caching at scale, not pricing changes. The new features themselves do not materially worsen Business margins.
+**Takeaway:** Discover and Build sit well above the 70% gross margin SaaS benchmark at the new price points. Scale is helped both by the price increase to $499 and by scan caching at scale. The new features themselves do not materially worsen Scale margins.
 
 ---
 
 ## Section 3: Pricing Options Analysis
 
-**Assumptions for revenue modeling:**
+> **2026-04 update:** The pricing decision was made. Current canonical pricing is Discover $79 / Build $189 / Scale $499. The Options A-D below are preserved as historical decision record — the option effectively chosen was a repricing beyond any of these scenarios (closer to Option D with all tiers adjusted). Do not use the specific dollar values in Section 3 for forward-looking planning; use the canonical pricing above and the updated margin table in Section 2.
+
+**Assumptions for revenue modeling (historical, Feb 2026):**
 - Current user base (estimated): 200 Starter, 150 Pro, 50 Business = 400 total paying users
 - These are estimates — confidence level: Low (no live subscriber data available)
 - Annual vs monthly split: assume 30% annual, 70% monthly (industry average for early-stage SaaS)
@@ -1334,11 +1336,11 @@ New prices: Starter $59, Pro $169, Business $369. Annual: ~$47, $135, $295.
 
 ## Section 4: Recommended Tier Structure
 
-### Recommendation: Hold pricing now. Raise Business to $449 when Phase 3 ships.
+### Recommendation (superseded — see 2026-04 update above): canonical pricing is now Discover $79 / Build $189 / Scale $499.
 
-The recommended feature-to-tier allocation is:
+The feature-to-tier allocation below maps to the new tier names (Starter → Discover, Pro → Build, Business → Scale). Dollar figures below reflect earlier pricing and should be read against the canonical table above.
 
-**Starter ($49/mo | $39/mo annual) — "See where you stand"**
+**Discover ($79/mo | $63/mo annual) — "See where you stand"**
 - All existing Starter features
 - F2: Content Comparison Tool (all paid tiers — zero cost, high retention value)
 - F5: Auto-Suggest Competitors (all tiers — onboarding improvement)
@@ -1346,7 +1348,7 @@ The recommended feature-to-tier allocation is:
 - F11: Internal prompt volume panel (all tiers, no GSC required)
 - Rationale: These additions cost near-zero and improve Starter retention without cannibalizing Pro.
 
-**Pro ($149/mo | $119/mo annual) — "Monitor and fix"**
+**Build ($189/mo | $151/mo annual) — "Monitor and fix"**
 - All existing Pro features
 - F1: AI Crawler Feed (Cloudflare integration, weekly Haiku summary)
 - F2: Content Comparison Tool
@@ -1359,7 +1361,7 @@ The recommended feature-to-tier allocation is:
 - F11: GSC integration for real prompt volume data
 - Rationale: F6 is the clearest Pro differentiator — it unlocks 3 engines no competitor offers at this price. F10 at 5 cities adds genuine Israeli-market value without exploding cost.
 
-**Business ($349/mo now → $449/mo when Phase 3 ships | $279 → $359 annual)**
+**Scale ($499/mo | $399/mo annual)**
 - All Pro features plus:
 - F4: Conversation Explorer with Perplexity Live Exploration (real-time query discovery)
 - F7: Web Mention Tracking — daily, 4 query variants, all alerts
@@ -1410,8 +1412,8 @@ Data sourced from Rex competitive synthesis (March 2026). Treat as potentially s
 
 | Competitor | Entry Tier | Mid Tier | Top Tier | Notes |
 |------------|-----------|---------|---------|-------|
-| **Beamix (current)** | $49 | $149 | $349 | Israeli-first, dual-language |
-| **Beamix (post-Phase 3)** | $49 | $149 | **$449** | Recommended |
+| **Beamix (current)** | $79 | $189 | $499 | Israeli-first, dual-language |
+| ~~**Beamix (earlier Phase 3 proposal)**~~ | ~~$49~~ | ~~$149~~ | ~~**$449**~~ | Superseded — see current row |
 | Profound | Enterprise only | ~$399 | Custom | 130M proprietary conversations |
 | SE Visible | $50 | $149 | $299 | SEO-first framing |
 | Peec AI | $79 | $149 | $299 | UI-focused, no agents |
@@ -1422,11 +1424,10 @@ Data sourced from Rex competitive synthesis (March 2026). Treat as potentially s
 | Brand24 | $99 | $179 | $299 | Social/web mentions only |
 
 **Beamix's price-to-engine-coverage ratio is the clearest competitive advantage:**
-- At $149/Pro: 7 engines + browser sim (10 total) — no competitor offers this at this price
-- At $349/Business: 30-min refresh — only RankPrompt is comparable (browser-only, less reliable)
-- At $449/Business (post-Phase 3): Copilot + AI Overviews — no SMB competitor covers these engines
+- At $189/Build: 7 engines + browser sim (10 total) — no competitor offers this at this price
+- At $499/Scale: 30-min refresh + Copilot + AI Overviews — no SMB competitor covers these engines
 
-**The key positioning principle:** Beamix should never compete on price alone against Otterly and RankPrompt in the $49-199 range. Competing on engine coverage and agent execution is the right axis. The pricing table above shows Beamix is currently priced to win on value, not on cost.
+**The key positioning principle:** Beamix should never compete on price alone against Otterly and RankPrompt in the $29-99 range. Competing on engine coverage and agent execution is the right axis. The pricing table above shows Beamix is priced to win on value, not on cost.
 
 ---
 

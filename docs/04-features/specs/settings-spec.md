@@ -279,9 +279,9 @@ User signs up → completes onboarding → arrives at /dashboard (FIRST VISIT)
 │                                                                 │
 │  WHAT YOU GET WHEN YOU UPGRADE                                  │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
-│  │  Starter     │  │  Pro         │  │  Business            │  │
-│  │  $49/mo      │  │  $149/mo     │  │  $349/mo             │  │
-│  │  5 agents    │  │  15 agents   │  │  50 agents           │  │
+│  │  Discover    │  │  Build       │  │  Scale               │  │
+│  │  $79/mo      │  │  $189/mo     │  │  $499/mo             │  │
+│  │  25 runs     │  │  90 runs     │  │  300 runs            │  │
 │  │  10 queries  │  │  25 queries  │  │  75 queries          │  │
 │  │  [Select]    │  │  [Select]    │  │  [Select]            │  │
 │  └──────────────┘  └──────────────┘  └──────────────────────┘  │
@@ -304,12 +304,12 @@ User signs up → completes onboarding → arrives at /dashboard (FIRST VISIT)
 │  [Monthly]  [Annual — Save 20%]   ← toggle                     │
 │                                                                 │
 │  ┌────────────┐  ┌──────────────┐  ┌───────────────────────┐   │
-│  │  Starter   │  │  Pro         │  │  Business             │   │
+│  │  Discover  │  │  Build       │  │  Scale                │   │
 │  │            │  │  [Current]   │  │                       │   │
-│  │  $49/mo    │  │  $149/mo     │  │  $349/mo              │   │
+│  │  $79/mo    │  │  $189/mo     │  │  $499/mo              │   │
 │  │            │  │              │  │                       │   │
 │  │  10 queries│  │  25 queries  │  │  75 queries           │   │
-│  │  5 agents  │  │  15 agents   │  │  50 agents            │   │
+│  │  25 runs   │  │  90 runs     │  │  300 runs             │   │
 │  │  Weekly    │  │  Every 3d    │  │  Daily scans          │   │
 │  │  4 engines │  │  7 engines   │  │  10+ engines          │   │
 │  │            │  │              │  │                       │   │
@@ -323,10 +323,10 @@ User signs up → completes onboarding → arrives at /dashboard (FIRST VISIT)
 If user selects a lower plan than current:
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Downgrade to Starter?                                   [✕]   │
+│  Downgrade to Discover?                                  [✕]   │
 │                                                                 │
 │  You currently have 18 tracked queries.                         │
-│  Starter allows 10. The extra 8 will be paused —               │
+│  Discover allows 10. The extra 8 will be paused —              │
 │  not deleted. You can reactivate them if you upgrade again.     │
 │                                                                 │
 │  You will also lose access to:                                  │
@@ -351,7 +351,7 @@ If user selects a lower plan than current:
 **Success state on return:**
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  ✦  Welcome to Pro! Your plan is now active.                    │
+│  ✦  Welcome to Build! Your plan is now active.                  │
 │     All features are unlocked. Let's fix your visibility.       │
 │                                          [Go to Dashboard →]   │
 └─────────────────────────────────────────────────────────────────┘
@@ -381,9 +381,9 @@ If user selects a lower plan than current:
 │  ✗  Your ranking progress will stall                            │
 │                                                                 │
 │  Would you prefer to pause instead?                             │
-│  Switch to Starter ($49/mo) and keep your scan history.         │
+│  Switch to Discover ($79/mo) and keep your scan history.        │
 │                                                                 │
-│  [Switch to Starter]     [Cancel Anyway]                        │
+│  [Switch to Discover]    [Cancel Anyway]                        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 

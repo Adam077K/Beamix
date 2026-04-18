@@ -70,7 +70,7 @@ Features that competitors have which Beamix does not yet fully implement. Rated 
 | **E-Commerce Module** | Skip (V3+) | AthenaHQ (Shopify), Writesonic (ChatGPT Shopping), Goodie (3/15) | 6-8 weeks | Product-level AI visibility for Shopify stores. Niche feature; most Beamix SMBs are service businesses, not e-commerce. |
 | **White-Label Agency Mode** | Nice-to-Have | Otterly, RankPrompt (2/15) | 3-4 weeks | Agency plan with white-label reports and multi-client management. Revenue multiplier but not MVP priority. Plan for V2. |
 | **Conversational AI Analyst** | Should-Have | Gauge (unique) | 2-3 weeks | "Ask Beamix" chat interface to explain dashboard data. Natural fit with existing agent chat UX. Reuse chat infrastructure. |
-| **API Access** | Nice-to-Have | Profound, Peec, Airefs (3/15) | 2-3 weeks | External API for developers/agencies. Not needed for core SMB persona. Defer to Business tier. |
+| **API Access** | Nice-to-Have | Profound, Peec, Airefs (3/15) | 2-3 weeks | External API for developers/agencies. Not needed for core SMB persona. Defer to Scale tier. |
 | **Looker Studio Connector** | Skip | Otterly, SE Visible, Peec (3/15) | 2-3 weeks | Agency reporting tool. Not valuable for SMB persona. Skip unless agency tier is prioritized. |
 | **Slack Integration** | Nice-to-Have | Profound, AthenaHQ, Gauge (3/15) | 1 week | Alert notifications via Slack. Low effort but SMBs may not use Slack. Email alerts more universal. |
 
@@ -130,13 +130,13 @@ Ranked by composite score: SMB Value (how much SMBs care) + Build Effort (invert
 
 **Rationale:**
 
-1. **API calls for speed and scale (Free/Starter tier)**
+1. **API calls for speed and scale (Free/Discover tier)**
    - Use OpenAI, Anthropic, Google, and Perplexity APIs for initial scans
    - Fast (seconds), reliable, cost-predictable
    - Good enough for 80% of use cases
    - Cost: ~$0.01-0.05 per prompt per engine [?] (varies by model)
 
-2. **Browser simulation for accuracy validation (Pro/Business tier)**
+2. **Browser simulation for accuracy validation (Build/Scale tier)**
    - Use Playwright to simulate real browser sessions for Pro users
    - Validates API results against real user experience
    - Catches discrepancies between API and UI responses
@@ -160,7 +160,7 @@ Ranked by composite score: SMB Value (how much SMBs care) + Build Effort (invert
 **Budget-conscious implementation order:**
 1. **Now:** Direct API calls (already built in mock scan engine)
 2. **V1:** Wire real API calls (OpenAI, Anthropic, Google, Perplexity)
-3. **V2:** Add Playwright browser simulation for Pro tier accuracy
+3. **V2:** Add Playwright browser simulation for Build tier accuracy
 4. **V3:** Add AI crawler detection via Vercel/Cloudflare analytics
 
 ---
@@ -350,7 +350,7 @@ These close critical feature gaps and prevent churn.
 | AI Crawler Analytics | 3-4 weeks | Writesonic/Scrunch level. Shows which AI bots visit your site. |
 | Content Pattern Analysis | 3-4 weeks | Spotlight's unique approach. What makes cited content successful. |
 | White-Label Agency Mode | 3-4 weeks | Otterly/RankPrompt. Revenue multiplier via agency channel. |
-| API Access | 2-3 weeks | Developer/agency feature. Business tier. |
+| API Access | 2-3 weeks | Developer/agency feature. Scale tier. |
 
 ---
 
@@ -530,7 +530,7 @@ This creates compounding value: each agent's output improves the next agent's wo
 - Historical trend: LLM costs have decreased significantly (GPT-4 pricing dropped ~90% from launch to 2025) (medium confidence)
 - Counter-risk: providers could change pricing models, add rate limits, or deprecate budget models
 
-**Scenario:** If LLM API costs rise significantly, agent execution at $79/mo becomes unprofitable. Each agent interaction may cost $0.10-0.50 in API calls [?]. At 50-100 agent uses per user per month, that is $5-50 in COGS.
+**Scenario:** If LLM API costs rise significantly, agent execution at $79/mo becomes unprofitable. Each agent interaction may cost $0.04-0.15 per AI Run [?]. At 25-90 AI Runs per user per month, that is $5-50 in COGS.
 
 **Mitigation:**
 - Multi-LLM architecture: switch between providers based on cost/quality

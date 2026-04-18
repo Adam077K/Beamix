@@ -20,7 +20,7 @@
 | D3 | **Free engine 4: | `_SYSTEM_DESIGN_ARCHITECTURE_LAYER.md`, scan engine, landing | Copilot locked as free engine 4 in decisions but has no public API and is Phase 3 deferred. Options: (a) Claude as engine 4 + make Claude available for scanning at all tiers, (b) 3 free engines until Copilot ready, (c) swap Copilot for You.com. |
 | D4 | **MVP onboarding design: 3-step vs 4-step** | `onboarding-spec.md`, `_SYSTEM_DESIGN_PRODUCT_LAYER.md` | onboarding-spec = 3 steps (Business Name, Industry, Location). Product layer = 4 steps (+ Competitors). Which is MVP? |
 | D5 | **Free scan result expiry: 30 days vs 14 days** | `scan-page.md`, `settings-spec.md`, `_SYSTEM_DESIGN_PRODUCT_LAYER.md` | 2 of 3 docs say 30 days; product layer says 14. Recommend confirming 30 days. |
-| D6 | **Visibility score formula for 7+ engines** | `PRODUCT_SPECIFICATION.md`, scan engine | Current "25pts × 4 engines = 100" breaks at Pro/Business tiers. Must define normalization approach before building Pro scan. |
+| D6 | **Visibility score formula for 7+ engines** | `PRODUCT_SPECIFICATION.md`, scan engine | Current "25pts × 4 engines = 100" breaks at Build/Scale tiers. Must define normalization approach before building Build scan. |
 | D7 | **Trial: manual re-scans locked or allowed?** | `settings-spec.md` | Locking manual re-scans during trial prevents users from seeing their improvement — reduces trial value. Allow 1 re-scan during trial, or keep fully locked? |
 
 ---
@@ -40,7 +40,7 @@ Must be built before first paying customer.
 
 | # | Item | Status | Notes |
 |---|------|--------|-------|
-| 1 | Scan engine with 3 free-tier engines (ChatGPT, Gemini, Perplexity) | Built (mock) | Real LLM calls needed. Claude is Pro-tier only. |
+| 1 | Scan engine with 3 free-tier engines (ChatGPT, Gemini, Perplexity) | Built (mock) | Real LLM calls needed. Claude is Build-tier only. |
 | 2 | Response parsing with 0-100 sentiment | Designed | In Intelligence Layer |
 | 3 | Visibility scoring algorithm | Built (mock) | Wire to real scan data |
 | 4 | Free scan flow (viral acquisition) | Built | |
@@ -49,7 +49,7 @@ Must be built before first paying customer.
 | 7 | Credit system (hold/confirm/release) | Built | RPCs: `hold_credits`, `confirm_credits`, `release_credits` — defined in `20260308_002_billing.sql`, fixed in `20260318_reconciliation.sql`. **⚠️ Migration not yet applied to production.** |
 | 8 | Onboarding 4-step flow | Built | |
 | 9 | Content library with editor | Built | |
-| 10 | WordPress integration (Pro tier) | Not started | CMS publish flow |
+| 10 | WordPress integration (Build tier) | Not started | CMS publish flow |
 | 11 | Alert system (email + in-app) | Not started | 9 alert types |
 | 12 | Settings (business, billing, preferences) | Built | Billing tab uses hardcoded data |
 | 13 | Paddle billing integration | Built (partial) | Webhooks + portal wired |
@@ -103,7 +103,7 @@ Build after launch, within first 3 months.
 | B9 | **Share button UX for viral free scan** — polished share flow for growth loop | Medium — viral coefficient | Morgan O5 |
 | B10 | **Supabase Realtime channel design** — live updates for scan progress, agent streaming | Medium — UX improvement | Atlas O3 |
 | B11 | **Cross-model QA latency optimization** — QA adds 2-5s. Consider streaming intermediate results. | Low — UX polish | Sage O1 |
-| B12 | **Scan frequency tier value gap** — big jump between Starter (1/week) and Pro (every 3 days). Consider intermediate. | Medium — pricing/churn risk | Sage O4 |
+| B12 | **Scan frequency tier value gap** — big jump between Discover (1/week) and Build (every 3 days). Consider intermediate. | Medium — pricing/churn risk | Sage O4 |
 
 ---
 
@@ -116,12 +116,12 @@ Competitive moat features that differentiate long-term.
 | M1 | Persona-based tracking | `personas` table + prompt modifiers |
 | M2 | Browser simulation (Copilot, AI Overviews) | Playwright infrastructure |
 | M3 | Multi-region scanning | Geographic proxy architecture |
-| M4 | Public REST API | Business tier, API keys with SHA-256 hashing |
+| M4 | Public REST API | Scale tier, API keys with SHA-256 hashing |
 | M5 | Brand narrative history + trends | Historical brand perception tracking |
 | M6 | Content performance attribution | Agent output → visibility change correlation |
 | M7 | Agent suggestion engine | Dashboard recommends which agent to run next |
 | M8 | Cross-agent memory | Agents remember previous outputs and user edits |
-| M9 | Cloudflare integration | Business tier |
+| M9 | Cloudflare integration | Scale tier |
 | M10 | Multi-person editorial review workflows | Agency tier, multi-person review queue |
 | M11 | Hebrew prompt library (unique) | Zero competition — first-mover monopoly |
 | M12 | "What Changed" weekly diff reports | Per-query, per-engine diffs with competitor context |
@@ -131,7 +131,7 @@ Competitive moat features that differentiate long-term.
 | M16 | "Authority estimate" algorithm | Citation source authority scoring for A9 |
 | M17 | Meta AI engine adapter | Pending Meta API access |
 | M18 | Revenue attribution (GA4 deep) | AI visibility → traffic → conversion correlation |
-| M19 | Near real-time monitoring | Reduce scan frequency for Pro+ tiers |
+| M19 | Near real-time monitoring | Reduce scan frequency for Build+ tiers |
 | M20 | AI crawler analytics | Which AI bots visit user's website |
 
 ---
@@ -143,7 +143,7 @@ Evaluated and rejected for current scope. Each has explicit reasoning.
 | # | Item | Why Skipped |
 |---|------|------------|
 | S1 | White-label agency mode | Enterprise scope, premature for MVP. Requires multi-tenant architecture. |
-| S2 | Looker Studio connector | Agency-specific feature. REST API (Business tier) covers data export needs. |
+| S2 | Looker Studio connector | Agency-specific feature. REST API (Scale tier) covers data export needs. |
 | S3 | CDN-level site optimization (AXP) | Scrunch-only feature. Very high implementation effort, low competitive pressure. |
 | S4 | Shopify / e-commerce module | Not core SMB market. Service businesses are primary ICP. |
 | S5 | YouTube/TikTok/Reddit monitoring | Orthogonal to core GEO value prop. |

@@ -3,7 +3,7 @@
 > **Last synced:** March 2026 — aligned with 03-system-design/
 
 **Version:** 1.1 | **Date:** 2026-02-28 | **Status:** Updated
-**Updated:** 2026-03-06 — Aligned with System Design v2.1. Trial: 7 days. Pricing: Starter $49, Pro $149, Business $349. 16 agents (A1-A16). 10 engines (3 phases). 23 pages. Hebrew-first positioning.
+**Updated:** 2026-04-18 — Aligned with System Design v2.1. Trial: 7 days. Pricing: Discover $79, Build $189, Scale $499. 11 agents. 10 engines (3 phases). 23 pages. Hebrew-first positioning.
 
 ---
 
@@ -130,14 +130,14 @@ Features:
 
 Button: `Scan My Business — Free`
 
-### Starter — $49/mo *(Annual: $39/mo)*
+### Discover — $79/mo *(Annual: $63/mo)*
 `For small businesses ready to fix their AI visibility and start ranking.`
 
 Features:
 - 4 AI engines scanned
 - 10 tracked queries
 - Weekly scans
-- 5 agent uses/month
+- 25 AI Runs/month
 - 3 competitors tracked
 - 4 agents: Content Writer, Blog Writer, FAQ Agent, Schema Optimizer
 - 7-day free trial (includes 5 free agent credits)
@@ -145,32 +145,32 @@ Features:
 Button: `Start Free Trial`
 Note: `7 days free · 5 agent credits included · No credit card required`
 
-### Pro — $149/mo *(Annual: $119/mo)* `[Most Popular]`
+### Build — $189/mo *(Annual: $151/mo)* `[Most Popular]`
 `For growing businesses serious about AI search visibility and consistent content output.`
 
 Features:
 - 8 AI engines scanned
 - 25 tracked queries
 - Scans every 3 days
-- 15 agent uses/month
+- 90 AI Runs/month
 - 5 competitors tracked
-- 15 agents (all except Brand Narrative Analyst)
+- 10 agents
 - Trend charts + weekly digest
 - 7-day free trial (includes 5 free agent credits)
 
 Button: `Start Free Trial`
 Note: `7 days free · 5 agent credits included · No credit card required`
 
-### Business — $349/mo *(Annual: $279/mo)*
+### Scale — $499/mo *(Annual: $399/mo)*
 `For businesses that want daily intelligence, maximum output, and a serious competitive edge.`
 
 Features:
 - 10+ AI engines scanned
 - 75 tracked queries
 - Daily scans
-- 50 agent uses/month
+- 300 AI Runs/month
 - 10 competitors tracked
-- All 16 agents incl. Brand Narrative Analyst
+- All 11 agents
 - Google AI Overviews tracking
 - PDF/CSV export
 - Daily digest + priority support + onboarding call
@@ -179,12 +179,12 @@ Features:
 Button: `Start Free Trial`
 Note: `7 days free · 5 agent credits included · No credit card required`
 
-**Add-on note:** `Need more agent uses? Top up anytime: 5 uses for $15 · 15 uses for $35`
+**Add-on note:** `Need more AI Runs? Top up anytime: 25 runs for $15 · 90 runs for $35`
 
 ### Pricing FAQ
 
-- *What is an "agent use"?* → `One agent execution — one blog post, one schema file, one review analysis. One use per run, regardless of agent type.`
-- *Do unused uses roll over?* → `Yes — up to 20% rolls over each month. We don't punish a slow month.`
+- *What is an "AI Run"?* → `One agent execution — one blog post, one schema file, one review analysis. One AI Run per execution, regardless of agent type.`
+- *Do unused AI Runs roll over?* → `Yes — up to 20% rolls over each month. We don't punish a slow month.`
 - *Can I cancel anytime?* → `Yes. No lock-in, no fees. Cancel in two clicks from your dashboard.`
 
 ---

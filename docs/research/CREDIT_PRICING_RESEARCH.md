@@ -95,9 +95,9 @@ Consider naming credits something output-tied: "actions," "optimizations," or "r
 | Plan | Price | Credits | Agents Cost 2-5 each | Effective Agent Runs |
 |------|-------|---------|----------------------|---------------------|
 | Trial | Free (7 days) | 5 credits | 2-5 per agent | 1-2 runs total |
-| Starter $49/mo | ? credits | 2-5 per agent | ? runs |
-| Pro $149/mo | ? credits | 2-5 per agent | ? runs |
-| Business $349/mo | ? credits | 2-5 per agent | ? runs |
+| Discover $79/mo | ? credits | 2-5 per agent | ? runs |
+| Build $189/mo | ? credits | 2-5 per agent | ? runs |
+| Scale $499/mo | ? credits | 2-5 per agent | ? runs |
 
 ---
 
@@ -107,9 +107,9 @@ Consider naming credits something output-tied: "actions," "optimizations," or "r
 
 | Plan | Credits/mo | Blog Post | Content Writer | FAQ Agent | Schema Opt | Competitor Intel |
 |------|-----------|-----------|---------------|-----------|------------|-----------------|
-| Starter $49 | 10,000 | 500 | 300 | 200 | 200 | N/A |
-| Pro $149 | 35,000 | 500 | 300 | 200 | 200 | 400 |
-| Business $349 | 100,000 | 500 | 300 | 200 | 200 | 400 |
+| Discover $79 | 10,000 | 500 | 300 | 200 | 200 | N/A |
+| Build $189 | 35,000 | 500 | 300 | 200 | 200 | 400 |
+| Scale $499 | 100,000 | 500 | 300 | 200 | 200 | 400 |
 
 **Pros:**
 - Zero engineering risk -- just change display numbers
@@ -134,9 +134,9 @@ Consider naming credits something output-tied: "actions," "optimizations," or "r
 
 | Plan | Unlimited Agents | Credited Agents | Credits/mo |
 |------|-----------------|----------------|-----------|
-| Starter $49 | FAQ, Schema Optimizer, Review Analyzer | Content Writer, Blog Writer | 15 runs |
-| Pro $149 | All Starter + Social Strategy | Content Writer, Blog Writer, Competitor Intel | 40 runs |
-| Business $349 | All Pro | Content Writer, Blog Writer, Competitor Intel | 120 runs |
+| Discover $79 | FAQ, Schema Optimizer, Review Analyzer | Content Writer, Blog Writer | 15 runs |
+| Build $189 | All Discover + Social Strategy | Content Writer, Blog Writer, Competitor Intel | 40 runs |
+| Scale $499 | All Build | Content Writer, Blog Writer, Competitor Intel | 120 runs |
 
 Credits are now called **"AI Runs"** -- each run = one full agent execution. No variable pricing (1 run = 1 run). Simple.
 
@@ -164,9 +164,9 @@ Credits are now called **"AI Runs"** -- each run = one full agent execution. No 
 
 | Plan | Blog Posts | Content Rewrites | Quick Optimizations | Competitor Reports |
 |------|-----------|-----------------|--------------------|--------------------|
-| Starter $49 | 4/mo | 8/mo | Unlimited | N/A |
-| Pro $149 | 12/mo | 25/mo | Unlimited | 4/mo |
-| Business $349 | 40/mo | Unlimited | Unlimited | Unlimited |
+| Discover $79 | 4/mo | 8/mo | Unlimited | N/A |
+| Build $189 | 12/mo | 25/mo | Unlimited | 4/mo |
+| Scale $499 | 40/mo | Unlimited | Unlimited | Unlimited |
 
 "Quick Optimizations" = FAQ, Schema, Review Analyzer (low-cost agents, unlimited on all plans).
 
@@ -197,26 +197,26 @@ Credits are now called **"AI Runs"** -- each run = one full agent execution. No 
 
 | Plan | Unlimited Agents | AI Runs/mo | Rollover |
 |------|-----------------|-----------|----------|
-| **Starter $49** | FAQ Agent, Schema Optimizer, Review Analyzer | 20 runs | 20% (4 runs carry over) |
-| **Pro $149** | All Starter + Social Strategy | 60 runs | 20% (12 runs carry over) |
-| **Business $349** | All Pro agents unlimited | 150 runs | 20% (30 runs carry over) |
+| **Discover $79** | FAQ Agent, Schema Optimizer, Review Analyzer | 20 runs | 20% (4 runs carry over) |
+| **Build $189** | All Discover + Social Strategy | 60 runs | 20% (12 runs carry over) |
+| **Scale $499** | All Build agents unlimited | 150 runs | 20% (30 runs carry over) |
 
 - **1 AI Run = 1 agent execution**, regardless of agent type. No variable pricing. Simple.
-- The unlimited agents (FAQ, Schema, Review) are **rate-limited** to prevent abuse: max 10/day on Starter, 25/day on Pro, 100/day on Business. But these are soft limits users will rarely hit.
+- The unlimited agents (FAQ, Schema, Review) are **rate-limited** to prevent abuse: max 10/day on Discover, 25/day on Build, 100/day on Scale. But these are soft limits users will rarely hit.
 - Content Writer, Blog Writer, and Competitor Intelligence consume 1 run each.
 - Trial: 5 AI Runs (same as current 5 credits -- unchanged).
 
 #### Why This Wins
 
-1. **"Unlimited" headline** -- Starter users see "Unlimited FAQ + Schema + Reviews" on the pricing page. That word alone increases conversion.
+1. **"Unlimited" headline** -- Discover users see "Unlimited FAQ + Schema + Reviews" on the pricing page. That word alone increases conversion.
 
 2. **Simple unit** -- "1 run = 1 agent execution" eliminates the cognitive load of "this costs 2, that costs 5." Users never have to do math.
 
-3. **Generous feeling** -- 20 runs at Starter ($49) means ~5 blog posts/week or ~1/business day. That's more than most SMBs need. At Pro (60 runs), a user can run an agent every single day twice and still have surplus.
+3. **Generous feeling** -- 25 runs at Discover ($79) means ~5 blog posts/week or ~1/business day. That's more than most SMBs need. At Build (90 runs), a user can run an agent every single day twice and still have surplus.
 
 4. **Low-cost agents build habit** -- Making FAQ/Schema/Review unlimited means users come back daily. Daily usage = retention. These agents cost you pennies per call (short prompts, small outputs). The ROI on retention is enormous.
 
-5. **Clean upgrade path** -- Starter user hits 20 runs? "Upgrade to Pro for 3x the runs + Social Strategy unlimited." Clear value prop.
+5. **Clean upgrade path** -- Discover user hits 25 runs? "Upgrade to Build for 3x+ the runs + Social Strategy unlimited." Clear value prop.
 
 #### Display Enhancements (Borrow from Option A)
 
@@ -235,7 +235,7 @@ Call them **"AI Runs"** not "credits." A "run" feels like an action with output.
 
 Rough LLM cost per agent run (via OpenRouter):
 
-| Agent | Estimated LLM Cost | Cost at Starter (20 runs) | Margin |
+| Agent | Estimated LLM Cost | Cost at Discover (25 runs) | Margin |
 |-------|-------------------|--------------------------|--------|
 | Content Writer | ~$0.08-0.15 | $1.60-3.00 | 94-97% |
 | Blog Writer | ~$0.15-0.30 | $3.00-6.00 | 88-94% |
@@ -244,9 +244,9 @@ Rough LLM cost per agent run (via OpenRouter):
 | Review Analyzer | ~$0.03-0.08 | Unlimited (pennies) | 99%+ |
 | Competitor Intel | ~$0.10-0.20 | $2.00-4.00 | 92-96% |
 
-**Worst case at Starter ($49/mo):** User burns all 20 runs on Blog Writer (most expensive) = ~$6.00 in LLM costs. Plus unlimited FAQ/Schema/Review, say 100 calls = ~$5.00. Total COGS: ~$11. Margin: **77%+**. Healthy.
+**Worst case at Discover ($79/mo):** User burns all 25 runs on Blog Writer (most expensive) = ~$7.50 in LLM costs. Plus unlimited FAQ/Schema/Review, say 100 calls = ~$5.00. Total COGS: ~$12.50. Margin: **84%+**. Healthy.
 
-**Worst case at Pro ($149/mo):** 60 Blog Writer runs = ~$18 + unlimited low-cost agents ~$10 = $28. Margin: **81%+**.
+**Worst case at Build ($189/mo):** 90 Blog Writer runs = ~$27 + unlimited low-cost agents ~$10 = $37. Margin: **80%+**.
 
 The economics are strong. You can afford to be generous.
 

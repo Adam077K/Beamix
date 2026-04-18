@@ -100,3 +100,111 @@
 **Decided by:** CEO
 **Affects:** All scan URLs, DB columns, API params
 **Reversible?** Yes (scan_id), Hard (no n8n)
+
+---
+
+### [2026-04-15] — Pricing v2: $79/$189/$499 (Discover/Build/Scale)
+**Decision:** Replace $49/$149/$349 pricing. New tiers: Discover $79, Build $189, Scale $499. Annual: $63/$151/$399. Kill 7-day trial. Keep free one-time scan. 14-day money-back guarantee.
+**Rationale:** $49 is below "real work" perception. Build at $189 stays under Yael's NIS 700 approval ceiling ($189 = NIS 680). Scale $499 anchors. Research-backed: agencies $1,500-$30,000.
+**Decided by:** CEO + Business Lead (board meeting)
+**Affects:** Paddle price IDs, pricing page, onboarding, all tier-gated features
+**Reversible?** Yes (config change)
+
+---
+
+### [2026-04-15] — Agent Roster v2: 11 agents MVP-1, total rethink
+**Decision:** Kill all 7 old agents. Ship 11 new GEO-research-backed agents. Add Video SEO (12th) in MVP-2. Renames: Content Refresher→Freshness Agent, Citation Builder→Off-Site Presence Builder.
+**Rationale:** Old agents didn't address GEO research. 85% of AI mentions are off-site. New roster covers all proven GEO levers. Reddit Presence added (Perplexity 46.7%).
+**Decided by:** CEO + Research Lead + AI Engineer (board meeting)
+**Affects:** All agent code, prompts, credit system, dashboard UI
+**Reversible?** Hard (full rewrite)
+
+---
+
+### [2026-04-15] — Proactive Automation Model (not Agent Hub)
+**Decision:** Replace manual "Agent Hub" with proactive automation. Scans trigger rules engine → suggestions → user accepts → agents run (scheduled or event-triggered) → output in Inbox → user approves. "Agents" removed from sidebar nav.
+**Rationale:** Adam's directive: "not just a case of the customer manually choosing to run an agent." Continuous process, not one-time fix. Higher tiers unlock schedule frequency.
+**Decided by:** CEO + Product Lead (board meeting)
+**Affects:** Dashboard UI, Inngest jobs, agent execution pipeline, sidebar nav
+**Reversible?** Hard
+
+---
+
+### [2026-04-15] — LLM Models: Only Claude/Gemini/GPT/Perplexity
+**Decision:** No DeepSeek, Qwen, or other providers. Agents use ONLY: Claude (Sonnet/Haiku/Opus), Gemini (Flash/Pro), GPT (4o/4o-mini/5-mini), Perplexity (Sonar/Pro/Online). All via OpenRouter.
+**Rationale:** Adam's directive. Quality control + trust + vendor simplicity.
+**Decided by:** CEO (founder directive)
+**Affects:** All agent model configs in openrouter.ts
+**Reversible?** Yes
+
+---
+
+### [2026-04-15] — YMYL Safety: Hard-refuse medical/legal/financial advice
+**Decision:** Topic-risk classifier (Haiku) in Query Mapper. Hard-refuse: clinical diagnosis, legal advice, investment advice. Soft gate: general health/finance education. MVP excludes regulated IL professions.
+**Rationale:** AI error rate 18-88% on YMYL. FTC + CA AI Transparency Act + EU AI Act.
+**Decided by:** CEO + Research Lead
+**Affects:** Query Mapper prompts, content agent QA gates
+**Reversible?** Yes (expand cautiously)
+
+---
+
+### [2026-04-15] — Dashboard pages: 7-page restructure
+**Decision:** Home · Inbox · Scans · Automation · Archive · Competitors · Settings. "Agents" removed from nav. Inbox = 3-pane Superhuman. Freshness Agent gets inline chat editor.
+**Rationale:** Proactive model makes agents invisible. User sees suggestions + review queue + automation status. Agents are backend.
+**Decided by:** CEO + Design Lead + Product Lead
+**Affects:** All dashboard routes, sidebar, shell
+**Reversible?** Hard
+
+---
+
+### [2026-04-17] — Content Output Policy: No AI Labels
+**Decision:** Agent-generated content contains no AI disclosure markers. Content reads as human-written. User handles disclosure on their own site.
+**Rationale:** Adam's directive. "Assisted not autopilot" means user is the author. EU AI Act Article 50 falls on publisher, not tool.
+**Decided by:** CEO (founder directive)
+**Affects:** All agent prompts, Blog Strategist output, content export
+**Reversible?** Yes
+
+---
+
+### [2026-04-17] — Day-1 Auto-Trigger Pipeline
+**Decision:** Paddle payment webhook triggers Inngest chain: Query Mapper → paid scan → rules engine → first 2-3 agents auto-run. No empty dashboard on day 1.
+**Rationale:** UX audit found "dead dashboard" problem — user pays and sees empty pages. Auto-trigger ensures populated dashboard within 5-10 minutes.
+**Decided by:** CEO + UX Lead
+**Affects:** Paddle webhook handler, Inngest functions, Home page loading states
+**Reversible?** Yes
+
+---
+
+### [2026-04-17] — Assisted vs Autopilot Validated
+**Decision:** "Assisted not autopilot" confirmed as correct positioning. 93-97% of marketers review AI content before publishing (Ahrefs, HubSpot). Optional auto-approve for Scale tier post-MVP.
+**Rationale:** Research validation. Zero sources recommend full autopilot for SMBs.
+**Decided by:** CEO + Research Lead
+**Affects:** Product positioning, all agent interaction models
+**Reversible?** Yes (can add autopilot mode later)
+
+---
+
+### [2026-04-17] — $19 Top-Up Pack + Annual Pricing at Launch
+**Decision:** Ship $19/10 AI Runs top-up pack at launch. Ship annual pricing from day 1 (20% discount).
+**Rationale:** Top-up prevents mid-month churn. Annual per Adam's preference despite Business Lead recommending 60-day delay.
+**Decided by:** CEO
+**Affects:** Paddle products, pricing page, billing UI
+**Reversible?** Yes
+
+---
+
+### [2026-04-17] — Sonar Citation Verification in QA Pipeline
+**Decision:** Add Perplexity Sonar verification step to catch hallucinated citations. $0.02/run extra.
+**Rationale:** Haiku QA misses ~25% of hallucinated sources. Sonar cross-checks cited URLs/stats against live web.
+**Decided by:** CEO + Research Lead
+**Affects:** Agent QA pipeline, cost model (+$0.02/run)
+**Reversible?** Yes
+
+---
+
+### [2026-04-17] — Email Domain: notify.beamix.tech
+**Decision:** Transactional email via notify.beamix.tech (Resend). Cold outreach on separate subdomain. Main domain beamix.tech for website only.
+**Rationale:** Protect transactional deliverability from cold email reputation damage.
+**Decided by:** CEO
+**Affects:** DNS config, Resend setup, EMAIL_FROM_ADDRESS env var
+**Reversible?** Yes
