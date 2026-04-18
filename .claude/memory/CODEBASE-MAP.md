@@ -70,7 +70,7 @@
 | `agents/execute.ts` | Credit hold/confirm/release + Inngest job dispatch |
 | `agents/credit-guard.ts` | RPCs: hold_credits, confirm_credits, release_credits |
 | `agents/qa-gate.ts` | QA evaluation via Claude Haiku 4 |
-| `agents/config.ts` | 7 agent configurations (type, prompts, output format) |
+| `agents/config.ts` | 7 agent configurations (type, prompts, output format) — **OUTDATED: rethink target is 11 MVP-1 agents per `docs/product-rethink-2026-04-09/07-AGENT-ROSTER-V2.md`. Build Lead should treat config.ts as frozen pending rewrite.** |
 | `agents/mock-outputs.ts` | Mock outputs for dev/testing |
 | `recommendations.ts` | Auto-generate recommendations via Claude Haiku 4 |
 
