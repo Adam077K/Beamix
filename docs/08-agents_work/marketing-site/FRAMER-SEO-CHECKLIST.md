@@ -19,10 +19,10 @@
 - **OG Description:** `Beamix doesn't just show you a dashboard. It scans, diagnoses, and fixes your AI search visibility with specialized agents.`
 
 ### Pricing `/pricing`
-- **Title:** `Pricing — AI Search Visibility Plans Starting at $49/mo`
-- **Description:** `Start free. Upgrade when you see results. Beamix plans for every business size — Starter $49, Pro $149, Business $349. No agency required.`
-- **OG Title:** `AI Search Visibility Starting at $49/mo`
-- **OG Description:** `Everything your business needs to rank on AI search. 16 agents, 10+ engines, real deliverables. 7-day free trial included.`
+- **Title:** `Pricing — AI Search Visibility Plans Starting at $79/mo`
+- **Description:** `Start free. Upgrade when you see results. Beamix plans for every business size — Discover $79, Build $189, Scale $499. No agency required.`
+- **OG Title:** `AI Search Visibility Starting at $79/mo`
+- **OG Description:** `Everything your business needs to rank on AI search. 11 agents, 10+ engines, real deliverables. 7-day free trial included.`
 
 ### Company `/company`
 - **Title:** `About Beamix — Why We Built the GEO Platform for SMBs`
