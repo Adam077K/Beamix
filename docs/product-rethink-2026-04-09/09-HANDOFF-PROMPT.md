@@ -6,7 +6,7 @@ Branch: ceo-1-1776183146
 
 ## What Was Decided
 
-- **Pricing v2:** New tiers Discover $79 / Build $199 / Scale $499. Annual: $63/$159/$399. Kill 7-day trial — replace with 14-day money-back guarantee. Free one-time scan stays.
+- **Pricing v2:** New tiers Discover $79 / Build $189 / Scale $499. Annual: $63/$151/$399. Kill 7-day trial — replace with 14-day money-back guarantee. Free one-time scan stays.
 - **Agent Roster v2:** Kill all 7 old agents. Ship 11 new GEO-research-backed agents in MVP-1. Video SEO (12th) deferred to MVP-2. Renames: Content Refresher → Freshness Agent, Citation Builder → Off-Site Presence Builder.
 - **Proactive Automation Model:** Replace manual "Agent Hub" with rules engine. Scans trigger suggestions → user accepts → agents run on schedule or event → output lands in Inbox → user approves. "Agents" removed from sidebar nav entirely.
 - **Dashboard restructure:** 7 pages — Home · Inbox · Scans · Automation · Archive · Competitors · Settings. Inbox = 3-pane Superhuman layout. Freshness Agent gets inline chat editor for content editing.

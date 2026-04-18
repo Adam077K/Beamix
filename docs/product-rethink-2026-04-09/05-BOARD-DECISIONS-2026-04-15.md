@@ -28,7 +28,7 @@ STATUS: DECIDED — Approved by Adam (founder). Supersedes open questions in `04
 
 ### Pricing page behaviour
 - Annual toggle defaults **ON**
-- Build ($199) is the highlighted/recommended tier — anchored to Yael's $200 self-approval ceiling
+- Build ($189) is the highlighted/recommended tier — anchored to Yael's NIS 700 self-approval ceiling
 - Scale ($499) is the decoy anchor, making Build look reasonable
 
 ### Trial model
@@ -264,7 +264,7 @@ Research basis: sites publishing 50+ AI-generated pages/month saw ranking crashe
 
 **Human-in-loop as feature:** "Like an agency team — they draft, you approve, you publish. Except this agency costs $189/mo instead of $3,000."
 
-**Agency anchor:** "A GEO agency charges $1,500–$5,000/month. Beamix does the same work for $199."
+**Agency anchor:** "A GEO agency charges $1,500–$5,000/month. Beamix does the same work for $189."
 
 **Hebrew loss-aversion hook:** "שלושה מתחרים מקבלים את הלקוחות שלך עכשיו"
 
