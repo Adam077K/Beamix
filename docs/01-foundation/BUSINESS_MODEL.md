@@ -1412,8 +1412,8 @@ Data sourced from Rex competitive synthesis (March 2026). Treat as potentially s
 
 | Competitor | Entry Tier | Mid Tier | Top Tier | Notes |
 |------------|-----------|---------|---------|-------|
-| **Beamix (current)** | $49 | $149 | $349 | Israeli-first, dual-language |
-| **Beamix (post-Phase 3)** | $49 | $149 | **$449** | Recommended |
+| **Beamix (current)** | $79 | $189 | $499 | Israeli-first, dual-language |
+| ~~**Beamix (earlier Phase 3 proposal)**~~ | ~~$49~~ | ~~$149~~ | ~~**$449**~~ | Superseded — see current row |
 | Profound | Enterprise only | ~$399 | Custom | 130M proprietary conversations |
 | SE Visible | $50 | $149 | $299 | SEO-first framing |
 | Peec AI | $79 | $149 | $299 | UI-focused, no agents |
@@ -1424,11 +1424,10 @@ Data sourced from Rex competitive synthesis (March 2026). Treat as potentially s
 | Brand24 | $99 | $179 | $299 | Social/web mentions only |
 
 **Beamix's price-to-engine-coverage ratio is the clearest competitive advantage:**
-- At $149/Pro: 7 engines + browser sim (10 total) — no competitor offers this at this price
-- At $349/Business: 30-min refresh — only RankPrompt is comparable (browser-only, less reliable)
-- At $449/Business (post-Phase 3): Copilot + AI Overviews — no SMB competitor covers these engines
+- At $189/Build: 7 engines + browser sim (10 total) — no competitor offers this at this price
+- At $499/Scale: 30-min refresh + Copilot + AI Overviews — no SMB competitor covers these engines
 
-**The key positioning principle:** Beamix should never compete on price alone against Otterly and RankPrompt in the $49-199 range. Competing on engine coverage and agent execution is the right axis. The pricing table above shows Beamix is currently priced to win on value, not on cost.
+**The key positioning principle:** Beamix should never compete on price alone against Otterly and RankPrompt in the $29-99 range. Competing on engine coverage and agent execution is the right axis. The pricing table above shows Beamix is priced to win on value, not on cost.
 
 ---
 
