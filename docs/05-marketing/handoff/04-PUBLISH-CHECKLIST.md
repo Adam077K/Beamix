@@ -35,8 +35,8 @@
 - [ ] All three validate on https://validator.schema.org/
 
 ### Brand Accuracy
-- [ ] Pricing claims match locked values: Starter $49, Pro $149, Business $349
-- [ ] AI engine counts match: Free/Starter 3, Pro 7, Business 9+
+- [ ] Pricing claims match locked values: Discover $79, Build $189, Scale $499
+- [ ] AI engine counts match: Free/Discover 3, Build 7, Scale 9+
 - [ ] Trial length = 7 days with 5 agent credits
 - [ ] No "dashboard" framing ("not a dashboard" is the line)
 
