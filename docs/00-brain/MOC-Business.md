@@ -35,9 +35,9 @@ Note: MOAT.md is a redirect stub → competitive advantages live in VISION.md.
 
 ## Pricing (Locked)
 
-- Starter: $49/mo (annual: $39/mo) — ChatGPT, Gemini, Perplexity
-- Pro: $149/mo (annual: $119/mo) — + Claude, AI Overviews, Grok, You.com
-- Business: $349/mo (annual: $279/mo) — 9+ engines
+- Discover: $79/mo (annual: $63/mo) — ChatGPT, Gemini, Perplexity
+- Build: $189/mo (annual: $151/mo) — + Claude, AI Overviews, Grok, You.com
+- Scale: $499/mo (annual: $399/mo) — 9+ engines
 - [[docs/04-features/specs/pricing-page-spec]] — Pricing page implementation
 - [[docs/research/CREDIT_PRICING_RESEARCH]] — Credit pricing research
 
