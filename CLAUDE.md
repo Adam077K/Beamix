@@ -413,18 +413,34 @@ Beamix scans SMBs for AI search visibility, diagnoses why they rank (or don't), 
 | Surface | Platform | URL | What it covers |
 |---------|----------|-----|---------------|
 | **Marketing website** | **Framer** | average-product-525803.framer.app | Homepage, pricing, features, about, blog, contacts |
-| **Product (app)** | **Next.js on Vercel** | This repo (`saas-platform/`) | Dashboard, scan, onboarding, agents, settings, auth |
+| **Product (app)** | **Next.js on Vercel** | This repo (`apps/web/`) | Dashboard, scan, onboarding, agents, settings, auth |
 
 **This repo = product only.** All marketing pages (homepage, landing, pricing page, about, features) are built and maintained in Framer — NOT in this codebase.
 
-**Landing components in `src/components/landing/` are DEPRECATED** — do not update or extend them. They will be removed in a follow-up cleanup. The marketing site lives in Framer now.
+## Monorepo Layout (2026-04-18)
+
+This repo is a Turborepo + pnpm monorepo.
+
+| Path | Purpose |
+|------|---------|
+| `apps/web/` | **Next.js 16 product dashboard (deployed to Vercel). Fresh scaffold from 2026-04-18.** |
+| `packages/` | Reserved for shared UI / config packages. Empty for now; add as needed. |
+| `_archive/saas-platform-2026-04-legacy/` | Old product folder. Reference only. Never modify. |
+| `docs/` | Product + architecture specs |
+| `.agent/` | Agent system (skills, prompts, manifests) |
+
+Workspace commands run from repo root: `pnpm dev`, `pnpm build`, `pnpm typecheck`. Per-app: `pnpm -F @beamix/web <script>`.
 
 ## Key Paths
 
+| Path | Purpose |
+|------|---------|
 | `docs/` | PRD, architecture, specs, competitive research |
-| `saas-platform/` | Next.js product app (dashboard, API routes, agents) |
+| `apps/web/` | Next.js product app (dashboard, API routes, agents) |
+| `apps/web/supabase/migrations/` | DB migrations (2-phase rethink migration applied on staging first) |
 | `docs/_archive/` | Archived old design docs (pre-2026-03-17) |
 | `docs/product-rethink-2026-04-09/` | **AUTHORITATIVE** — all decisions from April 2026 rethink |
+| `_archive/saas-platform-2026-04-legacy/` | Old product codebase, preserved for reference |
 
 ## Default References
 
