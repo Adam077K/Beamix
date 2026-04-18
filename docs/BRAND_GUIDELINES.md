@@ -177,7 +177,7 @@ Always respect `prefers-reduced-motion`. Animation reveals hierarchy — never d
 
 **Oxford comma** always. **Em dashes** for pauses — preferred over colons in headlines. **Exclamation points** max one per piece.
 
-**Numbers:** Spell out one–nine in prose. Numerals for 10+. Always numerals for metrics/prices: 7 AI Engines, $79/mo.
+**Numbers:** Spell out one–nine in prose. Numerals for 10+. Always numerals for metrics/prices: 3 AI Engines, $79/mo.
 
 **Words we use:** scan, diagnose, fix, agents, visibility, rank, show up, done for you, AI search, GEO.
 
