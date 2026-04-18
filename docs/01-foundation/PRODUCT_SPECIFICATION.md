@@ -14,9 +14,9 @@
 > **Source of truth:** `docs/01-foundation/PRODUCT_SPECIFICATION.md`
 > This document covers user journeys and high-level feature summary. For full page specs, data flows, and agent UX, defer to the system design.
 >
-> **Key numbers:** 23 pages, 90+ features across 10 modules, 16 AI agents (A1-A16), 10 AI scan engines (3 phases), 4 user journeys, 32 DB tables.
+> **Key numbers:** 23 pages, 90+ features across 10 modules, 11 AI agents, 10 AI scan engines (3 phases), 4 user journeys, 32 DB tables.
 > **Trial:** 7 days starting on first dashboard visit (not signup). Capped at 5 agent credits.
-> **Pricing tiers:** Starter ($49/mo) / Pro ($149/mo) / Business ($349/mo). No "Free" plan_tier in DB — free tier = null.
+> **Pricing tiers:** Discover ($79/mo) / Build ($189/mo) / Scale ($499/mo). No "Free" plan_tier in DB — free tier = null.
 
 ---
 
@@ -63,7 +63,7 @@
 
 ### Journey B: Paid User Daily Workflow
 
-**Persona:** Avi, owner of a moving company. Subscribed to Pro tier last week after his free scan showed he was invisible in 3 out of 4 LLMs.
+**Persona:** Avi, owner of a moving company. Subscribed to Build tier last week after his free scan showed he was invisible in 3 out of 4 LLMs.
 
 **Goal:** Check progress, approve agent-generated content, improve rankings.
 
@@ -85,7 +85,7 @@
 
 ### Journey C: Returning User -- Seeing Results
 
-**Persona:** Avi again, 6 weeks into his Pro subscription.
+**Persona:** Avi again, 6 weeks into his Build subscription.
 
 **Goal:** See that his investment is working. Decide whether to continue or expand.
 
@@ -95,9 +95,9 @@
 | C2 | Dashboard | Clicks on Visibility Score trend chart | Line chart: Week 1: 28, Week 2: 34, Week 3: 41, Week 4: 48, Week 5: 55, Week 6: 58. Annotations on chart show when content was published | Proof |
 | C3 | Rankings Detail (`/dashboard/rankings`) | Clicks "View All Rankings" | Table: Query | ChatGPT | Gemini | Perplexity | Claude | Trend. Rows show position numbers with color coding (green = top 3, yellow = 4-7, red = 8+ or not ranked) | Understanding |
 | C4 | Rankings Detail | Clicks on a specific query row | Drill-down: Historical rank per LLM over time, which content pieces affected this query, competitor positions for same query | Deep insight |
-| C5 | Dashboard | Notices "Usage: 8/15 agent uses this month" in sidebar | Considers upgrading. Clicks "See Plans" | Contemplating |
-| C6 | Pricing (`/pricing` or settings modal) | Views tier comparison | Current plan highlighted. Next tier shows: more agent uses, more tracked queries, competitor tracking. "Upgrade" button. | Evaluating ROI |
-| C7 | Settings | Clicks "Upgrade to Business" | Paddle checkout (pre-filled with existing payment method). Confirms. Immediate access to new features | Committed |
+| C5 | Dashboard | Notices "Usage: 50/90 AI Runs this month" in sidebar | Considers upgrading. Clicks "See Plans" | Contemplating |
+| C6 | Pricing (`/pricing` or settings modal) | Views tier comparison | Current plan highlighted. Next tier shows: more AI Runs, more tracked queries, competitor tracking. "Upgrade" button. | Evaluating ROI |
+| C7 | Settings | Clicks "Upgrade to Scale" | Paddle checkout (pre-filled with existing payment method). Confirms. Immediate access to new features | Committed |
 
 **Retention signal:** User who sees ranking improvement in first 30 days has 3x higher retention.
 
@@ -290,7 +290,7 @@ Total Visibility Score = Sum of all 4 LLM scores (max 100)
 - System automatically detects competitors from LLM responses (businesses ranked near user)
 
 **Acceptance Criteria:**
-- [ ] User can add up to 3 competitors (Starter) or 5 competitors (Pro) or 10 (Business)
+- [ ] User can add up to 3 competitors (Discover) or 5 competitors (Build) or 10 (Scale)
 - [ ] Auto-detected competitors shown as suggestions: "We noticed [X] ranks near you. Track them?"
 - [ ] Comparison table shows user's rank vs each competitor per query per LLM
 - [ ] Overall comparison card: "You outrank [Competitor] on 4/10 queries"
@@ -310,7 +310,7 @@ Total Visibility Score = Sum of all 4 LLM scores (max 100)
 
 **Usage model (replaces credits):**
 
-Each plan tier includes a set number of "agent uses" per month. One agent execution = one use, regardless of which agent. Simple, no confusion.
+Each plan tier includes a set number of "AI Runs" per month. One agent execution = one AI Run, regardless of which agent. Simple, no confusion.
 
 ---
 
@@ -734,12 +734,12 @@ interface SocialStrategyOutput {
 **Actions:**
 - "Change Plan" -- opens plan comparison modal with upgrade/downgrade flow
 - "Update Payment Method" -- redirects to Paddle Customer Portal
-- "Cancel Subscription" -- cancellation flow with retention offer ("Switch to Starter instead?")
+- "Cancel Subscription" -- cancellation flow with retention offer ("Switch to Discover instead?")
 - "Download Invoice" -- per invoice row
 
 **Acceptance Criteria:**
 - [ ] Plan changes take effect immediately (prorated via Paddle)
-- [ ] Downgrade warns user if they exceed new plan limits (e.g., "You have 20 queries but Starter allows 10")
+- [ ] Downgrade warns user if they exceed new plan limits (e.g., "You have 20 queries but Discover allows 10")
 - [ ] Cancel flow includes retention step before confirming
 - [ ] Invoice download generates PDF via Paddle
 - [ ] Agent usage resets on billing date (shown clearly)
@@ -764,13 +764,13 @@ interface SocialStrategyOutput {
 
 | Integration | Plan | Purpose |
 |-------------|------|---------|
-| WordPress | Pro+ | Publish content directly from Content Library to WordPress |
-| Google Analytics 4 | Pro+ | Import traffic data for content performance attribution |
-| Google Search Console | Pro+ | Import organic rankings to correlate with AI visibility |
-| Slack | Pro+ | Alert notifications to Slack channel |
-| Cloudflare | Business | Analytics integration |
+| WordPress | Build+ | Publish content directly from Content Library to WordPress |
+| Google Analytics 4 | Build+ | Import traffic data for content performance attribution |
+| Google Search Console | Build+ | Import organic rankings to correlate with AI visibility |
+| Slack | Build+ | Alert notifications to Slack channel |
+| Cloudflare | Scale | Analytics integration |
 | Paddle | All paid | Billing portal access (auto-connected at signup) |
-| API Keys | Business | REST API access for custom integrations |
+| API Keys | Scale | REST API access for custom integrations |
 
 **OAuth flow:** WordPress, GA4, GSC, Slack use OAuth. Cloudflare uses API token. Credentials encrypted at rest (AES-256-GCM).
 
@@ -786,10 +786,10 @@ interface SocialStrategyOutput {
 
 ### Tier Structure
 
-| | Free Scan | Starter | Pro | Business |
+| | Free Scan | Discover | Build | Scale |
 |---|---|---|---|---|
-| **Price** | $0 | $49/mo | $149/mo | $349/mo |
-| **Annual price** | -- | $39/mo (billed $468/yr) | $119/mo (billed $1,428/yr) | $279/mo (billed $3,348/yr) |
+| **Price** | $0 | $79/mo | $189/mo | $499/mo |
+| **Annual price** | -- | $63/mo (billed $756/yr) | $151/mo (billed $1,812/yr) | $399/mo (billed $4,788/yr) |
 | **Trial** | N/A | 7-day free trial | 7-day free trial | 7-day free trial |
 | | | | | |
 | **Scanning** | | | | |
@@ -799,7 +799,7 @@ interface SocialStrategyOutput {
 | Scan frequency | One-time | Weekly | Every 3 days | Daily |
 | | | | | |
 | **AI Agents** | | | | |
-| Agent uses/month | 0 | 5 | 15 | 50 |
+| AI Runs/month | 0 | 25 | 90 | 300 |
 | Recommendations Agent | Preview (3 items) | Full access | Full access | Full access |
 | Content Writer Agent | -- | Yes | Yes | Yes |
 | Blog Writer Agent | -- | Yes | Yes | Yes |
@@ -825,19 +825,19 @@ interface SocialStrategyOutput {
 
 ### Pricing Rationale
 
-**Starter at $49/mo:** Below the psychological $50 barrier. Comparable to Mailchimp or Canva Pro -- tools SMBs already pay for. Provides enough value (10 queries, 5 agent uses/month) for a micro-business to see results.
+**Discover at $79/mo:** Priced for SMBs exploring GEO. Comparable to Mailchimp or Canva Pro -- tools SMBs already pay for. Provides enough value (10 queries, 25 AI Runs/month) for a micro-business to see results.
 
-**Pro at $149/mo:** The sweet spot for growing SMBs. 15 agent uses means ~3-4 content pieces per month plus analysis. Unlocks Review Analyzer and Social Strategy -- the agents that differentiate Beamix from "just another content tool." Under the $200 budget threshold most SMB marketing managers can approve without executive sign-off.
+**Build at $189/mo:** The sweet spot for growing SMBs. 90 AI Runs means ~3-4 content pieces per month plus analysis. Unlocks Review Analyzer and Social Strategy -- the agents that differentiate Beamix from "just another content tool." Under the $200 budget threshold most SMB marketing managers can approve without executive sign-off.
 
-**Business at $349/mo:** For businesses serious about AI visibility. Daily scanning, 50 agent uses, 75 queries, full export and reporting. Still 80% cheaper than enterprise competitors ($2K-5K). The 10-competitor tracking makes it valuable for competitive industries.
+**Scale at $499/mo:** For businesses serious about AI visibility. Daily scanning, 300 AI Runs, 75 queries, full export and reporting. Still far cheaper than enterprise competitors ($2K-5K). The 10-competitor tracking makes it valuable for competitive industries.
 
 **Annual discount (20%):** Reduces churn, improves cash flow. Clearly shown as monthly equivalent price.
 
-### Agent Usage Add-On
+### AI Runs Add-On
 
-For users who exhaust their monthly agent uses:
-- **5 additional agent uses:** $15 (one-time purchase)
-- **15 additional agent uses:** $35 (one-time purchase)
+For users who exhaust their monthly AI Runs:
+- **25 additional AI Runs:** $15 (one-time purchase)
+- **90 additional AI Runs:** $35 (one-time purchase)
 - Available from the "Agent Usage" card on dashboard when usage exceeds 80%
 
 ---
@@ -954,7 +954,7 @@ Dashboard | Rankings | Agents | Content | More (opens drawer with remaining item
 | Email templates | ~8 | Welcome email, scan results email, weekly digest |
 | Marketing pages | ~5 pages | Landing page, pricing page, about page |
 | Agent descriptions | ~6 | Description of each agent's purpose and capabilities |
-| Plan names & descriptions | ~4 | "Starter", "Pro", "Business" tier descriptions |
+| Plan names & descriptions | ~4 | "Discover", "Build", "Scale" tier descriptions |
 
 **Estimated total translatable strings:** ~210
 
@@ -968,7 +968,7 @@ Dashboard | Rankings | Agents | Content | More (opens drawer with remaining item
 | API endpoints | Technical |
 | Metric values (numbers, percentages) | Universal (with locale-aware formatting) |
 | Industry list | Translated (appears in dropdown) |
-| Plan tier names (Starter/Pro/Business) | Keep in English (internationally recognized) |
+| Plan tier names (Discover/Build/Scale) | Keep in English (internationally recognized) |
 
 ### 5.4 RTL Implementation Requirements
 
@@ -1001,7 +1001,7 @@ Agent-generated content respects the user's `content_language` preference:
 | Data Type | English (en) | Hebrew (he) |
 |-----------|-------------|-------------|
 | Numbers | 1,234.56 | 1,234.56 |
-| Currency | $49/mo | $49/mo (USD shown in both) |
+| Currency | $79/mo | $79/mo (USD shown in both) |
 | Dates | Feb 27, 2026 | 27 Feb 2026 (or Hebrew date format) |
 | Percentages | 42% | 42% |
 
@@ -1011,9 +1011,9 @@ Agent-generated content respects the user's `content_language` preference:
 
 | Decision | Rationale | Status |
 |----------|-----------|--------|
-| Agent uses (not credits) as usage model | Strategic Foundation says "no confusing credit systems." Flat agent uses are simpler to understand: "You get 15 uses/month." | Locked |
-| 4 tiers: Free Scan + Starter ($49) + Pro ($149) + Business ($349) | Must be affordable for SMBs, clear progression, under $250 for entry paid tier. $49 is under $50 psychological threshold. $349 is under competitor's $500+ entry. | Locked |
-| 16 agents (A1-A16) | Platform ships with 12 launch agents (A1-A12) and 4 Growth Phase agents (A13-A16). Content Writer and Blog Writer are separate because outputs differ (website pages vs blog posts). A12 Ask Beamix is 0-credit, Pro+. A4 Recommendations is 0-credit, auto-runs post-scan. | Locked |
+| AI Runs (not credits) as usage model | Strategic Foundation says "no confusing credit systems." Flat AI Runs are simpler to understand: "You get 90 runs/month." | Locked |
+| 4 tiers: Free Scan + Discover ($79) + Build ($189) + Scale ($499) | Must be affordable for SMBs, clear progression. Discover entry is accessible to SMBs; Scale is under competitor enterprise tiers. | Locked |
+| 11 agents (launch roster) | Platform ships with 11 launch agents. Content Writer and Blog Writer are separate because outputs differ (website pages vs blog posts). Ask Beamix is 0-credit, Build+. Recommendations is 0-credit, auto-runs post-scan. | Locked |
 | Hebrew + English from day 1 | Strategic Foundation explicitly states this. Old PRD had "Hebrew in Phase 2" -- overridden. | Locked |
 | Free scan requires no account | Strategic Foundation: "This is free for everyone. Top of funnel." Zero friction principle. | Locked |
 | Scan results shareable via URL for 30 days | Enables word-of-mouth sharing: "Look at this, my competitor ranks #2 and I'm invisible" | Locked |
@@ -1027,7 +1027,7 @@ Agent-generated content respects the user's `content_language` preference:
 | Exact industry list for dropdown (25+ options) -- needs validation with target market | Rex (research) | Before build |
 | Free scan rate limit: 3 per IP per 24h -- is this too restrictive? Could hurt organic sharing. | Morgan + Atlas | Before build |
 | Should annual plans show savings as dollar amount or percentage? | Nova (copy) | Before build |
-| Do we need a "Freemium" tier between Free Scan and Starter? (e.g., free account with limited dashboard but no agents) | Morgan | Week 2 decision |
+| Do we need a "Freemium" tier between Free Scan and Discover? (e.g., free account with limited dashboard but no agents) | Morgan | Week 2 decision |
 | Schema Optimizer: should it auto-detect existing schema or require user to paste current HTML? | Atlas | During build |
 | Review Analyzer: which review scraping method is legal and reliable? API vs scraping implications. | Atlas + Guardian | Before build |
 | Hebrew font: Is Inter sufficient or do we need Heebo/Rubik as fallback? | Lyra (design) | Before build |
