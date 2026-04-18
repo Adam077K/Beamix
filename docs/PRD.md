@@ -23,8 +23,8 @@
 | **Product Specification** | User journeys, features, pricing, IA, i18n | `docs/01-foundation/PRODUCT_SPECIFICATION.md` |
 | **System Design (Master)** | Complete technical and product architecture (v2.1) | `docs/03-system-design/ARCHITECTURE.md` |
 | **Architecture Layer** | Database (32 tables), APIs, Inngest jobs, security | `docs/03-system-design/ARCHITECTURE.md` |
-| **Product Layer** | 23 pages, 90+ features, user journeys, 16 agents UX | `docs/01-foundation/PRODUCT_SPECIFICATION.md` |
-| **Intelligence Layer** | 16 agent pipelines, scan engine, LLM costs | `docs/03-system-design/ARCHITECTURE.md` |
+| **Product Layer** | 23 pages, 90+ features, user journeys, 11 agents UX | `docs/01-foundation/PRODUCT_SPECIFICATION.md` |
+| **Intelligence Layer** | 11 agent pipelines, scan engine, LLM costs | `docs/03-system-design/ARCHITECTURE.md` |
 | **Validation** | Gap closure, competitive parity, priority classification | `docs/03-system-design/ARCHITECTURE.md` |
 | **Feature Specs (12 specs)** | Detailed engineering specs for all features (launch + Phase 2 & 3) | `docs/04-features/specs/` |
 | **Pricing Impact Analysis** | Cost analysis for 11 new features + pricing recommendations | `docs/08-agents_work/AUDITS/PRICING-IMPACT-ANALYSIS.md` |
@@ -46,7 +46,7 @@ People no longer search only on Google. They ask ChatGPT, Gemini, Perplexity, an
 A closed-loop system:
 1. **Scan:** Query up to 10 AI engines with industry-relevant prompts
 2. **Diagnose:** AI recommends what to fix and why
-3. **Fix:** 16 AI agents create content, schema, citations, strategies
+3. **Fix:** 11 AI agents create content, schema, citations, strategies
 4. **Measure:** Track improvement across engines over time
 5. **Repeat**
 
@@ -57,7 +57,7 @@ Every competitor builds dashboards. Beamix does the work.
 | What competitors do | What Beamix does |
 |---|---|
 | "You rank #7 in ChatGPT" | "Here's the content that will fix that. Want us to write it?" |
-| $200-500/month entry price | $49/month Starter tier |
+| $200-500/month entry price | $79/month Discover tier |
 | 30-day delay before insights | Value on day 1 with free scan |
 | Built for agencies | Built for the business owner |
 | 1 LLM model for content + QA | Cross-model QA (GPT-4o reviews Claude output) |
@@ -76,11 +76,11 @@ Every competitor builds dashboards. Beamix does the work.
 
 ### Subscription Tiers
 
-| | Free Scan | Starter | Pro | Business |
+| | Free Scan | Discover | Build | Scale |
 |---|---|---|---|---|
-| **Price** | $0 | $49/mo | $149/mo | $349/mo |
+| **Price** | $0 | $79/mo | $189/mo | $499/mo |
 | **Tracked queries** | 0 | 10 | 25 | 75 |
-| **Agent uses/month** | 0 | 5 | 15 | 50 |
+| **AI Runs/month** | 0 | 25 | 90 | 300 |
 | **Scan frequency** | One-time | Weekly | Every 3 days | Daily |
 | **AI engines** | 4 (Phase 1) | 4 | 7 | 10 |
 | **Competitors tracked** | 0 | 3 | 5 | 10 |
@@ -97,7 +97,7 @@ Every competitor builds dashboards. Beamix does the work.
 | Phase 2 — Growth | + Grok, DeepSeek, You.com | API |
 | Phase 3 — Deferred | + Copilot, AI Overviews, Meta AI | Browser simulation |
 
-### AI Agents (16 Total — A1 through A16)
+### AI Agents (11 Active — Launch Roster)
 
 | # | Agent | Purpose | Credits |
 |---|-------|---------|---------|
