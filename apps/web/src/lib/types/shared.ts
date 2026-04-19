@@ -45,12 +45,38 @@ export interface InboxItem {
   title: string;
   previewMarkdown: string;
   fullMarkdown: string;
+  /** user_edited_content if present, else fullMarkdown. Never null in UI. */
+  userEditedContent?: string | null;
   targetUrl: string | null;
   evidence: InboxEvidence;
   status: 'draft' | 'awaiting_review' | 'approved' | 'rejected' | 'archived';
   ymylFlagged: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// ─── Workspace ────────────────────────────────────────────────────────────
+
+export interface WorkspaceItem extends InboxItem {
+  /** Confidence score 0–100 from agent run. */
+  confidenceScore?: number | null;
+  /** Estimated impact label from agent analysis. */
+  estimatedImpact?: string | null;
+  /** Which scan/queries triggered this output. */
+  triggerQuerySummary?: string | null;
+  /** Run date from agent_jobs.created_at. */
+  runAt?: string | null;
+}
+
+export interface InboxItemEdit {
+  id: string;
+  contentItemId: string;
+  userId: string;
+  selectionText: string;
+  prompt: string;
+  originalText: string;
+  editedText: string;
+  createdAt: string;
 }
 
 export interface InboxEvidence {
