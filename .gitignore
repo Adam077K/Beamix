@@ -3,3 +3,7 @@
 
 # Git worktrees
 .worktrees/
+
+# MCP secrets (shouldn't be needed since .mcp.json uses env var expansion,
+# but belt-and-suspenders)
+.mcp.local.json
