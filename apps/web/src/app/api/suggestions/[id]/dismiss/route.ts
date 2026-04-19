@@ -84,8 +84,8 @@ export async function POST(
     }
 
     // Invalidate home + inbox cache for this user so fresh suggestions are fetched
-    revalidateTag(`home-${user.id}`);
-    revalidateTag(`inbox-${user.id}`);
+    revalidateTag(`home-${user.id}`, 'page');
+    revalidateTag(`inbox-${user.id}`, 'page');
     revalidatePath('/home');
 
     return NextResponse.json({ id, status: 'dismissed' }, { status: 200 });

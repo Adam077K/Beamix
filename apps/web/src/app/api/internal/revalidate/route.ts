@@ -76,8 +76,10 @@ export async function POST(request: Request) {
     }
 
     // 3. Revalidate all provided tags and paths
+    // Next.js 16 requires an explicit type argument for revalidateTag — use 'page'
+    // since tags are emitted from server components via fetch(..., { next: { tags: [...] }}).
     for (const tag of tags) {
-      revalidateTag(tag);
+      revalidateTag(tag, 'page');
     }
 
     for (const path of paths) {
