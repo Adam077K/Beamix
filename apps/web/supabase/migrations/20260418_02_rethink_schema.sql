@@ -566,10 +566,10 @@ DECLARE
   v_prev_score integer;
 BEGIN
   -- Latest scan score
-  SELECT id, overall_score, scanned_at INTO v_latest_scan
+  SELECT id, overall_score, completed_at INTO v_latest_scan
   FROM scans
   WHERE business_id = p_business_id AND status = 'completed'
-  ORDER BY scanned_at DESC LIMIT 1;
+  ORDER BY completed_at DESC LIMIT 1;
 
   v_score := COALESCE(v_latest_scan.overall_score, 0);
 
@@ -578,7 +578,7 @@ BEGIN
   FROM scans
   WHERE business_id = p_business_id AND status = 'completed'
     AND id != v_latest_scan.id
-  ORDER BY scanned_at DESC LIMIT 1;
+  ORDER BY completed_at DESC LIMIT 1;
 
   -- Top 3 pending suggestions
   SELECT COALESCE(jsonb_agg(row_to_json(s)::jsonb), '[]'::jsonb)
@@ -609,7 +609,7 @@ BEGIN
   RETURN jsonb_build_object(
     'score', v_score,
     'score_delta', v_score - COALESCE(v_prev_score, v_score),
-    'latest_scan_at', v_latest_scan.scanned_at,
+    'latest_scan_at', v_latest_scan.completed_at,
     'suggestions', v_suggestions,
     'inbox_preview', v_inbox_preview
   );
