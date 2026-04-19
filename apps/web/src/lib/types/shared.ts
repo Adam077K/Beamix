@@ -126,13 +126,14 @@ export interface Competitor {
 
 export interface AutomationSchedule {
   id: string;
-  userId: string;
+  userId?: string;
   agentType: AgentType;
+  actionLabel?: string; // user-facing label — populated server-side from AGENT_REGISTRY
   cadence: 'daily' | 'weekly' | 'biweekly' | 'monthly';
   nextRunAt: string;
   lastRunAt: string | null;
   isPaused: boolean;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface AutomationStatus {
