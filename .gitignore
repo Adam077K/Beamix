@@ -4,6 +4,12 @@
 # Git worktrees
 .worktrees/
 
+# Node dependencies (monorepo root — pnpm hoists shared deps here)
+node_modules/
+.pnpm-store/
+*.tsbuildinfo
+.turbo/
+
 # MCP secrets (shouldn't be needed since .mcp.json uses env var expansion,
 # but belt-and-suspenders)
 .mcp.local.json
