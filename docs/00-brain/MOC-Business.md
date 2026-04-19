@@ -38,16 +38,7 @@ Note: MOAT.md is a redirect stub → competitive advantages live in VISION.md.
 - Discover: $79/mo (annual: $63/mo) — ChatGPT, Gemini, Perplexity
 - Build: $189/mo (annual: $151/mo) — + Claude, AI Overviews, Grok, You.com
 - Scale: $499/mo (annual: $399/mo) — 9+ engines
-- [[docs/04-features/specs/pricing-page-spec]] — Pricing page implementation
 - [[docs/research/CREDIT_PRICING_RESEARCH]] — Credit pricing research
-
-## Unresolved Decisions (from BACKLOG.md)
-
-- D3: Which is free engine 4? (Copilot has no API)
-- D4: MVP onboarding 3-step or 4-step?
-- D5: Free scan result expiry: 30 days or 14 days?
-- D6: Visibility score formula for 7+ engines
-- D7: Trial manual re-scans: allow 1 or lock?
 
 ## Related MOCs
 

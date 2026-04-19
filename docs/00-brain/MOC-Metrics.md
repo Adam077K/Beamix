@@ -33,7 +33,7 @@ Note: `docs/09-metrics/` contains redirect stubs. Real content is in foundation 
 - Discover: $79/mo (annual: $63/mo) — 3 engines
 - Build: $189/mo (annual: $151/mo) — 7 engines
 - Scale: $499/mo (annual: $399/mo) — 9+ engines
-- Trial: 7 days free, 5 agent credits cap
+- Trial: 14-day money-back guarantee (no credit cap, no time-lock)
 
 ## Key Targets (from BACKLOG.md)
 

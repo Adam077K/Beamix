@@ -21,7 +21,7 @@ updated: 2026-04-10
 - [[docs/03-system-design/ARCHITECTURE]] — Master system design (4 layers: product, architecture, intelligence, validation)
 - [[docs/03-system-design/DATABASE_SCHEMA]] — 32 Supabase tables, RLS policies, RPCs
 - [[docs/03-system-design/API_CONTRACTS]] — All API routes and contracts
-- [[docs/03-system-design/AI_AGENTS]] — 16 AI agent pipelines, LLM costs, execution flow
+- [[docs/03-system-design/AI_AGENTS]] — 11 GEO agent pipelines, LLM costs, execution flow
 - [[docs/03-system-design/TECH_STACK]] — Full technology stack and rationale
 
 ## Engineering

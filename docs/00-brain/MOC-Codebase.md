@@ -28,15 +28,15 @@ updated: 2026-04-10
 ## Key Paths
 
 ```
-saas-platform/src/
+apps/web/src/
 ├── app/          — Next.js App Router pages
 │   ├── (auth)/   — Login, signup, forgot-password
-│   ├── (protected)/ — Dashboard, agents, settings
+│   ├── (protected)/ — Dashboard (Home, Inbox, Scans, Automation, Archive, Competitors, Settings)
 │   ├── scan/     — Free scan page
-│   └── api/      — API routes (scan, onboarding, agents, billing)
+│   └── api/      — API routes (scan, onboarding, agents, billing, paddle)
 ├── components/   — React components (ui, dashboard, scan, onboarding, auth)
-├── lib/          — Core logic (agents, scan, supabase, paddle, blog)
-├── inngest/      — Background jobs (scan-free, scan-manual, agent-execute)
+├── lib/          — Core logic (agents, scan, supabase, paddle, openrouter)
+├── inngest/      — Background jobs (scan-free, scan-manual, agent-execute, rules-engine)
 └── constants/    — Static data (industries, engines)
 ```
 
