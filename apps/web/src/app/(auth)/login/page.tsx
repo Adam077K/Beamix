@@ -2,7 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+
+const DISABLE_TESTER_LOGIN = process.env['NEXT_PUBLIC_DISABLE_TESTER_LOGIN'] === 'true'
 
 function SpinnerIcon() {
   return (
@@ -24,9 +27,11 @@ function SpinnerIcon() {
 }
 
 export default function LoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [testerLoading, setTesterLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -63,6 +68,24 @@ export default function LoginPage() {
     } catch {
       setError('Something went wrong. Please try again.')
       setLoading(false)
+    }
+  }
+
+  async function handleTesterLogin() {
+    setError(null)
+    setTesterLoading(true)
+    try {
+      const res = await fetch('/api/auth/tester-login', { method: 'POST' })
+      const data: { ok?: boolean; redirect?: string; error?: { message: string } } = await res.json()
+      if (!res.ok || !data.ok) {
+        setError(data.error?.message ?? 'Tester login failed. Please try again.')
+        setTesterLoading(false)
+        return
+      }
+      router.push(data.redirect ?? '/home')
+    } catch {
+      setError('Something went wrong. Please try again.')
+      setTesterLoading(false)
     }
   }
 
@@ -182,6 +205,40 @@ export default function LoginPage() {
           Create one free
         </Link>
       </p>
+
+      {/* Tester login — hidden when NEXT_PUBLIC_DISABLE_TESTER_LOGIN=true */}
+      {!DISABLE_TESTER_LOGIN && (
+        <div className="mt-5">
+          {/* Divider */}
+          <div className="relative flex items-center">
+            <div className="flex-grow border-t border-gray-200" />
+            <span className="mx-3 shrink-0 text-xs text-gray-400">or</span>
+            <div className="flex-grow border-t border-gray-200" />
+          </div>
+
+          {/* Tester button */}
+          <button
+            type="button"
+            onClick={handleTesterLogin}
+            disabled={testerLoading || loading}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-all duration-150 hover:border-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {testerLoading ? (
+              <>
+                <SpinnerIcon />
+                Signing you in&hellip;
+              </>
+            ) : (
+              'Continue as tester \u2192'
+            )}
+          </button>
+
+          {/* Caption */}
+          <p className="mt-2 text-center text-xs text-gray-400">
+            Skips signup for demo &mdash; data may be wiped
+          </p>
+        </div>
+      )}
     </>
   )
 }
