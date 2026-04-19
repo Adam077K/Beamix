@@ -44,14 +44,13 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
   const [competitors, setCompetitors] = React.useState<string[]>(['', '', ''])
   const [urlError, setUrlError] = React.useState<string | null>(null)
   const [industryError, setIndustryError] = React.useState<string | null>(null)
-  const [touched, setTouched] = React.useState(false)
   const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null)
 
   function handleUrlBlur() {
     if (!url) {
       setUrlError('Enter your website URL')
     } else if (!isValidUrl(url)) {
-      setUrlError('Enter a valid URL (e.g. yourbusiness.com)')
+      setUrlError('Enter a valid URL — e.g. yourbusiness.com')
     } else {
       setUrlError(null)
     }
@@ -67,7 +66,6 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setTouched(true)
 
     let valid = true
 
@@ -75,7 +73,7 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
       setUrlError('Enter your website URL')
       valid = false
     } else if (!isValidUrl(url)) {
-      setUrlError('Enter a valid URL (e.g. yourbusiness.com)')
+      setUrlError('Enter a valid URL — e.g. yourbusiness.com')
       valid = false
     } else {
       setUrlError(null)
@@ -105,7 +103,7 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97 }}
       transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-      className="w-full max-w-[520px] mx-auto bg-white rounded-2xl shadow-lg border border-gray-100 p-8"
+      className="w-full max-w-[520px] mx-auto bg-white rounded-[20px] shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-[#E5E7EB] p-8"
     >
       {/* Logo + heading */}
       <div className="flex flex-col items-center gap-4 mb-8">
@@ -119,11 +117,12 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
           />
         </div>
         <div className="text-center">
-          <h1 className="text-2xl font-semibold text-[#0A0A0A] tracking-tight leading-tight">
+          {/* H1 — InterDisplay-Medium equivalent: font-[500] + tight tracking */}
+          <h1 className="text-[30px] font-[500] text-[#0A0A0A] tracking-[-0.5px] leading-[1.1]">
             See if AI recommends you
           </h1>
-          <p className="mt-1.5 text-sm text-gray-500 font-normal">
-            Free scan. No signup needed. 60 seconds.
+          <p className="mt-2 text-[15px] text-[#6B7280] font-normal leading-relaxed">
+            Free scan. No account needed. 60 seconds.
           </p>
         </div>
       </div>
@@ -146,15 +145,18 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
             placeholder="yourbusiness.com"
             autoComplete="url"
             aria-invalid={!!urlError}
-            aria-describedby={urlError ? 'url-error' : undefined}
+            aria-describedby={urlError ? 'url-error' : 'url-hint'}
             className={cn(
-              'h-11 w-full rounded-lg border bg-white px-3.5 text-sm text-[#0A0A0A] placeholder:text-gray-400 outline-none transition-all duration-150',
+              'h-11 w-full rounded-lg border bg-white px-3.5 text-sm text-[#0A0A0A] placeholder:text-[#9CA3AF] outline-none transition-all duration-150',
               'focus:ring-2 focus:ring-[#3370FF]/20 focus:border-[#3370FF]',
               urlError
-                ? 'border-red-400 focus:ring-red-200 focus:border-red-400'
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'border-[#EF4444] focus:ring-[#EF4444]/20 focus:border-[#EF4444]'
+                : 'border-[#E5E7EB] hover:border-[#D1D5DB]'
             )}
           />
+          <span id="url-hint" className="sr-only">
+            Enter your website without https — e.g. yourbusiness.com
+          </span>
           <AnimatePresence>
             {urlError && (
               <motion.p
@@ -164,9 +166,9 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.15 }}
-                className="flex items-center gap-1.5 text-xs text-red-500"
+                className="flex items-center gap-1.5 text-xs text-[#EF4444]"
               >
-                <AlertCircle className="size-3 shrink-0" />
+                <AlertCircle className="size-3 shrink-0" aria-hidden="true" />
                 {urlError}
               </motion.p>
             )}
@@ -178,30 +180,44 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
           <label htmlFor="scan-industry" className="text-sm font-medium text-[#0A0A0A]">
             Industry
           </label>
-          <select
-            id="scan-industry"
-            value={industry}
-            onChange={e => {
-              setIndustry(e.target.value)
-              if (industryError && e.target.value) setIndustryError(null)
-            }}
-            aria-invalid={!!industryError}
-            aria-describedby={industryError ? 'industry-error' : undefined}
-            className={cn(
-              'h-11 w-full rounded-lg border bg-white px-3.5 text-sm text-[#0A0A0A] outline-none transition-all duration-150 cursor-pointer appearance-none',
-              'focus:ring-2 focus:ring-[#3370FF]/20 focus:border-[#3370FF]',
-              !industry && 'text-gray-400',
-              industryError
-                ? 'border-red-400 focus:ring-red-200 focus:border-red-400'
-                : 'border-gray-200 hover:border-gray-300',
-              "bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")] bg-no-repeat bg-[right_14px_center]"
-            )}
-          >
-            <option value="" disabled>Select your industry</option>
-            {INDUSTRIES.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
+          {/* Wrapper div for absolute-positioned chevron */}
+          <div className="relative">
+            <select
+              id="scan-industry"
+              value={industry}
+              onChange={e => {
+                setIndustry(e.target.value)
+                if (industryError && e.target.value) setIndustryError(null)
+              }}
+              aria-invalid={!!industryError}
+              aria-describedby={industryError ? 'industry-error' : undefined}
+              className={cn(
+                'h-11 w-full rounded-lg border bg-white px-3.5 pe-10 text-sm text-[#0A0A0A] outline-none transition-all duration-150 cursor-pointer appearance-none',
+                'focus:ring-2 focus:ring-[#3370FF]/20 focus:border-[#3370FF]',
+                !industry && 'text-[#9CA3AF]',
+                industryError
+                  ? 'border-[#EF4444] focus:ring-[#EF4444]/20 focus:border-[#EF4444]'
+                  : 'border-[#E5E7EB] hover:border-[#D1D5DB]'
+              )}
+            >
+              <option value="" disabled>Select your industry</option>
+              {INDUSTRIES.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <svg
+              className="pointer-events-none absolute end-3.5 top-1/2 -translate-y-1/2 size-4 text-[#9CA3AF]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
           <AnimatePresence>
             {industryError && (
               <motion.p
@@ -211,9 +227,9 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.15 }}
-                className="flex items-center gap-1.5 text-xs text-red-500"
+                className="flex items-center gap-1.5 text-xs text-[#EF4444]"
               >
-                <AlertCircle className="size-3 shrink-0" />
+                <AlertCircle className="size-3 shrink-0" aria-hidden="true" />
                 {industryError}
               </motion.p>
             )}
@@ -224,7 +240,7 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
         <div className="flex flex-col gap-1.5">
           <label htmlFor="scan-location" className="text-sm font-medium text-[#0A0A0A]">
             Location{' '}
-            <span className="text-gray-400 font-normal text-xs">(optional)</span>
+            <span className="text-[#9CA3AF] font-normal text-xs">(optional)</span>
           </label>
           <input
             id="scan-location"
@@ -233,7 +249,7 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
             onChange={e => setLocation(e.target.value)}
             placeholder="Tel Aviv, Israel"
             autoComplete="address-level2"
-            className="h-11 w-full rounded-lg border border-gray-200 hover:border-gray-300 bg-white px-3.5 text-sm text-[#0A0A0A] placeholder:text-gray-400 outline-none transition-all duration-150 focus:ring-2 focus:ring-[#3370FF]/20 focus:border-[#3370FF]"
+            className="h-11 w-full rounded-lg border border-[#E5E7EB] hover:border-[#D1D5DB] bg-white px-3.5 text-sm text-[#0A0A0A] placeholder:text-[#9CA3AF] outline-none transition-all duration-150 focus:ring-2 focus:ring-[#3370FF]/20 focus:border-[#3370FF]"
           />
         </div>
 
@@ -242,9 +258,11 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
           <div>
             <span className="text-sm font-medium text-[#0A0A0A]">
               Competitor URLs{' '}
-              <span className="text-gray-400 font-normal text-xs">(optional)</span>
+              <span className="text-[#9CA3AF] font-normal text-xs">(optional)</span>
             </span>
-            <p className="text-xs text-gray-400 mt-0.5">We show you who AI recommends instead of you.</p>
+            <p className="text-xs text-[#6B7280] mt-0.5">
+              We show who AI recommends instead of you.
+            </p>
           </div>
           <div className="flex flex-col gap-2">
             {competitors.map((val, i) => (
@@ -255,16 +273,16 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
                   onChange={e => handleCompetitorChange(i, e.target.value)}
                   placeholder={`competitor-${i + 1}.com`}
                   aria-label={`Competitor URL ${i + 1}`}
-                  className="h-10 w-full rounded-lg border border-gray-200 hover:border-gray-300 bg-white px-3.5 pr-8 text-sm text-[#0A0A0A] placeholder:text-gray-400 outline-none transition-all duration-150 focus:ring-2 focus:ring-[#3370FF]/20 focus:border-[#3370FF]"
+                  className="h-10 w-full rounded-lg border border-[#E5E7EB] hover:border-[#D1D5DB] bg-white px-3.5 pe-8 text-sm text-[#0A0A0A] placeholder:text-[#9CA3AF] outline-none transition-all duration-150 focus:ring-2 focus:ring-[#3370FF]/20 focus:border-[#3370FF]"
                 />
                 {val && (
                   <button
                     type="button"
                     onClick={() => handleCompetitorChange(i, '')}
-                    aria-label="Clear competitor URL"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label={`Clear competitor URL ${i + 1}`}
+                    className="absolute end-2.5 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B7280] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#3370FF] rounded"
                   >
-                    <X className="size-3.5" />
+                    <X className="size-3.5" aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -282,16 +300,16 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
           />
         </div>
 
-        {/* Submit */}
+        {/* Submit — pill shape is correct for marketing-context CTA */}
         <motion.button
           type="submit"
           disabled={!turnstileToken}
           whileTap={turnstileToken ? { scale: 0.98 } : {}}
           className={cn(
-            'mt-1 h-12 w-full rounded-lg text-white text-sm font-medium tracking-tight transition-all duration-150',
+            'mt-1 h-12 w-full rounded-full text-white text-sm font-medium tracking-tight transition-all duration-150',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2',
             turnstileToken
-              ? 'bg-[#3370FF] hover:bg-[#2558e6] cursor-pointer active:scale-[0.98]'
+              ? 'bg-[#3370FF] hover:bg-[#2558E6] cursor-pointer active:scale-[0.98]'
               : 'bg-[#3370FF]/40 cursor-not-allowed'
           )}
           aria-disabled={!turnstileToken}
@@ -299,8 +317,8 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
           Scan my visibility &rarr;
         </motion.button>
 
-        <p className="text-center text-xs text-gray-400">
-          No account required. Results ready in about 60 seconds.
+        <p className="text-center text-xs text-[#9CA3AF]">
+          No account required. Results in about 60 seconds.
         </p>
       </form>
     </motion.div>

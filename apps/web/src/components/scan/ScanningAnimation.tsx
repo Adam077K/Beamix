@@ -129,7 +129,7 @@ function QueryTicker() {
           animate={{ opacity: visible ? 1 : 0, y: visible ? 0 : -4 }}
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.2 }}
-          className="text-sm text-white/40 leading-relaxed italic"
+          className="text-[13px] text-white/40 leading-relaxed italic"
         >
           &ldquo;{SAMPLE_QUERIES[currentIndex]}&rdquo;
         </motion.p>
@@ -164,11 +164,11 @@ export function ScanningAnimation() {
           transition={{ type: 'spring', stiffness: 280, damping: 26, delay: 0.1 }}
           className="text-center"
         >
-          <h2 className="text-3xl font-medium text-white tracking-tight leading-tight">
+          <h2 className="text-[36px] font-[500] text-white tracking-[-0.5px] leading-[1.1]">
             Scanning your AI visibility&hellip;
           </h2>
-          <p className="mt-2 text-sm text-white/40">
-            Querying AI engines across 30 search intents
+          <p className="mt-3 text-[15px] text-white/40 leading-relaxed">
+            Asking ChatGPT, Gemini, and Perplexity about your business
           </p>
         </motion.div>
 
@@ -187,7 +187,7 @@ export function ScanningAnimation() {
                   ? 'border-[#3370FF]/40 bg-[#3370FF]/5'
                   : engineStates[i] === 'done'
                   ? 'border-emerald-500/20 bg-emerald-500/5'
-                  : 'border-white/8 bg-white/4'
+                  : 'border-white/[0.08] bg-white/[0.04]'
               }`}
             >
               <div
@@ -241,7 +241,7 @@ export function ScanningAnimation() {
           transition={{ delay: 0.6 }}
           className="w-full"
         >
-          <p className="text-xs text-white/25 uppercase tracking-widest font-medium mb-3 text-center">
+          <p className="text-[11px] text-white/25 uppercase tracking-[0.1em] font-semibold mb-3 text-center">
             Live query sample
           </p>
           <QueryTicker />
