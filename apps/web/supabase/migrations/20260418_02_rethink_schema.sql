@@ -548,75 +548,64 @@ $$;
 
 
 -- D4: get_home_summary — Home page data in one call
--- Uses scalar variables (not RECORD) to avoid PostgreSQL SQL-parser ambiguity
--- when a plpgsql variable is used in a sub-SELECT WHERE clause.
+-- Rewritten as LANGUAGE sql CTE to avoid 42P01: PostgreSQL SQL validator
+-- treats plpgsql local variables as relation references in sub-SELECT WHERE clauses.
+-- All parameters (p_*) are safe inside SQL; only local DECLARE variables cause the bug.
 CREATE OR REPLACE FUNCTION public.get_home_summary(
   p_user_id uuid,
   p_business_id uuid
 ) RETURNS jsonb
-LANGUAGE plpgsql
+LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-DECLARE
-  v_latest_scan_id uuid;
-  v_latest_scan_at timestamptz;
-  v_score integer := 0;
-  v_prev_score integer := 0;
-  v_suggestions jsonb;
-  v_inbox_preview jsonb;
-BEGIN
-  -- Latest completed scan
-  SELECT id, COALESCE(overall_score, 0), completed_at
-  INTO v_latest_scan_id, v_score, v_latest_scan_at
-  FROM scans
-  WHERE business_id = p_business_id AND status = 'completed'
-  ORDER BY completed_at DESC LIMIT 1;
-
-  -- Previous scan score for delta (scalar id avoids SQL-parser ambiguity)
-  IF v_latest_scan_id IS NOT NULL THEN
-    SELECT COALESCE(overall_score, 0) INTO v_prev_score
+  WITH latest AS (
+    SELECT id, COALESCE(overall_score, 0) AS score, completed_at
     FROM scans
     WHERE business_id = p_business_id AND status = 'completed'
-      AND id != v_latest_scan_id
-    ORDER BY completed_at DESC LIMIT 1;
-  END IF;
-
-  -- Top 3 pending suggestions
-  SELECT COALESCE(jsonb_agg(row_to_json(s)::jsonb), '[]'::jsonb)
-  INTO v_suggestions
-  FROM (
-    SELECT id, title, description, agent_type, impact, estimated_runs
-    FROM suggestions
-    WHERE user_id = p_user_id AND business_id = p_business_id
-      AND status = 'pending'
-    ORDER BY
-      CASE impact WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
-      created_at DESC
-    LIMIT 3
-  ) s;
-
-  -- Last 3 inbox items
-  SELECT COALESCE(jsonb_agg(row_to_json(i)::jsonb), '[]'::jsonb)
-  INTO v_inbox_preview
-  FROM (
-    SELECT id, title, agent_type, status::text, created_at
-    FROM content_items
-    WHERE user_id = p_user_id AND business_id = p_business_id
-      AND status IN ('draft', 'in_review')
-    ORDER BY created_at DESC
-    LIMIT 3
-  ) i;
-
-  RETURN jsonb_build_object(
-    'score', v_score,
-    'score_delta', v_score - v_prev_score,
-    'latest_scan_at', v_latest_scan_at,
-    'suggestions', v_suggestions,
-    'inbox_preview', v_inbox_preview
+    ORDER BY completed_at DESC
+    LIMIT 1
+  ),
+  prev AS (
+    SELECT COALESCE(overall_score, 0) AS score
+    FROM scans
+    WHERE business_id = p_business_id AND status = 'completed'
+      AND id != (SELECT id FROM latest)
+    ORDER BY completed_at DESC
+    LIMIT 1
+  ),
+  sugg AS (
+    SELECT COALESCE(jsonb_agg(row_to_json(s)::jsonb), '[]'::jsonb) AS data
+    FROM (
+      SELECT id, title, description, agent_type, impact, estimated_runs
+      FROM suggestions
+      WHERE user_id = p_user_id AND business_id = p_business_id
+        AND status = 'pending'
+      ORDER BY
+        CASE impact WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,
+        created_at DESC
+      LIMIT 3
+    ) s
+  ),
+  inbox AS (
+    SELECT COALESCE(jsonb_agg(row_to_json(i)::jsonb), '[]'::jsonb) AS data
+    FROM (
+      SELECT id, title, agent_type, status::text, created_at
+      FROM content_items
+      WHERE user_id = p_user_id AND business_id = p_business_id
+        AND status IN ('draft', 'in_review')
+      ORDER BY created_at DESC
+      LIMIT 3
+    ) i
+  )
+  SELECT jsonb_build_object(
+    'score',          COALESCE((SELECT score FROM latest), 0),
+    'score_delta',    COALESCE((SELECT score FROM latest), 0) - COALESCE((SELECT score FROM prev), 0),
+    'latest_scan_at', (SELECT completed_at FROM latest),
+    'suggestions',    (SELECT data FROM sugg),
+    'inbox_preview',  (SELECT data FROM inbox)
   );
-END;
 $$;
 
 
