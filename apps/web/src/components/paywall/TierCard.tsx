@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { Check } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 
 export type TierKey = 'discover' | 'build' | 'scale'
@@ -74,6 +75,7 @@ export interface TierCardProps {
 }
 
 export function TierCard({ tier, annual, highlighted, onSelect }: TierCardProps) {
+  const t = useTranslations('paywall')
   const data = TIERS[tier]
   const price = annual ? data.annual : data.monthly
 
@@ -91,7 +93,7 @@ export function TierCard({ tier, annual, highlighted, onSelect }: TierCardProps)
       {highlighted && (
         <div className="absolute -top-3 end-5">
           <span className="inline-flex items-center rounded-full bg-[#3370FF] px-3 py-0.5 text-xs font-medium text-white">
-            Recommended
+            {t('recommended')}
           </span>
         </div>
       )}
@@ -108,19 +110,19 @@ export function TierCard({ tier, annual, highlighted, onSelect }: TierCardProps)
       {/* Annual note */}
       {annual ? (
         <p className="text-xs text-gray-500 -mt-3">
-          billed annually &mdash; ${data.annualTotal}/yr
+          {t('billedAnnually')} &mdash; ${data.annualTotal}/yr
         </p>
       ) : (
-        <p className="text-xs text-gray-400 -mt-3">billed monthly</p>
+        <p className="text-xs text-gray-400 -mt-3">{t('billedMonthly')}</p>
       )}
 
       {/* Metadata */}
       <div className="flex flex-col gap-1">
         <p className="text-sm text-gray-600">
-          <span className="font-medium text-[#0A0A0A]">{data.runs}</span> AI runs/mo
+          {t('aiRunsPerMonth', { runs: data.runs })}
         </p>
         <p className="text-sm text-gray-600">
-          <span className="font-medium text-[#0A0A0A]">{data.engines}</span> engines
+          {t('engines', { count: data.engines })}
         </p>
       </div>
 
@@ -154,7 +156,7 @@ export function TierCard({ tier, annual, highlighted, onSelect }: TierCardProps)
             : 'border border-gray-200 bg-white text-[#0A0A0A] hover:bg-gray-50 focus-visible:ring-gray-400'
         )}
       >
-        Start with {data.name} &rarr;
+        {t('startWith', { name: data.name })} &rarr;
       </button>
     </div>
   )

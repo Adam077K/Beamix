@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { Dialog as DialogPrimitive, Switch as SwitchPrimitive } from 'radix-ui'
 import { X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import { TierCard, TierKey } from './TierCard'
 
@@ -13,6 +14,7 @@ export interface PaywallModalProps {
 }
 
 export function PaywallModal({ open, onClose, triggerContext }: PaywallModalProps) {
+  const t = useTranslations('paywall')
   const [annual, setAnnual] = React.useState(true)
   const [checkoutBanner, setCheckoutBanner] = React.useState<TierKey | null>(null)
 
@@ -73,7 +75,7 @@ export function PaywallModal({ open, onClose, triggerContext }: PaywallModalProp
           {/* Header */}
           <div className="mb-6">
             <DialogPrimitive.Title className="text-2xl font-bold text-[#0A0A0A] tracking-tight">
-              Unlock Beamix
+              {t('title')}
             </DialogPrimitive.Title>
             {triggerContext && (
               <DialogPrimitive.Description className="mt-1.5 text-sm text-gray-500">
@@ -108,9 +110,9 @@ export function PaywallModal({ open, onClose, triggerContext }: PaywallModalProp
               htmlFor="annual-toggle"
               className="cursor-pointer select-none text-sm text-gray-700"
             >
-              Save 20% with annual billing
+              {t('saveWithAnnual')}
               <span className="ms-2 inline-flex items-center rounded-full bg-[#3370FF]/10 px-2 py-0.5 text-xs font-medium text-[#3370FF]">
-                2 months free
+                {t('twoMonthsFree')}
               </span>
             </label>
           </div>
@@ -119,7 +121,7 @@ export function PaywallModal({ open, onClose, triggerContext }: PaywallModalProp
           {checkoutBanner && (
             <div className="mb-5 flex items-center gap-2 rounded-lg bg-[#3370FF]/8 px-4 py-2.5 text-sm text-[#3370FF]">
               <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#3370FF]/30 border-t-[#3370FF]" />
-              Redirecting to checkout...
+              {t('redirectingToCheckout')}
             </div>
           )}
 
@@ -147,7 +149,7 @@ export function PaywallModal({ open, onClose, triggerContext }: PaywallModalProp
 
           {/* Footer */}
           <p className="mt-6 text-center text-xs text-gray-400">
-            All plans include a 14-day money-back guarantee. No contracts, cancel anytime.
+            {t('guarantee')}
           </p>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
