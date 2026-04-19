@@ -3,6 +3,8 @@
  *
  * Starts a new scan for a given business. Inserts a `scans` row,
  * fires an Inngest event, and returns 202 with the scanId.
+ *
+ * Requires Cloudflare Turnstile verification in non-development environments.
  */
 
 import { NextResponse } from 'next/server'
@@ -31,7 +33,7 @@ async function verifyTurnstile(token: string | undefined): Promise<boolean> {
 
 export async function POST(request: Request) {
   try {
-    // 1. Parse + validate request body
+    // 1. Parse request body
     let body: unknown
     try {
       body = await request.json()
@@ -42,13 +44,19 @@ export async function POST(request: Request) {
       )
     }
 
-    // 2. Turnstile server-side verification (before any DB work)
-    const cfTurnstileResponse = (body as Record<string, unknown>)?.cfTurnstileResponse as string | undefined
-    if (!(await verifyTurnstile(cfTurnstileResponse))) {
-      return NextResponse.json({ error: 'turnstile_failed' }, { status: 403 })
+    // 2. Cloudflare Turnstile verification (skipped in development)
+    const rawBody = body as Record<string, unknown>
+    const { cfTurnstileResponse, ...restOfBody } = rawBody
+
+    if (!(await verifyTurnstile(cfTurnstileResponse as string | undefined))) {
+      return NextResponse.json(
+        { error: { code: 'TURNSTILE_FAILED', message: 'Bot verification failed. Please try again.' } },
+        { status: 403 },
+      )
     }
 
-    const parsed = ScanStartRequestSchema.safeParse(body)
+    // 3. Validate structured fields
+    const parsed = ScanStartRequestSchema.safeParse(restOfBody)
     if (!parsed.success) {
       return NextResponse.json(
         {
@@ -64,7 +72,7 @@ export async function POST(request: Request) {
 
     const { businessId, engines } = parsed.data
 
-    // 3. Auth check
+    // 4. Auth check
     const supabase = await createClient()
     const {
       data: { user },
@@ -78,7 +86,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // 4. Insert scan row
+    // 5. Insert scan row
     const { data: scan, error: insertError } = await (supabase as any)
       .from('scans')
       .insert({
@@ -101,13 +109,13 @@ export async function POST(request: Request) {
 
     const scanId: string = scan.id
 
-    // 5. Fire Inngest event
+    // 6. Fire Inngest event
     await inngest.send({
       name: 'scan/start.requested' as any,
       data: { scanId, userId: user.id, businessId },
     })
 
-    // 6. Return 202 + response envelope
+    // 7. Return 202 + response envelope
     const estimatedCompletionAt = new Date(Date.now() + 90_000).toISOString()
     const responsePayload = ScanStartResponseSchema.parse({
       scanId,

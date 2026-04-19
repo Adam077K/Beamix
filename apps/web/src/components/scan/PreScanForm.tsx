@@ -2,8 +2,9 @@
 
 import * as React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { AlertCircle, Plus, X } from 'lucide-react'
+import { AlertCircle, X } from 'lucide-react'
 import Image from 'next/image'
+import { Turnstile } from '@marsidev/react-turnstile'
 import { cn } from '@/lib/utils'
 
 export interface PreScanFormData {
@@ -11,6 +12,7 @@ export interface PreScanFormData {
   industry: string
   location: string
   competitors: string[]
+  turnstileToken: string | null
 }
 
 interface PreScanFormProps {
@@ -43,6 +45,7 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
   const [urlError, setUrlError] = React.useState<string | null>(null)
   const [industryError, setIndustryError] = React.useState<string | null>(null)
   const [touched, setTouched] = React.useState(false)
+  const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null)
 
   function handleUrlBlur() {
     if (!url) {
@@ -92,6 +95,7 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
       industry,
       location,
       competitors: competitors.filter(Boolean),
+      turnstileToken,
     })
   }
 
@@ -190,7 +194,6 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
               industryError
                 ? 'border-red-400 focus:ring-red-200 focus:border-red-400'
                 : 'border-gray-200 hover:border-gray-300',
-              // custom caret
               "bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")] bg-no-repeat bg-[right_14px_center]"
             )}
           >
@@ -269,11 +272,29 @@ export function PreScanForm({ onSubmit }: PreScanFormProps) {
           </div>
         </div>
 
+        {/* Turnstile widget */}
+        <div className="flex justify-center">
+          <Turnstile
+            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+            onSuccess={(token) => setTurnstileToken(token)}
+            onExpire={() => setTurnstileToken(null)}
+            onError={() => setTurnstileToken(null)}
+          />
+        </div>
+
         {/* Submit */}
         <motion.button
           type="submit"
-          whileTap={{ scale: 0.98 }}
-          className="mt-1 h-12 w-full rounded-lg bg-[#3370FF] text-white text-sm font-medium tracking-tight cursor-pointer transition-all duration-150 hover:bg-[#2558e6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2 active:scale-[0.98]"
+          disabled={!turnstileToken}
+          whileTap={turnstileToken ? { scale: 0.98 } : {}}
+          className={cn(
+            'mt-1 h-12 w-full rounded-lg text-white text-sm font-medium tracking-tight transition-all duration-150',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2',
+            turnstileToken
+              ? 'bg-[#3370FF] hover:bg-[#2558e6] cursor-pointer active:scale-[0.98]'
+              : 'bg-[#3370FF]/40 cursor-not-allowed'
+          )}
+          aria-disabled={!turnstileToken}
         >
           Scan my visibility &rarr;
         </motion.button>
