@@ -3,6 +3,8 @@ import { Inter, Heebo } from 'next/font/google'
 import { headers } from 'next/headers'
 import { cn } from '@/lib/utils'
 import { detectLocale } from '@/lib/i18n/locale'
+import { getMessages } from '@/lib/i18n/get-messages'
+import { IntlProvider } from '@/lib/i18n/provider'
 import '@/styles/globals.css'
 
 const inter = Inter({
@@ -41,6 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   )
 
   const dir = locale === 'he' ? 'rtl' : 'ltr'
+  const messages = await getMessages(locale)
 
   return (
     <html
@@ -48,7 +51,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       dir={dir}
       className={cn(inter.variable, heebo.variable)}
     >
-      <body>{children}</body>
+      <body>
+        <IntlProvider locale={locale} messages={messages}>
+          {children}
+        </IntlProvider>
+      </body>
     </html>
   )
 }
