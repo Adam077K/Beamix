@@ -53,11 +53,14 @@ const nextConfig: NextConfig = {
 export default withSentryConfig(nextConfig, {
   // Suppress verbose Sentry build output
   silent: true,
-  // Do not expose source maps in production builds
-  hideSourceMaps: true,
   // Sentry organization and project (set via CI env vars)
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   // Auth token for uploading source maps
   authToken: process.env.SENTRY_AUTH_TOKEN,
+  // Delete sourcemaps from the client bundle after uploading to Sentry
+  // so they are not publicly exposed (replaces v8's hideSourceMaps).
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
 })
