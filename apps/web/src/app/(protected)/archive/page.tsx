@@ -1,56 +1,59 @@
-import Link from 'next/link'
-import { Archive } from 'lucide-react'
 import { ArchiveClient } from '@/components/archive/ArchiveClient'
-import { Button } from '@/components/ui/button'
 
+// Realistic mock data with varied states
 const mockArchive = [
   {
     id: 'ar1',
-    actionLabel: 'Optimize your homepage',
+    actionLabel: 'Optimize homepage for "AI accounting software"',
     approvedAt: '2026-04-18T10:00:00Z',
-    publishedAt: '2026-04-18T15:00:00Z',
+    publishedAt: '2026-04-18T15:30:00Z',
     targetUrl: 'https://example.com/',
-    verificationStatus: 'verified',
+    verificationStatus: 'verified' as const,
     estimatedImpact: 'high' as const,
     formats: ['markdown', 'html'],
   },
   {
     id: 'ar2',
-    actionLabel: 'Generate FAQ page',
+    actionLabel: 'Generate FAQ for pricing page',
     approvedAt: '2026-04-15T09:00:00Z',
     publishedAt: null,
     targetUrl: 'https://example.com/pricing',
-    verificationStatus: 'pending',
+    verificationStatus: 'pending' as const,
     estimatedImpact: 'medium' as const,
     formats: ['markdown', 'json_ld'],
   },
   {
     id: 'ar3',
-    actionLabel: 'Check directory listings',
+    actionLabel: 'Update directory listings for local search',
     approvedAt: '2026-04-10T14:00:00Z',
     publishedAt: '2026-04-12T10:00:00Z',
     targetUrl: null,
-    verificationStatus: 'unverified',
+    verificationStatus: 'unverified' as const,
     estimatedImpact: 'medium' as const,
+    formats: ['markdown'],
+  },
+  {
+    id: 'ar4',
+    actionLabel: 'Add structured data to product pages',
+    approvedAt: '2026-04-07T11:00:00Z',
+    publishedAt: '2026-04-08T09:00:00Z',
+    targetUrl: 'https://example.com/products',
+    verificationStatus: 'verified' as const,
+    estimatedImpact: 'high' as const,
+    formats: ['json_ld'],
+  },
+  {
+    id: 'ar5',
+    actionLabel: 'Refresh about page for brand queries',
+    approvedAt: '2026-03-28T08:00:00Z',
+    publishedAt: null,
+    targetUrl: 'https://example.com/about',
+    verificationStatus: 'pending' as const,
+    estimatedImpact: 'low' as const,
     formats: ['markdown'],
   },
 ]
 
 export default function ArchivePage() {
-  if (mockArchive.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center">
-        <Archive size={48} className="mb-4 text-muted-foreground/50" />
-        <h3 className="text-lg font-medium text-foreground mb-2">Nothing archived yet</h3>
-        <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-          Content you approve in Inbox moves here. Mark it published once it&apos;s live on your site.
-        </p>
-        <Button asChild className="bg-[#3370FF] hover:bg-[#2860e8] text-white">
-          <Link href="/inbox">Go to Inbox</Link>
-        </Button>
-      </div>
-    )
-  }
-
   return <ArchiveClient items={mockArchive} />
 }
