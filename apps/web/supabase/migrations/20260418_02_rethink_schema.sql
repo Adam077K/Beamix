@@ -507,7 +507,7 @@ SET search_path = public
 AS $$
   SELECT ac.id, ac.user_id, ac.business_id, ac.agent_type, ac.cadence, ac.config
   FROM automation_configs ac
-  JOIN user_profiles up ON up.user_id = ac.user_id
+  JOIN user_profiles up ON up.id = ac.user_id
   WHERE ac.is_active = true
     AND ac.paused_at IS NULL
     AND ac.next_run_at <= NOW()
