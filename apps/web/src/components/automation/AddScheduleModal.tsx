@@ -61,18 +61,18 @@ const AGENT_OPTIONS: Array<{ value: AgentType; label: string; description: strin
     description: 'Generates structured FAQ pages from scan queries.',
   },
   {
-    value: 'competitor_intelligence',
-    label: 'Competitor Intel',
-    description: 'Tracks how competitors rank in AI answers.',
+    value: 'entity_builder',
+    label: 'Entity Builder',
+    description: 'Strengthens your Google Knowledge Panel and AI knowledge graph entries.',
   },
   {
-    value: 'schema_optimizer',
-    label: 'Schema Optimizer',
+    value: 'schema_generator',
+    label: 'Schema Generator',
     description: 'Adds and corrects structured data markup.',
   },
   {
-    value: 'blog_strategist',
-    label: 'Blog Strategist',
+    value: 'authority_blog_strategist',
+    label: 'Authority Blog Strategist',
     description: 'Plans content that directly answers AI queries.',
   },
 ]
@@ -117,7 +117,8 @@ export function AddScheduleModal({
 
   const selectedAgent = AGENT_OPTIONS.find((a) => a.value === agentType) ?? null
   const alreadyScheduled = agentType !== '' && existingAgentTypes.includes(agentType as AgentType)
-  const canSubmit = agentType !== '' && submitState === 'idle'
+  const hasAgent = agentType !== ''
+  const canSubmit: boolean = hasAgent && submitState === 'idle'
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -289,7 +290,7 @@ export function AddScheduleModal({
             <Button
               type="submit"
               size="sm"
-              disabled={!canSubmit || submitState === 'loading' || submitState === 'success'}
+              disabled={submitState === 'loading' || submitState === 'success' || !canSubmit}
               className={cn(
                 'transition-all duration-150 active:scale-[0.98] focus-visible:ring-[#3370FF]',
                 submitState === 'success'

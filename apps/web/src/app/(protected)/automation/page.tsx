@@ -41,7 +41,7 @@ const mockStatus: AutomationStatus = {
       completedAt: new Date(Date.now() - 1 * 86_400_000).toISOString(),
     },
     {
-      agentType: 'competitor_intelligence',
+      agentType: 'entity_builder',
       status: 'success',
       completedAt: new Date(Date.now() - 1.5 * 86_400_000).toISOString(),
     },
@@ -56,12 +56,12 @@ const mockStatus: AutomationStatus = {
       completedAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
     },
     {
-      agentType: 'schema_optimizer',
+      agentType: 'schema_generator',
       status: 'failed',
       completedAt: new Date(Date.now() - 4 * 86_400_000).toISOString(),
     },
     {
-      agentType: 'blog_strategist',
+      agentType: 'authority_blog_strategist',
       status: 'success',
       completedAt: new Date(Date.now() - 5 * 86_400_000).toISOString(),
     },
