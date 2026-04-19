@@ -7,3 +7,8 @@
 
 export { scanRun } from './scan-run'
 export { agentPipeline } from './agent-pipeline'
+export { automationDispatcher } from './automation-dispatcher'
+export { scanCompleted } from './scan-completed'
+export { urlProbe } from './url-probe'
+export { budgetGuard } from './budget-guard'
+export { dailyDigest } from './daily-digest'
