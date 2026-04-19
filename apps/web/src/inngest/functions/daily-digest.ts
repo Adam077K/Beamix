@@ -40,6 +40,9 @@ export const dailyDigest = inngest.createFunction(
         day: 'numeric',
       })
 
+      // today as YYYY-MM-DD for deduplication check
+      const today = new Date().toISOString().split('T')[0]
+
       let sentCount = 0
 
       for (const userId of uniqueUserIds) {
@@ -48,16 +51,28 @@ export const dailyDigest = inngest.createFunction(
         )
 
         // Fetch user profile — need email + first_name + notification preferences
+        // user_profiles.id is the PK (FK to auth.users.id), not user_id
         const { data: profile } = await supabase
           .from('user_profiles')
           .select('email, first_name, notification_preferences')
-          .eq('user_id', userId)
+          .eq('id', userId)
           .maybeSingle()
 
         if (!profile?.email) continue
 
         // Respect notification preference — skip if user has opted out
         if (profile.notification_preferences?.daily_digest === false) continue
+
+        // Deduplication guard — skip if digest was already sent today (handles Inngest retries)
+        const { data: alreadySent } = await supabase
+          .from('email_log')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('email_type', 'daily_digest')
+          .gte('sent_at', today + 'T00:00:00Z')
+          .maybeSingle()
+
+        if (alreadySent) continue // already sent today, skip
 
         const inboxUrl = `${APP_BASE_URL}/dashboard/inbox`
 
@@ -81,6 +96,14 @@ export const dailyDigest = inngest.createFunction(
             text: dailyDigestText(props),
           })
           sentCount++
+
+          // Log the send to prevent duplicate sends on Inngest retry
+          await supabase.from('email_log').insert({
+            user_id: userId,
+            email_type: 'daily_digest',
+            recipient_email: profile.email,
+            sent_at: new Date().toISOString(),
+          }).catch(() => {}) // non-blocking — if log fails, don't block the send
         } catch (err) {
           console.error('[daily-digest] Failed to send to', userId, err)
         }

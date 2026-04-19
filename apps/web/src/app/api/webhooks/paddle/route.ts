@@ -89,7 +89,7 @@ export async function POST(req: Request) {
           const { data: profile } = await supabase
             .from('user_profiles')
             .select('email, first_name')
-            .eq('user_id', userId)
+            .eq('id', userId)
             .maybeSingle()
           if (profile?.email) {
             const dashboardUrl = `${APP_BASE_URL}/dashboard`
@@ -148,7 +148,7 @@ export async function POST(req: Request) {
           const { data: profile } = await supabase
             .from('user_profiles')
             .select('email, first_name')
-            .eq('user_id', userId)
+            .eq('id', userId)
             .maybeSingle()
           if (profile?.email) {
             const rawTotal = tx.details?.totals?.total

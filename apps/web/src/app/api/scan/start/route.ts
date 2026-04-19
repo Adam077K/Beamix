@@ -10,6 +10,25 @@ import { createClient } from '@/lib/supabase/server'
 import { inngest } from '@/inngest/client'
 import { ScanStartRequestSchema, ScanStartResponseSchema } from '@/lib/types/api'
 
+async function verifyTurnstile(token: string | undefined): Promise<boolean> {
+  if (process.env.NODE_ENV === 'development') return true // skip in dev
+  if (!token) return false
+  try {
+    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        secret: process.env.TURNSTILE_SECRET_KEY ?? '',
+        response: token,
+      }),
+    })
+    const data = await res.json() as { success: boolean }
+    return data.success === true
+  } catch {
+    return false
+  }
+}
+
 export async function POST(request: Request) {
   try {
     // 1. Parse + validate request body
@@ -21,6 +40,12 @@ export async function POST(request: Request) {
         { error: { code: 'INVALID_JSON', message: 'Request body must be valid JSON.' } },
         { status: 400 },
       )
+    }
+
+    // 2. Turnstile server-side verification (before any DB work)
+    const cfTurnstileResponse = (body as Record<string, unknown>)?.cfTurnstileResponse as string | undefined
+    if (!(await verifyTurnstile(cfTurnstileResponse))) {
+      return NextResponse.json({ error: 'turnstile_failed' }, { status: 403 })
     }
 
     const parsed = ScanStartRequestSchema.safeParse(body)
@@ -39,7 +64,7 @@ export async function POST(request: Request) {
 
     const { businessId, engines } = parsed.data
 
-    // 2. Auth check
+    // 3. Auth check
     const supabase = await createClient()
     const {
       data: { user },
@@ -53,7 +78,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // 3. Insert scan row
+    // 4. Insert scan row
     const { data: scan, error: insertError } = await (supabase as any)
       .from('scans')
       .insert({
@@ -76,13 +101,13 @@ export async function POST(request: Request) {
 
     const scanId: string = scan.id
 
-    // 4. Fire Inngest event
+    // 5. Fire Inngest event
     await inngest.send({
       name: 'scan/start.requested' as any,
       data: { scanId, userId: user.id, businessId },
     })
 
-    // 5. Return 202 + response envelope
+    // 6. Return 202 + response envelope
     const estimatedCompletionAt = new Date(Date.now() + 90_000).toISOString()
     const responsePayload = ScanStartResponseSchema.parse({
       scanId,

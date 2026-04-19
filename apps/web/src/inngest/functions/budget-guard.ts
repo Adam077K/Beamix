@@ -47,22 +47,26 @@ export const budgetGuard = inngest.createFunction(
 
           // Send budget-100% email — failure must never throw
           if (userEmail) {
-            await sendEmail({
-              to: userEmail,
-              subject: 'Agent credits exhausted — automation paused — Beamix',
-              html: budget100Html({
-                firstName,
-                creditsTotal: cap,
-                automationUrl: `${baseUrl}/dashboard/automation`,
-                topupUrl: `${baseUrl}/settings?tab=billing`,
-              }),
-              text: budget100Text({
-                firstName,
-                creditsTotal: cap,
-                automationUrl: `${baseUrl}/dashboard/automation`,
-                topupUrl: `${baseUrl}/settings?tab=billing`,
-              }),
-            })
+            try {
+              await sendEmail({
+                to: userEmail,
+                subject: 'Agent credits exhausted — automation paused — Beamix',
+                html: budget100Html({
+                  firstName,
+                  creditsTotal: cap,
+                  automationUrl: `${baseUrl}/dashboard/automation`,
+                  topupUrl: `${baseUrl}/settings?tab=billing`,
+                }),
+                text: budget100Text({
+                  firstName,
+                  creditsTotal: cap,
+                  automationUrl: `${baseUrl}/dashboard/automation`,
+                  topupUrl: `${baseUrl}/settings?tab=billing`,
+                }),
+              })
+            } catch (err) {
+              console.error('[budget-guard] Failed to send budget email:', err)
+            }
           }
 
           hit100.push(pool.user_id)
@@ -78,22 +82,26 @@ export const budgetGuard = inngest.createFunction(
 
           // Send budget-75% email — failure must never throw
           if (userEmail) {
-            await sendEmail({
-              to: userEmail,
-              subject: '75% of your agent credits used — Beamix',
-              html: budget75Html({
-                firstName,
-                creditsUsed: pool.used_amount,
-                creditsTotal: cap,
-                automationUrl: `${baseUrl}/dashboard/automation`,
-              }),
-              text: budget75Text({
-                firstName,
-                creditsUsed: pool.used_amount,
-                creditsTotal: cap,
-                automationUrl: `${baseUrl}/dashboard/automation`,
-              }),
-            })
+            try {
+              await sendEmail({
+                to: userEmail,
+                subject: '75% of your agent credits used — Beamix',
+                html: budget75Html({
+                  firstName,
+                  creditsUsed: pool.used_amount,
+                  creditsTotal: cap,
+                  automationUrl: `${baseUrl}/dashboard/automation`,
+                }),
+                text: budget75Text({
+                  firstName,
+                  creditsUsed: pool.used_amount,
+                  creditsTotal: cap,
+                  automationUrl: `${baseUrl}/dashboard/automation`,
+                }),
+              })
+            } catch (err) {
+              console.error('[budget-guard] Failed to send budget email:', err)
+            }
           }
 
           hit75.push(pool.user_id)
