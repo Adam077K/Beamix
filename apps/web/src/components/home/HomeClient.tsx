@@ -44,7 +44,7 @@ function InboxPreviewRow({ item }: { item: HomeInboxPreviewItem }) {
         <p className="text-sm font-medium text-gray-900 truncate">{item.actionLabel}</p>
         <p className="text-xs text-gray-500 truncate">{item.title}</p>
       </div>
-      <span className="text-xs text-gray-400 flex-shrink-0 ms-auto">{item.ageLabel}</span>
+      <span className="text-xs text-gray-400 shrink-0 ms-auto">{item.ageLabel}</span>
     </div>
   )
 }
@@ -123,7 +123,7 @@ export function HomeClient({
                   <h2 className="text-base font-medium text-gray-900">Inbox</h2>
                   <Link
                     href="/inbox"
-                    className="text-xs font-medium text-[#3370FF] hover:underline"
+                    className="text-xs font-medium text-[#3370FF] hover:underline ms-auto"
                     aria-label="View all inbox items"
                   >
                     View all &rarr;
