@@ -38,6 +38,7 @@ export function PaywallModal({ open, onClose, triggerContext }: PaywallModalProp
       const t = setTimeout(() => setLoadingTier(null), 300)
       return () => clearTimeout(t)
     }
+    return undefined
   }, [open])
 
   return (
