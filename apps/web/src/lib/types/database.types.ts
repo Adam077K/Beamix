@@ -87,6 +87,9 @@ export type Database = {
           scan_id: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["agent_job_status"]
+          suggestion_id: string | null
+          target_query_ids: string[] | null
+          trigger_source: string | null
           updated_at: string
           user_id: string
         }
@@ -109,6 +112,9 @@ export type Database = {
           scan_id?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["agent_job_status"]
+          suggestion_id?: string | null
+          target_query_ids?: string[] | null
+          trigger_source?: string | null
           updated_at?: string
           user_id: string
         }
@@ -131,6 +137,9 @@ export type Database = {
           scan_id?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["agent_job_status"]
+          suggestion_id?: string | null
+          target_query_ids?: string[] | null
+          trigger_source?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -154,6 +163,7 @@ export type Database = {
       agent_workflows: {
         Row: {
           business_id: string
+          cadence: string | null
           created_at: string
           description: string | null
           id: string
@@ -161,6 +171,8 @@ export type Database = {
           last_run_at: string | null
           max_runs_per_month: number | null
           name: string
+          next_run_at: string | null
+          paused_at: string | null
           runs_this_month: number | null
           steps: Json
           trigger_config: Json
@@ -170,6 +182,7 @@ export type Database = {
         }
         Insert: {
           business_id: string
+          cadence?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -177,6 +190,8 @@ export type Database = {
           last_run_at?: string | null
           max_runs_per_month?: number | null
           name: string
+          next_run_at?: string | null
+          paused_at?: string | null
           runs_this_month?: number | null
           steps: Json
           trigger_config?: Json
@@ -186,6 +201,7 @@ export type Database = {
         }
         Update: {
           business_id?: string
+          cadence?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -193,6 +209,8 @@ export type Database = {
           last_run_at?: string | null
           max_runs_per_month?: number | null
           name?: string
+          next_run_at?: string | null
+          paused_at?: string | null
           runs_this_month?: number | null
           steps?: Json
           trigger_config?: Json
@@ -330,6 +348,65 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      automation_configs: {
+        Row: {
+          agent_type: string
+          business_id: string
+          cadence: string
+          config: Json | null
+          created_at: string
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          max_runs_per_month: number | null
+          next_run_at: string | null
+          paused_at: string | null
+          runs_this_month: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_type: string
+          business_id: string
+          cadence?: string
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          max_runs_per_month?: number | null
+          next_run_at?: string | null
+          paused_at?: string | null
+          runs_this_month?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_type?: string
+          business_id?: string
+          cadence?: string
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          max_runs_per_month?: number | null
+          next_run_at?: string | null
+          paused_at?: string | null
+          runs_this_month?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_configs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       blog_posts: {
         Row: {
@@ -476,6 +553,7 @@ export type Database = {
       }
       businesses: {
         Row: {
+          competitors_auto_detected: string[] | null
           created_at: string
           description: string | null
           id: string
@@ -492,8 +570,10 @@ export type Database = {
           updated_at: string
           user_id: string
           website_url: string
+          ymyl_category: boolean
         }
         Insert: {
+          competitors_auto_detected?: string[] | null
           created_at?: string
           description?: string | null
           id?: string
@@ -510,8 +590,10 @@ export type Database = {
           updated_at?: string
           user_id: string
           website_url: string
+          ymyl_category?: boolean
         }
         Update: {
+          competitors_auto_detected?: string[] | null
           created_at?: string
           description?: string | null
           id?: string
@@ -528,6 +610,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           website_url?: string
+          ymyl_category?: boolean
         }
         Relationships: []
       }
@@ -624,54 +707,6 @@ export type Database = {
             columns: ["competitor_id"]
             isOneToOne: false
             referencedRelation: "competitors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      competitor_scan_results: {
-        Row: {
-          competitor_id: string
-          created_at: string
-          engine: string
-          id: string
-          is_mentioned: boolean
-          rank_position: number | null
-          scan_id: string
-          score: number | null
-        }
-        Insert: {
-          competitor_id: string
-          created_at?: string
-          engine: string
-          id?: string
-          is_mentioned?: boolean
-          rank_position?: number | null
-          scan_id: string
-          score?: number | null
-        }
-        Update: {
-          competitor_id?: string
-          created_at?: string
-          engine?: string
-          id?: string
-          is_mentioned?: boolean
-          rank_position?: number | null
-          scan_id?: string
-          score?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "competitor_scan_results_competitor_id_fkey"
-            columns: ["competitor_id"]
-            isOneToOne: false
-            referencedRelation: "competitors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "competitor_scan_results_scan_id_fkey"
-            columns: ["scan_id"]
-            isOneToOne: false
-            referencedRelation: "scans"
             referencedColumns: ["id"]
           },
         ]
@@ -839,12 +874,15 @@ export type Database = {
         Row: {
           agent_job_id: string
           agent_type: Database["public"]["Enums"]["agent_type"]
+          archived_at: string | null
           business_id: string
           content: string
           content_body: string | null
           content_format: Database["public"]["Enums"]["content_format"]
           content_type: string | null
           created_at: string
+          estimated_impact: string | null
+          evidence: Json | null
           id: string
           is_favorited: boolean
           language: string | null
@@ -853,26 +891,37 @@ export type Database = {
           original_content: string | null
           published_at: string | null
           published_url: string | null
+          published_verified_at: string | null
           quality_score: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           status: Database["public"]["Enums"]["content_item_status"]
+          suggestion_id: string | null
           tags: string[] | null
+          target_queries: string[] | null
           title: string
+          trigger_reason: string | null
           updated_at: string
+          user_edited_content: string | null
           user_feedback: string | null
           user_id: string
           user_rating: number | null
           voice_profile_id: string | null
           word_count: number | null
+          workflow_run_id: string | null
         }
         Insert: {
           agent_job_id: string
           agent_type: Database["public"]["Enums"]["agent_type"]
+          archived_at?: string | null
           business_id: string
           content: string
           content_body?: string | null
           content_format?: Database["public"]["Enums"]["content_format"]
           content_type?: string | null
           created_at?: string
+          estimated_impact?: string | null
+          evidence?: Json | null
           id?: string
           is_favorited?: boolean
           language?: string | null
@@ -881,26 +930,37 @@ export type Database = {
           original_content?: string | null
           published_at?: string | null
           published_url?: string | null
+          published_verified_at?: string | null
           quality_score?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           status?: Database["public"]["Enums"]["content_item_status"]
+          suggestion_id?: string | null
           tags?: string[] | null
+          target_queries?: string[] | null
           title: string
+          trigger_reason?: string | null
           updated_at?: string
+          user_edited_content?: string | null
           user_feedback?: string | null
           user_id: string
           user_rating?: number | null
           voice_profile_id?: string | null
           word_count?: number | null
+          workflow_run_id?: string | null
         }
         Update: {
           agent_job_id?: string
           agent_type?: Database["public"]["Enums"]["agent_type"]
+          archived_at?: string | null
           business_id?: string
           content?: string
           content_body?: string | null
           content_format?: Database["public"]["Enums"]["content_format"]
           content_type?: string | null
           created_at?: string
+          estimated_impact?: string | null
+          evidence?: Json | null
           id?: string
           is_favorited?: boolean
           language?: string | null
@@ -909,16 +969,24 @@ export type Database = {
           original_content?: string | null
           published_at?: string | null
           published_url?: string | null
+          published_verified_at?: string | null
           quality_score?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           status?: Database["public"]["Enums"]["content_item_status"]
+          suggestion_id?: string | null
           tags?: string[] | null
+          target_queries?: string[] | null
           title?: string
+          trigger_reason?: string | null
           updated_at?: string
+          user_edited_content?: string | null
           user_feedback?: string | null
           user_id?: string
           user_rating?: number | null
           voice_profile_id?: string | null
           word_count?: number | null
+          workflow_run_id?: string | null
         }
         Relationships: [
           {
@@ -1228,6 +1296,30 @@ export type Database = {
           },
         ]
       }
+      daily_cap_usage: {
+        Row: {
+          agent_type: Database["public"]["Enums"]["agent_type"]
+          count: number
+          updated_at: string | null
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          agent_type: Database["public"]["Enums"]["agent_type"]
+          count?: number
+          updated_at?: string | null
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          agent_type?: Database["public"]["Enums"]["agent_type"]
+          count?: number
+          updated_at?: string | null
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_log: {
         Row: {
           business_id: string | null
@@ -1281,6 +1373,7 @@ export type Database = {
       free_scans: {
         Row: {
           business_name: string
+          competitor_urls: string[] | null
           completed_at: string | null
           converted_to_scan_id: string | null
           converted_user_id: string | null
@@ -1292,6 +1385,7 @@ export type Database = {
           ip_address: unknown
           language: string | null
           location: string
+          mock_engines: string[] | null
           overall_score: number | null
           results_data: Json | null
           scan_id: string | null
@@ -1302,6 +1396,7 @@ export type Database = {
         }
         Insert: {
           business_name: string
+          competitor_urls?: string[] | null
           completed_at?: string | null
           converted_to_scan_id?: string | null
           converted_user_id?: string | null
@@ -1313,6 +1408,7 @@ export type Database = {
           ip_address?: unknown
           language?: string | null
           location: string
+          mock_engines?: string[] | null
           overall_score?: number | null
           results_data?: Json | null
           scan_id?: string | null
@@ -1323,6 +1419,7 @@ export type Database = {
         }
         Update: {
           business_name?: string
+          competitor_urls?: string[] | null
           completed_at?: string | null
           converted_to_scan_id?: string | null
           converted_user_id?: string | null
@@ -1334,6 +1431,7 @@ export type Database = {
           ip_address?: unknown
           language?: string | null
           location?: string
+          mock_engines?: string[] | null
           overall_score?: number | null
           results_data?: Json | null
           scan_id?: string | null
@@ -1419,6 +1517,50 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inbox_item_edits: {
+        Row: {
+          accepted: boolean | null
+          ai_response: string | null
+          content_item_id: string
+          created_at: string
+          edit_type: string
+          id: string
+          selected_text: string | null
+          user_id: string
+          user_prompt: string | null
+        }
+        Insert: {
+          accepted?: boolean | null
+          ai_response?: string | null
+          content_item_id: string
+          created_at?: string
+          edit_type?: string
+          id?: string
+          selected_text?: string | null
+          user_id: string
+          user_prompt?: string | null
+        }
+        Update: {
+          accepted?: boolean | null
+          ai_response?: string | null
+          content_item_id?: string
+          created_at?: string
+          edit_type?: string
+          id?: string
+          selected_text?: string | null
+          user_id?: string
+          user_prompt?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbox_item_edits_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
             referencedColumns: ["id"]
           },
         ]
@@ -1580,6 +1722,137 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      page_locks: {
+        Row: {
+          agent_job_id: string
+          agent_type: string
+          business_id: string
+          expires_at: string
+          id: string
+          locked_at: string
+          page_url: string
+        }
+        Insert: {
+          agent_job_id: string
+          agent_type: string
+          business_id: string
+          expires_at?: string
+          id?: string
+          locked_at?: string
+          page_url: string
+        }
+        Update: {
+          agent_job_id?: string
+          agent_type?: string
+          business_id?: string
+          expires_at?: string
+          id?: string
+          locked_at?: string
+          page_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_locks_agent_job_id_fkey"
+            columns: ["agent_job_id"]
+            isOneToOne: false
+            referencedRelation: "agent_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_locks_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      performance_reports: {
+        Row: {
+          actions_measured: Json | null
+          agent_job_id: string | null
+          business_id: string
+          created_at: string
+          engine_deltas: Json | null
+          id: string
+          query_deltas: Json | null
+          report_period_end: string
+          report_period_start: string
+          scan_after_id: string | null
+          scan_before_id: string | null
+          score_after: number | null
+          score_before: number | null
+          score_delta: number | null
+          summary_text: string | null
+          user_id: string
+        }
+        Insert: {
+          actions_measured?: Json | null
+          agent_job_id?: string | null
+          business_id: string
+          created_at?: string
+          engine_deltas?: Json | null
+          id?: string
+          query_deltas?: Json | null
+          report_period_end: string
+          report_period_start: string
+          scan_after_id?: string | null
+          scan_before_id?: string | null
+          score_after?: number | null
+          score_before?: number | null
+          score_delta?: number | null
+          summary_text?: string | null
+          user_id: string
+        }
+        Update: {
+          actions_measured?: Json | null
+          agent_job_id?: string | null
+          business_id?: string
+          created_at?: string
+          engine_deltas?: Json | null
+          id?: string
+          query_deltas?: Json | null
+          report_period_end?: string
+          report_period_start?: string
+          scan_after_id?: string | null
+          scan_before_id?: string | null
+          score_after?: number | null
+          score_before?: number | null
+          score_delta?: number | null
+          summary_text?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_reports_agent_job_id_fkey"
+            columns: ["agent_job_id"]
+            isOneToOne: false
+            referencedRelation: "agent_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_reports_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_reports_scan_after_id_fkey"
+            columns: ["scan_after_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_reports_scan_before_id_fkey"
+            columns: ["scan_before_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       personas: {
         Row: {
@@ -1786,6 +2059,163 @@ export type Database = {
           },
         ]
       }
+      query_clusters: {
+        Row: {
+          business_id: string
+          cluster_intent: string | null
+          cluster_name: string
+          created_at: string
+          id: string
+          priority_score: number | null
+          query_ids: string[]
+          query_run_id: string
+          ymyl_flag: boolean
+        }
+        Insert: {
+          business_id: string
+          cluster_intent?: string | null
+          cluster_name: string
+          created_at?: string
+          id?: string
+          priority_score?: number | null
+          query_ids?: string[]
+          query_run_id: string
+          ymyl_flag?: boolean
+        }
+        Update: {
+          business_id?: string
+          cluster_intent?: string | null
+          cluster_name?: string
+          created_at?: string
+          id?: string
+          priority_score?: number | null
+          query_ids?: string[]
+          query_run_id?: string
+          ymyl_flag?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "query_clusters_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "query_clusters_query_run_id_fkey"
+            columns: ["query_run_id"]
+            isOneToOne: false
+            referencedRelation: "query_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      query_positions: {
+        Row: {
+          brands_mentioned: Json | null
+          business_id: string
+          created_at: string
+          engine: string
+          id: string
+          is_mentioned: boolean
+          rank_position: number | null
+          scan_id: string
+          snippet: string | null
+          tracked_query_id: string
+        }
+        Insert: {
+          brands_mentioned?: Json | null
+          business_id: string
+          created_at?: string
+          engine: string
+          id?: string
+          is_mentioned?: boolean
+          rank_position?: number | null
+          scan_id: string
+          snippet?: string | null
+          tracked_query_id: string
+        }
+        Update: {
+          brands_mentioned?: Json | null
+          business_id?: string
+          created_at?: string
+          engine?: string
+          id?: string
+          is_mentioned?: boolean
+          rank_position?: number | null
+          scan_id?: string
+          snippet?: string | null
+          tracked_query_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "query_positions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "query_positions_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "query_positions_tracked_query_id_fkey"
+            columns: ["tracked_query_id"]
+            isOneToOne: false
+            referencedRelation: "tracked_queries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      query_runs: {
+        Row: {
+          agent_job_id: string | null
+          business_id: string
+          created_at: string
+          id: string
+          query_count: number
+          run_metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          agent_job_id?: string | null
+          business_id: string
+          created_at?: string
+          id?: string
+          query_count?: number
+          run_metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          agent_job_id?: string | null
+          business_id?: string
+          created_at?: string
+          id?: string
+          query_count?: number
+          run_metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "query_runs_agent_job_id_fkey"
+            columns: ["agent_job_id"]
+            isOneToOne: false
+            referencedRelation: "agent_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "query_runs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recommendations: {
         Row: {
           action_items: Json
@@ -1888,9 +2318,13 @@ export type Database = {
       }
       scan_engine_results: {
         Row: {
+          brands_mentioned: Json | null
           business_id: string
           citations: Json | null
+          cited_by_name: boolean | null
+          cited_urls: Json | null
           competitors_mentioned: string[] | null
+          confidence: number | null
           confidence_score: number | null
           created_at: string
           engine: string
@@ -1905,17 +2339,23 @@ export type Database = {
           prompt_text: string | null
           queries_checked: number
           queries_mentioned: number
+          query_type: string | null
           rank_position: number | null
           raw_response_hash: string | null
+          response_excerpt: string | null
           scan_id: string
           sentiment: string | null
           sentiment_score: number | null
           tokens_used: number | null
         }
         Insert: {
+          brands_mentioned?: Json | null
           business_id: string
           citations?: Json | null
+          cited_by_name?: boolean | null
+          cited_urls?: Json | null
           competitors_mentioned?: string[] | null
+          confidence?: number | null
           confidence_score?: number | null
           created_at?: string
           engine: string
@@ -1930,17 +2370,23 @@ export type Database = {
           prompt_text?: string | null
           queries_checked?: number
           queries_mentioned?: number
+          query_type?: string | null
           rank_position?: number | null
           raw_response_hash?: string | null
+          response_excerpt?: string | null
           scan_id: string
           sentiment?: string | null
           sentiment_score?: number | null
           tokens_used?: number | null
         }
         Update: {
+          brands_mentioned?: Json | null
           business_id?: string
           citations?: Json | null
+          cited_by_name?: boolean | null
+          cited_urls?: Json | null
           competitors_mentioned?: string[] | null
+          confidence?: number | null
           confidence_score?: number | null
           created_at?: string
           engine?: string
@@ -1955,8 +2401,10 @@ export type Database = {
           prompt_text?: string | null
           queries_checked?: number
           queries_mentioned?: number
+          query_type?: string | null
           rank_position?: number | null
           raw_response_hash?: string | null
+          response_excerpt?: string | null
           scan_id?: string
           sentiment?: string | null
           sentiment_score?: number | null
@@ -2086,6 +2534,7 @@ export type Database = {
           free_scan_id: string | null
           id: string
           mentions_count: number
+          mock_engines: string[] | null
           overall_score: number | null
           projected_rank: number | null
           prompts_used: number | null
@@ -2109,6 +2558,7 @@ export type Database = {
           free_scan_id?: string | null
           id?: string
           mentions_count?: number
+          mock_engines?: string[] | null
           overall_score?: number | null
           projected_rank?: number | null
           prompts_used?: number | null
@@ -2132,6 +2582,7 @@ export type Database = {
           free_scan_id?: string | null
           id?: string
           mentions_count?: number
+          mock_engines?: string[] | null
           overall_score?: number | null
           projected_rank?: number | null
           prompts_used?: number | null
@@ -2162,8 +2613,95 @@ export type Database = {
           },
         ]
       }
+      submission_packages: {
+        Row: {
+          agent_job_id: string | null
+          agent_type: string
+          business_id: string
+          content_item_id: string | null
+          created_at: string
+          id: string
+          instructions: string
+          platform_name: string
+          platform_url: string | null
+          status: string
+          submission_type: string
+          submitted_at: string | null
+          template_content: string | null
+          user_id: string
+          verification_scan_id: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          agent_job_id?: string | null
+          agent_type: string
+          business_id: string
+          content_item_id?: string | null
+          created_at?: string
+          id?: string
+          instructions: string
+          platform_name: string
+          platform_url?: string | null
+          status?: string
+          submission_type: string
+          submitted_at?: string | null
+          template_content?: string | null
+          user_id: string
+          verification_scan_id?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          agent_job_id?: string | null
+          agent_type?: string
+          business_id?: string
+          content_item_id?: string | null
+          created_at?: string
+          id?: string
+          instructions?: string
+          platform_name?: string
+          platform_url?: string | null
+          status?: string
+          submission_type?: string
+          submitted_at?: string | null
+          template_content?: string | null
+          user_id?: string
+          verification_scan_id?: string | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submission_packages_agent_job_id_fkey"
+            columns: ["agent_job_id"]
+            isOneToOne: false
+            referencedRelation: "agent_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submission_packages_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submission_packages_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submission_packages_verification_scan_id_fkey"
+            columns: ["verification_scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
+          autonomous_cap_pct: number
           billing_interval: string | null
           cancel_at: string | null
           cancel_at_period_end: boolean
@@ -2174,6 +2712,7 @@ export type Database = {
           id: string
           paddle_customer_id: string | null
           paddle_subscription_id: string | null
+          plan_id: string | null
           plan_tier: Database["public"]["Enums"]["plan_tier"] | null
           status: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at: string | null
@@ -2182,6 +2721,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          autonomous_cap_pct?: number
           billing_interval?: string | null
           cancel_at?: string | null
           cancel_at_period_end?: boolean
@@ -2192,6 +2732,7 @@ export type Database = {
           id?: string
           paddle_customer_id?: string | null
           paddle_subscription_id?: string | null
+          plan_id?: string | null
           plan_tier?: Database["public"]["Enums"]["plan_tier"] | null
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string | null
@@ -2200,6 +2741,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          autonomous_cap_pct?: number
           billing_interval?: string | null
           cancel_at?: string | null
           cancel_at_period_end?: boolean
@@ -2210,6 +2752,7 @@ export type Database = {
           id?: string
           paddle_customer_id?: string | null
           paddle_subscription_id?: string | null
+          plan_id?: string | null
           plan_tier?: Database["public"]["Enums"]["plan_tier"] | null
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string | null
@@ -2219,16 +2762,143 @@ export type Database = {
         }
         Relationships: []
       }
+      suggestions: {
+        Row: {
+          accepted_at: string | null
+          agent_type: string
+          business_id: string
+          created_at: string
+          description: string
+          estimated_runs: number
+          evidence: Json | null
+          expires_at: string | null
+          id: string
+          impact: string
+          scan_id: string | null
+          status: string
+          target_query_ids: string[] | null
+          target_url: string | null
+          title: string
+          trigger_rule: string | null
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          agent_type: string
+          business_id: string
+          created_at?: string
+          description: string
+          estimated_runs?: number
+          evidence?: Json | null
+          expires_at?: string | null
+          id?: string
+          impact?: string
+          scan_id?: string | null
+          status?: string
+          target_query_ids?: string[] | null
+          target_url?: string | null
+          title: string
+          trigger_rule?: string | null
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          agent_type?: string
+          business_id?: string
+          created_at?: string
+          description?: string
+          estimated_runs?: number
+          evidence?: Json | null
+          expires_at?: string | null
+          id?: string
+          impact?: string
+          scan_id?: string | null
+          status?: string
+          target_query_ids?: string[] | null
+          target_url?: string | null
+          title?: string
+          trigger_rule?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggestions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestions_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topic_ledger: {
+        Row: {
+          agent_type: string
+          business_id: string
+          content_item_id: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          topic_hash: string
+          topic_title: string
+        }
+        Insert: {
+          agent_type: string
+          business_id: string
+          content_item_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          topic_hash: string
+          topic_title: string
+        }
+        Update: {
+          agent_type?: string
+          business_id?: string
+          content_item_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          topic_hash?: string
+          topic_title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_ledger_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topic_ledger_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tracked_queries: {
         Row: {
           added_source: string
           business_id: string
+          competitor_presence: Json | null
           created_at: string
+          engines_visible: string[] | null
           id: string
           is_active: boolean
           last_scanned_at: string | null
+          opportunity_score: number | null
           priority: string
           query_category: string | null
+          query_run_id: string | null
           query_text: string
           target_url: string | null
           user_id: string
@@ -2236,12 +2906,16 @@ export type Database = {
         Insert: {
           added_source?: string
           business_id: string
+          competitor_presence?: Json | null
           created_at?: string
+          engines_visible?: string[] | null
           id?: string
           is_active?: boolean
           last_scanned_at?: string | null
+          opportunity_score?: number | null
           priority?: string
           query_category?: string | null
+          query_run_id?: string | null
           query_text: string
           target_url?: string | null
           user_id: string
@@ -2249,12 +2923,16 @@ export type Database = {
         Update: {
           added_source?: string
           business_id?: string
+          competitor_presence?: Json | null
           created_at?: string
+          engines_visible?: string[] | null
           id?: string
           is_active?: boolean
           last_scanned_at?: string | null
+          opportunity_score?: number | null
           priority?: string
           query_category?: string | null
+          query_run_id?: string | null
           query_text?: string
           target_url?: string | null
           user_id?: string
@@ -2269,8 +2947,48 @@ export type Database = {
           },
         ]
       }
+      url_probes: {
+        Row: {
+          archive_item_id: string | null
+          attempts: number
+          created_at: string | null
+          id: string
+          next_probe_at: string | null
+          probe_at: string | null
+          result: Json | null
+          status: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          archive_item_id?: string | null
+          attempts?: number
+          created_at?: string | null
+          id?: string
+          next_probe_at?: string | null
+          probe_at?: string | null
+          result?: Json | null
+          status?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          archive_item_id?: string | null
+          attempts?: number
+          created_at?: string | null
+          id?: string
+          next_probe_at?: string | null
+          probe_at?: string | null
+          result?: Json | null
+          status?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
+          automation_paused_at: string | null
           avatar_url: string | null
           content_lang: string
           created_at: string
@@ -2279,6 +2997,7 @@ export type Database = {
           id: string
           interface_lang: string
           is_admin: boolean
+          is_preview: boolean
           locale: string | null
           onboarding_completed_at: string | null
           onboarding_scan_id: string | null
@@ -2287,6 +3006,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          automation_paused_at?: string | null
           avatar_url?: string | null
           content_lang?: string
           created_at?: string
@@ -2295,6 +3015,7 @@ export type Database = {
           id: string
           interface_lang?: string
           is_admin?: boolean
+          is_preview?: boolean
           locale?: string | null
           onboarding_completed_at?: string | null
           onboarding_scan_id?: string | null
@@ -2303,6 +3024,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          automation_paused_at?: string | null
           avatar_url?: string | null
           content_lang?: string
           created_at?: string
@@ -2311,6 +3033,7 @@ export type Database = {
           id?: string
           interface_lang?: string
           is_admin?: boolean
+          is_preview?: boolean
           locale?: string | null
           onboarding_completed_at?: string | null
           onboarding_scan_id?: string | null
@@ -2386,17 +3109,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      allocate_monthly_credits:
-        | { Args: { p_plan_id: string; p_user_id: string }; Returns: Json }
-        | {
-            Args: {
-              p_period_end?: string
-              p_period_start?: string
-              p_plan_id: string
-              p_user_id: string
-            }
-            Returns: Json
-          }
+      acquire_page_lock: {
+        Args: {
+          p_agent_job_id: string
+          p_agent_type: string
+          p_business_id: string
+          p_page_url: string
+        }
+        Returns: Json
+      }
+      allocate_monthly_credits: {
+        Args: {
+          p_period_end?: string
+          p_period_start?: string
+          p_plan_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      check_topic_duplicate: {
+        Args: { p_business_id: string; p_topic_hash: string }
+        Returns: boolean
+      }
+      clean_expired_locks: { Args: never; Returns: number }
+      clean_expired_topics: { Args: never; Returns: number }
       confirm_credits: { Args: { p_job_id: string }; Returns: Json }
       deduct_credits: {
         Args: {
@@ -2408,11 +3144,67 @@ export type Database = {
         }
         Returns: boolean
       }
+      expire_old_suggestions: { Args: never; Returns: number }
+      get_due_automations: {
+        Args: { p_limit?: number }
+        Returns: {
+          agent_type: string
+          business_id: string
+          cadence: string
+          config: Json
+          id: string
+          user_id: string
+        }[]
+      }
+      get_home_summary: {
+        Args: { p_business_id: string; p_user_id: string }
+        Returns: Json
+      }
+      get_inbox_items: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_status?: string
+          p_user_id: string
+        }
+        Returns: {
+          agent_type: string
+          created_at: string
+          estimated_impact: string
+          evidence: Json
+          id: string
+          status: string
+          target_queries: string[]
+          title: string
+          trigger_reason: string
+          updated_at: string
+        }[]
+      }
+      get_query_trend: {
+        Args: {
+          p_business_id: string
+          p_days?: number
+          p_engine?: string
+          p_tracked_query_id: string
+        }
+        Returns: {
+          brands_mentioned: Json
+          created_at: string
+          engine: string
+          is_mentioned: boolean
+          rank_position: number
+          scan_id: string
+        }[]
+      }
       hold_credits: {
         Args: { p_amount: number; p_job_id: string; p_user_id: string }
         Returns: Json
       }
       release_credits: { Args: { p_job_id: string }; Returns: Json }
+      release_page_lock: {
+        Args: { p_agent_job_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       agent_job_status:
@@ -2437,6 +3229,18 @@ export type Database = {
         | "content_pattern_analyzer"
         | "content_refresh"
         | "brand_narrative_analyst"
+        | "query_mapper"
+        | "content_optimizer"
+        | "freshness_agent"
+        | "faq_builder"
+        | "schema_generator"
+        | "offsite_presence_builder"
+        | "review_presence_planner"
+        | "entity_builder"
+        | "authority_blog_strategist"
+        | "performance_tracker"
+        | "reddit_presence_planner"
+        | "video_seo_agent"
       blog_post_status: "draft" | "scheduled" | "published" | "archived"
       content_format:
         | "markdown"
@@ -2444,27 +3248,49 @@ export type Database = {
         | "json_ld"
         | "plain_text"
         | "structured_report"
-      content_item_status: "draft" | "in_review" | "approved" | "published" | "archived"
-      credit_pool_type: "monthly" | "topup" | "trial"
+      content_item_status:
+        | "draft"
+        | "ready"
+        | "published"
+        | "archived"
+        | "in_review"
+        | "approved"
+        | "rejected"
+      credit_pool_type:
+        | "agent"
+        | "scan"
+        | "report"
+        | "monthly"
+        | "topup"
+        | "trial"
       credit_transaction_type:
         | "allocation"
+        | "usage"
+        | "topup"
+        | "rollover"
+        | "refund"
+        | "adjustment"
         | "hold"
         | "confirm"
         | "release"
-        | "topup"
-        | "rollover"
         | "expire"
         | "system_grant"
-      plan_tier: "starter" | "pro" | "business"
+      plan_tier: "starter" | "pro" | "business" | "discover" | "build" | "scale"
       recommendation_priority: "high" | "medium" | "low"
-      recommendation_status: "new" | "in_progress" | "completed" | "dismissed"
+      recommendation_status:
+        | "pending"
+        | "in_progress"
+        | "done"
+        | "dismissed"
+        | "new"
+        | "completed"
       scan_status: "pending" | "processing" | "completed" | "failed" | "expired"
       subscription_status:
         | "trialing"
         | "active"
         | "past_due"
         | "cancelled"
-        | "paused"
+        | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2615,6 +3441,18 @@ export const Constants = {
         "content_pattern_analyzer",
         "content_refresh",
         "brand_narrative_analyst",
+        "query_mapper",
+        "content_optimizer",
+        "freshness_agent",
+        "faq_builder",
+        "schema_generator",
+        "offsite_presence_builder",
+        "review_presence_planner",
+        "entity_builder",
+        "authority_blog_strategist",
+        "performance_tracker",
+        "reddit_presence_planner",
+        "video_seo_agent",
       ],
       blog_post_status: ["draft", "scheduled", "published", "archived"],
       content_format: [
@@ -2624,28 +3462,53 @@ export const Constants = {
         "plain_text",
         "structured_report",
       ],
-      content_item_status: ["draft", "in_review", "approved", "published", "archived"],
-      credit_pool_type: ["monthly", "topup", "trial"],
+      content_item_status: [
+        "draft",
+        "ready",
+        "published",
+        "archived",
+        "in_review",
+        "approved",
+        "rejected",
+      ],
+      credit_pool_type: [
+        "agent",
+        "scan",
+        "report",
+        "monthly",
+        "topup",
+        "trial",
+      ],
       credit_transaction_type: [
         "allocation",
+        "usage",
+        "topup",
+        "rollover",
+        "refund",
+        "adjustment",
         "hold",
         "confirm",
         "release",
-        "topup",
-        "rollover",
         "expire",
         "system_grant",
       ],
-      plan_tier: ["starter", "pro", "business"],
+      plan_tier: ["starter", "pro", "business", "discover", "build", "scale"],
       recommendation_priority: ["high", "medium", "low"],
-      recommendation_status: ["new", "in_progress", "completed", "dismissed"],
+      recommendation_status: [
+        "pending",
+        "in_progress",
+        "done",
+        "dismissed",
+        "new",
+        "completed",
+      ],
       scan_status: ["pending", "processing", "completed", "failed", "expired"],
       subscription_status: [
         "trialing",
         "active",
         "past_due",
         "cancelled",
-        "paused",
+        "expired",
       ],
     },
   },
