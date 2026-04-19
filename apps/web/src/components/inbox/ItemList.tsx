@@ -27,7 +27,7 @@ function formatAge(isoString: string): string {
 export default function ItemList({ items, selectedId, onSelect }: ItemListProps) {
   if (items.length === 0) {
     return (
-      <div className="flex w-90 shrink-0 flex-col items-center justify-center border-r border-gray-100 bg-white px-6 py-16 text-center">
+      <div className="flex w-90 shrink-0 flex-col items-center justify-center border-e border-gray-100 bg-white px-6 py-16 text-center">
         <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gray-50">
           <svg
             width="20"
@@ -60,7 +60,7 @@ export default function ItemList({ items, selectedId, onSelect }: ItemListProps)
   }
 
   return (
-    <div className="w-90 shrink-0 overflow-y-auto border-r border-gray-100 bg-white">
+    <div className="w-90 shrink-0 overflow-y-auto border-e border-gray-100 bg-white">
       {items.map((item) => {
         const isSelected = item.id === selectedId;
         const isUnread = item.status === 'awaiting_review';
@@ -70,7 +70,7 @@ export default function ItemList({ items, selectedId, onSelect }: ItemListProps)
             type="button"
             onClick={() => onSelect(item.id)}
             className={cn(
-              'relative flex w-full flex-col justify-center gap-0.5 px-4 py-3 text-left transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#3370FF]',
+              'relative flex w-full flex-col justify-center gap-0.5 px-4 py-3 text-start transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#3370FF]',
               isSelected
                 ? 'bg-blue-50'
                 : 'hover:bg-gray-50',
@@ -81,7 +81,7 @@ export default function ItemList({ items, selectedId, onSelect }: ItemListProps)
             {isSelected && (
               <span
                 aria-hidden="true"
-                className="absolute left-0 top-0 h-full w-0.5 bg-[#3370FF]"
+                className="absolute start-0 top-0 h-full w-0.5 bg-[#3370FF]"
               />
             )}
 

@@ -122,7 +122,7 @@ export default function PreviewPane({ item, onApprove, onReject, onArchive }: Pr
         <button
           type="button"
           onClick={() => setEvidenceOpen((v) => !v)}
-          className="flex w-full items-center justify-between px-6 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#3370FF]"
+          className="flex w-full items-center justify-between px-6 py-3 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#3370FF]"
           aria-expanded={evidenceOpen}
         >
           <span className="text-xs font-semibold uppercase tracking-widest text-gray-500">

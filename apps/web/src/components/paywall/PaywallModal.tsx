@@ -61,7 +61,7 @@ export function PaywallModal({ open, onClose, triggerContext }: PaywallModalProp
           <DialogPrimitive.Close
             aria-label="Close"
             className={cn(
-              'absolute right-5 top-5 rounded-lg p-1.5 text-gray-400',
+              'absolute end-5 top-5 rounded-lg p-1.5 text-gray-400',
               'hover:bg-gray-100 hover:text-gray-600',
               'transition-colors duration-150',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2'
@@ -109,7 +109,7 @@ export function PaywallModal({ open, onClose, triggerContext }: PaywallModalProp
               className="cursor-pointer select-none text-sm text-gray-700"
             >
               Save 20% with annual billing
-              <span className="ml-2 inline-flex items-center rounded-full bg-[#3370FF]/10 px-2 py-0.5 text-xs font-medium text-[#3370FF]">
+              <span className="ms-2 inline-flex items-center rounded-full bg-[#3370FF]/10 px-2 py-0.5 text-xs font-medium text-[#3370FF]">
                 2 months free
               </span>
             </label>

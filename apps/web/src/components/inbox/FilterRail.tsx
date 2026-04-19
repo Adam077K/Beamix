@@ -20,7 +20,7 @@ interface FilterRailProps {
 
 export default function FilterRail({ counts, active, onChange }: FilterRailProps) {
   return (
-    <aside className="w-60 shrink-0 border-r border-gray-100 bg-white h-full flex flex-col pt-4 pb-4">
+    <aside className="w-60 shrink-0 border-e border-gray-100 bg-white h-full flex flex-col pt-4 pb-4">
       <p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-400">
         Filter
       </p>
@@ -44,7 +44,7 @@ export default function FilterRail({ counts, active, onChange }: FilterRailProps
               {isActive && (
                 <span
                   aria-hidden="true"
-                  className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[#3370FF]"
+                  className="absolute start-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-[#3370FF]"
                 />
               )}
               <span>{label}</span>

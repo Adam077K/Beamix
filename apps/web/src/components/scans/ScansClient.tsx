@@ -141,7 +141,7 @@ export function ScansClient({ scans }: ScansClientProps) {
       ) : (
         <div className="relative">
           {/* Vertical timeline rail */}
-          <div className="absolute top-2 left-6 h-[calc(100%-1.5rem)] w-px bg-gray-200" />
+          <div className="absolute top-2 start-6 h-[calc(100%-1.5rem)] w-px bg-gray-200" />
 
           <ol className="space-y-0">
             {scans.map((scan, index) => (
@@ -154,12 +154,12 @@ export function ScansClient({ scans }: ScansClientProps) {
                   delay: index * 0.06,
                   ease: [0.16, 1, 0.3, 1],
                 }}
-                className="relative pl-14"
+                className="relative ps-14"
               >
                 {/* Timeline dot */}
                 <div
                   className={cn(
-                    'absolute left-[18px] top-3.5 flex size-3 -translate-x-1/2 items-center justify-center rounded-full border-2',
+                    'absolute start-[18px] top-3.5 flex size-3 -translate-x-1/2 items-center justify-center rounded-full border-2',
                     scan.status === 'completed'
                       ? 'border-[#3370FF] bg-[#3370FF]'
                       : scan.status === 'failed'
@@ -171,7 +171,7 @@ export function ScansClient({ scans }: ScansClientProps) {
                 {/* Row card — subtle hover surface */}
                 <button
                   onClick={() => setSelectedScan(scan)}
-                  className="group mb-1 flex w-full items-center justify-between rounded-lg px-3 py-3 text-left transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+                  className="group mb-1 flex w-full items-center justify-between rounded-lg px-3 py-3 text-start transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -186,7 +186,7 @@ export function ScansClient({ scans }: ScansClientProps) {
                     </p>
                   </div>
 
-                  <div className="ml-4 flex items-center gap-3 shrink-0">
+                  <div className="ms-4 flex items-center gap-3 shrink-0">
                     <ScoreChip score={scan.score} delta={scan.scoreDelta} />
                     <span className="text-xs text-gray-400 opacity-0 transition-opacity group-hover:opacity-100">
                       View details
@@ -195,7 +195,7 @@ export function ScansClient({ scans }: ScansClientProps) {
                 </button>
 
                 {/* Connector spacing between items */}
-                {index < scans.length - 1 && <div className="ml-3 h-1" />}
+                {index < scans.length - 1 && <div className="ms-3 h-1" />}
               </motion.li>
             ))}
           </ol>

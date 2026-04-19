@@ -89,7 +89,7 @@ export function TierCard({ tier, annual, highlighted, onSelect }: TierCardProps)
     >
       {/* Recommended pill */}
       {highlighted && (
-        <div className="absolute -top-3 right-5">
+        <div className="absolute -top-3 end-5">
           <span className="inline-flex items-center rounded-full bg-[#3370FF] px-3 py-0.5 text-xs font-medium text-white">
             Recommended
           </span>
