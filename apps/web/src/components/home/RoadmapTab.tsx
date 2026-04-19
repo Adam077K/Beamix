@@ -339,7 +339,7 @@ export function RoadmapTab({ actions, className }: RoadmapTabProps) {
       {/* Future */}
       {grouped.future.length > 0 && (
         <Section delay={0.16}>
-          <SectionHeader label={`Future (${grouped.future.length} locked)`} count={0} />
+          <SectionHeader label="Future" count={grouped.future.length} />
           {grouped.future.map((a, i) => (
             <FutureRow key={a.id} action={a} index={i} />
           ))}
