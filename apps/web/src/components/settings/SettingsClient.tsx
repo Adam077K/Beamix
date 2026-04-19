@@ -623,11 +623,11 @@ export function SettingsClient({ user }: Props) {
         value={activeTab}
         onValueChange={handleTabChange}
         orientation="vertical"
-        className="flex gap-0 items-start"
+        className="flex flex-col gap-0 sm:flex-row sm:items-start"
       >
         {/* Left sidebar nav */}
         <TabsPrimitive.List
-          className="flex flex-col gap-0.5 w-[220px] shrink-0 sticky top-24 mr-8"
+          className="flex flex-row gap-1 overflow-x-auto pb-2 sm:flex-col sm:gap-0.5 sm:w-[220px] sm:shrink-0 sm:sticky sm:top-24 sm:mr-8 sm:pb-0"
           aria-label="Settings navigation"
         >
           {TABS.map(({ id, label, icon: Icon }) => (
@@ -635,7 +635,7 @@ export function SettingsClient({ user }: Props) {
               key={id}
               value={id}
               className={cn(
-                'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-left w-full transition-all duration-150 outline-none',
+                'flex shrink-0 items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-left transition-all duration-150 outline-none sm:w-full',
                 'text-gray-500 hover:text-gray-900 hover:bg-gray-100',
                 'data-[state=active]:text-gray-900 data-[state=active]:bg-gray-100',
                 'focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1'

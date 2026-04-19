@@ -54,7 +54,7 @@ export function ScoreHero({ score, delta, sparkline }: ScoreHeroProps) {
   const { line, area } = buildSparklinePath(sparkline, 120, 40)
 
   return (
-    <div className="flex items-center justify-between gap-6 rounded-2xl border border-gray-100 bg-white px-8 py-6 shadow-sm">
+    <div className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white px-6 py-6 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-8">
       {/* Score block */}
       <div className="flex items-end gap-4">
         <div className="flex items-baseline gap-1">
@@ -84,7 +84,7 @@ export function ScoreHero({ score, delta, sparkline }: ScoreHeroProps) {
       </div>
 
       {/* Sparkline */}
-      <div className="flex flex-col items-end gap-1">
+      <div className="flex flex-col items-start gap-1 sm:items-end">
         <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Trend</span>
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
           <svg
