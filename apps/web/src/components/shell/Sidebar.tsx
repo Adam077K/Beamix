@@ -15,6 +15,7 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { PlanBadge } from './PlanBadge'
+import { NotificationBell } from './NotificationBell'
 
 interface SidebarProps {
   user: { email: string }
@@ -94,6 +95,11 @@ export function Sidebar({ user, plan, inboxUnreadCount }: SidebarProps) {
           )
         })}
       </nav>
+
+      {/* Notification bell */}
+      <div className="px-2 pb-1">
+        <NotificationBell />
+      </div>
 
       {/* User footer */}
       <div className="px-2 py-3 border-t border-gray-100">
