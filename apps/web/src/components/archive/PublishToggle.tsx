@@ -24,13 +24,13 @@ export function PublishToggle({
   const [loading, setLoading] = useState(false)
 
   async function handleChange(value: boolean) {
-    if (!onToggle || loading) return
+    if (loading) return
     setChecked(value)
+    if (!onToggle) return
     setLoading(true)
     try {
       await onToggle(itemId, value)
     } catch {
-      // Revert on error
       setChecked(!value)
     } finally {
       setLoading(false)
@@ -44,17 +44,23 @@ export function PublishToggle({
         checked={checked}
         onCheckedChange={handleChange}
         disabled={disabled || loading}
-        size="sm"
+        aria-label={checked ? 'Mark as unpublished' : 'Mark as published'}
+        className={cn(
+          'transition-colors duration-150',
+          checked
+            ? 'data-[state=checked]:bg-[#3370FF]'
+            : 'data-[state=unchecked]:bg-gray-200'
+        )}
       />
       <Label
         htmlFor={`publish-${itemId}`}
         className={cn(
-          'text-xs cursor-pointer select-none',
-          checked ? 'text-gray-700' : 'text-gray-400',
+          'text-xs cursor-pointer select-none transition-colors duration-150',
+          checked ? 'text-[#3370FF] font-medium' : 'text-gray-400',
           loading && 'opacity-50'
         )}
       >
-        {checked ? 'Published' : 'Mark as published'}
+        {loading ? 'Saving…' : checked ? 'Published' : 'Mark as published'}
       </Label>
     </div>
   )

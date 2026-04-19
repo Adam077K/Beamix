@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils'
 import { CheckCircle, Clock, XCircle } from 'lucide-react'
 
-export type VerificationStatus = 'pending' | 'verified' | 'unverified'
+export type VerificationStatus = 'pending' | 'verified' | 'unverified' | 'failed'
 
 interface VerificationChipProps {
   status: VerificationStatus
@@ -29,10 +29,16 @@ const statusConfig: Record<
     icon: XCircle,
     classes: 'bg-gray-50 text-gray-500 border-gray-200',
   },
+  failed: {
+    label: 'Failed',
+    icon: XCircle,
+    classes: 'bg-red-50 text-red-600 border-red-200',
+  },
 }
 
 export function VerificationChip({ status, className }: VerificationChipProps) {
-  const { label, icon: Icon, classes } = statusConfig[status]
+  const config = statusConfig[status] ?? statusConfig.unverified
+  const { label, icon: Icon, classes } = config
 
   return (
     <span
@@ -42,7 +48,7 @@ export function VerificationChip({ status, className }: VerificationChipProps) {
         className
       )}
     >
-      <Icon size={11} className="shrink-0" />
+      <Icon size={11} className="shrink-0" aria-hidden="true" />
       {label}
     </span>
   )
