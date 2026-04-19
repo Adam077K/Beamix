@@ -11,6 +11,13 @@
 - Created _INDEX.md hub + 8 MOC notes (192 wikilinks)
 - MOCs: Product, Architecture, Business, Marketing, Codebase, History, Metrics, Agents
 
+## [2026-04-19] design | Framer features page — BenefitTabV2 content planning
+- Audited all components on /features page via Framer MCP — full map of covered vs uncovered features
+- Read product rethink docs (PRODUCT-VISION, AGENT-ROSTER-V2, UX-ARCHITECTURE) to identify lifecycle gaps
+- Defined 4 GEO-optimized feature tabs: Your Agent Workspace · Measure Every Fix · Automation That Runs for You · Your Competitor Gap Map
+- Icons: NotePencil · TrendUp · Lightning · Crosshair (Phosphor). Screen designs scoped per tab.
+- Copy not yet pushed to Framer — waiting on product screenshot designs for DashboardImage01–04
+
 ## [2026-04-17] docs | Documentation cleanup after April 14-15 board decisions
 - Full docs cleanup after April 14-15 board meeting decisions
 - PRD, VISION, PRODUCT_SPEC, ARCHITECTURE, AI_AGENTS rewritten
