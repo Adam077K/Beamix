@@ -59,7 +59,7 @@ export function DashboardShellClient({ children, user, plan }: DashboardShellCli
       )}
       <div className="flex min-h-screen bg-white">
         <Sidebar user={user} plan={plan} onOpenCommandPalette={openPalette} />
-        <main className="flex-1 min-h-screen min-w-0">{children}</main>
+        <main className="flex-1 min-h-screen min-w-0 pt-14 md:pt-0">{children}</main>
       </div>
       <PaywallModal
         open={paywallOpen}

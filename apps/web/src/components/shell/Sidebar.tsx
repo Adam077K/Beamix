@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -95,29 +95,40 @@ interface SidebarInnerProps {
   inboxUnreadCount?: number
   onOpenCommandPalette?: () => void
   onNavClick?: () => void
+  /** When true, the logo header row is omitted (mobile drawer renders its own header) */
+  hideLogoHeader?: boolean
 }
 
-function SidebarInner({ user, plan, inboxUnreadCount, onOpenCommandPalette, onNavClick }: SidebarInnerProps) {
+function SidebarInner({
+  user,
+  plan,
+  inboxUnreadCount,
+  onOpenCommandPalette,
+  onNavClick,
+  hideLogoHeader = false,
+}: SidebarInnerProps) {
   const pathname = usePathname()
 
   return (
     <>
-      {/* Logo */}
-      <div className="flex items-center gap-2 px-4 h-14 border-b border-gray-100 shrink-0">
-        <Image
-          src="/logo/beamix_logo_blue_Primary.png"
-          alt="Beamix"
-          width={24}
-          height={24}
-          className="shrink-0"
-        />
-        <span
-          className="text-sm font-semibold text-gray-900 tracking-tight"
-          style={{ fontFamily: 'InterDisplay, Inter, sans-serif' }}
-        >
-          Beamix
-        </span>
-      </div>
+      {/* Logo — omit when mobile drawer renders its own header */}
+      {!hideLogoHeader && (
+        <div className="flex items-center gap-2 px-4 h-14 border-b border-gray-100 shrink-0">
+          <Image
+            src="/logo/beamix_logo_blue_Primary.png"
+            alt="Beamix"
+            width={24}
+            height={24}
+            className="shrink-0"
+          />
+          <span
+            className="text-sm font-semibold text-gray-900 tracking-tight"
+            style={{ fontFamily: 'InterDisplay, Inter, sans-serif' }}
+          >
+            Beamix
+          </span>
+        </div>
+      )}
 
       {/* Command palette trigger */}
       {onOpenCommandPalette && (
@@ -179,6 +190,30 @@ function SidebarInner({ user, plan, inboxUnreadCount, onOpenCommandPalette, onNa
 export function Sidebar({ user, plan, inboxUnreadCount, onOpenCommandPalette }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  const close = useCallback(() => setMobileOpen(false), [])
+
+  // Escape key closes the drawer
+  useEffect(() => {
+    if (!mobileOpen) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') close()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [mobileOpen, close])
+
+  // Lock body scroll while drawer is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileOpen])
+
   return (
     <>
       {/* Mobile top bar — only visible below md */}
@@ -203,65 +238,82 @@ export function Sidebar({ user, plan, inboxUnreadCount, onOpenCommandPalette }: 
           onClick={() => setMobileOpen(true)}
           className="flex size-9 items-center justify-center rounded-md text-gray-500 hover:bg-gray-50 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1"
           aria-label="Open navigation menu"
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-nav-drawer"
         >
-          <Menu size={20} />
+          <Menu size={20} aria-hidden="true" />
         </button>
       </div>
 
-      {/* Mobile drawer overlay */}
-      {mobileOpen && (
+      {/* Mobile drawer — slide-in from start with backdrop */}
+      <div
+        id="mobile-nav-drawer"
+        className={`md:hidden fixed inset-0 z-50 transition-opacity duration-200 ${
+          mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation menu"
+        aria-hidden={!mobileOpen}
+      >
+        {/* Backdrop */}
         <div
-          className="md:hidden fixed inset-0 z-50 flex"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Navigation menu"
+          className="absolute inset-0 bg-black/30"
+          onClick={close}
+          aria-hidden="true"
+        />
+
+        {/* Drawer panel */}
+        <aside
+          className={`relative flex w-72 max-w-[85vw] flex-col min-h-dvh bg-white border-r border-gray-100 shadow-xl transition-transform duration-200 ease-out ${
+            mobileOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
         >
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/30"
-            onClick={() => setMobileOpen(false)}
-            aria-hidden="true"
-          />
-
-          {/* Drawer panel */}
-          <aside className="relative flex w-72 max-w-[85vw] flex-col min-h-dvh bg-white border-r border-gray-100 shadow-xl">
-            {/* Close button row */}
-            <div className="flex items-center justify-between px-4 h-14 border-b border-gray-100 shrink-0">
-              <div className="flex items-center gap-2">
-                <Image
-                  src="/logo/beamix_logo_blue_Primary.png"
-                  alt="Beamix"
-                  width={22}
-                  height={22}
-                  className="shrink-0"
-                />
-                <span
-                  className="text-sm font-semibold text-gray-900 tracking-tight"
-                  style={{ fontFamily: 'InterDisplay, Inter, sans-serif' }}
-                >
-                  Beamix
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMobileOpen(false)}
-                className="flex size-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-50 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF]"
-                aria-label="Close navigation menu"
+          {/* Header row with logo + close button */}
+          <div className="flex items-center justify-between px-4 h-14 border-b border-gray-100 shrink-0">
+            <div className="flex items-center gap-2">
+              <Image
+                src="/logo/beamix_logo_blue_Primary.png"
+                alt="Beamix"
+                width={22}
+                height={22}
+                className="shrink-0"
+              />
+              <span
+                className="text-sm font-semibold text-gray-900 tracking-tight"
+                style={{ fontFamily: 'InterDisplay, Inter, sans-serif' }}
               >
-                <X size={16} />
-              </button>
+                Beamix
+              </span>
             </div>
+            <button
+              type="button"
+              onClick={close}
+              className="flex size-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-50 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF]"
+              aria-label="Close navigation menu"
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+          </div>
 
-            <SidebarInner
-              user={user}
-              plan={plan}
-              inboxUnreadCount={inboxUnreadCount}
-              onOpenCommandPalette={onOpenCommandPalette ? () => { setMobileOpen(false); onOpenCommandPalette() } : undefined}
-              onNavClick={() => setMobileOpen(false)}
-            />
-          </aside>
-        </div>
-      )}
+          {/* Nav content — logo header suppressed since we render it above */}
+          <SidebarInner
+            user={user}
+            plan={plan}
+            inboxUnreadCount={inboxUnreadCount}
+            onOpenCommandPalette={
+              onOpenCommandPalette
+                ? () => {
+                    close()
+                    onOpenCommandPalette()
+                  }
+                : undefined
+            }
+            onNavClick={close}
+            hideLogoHeader
+          />
+        </aside>
+      </div>
 
       {/* Desktop sidebar — hidden below md */}
       <aside className="hidden md:flex flex-col w-60 min-h-screen border-r border-gray-100 bg-white shrink-0">
