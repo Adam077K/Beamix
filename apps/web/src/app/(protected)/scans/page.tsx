@@ -1,14 +1,17 @@
-import { BarChart3 } from 'lucide-react'
 import type { ScanSummary } from '@/lib/types/shared'
 import { ScansClient } from '@/components/scans/ScansClient'
 
+/**
+ * Mock data — replace with real Supabase fetch when wiring up the API.
+ * Sorted latest first by startedAt.
+ */
 const mockScans: ScanSummary[] = [
   {
     id: 's1',
     userId: 'u1',
     businessId: 'b1',
     startedAt: '2026-04-19T08:00:00Z',
-    completedAt: '2026-04-19T08:02:00Z',
+    completedAt: '2026-04-19T08:02:14Z',
     status: 'completed',
     score: 62,
     scoreDelta: 5,
@@ -20,7 +23,7 @@ const mockScans: ScanSummary[] = [
     userId: 'u1',
     businessId: 'b1',
     startedAt: '2026-04-12T08:00:00Z',
-    completedAt: '2026-04-12T08:02:00Z',
+    completedAt: '2026-04-12T08:01:53Z',
     status: 'completed',
     score: 57,
     scoreDelta: 3,
@@ -32,7 +35,7 @@ const mockScans: ScanSummary[] = [
     userId: 'u1',
     businessId: 'b1',
     startedAt: '2026-04-05T08:00:00Z',
-    completedAt: '2026-04-05T08:02:00Z',
+    completedAt: '2026-04-05T08:02:07Z',
     status: 'completed',
     score: 54,
     scoreDelta: -2,
@@ -44,7 +47,7 @@ const mockScans: ScanSummary[] = [
     userId: 'u1',
     businessId: 'b1',
     startedAt: '2026-03-29T08:00:00Z',
-    completedAt: '2026-03-29T08:02:00Z',
+    completedAt: '2026-03-29T08:02:01Z',
     status: 'completed',
     score: 56,
     scoreDelta: null,
@@ -54,17 +57,7 @@ const mockScans: ScanSummary[] = [
 ]
 
 export default function ScansPage() {
-  if (mockScans.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center">
-        <BarChart3 size={48} className="mb-4 text-muted-foreground/50" />
-        <h3 className="text-lg font-medium text-foreground mb-2">No scans yet</h3>
-        <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-          Your first scan runs automatically after setup. Results appear here with detailed engine breakdowns.
-        </p>
-      </div>
-    )
-  }
-
+  // ScansClient handles all states: loading / empty / error / success
+  // Pass isLoading / error props once real data fetching is wired
   return <ScansClient scans={mockScans} />
 }
