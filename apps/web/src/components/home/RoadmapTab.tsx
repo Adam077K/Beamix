@@ -1,8 +1,13 @@
 'use client'
 
+import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { Check, Loader, Lock, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { spring, fadeInUp } from '@/lib/motion'
+import ProgressRing from './ProgressRing'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export type RoadmapStatus = 'completed' | 'in_progress' | 'up_next' | 'future'
 
@@ -10,167 +15,256 @@ export interface RoadmapAction {
   id: string
   label: string
   status: RoadmapStatus
-  impactDelta?: string   // e.g. "+12 citations"
-  relativeTime?: string  // e.g. "3 days ago"
+  impactDelta?: string     // e.g. "+3 score"
+  dateLabel?: string       // e.g. "Apr 14"
+  note?: string            // secondary note e.g. "pending verification"
+  inboxHref?: string       // if in_progress and reviewable
+  upNextIndex?: number     // 1-based number for up_next rows
 }
 
 interface RoadmapTabProps {
-  actions: RoadmapAction[]
+  actions?: RoadmapAction[]
   className?: string
 }
 
-const STATUS_CONFIG: Record<
-  RoadmapStatus,
-  { label: string; dotClass: string; iconEl: React.ReactNode }
-> = {
-  completed: {
-    label: 'Completed',
-    dotClass: 'bg-emerald-500',
-    iconEl: (
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-        <circle cx="7" cy="7" r="6" fill="#10B981" />
-        <path d="M4.5 7l2 2 3-3" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  in_progress: {
-    label: 'In Progress',
-    dotClass: 'bg-blue-500 animate-pulse',
-    iconEl: (
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-        <circle cx="7" cy="7" r="6" stroke="#3370FF" strokeWidth="1.5" fill="#EFF6FF" />
-        <path d="M7 4.5v2.5l1.5 1" stroke="#3370FF" strokeWidth="1.3" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  up_next: {
-    label: 'Up Next',
-    dotClass: 'bg-amber-400',
-    iconEl: (
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-        <circle cx="7" cy="7" r="6" stroke="#F59E0B" strokeWidth="1.5" fill="#FFFBEB" />
-        <path d="M5 7h4M7 5l2 2-2 2" stroke="#F59E0B" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  future: {
-    label: 'Future',
-    dotClass: 'bg-gray-300',
-    iconEl: (
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-        <circle cx="7" cy="7" r="6" stroke="#D1D5DB" strokeWidth="1.5" fill="#F9FAFB" />
-        <path d="M5 7h4" stroke="#D1D5DB" strokeWidth="1.3" strokeLinecap="round" />
-        <path d="M7 5l2 2-2 2" stroke="#D1D5DB" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-}
+// ─── Section header ───────────────────────────────────────────────────────────
 
-// Circular progress ring
-function ProgressRing({
-  done,
-  total,
-  pct,
-}: {
-  done: number
-  total: number
-  pct: number
-}) {
-  const r = 28
-  const circ = 2 * Math.PI * r
-  const offset = circ - (pct / 100) * circ
-
+function SectionHeader({ label, count }: { label: string; count: number }) {
   return (
-    <div className="flex items-center gap-4">
-      <div className="relative flex h-16 w-16 items-center justify-center">
-        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-          <circle cx="32" cy="32" r={r} stroke="#E5E7EB" strokeWidth="5" />
-          <motion.circle
-            cx="32"
-            cy="32"
-            r={r}
-            stroke="#3370FF"
-            strokeWidth="5"
-            strokeLinecap="round"
-            strokeDasharray={circ}
-            strokeDashoffset={offset}
-            transform="rotate(-90 32 32)"
-            initial={{ strokeDashoffset: circ }}
-            animate={{ strokeDashoffset: offset }}
-            transition={{ ...spring.subtle, duration: 1.0 }}
-          />
-        </svg>
-        <span className="absolute text-sm font-bold tabular-nums text-gray-900">
-          {pct}%
-        </span>
-      </div>
-      <div>
-        <p className="text-sm font-semibold text-gray-900">
-          {done} of {total} actions done
-        </p>
-        <p className="text-xs text-gray-400 mt-0.5">
-          {total - done} remaining to complete your GEO plan
-        </p>
-      </div>
-    </div>
+    <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-400">
+      {label}{' '}
+      <span className="font-normal text-gray-300">({count})</span>
+    </p>
   )
 }
 
-interface ActionRowProps {
-  action: RoadmapAction
-  index: number
-}
+// ─── Completed row ────────────────────────────────────────────────────────────
 
-function ActionRow({ action, index }: ActionRowProps) {
-  const cfg = STATUS_CONFIG[action.status]
-  const isFuture = action.status === 'future'
-
+function CompletedRow({ action, index }: { action: RoadmapAction; index: number }) {
   return (
     <motion.div
       initial={fadeInUp.initial}
       animate={fadeInUp.animate}
-      transition={{ ...spring.subtle, delay: index * 0.04 }}
-      className={cn(
-        'flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0',
-        isFuture && 'opacity-50',
-      )}
+      transition={{ ...spring.subtle, delay: index * 0.035 }}
+      className="flex min-h-[52px] items-center gap-3 border-b border-gray-50 last:border-0 py-2"
     >
-      <div className="shrink-0">{cfg.iconEl}</div>
+      {/* Check icon */}
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50">
+        <Check className="h-3 w-3 text-emerald-500" strokeWidth={2.5} />
+      </span>
 
-      <div className="flex-1 min-w-0">
-        <p
-          className={cn(
-            'text-sm font-medium leading-snug truncate',
-            action.status === 'completed' ? 'text-gray-400 line-through' : 'text-gray-800',
-          )}
-        >
-          {action.label}
-        </p>
-      </div>
+      {/* Title */}
+      <p className="flex-1 min-w-0 truncate text-sm text-gray-400 line-through">
+        {action.label}
+      </p>
 
+      {/* Right side: delta + date */}
       <div className="flex items-center gap-2 shrink-0">
         {action.impactDelta && (
-          <span className="text-[11px] font-semibold text-emerald-600 tabular-nums">
+          <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-600">
             {action.impactDelta}
           </span>
         )}
-        {action.relativeTime && (
-          <span className="text-[11px] text-gray-400">{action.relativeTime}</span>
+        {action.note && !action.impactDelta && (
+          <span className="text-[11px] text-gray-400">{action.note}</span>
         )}
-        {isFuture && (
-          <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400">
-            Locked
-          </span>
+        {action.dateLabel && (
+          <span className="text-[11px] text-gray-400">{action.dateLabel}</span>
         )}
       </div>
     </motion.div>
   )
 }
 
-const STATUS_ORDER: RoadmapStatus[] = ['completed', 'in_progress', 'up_next', 'future']
+// ─── In Progress row ──────────────────────────────────────────────────────────
+
+function InProgressRow({ action, index }: { action: RoadmapAction; index: number }) {
+  return (
+    <motion.div
+      initial={fadeInUp.initial}
+      animate={fadeInUp.animate}
+      transition={{ ...spring.subtle, delay: index * 0.035 }}
+      className="flex min-h-[52px] items-center gap-3 border-b border-gray-50 last:border-0 py-2"
+    >
+      {/* Spinner */}
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+        <Loader className="h-4 w-4 animate-spin text-[#3370FF]" strokeWidth={2} />
+      </span>
+
+      {/* Title */}
+      <p className="flex-1 min-w-0 truncate text-sm font-semibold text-gray-800">
+        {action.label}
+      </p>
+
+      {/* CTA */}
+      {action.inboxHref && (
+        <Link
+          href={action.inboxHref}
+          className="shrink-0 flex items-center gap-1 text-xs font-semibold text-[#3370FF] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1 rounded"
+        >
+          Review in Inbox
+          <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
+        </Link>
+      )}
+    </motion.div>
+  )
+}
+
+// ─── Up Next row ──────────────────────────────────────────────────────────────
+
+function UpNextRow({ action, index }: { action: RoadmapAction; index: number }) {
+  const num = action.upNextIndex ?? index + 1
+
+  return (
+    <motion.div
+      initial={fadeInUp.initial}
+      animate={fadeInUp.animate}
+      transition={{ ...spring.subtle, delay: index * 0.035 }}
+      className="flex min-h-[52px] items-center gap-3 border-b border-gray-50 last:border-0 py-2"
+    >
+      {/* Numbered circle */}
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-100 text-[11px] font-bold text-gray-500">
+        {num}
+      </span>
+
+      {/* Title */}
+      <p className="flex-1 min-w-0 truncate text-sm text-gray-700">
+        {action.label}
+      </p>
+    </motion.div>
+  )
+}
+
+// ─── Future row ───────────────────────────────────────────────────────────────
+
+function FutureRow({ action, index }: { action: RoadmapAction; index: number }) {
+  return (
+    <motion.div
+      initial={fadeInUp.initial}
+      animate={fadeInUp.animate}
+      transition={{ ...spring.subtle, delay: index * 0.035 }}
+      className="flex min-h-[52px] items-center gap-3 border-b border-gray-50 last:border-0 py-2 opacity-50"
+    >
+      {/* Lock */}
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+        <Lock className="h-3.5 w-3.5 text-gray-400" strokeWidth={2} />
+      </span>
+
+      {/* Title */}
+      <p className="flex-1 min-w-0 truncate text-sm text-gray-400">
+        {action.label}
+      </p>
+    </motion.div>
+  )
+}
+
+// ─── Section wrapper ──────────────────────────────────────────────────────────
+
+function Section({
+  children,
+  delay = 0,
+}: {
+  children: React.ReactNode
+  delay?: number
+}) {
+  return (
+    <motion.div
+      initial={fadeInUp.initial}
+      animate={fadeInUp.animate}
+      transition={{ ...spring.subtle, delay }}
+      className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+// ─── Mock data ────────────────────────────────────────────────────────────────
+
+const MOCK_ACTIONS: RoadmapAction[] = [
+  // Completed
+  {
+    id: 'c1',
+    status: 'completed',
+    label: 'Schema markup added (LocalBusiness)',
+    impactDelta: '+3 score',
+    dateLabel: 'Apr 14',
+  },
+  {
+    id: 'c2',
+    status: 'completed',
+    label: 'FAQ page: pricing questions (8 Q&A)',
+    impactDelta: '+5 score',
+    dateLabel: 'Apr 16',
+  },
+  {
+    id: 'c3',
+    status: 'completed',
+    label: 'Yelp listing claimed',
+    note: 'pending verification',
+    dateLabel: 'Apr 17',
+  },
+  // In progress
+  {
+    id: 'ip1',
+    status: 'in_progress',
+    label: 'Homepage rewrite — ready for your review',
+    inboxHref: '/inbox',
+  },
+  // Up next
+  {
+    id: 'u1',
+    status: 'up_next',
+    label: 'Add statistics to your services page',
+    upNextIndex: 1,
+  },
+  {
+    id: 'u2',
+    status: 'up_next',
+    label: 'Create comparison page vs competitors',
+    upNextIndex: 2,
+  },
+  {
+    id: 'u3',
+    status: 'up_next',
+    label: 'Build your Google Business Profile',
+    upNextIndex: 3,
+  },
+  // Future
+  {
+    id: 'f1',
+    status: 'future',
+    label: 'Video schema markup',
+  },
+  {
+    id: 'f2',
+    status: 'future',
+    label: 'Reddit presence builder',
+  },
+  {
+    id: 'f3',
+    status: 'future',
+    label: 'Industry directory submissions (7 more)',
+  },
+  {
+    id: 'f4',
+    status: 'future',
+    label: 'Long-tail query expansion',
+  },
+  {
+    id: 'f5',
+    status: 'future',
+    label: 'Competitor comparison blog series',
+  },
+]
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export function RoadmapTab({ actions, className }: RoadmapTabProps) {
-  if (!actions || actions.length === 0) {
+  const items = actions && actions.length > 0 ? actions : MOCK_ACTIONS
+
+  // Empty state
+  if (items.length === 0) {
     return (
       <div
         className={cn(
@@ -183,62 +277,74 @@ export function RoadmapTab({ actions, className }: RoadmapTabProps) {
     )
   }
 
-  const doneCount = actions.filter((a) => a.status === 'completed').length
-  const totalCount = actions.length
-  const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0
-
-  // Group by status in display order
+  // Group by status
   const grouped: Record<RoadmapStatus, RoadmapAction[]> = {
     completed: [],
     in_progress: [],
     up_next: [],
     future: [],
   }
-  for (const action of actions) {
-    grouped[action.status].push(action)
+  for (const a of items) {
+    grouped[a.status].push(a)
   }
+
+  const doneCount = grouped.completed.length
+  const totalCount = items.length
 
   return (
     <div className={cn('flex flex-col gap-4', className)}>
-      {/* Progress ring header */}
-      <motion.div
-        initial={fadeInUp.initial}
-        animate={fadeInUp.animate}
-        transition={spring.subtle}
-        className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
-      >
-        <ProgressRing done={doneCount} total={totalCount} pct={pct} />
-      </motion.div>
+      {/* Progress header */}
+      <Section delay={0}>
+        <div className="flex items-center gap-4">
+          <ProgressRing value={doneCount} max={totalCount} size={64} />
+          <div>
+            <p className="text-sm font-semibold text-gray-900">
+              {doneCount} of {totalCount} actions done
+            </p>
+            <p className="mt-0.5 text-xs text-gray-400">Keep closing the gap</p>
+          </div>
+        </div>
+      </Section>
 
-      {/* Action groups */}
-      {STATUS_ORDER.map((status) => {
-        const group = grouped[status]
-        if (group.length === 0) return null
-        const cfg = STATUS_CONFIG[status]
+      {/* Completed */}
+      {grouped.completed.length > 0 && (
+        <Section delay={0.04}>
+          <SectionHeader label="Completed" count={grouped.completed.length} />
+          {grouped.completed.map((a, i) => (
+            <CompletedRow key={a.id} action={a} index={i} />
+          ))}
+        </Section>
+      )}
 
-        return (
-          <motion.div
-            key={status}
-            initial={fadeInUp.initial}
-            animate={fadeInUp.animate}
-            transition={spring.subtle}
-            className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
-          >
-            {/* Group heading */}
-            <div className="flex items-center gap-2 mb-2">
-              <div className={cn('h-2 w-2 rounded-full', cfg.dotClass)} aria-hidden="true" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                {cfg.label}
-                <span className="ml-1.5 text-gray-300">({group.length})</span>
-              </span>
-            </div>
+      {/* In Progress */}
+      {grouped.in_progress.length > 0 && (
+        <Section delay={0.08}>
+          <SectionHeader label="In Progress" count={grouped.in_progress.length} />
+          {grouped.in_progress.map((a, i) => (
+            <InProgressRow key={a.id} action={a} index={i} />
+          ))}
+        </Section>
+      )}
 
-            {group.map((action, i) => (
-              <ActionRow key={action.id} action={action} index={i} />
-            ))}
-          </motion.div>
-        )
-      })}
+      {/* Up Next */}
+      {grouped.up_next.length > 0 && (
+        <Section delay={0.12}>
+          <SectionHeader label="Up Next" count={grouped.up_next.length} />
+          {grouped.up_next.map((a, i) => (
+            <UpNextRow key={a.id} action={a} index={i} />
+          ))}
+        </Section>
+      )}
+
+      {/* Future */}
+      {grouped.future.length > 0 && (
+        <Section delay={0.16}>
+          <SectionHeader label={`Future (${grouped.future.length} locked)`} count={0} />
+          {grouped.future.map((a, i) => (
+            <FutureRow key={a.id} action={a} index={i} />
+          ))}
+        </Section>
+      )}
     </div>
   )
 }
