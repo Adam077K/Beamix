@@ -8,9 +8,9 @@
 
 import { serve } from 'inngest/next'
 import { inngest } from '@/inngest/client'
-import { scanRun, agentPipeline } from '@/inngest/functions'
+import { scanRun, agentPipeline, automationDispatcher, scanCompleted, urlProbe, budgetGuard, dailyDigest } from '@/inngest/functions'
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [scanRun, agentPipeline],
+  functions: [scanRun, agentPipeline, automationDispatcher, scanCompleted, urlProbe, budgetGuard, dailyDigest],
 })
