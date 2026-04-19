@@ -113,7 +113,7 @@ const en = {
     bannerText: "You're in preview mode.",
     upgradeLink: 'Upgrade to unlock agents',
   },
-} as const
+}
 
 export type Messages = typeof en
 export default en
