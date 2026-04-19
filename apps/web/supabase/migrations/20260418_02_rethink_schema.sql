@@ -548,6 +548,8 @@ $$;
 
 
 -- D4: get_home_summary — Home page data in one call
+-- Uses scalar variables (not RECORD) to avoid PostgreSQL SQL-parser ambiguity
+-- when a plpgsql variable is used in a sub-SELECT WHERE clause.
 CREATE OR REPLACE FUNCTION public.get_home_summary(
   p_user_id uuid,
   p_business_id uuid
@@ -558,27 +560,28 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_latest_scan RECORD;
-  v_prev_scan RECORD;
+  v_latest_scan_id uuid;
+  v_latest_scan_at timestamptz;
+  v_score integer := 0;
+  v_prev_score integer := 0;
   v_suggestions jsonb;
   v_inbox_preview jsonb;
-  v_score integer;
-  v_prev_score integer;
 BEGIN
-  -- Latest scan score
-  SELECT id, overall_score, completed_at INTO v_latest_scan
+  -- Latest completed scan
+  SELECT id, COALESCE(overall_score, 0), completed_at
+  INTO v_latest_scan_id, v_score, v_latest_scan_at
   FROM scans
   WHERE business_id = p_business_id AND status = 'completed'
   ORDER BY completed_at DESC LIMIT 1;
 
-  v_score := COALESCE(v_latest_scan.overall_score, 0);
-
-  -- Previous scan for delta
-  SELECT overall_score INTO v_prev_score
-  FROM scans
-  WHERE business_id = p_business_id AND status = 'completed'
-    AND id != v_latest_scan.id
-  ORDER BY completed_at DESC LIMIT 1;
+  -- Previous scan score for delta (scalar id avoids SQL-parser ambiguity)
+  IF v_latest_scan_id IS NOT NULL THEN
+    SELECT COALESCE(overall_score, 0) INTO v_prev_score
+    FROM scans
+    WHERE business_id = p_business_id AND status = 'completed'
+      AND id != v_latest_scan_id
+    ORDER BY completed_at DESC LIMIT 1;
+  END IF;
 
   -- Top 3 pending suggestions
   SELECT COALESCE(jsonb_agg(row_to_json(s)::jsonb), '[]'::jsonb)
@@ -598,7 +601,7 @@ BEGIN
   SELECT COALESCE(jsonb_agg(row_to_json(i)::jsonb), '[]'::jsonb)
   INTO v_inbox_preview
   FROM (
-    SELECT id, title, agent_type, status, created_at
+    SELECT id, title, agent_type, status::text, created_at
     FROM content_items
     WHERE user_id = p_user_id AND business_id = p_business_id
       AND status IN ('draft', 'in_review')
@@ -608,8 +611,8 @@ BEGIN
 
   RETURN jsonb_build_object(
     'score', v_score,
-    'score_delta', v_score - COALESCE(v_prev_score, v_score),
-    'latest_scan_at', v_latest_scan.completed_at,
+    'score_delta', v_score - v_prev_score,
+    'latest_scan_at', v_latest_scan_at,
     'suggestions', v_suggestions,
     'inbox_preview', v_inbox_preview
   );
