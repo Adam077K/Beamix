@@ -33,6 +33,13 @@
 - All contradictions in 05/06/07/08 resolved (naming, pricing, tier access, settings tabs)
 - Ready for Round 5: 2-week execution plan
 
+## [2026-04-19] docs cleanup | PRD + BACKLOG + specs aligned to April rethink
+- PRD.md rewritten v3.1→v4.0: 11 new GEO agents, 7 dashboard pages, Discover/Build/Scale tiers, 14-day money-back
+- BACKLOG.md rewritten: Wave 2 items (10 items), 3 current blockers, old A1-A16 roster removed
+- ENGINEERING_PRINCIPLES.md updated: monorepo file structure (apps/web/src/), approved LLM list, testing tools filled in
+- 14 pre-rethink feature specs archived to docs/_archive/2026-04-pre-rethink/specs/ (originals tombstoned)
+- MOC-Product.md: 14 dead links removed, dashboard-7-pages.md + proactive-automation-model.md added
+
 ## 2026-04-18 — 8-Expert Pre-Build Audit
 - 8 agents reviewed complete build plan from different expert perspectives
 - Key changes: Build tier $189, agent priority (Deep 6 / Lighter 5), FAQ+Optimizer aha moment
