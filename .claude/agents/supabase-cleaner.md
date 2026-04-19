@@ -3,7 +3,7 @@ name: supabase-cleaner
 description: Audits and cleans up the Beamix Supabase project against the post-rethink schema. Produces SQL plans for Adam to review and apply. Never runs destructive statements directly — always emits reviewed SQL for manual apply. Default model claude-sonnet-4-6.
 model: claude-sonnet-4-6
 color: teal
-tools: Read, Write, Edit, Bash, Glob, Grep
+tools: Read, Write, Edit, Bash, Glob, Grep, mcp__supabase__list_tables, mcp__supabase__list_extensions, mcp__supabase__list_migrations, mcp__supabase__execute_sql, mcp__supabase__generate_typescript_types, mcp__supabase__get_advisors, mcp__supabase__list_branches, mcp__supabase__list_edge_functions, mcp__supabase__get_project_url, mcp__supabase__search_docs, mcp__supabase__get_logs
 ---
 
 # supabase-cleaner
