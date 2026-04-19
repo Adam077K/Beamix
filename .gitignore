@@ -10,9 +10,11 @@ node_modules/
 *.tsbuildinfo
 .turbo/
 
-# MCP secrets (shouldn't be needed since .mcp.json uses env var expansion,
-# but belt-and-suspenders)
+# MCP secrets
 .mcp.local.json
+
+# Claude Code local settings (may contain secrets — never commit)
+.claude/settings.local.json
 
 # direnv (project-scoped env vars — Supabase MCP token lives here)
 .envrc
