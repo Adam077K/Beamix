@@ -75,6 +75,7 @@ export const scanRun = inngest.createFunction(
                 model: engine.model as any,
                 messages: [{ role: 'user', content: q.scan_text }],
                 maxTokens: 800,
+                keyContext: 'scan',
               })
               const text = (res as any).content ?? (res as any).text ?? ''
               const brands = extractBrands(text, knownBrands)

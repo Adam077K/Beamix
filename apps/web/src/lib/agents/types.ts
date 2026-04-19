@@ -298,6 +298,11 @@ export interface LLMCallParams {
   /** Agent step the call is attributed to (for cost logging). */
   step?: PipelineStep | 'qa-citation';
   jobId?: string;
+  /**
+   * Which OpenRouter key to use. 'scan' → OPENROUTER_SCAN_KEY, 'agent' → OPENROUTER_AGENT_KEY.
+   * Defaults to 'agent'. Always pass 'scan' from the scan engine to track spend separately.
+   */
+  keyContext?: 'scan' | 'agent';
 }
 
 export interface LLMResponse {

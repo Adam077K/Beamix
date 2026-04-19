@@ -4,8 +4,9 @@
  * - Claude (Sonnet/Haiku/Opus) → direct @anthropic-ai/sdk (80% of traffic).
  *   Prompt caching ON by default for system messages.
  * - Gemini / GPT / Perplexity → OpenRouter HTTP call.
- *   If OPENROUTER_API_KEY is missing, returns a well-formed stub response
- *   (never throws). Worker 1 / DevOps wires the real key later.
+ *   Scan calls use OPENROUTER_SCAN_KEY; agent calls use OPENROUTER_AGENT_KEY.
+ *   Pass keyContext: 'scan' from the scan engine; defaults to 'agent' everywhere else.
+ *   If the key is missing, returns a well-formed stub response (never throws).
  *
  * Token budgets (max_tokens defaults):
  *   - Claude Opus: 8000
@@ -215,7 +216,8 @@ async function callAnthropic(
 async function callOpenRouter(
   params: LLMCallParams & { maxTokens: number; provider: ModelProvider },
 ): Promise<LLMResponse> {
-  const apiKey = process.env['OPENROUTER_API_KEY'];
+  const keyEnv = params.keyContext === 'scan' ? 'OPENROUTER_SCAN_KEY' : 'OPENROUTER_AGENT_KEY';
+  const apiKey = process.env[keyEnv];
   const modelId = OPENROUTER_MODEL_IDS[params.model];
 
   if (!apiKey || !modelId) {
@@ -298,6 +300,6 @@ function stubResponse(
     usage: { promptTokens: 0, completionTokens: 0 },
     costUsd: 0,
     costEntry,
-    rawProviderResponse: { stub: true, reason: 'OPENROUTER_API_KEY not set' },
+    rawProviderResponse: { stub: true, reason: 'OPENROUTER_SCAN_KEY or OPENROUTER_AGENT_KEY not set' },
   };
 }
