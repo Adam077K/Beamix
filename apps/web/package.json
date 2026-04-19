@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "echo 'lint deferred to Wave 2 — see eslint.config.mjs note' && exit 0",
+    "lint": "next lint",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
