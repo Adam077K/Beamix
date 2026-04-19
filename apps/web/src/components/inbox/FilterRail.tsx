@@ -1,15 +1,18 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
 export type FilterKey = 'all' | 'awaiting_review' | 'draft' | 'approved' | 'archived';
 
-const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'awaiting_review', label: 'Awaiting Review' },
-  { key: 'draft', label: 'Draft' },
-  { key: 'approved', label: 'Approved' },
-  { key: 'archived', label: 'Archived' },
+type FilterDef = { key: FilterKey; tKey: string };
+
+const FILTERS: FilterDef[] = [
+  { key: 'all', tKey: 'all' },
+  { key: 'awaiting_review', tKey: 'awaitingReview' },
+  { key: 'draft', tKey: 'draft' },
+  { key: 'approved', tKey: 'approved' },
+  { key: 'archived', tKey: 'archived' },
 ];
 
 interface FilterRailProps {
@@ -19,13 +22,15 @@ interface FilterRailProps {
 }
 
 export default function FilterRail({ counts, active, onChange }: FilterRailProps) {
+  const t = useTranslations('inbox');
   return (
     <aside className="w-60 shrink-0 border-e border-gray-100 bg-white h-full flex flex-col pt-4 pb-4">
       <p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-400">
         Filter
       </p>
       <nav className="flex flex-col gap-0.5 px-2">
-        {FILTERS.map(({ key, label }) => {
+        {FILTERS.map(({ key, tKey }) => {
+          const label = t(tKey as Parameters<typeof t>[0]);
           const isActive = active === key;
           const count = counts[key] ?? 0;
           return (

@@ -1,7 +1,4 @@
-import Link from 'next/link'
-import { Inbox } from 'lucide-react'
 import InboxClient from '@/components/inbox/InboxClient'
-import { Button } from '@/components/ui/button'
 import type { InboxItem } from '@/lib/types/shared'
 
 const mockItems: InboxItem[] = [
@@ -77,20 +74,5 @@ const mockItems: InboxItem[] = [
 ]
 
 export default function InboxPage() {
-  if (mockItems.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center">
-        <Inbox size={48} className="mb-4 text-muted-foreground/50" />
-        <h3 className="text-lg font-medium text-foreground mb-2">Your inbox is empty</h3>
-        <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-          Agent outputs appear here for review. Accept a suggestion to run your first agent.
-        </p>
-        <Button asChild className="bg-[#3370FF] hover:bg-[#2860e8] text-white">
-          <Link href="/home">View suggestions</Link>
-        </Button>
-      </div>
-    )
-  }
-
   return <InboxClient items={mockItems} />
 }

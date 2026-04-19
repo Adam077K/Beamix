@@ -1,10 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { Inbox } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { InboxItem } from '@/lib/types/shared';
 import FilterRail, { type FilterKey } from './FilterRail';
 import ItemList from './ItemList';
 import PreviewPane from './PreviewPane';
+import { Button } from '@/components/ui/button';
 
 interface InboxClientProps {
   items: InboxItem[];
@@ -29,6 +33,7 @@ function computeCounts(items: InboxItem[]): Record<string, number> {
 }
 
 export default function InboxClient({ items }: InboxClientProps) {
+  const t = useTranslations('inbox');
   const [filter, setFilter] = useState<StatusFilter>('awaiting_review');
   const [selectedId, setSelectedId] = useState<string | null>(
     items.find((i) => i.status === 'awaiting_review')?.id ?? items[0]?.id ?? null,
@@ -97,13 +102,28 @@ export default function InboxClient({ items }: InboxClientProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleNext, handlePrev, selectedId]);
 
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center">
+        <Inbox size={48} className="mb-4 text-muted-foreground/50" />
+        <h3 className="text-lg font-medium text-foreground mb-2">{t('emptyTitle')}</h3>
+        <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+          {t('emptyBody')}
+        </p>
+        <Button asChild className="bg-[#3370FF] hover:bg-[#2860e8] text-white">
+          <Link href="/home">{t('viewSuggestions')}</Link>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-[100dvh] w-full flex-col bg-white">
       {/* Keyboard hint bar */}
       <div className="hidden shrink-0 items-center justify-end gap-4 border-b border-gray-100 bg-white px-6 py-1.5 sm:flex">
-        <KbdHint keys={['j', 'k']} label="navigate" />
-        <KbdHint keys={['a']} label="approve" />
-        <KbdHint keys={['r']} label="reject" />
+        <KbdHint keys={['j', 'k']} label={t('navigate')} />
+        <KbdHint keys={['a']} label={t('approve')} />
+        <KbdHint keys={['r']} label={t('reject')} />
       </div>
 
       {/* 3-pane layout */}
@@ -150,6 +170,7 @@ function KbdHint({ keys, label }: { keys: string[]; label: string }) {
 }
 
 function EmptySelection() {
+  const t = useTranslations('inbox');
   return (
     <div className="flex flex-1 flex-col items-center justify-center bg-gray-50/40 text-center">
       <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-gray-100">
@@ -178,12 +199,12 @@ function EmptySelection() {
           />
         </svg>
       </div>
-      <p className="text-sm font-medium text-gray-600">Select an item to review</p>
+      <p className="text-sm font-medium text-gray-600">{t('selectItem')}</p>
       <p className="mt-1 text-xs text-gray-400">
         Use <kbd className="rounded border border-gray-200 bg-gray-100 px-1 font-mono text-[10px]">j</kbd>{' '}
         /{' '}
         <kbd className="rounded border border-gray-200 bg-gray-100 px-1 font-mono text-[10px]">k</kbd>{' '}
-        to navigate
+        {t('navigate')}
       </p>
     </div>
   );
