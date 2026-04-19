@@ -1,9 +1,9 @@
 # CEO Handoff — Wave 2 Batch 2
-*Written by CEO session ceo-1-1776597527, 2026-04-19*
+*Written by CEO session ceo-1-1776597527, 2026-04-19. DB verified MVP-ready.*
 
 ---
 
-## Paste this prompt to start the next session
+## Paste this to start the next session
 
 ```
 @"ceo (agent)" You are the CEO and Orchestrator. YOU are the CEO in this chat — read .agent/agents/ceo.md but do NOT deploy a CEO subagent.
@@ -15,171 +15,175 @@ Pre-flight reading (do ALL of these before delegating anything):
 - .claude/memory/LONG-TERM.md
 - .claude/memory/DECISIONS.md
 
-Session context: Wave 0, Wave 1, and Wave 2 Batch 1 are complete and merged to main. Supabase migration 02 is applied. TypeScript types are regenerated. Two Wave 2 branches are ready for Adam to merge (see below). This session handles Wave 2 Batch 2.
+Session context: Wave 0, Wave 1, and Wave 2 Batch 1 are complete and merged to main. Supabase is fully verified MVP-ready (33 tables, RLS 100%, all enums correct, 7 RPCs live, 20 legacy tables dropped). This session handles Wave 2 Batch 2. Deploy 4 workers in parallel immediately after pre-flight.
+```
 
 ---
 
-## Current main branch state (as of 2026-04-19, commit ~29b7d5a)
+## Verified DB state (2026-04-19, confirmed by supabase-cleaner)
 
-### What's merged to main
-- Turborepo + pnpm monorepo scaffold (apps/web/)
-- Wave 0: DB migration (20260418_01 + 02 applied to staging), agent system (11 agents), app shell
-- Wave 0.5: Shared types contract (src/lib/types/shared.ts + api.ts)
-- Wave 1: 7 dashboard pages, 17 API routes, 7 Inngest functions, Paddle webhook, feature gating, 6 email templates, paywall, free-scan funnel
-- Wave 2 Batch 1 code (2 branches — see below)
-- Migration fixes committed to main (20260418_02 cast fix, enum fix, LANGUAGE sql CTE rewrite)
-- database.types.ts regenerated (3,516 lines)
+**33 public tables — all with RLS enabled.**
 
-### Branches awaiting Adam's merge review
-1. `feat/wave2-backend-wiring` — 3 commits:
-   - Inngest agent-pipeline real body (full 5-step execution)
-   - sendEmail() helper + budget/scan email sends
-   - Daily cap enforcement, welcome/payment-failed/daily-digest emails, Turnstile server-verify fix, user_profiles id fix, digest dedup via email_log
+### Rethink tables (12) — all live ✅
+`suggestions`, `query_runs`, `query_clusters`, `query_positions`, `submission_packages`, `automation_configs`, `page_locks`, `topic_ledger`, `performance_reports`, `inbox_item_edits`, `url_probes`, `daily_cap_usage`
 
-2. `feat/wave2-frontend-polish` — 2 commits:
-   - Turnstile widget on /scan (client-side), home empty state
-   - 5 empty states: inbox, scans, automation, archive, competitors
+### Core product tables (15) — all live ✅
+`user_profiles`, `businesses`, `subscriptions`, `credit_pools`, `credit_transactions`, `scans`, `scan_engine_results`, `tracked_queries`, `competitors`, `agent_jobs`, `content_items`, `free_scans`, `notifications`, `plans`, `email_log`
 
-### Supabase state
-- Migration 01 applied: discover/build/scale plan_tier + 12 new agent_type values
-- Migration 02 applied: 12 new tables, 10 ALTERs, 7 RPCs (LANGUAGE sql CTEs — no plpgsql vars)
-- RLS: 100% on all 52 tables
-- Plans: discover/build/scale active; starter/pro/business deactivated
-- 4 cleanup SQL files written, pending Adam's manual apply:
-  - apps/web/supabase/cleanup/0001-drop-competitor-intelligence-legacy.sql
-  - apps/web/supabase/cleanup/0002-drop-retired-agent-tables.sql
-  - apps/web/supabase/cleanup/0003-drop-misc-legacy.sql
-  - apps/web/supabase/cleanup/0004-drop-trial-columns.sql
-- After cleanup: regen types again (mcp__supabase__generate_typescript_types)
+### Other live tables ✅
+`agent_workflows` (kept — rethink added cadence/next_run_at/paused_at), `api_keys`, `blog_posts`, `integrations`, `notification_preferences`, `recommendations`
 
-### Known lessons from last session
-- Supabase SQL Editor splits $$-quoted strings on semicolons → local plpgsql DECLARE vars cause 42P01. Always use LANGUAGE sql + CTEs for migrations. (Saved to .claude/memory/feedback_supabase_plpgsql.md)
-- user_profiles PK is `id` (not `user_id`) — FK to auth.users.id
-- scans table has `completed_at` (not `scanned_at`)
+### Legacy tables (20) — all dropped ✅
+Archived in `_archive` schema (21 tables with `_2026_04_19` suffix). Retained 90 days.
+
+### Plans ✅
+- `discover` (active, 25 AI runs/mo), `build` (active, 90/mo), `scale` (active, 250/mo)
+- `starter`, `pro`, `business` → `is_active = false`
+
+### Enums ✅
+- `plan_tier`: discover, build, scale (+ legacy starter/pro/business retained — can't drop without table rewrite)
+- `agent_type`: all 12 new GEO agents present
+- `content_item_status`: rejected added
+
+### RPCs (7) ✅
+`get_inbox_items`, `get_due_automations`, `get_query_trend`, `get_home_summary`, `acquire_page_lock`, `release_page_lock`, `check_topic_duplicate`
+
+### Cleanup helpers (3) ✅
+`expire_old_suggestions`, `clean_expired_locks`, `clean_expired_topics`
+
+---
+
+## Code state on main (2026-04-19, commit 1fa0572)
+
+### What's merged
+- **Wave 0**: DB migration, 11-agent system, app shell
+- **Wave 0.5**: Shared types (`src/lib/types/shared.ts` + `api.ts`)
+- **Wave 1**: 7 dashboard pages, 17 API routes, 7 Inngest functions, Paddle webhook, feature gating, 6 email templates, paywall, free-scan funnel
+- **Wave 2 Batch 1 backend** (`feat/wave2-backend-wiring` — merged):
+  - Inngest `agent-pipeline.ts` — full 5-step pipeline body
+  - `sendEmail()` helper (`src/lib/resend/send.ts`)
+  - Budget/scan/welcome/payment-failed/daily-digest email sends
+  - Daily cap enforcement in `POST /api/agents/run`
+  - Turnstile server-side verify on `POST /api/scan/start`
+  - `user_profiles` id fix in Paddle webhook + daily-digest
+  - Digest deduplication via `email_log` table
+- **Wave 2 Batch 1 frontend** (`feat/wave2-frontend-polish` — merged):
+  - Turnstile widget on `/scan` free-scan form
+  - Home empty state ("Setting up your workspace...")
+  - Empty states on inbox, scans, automation, archive, competitors
+
+### Key file paths
+| What | Path |
+|------|------|
+| Agent system | `apps/web/src/lib/agents/` |
+| Inngest functions | `apps/web/src/inngest/functions/` |
+| Email templates | `apps/web/src/lib/resend/templates/` |
+| API routes | `apps/web/src/app/api/` |
+| Dashboard pages | `apps/web/src/app/(protected)/` |
+| Public pages | `apps/web/src/app/(public)/` |
+| DB migrations | `apps/web/supabase/migrations/` |
+| Cleanup SQL | `apps/web/supabase/cleanup/` |
+| Shared types | `apps/web/src/lib/types/` |
+
+### Important schema facts (burn these in — prevent repeat bugs)
+- `user_profiles` PK is `id` (FK to `auth.users.id`) — NOT `user_id`
+- `scans` uses `completed_at` — NOT `scanned_at`
+- `content_items.status` is enum `content_item_status` — always cast to `::text` in SQL comparisons against text params
+- Supabase SQL Editor splits `$$` blocks on semicolons → never use `LANGUAGE plpgsql` with local `DECLARE` variables in migrations; use `LANGUAGE sql` + CTEs instead (see `.claude/memory/feedback_supabase_plpgsql.md`)
 - MCP is read-only (by design); apply migrations via Supabase SQL Editor manually
 
 ---
 
-## Wave 2 Batch 2 — Your mission
+## Wave 2 Batch 2 — Deploy these 4 workers in parallel
 
-Deploy 4-5 workers in parallel. Each has a bounded scope.
-
-### Worker 1 — frontend-developer: Hebrew + RTL
-
-5 core screens in Hebrew with RTL layout. Spec from docs/product-rethink-2026-04-09/05-BOARD-DECISIONS-2026-04-15.md (Hebrew section).
-
-- `next-intl` for string extraction (already in package.json — verify)
-- Heebo font for Hebrew text (paired with Inter — load via next/font)
-- RTL pass using Tailwind logical properties: `ms-` `me-` `ps-` `pe-` `start-` `end-` (never `ml-` `mr-` `pl-` `pr-` `left-` `right-`)
-- Set `dir="rtl"` on the html element when locale is `he`
-- 5 screens to Hebraize: Home (`/home`), Scans (`/scans`), Inbox (`/inbox`), paywall modal (PaywallModal component), free-scan result page (`/scan` result view)
-- Hebrew strings: score label, suggestion titles/descriptions, empty state text, CTA labels
-- DO NOT translate the entire UI — just the 5 specified screens, key labels only
-- Heebo is the Hebrew sister-font (visual weight parity with Inter)
-
-Worktree: `feat/wave2-hebrew-rtl`
-
-### Worker 2 — test-engineer: E2E Playwright (5 flows)
-
-5 critical user flows, each as a separate Playwright test file.
-
-Required reading: `apps/web/src/app/` route structure to understand page URLs.
-Use `mcp__playwright__*` tools where available.
-
-Flows:
-1. **Free scan funnel** — land on `/scan`, fill form (URL + industry + location), submit (with Turnstile mocked in test env), poll until result, verify score + competitors appear
-2. **Preview mode** — from scan result, click "Explore first", verify dashboard loads with PreviewModeBanner visible, verify agent run button triggers paywall modal
-3. **Paywall flow** — click "Run Agent" anywhere in preview mode, verify PaywallModal opens with 3 tiers, Build highlighted
-4. **Authenticated dashboard** — sign in as test user, verify Home loads with score hero, Inbox accessible, Scans timeline renders
-5. **Kill switch** — go to `/automation`, verify kill switch button exists, click it, verify confirmation modal appears
-
-Test config: `apps/web/playwright.config.ts` (create if missing). Base URL: `http://localhost:3000`.
-Mock Turnstile in test env via env var `BYPASS_TURNSTILE=true` (already handled in scan/start route).
-
-Worktree: `feat/wave2-e2e-tests`
-
-### Worker 3 — backend-developer: Sentry + ESLint
-
-**Sentry wiring** (`@sentry/nextjs` already installed):
-- Create `apps/web/sentry.client.config.ts` — browser SDK, `NEXT_PUBLIC_SENTRY_DSN`, 10% sample rate, Replay integration
-- Create `apps/web/sentry.server.config.ts` — Node SDK, `SENTRY_DSN`, 10% sample rate
-- Create `apps/web/sentry.edge.config.ts` — Edge SDK, `SENTRY_DSN`
-- Create or update `apps/web/instrumentation.ts` — call `register()` routing to server/edge config by `NEXT_RUNTIME`
-- Update `apps/web/next.config.ts` — wrap with `withSentryConfig(config, { silent: true, hideSourceMaps: true })`
-- Add `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT` to `apps/web/.env.example`
-
-**ESLint flat-config fix** (Next.js 16 + ESLint 9 incompatibility with `next/core-web-vitals`):
-- Check current ESLint config (`eslint.config.js` or `.eslintrc.*`)
-- Fix so `pnpm -F @beamix/web lint` exits without crashing (config error resolved)
-- Do NOT fix pre-existing lint errors in app code — just make the config valid
-- If using flat-config: import `@next/eslint-plugin-next` directly rather than the legacy `next/core-web-vitals` preset
-
-Worktree: `feat/wave2-sentry-lint`
-
-### Worker 4 — frontend-developer: Command palette + mobile QA
-
-**Command palette (⌘K)**:
-- Global keyboard shortcut ⌘K (or Ctrl+K) opens a modal command palette
-- Built with `cmdk` package (verify installed, add if not)
-- Commands: navigate to Home, Inbox, Scans, Automation, Archive, Competitors, Settings
-- Show as: icon + label + keyboard shortcut hint
-- Close on Escape or click outside
-- Mount in `DashboardShell` layout so it's available on all protected pages
-- Style: dark overlay, white/neutral card, search input at top, results below
-
-**Mobile layout QA pass** (all 7 dashboard pages):
-- Check each page renders without horizontal overflow on 375px width (iPhone SE)
-- Sidebar collapses to hamburger menu on mobile (or hidden with drawer — check what exists)
-- Tables/grids stack vertically on mobile
-- Fix any obvious mobile breakages (text overflow, buttons too small, hidden content)
-- No full redesign — just fix regressions
-
-Worktree: `feat/wave2-cmd-palette-mobile`
+Main repo root: `/Users/adamks/VibeCoding/Beamix`
+Worktree creation: `git -C /Users/adamks/VibeCoding/Beamix worktree add /Users/adamks/VibeCoding/Beamix/.worktrees/[name] -b feat/[name]`
 
 ---
 
-## Security requirements (include in every worker brief)
+### Worker 1 — frontend-developer: Hebrew + RTL
+Worktree: `feat/wave2-hebrew-rtl`
 
-Per board decisions (10 security requirements):
-1. Turnstile already wired on /scan ✅
-2. SSRF validator in `src/lib/security/ssrf.ts` ✅ — workers must use it for any URL inputs
-3. Paddle webhook HMAC verification ✅
-4. RLS on all tables ✅
-5. `rehype-sanitize` on markdown renders ✅
-6. Rate limiting in `src/lib/security/rate-limit.ts` ✅ — apply to new API routes
-7. Prompt injection sanitization — agents sanitize user content before LLM calls ✅
-8. Credit locking (hold/confirm/release) ✅
-9. Cost circuit breaker in budget-guard ✅
-10. npm audit — run before final merge, 0 critical CVEs
+5 screens in Hebrew with RTL layout. Spec: `docs/product-rethink-2026-04-09/05-BOARD-DECISIONS-2026-04-15.md` (Hebrew section).
+
+- Install/verify `next-intl` for string extraction
+- Load Heebo font via `next/font/google` (Hebrew sister-font to Inter)
+- RTL: use Tailwind logical properties only — `ms-` `me-` `ps-` `pe-` `start-` `end-` (never `ml-` `mr-` `pl-` `pr-`)
+- Set `dir="rtl"` on html element when locale is `he`
+- 5 screens: Home (`/home`), Scans (`/scans`), Inbox (`/inbox`), PaywallModal component, free-scan result page
+- Translate key labels only (score, suggestions, CTA buttons, empty states)
+- Israeli directory seed list: d.co.il, Easy.co.il, Rest.co.il, Bizmap/B144, Zap.co.il (for Off-Site agent reference strings)
+
+---
+
+### Worker 2 — test-engineer: E2E Playwright (5 flows)
+Worktree: `feat/wave2-e2e-tests`
+
+5 critical user journey tests. Create `apps/web/playwright.config.ts` if missing. Base URL: `http://localhost:3000`. Mock Turnstile via `BYPASS_TURNSTILE=true` env var (already handled in `scan/start/route.ts` — dev mode skips verify).
+
+Flows:
+1. **Free scan** — fill `/scan` form, submit, poll `GET /api/scan/[scanId]` until completed, assert score visible
+2. **Preview mode** — from result, click "Explore first", assert `PreviewModeBanner` renders, click "Run Agent", assert `PaywallModal` opens
+3. **Paywall modal** — assert 3 tiers shown, Build highlighted, annual toggle works
+4. **Authenticated dashboard** — sign in as test user (use Supabase test credentials from env), assert `/home` loads score hero, `/inbox` accessible, `/scans` timeline renders
+5. **Kill switch** — navigate to `/automation`, assert kill switch button present, click, assert confirmation modal
+
+---
+
+### Worker 3 — backend-developer: Sentry + ESLint
+Worktree: `feat/wave2-sentry-lint`
+
+**Sentry** (`@sentry/nextjs` already installed — check `apps/web/package.json`):
+- `apps/web/sentry.client.config.ts` — browser SDK, `NEXT_PUBLIC_SENTRY_DSN`, 10% tracesSampleRate, Replay integration
+- `apps/web/sentry.server.config.ts` — Node SDK, `SENTRY_DSN`, 10% tracesSampleRate
+- `apps/web/sentry.edge.config.ts` — Edge SDK, `SENTRY_DSN`
+- `apps/web/instrumentation.ts` — `register()` routing to server/edge config by `NEXT_RUNTIME`
+- `apps/web/next.config.ts` — wrap export with `withSentryConfig(config, { silent: true, hideSourceMaps: true })`
+- Add `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT` to `apps/web/.env.example`
+
+**ESLint** (Next.js 16 + ESLint 9 flat-config compatibility issue):
+- Check `apps/web/eslint.config.js` or `.eslintrc.*`
+- Goal: `pnpm -F @beamix/web lint` exits without crashing
+- If flat-config: import `@next/eslint-plugin-next` directly, not legacy `next/core-web-vitals` preset
+- Do NOT fix pre-existing lint errors in app code — just fix the config
+
+---
+
+### Worker 4 — frontend-developer: Command palette + mobile QA
+Worktree: `feat/wave2-cmd-palette-mobile`
+
+**Command palette (⌘K)**:
+- Install `cmdk` if not present (`pnpm -F @beamix/web add cmdk`)
+- Global ⌘K / Ctrl+K shortcut opens modal palette
+- Commands: navigate to Home, Inbox, Scans, Automation, Archive, Competitors, Settings
+- Show icon + label + shortcut hint per item
+- Mount in `DashboardShell` layout (`apps/web/src/app/(protected)/layout.tsx` or shell component)
+- Close on Escape, close on click outside
+- Style: dark overlay, neutral card, search input at top
+
+**Mobile QA** (all 7 dashboard pages at 375px):
+- Check each page for horizontal overflow, broken layouts, unreadable text
+- Verify sidebar collapses on mobile (hamburger or drawer)
+- Fix obvious breakages only — no full redesigns
+- Pages: `/home`, `/inbox`, `/scans`, `/automation`, `/archive`, `/competitors`, `/settings`
 
 ---
 
 ## QA gate (mandatory before any merge)
 
-Every worktree must pass before merge:
-- `pnpm -F @beamix/web typecheck` → 0 errors
-- `pnpm -F @beamix/web build` → compiles
-- QA Lead PASS (Security Engineer + Test Engineer in parallel)
-- Adam reviews PR before merge
+Every worker branch before merge:
+1. `pnpm -F @beamix/web typecheck` → 0 errors
+2. `pnpm -F @beamix/web build` → compiles
+3. QA Lead PASS (Security Engineer + Test Engineer in parallel)
+4. Adam reviews and approves
 
 ---
 
 ## After Batch 2 merges — Wave 2 Batch 3
 
-- Agent eval suite — 20+ golden test cases per Deep-6 agent (Query Mapper, Content Optimizer, Blog Strategist, Performance Tracker, FAQ Builder, Off-Site Presence Builder), 5+ per Lighter-5
-- Production migration apply + smoke test + rollback plan
-- Go/no-go criteria check (see docs/product-rethink-2026-04-09/11-EXECUTION-PLAN.md)
-
----
-
-## Team leads to use
-
-- `build-lead` for all code orchestration (deploys the 4 workers above)
-- `qa-lead` before any merge
-- `devops-lead` when production migration is ready
-
-Do NOT use `design-lead` for Batch 2 — no new design work, only implementation of existing specs.
-
-Main repo root: `/Users/adamks/VibeCoding/Beamix`
-CEO worktree detection: run `git worktree list` first, use main repo root for child worktree creation.
-```
+- Agent eval suite: 20+ golden test cases per Deep-6 agent, 5+ per Lighter-5
+- Production Supabase project creation + migration apply + smoke test
+- Go/no-go criteria check: `docs/product-rethink-2026-04-09/11-EXECUTION-PLAN.md`
+- Inngest Pro upgrade ($75/mo) — free tier breaks at 10-15 users
+- Paddle sandbox products creation (7 price IDs needed)
+- Resend domain warm-up: `notify.beamix.tech` DNS (2-4 week lead time — start now)
