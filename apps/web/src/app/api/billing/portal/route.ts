@@ -33,7 +33,7 @@ export async function POST() {
     .eq('user_id', user.id)
     .maybeSingle()
 
-  const customerId = sub?.paddle_customer_id
+  const customerId = (sub as any)?.paddle_customer_id as string | undefined
   if (!customerId) {
     return NextResponse.json(
       { error: { code: 'NO_SUBSCRIPTION', message: 'No active subscription found' } },

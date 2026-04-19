@@ -575,7 +575,7 @@ const fadeInUp = {
   initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -4 },
-  transition: { type: 'spring', stiffness: 300, damping: 30 },
+  transition: { type: 'spring' as const, stiffness: 300, damping: 30 },
 }
 
 // ─── Main client component ────────────────────────────────────────────────────
