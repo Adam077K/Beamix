@@ -72,8 +72,8 @@ CREATE TABLE IF NOT EXISTS _archive.agent_job_steps_2026_04_19
 -- STEP 3 — DROP (destructive, run only after STEP 1 confirmed + STEP 2 applied)
 -- ============================================================
 DROP TABLE IF EXISTS public.agent_job_steps;
-DROP TABLE IF EXISTS public.scan_queries;
 DROP TABLE IF EXISTS public.scan_mentions;
+DROP TABLE IF EXISTS public.scan_queries;
 DROP TABLE IF EXISTS public.content_versions;
 DROP TABLE IF EXISTS public.content_performance;
 DROP TABLE IF EXISTS public.ai_readiness_history;
