@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import { spring, fadeInUp } from '@/lib/motion'
 
@@ -22,12 +23,6 @@ const impactStyles: Record<SuggestionItem['impact'], string> = {
   high: 'bg-red-50 text-red-600',
   medium: 'bg-amber-50 text-amber-600',
   low: 'bg-gray-100 text-gray-500',
-}
-
-const impactLabel: Record<SuggestionItem['impact'], string> = {
-  high: 'High impact',
-  medium: 'Medium impact',
-  low: 'Low impact',
 }
 
 function CreditPill({ runs }: { runs: number }) {
@@ -54,6 +49,14 @@ function SuggestionCard({
   onAccept: (id: string) => void
   onDismiss: (id: string) => void
 }) {
+  const t = useTranslations('home')
+
+  const impactLabelMap: Record<SuggestionItem['impact'], string> = {
+    high: t('highImpact'),
+    medium: t('mediumImpact'),
+    low: t('lowImpact'),
+  }
+
   return (
     <motion.div
       layout
@@ -82,7 +85,7 @@ function SuggestionCard({
               impactStyles[suggestion.impact],
             )}
           >
-            {impactLabel[suggestion.impact]}
+            {impactLabelMap[suggestion.impact]}
           </span>
           <CreditPill runs={suggestion.estimatedRuns} />
         </div>
