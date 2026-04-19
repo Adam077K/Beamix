@@ -1,0 +1,13 @@
+# direnv template for project-scoped Supabase MCP env vars.
+#
+# Usage:
+#   1. Copy this file to .envrc (same directory)
+#   2. Fill in the two values below
+#   3. Run `direnv allow .` once
+#   4. Restart Claude Code
+#
+# These values never reach git. .envrc is in .gitignore.
+# See SUPABASE-MCP-SETUP.md for where to get each value.
+
+export SUPABASE_ACCESS_TOKEN="sbp_..."      # Supabase Personal Access Token
+export SUPABASE_PROJECT_REF="..."           # Project-ref (subdomain of your Supabase URL)
