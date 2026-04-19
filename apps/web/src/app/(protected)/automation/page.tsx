@@ -1,5 +1,8 @@
+import Link from 'next/link'
+import { Zap } from 'lucide-react'
 import type { AutomationStatus } from '@/lib/types/shared'
 import { AutomationClient } from '@/components/automation/AutomationClient'
+import { Button } from '@/components/ui/button'
 
 const mockStatus: AutomationStatus = {
   globalKillSwitch: false,
@@ -55,5 +58,20 @@ const mockStatus: AutomationStatus = {
 }
 
 export default function AutomationPage() {
+  if (mockStatus.schedules.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center">
+        <Zap size={48} className="mb-4 text-muted-foreground/50" />
+        <h3 className="text-lg font-medium text-foreground mb-2">Automation is ready</h3>
+        <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+          Schedules you configure will appear here. Run your first agent from the Home page to get started.
+        </p>
+        <Button asChild className="bg-[#3370FF] hover:bg-[#2860e8] text-white">
+          <Link href="/home">View suggestions</Link>
+        </Button>
+      </div>
+    )
+  }
+
   return <AutomationClient status={mockStatus} />
 }

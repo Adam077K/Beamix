@@ -1,3 +1,4 @@
+import { Users } from 'lucide-react'
 import { CompetitorsClient } from '@/components/competitors/CompetitorsClient'
 
 const mockCompetitors = [
@@ -49,6 +50,18 @@ const mockMissedQueries = [
 ]
 
 export default function CompetitorsPage() {
+  if (mockCompetitors.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center">
+        <Users size={48} className="mb-4 text-muted-foreground/50" />
+        <h3 className="text-lg font-medium text-foreground mb-2">No competitors tracked</h3>
+        <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+          Add competitors to see how they rank against you across AI search engines.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <CompetitorsClient
       competitors={mockCompetitors}

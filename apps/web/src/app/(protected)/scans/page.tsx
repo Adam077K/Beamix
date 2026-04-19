@@ -1,3 +1,4 @@
+import { BarChart3 } from 'lucide-react'
 import type { ScanSummary } from '@/lib/types/shared'
 import { ScansClient } from '@/components/scans/ScansClient'
 
@@ -53,5 +54,17 @@ const mockScans: ScanSummary[] = [
 ]
 
 export default function ScansPage() {
+  if (mockScans.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center">
+        <BarChart3 size={48} className="mb-4 text-muted-foreground/50" />
+        <h3 className="text-lg font-medium text-foreground mb-2">No scans yet</h3>
+        <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+          Your first scan runs automatically after setup. Results appear here with detailed engine breakdowns.
+        </p>
+      </div>
+    )
+  }
+
   return <ScansClient scans={mockScans} />
 }
