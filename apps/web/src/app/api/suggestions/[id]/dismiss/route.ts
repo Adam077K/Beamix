@@ -6,6 +6,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { SuggestionDismissRequestSchema } from '@/lib/types/api';
 
@@ -81,6 +82,11 @@ export async function POST(
         { status: 500 },
       );
     }
+
+    // Invalidate home + inbox cache for this user so fresh suggestions are fetched
+    revalidateTag(`home-${user.id}`);
+    revalidateTag(`inbox-${user.id}`);
+    revalidatePath('/home');
 
     return NextResponse.json({ id, status: 'dismissed' }, { status: 200 });
   } catch (err) {
