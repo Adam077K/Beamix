@@ -15,7 +15,7 @@ type Notif = {
   createdAt: string
 }
 
-export function NotificationBell({ userEmail }: { userEmail: string }) {
+export function NotificationBell(_props: { userEmail?: string } = {}) {
   const [items, setItems] = useState<Notif[]>([])
 
   const unread = items.filter((i) => !i.readAt).length
@@ -24,13 +24,13 @@ export function NotificationBell({ userEmail }: { userEmail: string }) {
     try {
       const res = await fetch('/api/notifications?limit=20')
       if (!res.ok) {
-        console.error('[NotificationBell] fetch failed for user:', userEmail, res.status)
+        console.error('[NotificationBell] fetch failed for user:', _props.userEmail, res.status)
         return
       }
       const json = await res.json()
       setItems(json.items ?? [])
     } catch (err) {
-      console.error('[NotificationBell] fetch error for user:', userEmail, err)
+      console.error('[NotificationBell] fetch error for user:', _props.userEmail, err)
     }
   }
 
