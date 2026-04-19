@@ -1,56 +1,58 @@
 import { HomeClient } from '@/components/home/HomeClient'
+import type { SuggestionItem } from '@/components/home/SuggestionsFeed'
 
+// ── Mock data (replace with real Supabase fetch when wiring backend) ──────────
 const mockScore = 62
 const mockDelta = +5
-const mockSparkline = [45, 48, 52, 50, 55, 58, 60, 62]
+const mockSparkline = [41, 47, 51, 49, 54, 57, 59, 62]
 
-const mockSuggestions = [
+const mockSuggestions: SuggestionItem[] = [
   {
-    id: '1',
+    id: 's-1',
     title: 'Add FAQ to your pricing page',
     description:
-      'ChatGPT asks "how much does beamix cost" — no FAQ ranks. Adding structured FAQ content can lift AI citation rate by ~30%.',
-    impact: 'high' as const,
+      'ChatGPT surfaces "how much does Beamix cost?" as a common query — no structured FAQ ranks for it. Adding FAQ schema can lift AI citation rate by ~30%.',
+    impact: 'high',
     estimatedRuns: 1,
-    actionLabel: 'Generate FAQ page',
+    actionLabel: 'Generate FAQ content',
   },
   {
-    id: '2',
+    id: 's-2',
     title: 'Refresh your homepage copy',
     description:
-      'Last updated 94 days ago. Competitors publish weekly. Fresh content signals recency to AI search engines.',
-    impact: 'medium' as const,
+      'Last updated 94 days ago. Competitors publish weekly. Fresh, date-stamped content signals recency to AI search engines and improves citation odds.',
+    impact: 'medium',
     estimatedRuns: 2,
-    actionLabel: 'Optimize homepage',
+    actionLabel: 'Rewrite homepage',
   },
   {
-    id: '3',
+    id: 's-3',
     title: 'Claim your Yelp listing',
     description:
-      'Review Presence Planner found 3 directories with missing profiles. Unclaimed listings miss citation opportunities.',
-    impact: 'medium' as const,
+      'Presence Planner found 3 directories with incomplete or unclaimed profiles. Listings with verified details are cited 2× more often by AI engines.',
+    impact: 'medium',
     estimatedRuns: 0,
-    actionLabel: 'Check directory listings',
+    actionLabel: 'Fix directory listings',
   },
 ]
 
 const mockInboxPreview = [
   {
-    id: 'i1',
-    actionLabel: 'Optimize your homepage',
-    title: 'Homepage rewrite ready',
+    id: 'i-1',
+    actionLabel: 'Rewrite homepage hero',
+    title: 'Homepage rewrite ready for review',
     ageLabel: '2h ago',
   },
   {
-    id: 'i2',
-    actionLabel: 'Generate FAQ page',
-    title: 'Pricing FAQ ready',
+    id: 'i-2',
+    actionLabel: 'Pricing FAQ content',
+    title: '8-question FAQ draft ready',
     ageLabel: '5h ago',
   },
   {
-    id: 'i3',
-    actionLabel: 'Check directory listings',
-    title: '3 directories found',
+    id: 'i-3',
+    actionLabel: 'Directory listing audit',
+    title: '3 gaps found across Yelp, G2, Capterra',
     ageLabel: 'yesterday',
   },
 ]
