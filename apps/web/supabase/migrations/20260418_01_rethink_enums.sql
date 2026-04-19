@@ -35,3 +35,11 @@ ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'video_seo_agent';
 ALTER TYPE plan_tier ADD VALUE IF NOT EXISTS 'discover';
 ALTER TYPE plan_tier ADD VALUE IF NOT EXISTS 'build';
 ALTER TYPE plan_tier ADD VALUE IF NOT EXISTS 'scale';
+
+
+-- ──────────────────────────────────────────────────────────────
+-- content_item_status: add 'rejected' for Inbox state machine
+-- Must live here (standalone, no transaction) so migration 02
+-- can safely reference 'rejected' in function bodies.
+-- ──────────────────────────────────────────────────────────────
+ALTER TYPE content_item_status ADD VALUE IF NOT EXISTS 'rejected';

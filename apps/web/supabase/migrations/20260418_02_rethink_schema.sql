@@ -339,8 +339,7 @@ DO $$ BEGIN
 EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
 
--- Add 'rejected' to content_item_status enum if it exists
-ALTER TYPE content_item_status ADD VALUE IF NOT EXISTS 'rejected';
+-- 'rejected' enum value added in migration 01 (standalone, no transaction)
 
 -- Index for Inbox list query (most frequent page)
 CREATE INDEX IF NOT EXISTS idx_content_items_inbox
