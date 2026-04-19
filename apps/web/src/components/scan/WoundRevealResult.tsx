@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Lock, TrendingUp, Zap, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ExploreFirstModal } from './ExploreFirstModal'
@@ -39,13 +40,13 @@ const IMPACT_COLORS = {
   low: 'text-gray-500 bg-gray-50 border-gray-100',
 }
 
-const IMPACT_LABELS = {
-  high: 'High impact',
-  medium: 'Medium impact',
-  low: 'Low impact',
-}
+function FixCard({ fix, index, t }: { fix: VisibleFix; index: number; t: ReturnType<typeof useTranslations<'scanResult'>> }) {
+  const impactLabel = fix.impact === 'high'
+    ? t('highImpact')
+    : fix.impact === 'medium'
+    ? t('mediumImpact')
+    : t('lowImpact')
 
-function FixCard({ fix, index }: { fix: VisibleFix; index: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -60,11 +61,11 @@ function FixCard({ fix, index }: { fix: VisibleFix; index: number }) {
         <p className="text-sm font-medium text-[#0A0A0A] leading-snug">{fix.title}</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-2">
           <span className={cn('text-xs px-2 py-0.5 rounded border font-medium', IMPACT_COLORS[fix.impact])}>
-            {IMPACT_LABELS[fix.impact]}
+            {impactLabel}
           </span>
           {fix.quickFix && (
             <span className="text-xs px-2 py-0.5 rounded border border-[#3370FF]/20 bg-[#3370FF]/5 text-[#3370FF] font-medium">
-              Quick fix
+              {t('quickFix')}
             </span>
           )}
         </div>
@@ -96,6 +97,7 @@ function LockedFixCard({ index }: { index: number }) {
 
 export function WoundRevealResult({ data, businessUrl }: WoundRevealResultProps) {
   const router = useRouter()
+  const t = useTranslations('scanResult')
   const [modalOpen, setModalOpen] = React.useState(false)
 
   const lockedFixArray = Array.from({ length: data.lockedFixes }, (_, i) => i)
@@ -109,9 +111,9 @@ export function WoundRevealResult({ data, businessUrl }: WoundRevealResultProps)
       : 'fair'
 
   const severityLabel = {
-    critical: 'Critical — AI almost never recommends you',
-    poor: 'Poor — AI rarely recommends you',
-    fair: 'Fair — room to improve',
+    critical: t('criticalSeverity'),
+    poor: t('poorSeverity'),
+    fair: t('fairSeverity'),
   }[severity]
 
   const severityColor = {
@@ -142,7 +144,7 @@ export function WoundRevealResult({ data, businessUrl }: WoundRevealResultProps)
                   </span>
                 </div>
                 <p className="mt-2 text-sm text-gray-500 leading-relaxed max-w-xs">
-                  queries where AI engines mention your business
+                  {t('queriesLabel')}
                 </p>
                 <p className={cn('mt-2 text-sm font-semibold', severityColor)}>
                   {severityLabel}
@@ -167,7 +169,7 @@ export function WoundRevealResult({ data, businessUrl }: WoundRevealResultProps)
             className="bg-white rounded-2xl border border-gray-100 p-6 mb-5"
           >
             <h2 className="text-sm font-semibold text-[#0A0A0A] uppercase tracking-wider mb-4">
-              Top competitors outranking you
+              {t('competitorsTitle')}
             </h2>
             <div className="flex flex-col divide-y divide-gray-50">
               {data.competitors.map((comp, i) => (
@@ -179,9 +181,9 @@ export function WoundRevealResult({ data, businessUrl }: WoundRevealResultProps)
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-medium text-[#0A0A0A] truncate">{comp.name}</span>
                       <span className="text-xs text-gray-500 shrink-0 whitespace-nowrap">
-                        mentioned in{' '}
+                        {t('mentionedIn')}{' '}
                         <span className="font-semibold text-[#0A0A0A]">{comp.mentionsIn}</span>{' '}
-                        queries
+                        {t('queries')}
                       </span>
                     </div>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -209,13 +211,15 @@ export function WoundRevealResult({ data, businessUrl }: WoundRevealResultProps)
           >
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-[#0A0A0A] uppercase tracking-wider">
-                {data.visibleFixes.length} fixes visible
+                {t('visibleFixesTitle', { count: data.visibleFixes.length })}
               </h2>
-              <span className="text-xs text-gray-400">{data.visibleFixes.length} of {data.visibleFixes.length + data.lockedFixes} total</span>
+              <span className="text-xs text-gray-400">
+                {data.visibleFixes.length} {t('of')} {data.visibleFixes.length + data.lockedFixes} {t('total')}
+              </span>
             </div>
             <div className="flex flex-col gap-2.5">
               {data.visibleFixes.map((fix, i) => (
-                <FixCard key={fix.title} fix={fix} index={i} />
+                <FixCard key={fix.title} fix={fix} index={i} t={t} />
               ))}
             </div>
           </motion.div>
@@ -230,9 +234,9 @@ export function WoundRevealResult({ data, businessUrl }: WoundRevealResultProps)
             <div className="relative">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-[#0A0A0A] uppercase tracking-wider">
-                  {data.lockedFixes} more fixes
+                  {t('moreFixesTitle', { count: data.lockedFixes })}
                 </h2>
-                <span className="text-xs text-gray-400">Unlock with a free account</span>
+                <span className="text-xs text-gray-400">{t('unlockWithAccount')}</span>
               </div>
 
               {/* Blurred fix cards */}
@@ -252,10 +256,10 @@ export function WoundRevealResult({ data, businessUrl }: WoundRevealResultProps)
                     <Lock className="size-4 text-gray-500" aria-hidden="true" />
                   </div>
                   <p className="text-sm font-semibold text-[#0A0A0A]">
-                    {data.lockedFixes} more fixes are waiting
+                    {t('moreFixesWaiting', { count: data.lockedFixes })}
                   </p>
                   <p className="text-xs text-gray-500 max-w-[220px]">
-                    Sign up free to see every issue — then decide if you want agents to fix them.
+                    {t('signUpToSee')}
                   </p>
                 </div>
               </div>
@@ -274,7 +278,7 @@ export function WoundRevealResult({ data, businessUrl }: WoundRevealResultProps)
               onClick={() => router.push('/signup?source=scan')}
               className="flex items-center justify-center gap-2 h-12 w-full rounded-lg bg-[#3370FF] text-white text-sm font-medium tracking-tight cursor-pointer transition-all duration-150 hover:bg-[#2558e6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
             >
-              Fix this now — start for $79
+              {t('fixThisNow')}
               <ArrowRight className="size-4" aria-hidden="true" />
             </motion.button>
 
@@ -283,7 +287,7 @@ export function WoundRevealResult({ data, businessUrl }: WoundRevealResultProps)
               onClick={() => setModalOpen(true)}
               className="text-sm text-gray-500 underline underline-offset-2 hover:text-gray-700 transition-colors cursor-pointer py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2 rounded"
             >
-              Explore the product first
+              {t('exploreFirst')}
             </button>
           </motion.div>
         </div>
