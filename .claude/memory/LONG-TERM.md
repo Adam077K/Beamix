@@ -24,7 +24,8 @@
 - Email: Resend
 - Jobs: Inngest
 - Hosting: Vercel
-- LLM Gateway: OpenRouter (2 keys: OPENROUTER_SCAN_KEY for scans, OPENROUTER_AGENT_KEY for agents/QA)
+- LLM Gateway: OpenRouter (2 separate keys — OPENROUTER_SCAN_KEY for scan engine calls, OPENROUTER_AGENT_KEY for agent execution + QA + recommendations). Single OPENROUTER_API_KEY is WRONG — always use the two-key split.
+- Direct Anthropic SDK for all Claude models (ANTHROPIC_API_KEY). OpenRouter only for Gemini + Perplexity Sonar.
 - Vector DB: None (not in use)
 
 ---
