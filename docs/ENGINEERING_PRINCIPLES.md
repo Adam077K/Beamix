@@ -40,7 +40,7 @@ How:
 | Payments | Paddle | Merchant of record model — Paddle handles EU VAT, global tax compliance. Better for international B2B SaaS than Stripe. |
 | Email | Resend + React Email | React Email lets templates be typed, testable components. Resend has reliable deliverability and a simple API. |
 | Background Jobs | Inngest | Event-driven, serverless step functions with built-in retry, concurrency control, and observability dashboard. No Redis/BullMQ infra to manage. |
-| LLM Gateway | OpenRouter (2 keys: scan vs agent) | Unified billing across all LLM providers. Two separate keys isolate scan spend from agent spend. Simplifies provider switching. |
+| LLM Gateway | OpenRouter (2 keys: scan vs agent) | Unified billing across providers. Two keys: OPENROUTER_SCAN_KEY (scans) and OPENROUTER_AGENT_KEY (agents/QA). **Approved models only:** Claude (Sonnet 4.6, Haiku 4.5, Opus 4.6), GPT (4o, 4o-mini, GPT-5-mini), Gemini (2.0 Flash, 2.5 Pro), Perplexity (Sonar, Pro, Online). **Banned:** DeepSeek, Qwen, other providers. |
 | Hosting | Vercel | Zero-config Next.js deployment, edge functions, preview environments, Vercel Analytics included. |
 
 ---
@@ -53,7 +53,6 @@ How:
 - No `any`. No `as unknown as X`. Use proper type narrowing or a well-typed assertion function.
 - Prefer `type` over `interface` for object shapes; use `interface` only when declaration merging is intentional.
 - All external input validated with Zod schemas. Export the schema alongside the inferred type: `export type Foo = z.infer<typeof FooSchema>`.
-- _[Any additional project-specific type conventions]_
 
 ### Naming
 
@@ -63,12 +62,11 @@ How:
 - **Constants:** `SCREAMING_SNAKE_CASE` for module-level compile-time constants.
 - **Database columns:** `snake_case` — matches Postgres convention. Map to camelCase in app layer.
 - **Zod schemas:** suffix with `Schema`, e.g. `UserSchema`. Inferred types drop the suffix: `User`.
-- _[Any additional naming conventions specific to this project]_
 
 ### File Structure
 
 ```
-src/
+apps/web/src/
   app/                  # Next.js App Router pages and layouts
     (route-group)/      # Parenthesized groups for layout sharing
   components/           # Shared UI components (no business logic)
@@ -82,9 +80,8 @@ src/
   lib/                  # Utility functions, clients, shared helpers
     supabase/           # Supabase client + typed DB helpers
   types/                # Global types shared across features
+packages/               # Shared UI / config packages (reserved, currently empty)
 ```
-
-_[Adjust the tree above to match the actual project structure once scaffolded]_
 
 ---
 
@@ -119,7 +116,7 @@ Scope: the feature or module name, e.g., `auth`, `billing`, `dashboard`
 3. PR description must include: what changed, why, how to test, and any migration steps.
 4. Code Reviewer agent reviews before merge. QA Lead runs E2E before merge.
 5. Squash merge to `main`. Delete branch after merge.
-6. _[Any CI checks that must pass before merge, e.g., type-check, lint, tests]_
+6. TypeScript must pass (`pnpm -F @beamix/web typecheck`) before merge. No type errors in CI.
 
 ---
 
@@ -127,15 +124,13 @@ Scope: the feature or module name, e.g., `auth`, `billing`, `dashboard`
 
 | Layer | Tool | Coverage Target | What to Test |
 |-------|------|----------------|--------------|
-| Unit | _[e.g., Vitest]_ | _[e.g., 80% of business logic]_ | Pure functions, transformations, validation schemas, state machines |
-| Integration | _[e.g., Vitest + Supabase local]_ | _[e.g., All API routes]_ | API routes, server actions, DB queries |
-| E2E | _[e.g., Playwright]_ | _[e.g., All critical user paths]_ | Sign up, core workflow, payment flow, error states |
+| Unit | Vitest | 80% of business logic | Pure functions, transformations, validation schemas, state machines |
+| Integration | Vitest + Supabase local | All API routes + server actions | API routes, server actions, DB queries with real data |
+| E2E | Playwright | All critical user paths | Sign up, free scan, inbox approve, payment flow, error states |
 
 **TDD rule:** Any function that can be expressed as `expect(fn(input)).toBe(output)` must have a test written before the implementation.
 
 **What not to test:** UI layout, third-party library internals, one-liner wrappers around well-tested libs.
-
-_[Any project-specific testing constraints or patterns]_
 
 ---
 
@@ -143,14 +138,14 @@ _[Any project-specific testing constraints or patterns]_
 
 | Metric | Target | Tool |
 |--------|--------|------|
-| Core Web Vitals LCP | _[e.g., < 2.5s]_ | Vercel Analytics / Lighthouse |
-| Core Web Vitals CLS | _[e.g., < 0.1]_ | Vercel Analytics / Lighthouse |
-| Core Web Vitals INP | _[e.g., < 200ms]_ | Vercel Analytics / Lighthouse |
-| API p99 response time | _[e.g., < 500ms]_ | _[Monitoring tool]_ |
-| DB query time (p95) | _[e.g., < 100ms]_ | Supabase dashboard |
-| JS bundle size (initial) | _[e.g., < 200KB gzipped]_ | Next.js bundle analyzer |
+| Core Web Vitals LCP | < 2.5s | Vercel Analytics / Lighthouse |
+| Core Web Vitals CLS | < 0.1 | Vercel Analytics / Lighthouse |
+| Core Web Vitals INP | < 200ms | Vercel Analytics / Lighthouse |
+| API p99 response time | < 500ms | Vercel Analytics |
+| DB query time (p95) | < 100ms | Supabase dashboard |
+| JS bundle size (initial) | < 200KB gzipped | Next.js bundle analyzer |
 
-**Mandatory:** Run `next build` and check bundle output before every PR. Flag any chunk above _[threshold]_ KB to build-lead.
+**Mandatory:** Run `pnpm -F @beamix/web build` and check bundle output before every PR. Flag any chunk above 200KB to build-lead.
 
 ---
 
@@ -160,13 +155,17 @@ _[Any project-specific testing constraints or patterns]_
 - **Authorization:** Row-level security (RLS) enabled on all Supabase tables that contain user data. Test RLS policies in integration tests.
 - **Input validation:** Zod on every API route and server action. Reject before processing.
 - **Secrets:** Only via `process.env`. Validated with Zod at startup. Never hardcoded, never logged, never sent to the client.
-- **Dependencies:** _[e.g., `npm audit` runs in CI; no high/critical vulnerabilities in production deps]_
+- **Dependencies:** `pnpm audit` runs in CI. No high/critical vulnerabilities in production deps.
 - **SQL injection:** Parameterized queries only. No string interpolation in SQL.
-- **XSS:** Never use `dangerouslySetInnerHTML`. Sanitize any user-generated content before rendering.
-- _[Any additional security requirements specific to this domain, e.g., PII handling, GDPR, SOC2]_
+- **XSS:** Never use `dangerouslySetInnerHTML`. Use `rehype-sanitize` on all user-generated or agent-generated markdown before rendering.
+- **SSRF:** Validate all user-supplied URLs before making server-side requests. Block internal IP ranges.
+- **Prompt injection:** Sanitize business profile fields before injecting into LLM prompts.
+- **Webhooks:** Verify HMAC signatures on all inbound webhooks (Paddle, Inngest).
+- **Rate limiting:** Apply per-user rate limits on all public API routes and the /scan form.
+- **Cost circuit breaker:** Hard-stop LLM spend if hourly cost exceeds threshold. Configured in Inngest budget-guard function.
 
 ---
 
-_Last updated: 2026-03-19 | Updated by: technical-writer_
+_Last updated: 2026-04-19 | Updated by: technical-writer_
 
 *Historical build plan archived to docs/_archive/2026-03-19_engineering-build-plan.md*
