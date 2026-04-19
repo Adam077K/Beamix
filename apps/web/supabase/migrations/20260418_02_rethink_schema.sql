@@ -483,7 +483,7 @@ AS $$
          ci.evidence, ci.created_at, ci.updated_at
   FROM content_items ci
   WHERE ci.user_id = p_user_id
-    AND (p_status IS NULL OR ci.status = p_status)
+    AND (p_status IS NULL OR ci.status::text = p_status)
     AND ci.status IN ('draft', 'in_review', 'approved', 'rejected')
   ORDER BY ci.created_at DESC
   LIMIT p_limit OFFSET p_offset;
