@@ -2,6 +2,8 @@ import { inngest } from '@/inngest/client'
 import { createServiceClient } from '@/lib/supabase/service'
 import { callLLM } from '@/lib/llm/router'
 import { extractBrands } from '@/lib/scan/brand-extractor'
+import { sendEmail } from '@/lib/resend/send'
+import { scanCompleteHtml, scanCompleteText } from '@/lib/resend/templates/scan-complete'
 
 // Engines per tier (from board decisions).
 const ENGINES_BY_TIER: Record<string, Array<{ key: string; model: string; displayName: string }>> = {
@@ -117,6 +119,46 @@ export const scanRun = inngest.createFunction(
     await step.sendEvent('fan-out-suggestions', {
       name: 'scan.completed' as any,
       data: { scanId, userId, businessId, score, engineResults },
+    })
+
+    // Step 6: Send scan-complete email — failure must never throw
+    await step.run('send-scan-email', async () => {
+      const supabase = createServiceClient() as any
+
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('email, first_name')
+        .eq('id', userId)
+        .maybeSingle()
+
+      const userEmail: string = profile?.email ?? ''
+      const firstName: string = profile?.first_name ?? 'there'
+      const businessName: string = business.biz?.name ?? 'Your business'
+      const baseUrl = process.env['NEXT_PUBLIC_APP_URL'] ?? 'https://app.beamix.tech'
+      const enginesScanned = engines.length
+
+      if (userEmail) {
+        await sendEmail({
+          to: userEmail,
+          subject: `Scan complete for ${businessName} — Beamix`,
+          html: scanCompleteHtml({
+            firstName,
+            businessName,
+            score,
+            scoreDelta: null, // previous score comparison is a future enhancement
+            enginesScanned,
+            scanUrl: `${baseUrl}/dashboard/scans/${scanId}`,
+          }),
+          text: scanCompleteText({
+            firstName,
+            businessName,
+            score,
+            scoreDelta: null,
+            enginesScanned,
+            scanUrl: `${baseUrl}/dashboard/scans/${scanId}`,
+          }),
+        })
+      }
     })
 
     return { scanId, score, engineResults }
