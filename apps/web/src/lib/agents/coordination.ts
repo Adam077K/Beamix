@@ -17,7 +17,7 @@ export async function acquirePageLock(
   agentType: AgentType,
   jobId: string,
 ): Promise<boolean> {
-  const supabase = await createClient();
+  const supabase = (await createClient()) as any;
   const { data, error } = await supabase.rpc('acquire_page_lock', {
     p_url: url,
     p_agent_type: agentType,
@@ -31,7 +31,7 @@ export async function acquirePageLock(
  * Release a previously acquired page lock.
  */
 export async function releasePageLock(url: string): Promise<void> {
-  const supabase = await createClient();
+  const supabase = (await createClient()) as any;
   await supabase.rpc('release_page_lock', { p_url: url });
 }
 
@@ -43,7 +43,7 @@ export async function checkTopicDuplicate(
   businessId: string,
   topicHash: string,
 ): Promise<boolean> {
-  const supabase = await createClient();
+  const supabase = (await createClient()) as any;
   const { data } = await supabase.rpc('check_topic_duplicate', {
     p_business_id: businessId,
     p_topic_hash: topicHash,

@@ -13,7 +13,7 @@ export async function holdCredits(
   jobId: string,
   amount: number,
 ): Promise<{ held: boolean; reason?: string }> {
-  const supabase = await createClient();
+  const supabase = (await createClient()) as any;
   const { data, error } = await supabase.rpc('hold_credits', {
     p_user_id: userId,
     p_amount: amount,
@@ -25,13 +25,13 @@ export async function holdCredits(
 }
 
 export async function confirmCredits(jobId: string): Promise<void> {
-  const supabase = await createClient();
+  const supabase = (await createClient()) as any;
   const { error } = await supabase.rpc('confirm_credits', { p_job_id: jobId });
   if (error) throw new Error(`confirm_credits: ${error.message}`);
 }
 
 export async function releaseCredits(jobId: string): Promise<void> {
-  const supabase = await createClient();
+  const supabase = (await createClient()) as any;
   const { error } = await supabase.rpc('release_credits', { p_job_id: jobId });
   if (error) throw new Error(`release_credits: ${error.message}`);
 }

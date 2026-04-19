@@ -31,8 +31,8 @@ function Sparkline({ data, color = "var(--color-score-good)", className }: Spark
   const polylineStr = points.join(" ")
 
   // Build area fill path: polyline points + close down to bottom corners
-  const firstPoint = points[0].split(",")
-  const lastPoint = points[points.length - 1].split(",")
+  const firstPoint = (points[0] ?? '').split(",")
+  const lastPoint = (points[points.length - 1] ?? '').split(",")
   const areaPath = `M ${polylineStr.replace(/,/g, " ").replace(/ (\d)/g, " $1")} L ${lastPoint[0]} ${height} L ${firstPoint[0]} ${height} Z`
 
   // Unique gradient ID per color to avoid conflicts when multiple sparklines rendered

@@ -19,7 +19,7 @@ export async function checkDailyCap(
   const cap = cfg.dailyCapByTier[tier] ?? null;
   if (cap === null) return { allowed: true, remaining: Infinity, cap: null };
 
-  const supabase = await createClient();
+  const supabase = (await createClient()) as any;
   const today = new Date().toISOString().slice(0, 10);
   const { data } = await supabase
     .from('daily_cap_usage')
@@ -37,7 +37,7 @@ export async function incrementDailyCap(
   userId: string,
   agentType: AgentType,
 ): Promise<void> {
-  const supabase = await createClient();
+  const supabase = (await createClient()) as any;
   const today = new Date().toISOString().slice(0, 10);
 
   // Upsert with onConflict so repeated calls within the same day increment.

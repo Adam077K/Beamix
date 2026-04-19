@@ -10,7 +10,7 @@ import type { BeamixEventMap } from './events';
 
 export const inngest = new Inngest({
   id: 'beamix',
-  eventKey: process.env['INNGEST_EVENT_KEY'],
+  eventKey: process.env['INNGEST_EVENT_KEY'] ?? '',
   schemas: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any,

@@ -85,7 +85,7 @@ export function estimateRankPosition(
 
     const match = numberedPattern.exec(line);
     if (match) {
-      const rank = parseInt(match[1], 10);
+      const rank = parseInt(match[1] ?? '0', 10);
       if (rank >= 1 && rank <= 20) return rank;
     }
 
