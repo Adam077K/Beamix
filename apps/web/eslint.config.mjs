@@ -1,9 +1,15 @@
-// Placeholder ESLint config for ESLint 9 flat-config.
-//
-// NOTE: next/core-web-vitals has a known circular-reference issue when loaded
-// via FlatCompat against ESLint 9 + Next 16. Wave 2 polish worker will migrate
-// to the native flat config once @next/eslint-plugin-next ships proper flat
-// exports. For now, linting is deferred — typecheck + build are the gates.
-//
-// Do not add rules here until the Next plugin compatibility lands.
-export default []
+// ESLint 9 flat config for Next.js 16
+// eslint-config-next@16 ships a flat-config-compatible array export — import directly.
+// No FlatCompat shim needed.
+import nextConfig from 'eslint-config-next'
+
+export default [
+  ...nextConfig,
+  {
+    // Project-level overrides
+    rules: {
+      // Allow unused vars prefixed with _ (common TS pattern)
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    },
+  },
+]
