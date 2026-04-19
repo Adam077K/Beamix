@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ScanIcon, CheckCircle2, AlertCircle, Loader2, TrendingUp, TrendingDown } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { ScanSummary } from '@/lib/types/shared'
@@ -73,6 +74,7 @@ function StatusDot({ status }: { status: ScanSummary['status'] }) {
 
 // Empty state
 function EmptyScans({ onRun }: { onRun: () => void }) {
+  const t = useTranslations('scans')
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -83,18 +85,19 @@ function EmptyScans({ onRun }: { onRun: () => void }) {
       <div className="mb-4 flex size-12 items-center justify-center rounded-xl border border-gray-200 bg-gray-50">
         <ScanIcon className="size-5 text-gray-400" />
       </div>
-      <p className="text-sm font-medium text-gray-900">No scans yet</p>
+      <p className="text-sm font-medium text-gray-900">{t('noScansYet')}</p>
       <p className="mt-1 max-w-xs text-xs text-gray-500">
-        Run your first scan to see how visible your business is in AI search results.
+        {t('noScansBody')}
       </p>
       <Button onClick={onRun} className="mt-6 bg-[#3370FF] hover:bg-[#2558e0]" size="sm">
-        Run first scan
+        {t('runFirstScan')}
       </Button>
     </motion.div>
   )
 }
 
 export function ScansClient({ scans }: ScansClientProps) {
+  const t = useTranslations('scans')
   const [selectedScan, setSelectedScan] = React.useState<ScanSummary | null>(null)
   const [isRunning, setIsRunning] = React.useState(false)
 
@@ -108,11 +111,13 @@ export function ScansClient({ scans }: ScansClientProps) {
       {/* Header */}
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Scans</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">{t('title')}</h1>
           <p className="mt-0.5 text-sm text-gray-500">
             {scans.length > 0
-              ? `${scans.length} scan${scans.length !== 1 ? 's' : ''} — most recent first`
-              : 'Visibility checks across all AI engines'}
+              ? scans.length === 1
+                ? t('subtitleCount', { count: scans.length })
+                : t('subtitleCountPlural', { count: scans.length })
+              : t('subtitle')}
           </p>
         </div>
         <Button
@@ -124,12 +129,12 @@ export function ScansClient({ scans }: ScansClientProps) {
           {isRunning ? (
             <>
               <Loader2 className="size-3.5 animate-spin" />
-              Running…
+              {t('running')}
             </>
           ) : (
             <>
               <ScanIcon className="size-3.5" />
-              Run scan now
+              {t('runScanNow')}
             </>
           )}
         </Button>
@@ -182,14 +187,14 @@ export function ScansClient({ scans }: ScansClientProps) {
                       <span className="text-xs text-gray-400">{formatTime(scan.startedAt)}</span>
                     </div>
                     <p className="mt-0.5 text-xs text-gray-500">
-                      {scan.enginesSucceeded} of {scan.enginesTotal} engines passed
+                      {t('enginesPassed', { succeeded: scan.enginesSucceeded, total: scan.enginesTotal })}
                     </p>
                   </div>
 
                   <div className="ms-4 flex items-center gap-3 shrink-0">
                     <ScoreChip score={scan.score} delta={scan.scoreDelta} />
                     <span className="text-xs text-gray-400 opacity-0 transition-opacity group-hover:opacity-100">
-                      View details
+                      {t('viewDetails')}
                     </span>
                   </div>
                 </button>
