@@ -292,7 +292,9 @@ export function HomeClientV2({
                 </Link>
               </div>
               {inboxPreview.length === 0 ? (
-                <p className="py-4 text-center text-sm text-gray-400">Nothing pending review.</p>
+                <p className="py-4 text-center text-sm text-gray-400">
+                  No drafts yet — accept a suggestion to queue your first agent
+                </p>
               ) : (
                 <div>
                   {inboxPreview.map((item) => (
