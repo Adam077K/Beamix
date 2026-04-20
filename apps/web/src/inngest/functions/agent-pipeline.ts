@@ -273,6 +273,35 @@ export const agentPipeline = inngest.createFunction(
 
       const contentItemId: string | null = contentItem?.id ?? null;
 
+      // 8b. Trigger cache revalidation for home + inbox so the new content_item
+      //     appears immediately without waiting for ISR TTL to expire.
+      //     Non-fatal: if this POST fails, the pipeline still succeeds.
+      try {
+        const revalidateSecret = process.env.INTERNAL_REVALIDATE_SECRET;
+        if (revalidateSecret) {
+          const baseUrl =
+            process.env.NEXT_PUBLIC_APP_URL ?? process.env.VERCEL_URL
+              ? `https://${process.env.VERCEL_URL}`
+              : 'http://localhost:3000';
+          await fetch(`${baseUrl}/api/internal/revalidate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-internal-secret': revalidateSecret,
+            },
+            body: JSON.stringify({
+              tags: [`home-${userId}`, `inbox-${userId}`],
+              paths: ['/home', '/inbox'],
+            }),
+          });
+        } else {
+          console.warn('[agent-pipeline] INTERNAL_REVALIDATE_SECRET not set — skipping revalidation');
+        }
+      } catch (revalidateErr) {
+        // Non-fatal — log and continue
+        console.error('[agent-pipeline] revalidation POST failed:', revalidateErr);
+      }
+
       // 9. Mark job completed
       await supabase
         .from('agent_jobs')

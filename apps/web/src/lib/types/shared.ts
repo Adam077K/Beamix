@@ -45,12 +45,38 @@ export interface InboxItem {
   title: string;
   previewMarkdown: string;
   fullMarkdown: string;
+  /** user_edited_content if present, else fullMarkdown. Never null in UI. */
+  userEditedContent?: string | null;
   targetUrl: string | null;
   evidence: InboxEvidence;
   status: 'draft' | 'awaiting_review' | 'approved' | 'rejected' | 'archived';
   ymylFlagged: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// ─── Workspace ────────────────────────────────────────────────────────────
+
+export interface WorkspaceItem extends InboxItem {
+  /** Confidence score 0–100 from agent run. */
+  confidenceScore?: number | null;
+  /** Estimated impact label from agent analysis. */
+  estimatedImpact?: string | null;
+  /** Which scan/queries triggered this output. */
+  triggerQuerySummary?: string | null;
+  /** Run date from agent_jobs.created_at. */
+  runAt?: string | null;
+}
+
+export interface InboxItemEdit {
+  id: string;
+  contentItemId: string;
+  userId: string;
+  selectionText: string;
+  prompt: string;
+  originalText: string;
+  editedText: string;
+  createdAt: string;
 }
 
 export interface InboxEvidence {
@@ -134,6 +160,15 @@ export interface AutomationSchedule {
   lastRunAt: string | null;
   isPaused: boolean;
   createdAt?: string;
+  /** Last run outcome — fetched from agent_jobs join */
+  lastRunResult?: AutomationRunResult | null;
+  /** Last 7 runs: true=success, false=failure, null=skipped */
+  runHistory7?: Array<boolean | null>;
+}
+
+export interface AutomationRunResult {
+  status: 'success' | 'failed' | 'skipped';
+  label: string; // e.g. "Content generated" | "Failed: LLM timeout" | "No output — skipped"
 }
 
 export interface AutomationStatus {
@@ -141,7 +176,30 @@ export interface AutomationStatus {
   creditsUsedThisMonth: number;
   creditsCapThisMonth: number;
   creditsUsedPercent: number;
+  /** Daily run counts for last 14 days, oldest first */
+  dailyRunsLast14: number[];
+  /** Days elapsed this billing cycle */
+  daysElapsed: number;
+  /** Days remaining in billing cycle */
+  daysRemaining: number;
   schedules: AutomationSchedule[];
+  /** Content funnel counts */
+  contentFunnel: AutomationContentFunnel;
+  /** Last 10 agent runs */
+  runHistoryRecent: AutomationRecentRun[];
+}
+
+export interface AutomationContentFunnel {
+  draft: number;
+  in_review: number;
+  approved: number;
+  published: number;
+}
+
+export interface AutomationRecentRun {
+  agentType: AgentType;
+  status: 'success' | 'failed' | 'skipped';
+  completedAt: string;
 }
 
 // ─── Archive ──────────────────────────────────────────────────────────────
