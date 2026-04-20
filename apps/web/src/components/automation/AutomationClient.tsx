@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MoreHorizontal,
@@ -655,30 +656,85 @@ function RunHistoryCard({ runs }: RunHistoryCardProps) {
 // ─── Main component ───────────────────────────────────────────────────────
 
 export function AutomationClient({ status }: AutomationClientProps) {
+  const router = useRouter()
   const [globalKill, setGlobalKill] = React.useState(status.globalKillSwitch)
   const [killPending, setKillPending] = React.useState(false)
   const [addModalOpen, setAddModalOpen] = React.useState(false)
   const [schedules, setSchedules] = React.useState<AutomationSchedule[]>(status.schedules)
+  // Track in-flight toggle requests to prevent double-clicks
+  const [togglingIds, setTogglingIds] = React.useState<Set<string>>(new Set())
 
   function handleKillButtonClick() {
     if (globalKill) {
-      setGlobalKill(false)
+      // Re-enable: call API immediately
+      void handleKillReEnable()
     } else {
       setKillPending(true)
     }
   }
 
-  function handleKillConfirm() {
-    setGlobalKill(true)
+  async function handleKillReEnable() {
+    try {
+      const res = await fetch('/api/automation/kill-switch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: false }),
+      })
+      if (!res.ok) throw new Error('Failed to re-enable')
+      setGlobalKill(false)
+      router.refresh()
+    } catch {
+      // silently ignore — state will revert on refresh
+    }
+  }
+
+  async function handleKillConfirm() {
     setKillPending(false)
+    try {
+      const res = await fetch('/api/automation/kill-switch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: true }),
+      })
+      if (!res.ok) throw new Error('Failed to pause all')
+      setGlobalKill(true)
+      router.refresh()
+    } catch {
+      // silently ignore
+    }
   }
 
   function handleKillCancel() {
     setKillPending(false)
   }
 
-  function handleTogglePause(id: string, paused: boolean) {
+  async function handleTogglePause(id: string, paused: boolean) {
+    if (togglingIds.has(id)) return
+    // Optimistic update
     setSchedules((prev) => prev.map((s) => (s.id === id ? { ...s, isPaused: paused } : s)))
+    setTogglingIds((prev) => new Set(prev).add(id))
+
+    try {
+      const res = await fetch(`/api/automation/schedules/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: !paused }),
+      })
+      if (!res.ok) {
+        // Revert optimistic update on failure
+        setSchedules((prev) => prev.map((s) => (s.id === id ? { ...s, isPaused: !paused } : s)))
+      } else {
+        router.refresh()
+      }
+    } catch {
+      setSchedules((prev) => prev.map((s) => (s.id === id ? { ...s, isPaused: !paused } : s)))
+    } finally {
+      setTogglingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
   }
 
   function handleChangeCadence(id: string, cadence: Cadence) {
@@ -700,6 +756,7 @@ export function AutomationClient({ status }: AutomationClientProps) {
       return [newSchedule, ...prev]
     })
     setAddModalOpen(false)
+    router.refresh()
   }
 
   const activeCount = schedules.filter((s) => !s.isPaused && !globalKill).length

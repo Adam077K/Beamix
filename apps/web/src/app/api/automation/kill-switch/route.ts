@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await (supabase as any).auth.getUser();
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.json(UNAUTHENTICATED, { status: 401 });
@@ -26,33 +26,23 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { enabled } = parsed.data as any;
+  const { enabled } = parsed.data;
   const now = new Date().toISOString();
 
-  const { error: profileError } = await (supabase as any)
-    .from('user_profiles')
-    .upsert({ id: user.id, automation_kill_switch: enabled, updated_at: now });
+  // Upsert automation_settings — creates row if missing (W0 migration created this table)
+  const { error: settingsError } = await supabase
+    .from('automation_settings')
+    .upsert(
+      { user_id: user.id, automation_paused: !enabled, updated_at: now } as never,
+      { onConflict: 'user_id' }
+    );
 
-  if (profileError) {
+  if (settingsError) {
     return NextResponse.json(
-      { error: { code: 'DB_ERROR', message: profileError.message } },
+      { error: { code: 'DB_ERROR', message: settingsError.message } },
       { status: 500 }
     );
   }
 
-  if (enabled) {
-    const { error: configError } = await (supabase as any)
-      .from('automation_configs')
-      .update({ is_paused: true, updated_at: now })
-      .eq('user_id', user.id);
-
-    if (configError) {
-      return NextResponse.json(
-        { error: { code: 'DB_ERROR', message: configError.message } },
-        { status: 500 }
-      );
-    }
-  }
-
-  return NextResponse.json({ ok: true, enabled });
+  return NextResponse.json({ ok: true, automation_paused: !enabled });
 }
