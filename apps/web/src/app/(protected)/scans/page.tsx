@@ -1,177 +1,71 @@
-import type { ScanSummaryExtended, EngineStatus } from '@/components/scans/ScansClient'
+/**
+ * /scans — Server Component
+ *
+ * Fetches real scan rows for the authenticated user's business
+ * and passes them to ScansClient for rendering.
+ */
+
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { ScansClient } from '@/components/scans/ScansClient'
+import type { ScanRow } from '@/components/scans/ScansClient'
 
-// ─── Mock engine status helpers ───────────────────────────────────────────────
+export default async function ScansPage() {
+  const supabase = (await createClient()) as any
 
-function makeStatus(
-  chatgpt: boolean,
-  gemini: boolean,
-  perplexity: boolean,
-  claude: boolean,
-  aio: boolean,
-  grok: boolean,
-  youcom: boolean,
-): EngineStatus {
-  const keys = ['chatgpt', 'gemini', 'perplexity', 'claude', 'aio', 'grok', 'youcom'] as const
-  const vals = [chatgpt, gemini, perplexity, claude, aio, grok, youcom]
-  const result: EngineStatus = {}
-  keys.forEach((k, i) => {
-    result[k] = vals[i] ? 'mentioned' : 'not_mentioned'
-  })
-  return result
-}
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-function countMentioned(status: EngineStatus): number {
-  return Object.values(status).filter((v) => v === 'mentioned').length
-}
+  // Fetch the user's primary business
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('is_primary', true)
+    .maybeSingle()
 
-// ─── Realistic mock data ──────────────────────────────────────────────────────
+  // Fetch plan tier for tier-gating the manual re-scan CTA
+  const { data: sub } = await supabase
+    .from('subscriptions')
+    .select('plan_id')
+    .eq('user_id', user.id)
+    .maybeSingle()
 
-// These scores tell a real story: dropped in early April, recovered mid-April
-const SCORE_HISTORY = [48, 51, 54, 52, 49, 56, 57, 62]
+  const planTier = ((sub?.plan_id as string | undefined) ?? null) as
+    | 'discover'
+    | 'build'
+    | 'scale'
+    | null
 
-function buildSparkline(upToIndex: number): number[] {
-  return SCORE_HISTORY.slice(Math.max(0, upToIndex - 5), upToIndex + 1)
-}
+  let scans: ScanRow[] = []
 
-const s1Status = makeStatus(true, true, true, false, true, false, false)
-const s3Status = makeStatus(true, true, true, false, true, false, true)
-const s5Status = makeStatus(true, true, false, false, false, false, false)
-const s6Status = makeStatus(true, true, true, true, false, false, false)
-const s7Status = makeStatus(true, false, true, false, false, false, false)
-const s8Status = makeStatus(false, true, false, false, false, false, false)
+  if (business?.id) {
+    const { data: rows } = await supabase
+      .from('scans')
+      .select(
+        'id, overall_score, started_at, completed_at, status, engines_queried, engines_scanned, scan_type',
+      )
+      .eq('business_id', business.id)
+      .order('started_at', { ascending: false })
+      .limit(50)
 
-const mockScans: ScanSummaryExtended[] = [
-  {
-    id: 's1',
-    userId: 'u1',
-    businessId: 'b1',
-    startedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 2 * 60 * 60 * 1000 + 2 * 60 * 1000).toISOString(),
-    status: 'completed',
-    score: 62,
-    scoreDelta: 5,
-    enginesSucceeded: 7,
-    enginesTotal: 7,
-    engineStatus: s1Status,
-    mentionedCount: countMentioned(s1Status),
-    sparkline: buildSparkline(7),
-  },
-  {
-    id: 's2',
-    userId: 'u1',
-    businessId: 'b1',
-    startedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    completedAt: null,
-    status: 'running',
-    score: null,
-    scoreDelta: null,
-    enginesSucceeded: 3,
-    enginesTotal: 7,
-    engineStatus: {
-      chatgpt: 'mentioned',
-      gemini: 'mentioned',
-      perplexity: 'mentioned',
-      claude: 'not_tested',
-      aio: 'not_tested',
-      grok: 'not_tested',
-      youcom: 'not_tested',
-    },
-    mentionedCount: 3,
-    sparkline: buildSparkline(6),
-  },
-  {
-    id: 's3',
-    userId: 'u1',
-    businessId: 'b1',
-    startedAt: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 26 * 60 * 60 * 1000 + 3 * 60 * 1000).toISOString(),
-    status: 'completed',
-    score: 57,
-    scoreDelta: 3,
-    enginesSucceeded: 7,
-    enginesTotal: 7,
-    engineStatus: s3Status,
-    mentionedCount: countMentioned(s3Status),
-    sparkline: buildSparkline(6),
-  },
-  {
-    id: 's4',
-    userId: 'u1',
-    businessId: 'b1',
-    startedAt: new Date(Date.now() - 30 * 60 * 60 * 1000).toISOString(),
-    completedAt: null,
-    status: 'failed',
-    score: null,
-    scoreDelta: null,
-    enginesSucceeded: 0,
-    enginesTotal: 7,
-    engineStatus: {},
-    mentionedCount: 0,
-    sparkline: buildSparkline(5),
-  },
-  {
-    id: 's5',
-    userId: 'u1',
-    businessId: 'b1',
-    startedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 1000).toISOString(),
-    status: 'completed',
-    score: 54,
-    scoreDelta: -2,
-    enginesSucceeded: 6,
-    enginesTotal: 7,
-    engineStatus: s5Status,
-    mentionedCount: countMentioned(s5Status),
-    sparkline: buildSparkline(4),
-  },
-  {
-    id: 's6',
-    userId: 'u1',
-    businessId: 'b1',
-    startedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000 + 2 * 60 * 1000).toISOString(),
-    status: 'completed',
-    score: 56,
-    scoreDelta: null,
-    enginesSucceeded: 7,
-    enginesTotal: 7,
-    engineStatus: s6Status,
-    mentionedCount: countMentioned(s6Status),
-    sparkline: buildSparkline(3),
-  },
-  {
-    id: 's7',
-    userId: 'u1',
-    businessId: 'b1',
-    startedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000 + 2 * 60 * 1000).toISOString(),
-    status: 'completed',
-    score: 51,
-    scoreDelta: 3,
-    enginesSucceeded: 5,
-    enginesTotal: 7,
-    engineStatus: s7Status,
-    mentionedCount: countMentioned(s7Status),
-    sparkline: buildSparkline(2),
-  },
-  {
-    id: 's8',
-    userId: 'u1',
-    businessId: 'b1',
-    startedAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000 + 2 * 60 * 1000).toISOString(),
-    status: 'completed',
-    score: 48,
-    scoreDelta: -3,
-    enginesSucceeded: 3,
-    enginesTotal: 7,
-    engineStatus: s8Status,
-    mentionedCount: countMentioned(s8Status),
-    sparkline: buildSparkline(1),
-  },
-]
+    if (rows) {
+      scans = (rows as Array<Record<string, unknown>>).map((row) => ({
+        id: row.id as string,
+        overallScore: (row.overall_score as number | null) ?? null,
+        // score_delta_vs_prev is not stored in DB — computed at display time via prev scan comparison
+        scoreDelta: null,
+        startedAt: (row.started_at as string | null) ?? new Date().toISOString(),
+        completedAt: (row.completed_at as string | null) ?? null,
+        status: (row.status as 'running' | 'completed' | 'failed') ?? 'failed',
+        enginesQueried: (row.engines_queried as string[] | null) ?? [],
+        enginesScanned: (row.engines_scanned as string[]) ?? [],
+        scanType: (row.scan_type as 'initial' | 'manual' | 'scheduled') ?? 'manual',
+      }))
+    }
+  }
 
-export default function ScansPage() {
-  return <ScansClient scans={mockScans} />
+  return <ScansClient scans={scans} planTier={planTier} />
 }
