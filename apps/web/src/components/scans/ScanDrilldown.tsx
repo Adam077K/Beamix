@@ -18,6 +18,9 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { cn, getScoreColor } from '@/lib/utils'
 import { ENGINE_CONFIG } from './ScansClient'
+import { QueryByQueryTable } from './QueryByQueryTable'
+import { SentimentHistogram } from './SentimentHistogram'
+import type { ScanEngineResult } from './EngineBreakdownTable'
 
 // ─── Prop types (exported for the server page to import) ──────────────────────
 
@@ -78,6 +81,22 @@ function relativeTime(iso: string): string {
   if (diffDays === 1) return 'yesterday'
   if (diffDays < 7) return `${diffDays}d ago`
   return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(iso))
+}
+
+// ─── Adapter: ScanPageEngineResult → ScanEngineResult (W6 components use snake_case) ──
+
+function toScanEngineResult(r: ScanPageEngineResult, scanId: string): ScanEngineResult {
+  return {
+    id: r.id,
+    scan_id: scanId,
+    engine: r.engine,
+    is_mentioned: r.isMentioned,
+    rank_position: r.rankPosition,
+    sentiment_score: r.sentimentScore,
+    mention_context: r.mentionContext,
+    competitors_mentioned: r.competitorsMentioned,
+    prompt_text: undefined,
+  }
 }
 
 // ─── Section label ────────────────────────────────────────────────────────────
@@ -317,6 +336,12 @@ interface ScanDrilldownProps {
 }
 
 export function ScanDrilldown({ scan, engineResults, prevScan }: ScanDrilldownProps) {
+  // Adapt camelCase engine results to snake_case for W6 components
+  const adaptedResults = React.useMemo(
+    () => engineResults.map((r) => toScanEngineResult(r, scan.id)),
+    [engineResults, scan.id],
+  )
+
   // Compute score delta vs previous scan
   const scoreDelta =
     prevScan?.overallScore !== null && prevScan?.overallScore !== undefined && scan.overallScore !== null
@@ -471,10 +496,7 @@ export function ScanDrilldown({ scan, engineResults, prevScan }: ScanDrilldownPr
         aria-label="Query-by-query breakdown"
       >
         <SectionLabel>Query breakdown</SectionLabel>
-        {/* W6 will add QueryByQueryTable component here */}
-        <p className="text-xs text-gray-400">
-          Query-level data will be available here (W6 component).
-        </p>
+        <QueryByQueryTable results={adaptedResults} />
       </motion.section>
 
       {/* ── Sentiment distribution ────────────────────────────────────────── */}
@@ -486,10 +508,7 @@ export function ScanDrilldown({ scan, engineResults, prevScan }: ScanDrilldownPr
         aria-label="Sentiment distribution"
       >
         <SectionLabel>Sentiment distribution</SectionLabel>
-        {/* W6 will add SentimentHistogram component here */}
-        <p className="text-xs text-gray-400">
-          Sentiment histogram will be available here (W6 component).
-        </p>
+        <SentimentHistogram results={adaptedResults} />
       </motion.section>
 
       {/* ── Competitors spotted ───────────────────────────────────────────── */}
