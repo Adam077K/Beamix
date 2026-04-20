@@ -5,6 +5,9 @@ import InboxClient from '@/components/inbox/InboxClient'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
 import type { InboxItem } from '@/lib/types/shared'
+import type { Database } from '@/lib/types/database.types'
+
+type ContentItemRow = Database['public']['Tables']['content_items']['Row']
 
 export default async function InboxPage() {
   const supabase = await createClient()
@@ -33,7 +36,8 @@ export default async function InboxPage() {
 
   // Map DB rows → InboxItem shape.
   // Key bridge: DB status 'in_review' → UI type 'awaiting_review'.
-  const items: InboxItem[] = (rows ?? []).map((row) => {
+  const typedRows = (rows ?? []) as unknown as ContentItemRow[]
+  const items: InboxItem[] = typedRows.map((row) => {
     const evidenceRaw =
       row.evidence && typeof row.evidence === 'object' && !Array.isArray(row.evidence)
         ? (row.evidence as Record<string, unknown>)
@@ -65,7 +69,7 @@ export default async function InboxPage() {
       id: row.id,
       userId: user.id,
       jobId: row.agent_job_id,
-      agentType: row.agent_type,
+      agentType: row.agent_type as InboxItem['agentType'],
       actionLabel: row.title,
       title: row.title,
       previewMarkdown: (row.content_body ?? '').slice(0, 200),
