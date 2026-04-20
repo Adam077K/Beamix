@@ -179,89 +179,10 @@ function Section({
   )
 }
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-
-const MOCK_ACTIONS: RoadmapAction[] = [
-  // Completed
-  {
-    id: 'c1',
-    status: 'completed',
-    label: 'Schema markup added (LocalBusiness)',
-    impactDelta: '+3 score',
-    dateLabel: 'Apr 14',
-  },
-  {
-    id: 'c2',
-    status: 'completed',
-    label: 'FAQ page: pricing questions (8 Q&A)',
-    impactDelta: '+5 score',
-    dateLabel: 'Apr 16',
-  },
-  {
-    id: 'c3',
-    status: 'completed',
-    label: 'Yelp listing claimed',
-    note: 'pending verification',
-    dateLabel: 'Apr 17',
-  },
-  // In progress
-  {
-    id: 'ip1',
-    status: 'in_progress',
-    label: 'Homepage rewrite — ready for your review',
-    inboxHref: '/inbox',
-  },
-  // Up next
-  {
-    id: 'u1',
-    status: 'up_next',
-    label: 'Add statistics to your services page',
-    upNextIndex: 1,
-  },
-  {
-    id: 'u2',
-    status: 'up_next',
-    label: 'Create comparison page vs competitors',
-    upNextIndex: 2,
-  },
-  {
-    id: 'u3',
-    status: 'up_next',
-    label: 'Build your Google Business Profile',
-    upNextIndex: 3,
-  },
-  // Future
-  {
-    id: 'f1',
-    status: 'future',
-    label: 'Video schema markup',
-  },
-  {
-    id: 'f2',
-    status: 'future',
-    label: 'Reddit presence builder',
-  },
-  {
-    id: 'f3',
-    status: 'future',
-    label: 'Industry directory submissions (7 more)',
-  },
-  {
-    id: 'f4',
-    status: 'future',
-    label: 'Long-tail query expansion',
-  },
-  {
-    id: 'f5',
-    status: 'future',
-    label: 'Competitor comparison blog series',
-  },
-]
-
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function RoadmapTab({ actions, className }: RoadmapTabProps) {
-  const items = actions && actions.length > 0 ? actions : MOCK_ACTIONS
+  const items = actions ?? []
 
   // Empty state
   if (items.length === 0) {
