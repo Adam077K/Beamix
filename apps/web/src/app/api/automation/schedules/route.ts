@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
         paused_at: null,
         next_run_at: nextRunAt,
         updated_at: now,
-      },
+      } as never,
       { onConflict: 'user_id,agent_type' }
     )
     .select('*')

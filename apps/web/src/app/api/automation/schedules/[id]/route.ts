@@ -47,7 +47,7 @@ export async function PATCH(
 
   const { data: updated, error } = await supabase
     .from('automation_configs')
-    .update(updatePayload)
+    .update(updatePayload as never)
     .eq('id', id)
     .eq('user_id', user.id) // RLS double-check
     .select('*')

@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   const { error: settingsError } = await supabase
     .from('automation_settings')
     .upsert(
-      { user_id: user.id, automation_paused: !enabled, updated_at: now },
+      { user_id: user.id, automation_paused: !enabled, updated_at: now } as never,
       { onConflict: 'user_id' }
     );
 

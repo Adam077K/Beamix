@@ -70,7 +70,12 @@ export default async function AutomationPage() {
   )
 
   // --- Credits ---
-  const creditsRow = creditsRes.data
+  const creditsRow = creditsRes.data as {
+    base_allocation: number | null
+    rollover_amount: number | null
+    topup_amount: number | null
+    used_amount: number | null
+  } | null
   const usedAmount = creditsRow?.used_amount ?? 0
   const totalCap =
     (creditsRow?.base_allocation ?? 0) +
@@ -79,7 +84,7 @@ export default async function AutomationPage() {
   const creditsUsedPercent = totalCap > 0 ? Math.round((usedAmount / totalCap) * 100) : 0
 
   // --- Kill-switch ---
-  const settingsRow = settingsRes.data
+  const settingsRow = settingsRes.data as { automation_paused: boolean | null } | null
   // If no row exists yet, automation is not paused
   const globalKillSwitch = settingsRow?.automation_paused ?? false
 
@@ -91,7 +96,7 @@ export default async function AutomationPage() {
   const daysRemaining = Math.max(0, Math.ceil((cycleEnd.getTime() - now.getTime()) / 86_400_000))
 
   // --- Sparkline: daily run counts last 14 days ---
-  const jobs = jobsRes.data ?? []
+  const jobs = (jobsRes.data ?? []) as Array<{ status: string | null; created_at: string | null; agent_type: string | null }>
   const dailyRunsMap = new Map<string, number>()
   for (const job of jobs) {
     if (!job.created_at) continue
