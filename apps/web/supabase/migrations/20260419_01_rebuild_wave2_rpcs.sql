@@ -41,7 +41,7 @@ SET search_path = public
 AS $$
   -- ── Core business domain (used for SOV matching) ──────────────────────────
   WITH biz AS (
-    SELECT b.id, b.scan_url, b.name
+    SELECT b.id, b.website_url, b.name
     FROM businesses b
     WHERE b.id = p_business_id
       AND b.user_id = p_user_id
