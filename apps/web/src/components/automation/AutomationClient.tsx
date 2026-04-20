@@ -197,7 +197,7 @@ function StatusPill({ isPaused, globalPaused, hasError }: StatusPillProps) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
         <Pause className="size-3" />
-        Paused
+        Off — not running
       </span>
     )
   }
@@ -399,7 +399,7 @@ function EmptySchedules() {
             <Zap className="size-5 text-gray-400" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-900">No automations yet</p>
+            <p className="text-sm font-medium text-gray-900">No agents scheduled — add a schedule to start improving your visibility automatically</p>
             <p className="mt-0.5 text-xs text-gray-500 max-w-xs mx-auto">
               Accept a suggestion from your inbox to create a schedule, or add one manually.
             </p>
