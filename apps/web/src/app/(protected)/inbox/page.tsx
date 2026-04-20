@@ -1,83 +1,96 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { Inbox } from 'lucide-react'
 import InboxClient from '@/components/inbox/InboxClient'
 import { Button } from '@/components/ui/button'
+import { createClient } from '@/lib/supabase/server'
 import type { InboxItem } from '@/lib/types/shared'
+import type { Database } from '@/lib/types/database.types'
 
-const mockItems: InboxItem[] = [
-  {
-    id: '1',
-    userId: 'u_mock',
-    jobId: 'job_mock_1',
-    actionLabel: 'Optimize your homepage',
-    title: 'Homepage rewrite ready',
-    status: 'awaiting_review',
-    agentType: 'content_optimizer',
-    targetUrl: 'https://example.com',
-    createdAt: '2026-04-19T10:00:00Z',
-    updatedAt: '2026-04-19T10:00:00Z',
-    ymylFlagged: false,
-    previewMarkdown:
-      '# Homepage rewrite\n\nYour business helps SMBs win...',
-    fullMarkdown:
-      '# Homepage rewrite\n\nYour business helps SMBs win in AI search.\n\n## Why it matters\n\nChatGPT cites ...\n\n- Bullet one\n- Bullet two',
-    evidence: {
-      triggerSource: 'Weekly scan suggestion',
-      targetQueries: ['best AI visibility tool', 'how to rank in ChatGPT'],
-      impactEstimate: '+12 positions est.',
-      citations: [],
-    },
-  },
-  {
-    id: '2',
-    userId: 'u_mock',
-    jobId: 'job_mock_2',
-    actionLabel: 'Generate FAQ page',
-    title: 'Pricing FAQ ready (8 Q&A)',
-    status: 'awaiting_review',
-    agentType: 'faq_builder',
-    targetUrl: null,
-    createdAt: '2026-04-19T08:00:00Z',
-    updatedAt: '2026-04-19T08:00:00Z',
-    ymylFlagged: false,
-    previewMarkdown:
-      '**Q: How much does Beamix cost?**\nA: Pricing starts at $79...',
-    fullMarkdown:
-      '## Pricing FAQ\n\n**Q: How much does Beamix cost?**\nA: Pricing starts at $79/mo for the Discover tier.\n\n**Q: Can I cancel anytime?**\nA: Yes, within 14 days get a full refund.',
-    evidence: {
-      triggerSource: 'Scan found 8 unanswered pricing queries',
-      targetQueries: ['beamix cost', 'beamix pricing', 'is beamix cheap'],
-      impactEstimate: '+8 query coverage',
-      citations: [],
-    },
-  },
-  {
-    id: '3',
-    userId: 'u_mock',
-    jobId: 'job_mock_3',
-    actionLabel: 'Check directory listings',
-    title: '3 directories missing',
-    status: 'draft',
-    agentType: 'offsite_presence_builder',
-    targetUrl: null,
-    createdAt: '2026-04-18T14:00:00Z',
-    updatedAt: '2026-04-18T14:00:00Z',
-    ymylFlagged: false,
-    previewMarkdown:
-      'We found 3 high-value directories where your profile is incomplete or missing.',
-    fullMarkdown:
-      '## Missing directory listings\n\n1. **Yelp** — No profile. Submission package ready.\n2. **Capterra** — Unclaimed. Verify steps below.\n3. **G2** — No listing. Template provided.',
-    evidence: {
-      triggerSource: 'Scan crossref',
-      targetQueries: ['best SaaS for X'],
-      impactEstimate: 'Medium',
-      citations: [],
-    },
-  },
-]
+type ContentItemRow = Database['public']['Tables']['content_items']['Row']
 
-export default function InboxPage() {
-  if (mockItems.length === 0) {
+export default async function InboxPage() {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  const { data: rows, error } = await supabase
+    .from('content_items')
+    .select(
+      'id, agent_job_id, agent_type, title, content_body, status, created_at, updated_at, estimated_impact, evidence, trigger_reason, target_queries',
+    )
+    .eq('user_id', user.id)
+    .in('status', ['draft', 'in_review', 'approved', 'rejected'])
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    // Non-fatal: render empty state with a fallback notice
+    console.error('[inbox] failed to fetch content_items:', error.message)
+  }
+
+  // Map DB rows → InboxItem shape.
+  // Key bridge: DB status 'in_review' → UI type 'awaiting_review'.
+  const typedRows = (rows ?? []) as unknown as ContentItemRow[]
+  const items: InboxItem[] = typedRows.map((row) => {
+    const evidenceRaw =
+      row.evidence && typeof row.evidence === 'object' && !Array.isArray(row.evidence)
+        ? (row.evidence as Record<string, unknown>)
+        : {}
+
+    const targetQueries: string[] = Array.isArray(evidenceRaw['targetQueries'])
+      ? (evidenceRaw['targetQueries'] as string[])
+      : Array.isArray(row.target_queries)
+        ? (row.target_queries as string[])
+        : []
+
+    const impactEstimate =
+      typeof evidenceRaw['impactEstimate'] === 'string'
+        ? evidenceRaw['impactEstimate']
+        : (row.estimated_impact ?? 'Unknown')
+
+    const triggerSource =
+      typeof evidenceRaw['triggerSource'] === 'string'
+        ? evidenceRaw['triggerSource']
+        : (row.trigger_reason ?? 'Agent run')
+
+    // Map DB status to UI status
+    const uiStatus: InboxItem['status'] =
+      row.status === 'in_review'
+        ? 'awaiting_review'
+        : (row.status as InboxItem['status'])
+
+    return {
+      id: row.id,
+      userId: user.id,
+      jobId: row.agent_job_id,
+      agentType: row.agent_type as InboxItem['agentType'],
+      actionLabel: row.title,
+      title: row.title,
+      previewMarkdown: (row.content_body ?? '').slice(0, 200),
+      fullMarkdown: row.content_body ?? '',
+      targetUrl: null,
+      evidence: {
+        triggerSource,
+        targetQueries,
+        citations: [],
+        impactEstimate,
+      },
+      status: uiStatus,
+      ymylFlagged: false,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }
+  })
+
+  const unreadCount = items.filter((i) => i.status === 'awaiting_review').length
+
+  if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center">
         <Inbox size={48} className="mb-4 text-muted-foreground/50" />
@@ -92,5 +105,5 @@ export default function InboxPage() {
     )
   }
 
-  return <InboxClient items={mockItems} />
+  return <InboxClient items={items} unreadCount={unreadCount} />
 }

@@ -11,10 +11,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { cn, getScoreColor } from '@/lib/utils'
-import type { ScanSummary } from '@/lib/types/shared'
-import { ScanDrilldown } from './ScanDrilldown'
 
 // ─── Engine config ────────────────────────────────────────────────────────────
 
@@ -30,19 +29,28 @@ export const ENGINE_CONFIG = [
 
 export type EngineKey = (typeof ENGINE_CONFIG)[number]['key']
 
-/** Per-scan engine mention status. Keys match ENGINE_CONFIG.key */
-export type EngineStatus = Record<string, 'mentioned' | 'not_mentioned' | 'not_tested'>
+// ─── Real DB row shape ────────────────────────────────────────────────────────
 
-// ─── Extended scan summary ────────────────────────────────────────────────────
-
-export interface ScanSummaryExtended extends ScanSummary {
-  /** Sparkline: last 6 scores for mini chart (oldest → newest) */
-  sparkline: number[]
-  /** Engine-level mention status for this scan */
-  engineStatus: EngineStatus
-  /** Count of engines that mentioned the business */
-  mentionedCount: number
+/** Mapped from the `scans` Supabase table row. */
+export interface ScanRow {
+  id: string
+  overallScore: number | null
+  /** Computed client-side from previous scan comparison. null from server. */
+  scoreDelta: number | null
+  startedAt: string
+  completedAt: string | null
+  status: 'running' | 'completed' | 'failed'
+  /** Array of engine keys queried, e.g. ['chatgpt', 'gemini', ...] */
+  enginesQueried: string[]
+  /** Array of engine keys that succeeded. Derived from engines_scanned column. */
+  enginesScanned: string[]
+  scanType: 'initial' | 'manual' | 'scheduled'
 }
+
+// ─── Legacy extended type (kept for ScanDrilldown dialog compatibility) ───────
+
+/** @deprecated Use ScanRow for list; ScanDrilldown has its own props now. */
+export type EngineStatus = Record<string, 'mentioned' | 'not_mentioned' | 'not_tested'>
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
@@ -70,6 +78,13 @@ function formatDayLabel(iso: string): string {
 
   if (date.toDateString() === today.toDateString()) return 'TODAY'
   if (date.toDateString() === yesterday.toDateString()) return 'YESTERDAY'
+
+  // Check if within this week (Mon–Sun)
+  const startOfWeek = new Date(today)
+  startOfWeek.setDate(today.getDate() - today.getDay())
+  startOfWeek.setHours(0, 0, 0, 0)
+  if (date >= startOfWeek) return 'EARLIER THIS WEEK'
+
   return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' })
     .format(date)
     .toUpperCase()
@@ -90,7 +105,7 @@ function scoreVerdict(score: number): {
     }
   if (score >= 50)
     return {
-      label: 'Good',
+      label: '',
       textClass: 'text-emerald-600',
       bgClass: 'bg-emerald-50',
       borderClass: 'border-emerald-200',
@@ -110,47 +125,35 @@ function scoreVerdict(score: number): {
   }
 }
 
-function computeAvgScore(scans: ScanSummaryExtended[]): number | null {
-  const completed = scans.filter((s) => s.score !== null && s.status === 'completed')
+function computeAvgScore(scans: ScanRow[]): number | null {
+  const completed = scans.filter((s) => s.overallScore !== null && s.status === 'completed')
   if (completed.length === 0) return null
-  const sum = completed.reduce((acc, s) => acc + (s.score ?? 0), 0)
+  const sum = completed.reduce((acc, s) => acc + (s.overallScore ?? 0), 0)
   return Math.round(sum / completed.length)
 }
 
-function computeScoreDelta(scans: ScanSummaryExtended[]): number | null {
-  const completed = scans.filter((s) => s.score !== null && s.status === 'completed')
+function computeScoreDelta(scans: ScanRow[]): number | null {
+  const completed = scans.filter((s) => s.overallScore !== null && s.status === 'completed')
   if (completed.length < 2) return null
-  const latest = completed[0]?.score ?? 0
-  const oldest = completed[completed.length - 1]?.score ?? 0
+  const latest = completed[0]?.overallScore ?? 0
+  const oldest = completed[completed.length - 1]?.overallScore ?? 0
   return latest - oldest
 }
 
-function buildLastScanCtx(scans: ScanSummaryExtended[]): string {
+function buildLastScanCtx(scans: ScanRow[]): string {
   const latest = scans[0]
   if (!latest) return ''
-  const rel = relativeTime(latest.startedAt)
-
-  const worstEngineEntry = Object.entries(latest.engineStatus).find(
-    ([, v]) => v === 'not_mentioned',
-  )
-  const worstLabel = worstEngineEntry
-    ? ENGINE_CONFIG.find((e) => e.key === worstEngineEntry[0])?.label
-    : null
-
-  if (worstLabel && latest.status === 'completed') {
-    return `${rel} · Visibility dropped on ${worstLabel}`
-  }
-  return rel
+  return relativeTime(latest.startedAt)
 }
 
 // ─── Score-over-time mini chart ───────────────────────────────────────────────
 
-function ScoreOverTimeChart({ scans }: { scans: ScanSummaryExtended[] }) {
+function ScoreOverTimeChart({ scans }: { scans: ScanRow[] }) {
   const points = scans
     .slice(0, 12)
     .reverse()
-    .filter((s) => s.score !== null)
-    .map((s) => s.score as number)
+    .filter((s) => s.overallScore !== null)
+    .map((s) => s.overallScore as number)
 
   if (points.length < 2) return null
 
@@ -199,77 +202,34 @@ function ScoreOverTimeChart({ scans }: { scans: ScanSummaryExtended[] }) {
   )
 }
 
-// ─── Mini sparkline (40 × 20px per row) ──────────────────────────────────────
+// ─── Engine pips (5-7 dots showing which engines ran) ────────────────────────
 
-function MiniSparkline({ data, score }: { data: number[]; score: number | null }) {
-  if (data.length < 2) return <span style={{ width: 40 }} className="shrink-0 block" />
+function EnginePips({
+  enginesQueried,
+  enginesScanned,
+}: {
+  enginesQueried: string[]
+  enginesScanned: string[]
+}) {
+  // Show up to 5 most-known engines
+  const queried = enginesQueried.length > 0 ? enginesQueried : ENGINE_CONFIG.map((e) => e.key)
+  const scannedSet = new Set(enginesScanned)
 
-  const W = 40
-  const H = 20
-  const lo = Math.min(...data)
-  const hi = Math.max(...data)
-  const range = hi - lo || 1
-
-  const pts = data
-    .map((v, i) => {
-      const x = (i / (data.length - 1)) * W
-      const y = H - 2 - ((v - lo) / range) * (H - 4)
-      return `${x.toFixed(1)},${y.toFixed(1)}`
-    })
-    .join(' ')
-
-  const color = score !== null ? getScoreColor(score) : '#9CA3AF'
-
-  return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      width={W}
-      height={H}
-      className="shrink-0"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <polyline
-        points={pts}
-        fill="none"
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity={0.85}
-      />
-    </svg>
-  )
-}
-
-// ─── Engine dots ──────────────────────────────────────────────────────────────
-
-function EngineDots({ engineStatus }: { engineStatus: EngineStatus }) {
   return (
     <div className="flex items-center gap-[3px] shrink-0" aria-label="Engine coverage">
-      {ENGINE_CONFIG.map((engine) => {
-        const status = engineStatus[engine.key] ?? 'not_tested'
+      {queried.slice(0, 7).map((engineKey) => {
+        const config = ENGINE_CONFIG.find((e) => e.key === engineKey)
+        const succeeded = scannedSet.has(engineKey)
         return (
           <span
-            key={engine.key}
-            title={`${engine.label}: ${
-              status === 'mentioned'
-                ? 'mentioned'
-                : status === 'not_mentioned'
-                  ? 'not mentioned'
-                  : 'not tested'
-            }`}
+            key={engineKey}
+            title={`${config?.label ?? engineKey}: ${succeeded ? 'succeeded' : 'failed'}`}
             className="block rounded-full"
             style={{
               width: 7,
               height: 7,
-              backgroundColor:
-                status === 'mentioned'
-                  ? engine.color
-                  : status === 'not_mentioned'
-                    ? '#EF4444'
-                    : '#D1D5DB',
-              opacity: status === 'not_tested' ? 0.45 : 1,
+              backgroundColor: succeeded ? (config?.color ?? '#3370FF') : '#EF4444',
+              opacity: 1,
             }}
           />
         )
@@ -278,28 +238,34 @@ function EngineDots({ engineStatus }: { engineStatus: EngineStatus }) {
   )
 }
 
-// ─── Mention rate bar ─────────────────────────────────────────────────────────
+// ─── Scan type badge ──────────────────────────────────────────────────────────
 
-function MentionRateBar({ mentioned, total }: { mentioned: number; total: number }) {
-  const pct = total > 0 ? Math.round((mentioned / total) * 100) : 0
+function ScanTypeBadge({ scanType }: { scanType: ScanRow['scanType'] }) {
+  const labels: Record<ScanRow['scanType'], string> = {
+    initial: 'Initial',
+    manual: 'Manual',
+    scheduled: 'Scheduled',
+  }
+  const colors: Record<ScanRow['scanType'], string> = {
+    initial: 'bg-purple-50 text-purple-600 border-purple-200',
+    manual: 'bg-blue-50 text-[#3370FF] border-blue-200',
+    scheduled: 'bg-gray-50 text-gray-500 border-gray-200',
+  }
   return (
-    <div className="flex items-center gap-1.5 shrink-0 w-[80px]">
-      <div className="relative h-1 flex-1 rounded-full bg-gray-100 overflow-hidden">
-        <div
-          className="absolute inset-y-0 left-0 rounded-full bg-[#3370FF]/55"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <span className="text-[10px] font-mono text-gray-400 tabular-nums w-8 text-right shrink-0">
-        {mentioned}/{total}
-      </span>
-    </div>
+    <span
+      className={cn(
+        'inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-medium leading-4',
+        colors[scanType],
+      )}
+    >
+      {labels[scanType]}
+    </span>
   )
 }
 
 // ─── Status dot ───────────────────────────────────────────────────────────────
 
-function StatusDot({ status }: { status: ScanSummary['status'] }) {
+function StatusDot({ status }: { status: ScanRow['status'] }) {
   if (status === 'completed') {
     return <span className="size-[7px] shrink-0 rounded-full bg-[#3370FF]" />
   }
@@ -333,9 +299,8 @@ function SkeletonRow() {
             <span key={i} className="size-[7px] rounded-full bg-gray-200" />
           ))}
         </div>
-        <div className="h-1 w-20 rounded-full bg-gray-100" />
       </div>
-      <div className="hidden lg:block w-10 h-5 rounded bg-gray-100 shrink-0" />
+      <div className="hidden lg:block w-14 h-4 rounded bg-gray-100 shrink-0" />
       <div className="ml-auto size-4 rounded bg-gray-100 shrink-0" />
     </div>
   )
@@ -368,21 +333,21 @@ const FILTER_LABELS: Record<FilterKey, string> = {
 // ─── Main ScansClient ─────────────────────────────────────────────────────────
 
 interface ScansClientProps {
-  scans: ScanSummaryExtended[]
+  scans: ScanRow[]
+  /** User's plan tier — used to gate manual re-scan CTA. null = no active plan. */
+  planTier: 'discover' | 'build' | 'scale' | null
 }
 
-export function ScansClient({ scans }: ScansClientProps) {
-  const [selectedScanId, setSelectedScanId] = React.useState<string | null>(null)
+export function ScansClient({ scans, planTier }: ScansClientProps) {
   const [isRunning, setIsRunning] = React.useState(false)
   const [activeFilter, setActiveFilter] = React.useState<FilterKey>('all')
   const [isLoading] = React.useState(false)
 
-  const selectedScan = React.useMemo(
-    () => scans.find((s) => s.id === selectedScanId) ?? null,
-    [scans, selectedScanId],
-  )
+  // Discover plan cannot trigger manual re-scans
+  const canRunManualScan = planTier !== null && planTier !== 'discover'
 
   function handleRunScan() {
+    if (!canRunManualScan) return
     setIsRunning(true)
     setTimeout(() => setIsRunning(false), 2500)
   }
@@ -408,11 +373,12 @@ export function ScansClient({ scans }: ScansClientProps) {
     return scans.filter((s) => s.status === activeFilter)
   }, [scans, activeFilter])
 
+  // Group scans by date bucket: TODAY / YESTERDAY / EARLIER THIS WEEK / OLDER
   const grouped = React.useMemo(() => {
     const groups: Array<{
       dayKey: string
       label: string
-      items: ScanSummaryExtended[]
+      items: ScanRow[]
     }> = []
     let currentDayKey = ''
     for (const scan of filteredScans) {
@@ -452,25 +418,39 @@ export function ScansClient({ scans }: ScansClientProps) {
         </div>
 
         <div className="flex flex-col items-end gap-1 shrink-0">
-          <Button
-            onClick={handleRunScan}
-            disabled={isRunning}
-            size="sm"
-            className="bg-[#3370FF] hover:bg-[#2558e0] active:scale-[0.98] transition-transform h-8 px-3 text-sm gap-1.5"
-            aria-label="Run a new scan"
-          >
-            {isRunning ? (
-              <>
-                <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-                Running…
-              </>
-            ) : (
-              <>
-                <RefreshCw className="size-3.5" aria-hidden="true" />
-                Run scan now
-              </>
-            )}
-          </Button>
+          {canRunManualScan ? (
+            <Button
+              onClick={handleRunScan}
+              disabled={isRunning}
+              size="sm"
+              className="bg-[#3370FF] hover:bg-[#2558e0] active:scale-[0.98] transition-transform h-8 px-3 text-sm gap-1.5"
+              aria-label="Run a new scan"
+            >
+              {isRunning ? (
+                <>
+                  <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+                  Running…
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="size-3.5" aria-hidden="true" />
+                  Run scan now
+                </>
+              )}
+            </Button>
+          ) : planTier === 'discover' ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 px-3 text-sm gap-1.5 text-gray-400 border-gray-200 cursor-not-allowed"
+              disabled
+              aria-label="Upgrade to run manual scans"
+              title="Manual scans require Build or Scale plan"
+            >
+              <RefreshCw className="size-3.5" aria-hidden="true" />
+              Run scan now
+            </Button>
+          ) : null}
           <div className="flex items-center gap-1 text-[11px] text-gray-400">
             <Calendar className="size-3" aria-hidden="true" />
             <span>Next scheduled: Thursday</span>
@@ -549,7 +529,7 @@ export function ScansClient({ scans }: ScansClientProps) {
                     ? `+${kpiDelta}`
                     : `${kpiDelta}`}
               </p>
-              <p className="text-[11px] text-gray-400 mt-0.5">Last vs 30d ago</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">Last vs oldest</p>
             </div>
           </div>
 
@@ -558,7 +538,7 @@ export function ScansClient({ scans }: ScansClientProps) {
             <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 mb-2">
               Score trend —{' '}
               {Math.min(
-                scans.filter((s) => s.score !== null).length,
+                scans.filter((s) => s.overallScore !== null).length,
                 12,
               )}{' '}
               scans
@@ -637,13 +617,15 @@ export function ScansClient({ scans }: ScansClientProps) {
           <p className="mt-1 max-w-xs text-xs text-gray-500">
             Takes 90 seconds — we scan 7 AI engines and show you exactly where you show up.
           </p>
-          <Button
-            onClick={handleRunScan}
-            className="mt-6 bg-[#3370FF] hover:bg-[#2558e0] active:scale-[0.98] transition-transform h-8 px-4"
-            size="sm"
-          >
-            Run scan now
-          </Button>
+          {canRunManualScan && (
+            <Button
+              onClick={handleRunScan}
+              className="mt-6 bg-[#3370FF] hover:bg-[#2558e0] active:scale-[0.98] transition-transform h-8 px-4"
+              size="sm"
+            >
+              Run scan now
+            </Button>
+          )}
         </motion.div>
       )}
 
@@ -689,10 +671,6 @@ export function ScansClient({ scans }: ScansClientProps) {
                         key={scan.id}
                         scan={scan}
                         index={index}
-                        isSelected={selectedScanId === scan.id}
-                        onSelect={() =>
-                          setSelectedScanId(selectedScanId === scan.id ? null : scan.id)
-                        }
                       />
                     ))}
                   </ol>
@@ -702,9 +680,6 @@ export function ScansClient({ scans }: ScansClientProps) {
           </motion.div>
         </AnimatePresence>
       )}
-
-      {/* ── Drilldown ─────────────────────────────────────────────────────── */}
-      <ScanDrilldown scan={selectedScan} onClose={() => setSelectedScanId(null)} />
     </main>
   )
 }
@@ -712,19 +687,17 @@ export function ScansClient({ scans }: ScansClientProps) {
 // ─── Dense scan row ────────────────────────────────────────────────────────────
 
 interface ScanRowProps {
-  scan: ScanSummaryExtended
+  scan: ScanRow
   index: number
-  isSelected: boolean
-  onSelect: () => void
 }
 
-function ScanRow({ scan, index, isSelected, onSelect }: ScanRowProps) {
+function ScanRow({ scan, index }: ScanRowProps) {
   const time = new Intl.DateTimeFormat('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(scan.startedAt))
 
-  const verdict = scan.score !== null ? scoreVerdict(scan.score) : null
+  const verdict = scan.overallScore !== null ? scoreVerdict(scan.overallScore) : null
 
   return (
     <motion.li
@@ -736,16 +709,14 @@ function ScanRow({ scan, index, isSelected, onSelect }: ScanRowProps) {
         ease: [0.16, 1, 0.3, 1],
       }}
     >
-      <button
-        onClick={onSelect}
+      <Link
+        href={`/scans/${scan.id}`}
         className={cn(
           'group relative flex w-full items-center gap-3 rounded-md px-2 py-2 text-left',
           'transition-colors duration-100 hover:bg-gray-50',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1',
-          isSelected && 'bg-blue-50/50',
         )}
-        aria-label={`Scan from ${new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(new Date(scan.startedAt))}, score ${scan.score ?? 'pending'}`}
-        aria-expanded={isSelected}
+        aria-label={`Scan from ${new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(new Date(scan.startedAt))}, score ${scan.overallScore ?? 'pending'}`}
       >
         {/* Status dot */}
         <StatusDot status={scan.status} />
@@ -762,7 +733,7 @@ function ScanRow({ scan, index, isSelected, onSelect }: ScanRowProps) {
 
         {/* Score pill */}
         <div className="hidden sm:flex items-center gap-1.5 w-[90px] shrink-0">
-          {verdict !== null && scan.score !== null ? (
+          {verdict !== null && scan.overallScore !== null ? (
             <>
               <span
                 className={cn(
@@ -772,7 +743,7 @@ function ScanRow({ scan, index, isSelected, onSelect }: ScanRowProps) {
                   verdict.borderClass,
                 )}
               >
-                {scan.score}
+                {scan.overallScore}
               </span>
               <span className={cn('text-[10px] font-medium', verdict.textClass)}>
                 {verdict.label}
@@ -785,7 +756,7 @@ function ScanRow({ scan, index, isSelected, onSelect }: ScanRowProps) {
           )}
         </div>
 
-        {/* Trend arrow */}
+        {/* Score delta */}
         <div className="hidden sm:flex w-[36px] shrink-0 justify-start">
           {scan.scoreDelta !== null && scan.scoreDelta !== 0 && (
             <span
@@ -804,18 +775,20 @@ function ScanRow({ scan, index, isSelected, onSelect }: ScanRowProps) {
           )}
         </div>
 
-        {/* Engine dots + mention rate */}
+        {/* Engine pips */}
         <div className="hidden md:flex flex-1 items-center gap-4">
-          <EngineDots engineStatus={scan.engineStatus} />
-          <MentionRateBar
-            mentioned={scan.mentionedCount}
-            total={scan.enginesTotal}
+          <EnginePips
+            enginesQueried={scan.enginesQueried}
+            enginesScanned={scan.enginesScanned}
           />
+          <span className="text-[10px] text-gray-400 font-mono tabular-nums">
+            {scan.enginesScanned.length}/{Math.max(scan.enginesQueried.length, scan.enginesScanned.length)} engines
+          </span>
         </div>
 
-        {/* Mini sparkline */}
+        {/* Scan type badge */}
         <div className="hidden lg:flex shrink-0">
-          <MiniSparkline data={scan.sparkline} score={scan.score} />
+          <ScanTypeBadge scanType={scan.scanType} />
         </div>
 
         {/* View chevron */}
@@ -823,14 +796,14 @@ function ScanRow({ scan, index, isSelected, onSelect }: ScanRowProps) {
           <span
             className={cn(
               'text-[11px] text-[#3370FF] flex items-center gap-0.5 transition-opacity duration-150',
-              isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+              'opacity-0 group-hover:opacity-100',
             )}
           >
             <span className="hidden sm:inline text-xs">View details</span>
             <ChevronRight className="size-3.5" aria-hidden="true" />
           </span>
         </div>
-      </button>
+      </Link>
     </motion.li>
   )
 }

@@ -5,12 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Archive,
   ChevronDown,
+  Copy,
   Download,
+  ExternalLink,
   Loader2,
   MoreHorizontal,
-  ExternalLink,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -19,20 +21,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
-import { VerificationChip } from './VerificationChip'
-import type { VerificationStatus } from './VerificationChip'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface ArchiveItem {
+export interface ArchiveItem {
   id: string
-  actionLabel: string
-  approvedAt: string
-  publishedAt: string | null
-  targetUrl: string | null
-  verificationStatus: string
-  estimatedImpact: 'high' | 'medium' | 'low'
-  formats: string[]
+  title: string | null
+  agent_type: string | null
+  status: string
+  published_url: string | null
+  published_at: string | null
+  updated_at: string | null
+  content_body: string | null
 }
 
 interface ArchiveClientProps {
@@ -41,20 +41,18 @@ interface ArchiveClientProps {
 
 // ─── Filter config ────────────────────────────────────────────────────────────
 
-type FilterKey = 'all' | 'published' | 'pending' | 'unverified'
+type FilterKey = 'all' | 'published' | 'approved'
 
 const FILTER_LABELS: Record<FilterKey, string> = {
   all: 'All',
   published: 'Published',
-  pending: 'Pending',
-  unverified: 'Unverified',
+  approved: 'Approved',
 }
 
-function getItemFilter(item: ArchiveItem): FilterKey[] {
+function getItemFilters(item: ArchiveItem): FilterKey[] {
   const filters: FilterKey[] = ['all']
-  if (item.publishedAt !== null) filters.push('published')
-  if (item.verificationStatus === 'pending') filters.push('pending')
-  if (item.verificationStatus === 'unverified') filters.push('unverified')
+  if (item.status === 'published') filters.push('published')
+  if (item.status === 'approved') filters.push('approved')
   return filters
 }
 
@@ -68,7 +66,7 @@ function formatDate(iso: string): string {
   }).format(new Date(iso))
 }
 
-// ─── Agent badge ──────────────────────────────────────────────────────────────
+// ─── Agent label ──────────────────────────────────────────────────────────────
 
 const AGENT_LABELS: Record<string, string> = {
   content_writer: 'Content',
@@ -79,27 +77,26 @@ const AGENT_LABELS: Record<string, string> = {
   local_seo: 'Local SEO',
 }
 
-function agentLabel(actionLabel: string): string {
-  // Derive from label keywords
-  if (/faq/i.test(actionLabel)) return 'FAQ'
-  if (/schema|json.ld/i.test(actionLabel)) return 'Schema'
-  if (/director|listing/i.test(actionLabel)) return 'Directories'
-  if (/content|homepage|optimiz/i.test(actionLabel)) return 'Content'
-  return 'Agent'
+function agentBadge(agentType: string | null): string {
+  if (!agentType) return 'Agent'
+  return AGENT_LABELS[agentType] ?? agentType.replace(/_/g, ' ')
 }
 
-// ─── Impact dot ──────────────────────────────────────────────────────────────
+// ─── Status badge ─────────────────────────────────────────────────────────────
 
-function ImpactDot({ impact }: { impact: 'high' | 'medium' | 'low' }) {
+function StatusBadge({ status }: { status: string }) {
+  const isPublished = status === 'published'
   return (
     <span
       className={cn(
-        'inline-block size-1.5 rounded-full shrink-0',
-        impact === 'high' ? 'bg-emerald-500' : impact === 'medium' ? 'bg-amber-400' : 'bg-gray-300',
+        'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
+        isPublished
+          ? 'bg-emerald-50 text-emerald-700'
+          : 'bg-amber-50 text-amber-700',
       )}
-      title={`${impact} impact`}
-      aria-label={`${impact} impact`}
-    />
+    >
+      {isPublished ? 'Published' : 'Approved'}
+    </span>
   )
 }
 
@@ -169,22 +166,6 @@ function ExportDropdown({ selectedIds, label }: { selectedIds: string[]; label: 
   )
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-
-function SkeletonRow() {
-  return (
-    <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-3 animate-pulse">
-      <div className="size-3.5 shrink-0 rounded bg-gray-200" />
-      <div className="h-3.5 w-48 rounded bg-gray-200" />
-      <div className="h-5 w-14 rounded-full bg-gray-100 ml-2" />
-      <div className="ml-auto flex items-center gap-3">
-        <div className="h-5 w-16 rounded-full bg-gray-100" />
-        <div className="h-3 w-20 rounded bg-gray-100" />
-      </div>
-    </div>
-  )
-}
-
 // ─── Archive row ──────────────────────────────────────────────────────────────
 
 interface ArchiveRowProps {
@@ -195,7 +176,37 @@ interface ArchiveRowProps {
 }
 
 function ArchiveRow({ item, isSelected, onToggleSelect, index }: ArchiveRowProps) {
-  const badge = agentLabel(item.actionLabel)
+  const router = useRouter()
+  const [publishing, setPublishing] = React.useState(false)
+  const [copied, setCopied] = React.useState(false)
+
+  const displayTitle = item.title ?? '(Untitled)'
+  const badge = agentBadge(item.agent_type)
+  const dateStr = item.updated_at ? formatDate(item.updated_at) : ''
+
+  async function handleMarkPublished() {
+    const url = window.prompt('Published URL?')
+    if (!url) return
+    setPublishing(true)
+    try {
+      const res = await fetch(`/api/archive/${item.id}/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ publishedUrl: url }),
+      })
+      if (res.ok) {
+        router.refresh()
+      }
+    } finally {
+      setPublishing(false)
+    }
+  }
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(item.content_body ?? '')
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
 
   return (
     <motion.li
@@ -206,7 +217,8 @@ function ArchiveRow({ item, isSelected, onToggleSelect, index }: ArchiveRowProps
         'group relative flex items-center gap-3 border-b border-gray-100 px-4 py-3 text-sm',
         'transition-colors duration-100',
         isSelected ? 'bg-blue-50/50' : 'hover:bg-gray-50/70',
-        isSelected && 'before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-[#3370FF] before:rounded-r',
+        isSelected &&
+          'before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-[#3370FF] before:rounded-r',
       )}
     >
       {/* Checkbox */}
@@ -214,7 +226,7 @@ function ArchiveRow({ item, isSelected, onToggleSelect, index }: ArchiveRowProps
         type="checkbox"
         checked={isSelected}
         onChange={() => onToggleSelect(item.id)}
-        aria-label={`Select "${item.actionLabel}"`}
+        aria-label={`Select "${displayTitle}"`}
         className={cn(
           'size-3.5 shrink-0 rounded border-gray-300 accent-[#3370FF]',
           'transition-opacity duration-150',
@@ -222,22 +234,48 @@ function ArchiveRow({ item, isSelected, onToggleSelect, index }: ArchiveRowProps
         )}
       />
 
-      {/* Title + badge */}
+      {/* Title + agent badge */}
       <div className="min-w-0 flex-1 flex items-center gap-2">
-        <ImpactDot impact={item.estimatedImpact} />
-        <span className="truncate font-medium text-gray-900">{item.actionLabel}</span>
+        <span className="truncate font-medium text-gray-900">{displayTitle}</span>
         <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
           {badge}
         </span>
       </div>
 
-      {/* Verification chip */}
-      <VerificationChip status={item.verificationStatus as VerificationStatus} />
+      {/* Status badge */}
+      <StatusBadge status={item.status} />
+
+      {/* Published URL link */}
+      {item.published_url && (
+        <a
+          href={item.published_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden shrink-0 sm:flex items-center gap-1 text-xs text-[#3370FF] hover:underline"
+          aria-label="Open published URL"
+        >
+          <ExternalLink size={11} />
+          View live
+        </a>
+      )}
 
       {/* Date */}
-      <span className="hidden shrink-0 text-xs text-gray-400 sm:block">
-        {formatDate(item.approvedAt)}
-      </span>
+      <span className="hidden shrink-0 text-xs text-gray-400 sm:block">{dateStr}</span>
+
+      {/* Copy button */}
+      <button
+        onClick={handleCopy}
+        className={cn(
+          'shrink-0 flex size-6 items-center justify-center rounded transition-all duration-100',
+          'text-gray-400 hover:bg-gray-200 hover:text-gray-700',
+          'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF]',
+        )}
+        aria-label={copied ? 'Copied!' : 'Copy content'}
+        title={copied ? 'Copied!' : 'Copy content'}
+      >
+        <Copy size={13} className={copied ? 'text-emerald-500' : undefined} />
+      </button>
 
       {/* Actions menu */}
       <DropdownMenu>
@@ -249,16 +287,30 @@ function ArchiveRow({ item, isSelected, onToggleSelect, index }: ArchiveRowProps
               'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF]',
             )}
-            aria-label={`Actions for "${item.actionLabel}"`}
+            aria-label={`Actions for "${displayTitle}"`}
           >
             <MoreHorizontal size={14} />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
-          {item.targetUrl && (
+        <DropdownMenuContent align="end" className="w-44">
+          {item.status === 'approved' && (
+            <DropdownMenuItem
+              className="gap-2 text-sm cursor-pointer"
+              onSelect={handleMarkPublished}
+              disabled={publishing}
+            >
+              {publishing ? (
+                <Loader2 size={12} className="text-gray-400 animate-spin" />
+              ) : (
+                <ExternalLink size={12} className="text-gray-400" />
+              )}
+              Mark as published
+            </DropdownMenuItem>
+          )}
+          {item.published_url && (
             <DropdownMenuItem asChild>
               <a
-                href={item.targetUrl}
+                href={item.published_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 cursor-pointer"
@@ -268,9 +320,12 @@ function ArchiveRow({ item, isSelected, onToggleSelect, index }: ArchiveRowProps
               </a>
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem className="gap-2 text-sm cursor-pointer">
-            <Download size={12} className="text-gray-400" />
-            Export this item
+          <DropdownMenuItem
+            className="gap-2 text-sm cursor-pointer"
+            onSelect={handleCopy}
+          >
+            <Copy size={12} className="text-gray-400" />
+            Copy content
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -284,11 +339,10 @@ export function ArchiveClient({ items }: ArchiveClientProps) {
   const [activeFilter, setActiveFilter] = React.useState<FilterKey>('all')
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set())
 
-  // Build counts per filter
   const counts = React.useMemo<Record<FilterKey, number>>(() => {
-    const result: Record<FilterKey, number> = { all: 0, published: 0, pending: 0, unverified: 0 }
+    const result: Record<FilterKey, number> = { all: 0, published: 0, approved: 0 }
     for (const item of items) {
-      for (const key of getItemFilter(item)) {
+      for (const key of getItemFilters(item)) {
         result[key] = (result[key] ?? 0) + 1
       }
     }
@@ -297,7 +351,7 @@ export function ArchiveClient({ items }: ArchiveClientProps) {
 
   const filteredItems = React.useMemo(() => {
     if (activeFilter === 'all') return items
-    return items.filter((item) => getItemFilter(item).includes(activeFilter))
+    return items.filter((item) => getItemFilters(item).includes(activeFilter))
   }, [items, activeFilter])
 
   function toggleSelect(id: string) {
@@ -334,7 +388,6 @@ export function ArchiveClient({ items }: ArchiveClientProps) {
           </p>
         </div>
 
-        {/* Bulk export — appears when items selected; otherwise shows export-all */}
         <AnimatePresence mode="wait">
           {someSelected ? (
             <motion.div
@@ -410,7 +463,11 @@ export function ArchiveClient({ items }: ArchiveClientProps) {
           <p className="mt-1 max-w-xs text-xs text-gray-500">
             Content you approve in Inbox moves here. Mark it published once it&apos;s live.
           </p>
-          <Button asChild className="mt-6 bg-[#3370FF] hover:bg-[#2558e0] active:scale-[0.98] transition-transform" size="sm">
+          <Button
+            asChild
+            className="mt-6 bg-[#3370FF] hover:bg-[#2558e0] active:scale-[0.98] transition-transform"
+            size="sm"
+          >
             <Link href="/inbox">Go to Inbox</Link>
           </Button>
         </div>
@@ -455,7 +512,7 @@ export function ArchiveClient({ items }: ArchiveClientProps) {
               Item
             </span>
             <span className="ml-auto hidden text-[11px] font-medium uppercase tracking-wider text-gray-400 sm:block">
-              Approved
+              Updated
             </span>
           </div>
 

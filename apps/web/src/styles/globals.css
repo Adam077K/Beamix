@@ -39,6 +39,14 @@
     --input: 220 13% 91%;
     --ring: 221 100% 59%;
     --radius: 0.5rem;
+
+    /* Wave 3 density tokens */
+    --card-radius: 12px;
+    --card-padding-dense: 1rem;
+    --section-gap-dense: 1rem;
+    --kpi-strip-height: 3rem;
+    --aside-width: 280px;
+    --surface-inset: hsl(var(--muted) / 0.4);
   }
 
   .dark {

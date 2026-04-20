@@ -178,7 +178,7 @@ export function HomeClientV2({
   const isHighCredits = creditPct >= 75
 
   return (
-    <div className="mx-auto max-w-[1100px] px-6 py-8">
+    <div className="mx-auto max-w-[1200px] px-6 py-8">
       {/* Paywall banner */}
       {isPaywalled && (
         <motion.div
@@ -194,9 +194,9 @@ export function HomeClientV2({
       {!hasData ? (
         <NoScanYet />
       ) : (
-        <div className="flex flex-col gap-6 md:grid md:grid-cols-[1fr_340px] md:items-start">
+        <div className="flex flex-col gap-5 md:grid md:grid-cols-[1fr_300px] md:items-start">
           {/* ── LEFT MAIN COLUMN ── */}
-          <div className="flex flex-col gap-6 min-w-0">
+          <div className="flex flex-col gap-5 min-w-0">
             {/* Score header */}
             <motion.div
               initial={fadeInUp.initial}
@@ -292,7 +292,7 @@ export function HomeClientV2({
                 </Link>
               </div>
               {inboxPreview.length === 0 ? (
-                <p className="py-4 text-center text-sm text-gray-400">
+                <p className="py-4 text-center text-sm text-muted-foreground">
                   No drafts yet — accept a suggestion to queue your first agent
                 </p>
               ) : (

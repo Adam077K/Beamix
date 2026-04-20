@@ -83,16 +83,31 @@ const PLAN_PRICES: Record<NonNullable<SettingsUser['planTier']>, string> = {
 
 // ─── Save button ──────────────────────────────────────────────────────────────
 
-function SaveButton({ onClick }: { onClick?: () => void }) {
+function SaveButton({ onClick, saving }: { onClick?: () => void; saving?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="h-10 px-4 rounded-lg bg-[#3370FF] text-white text-sm font-medium hover:bg-[#2860e8] active:scale-[0.98] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+      disabled={saving}
+      className="h-10 px-4 rounded-lg bg-[#3370FF] text-white text-sm font-medium hover:bg-[#2860e8] active:scale-[0.98] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
     >
-      Save changes
+      {saving ? 'Saving…' : 'Save changes'}
     </button>
   )
+}
+
+// ─── Shared mutation helper ───────────────────────────────────────────────────
+
+async function patchSettings(tab: 'profile' | 'business' | 'notifications', data: Record<string, unknown>) {
+  const res = await fetch('/api/settings', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tab, data }),
+  })
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({})) as { error?: string }
+    throw new Error(json.error ?? 'Save failed')
+  }
 }
 
 // ─── Section heading ──────────────────────────────────────────────────────────
@@ -111,6 +126,24 @@ function SectionHeading({ title, description }: { title: string; description?: s
 function ProfileTab({ user }: { user: SettingsUser }) {
   const [timezone, setTimezone] = React.useState(user.timezone)
   const [language, setLanguage] = React.useState<'en' | 'he'>(user.language)
+  const [saving, setSaving] = React.useState(false)
+  const [saveError, setSaveError] = React.useState<string | null>(null)
+  const [saveOk, setSaveOk] = React.useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    setSaveError(null)
+    setSaveOk(false)
+    try {
+      await patchSettings('profile', { timezone, locale: language })
+      setSaveOk(true)
+      setTimeout(() => setSaveOk(false), 2000)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div>
@@ -148,7 +181,11 @@ function ProfileTab({ user }: { user: SettingsUser }) {
           </SelectContent>
         </Select>
       </SettingsField>
-      <SaveButton onClick={() => console.log('[Profile] save', { timezone, language })} />
+      <div className="flex items-center gap-3">
+        <SaveButton onClick={handleSave} saving={saving} />
+        {saveOk && <span className="text-sm text-green-600">Saved</span>}
+        {saveError && <span className="text-sm text-red-500">{saveError}</span>}
+      </div>
     </div>
   )
 }
@@ -161,6 +198,30 @@ function BusinessTab({ user }: { user: SettingsUser }) {
   const [industry, setIndustry] = React.useState(user.business.industry)
   const [location, setLocation] = React.useState(user.business.location)
   const [services, setServices] = React.useState(user.business.services.join('\n'))
+  const [saving, setSaving] = React.useState(false)
+  const [saveError, setSaveError] = React.useState<string | null>(null)
+  const [saveOk, setSaveOk] = React.useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    setSaveError(null)
+    setSaveOk(false)
+    try {
+      await patchSettings('business', {
+        name,
+        website_url: url,
+        industry,
+        location,
+        services: services.split('\n').filter(Boolean),
+      })
+      setSaveOk(true)
+      setTimeout(() => setSaveOk(false), 2000)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div>
@@ -200,17 +261,11 @@ function BusinessTab({ user }: { user: SettingsUser }) {
           className="w-80 rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-all outline-none resize-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:ring-offset-1"
         />
       </SettingsField>
-      <SaveButton
-        onClick={() =>
-          console.log('[Business] save', {
-            name,
-            url,
-            industry,
-            location,
-            services: services.split('\n').filter(Boolean),
-          })
-        }
-      />
+      <div className="flex items-center gap-3">
+        <SaveButton onClick={handleSave} saving={saving} />
+        {saveOk && <span className="text-sm text-green-600">Saved</span>}
+        {saveError && <span className="text-sm text-red-500">{saveError}</span>}
+      </div>
     </div>
   )
 }
@@ -221,10 +276,26 @@ function BillingTab({ user }: { user: SettingsUser }) {
   const [paywallOpen, setPaywallOpen] = React.useState(false)
   const [redirecting, setRedirecting] = React.useState(false)
 
-  function handleManageBilling() {
-    console.log('[Billing] → POST /api/billing/portal')
+  async function handleManageBilling() {
     setRedirecting(true)
-    setTimeout(() => setRedirecting(false), 1500)
+    try {
+      const res = await fetch('/api/billing/portal', { method: 'POST' })
+      if (res.ok) {
+        const json = await res.json() as { url?: string }
+        if (json.url) {
+          window.location.href = json.url
+          return
+        }
+      }
+    } catch {
+      // fallback below
+    }
+    // If no portal URL, open in new tab to Paddle fallback or stub
+    const portalUrl = process.env['NEXT_PUBLIC_PADDLE_PORTAL_URL'] ?? '#'
+    if (portalUrl !== '#') {
+      window.open(portalUrl, '_blank', 'noopener,noreferrer')
+    }
+    setRedirecting(false)
   }
 
   const tier = user.planTier
@@ -366,6 +437,9 @@ function NotificationsTab({ user }: { user: SettingsUser }) {
   const [budgetAlerts, setBudgetAlerts] = React.useState(user.notifications.budgetAlerts)
   const [competitorMovement, setCompetitorMovement] = React.useState(user.notifications.competitorMovement)
   const [digestHour, setDigestHour] = React.useState(String(user.notifications.dailyDigestHour))
+  const [saving, setSaving] = React.useState(false)
+  const [saveError, setSaveError] = React.useState<string | null>(null)
+  const [saveOk, setSaveOk] = React.useState(false)
 
   const switchRows: {
     label: string
@@ -378,6 +452,27 @@ function NotificationsTab({ user }: { user: SettingsUser }) {
     { label: 'Budget alerts', description: 'When credit usage crosses 80% of your monthly limit', checked: budgetAlerts, onChange: setBudgetAlerts },
     { label: 'Competitor movement', description: 'When tracked competitors gain or lose AI citations', checked: competitorMovement, onChange: setCompetitorMovement },
   ]
+
+  async function handleSave() {
+    setSaving(true)
+    setSaveError(null)
+    setSaveOk(false)
+    try {
+      await patchSettings('notifications', {
+        inbox_ready: inboxReady,
+        scan_complete: scanComplete,
+        budget_alerts: budgetAlerts,
+        competitor_movement: competitorMovement,
+        daily_digest_hour: Number(digestHour),
+      })
+      setSaveOk(true)
+      setTimeout(() => setSaveOk(false), 2000)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Save failed')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div>
@@ -413,17 +508,11 @@ function NotificationsTab({ user }: { user: SettingsUser }) {
         </Select>
       </SettingsField>
 
-      <SaveButton
-        onClick={() =>
-          console.log('[Notifications] save', {
-            inboxReady,
-            scanComplete,
-            budgetAlerts,
-            competitorMovement,
-            dailyDigestHour: Number(digestHour),
-          })
-        }
-      />
+      <div className="flex items-center gap-3">
+        <SaveButton onClick={handleSave} saving={saving} />
+        {saveOk && <span className="text-sm text-green-600">Saved</span>}
+        {saveError && <span className="text-sm text-red-500">{saveError}</span>}
+      </div>
     </div>
   )
 }
