@@ -95,6 +95,16 @@ function EngineCell({
   const isLoss =
     rate !== undefined && youRate !== undefined && rate < youRate - 0.05
 
+  const pct = rate !== undefined ? Math.round(rate * 100) : undefined
+  const titleText =
+    pct !== undefined
+      ? isWin
+        ? `${pct}% — they outrank you here`
+        : isLoss
+          ? `${pct}% — you outrank them here`
+          : `${pct}%`
+      : 'No data'
+
   return (
     <td className="px-3 py-0 h-10">
       <div
@@ -105,13 +115,7 @@ function EngineCell({
           isWin && 'ring-1 ring-red-300',
           isLoss && 'ring-1 ring-emerald-300',
         )}
-        title={
-          isWin
-            ? 'They outrank you here'
-            : isLoss
-              ? 'You outrank them here'
-              : undefined
-        }
+        title={titleText}
       >
         {display}
       </div>
