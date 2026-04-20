@@ -275,13 +275,16 @@ export default function InboxClient({ items }: InboxClientProps) {
         </div>
 
         {/* Desktop: item list (fixed 420px) */}
-        <div className="hidden sm:flex">
+        <div className="hidden sm:flex sm:flex-col">
           <ItemList
             items={filteredItems}
             selectedId={selectedId}
             onSelect={setSelectedId}
             activeFilter={filter}
           />
+          <div className="text-xs text-muted-foreground px-4 py-2 border-t border-border shrink-0">
+            j/k navigate · e edit · a approve · x dismiss
+          </div>
         </div>
 
         {/* Desktop: preview pane */}
