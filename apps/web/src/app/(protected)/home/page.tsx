@@ -105,12 +105,12 @@ export default async function HomePage() {
       .eq('user_id', userId)
       .eq('is_primary', true)
       .maybeSingle()
-    business = data ?? null
+    business = (data as BusinessRow | null) ?? null
   } catch {
     business = null
   }
 
-  const businessId = business?.id ?? null
+  const businessId: string | null = business?.id ?? null
 
   // 3. Parallel data fetch — all keyed on businessId
   const [
