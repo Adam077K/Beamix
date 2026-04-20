@@ -175,7 +175,7 @@ export function CompetitorsClient({
       {isEmpty ? (
         <EmptyState onAdd={() => setModalOpen(true)} />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-5 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_260px] gap-5 items-start">
 
           {/* ── Main column ──────────────────────────────────────────────────── */}
           <div className="min-w-0 space-y-5">
