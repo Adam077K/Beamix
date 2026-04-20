@@ -1,113 +1,41 @@
 -- ============================================================
 -- Migration: 20260420_wave3_foundation.sql
--- Purpose:   Wave 3 foundation — 6 new tables required by
---            Batch 2-5 workers (Home DB wiring, Scans drilldown,
---            Inbox/Workspace, Competitors, Automation, Archive).
+-- Purpose:   Wave 3 foundation — create the 3 tables still
+--            missing from public schema as of 2026-04-20.
+--
 -- Applies after: 20260419_01_rebuild_wave2_rpcs.sql
--- Date: 2026-04-20
+-- Date: 2026-04-20 (revised)
 --
--- Tables created:
---   1. suggestions          — Home page proactive suggestions queue
---   2. automation_schedules — Per-user scheduled agent runs
---   3. competitors          — Tracked competitors per business
---   4. automation_settings  — Global kill switch + credit cap per user
---   5. content_versions     — Workspace edit history per content_item
---   6. citation_sources     — Citation source aggregates for Scan drilldown
+-- Schema-drift audit summary (discovered via MCP on 2026-04-20):
 --
--- IMPORTANT: LANGUAGE sql throughout. No plpgsql DECLARE vars inside $$.
--- Supabase SQL Editor splits on semicolons inside $$; local DECLARE vars
--- become table lookups and raise 42P01. Pure DDL is safe.
+--   Tables ALREADY in DB — NOT created by this migration:
+--     • suggestions         — exists with richer schema
+--       (title, description, impact text, estimated_runs,
+--        trigger_rule, evidence jsonb, target_query_ids[],
+--        scan_id, user_id). Frontend uses actual columns.
+--     • competitors         — exists with richer schema
+--       (website_url, source, is_active, first_seen_score,
+--        latest_score, domain).
+--     • automation_configs  — the canonical schedules table
+--       already in DB. Supersedes the "automation_schedules"
+--       name used in prior planning docs. Has the features
+--       W0 planned (is_active, next_run_at, paused_at,
+--       max_runs_per_month, runs_this_month, config jsonb).
+--
+--   Tables created HERE:
+--     1. automation_settings  — Global kill switch + credit cap per user
+--     2. content_versions     — Workspace edit history per content_item
+--     3. citation_sources     — Citation source aggregates (Scans drilldown)
+--
+-- IMPORTANT: LANGUAGE sql throughout. No plpgsql DECLARE vars
+-- inside $$. Supabase SQL Editor splits on semicolons inside $$;
+-- local DECLARE vars become table lookups and raise 42P01.
+-- Pure DDL is safe.
 -- ============================================================
 
 
 -- ============================================================
--- 1. suggestions
--- Home page proactive suggestions queue. Each row is a rule-
--- triggered suggestion for a business awaiting user action.
--- ============================================================
-
-CREATE TABLE public.suggestions (
-  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  business_id  uuid        NOT NULL REFERENCES public.businesses(id) ON DELETE CASCADE,
-  rule_id      text        NOT NULL,
-  impact_score integer     CHECK (impact_score BETWEEN 0 AND 100),
-  agent_type   text        NOT NULL,
-  status       text        NOT NULL DEFAULT 'pending'
-                           CHECK (status IN ('pending', 'dismissed', 'accepted')),
-  created_at   timestamptz DEFAULT now(),
-  updated_at   timestamptz DEFAULT now()
-);
-
-ALTER TABLE public.suggestions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users access own suggestions" ON public.suggestions FOR ALL
-  USING (
-    business_id IN (SELECT id FROM public.businesses WHERE user_id = auth.uid())
-  );
-
--- Partial index: most queries filter on pending status
-CREATE INDEX suggestions_business_status_idx
-  ON public.suggestions (business_id, status)
-  WHERE status = 'pending';
-
-
--- ============================================================
--- 2. automation_schedules
--- Per-user scheduled agent runs. Inngest cron reads
--- next_run_at WHERE is_paused = false to queue jobs.
--- ============================================================
-
-CREATE TABLE public.automation_schedules (
-  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id      uuid        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  business_id  uuid        NOT NULL REFERENCES public.businesses(id) ON DELETE CASCADE,
-  agent_type   text        NOT NULL,
-  cadence      text        NOT NULL CHECK (cadence IN ('daily', 'weekly', 'monthly')),
-  next_run_at  timestamptz,
-  last_run_at  timestamptz,
-  is_paused    boolean     DEFAULT false,
-  created_at   timestamptz DEFAULT now()
-);
-
-ALTER TABLE public.automation_schedules ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users access own schedules" ON public.automation_schedules FOR ALL
-  USING (user_id = auth.uid());
-
--- Partial index: Inngest cron scans for upcoming non-paused runs
-CREATE INDEX automation_schedules_next_run_idx
-  ON public.automation_schedules (next_run_at)
-  WHERE is_paused = false;
-
-
--- ============================================================
--- 3. competitors
--- Tracked competitors per business. user_id included so the
--- get_competitors_summary RPC (already live from Wave 2) can
--- filter on c.user_id = p_user_id without a join.
--- ============================================================
-
-CREATE TABLE public.competitors (
-  id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  business_id  uuid        NOT NULL REFERENCES public.businesses(id) ON DELETE CASCADE,
-  user_id      uuid        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  name         text        NOT NULL,
-  domain       text,
-  created_at   timestamptz DEFAULT now()
-);
-
-ALTER TABLE public.competitors ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users access own competitors" ON public.competitors FOR ALL
-  USING (user_id = auth.uid());
-
--- Standard lookup index for RPC joins on business_id
-CREATE INDEX competitors_business_idx
-  ON public.competitors (business_id);
-
-
--- ============================================================
--- 4. automation_settings
+-- 1. automation_settings
 -- Global kill switch and credit cap per user. One row per user
 -- (enforced by UNIQUE constraint on user_id).
 -- ============================================================
@@ -130,7 +58,7 @@ CREATE POLICY "Users access own automation settings" ON public.automation_settin
 
 
 -- ============================================================
--- 5. content_versions
+-- 2. content_versions
 -- Workspace edit history. Each edit appends a new version row.
 -- version_number is monotonically increasing per content_item.
 -- UNIQUE (content_item_id, version_number) prevents duplicates.
@@ -160,7 +88,7 @@ CREATE INDEX content_versions_item_version_idx
 
 
 -- ============================================================
--- 6. citation_sources
+-- 3. citation_sources
 -- Aggregated citation source tracking per business.
 -- Populated/updated by the scan pipeline; used by Scans drilldown.
 -- UNIQUE (business_id, source_domain) enables upsert-on-conflict.
