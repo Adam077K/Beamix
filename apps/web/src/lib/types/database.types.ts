@@ -14,59 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      agent_job_steps: {
-        Row: {
-          agent_job_id: string
-          completed_at: string | null
-          duration_ms: number | null
-          id: string
-          input_summary: string | null
-          model_used: string | null
-          output_summary: string | null
-          started_at: string | null
-          status: string
-          step_name: string
-          step_order: number
-          tokens_used: number | null
-        }
-        Insert: {
-          agent_job_id: string
-          completed_at?: string | null
-          duration_ms?: number | null
-          id?: string
-          input_summary?: string | null
-          model_used?: string | null
-          output_summary?: string | null
-          started_at?: string | null
-          status?: string
-          step_name: string
-          step_order: number
-          tokens_used?: number | null
-        }
-        Update: {
-          agent_job_id?: string
-          completed_at?: string | null
-          duration_ms?: number | null
-          id?: string
-          input_summary?: string | null
-          model_used?: string | null
-          output_summary?: string | null
-          started_at?: string | null
-          status?: string
-          step_name?: string
-          step_order?: number
-          tokens_used?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "agent_job_steps_agent_job_id_fkey"
-            columns: ["agent_job_id"]
-            isOneToOne: false
-            referencedRelation: "agent_jobs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       agent_jobs: {
         Row: {
           agent_type: Database["public"]["Enums"]["agent_type"]
@@ -228,85 +175,6 @@ export type Database = {
           },
         ]
       }
-      ai_readiness_history: {
-        Row: {
-          business_id: string
-          id: string
-          recorded_at: string
-          score: number
-          score_breakdown: Json
-        }
-        Insert: {
-          business_id: string
-          id?: string
-          recorded_at?: string
-          score: number
-          score_breakdown?: Json
-        }
-        Update: {
-          business_id?: string
-          id?: string
-          recorded_at?: string
-          score?: number
-          score_breakdown?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ai_readiness_history_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      alert_rules: {
-        Row: {
-          alert_type: string
-          business_id: string
-          channels: string[]
-          cooldown_hours: number | null
-          created_at: string
-          id: string
-          is_active: boolean | null
-          last_triggered_at: string | null
-          threshold: Json
-          user_id: string
-        }
-        Insert: {
-          alert_type: string
-          business_id: string
-          channels?: string[]
-          cooldown_hours?: number | null
-          created_at?: string
-          id?: string
-          is_active?: boolean | null
-          last_triggered_at?: string | null
-          threshold: Json
-          user_id: string
-        }
-        Update: {
-          alert_type?: string
-          business_id?: string
-          channels?: string[]
-          cooldown_hours?: number | null
-          created_at?: string
-          id?: string
-          is_active?: boolean | null
-          last_triggered_at?: string | null
-          threshold?: Json
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "alert_rules_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       api_keys: {
         Row: {
           created_at: string
@@ -408,6 +276,33 @@ export type Database = {
           },
         ]
       }
+      automation_settings: {
+        Row: {
+          automation_paused: boolean | null
+          created_at: string | null
+          credit_cap: number | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          automation_paused?: boolean | null
+          created_at?: string | null
+          credit_cap?: number | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          automation_paused?: boolean | null
+          created_at?: string | null
+          credit_cap?: number | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_avatar_url: string | null
@@ -497,60 +392,6 @@ export type Database = {
           },
         ]
       }
-      brand_narratives: {
-        Row: {
-          brand_positioning: string | null
-          business_id: string
-          compared_to_previous: Json | null
-          created_at: string
-          id: string
-          key_themes: Json
-          misperceptions: Json | null
-          narrative_score: number | null
-          narrative_summary: string
-          scan_id: string
-        }
-        Insert: {
-          brand_positioning?: string | null
-          business_id: string
-          compared_to_previous?: Json | null
-          created_at?: string
-          id?: string
-          key_themes: Json
-          misperceptions?: Json | null
-          narrative_score?: number | null
-          narrative_summary: string
-          scan_id: string
-        }
-        Update: {
-          brand_positioning?: string | null
-          business_id?: string
-          compared_to_previous?: Json | null
-          created_at?: string
-          id?: string
-          key_themes?: Json
-          misperceptions?: Json | null
-          narrative_score?: number | null
-          narrative_summary?: string
-          scan_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "brand_narratives_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "brand_narratives_scan_id_fkey"
-            columns: ["scan_id"]
-            isOneToOne: false
-            referencedRelation: "scans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       businesses: {
         Row: {
           competitors_auto_detected: string[] | null
@@ -617,45 +458,27 @@ export type Database = {
       citation_sources: {
         Row: {
           business_id: string
-          created_at: string
-          engines: string[]
-          first_seen_at: string
+          engines: string[] | null
           id: string
-          is_own_domain: boolean
-          last_seen_at: string
-          mention_count: number
-          sentiment_avg: number | null
+          mention_count: number | null
           source_domain: string
-          source_title: string | null
-          source_url: string
+          updated_at: string | null
         }
         Insert: {
           business_id: string
-          created_at?: string
-          engines?: string[]
-          first_seen_at?: string
+          engines?: string[] | null
           id?: string
-          is_own_domain?: boolean
-          last_seen_at?: string
-          mention_count?: number
-          sentiment_avg?: number | null
+          mention_count?: number | null
           source_domain: string
-          source_title?: string | null
-          source_url: string
+          updated_at?: string | null
         }
         Update: {
           business_id?: string
-          created_at?: string
-          engines?: string[]
-          first_seen_at?: string
+          engines?: string[] | null
           id?: string
-          is_own_domain?: boolean
-          last_seen_at?: string
-          mention_count?: number
-          sentiment_avg?: number | null
+          mention_count?: number | null
           source_domain?: string
-          source_title?: string | null
-          source_url?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -663,156 +486,6 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      competitor_content_snapshots: {
-        Row: {
-          competitor_id: string
-          created_at: string
-          detected_at: string
-          id: string
-          is_new: boolean
-          snapshot_type: string
-          summary: string | null
-          title: string | null
-          url: string | null
-        }
-        Insert: {
-          competitor_id: string
-          created_at?: string
-          detected_at?: string
-          id?: string
-          is_new?: boolean
-          snapshot_type: string
-          summary?: string | null
-          title?: string | null
-          url?: string | null
-        }
-        Update: {
-          competitor_id?: string
-          created_at?: string
-          detected_at?: string
-          id?: string
-          is_new?: boolean
-          snapshot_type?: string
-          summary?: string | null
-          title?: string | null
-          url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "competitor_content_snapshots_competitor_id_fkey"
-            columns: ["competitor_id"]
-            isOneToOne: false
-            referencedRelation: "competitors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      competitor_scans: {
-        Row: {
-          business_id: string
-          competitor_id: string
-          created_at: string
-          engine: string
-          id: string
-          is_mentioned: boolean
-          mention_context: string | null
-          rank_position: number | null
-          scan_id: string
-          sentiment_score: number | null
-        }
-        Insert: {
-          business_id: string
-          competitor_id: string
-          created_at?: string
-          engine: string
-          id?: string
-          is_mentioned?: boolean
-          mention_context?: string | null
-          rank_position?: number | null
-          scan_id: string
-          sentiment_score?: number | null
-        }
-        Update: {
-          business_id?: string
-          competitor_id?: string
-          created_at?: string
-          engine?: string
-          id?: string
-          is_mentioned?: boolean
-          mention_context?: string | null
-          rank_position?: number | null
-          scan_id?: string
-          sentiment_score?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "competitor_scans_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "competitor_scans_competitor_id_fkey"
-            columns: ["competitor_id"]
-            isOneToOne: false
-            referencedRelation: "competitors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "competitor_scans_scan_id_fkey"
-            columns: ["scan_id"]
-            isOneToOne: false
-            referencedRelation: "scans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      competitor_share_of_voice: {
-        Row: {
-          business_id: string
-          competitor_id: string | null
-          created_at: string
-          id: string
-          mention_count: number
-          voice_share_pct: number
-          week_start: string
-        }
-        Insert: {
-          business_id: string
-          competitor_id?: string | null
-          created_at?: string
-          id?: string
-          mention_count?: number
-          voice_share_pct: number
-          week_start: string
-        }
-        Update: {
-          business_id?: string
-          competitor_id?: string | null
-          created_at?: string
-          id?: string
-          mention_count?: number
-          voice_share_pct?: number
-          week_start?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "competitor_share_of_voice_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "competitor_share_of_voice_competitor_id_fkey"
-            columns: ["competitor_id"]
-            isOneToOne: false
-            referencedRelation: "competitors"
             referencedColumns: ["id"]
           },
         ]
@@ -1005,86 +678,13 @@ export type Database = {
           },
         ]
       }
-      content_performance: {
-        Row: {
-          avg_position_after: number | null
-          avg_position_before: number | null
-          business_id: string
-          content_item_id: string
-          created_at: string
-          engines_mentioning: string[] | null
-          id: string
-          measurement_date: string
-          mention_count_after: number | null
-          mention_count_before: number | null
-          scan_id: string
-          score_delta: number | null
-          visibility_score_after: number | null
-          visibility_score_before: number | null
-        }
-        Insert: {
-          avg_position_after?: number | null
-          avg_position_before?: number | null
-          business_id: string
-          content_item_id: string
-          created_at?: string
-          engines_mentioning?: string[] | null
-          id?: string
-          measurement_date: string
-          mention_count_after?: number | null
-          mention_count_before?: number | null
-          scan_id: string
-          score_delta?: number | null
-          visibility_score_after?: number | null
-          visibility_score_before?: number | null
-        }
-        Update: {
-          avg_position_after?: number | null
-          avg_position_before?: number | null
-          business_id?: string
-          content_item_id?: string
-          created_at?: string
-          engines_mentioning?: string[] | null
-          id?: string
-          measurement_date?: string
-          mention_count_after?: number | null
-          mention_count_before?: number | null
-          scan_id?: string
-          score_delta?: number | null
-          visibility_score_after?: number | null
-          visibility_score_before?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "content_performance_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "content_performance_content_item_id_fkey"
-            columns: ["content_item_id"]
-            isOneToOne: false
-            referencedRelation: "content_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "content_performance_scan_id_fkey"
-            columns: ["scan_id"]
-            isOneToOne: false
-            referencedRelation: "scans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       content_versions: {
         Row: {
           change_summary: string | null
           content_body: string
           content_item_id: string
-          created_at: string
-          edited_by: string
+          created_at: string | null
+          edited_by: string | null
           id: string
           version_number: number
         }
@@ -1092,8 +692,8 @@ export type Database = {
           change_summary?: string | null
           content_body: string
           content_item_id: string
-          created_at?: string
-          edited_by?: string
+          created_at?: string | null
+          edited_by?: string | null
           id?: string
           version_number: number
         }
@@ -1101,8 +701,8 @@ export type Database = {
           change_summary?: string | null
           content_body?: string
           content_item_id?: string
-          created_at?: string
-          edited_by?: string
+          created_at?: string | null
+          edited_by?: string | null
           id?: string
           version_number?: number
         }
@@ -1112,94 +712,6 @@ export type Database = {
             columns: ["content_item_id"]
             isOneToOne: false
             referencedRelation: "content_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      content_voice_profiles: {
-        Row: {
-          business_id: string
-          created_at: string
-          example_excerpts: string[]
-          id: string
-          is_default: boolean | null
-          name: string
-          training_sources: Json
-          updated_at: string
-          user_id: string
-          vocabulary_patterns: Json | null
-          voice_description: string
-        }
-        Insert: {
-          business_id: string
-          created_at?: string
-          example_excerpts?: string[]
-          id?: string
-          is_default?: boolean | null
-          name: string
-          training_sources?: Json
-          updated_at?: string
-          user_id: string
-          vocabulary_patterns?: Json | null
-          voice_description: string
-        }
-        Update: {
-          business_id?: string
-          created_at?: string
-          example_excerpts?: string[]
-          id?: string
-          is_default?: boolean | null
-          name?: string
-          training_sources?: Json
-          updated_at?: string
-          user_id?: string
-          vocabulary_patterns?: Json | null
-          voice_description?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "content_voice_profiles_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      crawler_detections: {
-        Row: {
-          business_id: string
-          crawler_name: string
-          created_at: string
-          detected_at: string
-          id: string
-          page_url: string | null
-          user_agent: string | null
-        }
-        Insert: {
-          business_id: string
-          crawler_name: string
-          created_at?: string
-          detected_at: string
-          id?: string
-          page_url?: string | null
-          user_agent?: string | null
-        }
-        Update: {
-          business_id?: string
-          crawler_name?: string
-          created_at?: string
-          detected_at?: string
-          id?: string
-          page_url?: string | null
-          user_agent?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "crawler_detections_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -1441,85 +953,6 @@ export type Database = {
           website_url?: string
         }
         Relationships: []
-      }
-      ga4_metrics: {
-        Row: {
-          ai_referral_sessions: number
-          business_id: string
-          created_at: string
-          date: string
-          id: string
-          organic_sessions: number
-          sessions: number
-        }
-        Insert: {
-          ai_referral_sessions?: number
-          business_id: string
-          created_at?: string
-          date: string
-          id?: string
-          organic_sessions?: number
-          sessions?: number
-        }
-        Update: {
-          ai_referral_sessions?: number
-          business_id?: string
-          created_at?: string
-          date?: string
-          id?: string
-          organic_sessions?: number
-          sessions?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ga4_metrics_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      gsc_data: {
-        Row: {
-          business_id: string
-          clicks: number
-          created_at: string
-          date: string
-          id: string
-          impressions: number
-          position: number | null
-          query: string
-        }
-        Insert: {
-          business_id: string
-          clicks?: number
-          created_at?: string
-          date: string
-          id?: string
-          impressions?: number
-          position?: number | null
-          query: string
-        }
-        Update: {
-          business_id?: string
-          clicks?: number
-          created_at?: string
-          date?: string
-          id?: string
-          impressions?: number
-          position?: number | null
-          query?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "gsc_data_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       inbox_item_edits: {
         Row: {
@@ -1854,47 +1287,6 @@ export type Database = {
           },
         ]
       }
-      personas: {
-        Row: {
-          business_id: string
-          created_at: string
-          description: string | null
-          id: string
-          journey_stage: string | null
-          name: string
-          prompt_modifiers: string[] | null
-          user_id: string
-        }
-        Insert: {
-          business_id: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          journey_stage?: string | null
-          name: string
-          prompt_modifiers?: string[] | null
-          user_id: string
-        }
-        Update: {
-          business_id?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          journey_stage?: string | null
-          name?: string
-          prompt_modifiers?: string[] | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "personas_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       plans: {
         Row: {
           agent_uses_per_month: number
@@ -1972,92 +1364,6 @@ export type Database = {
           tracked_queries_limit?: number
         }
         Relationships: []
-      }
-      prompt_library: {
-        Row: {
-          category: string
-          created_at: string
-          estimated_volume: number | null
-          id: string
-          industry: string
-          language: string
-          last_volume_update: string | null
-          location_template: boolean | null
-          prompt_text: string
-          sample_size: number | null
-          trending_direction: string | null
-        }
-        Insert: {
-          category: string
-          created_at?: string
-          estimated_volume?: number | null
-          id?: string
-          industry: string
-          language?: string
-          last_volume_update?: string | null
-          location_template?: boolean | null
-          prompt_text: string
-          sample_size?: number | null
-          trending_direction?: string | null
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          estimated_volume?: number | null
-          id?: string
-          industry?: string
-          language?: string
-          last_volume_update?: string | null
-          location_template?: boolean | null
-          prompt_text?: string
-          sample_size?: number | null
-          trending_direction?: string | null
-        }
-        Relationships: []
-      }
-      prompt_volumes: {
-        Row: {
-          avg_position: number | null
-          competitor_density: number | null
-          created_at: string
-          engine_coverage: Json | null
-          id: string
-          measurement_period: string
-          mention_rate: number | null
-          prompt_library_id: string
-          scan_count: number
-        }
-        Insert: {
-          avg_position?: number | null
-          competitor_density?: number | null
-          created_at?: string
-          engine_coverage?: Json | null
-          id?: string
-          measurement_period: string
-          mention_rate?: number | null
-          prompt_library_id: string
-          scan_count?: number
-        }
-        Update: {
-          avg_position?: number | null
-          competitor_density?: number | null
-          created_at?: string
-          engine_coverage?: Json | null
-          id?: string
-          measurement_period?: string
-          mention_rate?: number | null
-          prompt_library_id?: string
-          scan_count?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "prompt_volumes_prompt_library_id_fkey"
-            columns: ["prompt_library_id"]
-            isOneToOne: false
-            referencedRelation: "prompt_library"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       query_clusters: {
         Row: {
@@ -2427,102 +1733,6 @@ export type Database = {
           },
         ]
       }
-      scan_mentions: {
-        Row: {
-          created_at: string
-          engine: string
-          id: string
-          mention_context: string | null
-          mention_position: number | null
-          mention_type: string | null
-          query_id: string | null
-          scan_id: string
-        }
-        Insert: {
-          created_at?: string
-          engine: string
-          id?: string
-          mention_context?: string | null
-          mention_position?: number | null
-          mention_type?: string | null
-          query_id?: string | null
-          scan_id: string
-        }
-        Update: {
-          created_at?: string
-          engine?: string
-          id?: string
-          mention_context?: string | null
-          mention_position?: number | null
-          mention_type?: string | null
-          query_id?: string | null
-          scan_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "scan_mentions_query_id_fkey"
-            columns: ["query_id"]
-            isOneToOne: false
-            referencedRelation: "scan_queries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "scan_mentions_scan_id_fkey"
-            columns: ["scan_id"]
-            isOneToOne: false
-            referencedRelation: "scans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      scan_queries: {
-        Row: {
-          business_id: string
-          created_at: string
-          engines_used: string[]
-          id: string
-          is_tracked: boolean
-          query_text: string
-          query_type: string
-          scan_id: string
-        }
-        Insert: {
-          business_id: string
-          created_at?: string
-          engines_used?: string[]
-          id?: string
-          is_tracked?: boolean
-          query_text: string
-          query_type: string
-          scan_id: string
-        }
-        Update: {
-          business_id?: string
-          created_at?: string
-          engines_used?: string[]
-          id?: string
-          is_tracked?: boolean
-          query_text?: string
-          query_type?: string
-          scan_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "scan_queries_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "scan_queries_scan_id_fkey"
-            columns: ["scan_id"]
-            isOneToOne: false
-            referencedRelation: "scans"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       scans: {
         Row: {
           business_id: string
@@ -2715,8 +1925,6 @@ export type Database = {
           plan_id: string | null
           plan_tier: Database["public"]["Enums"]["plan_tier"] | null
           status: Database["public"]["Enums"]["subscription_status"]
-          trial_ends_at: string | null
-          trial_started_at: string | null
           updated_at: string
           user_id: string
         }
@@ -2735,8 +1943,6 @@ export type Database = {
           plan_id?: string | null
           plan_tier?: Database["public"]["Enums"]["plan_tier"] | null
           status?: Database["public"]["Enums"]["subscription_status"]
-          trial_ends_at?: string | null
-          trial_started_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -2755,8 +1961,6 @@ export type Database = {
           plan_id?: string | null
           plan_tier?: Database["public"]["Enums"]["plan_tier"] | null
           status?: Database["public"]["Enums"]["subscription_status"]
-          trial_ends_at?: string | null
-          trial_started_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -3051,59 +2255,6 @@ export type Database = {
           },
         ]
       }
-      workflow_runs: {
-        Row: {
-          agent_job_ids: string[] | null
-          completed_at: string | null
-          credits_used: number | null
-          id: string
-          results_summary: Json | null
-          started_at: string
-          status: string
-          steps_completed: number | null
-          steps_total: number
-          trigger_event: Json
-          user_id: string
-          workflow_id: string
-        }
-        Insert: {
-          agent_job_ids?: string[] | null
-          completed_at?: string | null
-          credits_used?: number | null
-          id?: string
-          results_summary?: Json | null
-          started_at?: string
-          status?: string
-          steps_completed?: number | null
-          steps_total: number
-          trigger_event: Json
-          user_id: string
-          workflow_id: string
-        }
-        Update: {
-          agent_job_ids?: string[] | null
-          completed_at?: string | null
-          credits_used?: number | null
-          id?: string
-          results_summary?: Json | null
-          started_at?: string
-          status?: string
-          steps_completed?: number | null
-          steps_total?: number
-          trigger_event?: Json
-          user_id?: string
-          workflow_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workflow_runs_workflow_id_fkey"
-            columns: ["workflow_id"]
-            isOneToOne: false
-            referencedRelation: "agent_workflows"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -3145,6 +2296,10 @@ export type Database = {
         Returns: boolean
       }
       expire_old_suggestions: { Args: never; Returns: number }
+      get_competitors_summary: {
+        Args: { p_business_id: string; p_user_id: string }
+        Returns: Json
+      }
       get_due_automations: {
         Args: { p_limit?: number }
         Returns: {
@@ -3513,4 +2668,3 @@ export const Constants = {
     },
   },
 } as const
-
