@@ -90,7 +90,7 @@ function scoreVerdict(score: number): {
     }
   if (score >= 50)
     return {
-      label: 'Good',
+      label: '',
       textClass: 'text-emerald-600',
       bgClass: 'bg-emerald-50',
       borderClass: 'border-emerald-200',
