@@ -7,7 +7,7 @@ export type FilterKey = 'all' | 'awaiting_review' | 'draft' | 'approved' | 'arch
 const FILTERS: { key: FilterKey; label: string; icon: React.ReactNode }[] = [
   {
     key: 'awaiting_review',
-    label: 'Awaiting review',
+    label: 'Ready for your approval',
     icon: (
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
         <circle cx="7.5" cy="7.5" r="5.5" stroke="currentColor" strokeWidth="1.4" />
@@ -73,7 +73,7 @@ export default function FilterRail({ counts, active, onChange, onOpenShortcuts }
       {/* Header */}
       <div className="flex items-center justify-between px-5 pb-3 pt-5">
         <h2 className="text-[13px] font-semibold text-gray-900">Inbox</h2>
-        {counts['awaiting_review'] > 0 && (
+        {(counts['awaiting_review'] ?? 0) > 0 && (
           <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#3370FF] px-1.5 text-[10px] font-semibold tabular-nums text-white">
             {counts['awaiting_review']}
           </span>
@@ -91,7 +91,7 @@ export default function FilterRail({ counts, active, onChange, onOpenShortcuts }
               type="button"
               onClick={() => onChange(key)}
               className={cn(
-                'group relative flex h-8 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-[13px] transition-colors duration-100',
+                'group relative flex min-h-[32px] w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] leading-snug transition-colors duration-100',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1',
                 isActive
                   ? 'bg-blue-50 font-medium text-[#3370FF]'
@@ -103,7 +103,7 @@ export default function FilterRail({ counts, active, onChange, onOpenShortcuts }
               {isActive && (
                 <span
                   aria-hidden="true"
-                  className="absolute inset-y-1 start-0 w-0.5 rounded-full bg-[#3370FF]"
+                  className="absolute inset-y-1.5 start-0 w-0.5 rounded-full bg-[#3370FF]"
                 />
               )}
               <span className={cn('shrink-0', isActive ? 'text-[#3370FF]' : 'text-gray-400 group-hover:text-gray-500')}>
