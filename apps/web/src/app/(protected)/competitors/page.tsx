@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { CompetitorsClient } from '@/components/competitors/CompetitorsClient'
-import type { CompetitorsSummary } from '@/components/competitors/types'
+import type { CompetitorsData } from '@/components/competitors/types'
 
 export default async function CompetitorsPage() {
   const supabase = await createClient()
@@ -40,5 +40,5 @@ export default async function CompetitorsPage() {
     return <CompetitorsClient data={null} />
   }
 
-  return <CompetitorsClient data={data as CompetitorsSummary} />
+  return <CompetitorsClient data={data as unknown as CompetitorsData} />
 }
