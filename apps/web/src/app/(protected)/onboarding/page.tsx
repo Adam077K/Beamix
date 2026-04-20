@@ -9,20 +9,22 @@ export default async function OnboardingPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: profile } = await supabase
+  const profileRes = await supabase
     .from('user_profiles')
     .select('id, onboarding_completed_at, full_name')
     .eq('id', user.id)
     .maybeSingle();
+  const profile = profileRes.data as { id: string; onboarding_completed_at: string | null; full_name: string | null } | null;
 
   if (profile?.onboarding_completed_at) redirect('/home');
 
-  const { data: existingBusiness } = await supabase
+  const businessRes = await supabase
     .from('businesses')
     .select('*')
     .eq('user_id', user.id)
     .eq('is_primary', true)
     .maybeSingle();
+  const existingBusiness = businessRes.data as Parameters<typeof OnboardingClient>[0]['existingBusiness'];
 
   return (
     <OnboardingClient userId={user.id} existingBusiness={existingBusiness} />
