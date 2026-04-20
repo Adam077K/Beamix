@@ -33,6 +33,35 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Redirect incomplete new users to onboarding.
+  // Skip: onboarding itself, API routes, Next.js internals.
+  const { pathname } = request.nextUrl
+  if (
+    !pathname.startsWith('/onboarding') &&
+    !pathname.startsWith('/api/') &&
+    !pathname.startsWith('/_next/')
+  ) {
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('onboarding_completed_at')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    // G8 Option C: no subscriptions row = preview account (skip onboarding gate)
+    const isPreviewAccount = !sub
+    const hasCompletedOnboarding = !!profile?.onboarding_completed_at
+
+    if (!isPreviewAccount && !hasCompletedOnboarding) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    }
+  }
+
   return supabaseResponse
 }
 
