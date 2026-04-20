@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 
-export type FilterKey = 'all' | 'awaiting_review' | 'draft' | 'approved' | 'archived';
+export type FilterKey = 'all' | 'awaiting_review' | 'draft' | 'approved' | 'archived' | 'rejected';
 
 const FILTERS: { key: FilterKey; label: string; icon: React.ReactNode }[] = [
   {

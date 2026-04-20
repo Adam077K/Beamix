@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
@@ -61,6 +62,7 @@ export default function PreviewPane({
   onArchive,
   onBackToList,
 }: PreviewPaneProps) {
+  const router = useRouter();
   const [actionState, setActionState] = useState<ActionState>(null);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
 
@@ -297,6 +299,17 @@ export default function PreviewPane({
               r
             </kbd>
           </button>
+
+          {/* Open in Workspace */}
+          {item.jobId && (
+            <button
+              type="button"
+              onClick={() => router.push(`/workspace/${item.jobId}`)}
+              className="flex h-8 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-[13px] font-medium text-gray-600 transition-colors hover:border-[#3370FF]/30 hover:bg-blue-50 hover:text-[#3370FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1 active:scale-[0.98]"
+            >
+              Open in Workspace →
+            </button>
+          )}
 
           {/* Ghost: Archive */}
           <button
