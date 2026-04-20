@@ -46,7 +46,7 @@ export async function POST(req: Request) {
         onboarding_completed_at: now,
         ...(body.scanId ? { onboarding_scan_id: body.scanId } : {}),
         updated_at: now,
-      },
+      } as never,
       { onConflict: 'id' },
     )
 
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
           name: body.businessName,
           created_at: now,
           updated_at: now,
-        },
+        } as never,
         { onConflict: 'user_id' },
       )
 
