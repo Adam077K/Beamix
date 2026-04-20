@@ -15,6 +15,8 @@ import PreviewPane from './PreviewPane';
 
 interface InboxClientProps {
   items: InboxItem[];
+  /** Pre-computed count of items with status='awaiting_review' (in_review in DB). */
+  unreadCount?: number;
 }
 
 type StatusFilter = FilterKey;
@@ -25,6 +27,7 @@ function computeCounts(items: InboxItem[]): Record<string, number> {
     awaiting_review: 0,
     draft: 0,
     approved: 0,
+    rejected: 0,
     archived: 0,
   };
   for (const item of items) {
@@ -35,13 +38,13 @@ function computeCounts(items: InboxItem[]): Record<string, number> {
   return counts;
 }
 
-// Mobile: chip labels for filter bar
+// Mobile: chip labels for filter bar — order matches brief (All | Awaiting Review | Approved | Rejected)
 const MOBILE_FILTERS: { key: FilterKey; label: string }[] = [
-  { key: 'awaiting_review', label: 'Awaiting review' },
-  { key: 'draft', label: 'Draft' },
-  { key: 'approved', label: 'Approved' },
-  { key: 'archived', label: 'Archived' },
   { key: 'all', label: 'All' },
+  { key: 'awaiting_review', label: 'Awaiting review' },
+  { key: 'approved', label: 'Approved' },
+  { key: 'rejected', label: 'Rejected' },
+  { key: 'draft', label: 'Draft' },
 ];
 
 const SHORTCUTS: { keys: string[]; label: string }[] = [
@@ -55,7 +58,7 @@ const SHORTCUTS: { keys: string[]; label: string }[] = [
   { keys: ['Esc'], label: 'Close modal / clear selection' },
 ];
 
-export default function InboxClient({ items }: InboxClientProps) {
+export default function InboxClient({ items, unreadCount: _unreadCount }: InboxClientProps) {
   const [filter, setFilter] = useState<StatusFilter>('awaiting_review');
   const [selectedId, setSelectedId] = useState<string | null>(
     items.find((i) => i.status === 'awaiting_review')?.id ?? items[0]?.id ?? null,
