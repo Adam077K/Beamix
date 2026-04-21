@@ -1263,6 +1263,8 @@ Updated features page with current agent descriptions and proactive suggestion s
       published_url: 'https://beamix.tech/pricing',
       published_at: daysAgo(3),
       reviewed_at: daysAgo(4),
+      is_favorited: true,
+      quality_score: 94,
     },
     {
       business_id: businessId,
@@ -1362,6 +1364,8 @@ SEO and GEO use fundamentally different signals. This post explains why and what
       published_url: 'https://beamix.tech/blog/geo-vs-seo',
       published_at: daysAgo(10),
       reviewed_at: daysAgo(11),
+      is_favorited: true,
+      quality_score: 91,
     },
     // rejected (1)
     {
