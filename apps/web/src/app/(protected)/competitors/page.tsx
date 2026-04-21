@@ -32,7 +32,7 @@ export default async function CompetitorsPage() {
     .from('businesses')
     .select('id')
     .eq('user_id', user.id)
-    .eq('is_active', true)
+    .eq('is_primary', true)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()

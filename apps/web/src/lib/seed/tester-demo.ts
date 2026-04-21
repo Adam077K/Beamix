@@ -1897,7 +1897,19 @@ export async function seedTesterDemoData(
   }
 
   // ── Step 2: Scans (sequential — need IDs for engine results) ─────────────
-  const latestScanId = await seedScans(supabase, businessId, userId)
+  // Wrap every seed helper so a single failure doesn't abort subsequent steps.
+  // Each failure logs loudly but we keep going — tester can see partial data
+  // across all pages instead of only the first step that succeeded.
+  async function safe<T>(label: string, fn: () => Promise<T>): Promise<T | null> {
+    try {
+      return await fn()
+    } catch (err) {
+      console.error(`[seed:${label}] failed (non-fatal):`, err instanceof Error ? err.message : err)
+      return null
+    }
+  }
+
+  const latestScanId = await safe('scans', () => seedScans(supabase, businessId, userId))
 
   // Fetch all scan IDs sorted desc for engine results
   const { data: allScans } = await supabase
@@ -1910,25 +1922,25 @@ export async function seedTesterDemoData(
   const scanIds = (allScans ?? []).map((s) => (s as { id: string }).id)
 
   // ── Step 3: Agent jobs first (content_items FK depends on job IDs) ────────
-  const jobIds = await seedAgentJobs(supabase, businessId, userId)
+  const jobIds = (await safe('agent_jobs', () => seedAgentJobs(supabase, businessId, userId))) ?? []
 
   // ── Step 4: Content items (need job IDs) ─────────────────────────────────
-  const contentItemIds = await seedContentItems(supabase, businessId, userId, jobIds)
+  const contentItemIds = (await safe('content_items', () => seedContentItems(supabase, businessId, userId, jobIds))) ?? []
 
-  // ── Step 5: Rest in parallel ──────────────────────────────────────────────
+  // ── Step 5: Rest in parallel (each wrapped so one failure doesn't abort the rest) ─
   await Promise.all([
-    seedScanEngineResults(supabase, businessId, scanIds),
-    seedSuggestions(supabase, businessId, userId, latestScanId),
-    seedCompetitors(supabase, businessId, userId),
-    seedContentVersions(supabase, contentItemIds, userId),
-    seedAutomationConfigs(supabase, businessId, userId),
-    seedAutomationSettings(supabase, userId),
-    seedCreditPool(supabase, userId),
-    seedCitationSources(supabase, businessId),
-    seedNotifications(supabase, userId),
-    seedSubscription(supabase, userId),
-    seedUserProfile(supabase, userId),
-    seedNotificationPreferences(supabase, userId),
+    safe('scan_engine_results', () => seedScanEngineResults(supabase, businessId, scanIds)),
+    safe('suggestions', () => seedSuggestions(supabase, businessId, userId, latestScanId ?? '')),
+    safe('competitors', () => seedCompetitors(supabase, businessId, userId)),
+    safe('content_versions', () => seedContentVersions(supabase, contentItemIds, userId)),
+    safe('automation_configs', () => seedAutomationConfigs(supabase, businessId, userId)),
+    safe('automation_settings', () => seedAutomationSettings(supabase, userId)),
+    safe('credit_pools', () => seedCreditPool(supabase, userId)),
+    safe('citation_sources', () => seedCitationSources(supabase, businessId)),
+    safe('notifications', () => seedNotifications(supabase, userId)),
+    safe('subscriptions', () => seedSubscription(supabase, userId)),
+    safe('user_profiles', () => seedUserProfile(supabase, userId)),
+    safe('notification_preferences', () => seedNotificationPreferences(supabase, userId)),
   ])
 
   return { seeded: true, businessId }
