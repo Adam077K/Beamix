@@ -355,7 +355,7 @@ async function seedSuggestions(
       user_id: userId,
       scan_id: latestScanId,
       agent_type: 'competitor_intelligence',
-      title: 'Analyze Profound's recent content push',
+      title: "Analyze Profound's recent content push",
       description:
         "Profound published 4 new blog posts in the past 2 weeks on GEO topics you own. Two of those posts now rank in Perplexity responses for 'AI search visibility monitoring tool'. A competitive content gap analysis will identify which queries to counter first.",
       impact: 'high',
