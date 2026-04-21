@@ -11,6 +11,7 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createServiceClient } from '@/lib/supabase/service'
+import { seedTesterDemoData } from '@/lib/seed/tester-demo'
 import { cookies } from 'next/headers'
 
 export async function POST() {
@@ -105,6 +106,18 @@ export async function POST() {
         { error: { code: 'NO_SESSION', message: 'Sign-in succeeded but no session was returned.' } },
         { status: 500 },
       )
+    }
+
+    // ── Step 3: Seed demo data (non-fatal) ───────────────────────────────────
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const seedResult = await seedTesterDemoData(user.id)
+        console.log('[tester-login] seed result:', seedResult)
+      }
+    } catch (seedErr) {
+      // Non-fatal: log and continue — tester can still use the app
+      console.error('[tester-login] seed failed (non-fatal):', seedErr)
     }
 
     return NextResponse.json({ ok: true, redirect: '/home' })
