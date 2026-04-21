@@ -961,6 +961,7 @@ Beamix is the GEO (Generative Engine Optimization) platform built for SMBs who w
       target_queries: ['best GEO platform for SMBs', 'AI search visibility monitoring tool'],
       trigger_reason: 'Content freshness rule: page not updated in 180+ days',
       word_count: 210,
+      quality_score: 82,
     },
     {
       business_id: businessId,
@@ -1009,6 +1010,7 @@ Beamix scans how ChatGPT, Gemini, Perplexity, and 6 other AI engines describe yo
       target_queries: ['how to rank in ChatGPT search', 'best GEO platform for SMBs', 'AI search visibility for SaaS startups'],
       trigger_reason: 'Content optimization automation triggered weekly sweep',
       word_count: 175,
+      quality_score: 88,
     },
     {
       business_id: businessId,
