@@ -1407,9 +1407,19 @@ Schema Generator now handles Next.js dynamic routes correctly.`,
     },
   ]
 
+  // content_items.is_favorited is NOT NULL with DEFAULT false. Only 3 of 10
+  // items set is_favorited explicitly — in Supabase batch inserts with
+  // mixed-shape rows, PostgREST sends every column mentioned in any row for
+  // all rows, so the 7 unset rows get explicit NULL which overrides the
+  // DEFAULT. Normalize with a spread so every row has an explicit boolean.
+  const normalizedItems = items.map((item) => ({
+    ...item,
+    is_favorited: 'is_favorited' in item && typeof item.is_favorited === 'boolean' ? item.is_favorited : false,
+  }))
+
   const { data: inserted, error } = await supabase
     .from('content_items')
-    .insert(items as never)
+    .insert(normalizedItems as never)
     .select('id')
 
   if (error || !inserted?.length) {
