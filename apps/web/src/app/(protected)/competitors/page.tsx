@@ -1,10 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { CompetitorsClient } from '@/components/competitors/CompetitorsClient'
-import type { CompetitorsData } from '@/components/competitors/types'
+import { deriveCompetitorsData } from './derive'
 
-// Empty-state props for CompetitorsClient when RPC fails or no data exists.
-// CompetitorsClient expects 7 separate prop fields — a full adapter from
-// get_competitors_summary RPC output to these fields is a follow-up task.
 const EMPTY_PROPS = {
   competitors: [] as never[],
   yourSoV: 0,
@@ -26,8 +23,6 @@ export default async function CompetitorsPage() {
     return <CompetitorsClient {...EMPTY_PROPS} />
   }
 
-  // Business lookup — use 'any' cast because Database types inference is
-  // collapsing to 'never' for this query in the current Supabase SDK setup.
   const businessRes = await supabase
     .from('businesses')
     .select('id')
@@ -42,20 +37,50 @@ export default async function CompetitorsPage() {
     return <CompetitorsClient {...EMPTY_PROPS} />
   }
 
-  // RPC call — the result shape doesn't map 1:1 to CompetitorsClientProps,
-  // so we log it for future adapter work and fall back to empty props today.
-  const { data, error } = await (supabase.rpc as unknown as (fn: string, params: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)(
-    'get_competitors_summary',
-    { p_user_id: user.id, p_business_id: business.id },
-  )
+  const competitorsRes = await supabase
+    .from('competitors')
+    .select('id, name, website_url, domain, latest_score')
+    .eq('business_id', business.id)
+    .eq('is_active', true)
+  const competitorRows = (competitorsRes.data ?? []) as unknown as Array<{
+    id: string
+    name: string
+    website_url: string | null
+    domain: string | null
+    latest_score: number | null
+  }>
 
-  if (error) {
-    console.error('[competitors] RPC failed', error)
+  // All scan_engine_results for this business, joined to scan completion time.
+  const resultsRes = await supabase
+    .from('scan_engine_results')
+    .select('scan_id, engine, prompt_text, is_mentioned, competitors_mentioned, scans!inner(completed_at)')
+    .eq('business_id', business.id)
+  type RawResultRow = {
+    scan_id: string | null
+    engine: string | null
+    prompt_text: string | null
+    is_mentioned: boolean | null
+    competitors_mentioned: string[] | null
+    scans: { completed_at: string | null } | { completed_at: string | null }[] | null
+  }
+  const rawRows = (resultsRes.data ?? []) as unknown as RawResultRow[]
+  const scanResults = rawRows.map((r) => {
+    const scanJoin = Array.isArray(r.scans) ? r.scans[0] : r.scans
+    return {
+      scan_id: r.scan_id,
+      engine: r.engine,
+      prompt_text: r.prompt_text,
+      is_mentioned: r.is_mentioned,
+      competitors_mentioned: r.competitors_mentioned,
+      scan_completed_at: scanJoin?.completed_at ?? null,
+    }
+  })
+
+  if (competitorRows.length === 0 || scanResults.length === 0) {
     return <CompetitorsClient {...EMPTY_PROPS} />
   }
 
-  // TODO: adapter from RPC CompetitorsData → CompetitorsClientProps fields
-  void (data as CompetitorsData | null)
+  const derived = deriveCompetitorsData(competitorRows, scanResults)
 
-  return <CompetitorsClient {...EMPTY_PROPS} />
+  return <CompetitorsClient {...derived} />
 }
