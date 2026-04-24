@@ -116,6 +116,16 @@ export function Sidebar({ user, plan, inboxUnreadCount }: SidebarProps) {
             <PlanBadge tier={plan} />
           )}
 
+          {/* Upgrade link — build tier only */}
+          {plan === 'build' && (
+            <Link
+              href="/settings?tab=billing"
+              className="text-xs text-[#3370FF] hover:underline underline-offset-2 transition-colors"
+            >
+              Upgrade to Scale &rarr;
+            </Link>
+          )}
+
           {/* Sign out */}
           <button
             type="button"
