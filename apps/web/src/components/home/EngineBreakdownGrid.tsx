@@ -3,9 +3,10 @@
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { spring, fadeInUp } from '@/lib/motion'
+import { ENGINE_CONFIG, getEngineConfig } from '@/constants/engines'
 
 export interface EngineCell {
-  engine: 'ChatGPT' | 'Gemini' | 'Perplexity' | 'Claude' | string
+  engine: string
   mentionRate: number   // 0-100
   weeklyDelta: number   // percentage points change
   sparkline: number[]   // last 7 readings
@@ -15,16 +16,6 @@ interface EngineBreakdownGridProps {
   engines: EngineCell[]
   className?: string
 }
-
-const ENGINE_CONFIG: Record<string, { color: string; bg: string; initial: string }> = {
-  ChatGPT:    { color: '#10B981', bg: '#ECFDF5', initial: 'CG' },
-  Gemini:     { color: '#3370FF', bg: '#EFF6FF', initial: 'GM' },
-  Perplexity: { color: '#8B5CF6', bg: '#F5F3FF', initial: 'PX' },
-  Claude:     { color: '#F59E0B', bg: '#FFFBEB', initial: 'CL' },
-  Grok:       { color: '#0EA5E9', bg: '#F0F9FF', initial: 'GK' },
-}
-
-const DEFAULT_CONFIG = { color: '#6B7280', bg: '#F9FAFB', initial: '??' }
 
 function buildSparkPath(data: number[], w: number, h: number): string {
   if (!data || data.length < 2) return ''
@@ -56,7 +47,8 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
 }
 
 function EngineCard({ cell, index }: { cell: EngineCell; index: number }) {
-  const cfg = ENGINE_CONFIG[cell.engine] ?? DEFAULT_CONFIG
+  // Look up by lowercase key first (DB stores lowercase), then try as-is for backward compat
+  const cfg = ENGINE_CONFIG[cell.engine.toLowerCase()] ?? getEngineConfig(cell.engine)
   const isPositive = cell.weeklyDelta >= 0
   const pct = Math.max(0, Math.min(100, cell.mentionRate))
 
@@ -77,7 +69,7 @@ function EngineCard({ cell, index }: { cell: EngineCell; index: number }) {
           >
             {cfg.initial}
           </div>
-          <span className="text-sm font-semibold text-gray-800 truncate">{cell.engine}</span>
+          <span className="text-sm font-semibold text-gray-800 truncate">{cfg.label}</span>
         </div>
         {cell.weeklyDelta !== 0 && (
           <span

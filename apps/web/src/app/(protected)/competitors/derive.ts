@@ -47,6 +47,12 @@ function labelEngine(raw: string | null): Engine | null {
   return ENGINE_LABEL[raw.toLowerCase()] ?? null
 }
 
+// Strip protocol + trailing slash so consumer UI can safely prepend `https://`
+// without producing "https://https://..." links (UX audit finding).
+function stripProtocol(url: string): string {
+  return url.replace(/^https?:\/\//, '').replace(/\/$/, '')
+}
+
 // ISO week bucket — start of week (Monday) as YYYY-MM-DD.
 function weekStart(iso: string | null): string {
   if (!iso) return ''
@@ -154,7 +160,9 @@ export function deriveCompetitorsData(
     return {
       id: c.id,
       name: c.name,
-      url: c.website_url ?? '',
+      // Strip protocol — consumers (Drawer, StrategyDeltaAside) prepend
+      // `https://` on the href and render bare domain as the label.
+      url: stripProtocol(c.website_url ?? c.domain ?? ''),
       appearanceRate,
       queriesWhereAppears,
       fourWeekTrend: fourWeekTrend.length >= 2 ? fourWeekTrend : [0, 0, 0, 0],
