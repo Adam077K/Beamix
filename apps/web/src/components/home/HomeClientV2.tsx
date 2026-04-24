@@ -124,7 +124,7 @@ function PaywallBanner() {
         You&apos;re seeing your results — upgrade to start fixing them
       </p>
       <Link
-        href="/settings/billing"
+        href="/settings?tab=billing"
         className="shrink-0 rounded-lg bg-[#3370FF] px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-600 transition-colors"
       >
         Upgrade
