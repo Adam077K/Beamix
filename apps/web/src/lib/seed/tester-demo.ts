@@ -1665,7 +1665,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'agent_complete',
       severity: 'low',
       is_read: false,
-      action_url: '/dashboard/inbox',
+      action_url: '/inbox',
       created_at: daysAgo(0),
     },
     {
@@ -1675,7 +1675,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'score_change',
       severity: 'low',
       is_read: false,
-      action_url: '/dashboard/scans',
+      action_url: '/scans',
       created_at: daysAgo(1),
     },
     {
@@ -1685,7 +1685,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'suggestion',
       severity: 'low',
       is_read: true,
-      action_url: '/dashboard',
+      action_url: '/home',
       created_at: daysAgo(1),
     },
     {
@@ -1695,7 +1695,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'competitor_alert',
       severity: 'medium',
       is_read: false,
-      action_url: '/dashboard/competitors',
+      action_url: '/competitors',
       created_at: daysAgo(2),
     },
     {
@@ -1705,7 +1705,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'content_approved',
       severity: 'low',
       is_read: true,
-      action_url: '/dashboard/inbox',
+      action_url: '/inbox',
       created_at: daysAgo(6),
     },
     {
@@ -1715,7 +1715,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'weekly_digest',
       severity: 'low',
       is_read: true,
-      action_url: '/dashboard',
+      action_url: '/home',
       created_at: daysAgo(7),
     },
     {
@@ -1725,7 +1725,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'agent_failed',
       severity: 'high',
       is_read: true,
-      action_url: '/dashboard/automation',
+      action_url: '/automation',
       created_at: daysAgo(5),
     },
     {
@@ -1735,7 +1735,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'competitor_detected',
       severity: 'low',
       is_read: false,
-      action_url: '/dashboard/competitors',
+      action_url: '/competitors',
       created_at: daysAgo(3),
     },
     {
@@ -1745,7 +1745,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'score_change',
       severity: 'medium',
       is_read: true,
-      action_url: '/dashboard/scans',
+      action_url: '/scans',
       created_at: daysAgo(13),
     },
     {
@@ -1755,7 +1755,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'suggestion',
       severity: 'low',
       is_read: false,
-      action_url: '/dashboard',
+      action_url: '/home',
       created_at: daysAgo(4),
     },
   ]
