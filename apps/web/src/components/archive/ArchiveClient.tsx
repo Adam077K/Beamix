@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { agentTypeLabel } from '@/constants/agents'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -68,18 +69,9 @@ function formatDate(iso: string): string {
 
 // ─── Agent label ──────────────────────────────────────────────────────────────
 
-const AGENT_LABELS: Record<string, string> = {
-  content_writer: 'Content',
-  faq_agent: 'FAQ',
-  schema_builder: 'Schema',
-  citation_builder: 'Citations',
-  competitor_intelligence: 'Research',
-  local_seo: 'Local SEO',
-}
-
 function agentBadge(agentType: string | null): string {
   if (!agentType) return 'Agent'
-  return AGENT_LABELS[agentType] ?? agentType.replace(/_/g, ' ')
+  return agentTypeLabel(agentType)
 }
 
 // ─── Status badge ─────────────────────────────────────────────────────────────

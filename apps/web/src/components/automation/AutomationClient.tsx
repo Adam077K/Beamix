@@ -40,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { agentTypeLabel } from '@/constants/agents'
 import type {
   AutomationStatus,
   AutomationSchedule,
@@ -61,16 +62,6 @@ const CADENCE_LABELS: Record<Cadence, string> = {
   weekly: 'Every Monday at 09:00',
   biweekly: 'Every 2 weeks',
   monthly: 'First of the month',
-}
-
-const AGENT_LABELS: Record<string, string> = {
-  content_optimizer: 'Content Optimizer',
-  performance_tracker: 'Performance Tracker',
-  freshness_agent: 'Freshness Agent',
-  faq_builder: 'FAQ Builder',
-  competitor_intelligence: 'Competitor Intel',
-  schema_optimizer: 'Schema Optimizer',
-  blog_strategist: 'Blog Strategist',
 }
 
 const AGENT_TRIGGER_LABELS: Record<string, string> = {
@@ -258,7 +249,7 @@ function ScheduleRow({
   onRemove,
 }: ScheduleRowProps) {
   const effectivelyPaused = globalPaused || schedule.isPaused
-  const agentLabel = AGENT_LABELS[schedule.agentType] ?? schedule.agentType
+  const agentLabel = agentTypeLabel(schedule.agentType)
   const triggerLabel = AGENT_TRIGGER_LABELS[schedule.agentType] ?? 'Scheduled'
   const runs7: Array<boolean | null> = schedule.runHistory7 ?? []
 
@@ -640,7 +631,7 @@ function RunHistoryCard({ runs }: RunHistoryCardProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-gray-700 truncate leading-tight">
-                {AGENT_LABELS[run.agentType] ?? run.agentType}
+                {agentTypeLabel(run.agentType)}
               </p>
               <p className="text-[10px] text-gray-400 leading-tight mt-0.5">
                 {formatTimeAgo(run.completedAt)}
