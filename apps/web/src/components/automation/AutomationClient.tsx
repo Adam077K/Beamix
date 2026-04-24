@@ -767,11 +767,11 @@ export function AutomationClient({ status }: AutomationClientProps) {
       {/* Top strip */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Auto-pilot</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">Schedules</h1>
           <p className="mt-0.5 text-sm text-gray-500">
             {globalKill
-              ? 'All automation is paused'
-              : `${activeCount} agent${activeCount !== 1 ? 's' : ''} running automatically this week${
+              ? 'All schedules are paused'
+              : `${activeCount} schedule${activeCount !== 1 ? 's' : ''} running this week${
                   pausedCount > 0 ? ` · ${pausedCount} paused` : ''
                 }`}
           </p>

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { agentTypeLabel, agentOutcomeCta } from '@/constants/agents'
 import { HomeClientV2 } from '@/components/home/HomeClientV2'
 import type { HomeV2Props } from '@/components/home/HomeClientV2'
 import type { KpiStripData } from '@/components/home/KpiStripNew'
@@ -49,34 +50,6 @@ function formatNextRun(iso: string | null): string {
   const diffD = Math.floor(diffH / 24)
   if (diffD === 1) return 'Tomorrow'
   return `In ${diffD} days`
-}
-
-function agentTypeLabel(agentType: string): string {
-  const labels: Record<string, string> = {
-    content_writer: 'Content Writer',
-    blog_writer: 'Blog Writer',
-    faq_agent: 'FAQ Agent',
-    faq_builder: 'FAQ Builder',
-    schema_optimizer: 'Schema Optimizer',
-    schema_generator: 'Schema Generator',
-    review_analyzer: 'Review Analyzer',
-    social_strategy: 'Social Strategy',
-    competitor_intelligence: 'Competitor Intelligence',
-    recommendations: 'Recommendations',
-    citation_builder: 'Citation Builder',
-    llms_txt: 'LLMs.txt',
-    ai_readiness: 'AI Readiness',
-    content_optimizer: 'Content Optimizer',
-    freshness_agent: 'Freshness Agent',
-    offsite_presence_builder: 'Presence Builder',
-    review_presence_planner: 'Review Planner',
-    entity_builder: 'Entity Builder',
-    authority_blog_strategist: 'Blog Strategist',
-    performance_tracker: 'Performance Tracker',
-    reddit_presence_planner: 'Reddit Planner',
-    video_seo_agent: 'Video SEO Agent',
-  }
-  return labels[agentType] ?? agentType
 }
 
 // ─── Page (server component) ──────────────────────────────────────────────────
@@ -331,7 +304,10 @@ export default async function HomePage() {
     description: s.description,
     impact: (s.impact as 'high' | 'medium' | 'low') ?? 'medium',
     estimatedRuns: s.estimated_runs,
-    actionLabel: `Run ${agentTypeLabel(s.agent_type)}`,
+    // Outcome-first CTA (e.g. "Draft FAQ schema") — the agent name is shown
+    // as secondary text in the card, so the button surfaces the *result*, not
+    // the tool. Audit finding from 5 board members.
+    actionLabel: agentOutcomeCta(s.agent_type),
   }))
 
   // 9. Inbox preview
