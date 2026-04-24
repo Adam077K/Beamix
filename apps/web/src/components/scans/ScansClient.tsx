@@ -14,6 +14,7 @@ import {
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { cn, getScoreColor } from '@/lib/utils'
+import { groupByRelativeDate } from '@/lib/dates'
 
 // ─── Engine config ────────────────────────────────────────────────────────────
 
@@ -70,25 +71,7 @@ function relativeTime(iso: string): string {
   return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(new Date(iso))
 }
 
-function formatDayLabel(iso: string): string {
-  const date = new Date(iso)
-  const today = new Date()
-  const yesterday = new Date(today)
-  yesterday.setDate(today.getDate() - 1)
-
-  if (date.toDateString() === today.toDateString()) return 'TODAY'
-  if (date.toDateString() === yesterday.toDateString()) return 'YESTERDAY'
-
-  // Check if within this week (Mon–Sun)
-  const startOfWeek = new Date(today)
-  startOfWeek.setDate(today.getDate() - today.getDay())
-  startOfWeek.setHours(0, 0, 0, 0)
-  if (date >= startOfWeek) return 'EARLIER THIS WEEK'
-
-  return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' })
-    .format(date)
-    .toUpperCase()
-}
+// formatDayLabel removed — date grouping is now handled by groupByRelativeDate in @/lib/dates
 
 function scoreVerdict(score: number): {
   label: string
@@ -373,25 +356,13 @@ export function ScansClient({ scans, planTier }: ScansClientProps) {
     return scans.filter((s) => s.status === activeFilter)
   }, [scans, activeFilter])
 
-  // Group scans by date bucket: TODAY / YESTERDAY / EARLIER THIS WEEK / OLDER
-  const grouped = React.useMemo(() => {
-    const groups: Array<{
-      dayKey: string
-      label: string
-      items: ScanRow[]
-    }> = []
-    let currentDayKey = ''
-    for (const scan of filteredScans) {
-      const dayKey = new Date(scan.startedAt).toDateString()
-      if (dayKey !== currentDayKey) {
-        currentDayKey = dayKey
-        groups.push({ dayKey, label: formatDayLabel(scan.startedAt), items: [scan] })
-      } else {
-        groups[groups.length - 1].items.push(scan)
-      }
-    }
-    return groups
-  }, [filteredScans])
+  // Group scans by named date bucket (TODAY / YESTERDAY / EARLIER THIS WEEK / absolute).
+  // groupByRelativeDate collects ALL items in the same named bucket into ONE group,
+  // preventing duplicate "EARLIER THIS WEEK" headers when multiple calendar days share a bucket.
+  const grouped = React.useMemo(
+    () => groupByRelativeDate(filteredScans, (s) => s.startedAt),
+    [filteredScans],
+  )
 
   const filterKeys = Object.keys(FILTER_LABELS) as FilterKey[]
 
@@ -662,8 +633,8 @@ export function ScansClient({ scans, planTier }: ScansClientProps) {
             className="mx-auto max-w-[860px]"
           >
             <ol role="list" aria-label="Scan timeline">
-              {grouped.map(({ dayKey, label, items }) => (
-                <li key={dayKey}>
+              {grouped.map(({ key, label, items }) => (
+                <li key={key}>
                   <DateSeparator label={label} />
                   <ol role="list">
                     {items.map((scan, index) => (
