@@ -147,7 +147,7 @@ export default async function AutomationPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center">
         <Zap size={48} className="mb-4 text-muted-foreground/50" />
-        <h3 className="text-lg font-medium text-foreground mb-2">Auto-pilot is ready</h3>
+        <h3 className="text-lg font-medium text-foreground mb-2">No schedules yet</h3>
         <p className="text-sm text-muted-foreground mb-6 max-w-sm">
           Schedules you configure will appear here. Accept a suggestion from your inbox to get
           started.
