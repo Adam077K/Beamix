@@ -673,13 +673,11 @@ export function SettingsClient({ user }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const initialTab = (searchParams.get('tab') as TabId | null) ?? 'profile'
-  const validTab = TABS.some((t) => t.id === initialTab) ? initialTab : 'profile'
-  const [activeTab, setActiveTab] = React.useState<TabId>(validTab)
+  const rawTab = searchParams.get('tab') as TabId | null
+  const activeTab: TabId = rawTab && TABS.some((t) => t.id === rawTab) ? rawTab : 'profile'
 
   function handleTabChange(value: string) {
     const tab = value as TabId
-    setActiveTab(tab)
     const params = new URLSearchParams(searchParams.toString())
     params.set('tab', tab)
     router.push(`?${params.toString()}`, { scroll: false })
