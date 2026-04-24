@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { agentTypeLabel, agentOutcomeCta } from '@/constants/agents'
 import { HomeClientV2 } from '@/components/home/HomeClientV2'
 import type { HomeV2Props } from '@/components/home/HomeClientV2'
 import type { KpiStripData } from '@/components/home/KpiStripNew'
@@ -49,34 +50,6 @@ function formatNextRun(iso: string | null): string {
   const diffD = Math.floor(diffH / 24)
   if (diffD === 1) return 'Tomorrow'
   return `In ${diffD} days`
-}
-
-function agentTypeLabel(agentType: string): string {
-  const labels: Record<string, string> = {
-    content_writer: 'Content Writer',
-    blog_writer: 'Blog Writer',
-    faq_agent: 'FAQ Agent',
-    faq_builder: 'FAQ Builder',
-    schema_optimizer: 'Schema Optimizer',
-    schema_generator: 'Schema Generator',
-    review_analyzer: 'Review Analyzer',
-    social_strategy: 'Social Strategy',
-    competitor_intelligence: 'Competitor Intelligence',
-    recommendations: 'Recommendations',
-    citation_builder: 'Citation Builder',
-    llms_txt: 'LLMs.txt',
-    ai_readiness: 'AI Readiness',
-    content_optimizer: 'Content Optimizer',
-    freshness_agent: 'Freshness Agent',
-    offsite_presence_builder: 'Presence Builder',
-    review_presence_planner: 'Review Planner',
-    entity_builder: 'Entity Builder',
-    authority_blog_strategist: 'Blog Strategist',
-    performance_tracker: 'Performance Tracker',
-    reddit_presence_planner: 'Reddit Planner',
-    video_seo_agent: 'Video SEO Agent',
-  }
-  return labels[agentType] ?? agentType
 }
 
 // ─── Page (server component) ──────────────────────────────────────────────────
@@ -294,30 +267,60 @@ export default async function HomePage() {
     creditsResetDays,
   }
 
-  // 6. Engine breakdown — group scan_engine_results by engine
-  const engineMap = new Map<string, { mentioned: boolean; rankSum: number; count: number }>()
+  // 6. Engine breakdown — compute real per-engine mention rates across all scans
+  // and a 7-bucket sparkline from the most-recent 8 scans, chronological.
+  const scanIdsChronological = [...scans].reverse().map((s) => s.id) // oldest → newest
+  const recentScanIds = scanIdsChronological.slice(-8)
+  const recentScanIndex = new Map(recentScanIds.map((id, i) => [id, i]))
+
+  const engineStats = new Map<
+    string,
+    {
+      mentionedCount: number
+      totalCount: number
+      recentMentioned: number[] // length = recentScanIds.length
+      recentTotal: number[]
+    }
+  >()
+
   for (const row of engineResults) {
-    const existing = engineMap.get(row.engine)
-    if (existing) {
-      existing.count++
-      if (row.is_mentioned) existing.mentioned = true
-      if (row.rank_position != null) existing.rankSum += row.rank_position
-    } else {
-      engineMap.set(row.engine, {
-        mentioned: row.is_mentioned,
-        rankSum: row.rank_position ?? 0,
-        count: 1,
-      })
+    if (!row.engine) continue
+    let s = engineStats.get(row.engine)
+    if (!s) {
+      s = {
+        mentionedCount: 0,
+        totalCount: 0,
+        recentMentioned: new Array(recentScanIds.length).fill(0),
+        recentTotal: new Array(recentScanIds.length).fill(0),
+      }
+      engineStats.set(row.engine, s)
+    }
+    s.totalCount++
+    if (row.is_mentioned) s.mentionedCount++
+
+    const recentIdx = row.scan_id ? recentScanIndex.get(row.scan_id) : undefined
+    if (recentIdx != null) {
+      s.recentTotal[recentIdx]++
+      if (row.is_mentioned) s.recentMentioned[recentIdx]++
     }
   }
 
-  // Build sparkline per engine from last 8 scans — simplified: use mention rate as proxy
-  const engines: EngineCell[] = Array.from(engineMap.entries()).map(([engine, stats]) => ({
-    engine,
-    mentionRate: stats.mentioned ? Math.round((stats.count > 0 ? 70 : 0)) : 0,
-    weeklyDelta: 0,
-    sparkline: [0, 0, 0, 0, 0, 0, stats.mentioned ? 1 : 0],
-  }))
+  const engines: EngineCell[] = Array.from(engineStats.entries()).map(([engine, s]) => {
+    const mentionRate = s.totalCount > 0 ? Math.round((s.mentionedCount / s.totalCount) * 100) : 0
+    // Sparkline = per-scan mention rate over the last 8 scans
+    const sparkline = s.recentTotal.map((total, i) =>
+      total > 0 ? Math.round((s.recentMentioned[i] / total) * 100) : 0,
+    )
+    // Weekly delta = most-recent-bucket rate minus one-bucket-prior rate (whole percentage points)
+    const weeklyDelta =
+      sparkline.length >= 2 ? sparkline[sparkline.length - 1] - sparkline[sparkline.length - 2] : 0
+    return {
+      engine,
+      mentionRate,
+      weeklyDelta,
+      sparkline,
+    }
+  })
 
   // 7. Sparkline for score (8 weeks, chronological)
   const sparklineScores = [...scans]
@@ -331,7 +334,10 @@ export default async function HomePage() {
     description: s.description,
     impact: (s.impact as 'high' | 'medium' | 'low') ?? 'medium',
     estimatedRuns: s.estimated_runs,
-    actionLabel: `Run ${agentTypeLabel(s.agent_type)}`,
+    // Outcome-first CTA (e.g. "Draft FAQ schema") — the agent name is shown
+    // as secondary text in the card, so the button surfaces the *result*, not
+    // the tool. Audit finding from 5 board members.
+    actionLabel: agentOutcomeCta(s.agent_type),
   }))
 
   // 9. Inbox preview

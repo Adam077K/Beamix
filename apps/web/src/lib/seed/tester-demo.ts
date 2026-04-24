@@ -24,6 +24,18 @@ function daysAgo(n: number): string {
   return d.toISOString()
 }
 
+/**
+ * daysAgoAt — like daysAgo but overrides the time of day (UTC).
+ * Use this for seed rows that would otherwise all timestamp to the current
+ * clock minute (e.g., every scan showing "14:01" because the seed ran at 14:01).
+ */
+function daysAgoAt(n: number, hour: number, minute: number = 0): string {
+  const d = new Date()
+  d.setUTCDate(d.getUTCDate() - n)
+  d.setUTCHours(hour, minute, 0, 0)
+  return d.toISOString()
+}
+
 function hoursFromNow(h: number): string {
   const d = new Date()
   d.setHours(d.getHours() + h)
@@ -79,7 +91,13 @@ async function seedScans(
     { score: 71, daysBack: 1,  delta: 6,     scan_type: 'scheduled', engines: allEngines,   queries: 6 },
   ]
 
-  const scanRows = entries.map(({ score, daysBack, delta, scan_type, engines, queries }) => ({
+  const scanRows = entries.map(({ score, daysBack, delta, scan_type, engines, queries }, i) => {
+    // Per-scan hour jitter so the list doesn't show identical "14:01" across every row.
+    // Schedules usually run in the morning, manual runs mid-afternoon. Seed for texture.
+    const hour = scan_type === 'scheduled' ? (6 + (i % 5)) : (11 + (i % 7))
+    const minute = (i * 7) % 60
+    const ts = daysAgoAt(daysBack, hour, minute)
+    return ({
     business_id: businessId,
     user_id: userId,
     overall_score: score,
@@ -93,11 +111,12 @@ async function seedScans(
       score_delta_vs_prev: delta,
       top_engines: ['chatgpt', 'perplexity'],
     },
-    created_at: daysAgo(daysBack),
-    started_at: daysAgo(daysBack),
-    completed_at: daysAgo(daysBack),
-    updated_at: daysAgo(daysBack),
-  }))
+    created_at: ts,
+    started_at: ts,
+    completed_at: ts,
+    updated_at: ts,
+    })
+  })
 
   const { data: inserted, error } = await supabase
     .from('scans')
@@ -1665,7 +1684,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'agent_complete',
       severity: 'low',
       is_read: false,
-      action_url: '/dashboard/inbox',
+      action_url: '/inbox',
       created_at: daysAgo(0),
     },
     {
@@ -1675,7 +1694,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'score_change',
       severity: 'low',
       is_read: false,
-      action_url: '/dashboard/scans',
+      action_url: '/scans',
       created_at: daysAgo(1),
     },
     {
@@ -1685,7 +1704,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'suggestion',
       severity: 'low',
       is_read: true,
-      action_url: '/dashboard',
+      action_url: '/home',
       created_at: daysAgo(1),
     },
     {
@@ -1695,7 +1714,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'competitor_alert',
       severity: 'medium',
       is_read: false,
-      action_url: '/dashboard/competitors',
+      action_url: '/competitors',
       created_at: daysAgo(2),
     },
     {
@@ -1705,7 +1724,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'content_approved',
       severity: 'low',
       is_read: true,
-      action_url: '/dashboard/inbox',
+      action_url: '/inbox',
       created_at: daysAgo(6),
     },
     {
@@ -1715,7 +1734,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'weekly_digest',
       severity: 'low',
       is_read: true,
-      action_url: '/dashboard',
+      action_url: '/home',
       created_at: daysAgo(7),
     },
     {
@@ -1725,7 +1744,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'agent_failed',
       severity: 'high',
       is_read: true,
-      action_url: '/dashboard/automation',
+      action_url: '/automation',
       created_at: daysAgo(5),
     },
     {
@@ -1735,7 +1754,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'competitor_detected',
       severity: 'low',
       is_read: false,
-      action_url: '/dashboard/competitors',
+      action_url: '/competitors',
       created_at: daysAgo(3),
     },
     {
@@ -1745,7 +1764,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'score_change',
       severity: 'medium',
       is_read: true,
-      action_url: '/dashboard/scans',
+      action_url: '/scans',
       created_at: daysAgo(13),
     },
     {
@@ -1755,7 +1774,7 @@ async function seedNotifications(supabase: SupabaseClient, userId: string): Prom
       type: 'suggestion',
       severity: 'low',
       is_read: false,
-      action_url: '/dashboard',
+      action_url: '/home',
       created_at: daysAgo(4),
     },
   ]

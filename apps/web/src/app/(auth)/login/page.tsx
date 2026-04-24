@@ -212,7 +212,7 @@ export default function LoginPage() {
           {/* Divider */}
           <div className="relative flex items-center">
             <div className="flex-grow border-t border-gray-200" />
-            <span className="mx-3 shrink-0 text-xs text-gray-400">or</span>
+            <span className="mx-3 shrink-0 text-xs text-gray-400">or explore the demo</span>
             <div className="flex-grow border-t border-gray-200" />
           </div>
 
@@ -221,7 +221,7 @@ export default function LoginPage() {
             type="button"
             onClick={handleTesterLogin}
             disabled={testerLoading || loading}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-all duration-150 hover:border-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-[#3370FF]/20 bg-[#3370FF]/5 px-4 py-2.5 text-sm font-semibold text-[#3370FF] transition-all duration-150 hover:border-[#3370FF]/40 hover:bg-[#3370FF]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {testerLoading ? (
               <>
@@ -233,9 +233,9 @@ export default function LoginPage() {
             )}
           </button>
 
-          {/* Caption */}
-          <p className="mt-2 text-center text-xs text-gray-400">
-            Skips signup for demo &mdash; data may be wiped
+          {/* Caption — reassures cold visitors; doesn't pattern-match to scam */}
+          <p className="mt-2 text-center text-xs text-gray-500">
+            Demo account with sample data &mdash; no signup required
           </p>
         </div>
       )}

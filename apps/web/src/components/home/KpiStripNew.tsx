@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { spring, fadeInUp } from '@/lib/motion'
 
@@ -72,12 +73,13 @@ interface KpiTileProps {
   iconBg: string
   iconColor: string
   label: string
+  tooltip: string
   value: React.ReactNode
   sub: React.ReactNode
   index: number
 }
 
-function KpiTile({ icon, iconBg, iconColor, label, value, sub, index }: KpiTileProps) {
+function KpiTile({ icon, iconBg, iconColor, label, tooltip, value, sub, index }: KpiTileProps) {
   return (
     <motion.div
       initial={fadeInUp.initial}
@@ -92,9 +94,18 @@ function KpiTile({ icon, iconBg, iconColor, label, value, sub, index }: KpiTileP
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 truncate">
-          {label}
-        </p>
+        <span className="inline-flex items-center gap-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 truncate">
+            {label}
+          </p>
+          <span
+            title={tooltip}
+            aria-label={tooltip}
+            className="shrink-0 cursor-help"
+          >
+            <Info className="h-3 w-3 text-gray-300 hover:text-gray-500 transition-colors" aria-hidden="true" />
+          </span>
+        </span>
         <div className="mt-0.5 leading-none">{value}</div>
         <div className="mt-1">{sub}</div>
       </div>
@@ -131,6 +142,7 @@ export function KpiStripNew({
         iconBg="#EFF6FF"
         iconColor="#3370FF"
         label="AI Visibility Score"
+        tooltip="Your brand's average mention rate across all tracked AI engines. 0 = never cited, 100 = always top-of-answer."
         value={
           <div className="flex items-baseline gap-1.5">
             <span
@@ -168,6 +180,7 @@ export function KpiStripNew({
         iconBg="#ECFDF5"
         iconColor="#10B981"
         label="Citations This Month"
+        tooltip="Times an AI engine named your brand in an answer this month."
         value={
           <span className="text-3xl font-bold tabular-nums text-gray-900">
             {citationsThisMonth}
@@ -189,6 +202,7 @@ export function KpiStripNew({
         iconBg="#F0F9FF"
         iconColor="#0EA5E9"
         label="AI Impressions Added"
+        tooltip="Estimated monthly AI search impressions gained from agent-run fixes. Populated after your first scan."
         value={
           <span className="text-3xl font-bold tabular-nums text-gray-900">
             {impressionsAdded >= 1000
@@ -206,6 +220,7 @@ export function KpiStripNew({
         iconBg={isHighCredits ? '#FFF7ED' : '#F9FAFB'}
         iconColor={isHighCredits ? '#F59E0B' : '#6B7280'}
         label="Actions Used This Month"
+        tooltip="1 action = 1 agent run (draft + review). Resets at end of billing period."
         value={
           <span
             className={cn(

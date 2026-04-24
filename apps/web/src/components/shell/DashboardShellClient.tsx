@@ -21,6 +21,7 @@ export function DashboardShellClient({ children, user, plan }: DashboardShellCli
       )}
       <div className="flex min-h-screen bg-white">
         <Sidebar user={user} plan={plan} />
+        {/* md:pt-0 because the sidebar handles desktop layout; on mobile the fixed header (h-14) is rendered inside Sidebar + a spacer div */}
         <main className="flex-1 min-h-screen">{children}</main>
       </div>
       <PaywallModal
