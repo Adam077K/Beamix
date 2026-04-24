@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { agentTypeLabel } from '@/constants/agents';
 import type { InboxItem } from '@/lib/types/shared';
 import type { FilterKey } from './FilterRail';
 
@@ -11,16 +12,6 @@ interface ItemListProps {
   onSelect: (id: string) => void;
   activeFilter: FilterKey;
 }
-
-const AGENT_LABEL: Record<string, string> = {
-  content_optimizer: 'Content Optimizer',
-  faq_builder: 'FAQ Builder',
-  competitor_intelligence: 'Competitor Intel',
-  offsite_presence_builder: 'Listings Builder',
-  citation_builder: 'Citation Builder',
-  schema_markup: 'Schema Markup',
-  local_seo: 'Local SEO',
-};
 
 const AGENT_INITIALS: Record<string, string> = {
   content_optimizer: 'CO',
@@ -132,7 +123,7 @@ export default function ItemList({ items, selectedId, onSelect, activeFilter }: 
         const isSelected = item.id === selectedId;
         const isUnread = item.status === 'awaiting_review';
         const isHovered = hoveredId === item.id;
-        const agentLabel = AGENT_LABEL[item.agentType] ?? item.agentType;
+        const agentLabel = agentTypeLabel(item.agentType);
         const dotColor = STATUS_DOT[item.status] ?? 'bg-gray-300';
 
         return (

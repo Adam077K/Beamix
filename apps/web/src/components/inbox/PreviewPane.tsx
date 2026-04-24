@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize from 'rehype-sanitize';
 import { cn } from '@/lib/utils';
+import { agentTypeLabel } from '@/constants/agents';
 import type { InboxItem } from '@/lib/types/shared';
 
 interface PreviewPaneProps {
@@ -33,16 +34,6 @@ const STATUS_PILL: Record<string, string> = {
   approved: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
   rejected: 'bg-red-50 text-red-600 border border-red-200',
   archived: 'bg-gray-100 text-gray-500 border border-gray-200',
-};
-
-const AGENT_LABEL: Record<string, string> = {
-  content_optimizer: 'Content Optimizer',
-  faq_builder: 'FAQ Builder',
-  competitor_intelligence: 'Competitor Intel',
-  offsite_presence_builder: 'Listings Builder',
-  citation_builder: 'Citation Builder',
-  schema_markup: 'Schema Markup',
-  local_seo: 'Local SEO',
 };
 
 function formatDate(isoString: string): string {
@@ -92,7 +83,7 @@ export default function PreviewPane({
     triggerAction('archived');
   };
 
-  const agentLabel = AGENT_LABEL[item.agentType] ?? item.agentType;
+  const agentLabel = agentTypeLabel(item.agentType);
 
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-white">
