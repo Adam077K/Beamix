@@ -88,4 +88,14 @@
     font-family: var(--font-heebo), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
     direction: rtl;
   }
+
+  /* Tabular numerals — digits align across rows in tables, scores, and inputs */
+  td,
+  th,
+  .tabular-nums,
+  [data-tnum],
+  .font-mono,
+  input[type="number"] {
+    font-variant-numeric: tabular-nums;
+  }
 }
