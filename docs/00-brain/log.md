@@ -47,3 +47,61 @@
 - Infrastructure: Inngest Pro required ($75/mo), direct Anthropic SDK (bypass OpenRouter for 80% of calls)
 - Customer Yael: 11 confusing terms identified → user-facing language policy (action labels, no agent names)
 - Full audit saved to 15-EXPERT-AUDIT.md
+
+## 2026-04-24 design-rethink | product
+- Launched 3 parallel Phase-1 agents (2 Opus researchers + 1 design-critic)
+- Both Opus researchers independently converged on PostHog as primary design anchor
+- Design Lead produced 425-line DESIGN-DIRECTION.md with 10 aesthetic rules + page-by-page rethink
+- Awaiting Adam's answers on 5 open decisions before Phase 0 implementation
+
+## 2026-04-24 design-rethink-v2 | product
+- Round-2: 4 targeted researchers (companion character, flow visualization, competitor audit, motion+PMF)
+- Design Lead synthesized 651-line DESIGN-DIRECTION-v2.md with motion-first structure (inverse of v1)
+- All 3 category gaps confirmed 100% unclaimed (animated agent execution, character companion, proactive Inbox)
+- Phase 0 ready to ship: 10 fixes, 3-4 days engineering
+- 5 open questions to Adam (Rive creator, character name, First Scan gate, Crew rename, Rive licensing)
+
+## 2026-04-25 board-meeting-v2-critique | product
+- 7-seat board pressure-tested DESIGN-DIRECTION-v2 (Reductionist, Storyteller, Executor, Advocate, Motion Craftsman, Futurist, Moat Strategist)
+- All 7 returned 200-756 line critiques, ~3,500 total lines
+- Verdict: v2 thesis correct (7-0), execution broken (7 different fractures)
+- 5 ship-stoppers identified (WCAG, Hebrew typography, streaming API missing, internal contradictions, May launch impossible)
+- 4 of 7 seats independently invented "Shareable Scan Card" — biggest v2 omission
+- BOARD-MEETING-MINUTES.md produced with 15-decision matrix awaiting Adam
+
+## 2026-04-25 vision-framework-synthesis | product
+- 5 reference researchers + master list synthesizer + vision framework synthesizer
+- BEAMIX-VISION.md v1 delivered (423 lines, 7 anchors, 5 signature motions, 10 pages in dependency order)
+- 5 opinionated calls locked, 2 open questions for Adam
+- Page-by-page deep dive begins next (start with /scan — acquisition wedge)
+
+## 2026-04-25 page-architecture-audit | product
+- Two agents (Customer Journey + IA Critic) independently audited 10-page proposal
+- Both agree: kill /archive, add /crew + /reports, rename /automation→/schedules, add multi-domain switcher, resolve notification naming
+- Disagree on 3 splits: /home keep-or-kill, /workspace separate-or-merge, /competitors separate-or-merge
+- Synthesizer recommends Hybrid path: 7-8 sidebar pages (kill /home, keep /workspace + /competitors)
+- Awaiting Adam's call on 7 prioritized questions
+
+## 2026-04-25 overview-vs-inbox-debate | product
+- Two product designers (Maximalist + Minimalist) argued opposite sides on /home structure
+- Synthesizer produced OVERVIEW-DECISION.md with 3 paths (A/B/C) and recommended Path C (Hybrid)
+- Path C: /home rich (8 sections, no tabs), /inbox sibling page, /scans absorbs /archive as "Completed Items" tab
+- Awaiting Adam's call on path + 4 follow-up questions
+
+## 2026-04-25 home-design-spec | product
+- Page list locked (8 sidebar + 2 flow + Scale-tier /reports + 4 chrome elements)
+- Quality bar memory written (billion-dollar feel)
+- Premium /home references hunt (900 lines): 5 anchors, 12 expensive patterns, 8 anti-patterns
+- HOME-DESIGN-SPEC.md delivered (1271 lines): 3-act structure, 8 sections fully specced, signature pill primitive ("Run all — N credits")
+- 5 open questions for Adam to answer before section-by-section conversation begins
+
+## 2026-04-26 pages-design-moves | product
+- 2 designers debated all 10 remaining pages (Distinctive vs Discipline)
+- Synthesizer produced PAGES-DESIGN-MOVES.md (804 lines)
+- 3 D1 wins: /competitors, /scan, /reports. 3 D2 wins: /schedules, /settings, /workspace completion. 4 blends.
+- 7 open questions for Adam to lock per-page
+
+## 2026-04-26 design-foundation-handoff | product
+- Committing entire design + product architecture body of work to GitHub
+- Handoff prompt produced for next design/planning/UX team
+- ~50 documents totaling ~25,000 lines of synthesized design direction
