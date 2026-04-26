@@ -1,164 +1,199 @@
-# Beamix Frame 4 — PROPOSAL (Synthesis of 4-Seat Board Review)
+# Beamix Frame 4 — PROPOSAL v2 (Positioning Locked: AI Visibility Crew, as SaaS)
 Date: 2026-04-26
-Status: PROPOSAL. Adam reviews, locks, or revises. Supersedes Frame 3 if locked.
+Status: PROPOSAL v2. Positioning locked by Adam. Architecture pending final lock on 5 sub-decisions.
+
+**Changelog from v1 (committed earlier today):**
+- v1 had two paths: "firm rendered as software" (Visionary's pitch) vs "managed service with rich evidence" (PM/Designer/User Researcher). Adam resolved to neither — locking **AI Visibility Crew, as SaaS**.
+- "Firm" terminology dropped (it implied human service delivery). Replaced with "AI Visibility Crew."
+- Analogues updated: Pilot/Mercury/Stripe Atlas (have humans) → GitHub Copilot Coding Agent / Devin / Lindy / Notion Custom Agents (pure software, agents-as-teammates).
+- Frame 4.5 alternative section deleted (resolved by positioning lock).
+- Three new artifacts added per Adam's direction:
+  - **The Weekly Board Report** — separate from Monday Digest; for forwarding to management/clients
+  - **Four work-attribute lenses** (Done / Found / Researched / Changed) — depth structure for /home + per-agent profile pages
+  - **Agent attribution everywhere** — every action carries the agent's signature
+- R4 research validation added (GEO category data).
 
 ---
 
-## Why a Frame 4
+## The locked positioning
 
-Adam's instinct on Frame 3: **too minimalistic at the surface.** The 4-seat board confirmed it from four independent angles:
+**Beamix is your AI Visibility Crew. Eleven AI specialists working autonomously to make sure your business shows up when customers ask AI engines about you. They scan, diagnose, fix, monitor competitors, draft FAQs and content, and report progress. You watch the work and approve key decisions. No agencies. No marketing teams. One AI department for one specific job: showing up in AI search.**
+
+**External (customer-facing):** "Your AI Visibility Crew"
+**Industry/SEO-facing:** GEO (Generative Engine Optimization)
+**Domain (technical):** AI Search Optimization
+
+### The 3 segment-specific pitches
+
+| Segment | Pitch | Substitution math |
+|---|---|---|
+| SMB without an SEO team | *"Get the AI marketing department you couldn't afford — focused on showing up when AI is asked about you."* | Net new spend; price compares to $0 prior. |
+| SMB with an SEO/GEO agency on retainer | *"Replace your $5-20K/mo SEO/GEO retainer with an AI crew at $189/mo. Same outcomes, focused on AI search."* | $5-20K/mo → $189/mo = 96-99% cost reduction. Validated by R4 research. |
+| Agency operator (Yossi, Scale tier) | *"Run AI Visibility Crews for 20 clients on Beamix's infrastructure, white-labeled at your subdomain. Weekly board reports auto-sent."* | $499/mo for 20 clients = $25/client/mo at zero marginal labor. |
+
+---
+
+## Validated by R4 research (April 2026 GEO category data)
+
+Five HIGH-confidence findings validate the positioning:
+
+1. **GEO is a real, fast-growing category.** $1B (2025) → $17-20B (2034) at 40-50% CAGR. $1.4B VC investment in 2024-2025. ChatGPT 900M weekly active users. AI Overviews 1.5B monthly users. YC ranked AI-native agencies #3 in Spring 2026 RFS.
+2. **SMBs are losing leads silently.** Gartner: 25% organic search decline by 2026, 50% by 2028. Where AI Overviews appear, organic CTR drops 61%. AI-referred traffic converts 4.4-5x better than Google organic. Early GEO adopters get 6.6x higher citation rates.
+3. **Price gap is real and large.** Tools $29-399/mo (passive dashboards). Agencies $1,500-15,000/mo (humans doing work). Beamix at $79-499 with executing agents fills the unfilled middle.
+4. **"AI Visibility" is the right customer-facing language.** SMBs don't search "GEO." They search "show up in ChatGPT." Use "AI visibility" externally, "GEO" in industry/SEO content.
+5. **Narrow positioning wins.** Vertical SaaS commands 25-30% valuation premium (8.6x vs 6.7x rev multiples). No category-defining SaaS started broad. "AI Marketing Department" would mean fighting HubSpot/Klaviyo with their distribution; "AI Visibility Crew" creates an open category.
+
+Full research at `docs/08-agents_work/2026-04-26-R4-geo-positioning.md`.
+
+The one caveat the researcher flagged: *"the positioning only works if the product actually delivers outcomes, not just dashboards."* Beamix's executing agents satisfy this precondition.
+
+---
+
+## Why a Frame 4 (the diagnosis the 4-seat board agreed on)
+
+Adam's instinct on Frame 3: **too minimalistic at the surface.** All 4 board seats independently confirmed:
 
 - **PM** — *"At $189-499/mo, Frame 3's above-the-fold communicates 'one thing is happening' when the value proposition is 'many things are happening simultaneously.' The calm at the surface is indistinguishable from inactivity."*
-- **Designer** — *"'One sentence and one number' is a spec, not a visual. Frame 3 confuses 'calm' with 'empty.' Stripe is also 'a few numbers and charts' — but Stripe's are perfectly specified. Frame 3 describes content without saying what the page should look like."*
-- **User Researcher** — *"Stripe / Linear / Vercel are calm-and-dense. Frame 3 is calm-and-empty. Sarah's stated preference is simplicity; her revealed preference is legible proof of work she can metabolize in 30-60 seconds."*
-- **Visionary** — *"Frame 3 has no center of gravity. It's organized around a triad (Status / Decision / Number) that is a layout, not a worldview. Layouts don't define categories. Worldviews do."*
+- **Designer** — *"'One sentence and one number' is a spec, not a visual. Frame 3 confuses 'calm' with 'empty.' Stripe is also 'a few numbers and charts' — but Stripe's are perfectly specified."*
+- **User Researcher** — *"Stripe / Linear / Vercel are calm-and-dense. Frame 3 is calm-and-empty."*
+- **Visionary** — *"Frame 3 is organized around a layout (Status / Decision / Number), not a worldview. Layouts don't define categories. Worldviews do."*
 
-The board converged: Frame 3 has the right *philosophy* (calm tone, depth on demand, email as real channel) and wrong *execution* (sparse where it should be dense; reactive where it should be generative).
+The 7 cross-seat agreements on the FIX:
 
----
-
-## The 4 board members' Frame 4 proposals at a glance
-
-| Seat | Headline | Core move | Killer detail |
-|---|---|---|---|
-| **PM** | "Calm Signal, Rich Evidence" | Add an **Activity Pulse** (3 plain-text agent-action lines) above the fold + tier-visible per-engine strip | Per-engine strip with grayed-out gated engines is the in-product expansion driver Frame 3 missed |
-| **Designer** | "Make invisible work visible at whatever level the user wants" | **Activity Ring** (hand-drawn pulsing gap circling the score) + **Crew Traces** (faint Rough.js underlines below text agents recently touched) | The product feels alive without demanding attention — "expensive" is felt through invisible 5,000 typographic decisions |
-| **User Researcher** | "Calm surface, dense proof" | **Evidence Strip** (3 timestamped agent-action cards above the fold) + hybrid email cadence + monthly renewal anchor | The "sayable sentence" — Sarah at week 6 must walk away able to say "Schema Doctor fixed 3 errors Tuesday, Citation Fixer added 11 FAQs Wednesday, score up 5." That sentence IS the renewal. |
-| **Visionary** | "Beamix as a firm rendered as software" (The Live Company) | **The Standing Order** (3-paragraph customer-written agreement persistent across every surface) + **House Memory** (compounding institutional knowledge) + **public-by-default permalinks** for every digest/scan/report | "Profound shows you what AI engines are saying about you. Beamix is the firm you hired to fix it — with a written agreement, an institutional memory, and a public record of every week's work." |
-
-The four board files are committed alongside this synthesis: `seat-1-pm.md`, `seat-2-designer.md`, `seat-3-user.md`, `seat-4-visionary.md`.
+1. Above-the-fold needs explicit, dated, sayable proof of work
+2. Tier visibility on the surface (gated engines visible)
+3. /crew is NOT a roster museum with card flips
+4. Onboarding = DELIVERED work, not promised work
+5. Hybrid email cadence (weekly + event-triggered + monthly renewal)
+6. Depth defaults age with the user
+7. Score-drop messaging: name cause + response + timeline
 
 ---
 
-## What the board AGREED on (7 cross-seat convergences — these go straight into Frame 4)
+## Frame 4 — Your AI Visibility Crew, as SaaS
 
-1. **Frame 3's surface is too sparse to justify $189-499.** Above-the-fold needs explicit proof of work in the user's first 8-30 seconds.
-2. **The "evidence of work" must be specific, dated, and sayable.** "Healthy and gaining" is not evidence; "Schema Doctor fixed 3 markup errors on /pricing — Tuesday 10:14am" is evidence.
-3. **Tier visibility on the surface.** Frame 3's above-the-fold is identical at $79/$189/$499 — that kills expansion. The product surface must show what the user is paying for and what more they could get.
-4. **/crew is NOT a roster museum with card flips.** It's either a people-page (Visionary) or digest authoring + roster (PM/User Researcher). Card flips with hand-written field notes are out.
-5. **/onboarding magic moment must be DELIVERED work, not promised work.** Frame 3's "your crew is on it" is a promise; Frame 4 puts at least one concrete agent action in /home within 60-90s of Paddle payment. (PM, User Researcher, Visionary explicit.)
-6. **The hybrid email cadence beats Monday-only.** Weekly Monday digest + event-triggered briefs (score-move >3 points, competitor change) + monthly renewal-anchor email. Frame 3's Monday-only digest is a single point of failure. (User Researcher, with PM concurrence.)
-7. **The depth defaults should AGE with the user.** Week 1 user wants to verify everything; month 6 user wants to glance and leave. Frame 3 treats them identically. Frame 4 ramps depth-default down as `weeks_since_signup` grows.
+### The metaphor (clean)
 
----
+Beamix is **a SaaS where the product is presented as a working AI team.** Eleven named, accountable agents with distinct scopes. They run continuously in the background — no humans behind them, no service delivery, no CRM. The customer experiences having hired an AI department for one specific outcome: showing up in AI search.
 
-## Where the board SPLIT (the fundamental Frame 4 question for Adam)
+**The right software analogues** (correcting Visionary v1's analogue set):
 
-**Question: Is Beamix a managed service, or is it a firm?**
+| Drop (have humans) | Add (pure software, agents-as-teammates) |
+|---|---|
+| Pilot, Mercury, Stripe Atlas | **GitHub Copilot Coding Agent** — appears as contributor in same lists as humans, opens PRs, no human behind it |
+| | **Devin (Cognition)** — autonomous AI engineer, sessions are work units, posts to Slack like a teammate |
+| | **Lindy** — multi-agent SaaS, agents framed as colleagues with names and scope |
+| | **Notion Custom Agents** — autonomous teammates with auditable run logs |
 
-| Position | Seats holding it | What it implies |
-|---|---|---|
-| **Managed service with rich evidence** | PM, User Researcher, Designer | Frame 3 + Activity Pulse / Evidence Strip / Activity Ring / Crew Traces. Same category as Wealthfront/Mint/Mercury but for GEO. Compete on operational excellence + proof-density. |
-| **A firm rendered as software** | Visionary | A different category entirely. Standing Order replaces Status sentence. House Memory replaces credit/scan history. Public permalinks replace dashboard screenshots. Compete on relationship architecture, not feature parity. |
+R2 research validated the pattern: *"The agents should not have a home. The product IS their home."*
 
-**This is the choice you have to make.** The two paths are NOT mutually exclusive at the visual level (Activity Ring + Crew Traces work in both), but they ARE mutually exclusive at the architectural level. Standing Order + House Memory are massive product surfaces with their own data models and lifecycle. They're either central to the product or absent — they can't be a feature.
+### The signature elements
 
-The Visionary's argument for "firm": Frame 3 caps Beamix at $30-150M ARR (acquired by Semrush in year 4). Frame 4-as-firm caps higher because the architecture is portable to content marketing, reputation, fractional CMO categories — Beamix becomes the substrate for AI-native services firms, not just a GEO tool.
+#### 1. The Standing Order (renamed positioning, mechanic intact)
+A short written agreement between the user and their AI Crew, in plain English, defining what the crew is for. Persistent at top of /home as 2-line excerpt with "Read the full order →" link. Referenced in every digest email. Editable; edits preserved as versioned letters.
 
-The PM/User Researcher counter: SMBs don't write Standing Orders. Sarah won't type 3 paragraphs about what she wants. The "firm" metaphor needs a guided assembler fallback — and at that point, is it really different from a goals-and-preferences page?
-
-**My (CEO) synthesis recommendation:** **Take the firm framing, but ship a guided assembler at launch.** Reasons:
-- The firm framing IS more category-defining; Adam keeps invoking "billion-dollar feel" and category leadership; Frame 3's robo-advisor framing tops out before that.
-- The Visionary's House Memory + public permalinks are genuine architectural moats that compound — Frame 3 has no compounding asset.
-- The Standing Order, written as a guided assembler with menu-pick chips that output prose, is achievable at launch. Sarah picks 3-5 items from menus; the system formats them into prose; she reviews and signs. That's a 90-second flow.
-- The Activity Pulse / Evidence Strip / Activity Ring / Crew Traces from the other 3 seats all WORK INSIDE the firm framing — they become the surfaces where the firm's work is visible.
-
-If you reject the firm framing, Frame 4 collapses to Frame 3 + PM/Designer/User Researcher's evidence-density additions. That's a respectable Frame 4.5 — better than Frame 3 but not category-defining.
-
-I'm proposing both versions below, with the firm version as the primary recommendation.
-
----
-
-## Frame 4 (Primary recommendation) — "The Firm, with Proof"
-
-### The metaphor (Visionary)
-
-Beamix is a small firm of 11 specialists hired to handle your AI search visibility. The product surface is the firm's office: a roster of who works for you, a written agreement defining what they're for, a record of correspondence, a Monday digest signed by name, public receipts of every week's work that you can share.
-
-Profound shows you data. Beamix IS the firm.
-
-### The signature elements (composed from all 4 seats)
-
-#### 1. The Standing Order (Visionary)
-A 3-paragraph (or shorter) written agreement between Sarah and her crew, in her own words. Lives at the top of /home as a 2-line excerpt with "Read the full order →" link. Referenced in every digest email. Editable; edits preserved as versioned letters.
-
-**MVP delivery: Guided Assembler.** The user does NOT write 3 paragraphs from scratch. Onboarding presents:
-- 5-8 chip menus that fill in the blanks of a sentence template
-- Output is prose, not form: *"I want my crew to **get me cited on ChatGPT and Perplexity**. The most important AI engines for me are **ChatGPT, Perplexity, Gemini**. Don't change my brand voice without asking."*
-- User signs (literally — animated pen-stroke). Order persists.
+**MVP delivery: Guided Assembler, NOT free-form text.**
+- Onboarding presents 5-8 chip-menus that fill in the blanks of a sentence template.
+- Output reads as prose: *"I want my crew to **get cited on ChatGPT and Perplexity for plumbing-Tel-Aviv queries**. The most important AI engines for me are **ChatGPT, Perplexity, Gemini**. Don't change my brand voice without asking."*
+- User signs (animated pen-stroke). Order persists.
 - Yossi at Scale can edit free-form for richer per-client orders.
 
-This collapses Visionary's ambition with the User Researcher's behavioral concern.
-
-#### 2. The Signed Status Sentence (Visionary + User Researcher)
-Replaces Frame 3's bare status. The status reads as the crew speaking, not a system reporting:
-- *"This week we shipped 6 fixes. Score is 78, up five. Nothing needs you."*
-- Signed: small "— your crew" attribution.
+#### 2. Signed Status Sentence (replaces bare status)
+Status reads as the crew speaking, not a system reporting:
+- *"This week we shipped 6 fixes. Score is 78, up five. Nothing needs you. — your crew"*
 - Color-coded by state (green/blue/amber).
-- During score drops: User Researcher's "name cause + response + timeline" pattern.
+- During score drops, User Researcher's anti-anxiety pattern: cause + response + timeline.
   *"Score dipped 4 points — Profound published 12 new comparison pages. Citation Fixer is generating responses. Expect recovery within 2 weeks. — your crew"*
 
-#### 3. The Evidence Strip (User Researcher) + Activity Ring (Designer)
+#### 3. Evidence Strip + Activity Ring
 Below the signed status, above the fold. Two integrated moves:
 
-**Evidence Strip** — 3 timestamped agent-action cards in a horizontal row. Each card: *agent name + verb + object + timestamp + status*. Plain Inter, no decoration, click to expand inline.
+**Evidence Strip** — 3 timestamped agent-action cards in a horizontal row. Each: *agent + verb + object + timestamp + status*. Plain Inter, click to expand inline. Tier-aware: 3 cards on Discover/Build, 5 cards on Scale.
 - *"Schema Doctor fixed 3 markup errors on /pricing — Tue 10:14am — applied"*
 - *"Citation Fixer added 11 FAQ entries — Wed 4:02am — applied"*
 - *"Competitor Watch found you pulled even with Profound — Thu 8:30am — observed"*
-- Empty week pattern: *"Quiet week — your crew ran 6 monitoring checks; nothing needed action."*
+- Quiet weeks: *"Quiet week — your crew ran 6 monitoring checks; nothing needed action."*
 
-**Activity Ring** — 2px stroke ring (#3370FF) circling the score number with a hand-drawn gap. The gap pulses (1200ms breath) when agents are working, static when idle. Identifies Beamix in screenshots without decoration.
+**Activity Ring** — 2px stroke ring (#3370FF) circling the score number with a hand-drawn gap. Gap pulses (1200ms breath) when agents are working, static when idle. The product's screenshot-able signature.
 
-These two together solve the "is anything happening?" question in 8 seconds, with both ambient (ring) and explicit (cards) evidence.
+#### 4. Crew Traces (ambient evidence)
+Faint Rough.js underlines below text agents have recently modified. Roughness 0.6, #3370FF at 30% opacity. Not labeled. Power users (Yossi) learn them; Sarah doesn't need to.
 
-#### 4. Crew Traces (Designer)
-Faint Rough.js underlines below text agents have recently modified. Roughness 0.6, #3370FF at 30% opacity. Not labeled. Not explained. Power users (Yossi) learn them; Sarah doesn't need to. The "invisible work made visible" token applied at depth.
+#### 5. House Memory (the SaaS flywheel — pure software)
+Every approval, rejection, margin note, and Standing Order edit is stored as structured agent-account memory. Software flywheel, no humans:
+- Rejected suggestions train per-account agent constraints
+- Inbox shrinks as agents pre-empt rejections
+- 12-month correspondence accessible on /home Section 6 (Receipts list)
+- Phase 2: aggregated learning across accounts (anonymized, opt-in) → "Other businesses in your category solved this by..."
 
-#### 5. Public Permalinks (Visionary)
-Every digest, every scan, every report has a permanent URL: `app.beamix.tech/firms/[slug]/digests/2026-04-27`. Public by default (with a per-user toggle to private). The shareable artifact Frame 3 missed entirely.
+This is the compounding asset Frame 3 lacked. Sarah doesn't leave because alternatives don't know her.
 
-Mechanic: Stripe payment receipts → Linear issue links → GitHub commits → Beamix digests/scans/reports. Sharing is the marketing surface.
+#### 6. Public Permalinks (the viral surface)
+Every digest, every scan, every report has a permanent URL. Default-public with per-user toggle to private (decision for Adam — see open questions). Renders as beautifully-typeset shareable pages.
 
-For Yossi at Scale: digests render at his white-label subdomain.
+For Yossi at Scale: digests, scans, and Board Reports render at his white-label subdomain.
 
-#### 6. House Memory (Visionary)
-Every approval, rejection, margin note, and Standing Order edit accumulates as the firm's institutional memory of how to work for this client. Not a chat log — a structured corpus that:
-- Trains agent constraints per-account ("she rejected this style 4 times → don't try this style")
-- Powers the Inbox to shrink over time (agents pre-empt rejections)
-- Renders /home Section 6 as the "receipts list" — a reverse-chronological correspondence file
-
-This is the compounding asset the prior frames lacked.
-
-#### 7. Margin Note + Open Question (Visionary)
-Two new connection mechanics:
-- **Margin Note** — annotate any digest, scan, or report. The note enters House Memory; agents read it. Next digest references it: *"We saw your note about brand voice. Citation Fixer adjusted accordingly."*
+#### 7. Margin Note + Open Question (connection mechanics)
+- **Margin Note** — annotate any digest/scan/report. Note enters House Memory; agents read it. Next digest references it: *"We saw your note about brand voice. Citation Fixer adjusted accordingly."*
 - **Open Question** — bottom of every digest: "Anything you want to ask your crew?" One text area. Async, not chat. Next digest answers.
 
 These replace Frame 2's notebook-as-personality and Frame 3's no-direct-channel.
 
-#### 8. Hybrid email cadence (User Researcher)
-- **Weekly Monday digest** — kept (signed by crew, references Standing Order, links to public permalink)
-- **Event-triggered brief** — when score moves >3 pts OR competitor change OR high-confidence agent flag. Max 1 per 48hrs.
-- **Monthly renewal email** — sent 7 days before billing date. The "sayable sentence" generator. *"This month, your crew shipped N changes. Top three: [...]. Score moved X → Y. Renewing on [date]."* Lives also on `/account/value`.
+#### 8. Hybrid email cadence
+- **Weekly Monday Digest** — friendly, signed by crew, references Standing Order, links to permalink. Casual, story-form.
+- **Event-triggered brief** — score moves >3 points OR competitor change OR high-confidence agent flag. Max 1 per 48hrs.
+- **Monthly Renewal Email** — sent 7 days before billing. Generates the "sayable sentence" for renewal.
 
-#### 9. Tier-visible UI (PM)
-Above the fold on /home includes a single-line tier badge: *"Build plan — 6 engines, 8 agents active. Add competitors and 3 more engines on Scale →"*. Per-engine strip below the fold shows grayed-out gated engines. Activity Pulse / Evidence Strip is tier-aware (3 cards on Discover, 5 on Scale).
+#### 9. **Weekly Board Report** (NEW — distinct from Monday Digest)
+The artifact Sarah forwards to her CEO. The artifact Yossi sends to his client. Two different audiences from the Monday Digest, so it's a different artifact:
 
-#### 10. Trust gradient (User Researcher)
+| Artifact | Audience | Voice | Format |
+|---|---|---|---|
+| **Monday Digest** | The user (operator) | Casual, signed by crew, story-form | 5-7 sentences in plain email |
+| **Weekly Board Report** | The user's CEO/board/clients | Formal, executive-summary, data-rich | One-page PDF + permalink, Stripe-Press grade |
+
+**Board Report contents:**
+- Header: business name, week dates, Beamix branding (or white-label on Scale)
+- KPI grid: Score (current + delta), Mentions, Citations, Engine coverage, Competitor delta
+- 12-week trend chart (single line graph)
+- "What we did this week" — 3-5 specific agent actions summarized for executives
+- "What changed in your AI search visibility" — 1-2 paragraphs
+- "What's next" — 1-2 sentences
+- Signed by "Your AI Visibility Crew" with the agents who contributed listed below
+
+**This is a major Yossi value-prop.** He stops writing client emails because Beamix wrote them. Each Board Report is a permalink — recipients see Beamix's brand (or Yossi's white-label) every week. **That's distribution.** The viral channel Frame 3 missed.
+
+#### 10. Agent attribution everywhere (cross-cutting principle, NEW)
+Per Adam's direction: *"users follow along and read all of the things that the agents have done, found, researched, changed."* Concretely:
+
+- Every Inbox item: *"Citation Fixer drafted this on Tue 14:02."*
+- Every change in /scans: *"Schema Doctor applied at Tue 14:02."*
+- Every competitor finding in /competitors: *"Competitor Watch noticed Friday."*
+- Every recommendation: *"FAQ Agent suggested this Wednesday."*
+- Click any agent name anywhere → opens that agent's profile page (full history, scope, settings).
+
+Attribution is the trust mechanism. Sarah doesn't need to read everything — but knowing every line is signed builds confidence.
+
+#### 11. The four work-attribute lenses (NEW — depth structure)
+Per Adam's direction. Every page exposes work in 4 lenses:
+
+| Lens | Definition | Lives on |
+|---|---|---|
+| **Done** | Actions taken (drafts, schema fixes, FAQs added) | /inbox (pending review) + /scans (applied) |
+| **Found** | Discoveries (gaps, opportunities, risks) | /scans drilldowns + /home Section 7 (insights) |
+| **Researched** | Analysis output (competitor moves, query trends) | /competitors + per-agent profile pages |
+| **Changed** | Modifications applied to user's site (with rollback) | /scans Completed Items + per-change permalinks |
+
+These become tabs/filters on the per-agent profile page: click "Schema Doctor" → see Done / Found / Researched / Changed for that agent.
+
+#### 12. Tier-visible UI
+Above the fold on /home includes a single-line tier badge: *"Build plan — 6 engines, 8 agents active. Add competitors and 3 more engines on Scale →"*. Per-engine strip below the fold shows grayed-out gated engines. Activity Strip is tier-aware (3 cards on Discover/Build, 5 on Scale).
+
+#### 13. Trust gradient (depth defaults age with user)
 - Week 1-2: first Evidence Card auto-expanded. Tip: "Click to see what we did."
 - Week 3-4: all cards collapsed; tip persists.
 - Week 5+: cards collapsed, tip removed.
-- Yossi: verbose default permanently (operational use, not trust-building).
-
-### The 5-second test (User Researcher's "moment of truth")
-
-A Sarah session at week 6 walks away able to say (in any combination):
-- *"My score is 78, up 5 this week."*
-- *"Schema Doctor fixed 3 errors Tuesday."*
-- *"Citation Fixer added 11 FAQs Wednesday."*
-- *"My crew is closing the gap on Profound."*
-
-That sentence IS the retention mechanism. Frame 4 builds for it explicitly. Frame 3 cannot produce it.
+- Yossi: verbose default permanently (operational use).
 
 ---
 
@@ -166,156 +201,174 @@ That sentence IS the retention mechanism. Frame 4 builds for it explicitly. Fram
 
 ### `/home` (most significant rebuild)
 
-**Above the fold (Frame 4):**
-1. Standing Order excerpt — 2 lines, InterDisplay 22px, soft grey, "Read the full order →"
+**Above the fold:**
+1. Standing Order excerpt — 2 lines, InterDisplay 22px, soft grey
 2. Signed status sentence — Inter 28px, signed "— your crew", color-coded
-3. Score number with Activity Ring (72px tabular) + delta + "calculated against N queries → Methodology" footnote
-4. Evidence Strip — 3 timestamped agent-action cards (5 cards on Scale)
-5. Decision Card — conditional, signed empty state if absent ("Nothing exceeds your standing order this week. — your crew")
+3. Score with Activity Ring (72px tabular) + delta + "calculated against N queries — Methodology →"
+4. Evidence Strip — 3 timestamped agent-action cards (5 on Scale)
+5. Decision Card — conditional, signed empty state if absent
+6. Tier badge — single line ("Build plan, 6 engines, 8 agents — see what Scale adds →")
 
-**Below the fold (Frame 4):**
-6. Crew at Work — small horizontal strip of 11 agent monograms, pulsing if active. Hover for activity.
-7. This Week's Net Effect — single paragraph, plain English (Designer's Section 2)
-8. Score 12-week sparkline with hover-tooltips
-9. Per-engine strip — tier-aware, gated engines grayed with upgrade hover
-10. Crew Traces appear throughout below-fold text on items recently modified (≤24h)
-11. The Receipts — reverse-chronological digest/scan/report list, each with permalink icon (House Memory rendered)
-12. Goal track — "67% of the way to [Standing Order clause]"
-13. Next scheduled scan + next digest send
+**Below the fold:**
+7. Crew at Work — 11 agent monogram circles, pulsing if active. Hover for activity.
+8. KPI cards row — Mentions / Citations / Competitor Delta / Engine coverage (4 cards, all-time + this-week)
+9. This Week's Net Effect — single paragraph plain English
+10. Score 12-week sparkline with hover-tooltips
+11. Per-engine strip — tier-aware, gated engines grayed with upgrade hover
+12. **Crew Traces** appear throughout below-fold text on items recently modified (≤24h)
+13. **The Receipts list** — reverse-chronological digest/scan/Board-Report list, each with permalink icon (House Memory rendered)
+14. Goal track — "67% of the way to [Standing Order clause]"
+15. Next scheduled scan + next digest send
 
 ### `/inbox`
 
-**Frame 4:** Same structure as Frame 3, but inbox items are framed as "exceeds your Standing Order" — the Inbox shows things the crew flagged BECAUSE they go beyond what Sarah pre-authorized. Items reference the relevant clause. Approve/reject feeds House Memory; rejections optionally prompt "what was wrong?" → permanent agent constraint.
+Frame 4: items framed as "exceeds your Standing Order." Inbox shows things the crew flagged BECAUSE they go beyond what the user pre-authorized. Items reference relevant clause. Approve/reject feeds House Memory; rejections optionally prompt "what was wrong?" → permanent agent constraint. **Every item attributed to its agent.**
 
 ### `/workspace`
 
-**Frame 4:** Demoted further — accessible via "watch your crew work" link from /home Crew at Work strip. The agent execution stream is unchanged from Frame 3 (Linear-grade clarity, no courier flow).
+Frame 4: demoted; accessible via "watch your crew work" link from /home Crew at Work strip. Linear-grade clarity. Agent attribution at the top of every step.
 
 ### `/scans`
 
-**Frame 4:** Unchanged from Frame 3 (Stripe table, no receipt-tape ribbon). New addition: every scan row has a public-permalink icon. Click → opens the public scan page (the /scan public storyboard rendered with this scan's data) on a permanent URL.
+Frame 4: Stripe table with the four lenses (Done / Found / Researched / Changed) as filters. Every row has a public-permalink icon. Click → opens public scan page. **Every action attributed.**
 
 ### `/competitors`
 
-**Frame 4:** Unchanged from Frame 3 surface (clean table). Rivalry Strip survives as depth view on row click. Each competitor row references the Standing Order clause that named it (if user named it in onboarding) or just shows the metric.
+Frame 4: clean table primary. Rivalry Strip survives as depth view on row click. Each competitor row references the Standing Order clause that named it. **Every insight attributed to Competitor Watch agent.**
 
 ### `/crew`
 
-**Frame 4:** Rebuilt as the firm's people-page (Visionary's vision):
-- Above: "Your crew. 11 specialists working under your standing order."
-- Roster list — agent name, role, what they did this week (in their own voice — *"I added 11 FAQ entries this week"*), success rate.
-- Each agent's standing-order clause numbers shown ("Citation Fixer answers to clauses 1, 3, 7").
-- Click agent → agent's employee page: scope, full work history, settings, conversation log with this user.
-- Yossi sees a "Compose this Monday's note for client X" affordance — same page, expanded role.
+Frame 4: rebuilt as the crew's people-page (per Visionary, in SaaS framing):
+- "Your crew. 11 specialists working under your standing order."
+- Roster list — agent name, role, what they did this week (in their own voice — *"I added 11 FAQ entries this week"*), success rate, attribution to Standing Order clauses.
+- Click agent → agent's profile page with the four lenses (Done / Found / Researched / Changed) as tabs. Full work history, scope, settings, conversation log.
+- Yossi: same page + "Compose this week's Board Report for client X" affordance.
 
 ### `/schedules`
 
-**Frame 4:** Unchanged from Frame 3 (calm admin table, no Sentence Builder).
+Frame 4: unchanged from Frame 3 (calm admin table, no Sentence Builder).
 
 ### `/settings`
 
-**Frame 4:** Unchanged from Frame 3 (Stripe-replica forms, no Letter). New tab: **Standing Order** — full edit view of the user's order, with version history.
+Frame 4: unchanged from Frame 3 (Stripe-replica forms, no Letter). New tab: **Standing Order** — full edit view of the user's order with version history.
 
 ### `/scan` (public)
 
-**Frame 4:** Unchanged from prior locked storyboard. Strikethrough-and-rewrite Frame 3 mechanic survives. Permalink renders as a public scan page that appears on every shared scan URL.
+Frame 4: unchanged from prior locked storyboard. Permalink renders as a public scan page on every shared scan URL.
 
 ### `/onboarding` (significant rebuild)
 
-**Frame 4 — "The Founding of the Firm":**
+Frame 4 — "Hiring Your AI Visibility Crew":
 1. Step 1 — Confirm the brief (≤30s): pre-filled from /scan public flow.
 2. Step 2 — Sign your Standing Order (≤90s): guided assembler with 5-8 chip menus. Output is prose. User signs (animated pen-stroke).
-3. Step 3 — The crew responds (the wow): /home loads with Standing Order excerpt at top + first agent's first finding pre-populated as Evidence Card #1 (from a scan that started running at Step 1). 11 agent monograms appear at bottom of fold one at a time, each with one-line introduction. *"We received your standing order. The crew is reading your homepage now. We'll send our first digest on Monday. — your crew."*
+3. Step 3 — The crew responds (the wow): /home loads with Standing Order excerpt at top + first agent's first finding pre-populated as Evidence Card #1. 11 agent monograms appear at bottom of fold one at a time, each with one-line introduction. *"We received your standing order. The crew is reading your homepage now. We'll send our first digest on Monday. — your crew."*
 
-The "delivered work, not promise" pattern (User Researcher) inside the firm framing (Visionary).
+The "delivered work, not promise" pattern (User Researcher) inside the AI Crew framing.
 
-### `/reports`
+### `/reports` (RENAMED to better describe what it is)
 
-**Frame 4:** Unchanged from Frame 3 (workmanlike form, Stripe-Press PDF). New: every PDF cover renders the client's Standing Order on the inside cover. The white-label digest export renders at Yossi's subdomain as a public permalink.
+Frame 4: kept in scope. Generates two artifact types:
+- **Weekly Board Reports** (auto-generated weekly, stored history)
+- **On-demand snapshots** (point-in-time, custom date range)
 
----
-
-## Frame 4 Alternative (Adam-rejects-firm-framing) — "Frame 4.5: Calm, Dense, Proven"
-
-If you reject the Visionary's firm metaphor, Frame 4 collapses to Frame 3 + PM/Designer/User Researcher additions:
-
-- Activity Pulse / Evidence Strip above the fold (3 cards, plain text)
-- Activity Ring + Crew Traces (Designer's signature)
-- Tier-visible per-engine strip and Activity Pulse
-- Hybrid email cadence (weekly + event-triggered + monthly renewal)
-- Trust gradient by user-age
-- /crew rebuilt as digest authoring + roster (Frame 3's plan, kept)
-- Onboarding stays Vercel-pattern but adds "first evidence card pre-populated" within 60-90s
-
-**No Standing Order. No House Memory. No public permalinks. No Margin Note. No Open Question.**
-
-Frame 4.5 is a respectable answer — better than Frame 3 — but doesn't claim the category. PM, Designer, User Researcher all converge on this version when stripped of Visionary's worldview. It's the "smart compromise" Frame 3 was trying to be, executed with proper density.
+Tool surface stays workmanlike (form). Artifact (PDF + permalink) is Stripe-Press grade. White-label override on Scale tier — Yossi's branding.
 
 ---
 
-## Open questions for Adam (consolidated from board's 20+ questions)
+## Cross-cutting principles (Frame 4)
 
-The board collectively raised over 20 questions. I'm surfacing the **6 that block Frame 4 lock**:
-
-1. **Firm vs managed-service framing.** Lock the Visionary's "firm rendered as software" worldview, or stay in managed-service category? This is the decision that determines everything below.
-
-2. **Standing Order — guided assembler vs free-form vs cut entirely.** If we lock firm framing: do we ship the guided assembler (recommended, 90s onboarding step) or the free-form text area (Visionary's preferred, but User Researcher's high-risk bet on Sarah's writing willingness)?
-
-3. **Public permalinks — default-public or default-private with toggle.** Public-by-default is the viral mechanic but requires resolving abuse vectors, scraping, and competitor-snooping. PM raised this. The marketing upside is significant; the operational complexity is non-trivial.
-
-4. **House Memory build-in-week-1.** The flywheel is the moat, but it's empty at launch. Does the product feel acceptable in week 1 with no accumulated memory? Visionary's Q4 — needs an answer.
-
-5. **Trust-tier defaults.** Frame 3 raised this; still unanswered. Proposed: schema fixes / FAQ additions / citation corrections run auto-with-post-review; content rewrites pre-approve; pricing/brand copy always escalates. This affects Inbox volume and the "exceeds your Standing Order" framing.
-
-6. **Onboarding Step 2 chip menus — content lock.** The guided assembler needs 5-8 chip menus. What are the canonical 5-8 questions/chip-options that all SMB types (B2C local, B2B SaaS, e-comm, services) can answer in 60-90s? This is a copy-write task best handed to growth-lead.
+1. **Agent attribution everywhere.** Every action, finding, change, or recommendation carries the agent's signature. Click name → agent profile.
+2. **Outcomes over process.** Show what changed; hide how it was done. Process is one click away; never primary.
+3. **Calm tone, dense information.** Calm comes from visual hierarchy and low urgency, not from absence of content.
+4. **Email is a primary channel, not a fallback.** Monday Digest + Weekly Board Report + event-triggered briefs + monthly renewal.
+5. **Public permalinks make the product viral.** Every digest, scan, Board Report has a URL. Sharing = marketing.
+6. **House Memory compounds.** Every interaction trains the crew on this account. Switching cost grows with time.
 
 ---
 
-## Recommended next moves
+## Open questions for Adam (now 5, down from 6)
 
-If you lock Frame 4 (the firm version):
-- **A.** Lock answer to Q1-3 above (firm framing, guided assembler, permalink policy).
-- **B.** Spec the **Standing Order schema** (data model, version history, clause→agent mapping).
-- **C.** Spec the **Monday Morning Digest** template under firm framing (signed, references Standing Order, links to permalink).
-- **D.** Spec the **Onboarding Step 2 guided assembler** (chip menus, prose template, signature mechanic).
-- **E.** Visual design system consolidation — Activity Ring component, Status Token, signed status typography, Crew Traces token.
-- **F.** Begin /home rebuild (this is the surface where the most changes land).
+Q1 (firm vs managed-service) is **resolved** by your positioning lock. Five remain to lock Frame 4 fully:
 
-If you lock Frame 4.5 (managed service version):
-- A simpler path: Frame 3 + density additions. /onboarding pre-loads first evidence card. /home gets Activity Pulse + Activity Ring + Crew Traces + tier-visible per-engine strip. /crew stays as Frame 3 spec'd. 80% of Frame 3's build queue survives unchanged.
+1. **Standing Order — guided chip-assembler at MVP, free-form on Scale tier?** Recommended yes (User Researcher's behavioral concern about Sarah writing prose addressed; Yossi gets free-form for richer per-client orders).
+
+2. **Public permalinks — default-public or default-private with toggle?** Default-public is the viral mechanic but requires resolving abuse vectors (scraping, competitor snooping). Recommended: default-public on Discover/Build (these users want exposure); per-domain toggle on Scale (Yossi may want client confidentiality).
+
+3. **House Memory in week 1.** Empty at launch — does the product feel acceptable? Recommended: pre-seed Standing Order from /scan public data; first 2 weeks have inflated visible activity (more agents flagged "we noticed X"); position as "your crew is getting to know your business." Day-1 feels lighter than Day-90 by design, and that's OK if framed.
+
+4. **Trust-tier defaults.** Schema fixes / FAQ additions / citation corrections auto-run-post-review; content rewrites pre-approve; pricing/brand always escalate. **Recommend Adam confirm or adjust.**
+
+5. **Onboarding Step 2 chip-menu copy.** Need 5-8 chip menus that any SMB type (B2C local, B2B SaaS, e-comm, services) can answer in 60-90s. **Best dispatched to growth-lead.** Example menu:
+   - "I want my crew to..." [show up on these AI engines / outrank competitors / generate FAQ-driven citations / monitor competitor moves]
+   - "The most important engines for me are..." [multi-select from 11]
+   - "My business is..." [B2C local / B2B SaaS / e-comm / services / other]
+   - "Don't change without asking..." [brand voice / pricing copy / homepage hero / nothing]
+   - etc.
 
 ---
 
 ## What this preserves and what it kills from Frame 3
 
-### Preserved (works in both Frame 4 and Frame 4.5)
+### Preserved
 - Trust-tier router (auto-run / pre-approve / always-escalate)
 - /scan public 10-frame storyboard
-- /reports white-label PDF artifact (Stripe-Press cover)
+- /reports white-label PDF artifact (now repositioned as Weekly Board Report)
 - Stripe-table /scans, /competitors, /schedules, /settings primary surfaces
 - English-only UI
 - Engineering principle: outcomes over process
 
 ### Killed/replaced from Frame 3
 - Bare status sentence ("Healthy and gaining") → Signed crew sentence
-- One Status / One Decision / One Number triad → quintet (adds Standing Order excerpt + Evidence Strip + Activity Ring)
-- Empty space when no decision needed → signed empty state ("Nothing exceeds your standing order this week. — your crew")
-- /crew as digest authoring tool → /crew as people-page (Frame 4) or stays as digest authoring (Frame 4.5)
-- Monday-only digest → hybrid cadence (weekly + event-triggered + monthly renewal)
-- Frame 3's onboarding Step 2 (3-option goal picker) → Standing Order guided assembler (Frame 4) or stays + first-evidence-card pre-populated (Frame 4.5)
+- "One Status / One Decision / One Number" triad → richer above-fold (Standing Order excerpt + Signed Status + Score-with-Ring + Evidence Strip + tier badge + Decision Card)
+- Empty space when no decision needed → signed empty state
+- /crew as digest-authoring tool → /crew as crew people-page
+- Monday-only digest → hybrid (weekly + event-triggered + monthly + Weekly Board Report)
+- Frame 3's onboarding Step 2 (3-option goal picker) → Standing Order guided assembler
+- No board/client artifact → Weekly Board Report (the new viral surface)
 
 ---
 
-## Closing — what the 4 seats agree the customer should feel
+## Recommended next moves (auto mode, no timelines)
 
-Stripped of frame politics, all 4 seats agree on the felt experience:
+Once Adam locks Q1-5:
 
-1. **Sarah opens Beamix in week 6.** In 8 seconds she sees: one signed status sentence ("we shipped 6 fixes; score 78, up 5"), her score with a hand-drawn ring around it, and 3 specific agent actions with timestamps. She reads. Closes the tab. Renews next month.
+**A. Visual design system consolidation** — Activity Ring component, Status Token, signed-status typography, Crew Traces token, Evidence Strip layout, type scale, color tokens, spacing rhythm, motion budget. (Designer's full spec is in seat-2.)
 
-2. **Yossi opens Beamix in week 24.** In 30 seconds he reads /home, scrolls to the receipts list, clicks last week's digest permalink, copies the URL into his client email. Generates this week's white-label PDF. Closes the tab. Renews next month at $499.
+**B. Standing Order schema** — data model, version history, clause→agent mapping, edit log.
 
-3. **Both feel they have a real team working for them, not a dashboard reporting at them.**
+**C. Monday Digest template** — under AI Crew framing, signed, references Standing Order, links to permalink. Includes Open Question prompt.
 
-Frame 4's job is to deliver that felt experience. Frame 4 (firm) does it through a more ambitious metaphor; Frame 4.5 (managed service) does it through density alone. Both beat Frame 3.
+**D. Weekly Board Report template** — separate artifact. Stripe-Press PDF + permalink. Auto-generates from agent-action data.
 
-The choice is yours.
+**E. Onboarding Step 2 guided assembler** — chip menus copy (handed to growth-lead).
+
+**F. /home rebuild** — most surface changes land here. Build after the design system + Standing Order schema land.
+
+**G. Public permalinks infrastructure** — auth model, sharing controls, white-label rendering.
+
+**H. House Memory schema** — versioned approval/rejection record, agent constraint storage, inference rules.
+
+**I. Per-agent profile pages** — with the four work-attribute lens tabs (Done / Found / Researched / Changed).
+
+---
+
+## The 5-second test (every Sarah session)
+
+A Sarah session at week 6 walks away able to say (in any combination):
+- *"My score is 78, up 5 this week."*
+- *"Schema Doctor fixed 3 errors Tuesday."*
+- *"Citation Fixer added 11 FAQs Wednesday."*
+- *"My crew is closing the gap on Profound."*
+- *"I forwarded the Board Report to my CEO yesterday."*
+
+That sentence IS the renewal mechanism. Frame 4 builds for it explicitly. Frame 3 cannot produce it.
+
+---
+
+## The closing pitch (one paragraph)
+
+> Beamix is your AI Visibility Crew. When a small business hires us, they sign a Standing Order — a short written agreement defining what their crew is for. Eleven AI specialists, named and accountable, go to work under it. They scan how AI engines see the business. They diagnose the gaps. They fix them — drafting FAQs, applying schema, monitoring competitors, refreshing content. Every Monday morning, the crew sends a digest signed in their own voice: what they did, what changed, what needs you. Every week, a board-grade report goes out for the user's CEO or clients — a one-page summary auto-generated, white-labeled at Scale tier. Every action carries the agent's signature; click any name to see their full work history. Every digest, scan, and report has a permalink the user can share. The competitors are dashboards. Beamix is the crew. The customer's job is to enter their URL and watch the work happen — or close the tab and read the email on Monday.
+
+---
+
+*End of Frame 4 PROPOSAL v2. Locked positioning. 5 sub-decisions remain for Adam to lock the architecture.*
