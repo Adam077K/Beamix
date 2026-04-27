@@ -1,6 +1,34 @@
-# Beamix Frame 5 v2 — Full Vision (Maximum-Ambition Synthesis)
-Date: 2026-04-26
-Status: PROPOSAL. Adam reviews and locks. Supersedes Frame 5 v1 (which over-cut scope based on a misread of "$1M ARR bootstrap" as MVP-thin product).
+# Beamix Frame 5 v2 — Full Vision (Maximum-Ambition Synthesis) — LOCKED
+Date: 2026-04-26 (locked 2026-04-27)
+Status: **LOCKED.** All 8 strategic questions answered by Adam. See "Locked answers" section below.
+
+## Locked answers (the 8 strategic decisions)
+
+| Q | Topic | Decision |
+|---|---|---|
+| Q1 | Vertical wedge | **B2B SaaS + e-commerce** (both at launch; all 12 expand later) |
+| Q2 | Distribution motor | **Social media + cold email + AI citations of Beamix content** |
+| Q3 | Trust Architecture | **Build BEFORE MVP launch.** Non-negotiable. +3-4 weeks of timeline. |
+| Q4 | State of AI Search annual report | **Yes, but DEFERRED.** Focus on product first; publish in Year 1 Q4 once dataset is rich enough. |
+| Q5 | AI surfaces at MVP | **11 text engines at MVP.** Voice + multimodal + agent-mediated browsing later (Year 1+). |
+| Q6 | Vertical knowledge graphs at launch | **2 — SaaS + e-commerce** (matches Q1 wedge). |
+| Q7 | Marketplace + third-party Agent SDK | **YES — ship with reward system** for most-used agents/workflows in the marketplace. |
+| Q8 | Power User + Certified Agency programs | **Yes, both — but launch Year 1 Q3** when there are 100+ customers + 5+ agencies to seed. Infrastructure designed now. |
+
+## Strategic implications of the SaaS + e-commerce wedge (Q1)
+
+- Customers are tech-native — they tolerate (and want) more customization on /crew
+- Higher willingness to pay — $189-499 is reasonable for SMBs already paying $50K+/mo for SaaS tooling
+- Marketing channels favor the operator (Adam): social, cold email, AI citations all reach SaaS founders and e-comm operators much more than home-services owners
+- Founder network advantage — Adam's warm network is in tech
+- Two verticals share ~70% of agent infrastructure — the marginal cost of supporting both is small
+- /crew (power-user surface) becomes MORE important, not less — these users want orchestration controls
+
+---
+
+Status moved from PROPOSAL → LOCKED on 2026-04-27 by Adam after Frame 5 v2 review.
+
+Original PROPOSAL document below, retained for reference. Open Questions section is now resolved by the table above.
 
 ---
 
