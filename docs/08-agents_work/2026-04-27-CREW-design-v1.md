@@ -35,7 +35,7 @@ This is the inverse of every competitor. Profound shows you a dashboard. Otterly
 
 **Relationship to Workflow Builder + Marketplace.** /crew is the hub. The Workflow Builder lives at `/crew/workflows` (left-rail tab inside /crew, opens full-bleed editor on click). The Marketplace lives at `/marketplace` (separate top-level route, but **every entry point to it lives inside /crew**: a "Browse Marketplace →" CTA at the top of the roster, a "Find an agent for this gap →" CTA on tier-locked rows, and a "Publish this workflow to Marketplace" CTA inside the Workflow Builder per Q7). When a user installs a third-party agent from Marketplace, it returns to /crew and appears in the roster with a `Third-party` tag and the publisher's name in 11px Geist Mono.
 
-**Visual register.** /crew sits squarely in the **bright-paper product register** (per Designer 1.6). No cream. The Margin column is allowed (24px left strip with agent monograms accumulating over time). Crew Traces appear under recently-touched activity counts. The Activity Ring does *not* appear on /crew — the Ring is reserved for /home as the single image. /crew has its own visual signature: **the 18 agent monograms as a typographic grid**, each rendered in Rough.js with a deterministic seed, each in its agent's assigned color. The roster page itself, when you squint, reads like a yearbook. That's the design.
+**Visual register.** /crew sits squarely in the **bright-paper product register** (per Designer 1.6). No cream. The Margin column is allowed (24px left strip with agent monograms accumulating over time). Crew Traces appear under recently-touched activity counts. The Activity Ring does *not* appear on /crew — the Ring is reserved for /home as the single image. /crew has its own visual signature: **a Stripe-style table** with monograms in the Margin column, each rendered in Rough.js with a deterministic seed, each in its agent's assigned color. *(2026-04-28 board lock: yearbook framing was retired as the default. Yearbook DNA is preserved in two ceremonial states only — the empty/first-load state and the per-agent profile pages — not the default roster rendering.)*
 
 ---
 
@@ -155,6 +155,13 @@ This is the heart of /crew. **Single column of rows**, not a grid. The previous 
 **Total width:** 24 + 280 + 96 + 120 + 96 + 120 + 132 + 64 + 32 = **964px** out of 1340px. Remaining 376px distributed as flex-grow on the *Agent* column for long agent names + descriptions, with truncation via `text-overflow: ellipsis` only on widths < 1100px.
 
 **Column 1 — the Margin / monogram.** A 16×16 Rough.js circle, agent's color stroke at 1.5px, optional small initial letter inside (also Rough.js, agent's color), deterministic seed = agent_id (so the Schema Doctor monogram is *always* the same scribble shape, never random per render — the user learns to recognize it). This monogram is the agent's **portrait**. It also appears in /home Recent Crew Activity, in /inbox cards, in /scans Margin column, in the Monthly Update — same monogram everywhere. This is the cross-surface continuity move.
+
+**Monogram size table (locked 2026-04-28):**
+- Under 16px: color disc only (no letters)
+- 16-32px: 2-letter monogram (SD, CF, CW, CR, FA, etc.) in InterDisplay 500 caps, with deterministic Rough.js circle frame (per Design System §2.5 Agent Fingerprint Function)
+- 48px+: 2-letter monogram + name label below
+
+Three of 18 agents start with C — single-letter would collide. 2-letter is non-negotiable until 18 unique hand-drawn glyphs ship in month 6.
 
 **Column 2 — Agent name + role.** Two-line block:
 - Name: 15px Inter 500 ink. Tabular for any agent name with a number (none currently, but the rule holds).
@@ -514,6 +521,8 @@ The full page is reachable from:
 ## 4. The Workflow Builder — `/crew/workflows`
 
 The killer feature. The reason a Yossi-archetype pays $499/mo. A DAG-style visual editor where the user composes custom agent chains.
+
+**2026-04-28 amendments to Workflow Builder section:** see `2026-04-28-DESIGN-workflow-builder-canvas-v1.md` for the canonical canvas spec — and note Adam's locks: (a) full DAG editor + dry-run + 3-6 templates ship at MVP day 1; (b) cream paper canvas at 30% opacity replaces the dot grid; (c) Brief grounding cell remains cream + Fraunces 300 italic with first-time-per-session different mechanic; (d) agent node anatomy tightened to 220×72 with header + status only (drop redundant 1px stripe + body monogram); (e) connection handles always-visible at 6×6 ink-4 ring, brighten to brand-blue dot on hover; (f) workflow PUBLISHING deferred to MVP-1.5; (g) event triggers deferred to MVP-1.5.
 
 ### 4.1 Surface map
 
@@ -1155,7 +1164,7 @@ This sequence lets us ship `/crew` for Discover and Build tiers (Roster + audit 
 
 ## Closing
 
-`/crew` is where Beamix's 18-agent architecture is finally visible — to the people who paid for the depth. Sarah glances and leaves; Yossi lives here. The page must read as **professional + dense + transparent + respectful of your time**, all at once. The roster is a yearbook. The profile is a personnel file. The Workflow Builder is a power tool. The audit log is a courtroom record. The Marketplace is the labor pool.
+`/crew` is where Beamix's 18-agent architecture is finally visible — to the people who paid for the depth. Sarah glances and leaves; Yossi lives here. The page must read as **professional + dense + transparent + respectful of your time**, all at once. The roster is a Stripe-style table. The profile is a personnel file (this is where ceremonial yearbook-grade craft lives). The Workflow Builder is a power tool. The audit log is a courtroom record. The Marketplace is the labor pool. *(2026-04-28 board lock.)*
 
 Outside `/crew`, Beamix says *"we did this."* Inside `/crew`, you can say *"who exactly, and why, and on what authority, and can you undo it."* That is the contract.
 

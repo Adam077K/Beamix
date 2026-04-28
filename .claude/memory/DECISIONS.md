@@ -208,3 +208,50 @@
 **Decided by:** CEO
 **Affects:** DNS config, Resend setup, EMAIL_FROM_ADDRESS env var
 **Reversible?** Yes
+
+---
+
+### [2026-04-27] — Inngest tier: Free at MVP, Pro at ~5 paying customers
+**Decision:** MVP launches on Inngest free tier (50K steps/month, shorter wall-clock timeouts). Migrate to Pro ($150/mo) when paying customers ≥ 5 OR monthly steps usage hits 75-80% of free-tier ceiling, whichever comes first.
+**Rationale:** Cost discipline at pre-revenue stage. Free tier sufficient for first ~100 customers. Pro tier headroom isn't worth paying for until there's revenue to cover it. Revises board synthesis row 13 which had assumed Pro from day 1.
+**Decided by:** Adam (CEO)
+**Affects:** Tier 0 setup, agent runtime architecture (must fit free-tier wall-clock), DevOps migration runbook, cost model. Some agents (Long-form Authority Builder, Citation Predictor — both deferred past MVP) may need Pro tier on arrival; re-validate which MVP agents fit free-tier limits.
+**Reversible?** Yes (upgrade is one-click; downgrade is hard if usage exceeds tier).
+
+---
+
+### [2026-04-28] — Board meeting: 23 product/design/architecture decisions locked
+**Decision:** Adam confirmed all board decisions from the 9-seat / 3-round board meeting documented in `docs/08-agents_work/2026-04-27-BOARD-MEETING-SYNTHESIS.md`. The synthesis doc is the canonical record; this entry captures the consolidated lock. The 23 confirmed decisions:
+
+**Strategic (rows 1-15):**
+1. Monthly Update permalink default = **PRIVATE** with explicit "Generate share link." Forwarding via PDF email attachment. Hybrid-redaction model rejected.
+2. /crew layout = **Stripe-style table.** Yearbook DNA preserved as ceremonial state only (empty/first-load + per-agent profile pages).
+3. White-label digest signature = **Both, tier-gated.** Discover/Build = "Beamix" non-removable. Scale = agency-primary with "Powered by Beamix" footer in Geist Mono 9pt at `--color-ink-4`. Cream paper survives white-labeling.
+4. Voice canon = **Model B.** Agents named in product (`/home`, `/crew`, `/workspace`). "Beamix" on all external surfaces (emails, PDFs, permalinks, OG cards). Onboarding seal "— your crew" → "— Beamix."
+5. Workspace tier-gating = **All tiers** (including Discover).
+6. Marketplace install = **Build+ only.** Discover sees catalog read-only with upgrade CTA.
+7. Workflow Builder access = **Scale-only** to build/edit. Build can install pre-built workflows.
+8. Truth File schema = **Shared base + vertical-extensions** (Zod discriminatedUnion keyed by vertical_id, per-vertical schema versioning). Single Postgres row + JSONB.
+9. "Full-auto" semantics = **Conservative.** Even on Full-auto, validator's `uncertain` outcome routes to /inbox.
+10. Pre-publication validator binding = **Cryptographic signed-token** (60s TTL, draft-hash bound). First-party agents in same sandbox as future third-party.
+11. L2 site-integration = **Manual paste + Git-mode (GitHub PR) at MVP.** WordPress plugin parallel-builds, ships MVP-1.5.
+12. Real-time channel = **Supabase Realtime broadcast**, one channel per customer (`agent:runs:{customer_id}`), polling fallback at 10s.
+13. Inngest contract = Free tier at MVP; Pro at ~5 paying customers (already locked above).
+14. Day 1-6 silence cadence = **4 emails** plain-text Beamix register (D0+10min welcome / D2 first-finding / D4 review-debt nudge / D5 pre-Monday teaser). Skip Saturday/Sunday. Suppress if customer logged in that day.
+15. /security public page = **Ship at MVP.** Stripe-style 6-min security doc covering storage region, retention, DSAR flow, encryption, audit logs, no-training-on-customer-content DPA clause, sub-processors.
+
+**Critical corrections (rows 16-21):**
+16. White-label config is **PER-CLIENT**, not per-account. Lives inside multi-client switcher.
+17. Bulk-approve in /inbox at MVP (within single client). Cross-client bulk = MVP-1.5.
+18. Vertical-aware UI from Step 1 (kill plumber DNA in SaaS). SaaS = UTM-first Step 2; e-comm = Twilio-first.
+19. Truth File nightly integrity-hash job. Sev-1 alert + auto-pause-all-agents on >50% field loss in 24h.
+20. Scale-tier DPA includes mutual indemnification: Beamix indemnifies for content errors that pass pre-pub validation, capped lesser of (3× monthly subscription) or ($25K/incident).
+21. Workflow Builder dry-run = real LLM execution with `dry_run: true` flag. No mock-site sandbox needed.
+
+**Tensions resolved (rows 22-23):**
+22. Workflow Builder MVP scope = **Hybrid.** Day 1: full React Flow DAG editor + dry-run + 3-6 templates + manual/scheduled triggers + Brief grounding per node. Deferred to MVP-1.5: event triggers (`competitor.published`), workflow PUBLISHING to marketplace.
+23. Workflow PUBLISHING = **Defer to MVP-1.5.** Cross-tenant Truth File binding ships and gets 4 weeks of telemetry first. Marketplace at MVP = browse + install Beamix-curated workflows + install counts visible.
+
+**Decided by:** Adam (CEO) confirmed all 23 decisions on 2026-04-28 after the 9-seat board meeting (4 + 3 + 2 agents in 3 rounds).
+**Affects:** PRD-wedge-launch (10 features changed), 6 design specs, MARKETPLACE-spec (rewards section removed), DESIGN-SYSTEM (token clarifications), AUDIT-CONSOLIDATED (mark BLOCKERS #1, 2, 3, 4, 16, 17, 18, 19 as resolved), Tier 0 build sprint (19 person-days plumbing).
+**Reversible?** Hard. These shape every customer-facing surface and the build plan. Reversal requires re-running board.

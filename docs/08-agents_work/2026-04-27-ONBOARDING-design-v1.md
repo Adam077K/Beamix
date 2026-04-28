@@ -314,9 +314,11 @@ Sequence (triggered by clicking "Approve and start"):
 
 1. **0ms — button transition.** The button fades to `paper-elev` background with `ink-3` label "Signing…" (200ms cross-fade). The seal-mark inside the button vanishes simultaneously.
 2. **200ms — Brief block scrolls** (if needed) to ensure the bottom-right Margin of the Brief is in viewport. Smooth, 400ms ease-out.
-3. **400ms — the Seal begins to draw.** A `Rough.js` six-point star (the Beamix sigil mark from the logo), 32×32, rendered with `roughness: 1.4`, `bowing: 1.0`, `seed: <user_id_hash>` (so every customer's Seal has its own micro-jitter — *their* seal, not a stamp). Rendered as `<path>` with `stroke-dasharray` set to the path's total length and `stroke-dashoffset` animated from full length to 0 over **800ms** with curve `cubic-bezier(0.4, 0, 0.2, 1)`. Stroke `brand-blue` (`#3370FF`), 1.5px. The strokes appear in the order a hand would draw them: outer hexagon perimeter first (3 strokes, 480ms), then the inner star points (3 strokes, 320ms).
-4. **1200ms — the Seal lands.** A 50ms scale-overshoot (`motion/pill-spring`, `cubic-bezier(0.34, 1.56, 0.64, 1)`, scale 1.0 → 1.04 → 1.0). This is the "stamp on paper" beat.
-5. **1300ms — the signature line pen-strokes.** Below the Brief, centered or right-aligned (matching Seal position), the line `— your crew` in 22px Fraunces italic 300, opsz 144, ink. The line draws via stroke-dasharray on the *dash glyph* and the letterforms (using a pre-extracted SVG outline of the text glyphs, not text-rendered). Duration **600ms**, curve `cubic-bezier(0.4, 0, 0.2, 1)`. The em-dash strokes first (120ms), then the words "your crew" (480ms left-to-right).
+3. **400ms — the Seal stamps.** A `Rough.js` six-point star (the Beamix sigil mark from the logo), 32×32, rendered with `roughness: 1.4`, `bowing: 1.0`, `seed: <user_id_hash>` (so every customer's Seal has its own micro-jitter — *their* seal, not a stamp). Stroke `brand-blue` (`#3370FF`), 1.5px.
+
+   **Seal-draw is a STAMPING motion, not a tracing motion (re-curved 2026-04-28).** 540ms total: 240ms path-draw with `cubic-bezier(0.34, 0.0, 0.0, 1.0)` + 100ms hold + 200ms ink-bleed (stroke deepens from 60% opacity to 100%). The Seal is stamped, not drawn. Strokes appear in hand-order (outer hexagon perimeter first, then inner star points) but as one decisive press, not a slow pen tracing.
+4. **940ms — the Seal lands.** A 50ms scale-overshoot (`motion/pill-spring`, `cubic-bezier(0.34, 1.56, 0.64, 1)`, scale 1.0 → 1.04 → 1.0). This is the "stamp on paper" beat — already implicit in the ink-bleed phase, kept here for the final visual settle.
+5. **1300ms — the signature appears.** After the Seal completes its 540ms stamping motion, the line "— Beamix" appears in 22px Fraunces italic 300, opsz 144, ink, with a 300ms opacity fade-in (NOT a stroke-draw, NOT a letter-by-letter pen animation). The Seal IS the signature; the typed wordmark is the read-back. (Cut 2026-04-28 — Rams + Ive convergence: "the same gesture twice — like pressing send and then pressing send.")
 6. **1900ms — the Brief is "filed."** Three things happen in parallel over 600ms:
    - The Geist Mono header line at the top of the Brief block changes from `BRIEF · DRAFT v1 · Apr 27, 2026` to `BRIEF · v1 · SIGNED Apr 27, 2026 — 14:32` (cross-fade 200ms).
    - All chips lose their interactive affordance: hover/click do nothing; cursor becomes `default`; chip backgrounds shift from `brand-blue-soft` to `paper-cream-darker` (a hair darker than background, ~`#F2EBDA`). The sentences become read-only prose.
@@ -332,6 +334,21 @@ Sequence (triggered by clicking "Approve and start"):
 **Errors during signing.** If the Brief commit fails (network), the button reverts to `Approve and start` solid state with a 13px Inter `needs-you` line below: *"Couldn't file the Brief — try again?"* No modal. The Seal does not draw on retry; the customer clicks the button and the full ceremony plays on success.
 
 **Time benchmark.** Customer who reads + approves without edits: 35 seconds (read 25s + signing 2.5s + buffer). Customer who edits 2 chips: 70 seconds. Customer who restructures sentences: 90+ seconds.
+
+---
+
+### Step 3.5 — "Print this Brief" (F27, one-time offer)
+
+After the Seal lands and the signature appears, a single offer renders below the Brief:
+
+- 14px Inter 400 ink-3 link "Print this Brief →"
+- Centered, 32px below the signature line
+- Visible for 8 seconds; dismissable via Continue button or implicit timeout
+- Click → generates a single A4 PDF of the Brief in cream-paper editorial register (cream paper, Fraunces 300, signed Seal, dated)
+- Server-side generation via existing React-PDF infrastructure (zero net new engineering)
+- One-time offer per Brief signing — never appears again
+
+Most customers won't click. The 7% who do print and pin to a wall become evangelists. Cost: <1pd.
 
 ---
 
@@ -687,7 +704,7 @@ Chip editing on mobile:
 
 Seal-draw on mobile:
 - The Seal renders at 24×24 (smaller than desktop's 32×32 — the bottom-right margin of the Brief is tighter on mobile).
-- The signature line "— your crew" renders centered below the Brief at 18px Fraunces italic (slightly smaller than desktop's 22px to preserve the editorial proportion at narrow widths).
+- The signature line "— Beamix" renders centered below the Brief at 18px Fraunces italic (slightly smaller than desktop's 22px to preserve the editorial proportion at narrow widths).
 - The signing animation duration is identical (800ms Seal + 600ms signature = 1.4s of motion).
 
 **Step 4 (mobile).** Form fields stack vertically. The 7-day hours mini-table becomes a single accordion: tap "Set hours" → expands a per-day list. The 3 brand-voice fields stack instead of side-by-side (each 100% width, 56px tall). All other fields are the same, full-width.
@@ -755,7 +772,7 @@ Seal-draw on mobile:
 | Primary button (unsaved chip) | Save and approve |
 | Signing button state | Signing… |
 | Post-sign state | Signed. Continuing… |
-| Signature line (drawn) | — your crew |
+| Signature line (drawn) | — Beamix |
 | Save indicator | Saved |
 | Save failure | Couldn't save — we'll keep trying |
 | Brief commit failure | Couldn't file the Brief — try again? |
@@ -823,7 +840,7 @@ Seal-draw on mobile:
 - Specific verbs: *file, draft, issue, sign, ship, fix, read, approve.* Not *configure, set up, customize, manage.*
 - Numbers are concrete: "11 FAQ entries," "3 schema errors," "23 calls." Not "many" or "several."
 - Time is concrete: "Monday at 7am," "in 30-60 seconds," "8 sec ago." Not "soon" or "shortly."
-- The product speaks as "we" or "Beamix" — never "I" (Beamix is plural — your crew). The signature line is "— your crew."
+- The product speaks as "we" or "Beamix" — never "I" (Beamix is plural — Beamix). The signature line is "— Beamix."
 
 ---
 
@@ -839,7 +856,7 @@ Seal-draw on mobile:
 
 **Seal-draw animation.** SVG path with stroke-dasharray equal to the path's `getTotalLength()`. Animate stroke-dashoffset from full length to 0 via Framer Motion `<motion.path>` (or CSS animation if reduced-motion). Path is generated once per user via `roughjs` server-side at signup (deterministic from `seed = hash(user_id)`) and persisted as raw SVG in `users.seal_svg`. Re-used on the Brief, the Monthly Update PDF header, the OG share card, and the Inbox approve button.
 
-**Signature line pen-stroke.** Pre-extracted SVG outline of the text "— your crew" rendered in Fraunces italic 300 at 22px (or 18px on mobile). Outline extracted at build time using `opentype.js` from the licensed Fraunces font file; persisted as a static SVG in `public/onboarding/signature-stroke.svg`. The path is animated via stroke-dashoffset over 600ms.
+**Signature line pen-stroke.** Pre-extracted SVG outline of the text "— Beamix" rendered in Fraunces italic 300 at 22px (or 18px on mobile). Outline extracted at build time using `opentype.js` from the licensed Fraunces font file; persisted as a static SVG in `public/onboarding/signature-stroke.svg`. The path is animated via stroke-dashoffset over 600ms.
 
 **Fonts.** Inter, InterDisplay, Fraunces, Geist Mono. Self-hosted (woff2) under `public/fonts/`. Preloaded in `<head>` for the onboarding routes specifically. Fraunces is 100kb compressed; preloading is required to avoid FOUT on Step 3's cream-paper render.
 

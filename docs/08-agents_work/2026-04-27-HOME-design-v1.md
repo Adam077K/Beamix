@@ -14,7 +14,7 @@
 
 The answer has three load-bearing parts, in order:
 
-1. **Lead attribution** — *"Beamix produced 23 calls and 8 form submissions this month."* This is the renewal mechanic locked at Frame 5 v2. The phone rang or it didn't. Everything else is supporting evidence.
+1. **Lead attribution** — *"Beamix produced 23 calls and 12 UTM-attributed clicks this month."* This is the renewal mechanic locked at Frame 5 v2. The phone rang or it didn't. Everything else is supporting evidence. *(2026-04-28: dropped "form submissions" until customer-site JS snippet ships at MVP-1.5.)*
 2. **Score + delta + Activity Ring** — *"You're at 78, +5 since last week, and Beamix is working right now."* The Ring is the ambient signal that the product is alive on the user's behalf even when they aren't looking.
 3. **One decision, conditional** — *"One thing needs you. ~30 seconds."* Most days this slot is empty. When it appears, it is calm, specific, and quick.
 
@@ -24,7 +24,7 @@ Everything below the fold is the **proof shelf** — the receipts, the trend, th
 
 In 5 seconds, an unfamiliar but motivated user (Sarah, post-coffee, Tuesday) must learn:
 
-> *"Beamix made me 23 calls and 8 form submissions this month. My score went up 5. There's nothing on fire. I can leave."*
+> *"Beamix made me 23 calls and 12 UTM-attributed clicks this month. My score went up 5. There's nothing on fire. I can leave."*
 
 That's it. No charts read. No tabs clicked. No scrolling. The headline + score + delta + status sentence + (sometimes) one decision card. **Five elements, one second of eye-tracking each.**
 
@@ -67,11 +67,11 @@ The fold sits at ~840px below viewport top (900 − 56 topbar − ~scrollbar). W
 This is the headline of the page. It is the renewal mechanic rendered. It supersedes the score in the visual hierarchy because *the phone ringing* is more important than *a score going up*.
 
 **Copy template:**
-> **This month: 23 calls + 8 form submissions through Beamix.** Up 4× vs March.
+> **This month: 23 calls + 12 UTM-attributed clicks through Beamix.** Up 4× vs March.
 
 **Specs:**
 - **Position:** 120px from top of content area, full content width (1180px), left-aligned
-- **Typography (primary clause — "23 calls + 8 form submissions through Beamix"):**
+- **Typography (primary clause — "23 calls + 12 UTM-attributed clicks through Beamix"):**
   - Font: **InterDisplay 500** (Master Designer §1.2)
   - Size: **32px / line-height 40px** (token: `text-h2`)
   - Color: `ink` (`#0A0A0A`)
@@ -118,12 +118,9 @@ This is the single image of Beamix. Master Designer §1.1.
   - Seed: stable per session (deterministic per user_id so it doesn't re-jitter each render)
   - 3 jitter points along the dash
   - Rendered as a separate SVG `<path>` overlaid at the gap's terminal coordinate
-- **Pulse state (when system is acting):**
-  - Animation: `motion/ring-pulse` — gap opacity 0.4 → 1.0 → 0.4
-  - Curve: `cubic-bezier(0.4, 0, 0.6, 1)` (sine-like)
-  - Duration: 1200ms, infinite
-  - Only the **last 30° arc segment** + the Rough.js terminus pulse (use a separate `<path>` for this segment so the rest of the ring stays static at 1.0 opacity)
+- **Pulse state — CUT (2026-04-28).** The Ring does not pulse. State is communicated by the TopbarStatus dot. The Ring is identity geometry — a frame around the score. (Cut 2026-04-28 per Rams + Ive convergence: ring-pulse duplicates the topbar dot signal; the Ring is the photograph, not the performance.)
 - **Idle state (system not acting):** static. Gap terminus visible at 1.0 opacity. No motion.
+- **Entrance animation — CUT (2026-04-28).** The Ring renders at full geometry at t=0. No 1500ms ring-draw on first-load. (Cut 2026-04-28 per Rams + Ive: "1.5 seconds is fashion, not communication. An image that survives 50 years does not perform on entrance.")
 - **Cycle-close moment** (weekly scan + auto-fixes complete): `motion/ring-close` — the arc closes for 800ms (gap opacity → 0; arc completes), then re-opens to a fresh cycle. Curve: `cubic-bezier(0.4, 0, 0.2, 1)`. This fires once per week.
 - **Inner circle:** invisible (no fill). The score sits inside.
 - **Accessibility:** `<svg role="img" aria-label="Visibility score 78 of 100. Beamix is working.">` (or "...idle" when not acting). The role and label are computed server-side based on state.
@@ -139,10 +136,11 @@ This is the single image of Beamix. Master Designer §1.1.
 - **Tabular discipline:** 78, 9, 100 must all sit on the same horizontal axis. `tnum` enforces this.
 - **Hover:** none. The Score is not interactive.
 - **First-load animation:** `motion/score-fill` — counts up 0 → final value
-  - Duration: 800ms
+  - **Updated 2026-04-28:** On first scan EVER (sessionStorage flag), motion/score-fill plays once: 0 → final value, 800ms ease-out-expo. On all subsequent visits, score appears at final value instantly. The score is a fact; counting up performs calculation already complete. (Cut on returning sessions per Rams: "theatre — calculation already completed.")
+  - Duration: 800ms (first-scan-ever only)
   - Curve: `cubic-bezier(0.16, 1, 0.3, 1)` (ease-out-expo)
   - Implementation: `requestAnimationFrame` with eased lerp; render integer values only (no decimal flicker)
-  - Triggers ONCE per session (use sessionStorage flag)
+  - Trigger: `localStorage.getItem('first_scan_seen')` — null on first scan ever; once set, animation never plays again
 
 #### 2.2.3 The Delta
 
@@ -184,13 +182,13 @@ This is the single image of Beamix. Master Designer §1.1.
 - **Typography:** **13px Inter 500** (token: `text-sm` upweighted)
   - Color: `ink-2` (`#3F3F46`)
   - Letter-spacing: 0.02em
-- **Copy template:** *"Build plan · 6 engines · 8 agents"* (interpunct separators)
+- **Copy template:** *"Build plan · 6 engines · 6 agents"* (interpunct separators) *(2026-04-28: agent count corrected to 6 MVP per PRD F7 + board lock. Eliminates 6/8/18 contradiction across specs.)*
 - **Hover:** background lifts to `paper`, border darkens to `border-strong` (`rgba(10,10,10,0.12)`), 100ms linear (token: `motion/row-hover` reused)
 - **Click:** opens `/settings/billing` in same tab. No animation; instant nav.
 - **Tier-specific copy:**
-  - Discover: `Discover plan · 3 engines · 4 agents`
-  - Build: `Build plan · 6 engines · 8 agents`
-  - Scale: `Scale plan · 11 engines · 18 agents` (and a tiny gold dot in the badge — 4px brand-blue circle prefix)
+  - Discover: `Discover plan · 3 engines · 4 agents` *(the 3 engines locked: ChatGPT + Perplexity + Google AI Overviews per PRD v2)*
+  - Build: `Build plan · 6 engines · 6 agents` *(2026-04-28 lock: 6 MVP agents — was 8 in v1, contradicted PRD F7)*
+  - Scale: `Scale plan · 11 engines · 6 agents (+ 12 locked)` *(2026-04-28 lock: shows full 18-agent roadmap with locked rows; 6 unlocked at MVP — was 18 in v1)* (and a tiny gold dot in the badge — 4px brand-blue circle prefix)
 - **Free tier (pre-paid):** the badge reads `Free scan · Upgrade to activate crew →` with the arrow as part of the chip text, brand-blue. Hover slightly raises.
 
 ### 2.4 Decision Card (conditional)
@@ -467,6 +465,37 @@ The depth scroll. Each section earns its place. Section gaps: **72px** (Master D
 
 **Mobile fallback:** chips wrap into a vertical stack at full width.
 
+### Cycle-Close Bell (F23)
+
+When the weekly scan completes and all auto-fixes have shipped, the following choreography fires once on the customer's first /home visit after cycle close:
+
+1. Activity Ring closes its 30° gap over 800ms (motion/ring-close)
+2. Surrounding KPI sparklines briefly settle to final positions (200ms ease)
+3. Status sentence rewrites once: "Healthy and gaining." → "Cycle closed. {N} changes shipped this week."
+4. Holds 600ms
+5. Ring re-opens at fresh 252° baseline; status sentence reverts to standard variants
+
+Total bell duration: 1600ms. Fires once per cycle-close per customer. Cannot replay in same session.
+
+*(Added 2026-04-28 per Ive's intentional moment + CEO synthesis F23. Earns customer attention every Monday morning. Costs ~2pd. The page becomes, for two seconds, a closing curtain.)*
+
+### Receipt-That-Prints card (F25)
+
+On the morning the Monthly Update PDF is generated (1st of the month, customer-local time), /home renders a single new element above the Evidence Strip:
+
+- 96px tall, full content width (max 1180px), centered
+- Background: --color-paper-cream (#F7F2E8 — to be re-locked per Ive's hex audit)
+- Rough.js fold-mark down the centre (deterministic seed per customer + month)
+- Left side: 11px Geist Mono date stamp ("APR · 2026")
+- Centre: 22px Fraunces 300 italic line "Your Monthly Update is ready."
+- Right side: 14px Inter 500 link "Read it →" (links to /reports/[id])
+- Entrance animation: 600ms paper-fold (clip-path: inset(0 0 100% 0) → inset(0 0 0% 0), cubic-bezier(0.4, 0, 0.2, 1))
+- Stays for 24 hours, then files itself into /reports automatically (CSS opacity fade-out 800ms after 24h elapsed)
+
+This is the morning-of moment — Beamix's "Apple Watch birthday confetti." It costs ~1 person-day.
+
+*(Added 2026-04-28 per Ive's morning-of moment + CEO synthesis F25.)*
+
 ### 3.5 Section 6 — Crew at Work strip
 
 **Position:** 72px below Per-Engine Strip
@@ -545,11 +574,12 @@ The depth scroll. Each section earns its place. Section gaps: **72px** (Master D
 - Show last 12 entries by default; *"Load earlier"* link at the bottom
 - Each row: 48px tall
 
-**Row layout (24px Margin column on left, like /scans):**
-- Margin column (24px wide): a small Rough.js seal mark (12×12) — the seal of the artifact's author (Beamix)
+**Row layout (Margin column CUT 2026-04-28 — recover 24px for actual data):**
 - Date column (88px): 13px Geist Mono `ink-3` tabular — `APR 21`
 - Title column (flex): 14px Inter 400 `ink` — e.g., *"Monday Digest — Week of April 21"*, *"Monthly Update — March 2026"*, *"Weekly Scan Report"*
 - Permalink icon column (32px, right-aligned): 14×14 chain-link glyph at `ink-4`. Hover → `brand-blue`. Click copies permalink to clipboard with a 200ms toast (*"Permalink copied"*).
+
+*(Cut 2026-04-28: Margin column removed from /home Receipts list per Rams + Tufte + Kare convergence. Margin survives only on artifact surfaces — Monthly Update PDF, Monday Digest header — never on product chrome. The 24px is recovered for actual data.)*
 
 **Hover (whole row):**
 - Background: `rgba(10,10,10,0.03)`
@@ -889,7 +919,7 @@ The same page renders differently per tier. The discipline: **never hide a secti
 
 ### 7.2 Build ($189/mo)
 
-- **Tier badge:** *"Build plan · 6 engines · 8 agents"*
+- **Tier badge:** *"Build plan · 6 engines · 6 agents"* *(2026-04-28 lock — see canonical tier badge strings in §2.3)*
 - **Per-Engine Strip:** 6 active, 5 gated
 - **Crew at Work:** 8 monograms active, 10 placeholder
 - **All other sections:** identical to Discover
@@ -1049,6 +1079,22 @@ These are introduced in /home v1 but should be re-reviewed once the system catal
 - The **Evidence Strip's 3 vs 5 card density rule** — should this be a global tier-aware density token?
 - The **error-state cream-paper card** — first time cream paper enters product chrome. Master Designer's principle is "cream is for artifacts only." Argument: an error message IS an artifact (Beamix communicating with the user, not running the product). **Flag for Master Designer review.**
 - The **Crew at Work strip's hover-name behavior** — Master Designer's "single character externally" rule says agent names appear only on /crew. /home shows them on hover (one click from /crew anyway). Confirm this is acceptable or revise to monogram-only with no name reveal.
+
+---
+
+### Brief binding line (F31)
+
+Anchored to the bottom of /home (and every product page), 24px above the page chrome footer:
+
+- 13px Fraunces 300 italic
+- Color: --color-ink-3 (muted)
+- Centered, max-width 720px
+- Pattern: "{Brief clause text in italic} — clause N of M · Edit Brief →"
+- Rotates daily through the 4 Brief clauses (deterministic by date + customer ID)
+- Silent furniture, NOT a notification — no animation on page-load, no badge, no hover state beyond the standard Edit Brief link
+- The customer perceives this as ambient — a constant, restrained reminder that the work is in service of the document they signed
+
+*(Added 2026-04-28 per Ive's ambient-brand binding + CEO synthesis F31. Complements F30 (Rams' inline citations) — together the Brief becomes ubiquitous + grounded.)*
 
 ---
 

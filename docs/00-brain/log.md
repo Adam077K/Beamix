@@ -105,3 +105,10 @@
 - Committing entire design + product architecture body of work to GitHub
 - Handoff prompt produced for next design/planning/UX team
 - ~50 documents totaling ~25,000 lines of synthesized design direction
+## [2026-04-28] board-meeting | 23 decisions locked + PRD v2 cascade
+- 9-seat board (Customer Voice + Designer + Product Lead + Brand Lead + AI Engineer + Architect + T&S + Yossi sim + Marcus sim) ran across 3 rounds
+- Adam confirmed all 23 decisions: permalink private / table /crew / tier-gated white-label / Model B voice canon / Workflow Builder hybrid scope at MVP / publishing deferred MVP-1.5 / Inngest free → Pro at 5 customers / 4-email Day 1-6 cadence / per-client white-label / bulk-approve in /inbox / vertical-aware onboarding / Truth File hybrid schema / /security page / agency indemnification clause + 9 more
+- PRD v2 filed at docs/08-agents_work/2026-04-28-PRD-wedge-launch-v2.md (~12K words; supersedes v1)
+- Cross-session memory: 4 new entries (Inngest tier, voice canon Model B, white-label per-client, Workflow Builder scope)
+- Build is unblocked for Tier 0 sprint (~19 person-days plumbing)
+
