@@ -321,7 +321,7 @@ For FAQ additions, each new entry appears as a card with question + answer pair.
 └─────────────────────────────────────────────┘
 ```
 
-- **Approve:** Primary CTA. 44px tall, brand-blue background, white text, 8px radius. 14px Inter 500. Spans 240px wide. Keyboard shortcut `e` (for "execute"). On hover, a tiny Rough.js seal-mark draws itself in 200ms next to the button text — foreshadowing the artifact you're authorizing (Master Designer 2.2).
+- **Approve:** Primary CTA. 44px tall, brand-blue background, white text, 8px radius. 14px Inter 500. Spans 240px wide. Keyboard shortcut `e` (for "execute"). The Seal-draw motion fires on click only (the moment of authorship), never on hover. Hover state shows only the standard button hover treatment — no Seal foreshadowing. *(Cut 2026-04-28 — Rams + Kare convergence: "a seal that draws in anticipation is theatre.")*
 - **Modify:** Ghost button. 44px tall, transparent with `border-strong` 1px, ink text. 14px Inter 500. 120px wide. Keyboard shortcut `m`.
 - **Reject:** Ghost with red text. 44px tall, transparent with red border at 24% opacity. `score-critical` text. 14px Inter 500. 120px wide. Keyboard shortcut `r`.
 - **Add note:** Text-link below buttons, 13px Inter ink-3. Keyboard shortcut `n`. Opens the Margin Note inline editor (see A6).
@@ -781,6 +781,22 @@ When two seats on Yossi's agency tier open the same item simultaneously:
 
 ---
 
+## A9. Brief binding line (F31)
+
+Anchored to the bottom of /inbox, 24px above the page chrome footer:
+
+- 13px Fraunces 300 italic
+- Color: --color-ink-3 (muted)
+- Centered, max-width 720px
+- Pattern: "{Brief clause text in italic} — clause N of M · Edit Brief →"
+- Rotates daily through the 4 Brief clauses (deterministic by date + customer ID)
+- Silent furniture, NOT a notification — no animation on page-load, no badge, no hover state beyond the standard Edit Brief link
+- The customer perceives this as ambient — a constant, restrained reminder that the work is in service of the document they signed
+
+*(Added 2026-04-28 per Ive's ambient-brand binding + CEO synthesis F31. Same spec as /home and /workspace.)*
+
+---
+
 # PART B — `/workspace` — the agent-at-work surface
 
 ## B1. The page job
@@ -875,11 +891,7 @@ Below the header, the courier flow runs down the page. It is the page's primary 
   - Active: hollow with a pulsing brand-blue stroke (`motion/ring-pulse`, 1200ms infinite)
   - Pending: hollow with 30% opacity, dashed (3px dash, 2px gap)
 - **Step name:** 14px Inter 500 ink (active), ink-3 (completed), ink-4 30% (pending). 24px to the right of the step circle.
-- **Substep microcopy (active step only):** 13px Inter 400 ink-3, rotating every 800ms with a 200ms cross-fade (`motion/microcopy-rotate`, per Master Designer 2.3). Examples on the active step:
-  - "Asking Perplexity 4 sample questions…" (1.5s)
-  - "Got it." (800ms)
-  - "Reading the answer…" (1.5s)
-  - "Cross-referencing with Truth File…" (1.5s)
+- **Substep microcopy (active step only):** Each step shows ONE static sentence: the step's verb-noun summary or the static label "Working." No rotation, no cross-fade. *(Cut 2026-04-28: motion/microcopy-rotate removed per Rams — "personality dressed as feedback.")*
 - **Step duration:** 13px Geist Mono ink-4, right-aligned (e.g., "8s") on completed steps. Active step shows the live elapsed counter ("Step 3 · 12s and counting"). Pending steps show no duration.
 
 ### Output panel (right of completed and active steps)
@@ -942,77 +954,37 @@ The 144px vertical step gap is intentional — it accommodates the active-step s
 
 ---
 
-## B3. The agent-walking animation — Adam's specific vision
+## B3. Execution-as-narration column (replaces walking figure 2026-04-28)
 
-This is the page's defining moment. Adam's stated vision: *"Pencil drawing of an agent like a team member walking around with tools — researching, asking model, remembering."* This section translates that vision into a precise spec.
+Adam's prior directive ("agent like a team member walking around with tools") is implemented via a narration column rather than a walking figure. The narration honors the spirit (visible, attributed, real-time agents at work) at multi-agent parallelism, mobile, and accessibility scale that the walking figure could not.
 
-### The figure
+### Layout
 
-A small (~80×80px) hand-drawn character. Rough.js linework, low fps (8–12 fps), giving it a hand-drawn animation feel like Claude.ai's loading state.
+- Right side of /workspace, 320px wide narration column (replacing prior inspector during execution)
+- Each agent run that starts pushes a new sentence to the column
+- Sentence pattern: "{AgentName} is {verb} {object}. {duration}s." (e.g., "Schema Doctor is reading /pricing for FAQPage schema. 2.3s.")
+- 18px Inter 400 sentences, 12px gap between sentences
+- Active sentences are --color-ink; completed (>30s ago) fade to --color-ink-2 → --color-ink-3 over the next 10 minutes
+- Geist Mono duration counter on each sentence updates in real-time (Supabase Realtime channel — agent_run_state)
+- When an agent fails, sentence rewrites: "Schema Doctor encountered: {error in plain English}. Rolled back. 4.7s."
 
-**Anatomy:**
-- A simple *monogram-shaped body* (NOT a mascot face — this is critical per Adam's `2026-04-25 Beamie deferred`). The body is the agent's color (per the 11-agent palette in Master Designer 1.6) drawn as a 32×40px rough oval with two thin legs and two thin arms.
-- A small head (16×16) — a hand-drawn circle in ink, with **no facial features** (no eyes, no mouth). The figure is genderless, faceless, role-only. This is intentional: faces invite anthropomorphism we are not designing for. A monogram is recognizable; a face is a character.
-- The figure carries **a small toolbelt** — a 1px Rough.js horizontal line at waist height with hand-drawn tool icons hanging off it.
+The execution becomes narration. Plain English. No emoji-prop sprites. No gait animation. The work is what is visible.
 
-**The tools (~16×16 each, sketched in Rough.js):**
-- 🔍 **Magnifying glass** — used during *Read* steps (reading the customer's site, reading a Truth File entry)
-- 📖 **Book** — used during *Reference* steps (consulting House Memory, citing the Brief)
-- 🔧 **Wrench** — used during *Apply* steps (writing schema, drafting FAQs)
-- ✉ **Letter** — used during *Communicate* steps (preparing the inbox item, sending a notification)
-- ⚡ **Spark/lightbulb** — used during *Think* steps (asking the model, reasoning)
+### Multi-agent parallelism
 
-The toolbelt holds 2-3 tools at any time; the figure swaps tools as it moves through steps. The swap is animated: 200ms cross-fade between tool sprites.
+Sentences stack. Five agents running = five sentences. The customer reads the column top-to-bottom and understands the parallel reality.
 
-### The walking motion
+### Mobile
 
-The figure walks down the courier line, pausing at each step. Locomotion:
+Mobile (375px): narration column collapses to bottom-sheet showing 3 most-recent sentences with "View all →" link.
 
-- **Walking gait:** 8 fps (a deliberately slow frame rate for the hand-drawn feel). 4 frames per gait cycle: contact-left, mid-stride-left, contact-right, mid-stride-right. Each gait cycle covers ~24px of vertical travel.
-- **Speed:** ~1px per 100ms while walking (so a 144px gap between steps takes ~14 seconds of *walking time*). But the figure rarely walks for that long — it pauses at each step to *use a tool*.
-- **Tool-use pause:** When the figure arrives at the active step, it stops and animates a tool-use gesture for the duration of the step. Three gesture types:
-  - **Reading gesture:** holds magnifying glass to "head" (scaled up 1.1×), bobs up and down 4px, 1200ms cycle, 4 frames.
-  - **Writing gesture:** holds wrench/letter forward, makes small "scribble" motion (rotating wrist 8 degrees back and forth), 800ms cycle, 4 frames.
-  - **Thinking gesture:** holds lightbulb above head, lightbulb pulses (Rough.js stroke fades 60% → 100%), figure stands still, 1500ms cycle.
-- **Step-to-step transition:** when a step completes, the figure walks down to the next step. ~14s walk for 144px gap, but this happens *only when the next step is genuinely starting*. Between steps that complete instantly, the figure jumps with a 200ms ease-out translate-y (no walking — it would be too slow).
+### Accessibility
 
-### Frame rate philosophy
+Each new sentence is announced via aria-live="polite" — screen readers narrate exactly what's visible.
 
-The 8–12fps choice is deliberate. Higher fps (60fps) makes the figure look like a polished cartoon; lower fps (8fps) makes it look like a sketchbook flip-book. Adam's vision is the latter (per the comparison to Claude.ai's loading state).
+### Cut rationale
 
-Implementation: pre-rendered 4-frame Rough.js sprite sheets per gesture, served as PNG sprites. The Rough.js seed is locked per agent (so Citation Fixer's figure looks identifiably itself across runs). On each animation tick, the next frame is shown for 125ms (8fps).
-
-### Loop vs. once-per-task
-
-The figure does NOT loop infinitely. It walks the journey *once*, in real time with the agent's actual progress. When the agent completes step 3, the figure walks to step 4. When the run finishes, the figure stands at the bottom of the journey (see B4). This is the design.
-
-If the run takes 90 seconds, the figure walks for 90 seconds. If the run takes 8 minutes, the figure walks for 8 minutes (with long tool-use pauses at steps that take time). The figure is *coupled to the runtime*, not decorative.
-
-### Position on the page
-
-The figure floats. CSS:
-- `position: fixed` while the customer is on `/workspace` (so it stays visible as the customer scrolls).
-- `left: 240px` (40px to the left of the courier line, so the figure walks alongside the line, not on it).
-- `top` is updated in JavaScript every 100ms based on its current step position. When the figure is between steps, `top` interpolates linearly.
-- z-index: above the page background, below the topbar.
-
-**Scroll behavior:** when the customer scrolls the page, the figure stays attached to its step (moving with the page content), not to the viewport. So if the customer scrolls past the figure, the figure scrolls off-screen. The exception: the customer can press `f` to "follow the figure" — the page auto-scrolls to keep the active step in the center of the viewport.
-
-### Reduced-motion fallback
-
-When `prefers-reduced-motion: reduce`:
-- The figure is **static at the active step**. No walking. No gait animation.
-- The tools change as steps change (200ms opacity fade between tool sprites — a reduced-motion-acceptable transition).
-- The body and head remain visible.
-- The figure is still part of the page — the meaning ("an agent is at this step") is preserved; only the locomotion is removed.
-
-### Why this is the right level of motion
-
-The figure is the *signature animation* of the product. It is what someone shows their friend ("look at this thing — there's a tiny pencil-drawn agent walking down the page"). It is also what makes a 90-second runtime feel *purposeful*: the customer sees the agent at step 3, holding a magnifying glass, "reading" — and the substep text confirms what they're seeing ("Asking Perplexity 4 sample questions").
-
-It is what no competitor will ship. Profound shows a status bar. Otterly shows a log. Beamix shows a *team member at work*. That is the visual register Adam asked for.
-
-**Performance budget:** the entire animation system (sprite sheets + scroll tracking + tool transitions) must fit in <60kb gzipped JS + <80kb of sprite assets. This is enforceable in CI per Master Designer Section 6 to Seat 3.
+*(The prior 80×80px hand-drawn walking figure with toolbelt sprite sheets, 8fps gait animation, follow-figure auto-scroll, and per-agent tool gestures is **CUT 2026-04-28** per CEO synthesis #33 — Tufte: "decorative theatre"; Ive: "the execution becomes narration." The narration honors Adam's vision (agents-at-work visible, attributed, real) at parallelism + mobile + a11y scale the walking figure could not. Costs ~3 days less than building the gait animation.)*
 
 ---
 
@@ -1219,6 +1191,22 @@ If the cancellation was due to red-state review-debt pause: "*Beamix paused this
 If the customer's session expires while watching `/workspace`:
 - The page locks (overlay appears with "*Sign in to keep watching*").
 - After sign-in, the page resumes from the current run state. No data is lost.
+
+---
+
+## B8. Brief binding line (F31)
+
+Anchored to the bottom of /workspace, 24px above the page chrome footer:
+
+- 13px Fraunces 300 italic
+- Color: --color-ink-3 (muted)
+- Centered, max-width 720px
+- Pattern: "{Brief clause text in italic} — clause N of M · Edit Brief →"
+- Rotates daily through the 4 Brief clauses (deterministic by date + customer ID)
+- Silent furniture, NOT a notification — no animation on page-load, no badge, no hover state beyond the standard Edit Brief link
+- The customer perceives this as ambient — a constant, restrained reminder that the work is in service of the document they signed
+
+*(Added 2026-04-28 per Ive's ambient-brand binding + CEO synthesis F31. Same spec as /home and /inbox.)*
 
 ---
 
