@@ -509,25 +509,28 @@ See §4 Architecture Overview for full phase-by-phase spec.
 
 ### Feature 4: Pre-publication validation + review-debt counter
 
-*(Spec unchanged from v4. Amendment below.)*
+**What it does:** Before any agent publishes any content or schema change, a validation step runs through a separate validator service. Five mandatory rules: (1) Claim verification against Truth File, (2) Brand Voice Fingerprint match, (3) Prohibited-term check, (4) Vertical-specific rules, (5) Sensitive-topic classifier. Validator binding uses a cryptographic signed token (60s TTL, bound to draft hash). Even on Full-auto mode, `uncertain` outcome → /inbox. No `ctx.publish()` escape exists.
 
-**What it does:** Before any agent publishes, a validation step runs through a separate validator service. Five mandatory rules: (1) Claim verification against Truth File, (2) Brand Voice Fingerprint match, (3) Prohibited-term check, (4) Vertical-specific rules, (5) Sensitive-topic classifier. Validator binding uses a cryptographic signed token (60s TTL, bound to draft hash). Even on Full-auto mode, `uncertain` outcome → /inbox.
+**Acceptance criteria:**
+- [ ] Every agent action producing customer-facing content routes through `ctx.validate(draft)` BEFORE `ctx.propose()` — no exceptions
+- [ ] Validator is a separate server process. Agents have no direct write access to L4 site integration.
+- [ ] `validate()` returns a signed token (60s TTL). `propose()` requires this token. Hash mismatch = propose rejected.
+- [ ] First-party agents run against the same validator sandbox as future third-party agents — no privileged bypass
+- [ ] `uncertain` validation outcome routes to /inbox regardless of customer's autonomy setting
+- [ ] Validator unavailable for >15 minutes → all publishing suspended → /inbox banner "Beamix is in safe mode"
+- [ ] Brand Voice Fingerprint computed at onboarding from customer's existing site. Cosine threshold: 0.85 for content, 0.75 for schema/FAQ.
+- [ ] Auto-revise: validator calls `ctx.revise(draft, failures)` once. If revised draft passes, propose. If not, hard block.
+- [ ] Validation failure reason shown to customer in plain English
+- [ ] Review-debt counter visible at top of /inbox and in /home "Inbox pointer line"
+- [ ] Per-agent autonomy levels: Always ask (default) / Ask for new types, auto-approve repeats (after 10 approvals) / Full-auto with weekly summary (after 30 approvals in a category)
+- [ ] All 5 validator rules run on every propose — no partial validation
+
+**Dependencies:** Truth File (F3), Brand Voice Fingerprint system, /inbox surface (F6)
 
 **Amendment v5 (2026-05-04) — Billing placement:**
 Pre-publication validation runs only for Paid Customers. Free Accounts (post-Brief, pre-Paddle) do not trigger agent runs and therefore do not reach the validator. The validator's relationship to Paddle is: `subscription.status = 'active'` is checked before any agent job dispatch. Free Account state means `subscription.status = 'free_account'` (no Paddle subscription yet) — agent dispatch is blocked.
 
-**Acceptance criteria:**
-- [ ] Every agent action producing customer-facing content routes through `ctx.validate(draft)` BEFORE `ctx.propose()`
-- [ ] Validator is a separate server process. Agents have no direct write access to L4 site integration.
-- [ ] `validate()` returns a signed token (60s TTL). `propose()` requires this token. Hash mismatch = propose rejected.
-- [ ] First-party agents run against the same validator sandbox as future third-party agents
-- [ ] `uncertain` validation outcome routes to /inbox regardless of customer's autonomy setting
-- [ ] Validator unavailable for >15 minutes → all publishing suspended → /inbox banner "Beamix is in safe mode"
-- [ ] Brand Voice Fingerprint computed at onboarding. Cosine threshold: 0.85 for content, 0.75 for schema/FAQ.
-- [ ] Auto-revise: validator calls `ctx.revise(draft, failures)` once. If revised draft passes, propose. If not, hard block.
-- [ ] Validation failure reason shown to customer in plain English
-- [ ] Review-debt counter visible at top of /inbox and in /home "Inbox pointer line"
-- [ ] Per-agent autonomy levels: Always ask / Ask for new types auto-approve repeats (after 10) / Full-auto with weekly summary (after 30)
+**Amendment acceptance criteria (added in v5):**
 - [ ] Agent dispatch blocked if `subscription.status` is `'free_account'` — no validator calls for Free Account state
 
 **Priority: MVP**
@@ -536,40 +539,62 @@ Pre-publication validation runs only for Paid Customers. Free Accounts (post-Bri
 
 ### Feature 5: /home — the daily destination
 
-*(Spec unchanged from v4. Amendment below for Free Account state.)*
-
 **What it does:** Primary product surface. 8 locked sections in vertical scroll.
 
-**Tier badge canonical strings (no variation):**
+**Tier badge canonical strings (no variation, no other wording):**
 - **Discover:** "Discover · 3 engines · 4 agents"
 - **Build:** "Build · 6 engines · 6 agents"
 - **Scale:** "Scale · 11 engines · 6 agents (+ 12 locked)"
 
 **Section breakdown:**
-1. **Hero score block** — AI visibility score (0–100) with Activity Ring, 12-week sparkline (full state at t=0), delta vs last week, 1-line plain-English diagnosis
+1. **Hero score block** — AI visibility score (0–100) with Activity Ring, 12-week sparkline (rendered at full state at t=0, no path-draw entrance — Board 2 lock), delta vs last week, 1-line plain-English diagnosis
 2. **Top 3 fixes ready** — RecommendationCards, "Run all — N credits" CTA
 3. **Inbox pointer line** — count of items awaiting review. When zero: "Nothing needs your attention."
 4. **KPI cards row** — Mentions / Citations / Credits used / Top competitor delta
 5. **Score trend chart** — 12-week line, hover tooltips. No path-draw entrance animation.
 6. **Per-engine performance strip** — engine pills (3 for Discover / 11 for Build+)
-7. **Recent activity feed** — last 8 events
+7. **Recent activity feed** — last 8 events (agent names used here)
 8. **What's coming up footer** — next scheduled scan, next digest send, next billing date
+
+**New elements on /home (Board 2 additions):**
+- **Cycle-Close Bell** (F23): fires once per weekly cycle completion
+- **Receipt-That-Prints card** (F25): appears above Evidence Strip on Monthly Update generation day
+- **Brief binding line** (F31): 13px Fraunces 300 italic, ink-3, centered, anchored 24px above page footer chrome
+
+**Activity Ring (Board 2 re-spec):**
+- Renders at full geometry at t=0. No 1500ms ring-draw entrance animation (Board 2 lock).
+- Ring stays still when agents are acting — TopbarStatus dot is the "agent acting" signal. `motion/ring-pulse` cut entirely (Board 2 lock).
+- `motion/score-fill` cut on returning sessions. First-scan-ever keeps count-up moment. Subsequent visits: score renders at final value at t=0.
+
+**Margin column:** Cut from /home Receipts. The Margin (typographic edge) survives only on artifact surfaces (Monthly Update PDF, Monday Digest header strip) with temporal decay: full opacity current week, 20% prior month, 6% archived.
+
+**Changes from v2:**
+- Ring entrance animation cut (Board 2 lock)
+- ring-pulse motion token cut (Board 2 lock)
+- score-fill on returning sessions cut (Board 2 lock)
+- Sparkline path-draw entrance cut — renders at full state at t=0
+- Margin column cut from Receipts
+- Cycle-Close Bell (F23), Receipt-That-Prints (F25), Brief binding line (F31) added
+
+**Acceptance criteria:**
+- [ ] Tier badge renders exact canonical string — no other wording
+- [ ] Activity Ring renders at full geometry at t=0 — no ring-draw entrance animation, no ring-pulse
+- [ ] Score renders at final value at t=0 on returning sessions. count-up preserved for first-scan-ever only.
+- [ ] Score sparkline renders at full state at t=0 on all loads (no path-draw entrance animation)
+- [ ] Lead Attribution empty state is vertical-aware: SaaS = UTM-first copy. E-comm = Twilio-first copy.
+- [ ] Margin column absent from home Receipts/activity feed rows
+- [ ] Cycle-Close Bell fires per F23 specification on cycle completion
+- [ ] Receipt-That-Prints card renders per F25 specification on Monthly Update generation day
+- [ ] Brief binding line present per F31 specification — 13px Fraunces 300 italic, ink-3, centered, anchored 24px above footer chrome
+- [ ] Page loads in <2s LCP on desktop, <3.5s on mobile
+- [ ] Bottom mobile nav: /home · /inbox · /scans · /crew
+
+**Dependencies:** Scan engine, agent system, Lead Attribution Loop (F12), Activity Ring, Rough.js, F23, F25, F31
 
 **Amendment v5 (2026-05-04) — Free Account state on /home:**
 When customer is in Free Account state (post-Brief, pre-Paddle), /home renders with sample data per F52. A persistent banner appears at the top of /home: "Beamix is ready — activate your agents to start improving your AI visibility." With a prominent "Activate agents →" CTA that opens the Paddle inline modal. The Activate banner uses a distinct token treatment (see Design System Canon §11). Real scan data (score, cartogram, per-engine strip) is shown using actual scan results from Phase 1–2. Agent activity feed and /inbox items are populated with sample data (marked with a subtle "Sample" label visible only to the Free Account customer, not on shared artifacts).
 
-**Acceptance criteria:**
-- [ ] Tier badge renders exact canonical string
-- [ ] Activity Ring renders at full geometry at t=0 — no ring-draw entrance animation
-- [ ] Score renders at final value at t=0 on returning sessions. count-up preserved for first-scan-ever only.
-- [ ] Score sparkline renders at full state at t=0
-- [ ] Lead Attribution empty state is vertical-aware
-- [ ] Margin column absent from home Receipts/activity feed rows
-- [ ] Cycle-Close Bell fires per F23 specification
-- [ ] Receipt-That-Prints card renders per F25 specification
-- [ ] Brief binding line present per F31 specification — 13px Fraunces 300 italic, ink-3, centered, anchored 24px above footer chrome
-- [ ] Page loads in <2s LCP on desktop, <3.5s on mobile
-- [ ] Bottom mobile nav: /home · /inbox · /scans · /crew
+**Amendment acceptance criteria (added in v5):**
 - [ ] Free Account banner: "Beamix is ready — activate your agents to start improving your AI visibility." with "Activate agents →" CTA
 - [ ] Free Account banner absent for Paid Customers
 - [ ] Free Account /home shows real scan data (actual score, real per-engine results)
@@ -581,24 +606,28 @@ When customer is in Free Account state (post-Brief, pre-Paddle), /home renders w
 
 ### Feature 6: /inbox — consent surface
 
-*(Spec unchanged from v4.)*
+**What it does:** 3-pane Linear-pattern review queue. Left rail: filters (by agent, source, priority). Center: item list with J/K keyboard navigation and multi-select. Right: content preview with sticky ActionBar (Approve `A` / Reject `X` / Request Changes `R`). Tabs: Pending (default) / Drafts / Live. Max-width: **1280px**.
 
-**What it does:** 3-pane Linear-pattern review queue. Left rail: filters. Center: item list with J/K navigation and multi-select. Right: content preview with sticky ActionBar (Approve `A` / Reject `X` / Request Changes `R`). Tabs: Pending / Drafts / Live. Max-width: 1280px.
+**Seal on approval (Board 2 re-spec):** Seal-draw fires on single-item approval (click, NOT hover). Foreshadowing-on-hover cut entirely. Bulk-approve does NOT trigger Seal-draw animation.
+
+**Brief grounding citation (F30):** Every item in /inbox row detail shows the authorizing Brief clause citation inline. See F30 for specification.
 
 **Acceptance criteria:**
 - [ ] Max-width of /inbox is 1280px
-- [ ] J/K keyboard navigation works through item list
-- [ ] Shift-click selects a range. Cmd+A selects all visible items in current filter view.
-- [ ] "Approve N items" button on multi-select. Bulk-approve does NOT trigger Seal-draw animation.
-- [ ] Seal-draw fires on individual approval click ONLY — never on hover
+- [ ] J/K keyboard navigation works through item list without mouse
+- [ ] Shift-click selects a range of items. Cmd+A selects all visible items in current filter view.
+- [ ] When items selected: "Approve N items" button appears. Bulk-approve does NOT trigger Seal-draw animation.
+- [ ] Seal-draw fires on individual approval click ONLY — never on hover over approve button (Board 2 lock)
 - [ ] Brief grounding citation visible in /inbox row detail per F30 specification
 - [ ] Review-debt counter visible at top of inbox and echoed on /home
 - [ ] Each item shows: agent name, action type, before/after diff, Truth File references, provenance envelope fields
-- [ ] "Request Changes" opens plain-text note field
-- [ ] Empty state: Rough.js illustration + "Inbox zero. Beamix is working."
-- [ ] Cross-client bulk-approve: NOT in MVP (deferred to MVP-1.5)
+- [ ] "Request Changes" opens plain-text note field — agent re-runs with note as context
+- [ ] Empty state: Rough.js hand-drawn illustration + "Inbox zero. Beamix is working."
+- [ ] Cross-client bulk-approve: NOT in MVP, explicitly deferred to MVP-1.5
 - [ ] Brief binding line present per F31 specification
 - [ ] Sample /inbox items (F52) marked "Sample" visible to Free Account customer in appropriate treatment
+
+**Dependencies:** Agent system, pre-publication validation (F4), Seal component (re-curved), Rough.js, F30, F31
 
 **Priority: MVP**
 
@@ -606,31 +635,37 @@ When customer is in Free Account state (post-Brief, pre-Paddle), /home renders w
 
 ### Feature 7: MVP agent roster (6 agents)
 
-*(Spec unchanged from v4.)*
+**Voice Canon Rule (all agents):** Agents are named on in-product surfaces (/home, /crew, /workspace, /inbox row attribution). "Beamix" is used on all external surfaces (emails, PDFs, Monthly Update permalinks, OG cards). Onboarding seal signs "— Beamix." No agent names appear in emails or PDFs. This is Model B — non-negotiable.
 
-**Voice Canon Rule (all agents):** Agents named on in-product surfaces (/home, /crew, /workspace, /inbox). "Beamix" on all external surfaces. Onboarding seal signs "— Beamix." No agent names in emails or PDFs. Model B — non-negotiable.
+**Deterministic seed-per-agent (Board 2 lock):** Each agent's Rough.js monogram uses `seed(agentUuid) → path`. The same fingerprint recurs across every surface (monogram, PDF, OG card, email header). The seed-to-path function is brand canon, not codebase — changing it across versions is forbidden in the same way changing the Apple logo is forbidden. See Design Lock E in §3.
 
-**Deterministic seed-per-agent:** Each agent's Rough.js monogram uses `seed(agentUuid) → path`. Same fingerprint across all surfaces for the agent's lifetime.
+---
 
 #### Agent 1 — Schema Doctor (MVP)
-Audits and repairs JSON-LD structured data. Generates `llms.txt` manifest. SaaS: SoftwareApplication schema. E-commerce: Product + Offer schema.
+Audits and repairs JSON-LD structured data (Organization, Product, FAQ, Service, BreadcrumbList). Generates `llms.txt` manifest. SaaS: generates SoftwareApplication schema. E-commerce: generates Product + Offer schema. Every change goes through /inbox for approval.
 
 #### Agent 2 — Citation Fixer (MVP)
-Identifies 3–5 pages most likely to be cited by AI engines. Adds quotable-passage blocks.
+Identifies 3–5 pages most likely to be cited by AI engines. Adds quotable-passage blocks optimized for citation grammar. Surgical additions only. Every addition goes through /inbox.
 
 #### Agent 3 — FAQ Agent (MVP)
-Generates 8–12 FAQ entries per customer based on vertical KG query patterns and Truth File.
+Generates 8–12 FAQ entries per customer based on vertical KG query patterns, Truth File, and multi-turn AI engine query analysis. Generates voice-search variants as secondary output.
 
 #### Agent 4 — Competitor Watch (MVP, gated at Build+ tier)
-Monitors citation patterns of up to 5 competitors across all 11 engines.
+Monitors citation patterns of up to 5 competitors across all 11 engines. Surfaces: when a competitor gains share, why, and what the customer can do about it. Gated at Build ($189) and Scale ($499).
 
 #### Agent 5 — Trust File Auditor (MVP)
-Weekly consistency checks. Catches hallucinations. Surfaces conflicts to /inbox only when discrepancy found.
+Runs weekly consistency checks. Catches hallucinations. Surfaces conflicts to /inbox only when discrepancy found.
 
 #### Agent 6 — Reporter (MVP)
-Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix."
+Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix." See F14 and F22, F25, F28 for artifact additions from Board 2.
 
-**Agents deferred:** Brand Voice Guard, Long-form Authority Builder (MVP-1.5). Content Refresher, Trend Spotter, Citation Predictor, Local SEO Specialist (Year 1).
+---
+
+**Agents deferred (not in MVP):**
+- Brand Voice Guard — MVP-1.5
+- Long-form Authority Builder — MVP-1.5
+- Content Refresher, Trend Spotter, Citation Predictor, Local SEO Specialist — Year 1
+- Voice AI Optimizer, Visual/Multimodal Optimizer, Agent-Mediated Browsing Specialist, Reputation Defender, Industry KG Curator — Year 1 or later
 
 **Priority: MVP**
 
@@ -638,21 +673,28 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 
 ### Feature 8: /workspace — agent execution viewer
 
-*(Spec unchanged from v4.)*
+**What it does:** Real-time agent execution view. Vertical step list with live status, streaming output per step, agent tool usage. Linked from /home activity feed when agent is active.
 
-**What it does:** Real-time agent execution view. Vertical step list with live status. Execution-as-narration column replaces walking figure (Board 2 lock).
+**Board 2 change — execution-as-narration replaces walking figure:** The courier-flow walking figure animation is cut (Tufte: decorative theatre). Replaced with an execution-as-narration column: while a node executes, a plain-English sentence pushes to a reading column on the right side, replacing the inspector temporarily. Example: *"Schema Doctor is reading /pricing for FAQPage schema. 2.3 seconds."* The execution becomes narration. Honors the spirit of "agents at work, visible, attributed, real" without the chartjunk problem.
+
+**Microcopy-rotate cut (Board 2):** `motion/microcopy-rotate` token cut. Replace with one static step-verb-noun summary per step ("Analyzing /pricing" — not a cross-fading carousel of substep labels).
+
+**Brief grounding citation (F30):** Every /workspace step output shows the authorizing Brief clause citation inline per F30 specification.
 
 **Acceptance criteria:**
 - [ ] /workspace accessible to all tiers including Discover
-- [ ] Step list subscribes to `agent:runs:{customer_id}` Supabase Realtime channel. Polls at 10s on fail.
-- [ ] Walking figure animation absent. Execution-as-narration column present.
-- [ ] Narration pushes one plain-English sentence per executing node.
+- [ ] Step list subscribes to `agent:runs:{customer_id}` Supabase Realtime channel. Falls back to 10s polling if connection fails.
+- [ ] Walking figure animation absent. Execution-as-narration column present on right side during active runs.
+- [ ] Narration column pushes one plain-English sentence per executing node. Returns to inspector display after node completes.
 - [ ] Each step shows: tool name, target URL or field, status, duration
 - [ ] Static step-verb-noun summary per step — no microcopy-rotate cross-fade carousel
-- [ ] Customer can view past /workspace sessions
-- [ ] Failed runs show which step failed, why, and rollback action taken
+- [ ] Customer can view past /workspace sessions (linked from /scans Completed Items)
+- [ ] Failed runs show which step failed, why in plain English, and rollback action taken
+- [ ] Agent name shown in /workspace header (in-product surface, Voice Canon Model B)
 - [ ] Brief grounding citation visible per F30 specification on step outputs
 - [ ] Brief binding line present per F31 specification
+
+**Dependencies:** Supabase Realtime, Inngest, F30, F31
 
 **Priority: MVP**
 
@@ -660,19 +702,28 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 
 ### Feature 9: /scans — historical record
 
-*(Spec unchanged from v4.)*
+**What it does:** Stripe-table-style scan history. 3 tabs: All Scans / Completed Items / Per-Engine. 4 work-attribute lenses as filter pills: Done / Found / Researched / Changed.
+
+**Board 2 changes:**
+- Margin column cut from /scans rows — recover 24px of horizontal real estate
+- Per-engine mini-sparklines on row expansion: cut gradient (single 1.5px brand-blue stroke, no fade from ink-4 to brand)
+- Engine micro-strip replaces 11 colored dots per row (56px-wide sparkbar showing 11 columns at 4px wide, column height 0–12px encoding engine delta)
+- AI Visibility Cartogram (F22) renders on /scans/[scan_id] detail page
 
 **Acceptance criteria:**
 - [ ] All Scans tab: reverse-chronological, last 90 days default
 - [ ] Completed Items tab: agent-completed actions with before/after state and "Rollback" button
-- [ ] Per-Engine tab: per-engine score history — single 1.5px brand-blue stroke, no gradient
-- [ ] 4 lens pills: Done / Found / Researched / Changed
+- [ ] Per-Engine tab: per-engine score history as sparklines for all 11 engines — single 1.5px brand-blue stroke, no gradient
+- [ ] 4 lens pills are action-tags (Done / Found / Researched / Changed)
 - [ ] Margin column absent from all /scans rows
-- [ ] Engine micro-strip (56px sparkbar) replaces 11 colored dots per row
-- [ ] "Share this scan" generates a public URL on demand (private by default)
+- [ ] Engine micro-strip (56px sparkbar, 11 columns, delta-encoded heights) replaces 11 colored dots per row
+- [ ] "Share this scan" generates a public URL on demand (private by default) using nanoid21 format
 - [ ] AI Visibility Cartogram renders on /scans/[scan_id] detail page per F22 specification
-- [ ] Each scan row links to the /workspace session for that scan
+- [ ] Each scan row links to the /workspace session for that scan (if available)
 - [ ] Brief binding line present per F31 specification
+- [ ] Brief grounding citation visible in Done lens row expansion per F30 specification
+
+**Dependencies:** Scan engine, F22, F30, F31
 
 **Priority: MVP**
 
@@ -680,17 +731,24 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 
 ### Feature 10: /competitors — intelligence surface
 
-*(Spec unchanged from v4.)*
+**What it does:** Competitor citation dashboard. Table with Rivalry Strip on row click.
+
+**Board 2 changes:**
+- Margin column cut from /competitors rows
+- Rivalry Strip dual-sparkline: 80ms stagger cut. Both lines render simultaneously, instantly, static. No path-draw entrance animation.
+- Per-engine gradient cut on sparklines — single 1.5px brand-blue for customer, ink-2 at 40% for competitor
 
 **Acceptance criteria:**
-- [ ] Table shows up to 10 competitors
+- [ ] Table shows up to 10 competitors (5 vertical-KG-pre-populated + up to 5 customer-added)
 - [ ] Rivalry Strip opens as right-side panel on row click
-- [ ] Rivalry Strip dual-sparkline: both lines render simultaneously at t=0, no stagger, no path-draw
-- [ ] Customer sparkline: 1.5px brand-blue. Competitor sparkline: ink-2 at 40%.
-- [ ] Margin column absent
-- [ ] Gated at Build ($189) and Scale ($499) — Discover sees blurred Rivalry Strip + upgrade CTA
+- [ ] Rivalry Strip dual-sparkline: both lines render simultaneously at t=0 with no stagger and no path-draw animation
+- [ ] Customer sparkline: 1.5px brand-blue. Competitor sparkline: ink-2 at 40%. No color gradient on either.
+- [ ] Margin column absent from all /competitors rows
+- [ ] Gated at Build ($189) and Scale ($499) — Discover sees competitor table with blurred Rivalry Strip and upgrade CTA
 - [ ] Pre-populated competitors display "Beamix detected" badge
 - [ ] Brief binding line present per F31 specification
+
+**Dependencies:** Scan engine, Competitor Watch agent (F7)
 
 **Priority: MVP (gated at Build+)**
 
@@ -698,18 +756,28 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 
 ### Feature 11: /crew — power-user customization
 
-*(Spec unchanged from v4.)*
+**What it does:** The 6 MVP agents displayed as a Stripe-style table. Monogram column: 16×16 deterministic-seed Rough.js mark per agent (seed from agent UUID — Board 2 lock). Size-conditional rendering: under 16px = color disc only; 16–32px = 2-letter monogram; above 48px = 2-letter + name label below.
+
+**2-letter monograms locked (Board 2):** SD (Schema Doctor), CF (Citation Fixer), FA (FAQ Agent), CW (Competitor Watch), TFA (Trust File Auditor → TF), RP (Reporter). InterDisplay 500 caps. Below 16px: color disc only.
+
+**18 agent colors locked before MVP launch** (test at 12px on cream paper for discrimination; document in design system as canon).
+
+**Yearbook framing:** Preserved only in ceremonial states: (1) empty/first-load animation and (2) per-agent profile pages at `/crew/[agent-id]`.
 
 **Acceptance criteria:**
 - [ ] Default rendering is Stripe-style table: Agent / State / This week / Last action / Success rate
-- [ ] Monogram column shows 16×16 deterministic-seed Rough.js mark per agent
-- [ ] 2-letter monograms: SD, CF, FA, CW, TF, RP
-- [ ] Size-conditional rendering: <16px = color disc; 16–32px = 2-letter monogram; >48px = 2-letter + name
-- [ ] 18 agent colors locked and tested at 12px on cream paper before MVP launch
-- [ ] Row-expand shows: autonomy level selector, custom instructions (500-char), schedule override, manual trigger, last 10 actions
-- [ ] 6 active agent rows + 5 "Coming soon" rows
-- [ ] Scale customers see `+ New Workflow` button (F19). Build sees button but clicking opens upgrade modal.
+- [ ] Monogram column shows 16×16 deterministic-seed Rough.js mark per agent (seed = agent UUID). Same fingerprint across all surfaces.
+- [ ] 2-letter monograms: SD, CF, FA, CW, TF, RP (or confirmed set before launch). InterDisplay 500 caps.
+- [ ] Size-conditional rendering: <16px = color disc only; 16–32px = 2-letter monogram; >48px = 2-letter + name label
+- [ ] 18 agent colors locked and tested at 12px on cream paper before MVP launch. Documented in design system.
+- [ ] Row-expand shows: autonomy level selector, custom instructions (500-char), schedule override, manual trigger, last 10 actions, first-person blurb
+- [ ] 6 active agent rows + 5 "Coming soon Q3 2026" rows below (lighter ink, no clickable actions)
+- [ ] Per-agent autonomy level is independent per agent and per client
+- [ ] Scale customers see `+ New Workflow` button (F19). Build customers see button but clicking opens upgrade modal.
+- [ ] /crew accessible from mobile bottom nav as 4th item
 - [ ] Brief binding line present per F31 specification
+
+**Dependencies:** Deterministic seed-per-agent system (Tier 0 item 7), F19, F31
 
 **Priority: MVP**
 
@@ -717,12 +785,10 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 
 ### Feature 12: Lead Attribution Loop
 
-*(Spec unchanged from v4. Cross-reference: Twilio number provisioning trigger fires at Phase 9 Paddle checkout completion on /home — the paid-activation moment. Free Account customers do not receive Twilio numbers until Paddle checkout completes.)*
-
 **Acceptance criteria:**
-- [ ] Twilio number provisioned within 2 minutes of Paddle checkout completion (not Brief signing — Paid Customer state required)
+- [ ] Twilio number provisioned within 2 minutes of customer enabling Lead Attribution
 - [ ] UTM-tagged URL auto-generated and visible in /settings → Lead Attribution tab
-- [ ] Phase 5 (brief-co-author) shows UTM panel first for SaaS-classified customers, Twilio-first for e-commerce
+- [ ] Step 2 onboarding shows UTM panel first for SaaS-classified customers, Twilio-first for e-commerce
 - [ ] "Send to developer" button sends plaintext snippet within 60 seconds
 - [ ] 72-hour verification check: reminder email fires if neither Twilio nor UTM detected
 - [ ] All customer-facing copy says "calls + UTM-attributed clicks" — not "form submissions"
@@ -730,7 +796,12 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 - [ ] Monday Digest includes "this week: N attributed calls/clicks" line when data available
 - [ ] Monthly Update PDF includes lead-attribution headline as opening line
 - [ ] KPI card "Attributed Calls" in /home shows call count + delta
-- [ ] Day-14 evangelism email trigger: Day-14 measured from **Paddle checkout** (NOT signup, NOT Brief signed — per Q4/Q7 lock activation event redefinition). Fires only for customers who reached Paid Customer state and had ≥1 attribution event in their first 14 days post-checkout.
+
+**Dependencies:** Twilio, UTM tracking, Resend, Inngest
+
+**Amendment v5 (2026-05-04):** Twilio number provisioning trigger fires at Phase 9 Paddle checkout completion on /home — the paid-activation moment. Free Account customers do not receive Twilio numbers until Paddle checkout completes. AC "Twilio number provisioned within 2 minutes" applies from Paddle checkout (not Brief signing — Paid Customer state required).
+
+**Amendment v5 (2026-05-04) — P9 Day-14 anchor:** Day-14 evangelism email trigger: Day-14 measured from **Paddle checkout** (NOT signup, NOT Brief signed — per Q4/Q7 lock activation event redefinition). Fires only for customers who reached Paid Customer state and had ≥1 attribution event in their first 14 days post-checkout.
 
 **Priority: MVP**
 
@@ -738,9 +809,23 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 
 ### Feature 13: /settings
 
-*(Spec unchanged from v4.)*
+**What it does:** Settings with tabs. Per-client white-label config in multi-client switcher context.
 
-**Tabs:** Profile · Billing · Notifications · Business Facts (Truth File) · Lead Attribution · Brief · Phone numbers · Per-client white-label (Scale only) · Print operations summary · Privacy & Data
+**New in v3:**
+- "Print operations summary" sub-page added (F29)
+- Brief tab: includes "Regenerate Brief" and manual Brief editing flow (required for F24 quarterly re-reading)
+- Optional office address field (used for F26)
+
+**Tabs:**
+- **Profile:** name, email, domain
+- **Billing:** Paddle portal link, current tier, usage, top-up pack
+- **Notifications:** email preferences, digest frequency
+- **Business Facts (Truth File):** structured form editor, vertical-specific fields only
+- **Lead Attribution:** Twilio number, UTM URL, attribution settings, verification status
+- **Brief:** view + edit current Brief, re-generate option
+- **Phone numbers:** Twilio numbers across clients
+- **Per-client white-label (Scale only):** agency logo, brand color, email signature name, "Powered by Beamix" footer toggle
+- **Print operations summary:** new sub-page per F29
 
 **Acceptance criteria:**
 - [ ] Per-client white-label config accessible from client-switcher context
@@ -758,27 +843,33 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 
 ### Feature 14: Email infrastructure
 
-*(Spec unchanged from v4, with email count update.)*
+**What it does:** Three categories of email. Day 1-6 silence cadence. Monthly Update PDF.
 
-**What it does:** Three categories of email. Day 1-6 silence cadence. Monthly Update PDF. Day-N Free Account recovery sequence (F53 — new in v5, adds 3 email templates).
-
-**Template count: 15 (v4) → 18 (v5, adding 3 Free Account recovery emails per F53).**
+**Monthly Update PDF additions from Board 2:**
+- Page 2 is now the AI Visibility Cartogram (F22)
+- "What Beamix Did NOT Do" line added on Page 6 above closing Seal (F28)
+- Margin (typographic edge) survives on Monthly Update PDF with temporal decay (full opacity current week; 20% prior month; 6% archived)
 
 **Acceptance criteria:**
-- [ ] Day 0 T+10min welcome email fires within 15 minutes of Phase 8 completion (truth-file complete)
+- [ ] Day 0 T+10min welcome email fires within 15 minutes of onboarding completion
 - [ ] Day 2 email fires only when first /inbox item is created AND customer has not logged in that day
-- [ ] Day 4 email: weekend-skip rule applies
+- [ ] Day 4 email: weekend-skip rule applies (send on next Monday if Saturday/Sunday)
 - [ ] Day 5 email: only fires if Day 4 not opened AND customer has not logged in that day
-- [ ] Monday Digest delivers plain text. Subject: "Beamix · [date range]: [top metric]"
+- [ ] Monday Digest delivers plain text. Subject format: "Beamix · [date range]: [top metric]"
 - [ ] Monthly Update PDF Page 2 is AI Visibility Cartogram per F22 specification
 - [ ] Monthly Update PDF Page 6 includes "What Beamix Did NOT Do" line per F28 specification
-- [ ] Monthly Update PDF attachment included regardless of permalink privacy setting
-- [ ] Event-triggered attribution emails fire within 5 minutes
+- [ ] Margin on Monthly Update PDF uses temporal decay: full opacity for current week, 20% prior month, 6% archived
+- [ ] Monthly Update PDF attachment included in delivery email regardless of permalink privacy
+- [ ] Event-triggered attribution emails fire within 5 minutes of trigger event
 - [ ] All emails signed "— Beamix" (Voice Canon Model B)
-- [ ] "Powered by Beamix" Geist Mono 9pt footer in white-label emails
-- [ ] All emails include one-click unsubscribe
-- [ ] Day 1-6 cadence default-ON for weeks 1–4
+- [ ] "Powered by Beamix" Geist Mono 9pt footer in white-label emails (default ON, toggleable)
+- [ ] All emails include one-click unsubscribe (CAN-SPAM compliance)
+- [ ] Day 1-6 cadence default-ON for weeks 1–4. Opt-in after week 4.
 - [ ] 3 Free Account recovery email templates present per F53 specification
+
+**Dependencies:** Resend, Inngest, React-PDF, F22, F28
+
+**Amendment v5 (2026-05-04):** Email template count updated from 15 → 18 (added 3 Free Account recovery templates per F53). Updated again for F55 Pre-Brief Abandonment Recovery (3 more) and F56 Cookie Consent Banner (1 — for cookie revocation confirmation). Total Resend templates at MVP: ~22.
 
 **Priority: MVP**
 
@@ -786,16 +877,16 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 
 ### Feature 15: 11 text AI engine coverage
 
-*(Spec unchanged from v4.)*
+**Engine abbreviation corrections (Board 2):** "AI" → "AO" (Google AI Overviews). All 11 abbreviations rendered side-by-side at 11px before launch copy lock. Bing Copilot abbreviation: "MS" → "CP". ChatGPT: confirm "CG" vs "GP" at legibility audit.
 
 **Acceptance criteria:**
 - [ ] All 11 engines return citation data within 24 hours of scan trigger
 - [ ] Scan failures retried automatically within 2 hours
 - [ ] Citation envelope minimum fields: surface, query, brand_mentions, competitor_mentions, is_mentioned, citation_context
 - [ ] Per-engine score (0–100) calculated and displayed in /home per-engine strip
-- [ ] Discover tier: 3 engines. Remaining 8 locked/grayed with upgrade CTA.
+- [ ] Discover tier: 3 engines (ChatGPT, Perplexity, Google AI Overviews recommended). Remaining 8 locked/grayed with upgrade CTA.
 - [ ] Engine abbreviations: "AI" renamed "AO", all 11 tested at 11px before launch
-- [ ] Cost ceiling instrumentation per-account
+- [ ] Cost ceiling instrumentation per-account — required at MVP
 
 **Priority: MVP**
 
@@ -803,11 +894,11 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 
 ### Feature 16: 2 vertical knowledge graphs (SaaS + e-commerce)
 
-*(Spec unchanged from v4.)*
+*(No changes from v2.)*
 
 **Acceptance criteria:**
 - [ ] Domain detection classifies signups into SaaS or e-commerce with ≥80% accuracy
-- [ ] Competitor set pre-populated with 5 domain-specific competitors on first scan
+- [ ] Competitor set pre-populated with 5 domain-specific competitors from vertical KG on first scan
 - [ ] Brief template uses vertical-appropriate language
 - [ ] FAQ Agent generates vertical-specific questions
 - [ ] Schema Doctor emits correct schema type
@@ -816,17 +907,19 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 
 ---
 
-### Feature 17: Marketplace
+### Feature 17: Marketplace (re-spec without rewards)
 
-*(Spec unchanged from v4. Browse + install Beamix-curated workflows only at MVP. Workflow publishing defers to MVP-1.5.)*
+*(No changes from v2. Browse + install Beamix-curated workflows only at MVP. Workflow publishing defers to MVP-1.5.)*
 
 **Acceptance criteria:**
 - [ ] At least 4 Beamix-authored workflows at launch
 - [ ] Discover tier: full catalog visible, all install buttons show upgrade CTA
 - [ ] Build tier: install up to 3 workflows
 - [ ] Scale tier: unlimited installs
-- [ ] No leaderboards, no rev-share references
+- [ ] No leaderboards, no rev-share references, no grant references, no Hall of Fame
 - [ ] Workflow publishing by Scale users: NOT available at MVP
+
+**Amendment v5 (2026-05-04):** At MVP, Marketplace is read-only — customers can browse + install Beamix-curated workflows. Workflow publishing (customer-authored workflows shared publicly) defers to MVP-1.5.
 
 **Priority: MVP (constrained)**
 
@@ -834,16 +927,16 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 
 ### Feature 18: Incident runbook + rollback + Truth File integrity job
 
-*(Spec unchanged from v4.)*
+*(No changes from v2.)*
 
 **Acceptance criteria:**
 - [ ] Every agent-published action stores a revert payload at creation time
 - [ ] Customer can rollback any action from /scans → Completed Items with single "Rollback" button
-- [ ] Rollback completes within 60 seconds for content; within 5 minutes for schema
+- [ ] Rollback completes within 60 seconds for content changes; within 5 minutes for schema changes
 - [ ] Rollback confirmation email sent automatically
 - [ ] Internal incident runbook written pre-launch
-- [ ] Truth File integrity-hash nightly job: >50% field loss → Sev-1 alert + auto-pause all agents
-- [ ] Kill switch: one-click suspension of any marketplace workflow within 60 seconds
+- [ ] Truth File integrity-hash nightly job: >50% field loss in 24h → Sev-1 alert + auto-pause all agents + /inbox banner
+- [ ] Kill switch admin tool: one-click suspension of any marketplace workflow across all customers within 60 seconds
 
 **Priority: MVP (pre-launch requirement)**
 
@@ -1109,9 +1202,41 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 
 ### Feature 26: Print-Once-As-Gift — month 6
 
-*(Spec unchanged from v4. Explicitly Post-MVP.)*
+**What it does:** At the customer's month-6 anniversary, Beamix automatically sends a physical printed copy of the customer's most recent Monthly Update to their office. Heavyweight cream paper. Same Fraunces typesetting as the digital PDF. A real wax seal letterpressed on the cover (not Rough.js — actual letterpress). A Beamix bookmark inside: cream paper, single Fraunces line, dated. Cost: approximately $14 per customer (printing + shipping). Earns a tweet. Converts a customer into an evangelist. Apple did this with "Designed by Apple in California."
 
-**Priority: Post-MVP (month-6 milestone trigger)**
+**Trigger:** Customer account age reaches 6 months (180 days from `created_at`). Fires exactly once. Does not fire if no office address is on file.
+
+**Address collection:**
+- Optional field in onboarding Step 1 ("Office address for reports — optional")
+- Optional field surfaced in first cancel-flow attempt: "Before you go — would you like your Beamix report mailed to you? Add your address." This is not a dark pattern; it is an honest offer made once.
+- Address stored in `customer_profiles.office_address` (optional, customer can update in /settings → Profile)
+
+**Physical production:**
+- Printing vendor: print-on-demand with global fulfillment capability (Lulu, Blurb, or equivalent with API)
+- Paper: 60# cream stock or equivalent heavyweight cream
+- Cover: letterpress wax seal (not digital) — coordinate with letterpress vendor
+- Bookmark: cream paper card, Fraunces single line: "With regard — Beamix · [Month Year]"
+- Shipping: tracked. Customer receives tracking notification email (plain text, signed "— Beamix")
+- International shipping: supported if vendor has global fulfillment. If not available in customer's country: skip gracefully (no print sent, no error shown)
+
+**Why Post-MVP:** Trigger is inherently 6 months after customer creation — no customer will be eligible at MVP launch. Engineering pipeline (print-on-demand API integration) requires ~3pd but there is no urgency at MVP.
+
+**Acceptance criteria:**
+- [ ] Trigger fires on customer's 180-day anniversary if office address is on file
+- [ ] Does NOT fire if no address is on file — graceful skip, no error
+- [ ] Fires exactly once per customer (idempotent — `print_gifts_sent` boolean on customer_profiles)
+- [ ] Printing vendor receives correct content: most recent Monthly Update for that customer
+- [ ] Physical product includes: heavyweight cream paper, letterpress wax seal cover, Beamix bookmark
+- [ ] Customer receives tracking notification email within 24h of print order placed
+- [ ] Ships within 5 business days of print order
+- [ ] International: fires only if vendor has fulfillment coverage for customer's country
+- [ ] Address collected as optional field in onboarding Step 1 and in first cancel-flow attempt
+
+**Dependencies:** `customer_profiles.office_address` field (add to Tier 0 schema), print-on-demand vendor API (Lulu/Blurb or equivalent), Monthly Update PDF (F14), Inngest (month-6 trigger job)
+
+**Effort estimate:** ~$14/customer cost + ~3 person-days engineering (print API integration + Inngest trigger)
+
+**Priority: Post-MVP (month-6 milestone trigger — no customer eligible at launch)**
 
 ---
 
@@ -1289,7 +1414,36 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 
 ### Feature 32: Brief Re-author and Undo Window
 
-*(Spec unchanged from v4.)*
+**Feature ID:** F32
+**Surface:** /settings → Brief tab; onboarding post-Seal confirmation; /crew → per-client Brief tab (Yossi)
+
+**What it does:**
+Immediately after Brief approval, a 10-minute undo window is available. During the window, a small top-of-page banner reads: *"Your Brief was signed just now. Change your mind? You have N minutes to reopen it."* After the window closes, re-authoring is available at any time via /settings → Brief tab (non-destructive — always creates a new version, never deletes prior versions). Brief versions are retained in full and surfaced in an audit view. Quarterly re-reading (F24) already in PRD triggers the re-authorization flow; F32 fills the ad-hoc case.
+
+**Voice and microcopy:**
+- Undo banner: *"Your Brief was signed just now. Reopen it if anything needs correcting — you have 9 minutes."*
+- /settings re-author: *"Your Brief is the foundation everything is built on. Edit it carefully — changes take effect at the next weekly cycle."*
+- Confirmation after re-sign: *"Brief updated and signed. Beamix will apply the new direction in the next cycle."*
+
+**User story:** As Marcus, I want to reopen my Brief within minutes of approving it so that I don't let a misclassification bake into weeks of agent work.
+
+**Acceptance criteria:**
+- [ ] 10-minute undo window: after Seal lands in onboarding, a banner counts down. Clicking "Reopen Brief" returns to Step 3 with Brief in edit state; Seal must be re-stamped to proceed.
+- [ ] After 10-minute window closes, re-author available at /settings → Brief tab → "Edit Brief" button. Editing restores the chip editor UX from onboarding Step 3.
+- [ ] Every Brief re-sign creates a new Brief version (Brief_version table, append-only). Old versions are never deleted.
+- [ ] Brief audit log accessible in /settings → Brief tab → "Version history" — shows timestamp, diff of changes, who signed (always the account owner), and which agent actions were authorized under each version.
+- [ ] Agents authorized under a previous Brief version retain their version reference in provenance envelope (brief_version_id). The customer can see which version authorized which action.
+- [ ] When Brief is actively being edited, agents are paused for that client — a /home banner reads: *"Brief editing in progress. Beamix is paused until you save."*
+- [ ] Re-author flow includes "This is still wrong about my business" escape hatch back to Step 1's industry combobox — same mechanic as onboarding (already locked in F2 acceptance criteria; this confirms it also applies in the /settings re-author flow).
+- [ ] Brief re-sign in /settings requires Seal animation (540ms stamp, same ceremony as onboarding). Not a simple "Save" button.
+- [ ] Per F24 (quarterly Brief Re-Reading): if customer clicks "Edit Brief" at the quarterly prompt, they enter the same re-author flow specified here.
+
+**Build effort:** S — touches Brief table, brief_versions table (new), onboarding post-Seal state, /settings Brief tab. No new backend services.
+
+**Edge cases:**
+1. Customer edits Brief mid-agent-run: agent is already mid-execution when the Brief changes. The in-flight run completes under the prior version (brief_version_id is snapshotted at run-start, per Tier 0 item 12). The next run picks up the new version.
+2. Yossi edits Brief for client 3 while client 7's agents are running: each client has an independent brief_version_id. Cross-client isolation is complete.
+3. Customer re-opens Step 1 industry combobox, switches vertical from SaaS to E-commerce: this changes their vertical Knowledge Graph, Truth File required fields, and Brief template. Trigger a Truth File completeness check after re-sign; if required new fields are missing, route customer to /settings → Business Facts to fill them before agents resume.
 
 **Priority: MVP**
 
@@ -1475,7 +1629,46 @@ Customer initiates a domain change from /settings → Profile. A guided 4-step m
 
 ### Feature 37: /reports — Monthly Update Archive and Review
 
-*(Spec unchanged from v4. No changes in v5.)*
+**Feature ID:** F37
+**Surface:** /reports route; mobile nav (not in the bottom 4 items — accessible from sidebar or "more" overflow)
+
+**What it does:**
+/reports is the archive and staging area for all Monthly Update PDFs. It is not a general analytics dashboard — it is specifically the Monthly Update management surface. For Yossi, it is also the bulk-review-and-send surface for 12 client reports per month.
+
+**Page structure:**
+
+**Primary view:** Table of Monthly Updates, reverse-chronological.
+- Columns: Client (Scale only — single row otherwise) / Month / Status (Draft / Reviewed / Sent) / Attribution headline (one-line preview) / Privacy (Private / Share link active) / Actions
+- Row actions: Preview (opens PDF in a modal), Edit (opens the draft in a text editor — same chip-editing UX as Brief), Approve and send, Generate share link, Revoke share link
+
+**Draft state:** Monthly Updates in "Draft" status are those generated by the Reporter agent (F7) but not yet reviewed. For Discover/Build single-client accounts: a /home Receipt-That-Prints card (F25) appears when the draft is ready. Customer clicks through to /reports to review.
+
+**For Yossi (Scale multi-client):** A "This month" filter shows all 12 drafts for the current month in one view. Status column shows which are ready to send, which need review, which have been sent. Per-draft "Always send automatically" toggle (suppresses the manual review step for that client — customer explicitly opts in per-client).
+
+**Privacy controls:** The privacy settings for each Monthly Update are managed per-row in this table (matching the "Generate share link" mechanic from Q6/F35 amendment). The Monthly Update permalink is private by default (Board Decision #1 — already locked). "Generate share link" button generates a time-limited signed URL (7-day expiry, renewable). Recipients do not need a Beamix account to view. The signed share link is NOT indexed (X-Robots-Tag: noindex on these routes). Customer can revoke a share link from /reports (invalidates the signed URL immediately). Share links are generated per-report, not per-account.
+
+**User story:** As Yossi, I want a single /reports page that shows all 12 of my clients' Monthly Update drafts so that I can review, edit, and send each one without clicking through 12 separate client contexts.
+
+**Acceptance criteria:**
+- [ ] /reports route accessible from product sidebar. Not in mobile bottom nav (bottom 4 reserved for /home, /inbox, /scans, /crew per F5 acceptance criteria).
+- [ ] Table shows all Monthly Updates for the account (or per-client context on Scale). Reverse-chronological.
+- [ ] Status column: Draft / Reviewed / Sent. Draft = generated, not yet reviewed. Reviewed = customer opened and read. Sent = delivered to email(s) + permalink live.
+- [ ] "Preview" opens Monthly Update PDF in a modal (not a new tab). PDF is the React-PDF render (same artifact as emailed version).
+- [ ] "Edit" opens a structured editor: the Monthly Update is composed of sections (attributed results, top fixes, competitor moves, "What Beamix Did Not Do" line). Each section is editable as text. Re-signing not required (Monthly Update is editorial, not constitutional like the Brief).
+- [ ] "Approve and send": triggers Resend delivery of the email + PDF attachment. Sets status = Sent.
+- [ ] For Scale tier: "This month" filter groups all client drafts. J/K keyboard navigation through drafts (same pattern as /inbox).
+- [ ] Per-client "Always send automatically" toggle in /reports: opts that client into automatic send without manual review. Default: OFF (manual review required). Customer explicitly opts in per-client.
+- [ ] Generate/revoke share link per Monthly Update row. Share link: 7-day signed URL, X-Robots-Tag: noindex, revocable.
+- [ ] Receipt-That-Prints card on /home (F25) deep-links to the relevant /reports row.
+- [ ] /reports route: Brief binding line present per F31 specification.
+- [ ] Yossi context: in /reports, bulk "Approve and send all reviewed" button sends all Monthly Updates with status = Reviewed in one click. Does not affect status = Draft items.
+- [ ] Reporter agent does not auto-send zero-attribution reports (zero calls + zero UTM clicks): escalates to /reports → Draft for manual review, overriding the auto-send toggle.
+
+**Build effort:** M — new /reports route, table with status management, PDF modal renderer, per-client "auto-send" toggle, bulk-send action. React-PDF already in place (F14 dependency).
+
+**Edge cases:**
+1. Reporter agent generates a Monthly Update draft with a factual error (attribution number appears off): customer edits the draft in /reports. The edit history is logged. The sent version may differ from the agent-generated draft — this is by design (customer is the author; agent provides the first draft).
+2. Customer deletes a Monthly Update from /reports: deletion removes the hosted permalink (if any) and the record from /reports. The PDF in the customer's email client is not retrievable by Beamix.
 
 **Priority: MVP**
 
@@ -1637,7 +1830,30 @@ The multi-client cockpit is the Scale-tier /home equivalent for agency operators
 
 ### Feature 41: Cmd-K command bar + slash command
 
-*(Spec unchanged from v4.)*
+**Feature ID:** F41
+**Surface:** Global keyboard shortcut overlay (every page).
+
+**User story:** As any persona, I want one keyboard shortcut to find anything, jump anywhere, run any agent action — so I don't have to navigate the product visually for common tasks.
+
+**Acceptance criteria:**
+- [ ] `Cmd-K` (Mac) / `Ctrl-K` (Win/Linux) opens command bar from any page
+- [ ] Search across: pages (9 fixed surfaces + customer-created /reports surfaces), agents (6 MVP agents), scan results (last 30 days), Brief clauses (4 + custom), Twilio numbers, sub-processors, /changelog entries, Help Center
+- [ ] Each result row shows: result type icon (16×16), result title (Inter 14px), Brief grounding citation (Geist Mono 11px ink-3) — every result authorized by a Brief clause shows it
+- [ ] Recently used commands surfaced first (top 5)
+- [ ] Sacred shortcuts: `Cmd-K then i` → /inbox, `Cmd-K then s` → /scans, `Cmd-K then a` → /workspace, `Cmd-K then b` → Brief, `Cmd-K then c` → /crew, `Cmd-K then ?` → help
+- [ ] Slash command (`/`) opens block-insert palette (composable surfaces only — /reports + Workflow Builder Inspector at MVP)
+- [ ] Visible hotkey hints in UI: `<kbd>` style next to button labels (e.g., "Approve `enter ↵`")
+- [ ] Mobile fallback: tap global search icon (top-right of every page); same search results
+- [ ] Close: Esc
+- [ ] Zero-result query: shows "Nothing matches. Try [3 suggested searches]"
+- [ ] Brief grounding: results from sources without a Brief clause (e.g., "Help Center" entries) show no citation row — citation is per-result, not forced
+
+**Voice + microcopy:**
+- Placeholder: "What are you looking for?"
+- Empty state: "Type to search across your account, agents, and Brief."
+- Brief grounding line on results: `Authorized by your Brief: "[clause N]"`
+
+**Build effort:** M (~5 person-days). Touches: new component `CommandBar.tsx`, search index (Postgres FTS or in-memory at MVP scale), keyboard handler hook, mobile sheet variant.
 
 **Priority: MVP**
 
@@ -1671,7 +1887,20 @@ The Phase 7 (brief-signing) footer now includes a quiet "Security & DPA" link th
 
 ### Feature 43: Vulnerability disclosure + bug bounty
 
-*(Spec unchanged from v4.)*
+**Feature ID:** F43
+**Surface:** `/.well-known/security.txt` + HackerOne program + `/trust/disclosure` page.
+
+**User story:** As Aria, I trust vendors who treat external security research as input, not threat — so a public bounty signals operational maturity.
+
+**Acceptance criteria:**
+- [ ] `/.well-known/security.txt` published at MVP launch (zero-cost configuration)
+- [ ] HackerOne program live at MVP+30: $500 minimum bounty, $20K annual ceiling, scope = beamixai.com + api.beamixai.com + customer dashboards
+- [ ] Public disclosure page at `/trust/disclosure` — explains scope, payouts, response SLA (5 business days for triage, 30 for fix-or-mitigation)
+- [ ] Acknowledgments page: monthly-updated list of researchers who reported valid issues (name + handle + month; opt-out available)
+- [ ] Researcher reports issue in customer's site (out of scope): redirect with respectful note
+- [ ] Critical Sev-1: emergency direct line to security-lead phone (paired with §10 of /security spec)
+
+**Build effort:** XS (security.txt = 1 hour; HackerOne setup = 1 day; budget commit ~$20K/year ceiling).
 
 **Priority: MVP**
 
@@ -1759,7 +1988,35 @@ The Phase 7 (brief-signing) footer now includes a quiet "Security & DPA" link th
 
 ### Feature 47: State of AI Search 2026
 
-*(Spec unchanged from v4. Ships MVP+90.)*
+**Feature ID:** F47
+**Surface:** `/state-of-ai-search` route + downloadable PDF + 50 hand-bound print copies.
+
+**User story:** As Adam, I want a category-defining artifact that earns Beamix permanent citation as the authority on AI search visibility for SMBs.
+
+**Acceptance criteria:**
+- [ ] Ship at MVP+90 (data integrity + first-mover defense)
+- [ ] 8 hero charts:
+  1. Citation share by AI engine for SMBs (11 engines × 4 verticals)
+  2. Schema.org markup citation lift (8× findings — confidence-tested)
+  3. AI search loneliness cohort decay (≥60-day data required)
+  4. Engine reliability ranking (consistency scoring)
+  5. Engine divergence — where engines disagree about who matters
+  6. Fastest-growing AI search citations of Q1 2026 (delta tracking)
+  7. Verticals AI search engines cite most reliably (heatmap)
+  8. The 30-day-after-launch invisibility curve (cohort data)
+- [ ] 11-section editorial spine: Foreword (Adam's voice + Seal), Executive Summary, Methodology, Per-engine deep-dives (×4), Cross-engine cartogram view, Action chapter, Vertical chapter, Longitudinal chapter, Look-ahead, Colophon
+- [ ] Voice canon Model B (single-character "Beamix Editorial" byline; no agent names)
+- [ ] Cream paper register; Fraunces 300 italic for Section heads; Inter for body; Geist Mono for stats; cartogram on Page 2
+- [ ] 50 hand-bound numbered print copies for first 50 paying customers (pairs with F26 Print-Once-As-Gift)
+- [ ] 10 press-seeding copies, 10 archive copies
+- [ ] Digital download: gated by email (list-building flywheel)
+- [ ] OG share card: cream paper + cartogram preview + Seal
+- [ ] Annual cadence locked (April every year — repeat with deeper data each year)
+- [ ] Embargoed pre-brief to TechCrunch, Search Engine Land, MarketingProfs, Forbes Small-Business, Increment magazine
+- [ ] Founder Twitter / podcast coordination (Adam writes 3 short-form pitches in advance)
+- [ ] Insufficient data at MVP+90 (paying customers <50): publish 4-chart edition with explicit "more depth in 2027" footnote
+
+**Build effort:** XL (~25 person-days: editorial 12, design 8, data 5; ~$45.5K total — editorial contractor $10-15K, designer $10-12K, print $3-5K, PR $10-15K)
 
 **Priority: MVP+90**
 
