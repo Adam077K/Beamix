@@ -154,7 +154,7 @@ This summary is the input to QA dispatch. QA agents do not read individual ticke
 4. **Inngest error handling** — Every Inngest step has either a `try/catch` that produces a structured error event, or the Inngest function-level `onFailure` handler is wired. No silent failures. Check that failed Inngest jobs update the relevant DB row status to `'error'` rather than leaving it in `'running'`.
 5. **Webhook signature verification** — Every Paddle webhook handler calls `paddle.webhooks.unmarshal(rawBody, webhookSecret)` (or equivalent SDK method) before processing any payload. No processing of unsigned webhook payloads. Grep for `paddle` webhook routes without signature verification.
 6. **Paddle subscription state machine correctness** — State transitions: `active → cancelled → past_due → paused` must be handled correctly in the webhook handler. Cancellation must set `subscriptions.status = 'cancelled'` (UK spelling per DB enum). Check that cancellation does NOT immediately delete data — retention logic per F35 must be respected.
-7. **Email template correctness via Resend** — Changed email templates render without missing variables. Every `resend.emails.send()` call includes `from: 'notify@notify.beamixai.com'`, a `to:` that comes from a verified user record (not user input), and a subject line. No unescaped user-controlled content in HTML email templates.
+7. **Email template correctness via Resend** — Changed email templates render without missing variables. Every `resend.emails.send()` call includes `from: 'noreply@notify.beamixai.com'`, a `to:` that comes from a verified user record (not user input), and a subject line. No unescaped user-controlled content in HTML email templates.
 8. **Database transaction atomicity** — Multi-table writes (e.g., creating a `scans` row AND `scan_engine_results` rows together) are wrapped in a Supabase RPC function or use `BEGIN/COMMIT` pattern. No partial writes visible to the user on failure.
 9. **N+1 query detection** — Any server component or API route that fetches a list and then fetches per-item detail in a loop is a P1. Grep for `forEach` / `map` inside an `async` function that also calls `supabase.from(`.
 10. **Rate limiting on public endpoints** — `/api/scan/start` and any other unauthenticated POST endpoint must have rate limiting. Verify Upstash Redis or equivalent rate-limiter is called before the business logic. Unauthenticated endpoints with no rate limiting on an XS or S change are P1.
@@ -166,7 +166,7 @@ This summary is the input to QA dispatch. QA agents do not read individual ticke
 **Severity definitions:**
 
 - **🔴 P1 (blocks merge):** Missing Zod validation on any POST/PUT route. Missing RLS policy on any table with user-owned data. Unsigned webhook handler processing Paddle events. N+1 query on any list-fetch endpoint. Hardcoded secret in source code. Missing rate limiting on a public POST endpoint.
-- **🟡 P2 (fix this wave):** Inngest function lacks `onFailure` handler (fire-and-forget failure). Database write is not atomic where it should be (multi-step but not strictly required to be atomic by business logic). Email template renders correctly but `from` address is not the canonical `notify@notify.beamixai.com`. Paddle state transition handles `cancelled` but not `past_due`.
+- **🟡 P2 (fix this wave):** Inngest function lacks `onFailure` handler (fire-and-forget failure). Database write is not atomic where it should be (multi-step but not strictly required to be atomic by business logic). Email template renders correctly but `from` address is not the canonical `noreply@notify.beamixai.com`. Paddle state transition handles `cancelled` but not `past_due`.
 - **🟢 P3 (next-wave backlog):** Logging could be more structured (currently plain `console.error`). Inngest function retry configuration uses defaults (could be tightened). Missing index on a table column that will be queried frequently post-launch but is not on the critical path now.
 - **✅ Noted (no action):** Known deferred security hardening with explicit DECISIONS.md entry. Deliberate eventual-consistency pattern with comment explaining the tradeoff.
 
@@ -396,7 +396,7 @@ OR
 **🟡 P2 — fix this wave:**
 - `inngest.createFunction` for `scan-weekly` has no `onFailure` handler — failed weekly scans leave `scans.status = 'running'` indefinitely.
 - `subscriptions` update on Paddle `subscription.cancelled` event does not set `cancelled_at` timestamp — retention logic incomplete per F35.
-- Monthly Digest email template sends from `no-reply@beamixai.com` instead of `notify@notify.beamixai.com` — canonical from-address violation.
+- Monthly Digest email template sends from `no-reply@beamixai.com` instead of `noreply@notify.beamixai.com` — canonical from-address violation.
 - Agent-run cap check uses `created_at > NOW() - INTERVAL '30 days'` instead of 14 days — F54 cap window spec mismatch.
 
 **🟢 P3 — next-wave backlog:**
