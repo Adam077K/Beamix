@@ -851,9 +851,55 @@ Generates Monday Digest and Monthly Update. External surfaces signed "— Beamix
 
 ### Feature 19: Workflow Builder
 
-*(Spec unchanged from v4. Scale-only. React Flow DAG editor. Cream-paper canvas.)*
+**What it does:** Visual DAG editor built on React Flow. Tier-gated to Scale ($499) only for building and editing.
 
-See full v4 spec for complete acceptance criteria. No changes in v5.
+**Board 2 changes:**
+- Canvas background: dot grid replaced with cream paper at 30% over paper-default (Design Lock C in §3). The canvas becomes a sheet of paper on which workflows are composed.
+- Node anatomy: 24px category header strip (color-coded by category) + 12×12 status token. Cut: 16×16 monogram inside node body AND 1px agent-color left stripe. Header strip alone carries identity; status token carries state. (Board 2 lock — four redundant identifications reduced to two.)
+- Node dimensions: 240×88 → 220×72. Config-summary line drops into inspector.
+- Connection handles: visible at low priority always (1px ink-4 ring, 6×6). Brighten to brand-blue dot on hover. Not hidden until hover.
+- Brief grounding cell in inspector: KEEP cream + Fraunces 300 italic (Board 2 lock — Design Lock B in §3). First selection per session: cell fades in over 400ms with one-time Trace under the clause. Subsequent selections: 120ms fade. The constitution feels invoked, not routine.
+
+**Round 1 changes (2026-04-28 design doc lock):**
+- Narration column replaces walking figure animation: during dry-run execution, the right inspector temporarily transforms into a narration column. Each executing node pushes a plain-English sentence (*"Schema Doctor is reading /pricing for FAQPage schema. 2.3s."*). 18px Inter 400 sentences, 12px gap. Active sentences in `--color-ink`; completed fade to `ink-2` over 30s. Narration column transitions back to inspector with 200ms cross-fade on dry-run complete. Full spec: `docs/08-agents_work/2026-04-28-DESIGN-workflow-builder-canvas-v1.md`.
+- Skip-cinema option for users with ≥1 prior signed Brief: "You've done this before. Skip the ceremony and use defaults →" — Geist Mono 11px, `--color-ink-3`. Appears at Phase 5 (BriefCoAuthor) bottom. Locks Yossi at MVP partial-relief; full agency mode at MVP+30.
+
+**Scope at MVP Day 1:**
+- React Flow DAG editor — cream-paper canvas (30% over paper-default, not dot grid)
+- 3–6 Beamix-authored workflow templates
+- Trigger types at MVP: Schedule (cron-like UI) + Manual trigger only
+- Action nodes at MVP: Run agent, Notify (Email + Slack), Conditional branch, Wait for condition
+- Dry-run mode: `dry_run: true` flag on proposal envelope
+- Per-step "Test this step" button
+- Brief grounding visible per node (cream + Fraunces 300 cell in inspector per Design Lock B)
+- Validation on every save: cycle detection, orphan node detection, cost estimate
+- Linear versioning: 20 versions retained at MVP
+- Resource conflict detection at save time
+
+**Acceptance criteria:**
+- [ ] React Flow DAG editor ships for Scale-tier users at MVP
+- [ ] Canvas background is cream paper at 30% over paper-default — NOT a dot grid (Board 2 lock)
+- [ ] Node anatomy: category header strip (color-coded) + status token ONLY. No 16×16 monogram in node body. No 1px agent-color left stripe.
+- [ ] Node dimensions: 220×72px
+- [ ] Connection handles: 1px ink-4 ring, 6×6, always visible. Brighten to brand-blue dot on hover.
+- [ ] Trigger types at MVP: Schedule and Manual only. No event triggers.
+- [ ] Dry-run mode: nothing writes to customer CMS. Output renders in /workspace.
+- [ ] Dry-run execution: active node spotlighted (status indicator advances queued → running → completed → failed); 1 dot (4px brand-blue) travels per active edge at 480px/s via motion/path-draw.
+- [ ] Narration column: during active dry-run, right inspector replaced by narration column. Each executing node pushes one sentence. 18px Inter 400, 12px gap, `--color-ink` active / `ink-2` completed. Narration column cross-fades back to inspector (200ms) on run complete. Walking figure animation absent.
+- [ ] Brief grounding cell in inspector: cream paper + Fraunces 300 italic. First-per-session: 400ms fade-in + one-time Trace under clause. Subsequent: 120ms fade.
+- [ ] Skip-cinema option visible for customers who have ≥1 prior signed Brief in their account. Appears at bottom of BriefCoAuthor phase: "You've done this before. Skip the ceremony and use defaults →" (Geist Mono 11px, `--color-ink-3`).
+- [ ] Cycle detection, orphan node detection, cost estimate on every save
+- [ ] Resource conflict detection at save time
+- [ ] Linear versioning: "Save" creates new version. Last 20 retained.
+- [ ] "Agency review gate" node type available in node palette (Scale only)
+- [ ] Build-tier customers see upgrade modal on `+ New Workflow` click — not the editor
+- [ ] Discover-tier customers see no workflow UI
+- [ ] Brief grounding inline citation visible per F30 specification on Workflow Builder node inspector (1px rule + Inter italic variant, NOT cream cell — see F30 exception for WB Inspector which uses its own cream+Fraunces treatment per Design Lock B)
+- [ ] Brief binding line present per F31 specification
+
+**Design reference:** `docs/08-agents_work/2026-04-28-DESIGN-workflow-builder-canvas-v1.md`
+
+**Deferred to MVP-1.5:** Event triggers, workflow publishing, loop node, run sub-workflow
 
 **Priority: MVP (Scale-only)**
 
@@ -861,7 +907,28 @@ See full v4 spec for complete acceptance criteria. No changes in v5.
 
 ### Feature 20: /security public page
 
-*(Spec unchanged from v4. Aria's 5 fixes applied. "cannot publish" not "refuses to publish.")*
+*(Voice canon: "cannot publish" not "refuses to publish" — per Board 2 Ive note. One-word change, massive trust signal.)*
+
+**Acceptance criteria:**
+- [ ] /security page live at beamixai.com at MVP launch
+- [ ] Page is readable in 6 minutes at normal pace (target: 900–1200 words)
+- [ ] All 10 sections have at least a paragraph of plain prose
+- [ ] Sub-processors list maintained and linked
+- [ ] GDPR DSAR endpoints documented with SLA
+- [ ] No-training-on-customer-content statement explicit and prominent
+- [ ] Twilio recording posture explicitly stated
+- [ ] Contact for security disclosures present with response SLA
+- [ ] Page is indexed (`noindex` NOT applied)
+- [ ] Page linked from product footer, pricing page, onboarding Terms acknowledgment
+- [ ] Copy uses "cannot publish" not "refuses to publish" (Board 2 voice canon note)
+- [ ] Cream paper register KEPT on /security. Cream hex selection: research and confirm from 3 swatches on 3 displays before launch (current working value: #F7F2E8 — not final until swatch test).
+
+**Amendment v4 (2026-04-28) — Aria's 5 fixes:**
+1. §9 cryptographic primitive paragraph rewrite: name primitives (AES-256-GCM, Argon2id, libsodium, BoringSSL), name modes, name HMAC key storage (AWS KMS / Supabase Vault), rotation cadence (quarterly + 14d overlap), failure mode ("fails closed"), token format choice with reason (avoid JWT `alg=none`), static-analysis tool (Semgrep + custom AST rules)
+2. Compliance section added + Trust Center link (covered by F42)
+3. Bug bounty + security.txt section added (covered by F43)
+4. Public DPA link at /trust/dpa (ungated; covered by F42)
+5. Sub-processor table extended with 5 missing columns: controller/processor/joint-controller, underlying cloud, SOC 2/ISO 27001 status per sub-processor, last-audited-by-Beamix date, real DPA link per row (covered by F42 /trust/sub-processors)
 
 **Priority: MVP (3 person-days)**
 
@@ -869,7 +936,13 @@ See full v4 spec for complete acceptance criteria. No changes in v5.
 
 ### Feature 21: Scale-tier DPA + agency indemnification clause
 
-*(Spec unchanged from v4.)*
+**Acceptance criteria:**
+- [ ] Scale-tier DPA drafted before MVP launch
+- [ ] Indemnification clause: lesser of (3× monthly subscription fee) or ($25,000/incident)
+- [ ] Scope explicitly defined: covers errors that passed pre-publication validation
+- [ ] DPA signed as part of Scale-tier checkout (Paddle)
+- [ ] DPA accessible from /settings → Billing and /security page
+- [ ] Tech E&O insurance bound before launch — minimum $1M/$1M
 
 **Priority: MVP (legal advisor task)**
 
@@ -906,7 +979,43 @@ See full v4 spec for complete acceptance criteria. No changes in v5.
 
 ### Feature 23: Cycle-Close Bell
 
-*(Spec unchanged from v4. Amendment: Wave added in v4 Amendment preserved.)*
+**What it does:** A moment of unrequested acknowledgment when the weekly scan completes and all auto-fixes have shipped. Equivalent to Apple Watch's haptic acknowledgment when rings close. Costs ~2 days of frontend work. Earns customer attention every Monday morning permanently.
+
+**Trigger condition:** Weekly scan marked complete AND all auto-fix agent actions for that cycle have shipped (or been approved) within the same cycle window. Fires once per cycle-close per customer. Cannot replay in the same browser session.
+
+**Sequence (total duration: 1,600ms):**
+1. Activity Ring closes its 30° gap over 800ms (`motion/ring-close` — this is the ONE motion token kept for the Ring)
+2. Simultaneously: surrounding KPI sparklines settle to their final positions with 200ms ease
+3. Status sentence rewrites once: "Healthy and gaining." → "Cycle closed. {N} changes shipped this week."
+4. Full state holds for 600ms
+5. Ring re-opens at fresh 252° baseline (the next cycle's starting geometry)
+
+**Non-replay rule:** Once the bell fires in a given session, it does not fire again regardless of navigation. The moment is not a notification; it is a curtain-close.
+
+**Easing curves (Board 2 lock — distinct curves per motion moment):**
+- Ring-close: `cubic-bezier(0.25, 0.46, 0.45, 0.94)` — smooth deceleration (the ring is settling, not bouncing)
+- Sparkline settle: 200ms `ease-out`
+- Status sentence rewrite: 150ms opacity cross-fade
+
+**Why MVP:** The weekly cycle-close moment becomes the product's Monday morning presence. Customers who see it every week have a visceral sense that "Beamix finished." This is the kind of small, non-asked-for gesture that converts customers into evangelists. Engineering cost: ~2pd.
+
+**Acceptance criteria:**
+- [ ] Bell fires correctly on cycle close: scan complete + all auto-fixes shipped in cycle window
+- [ ] Ring gap closes over 800ms with correct easing curve (smooth deceleration)
+- [ ] KPI sparklines settle to final positions simultaneously with 200ms ease-out
+- [ ] Status sentence rewrites from "Healthy and gaining." to "Cycle closed. {N} changes shipped this week." with 150ms opacity cross-fade
+- [ ] Full state holds 600ms before ring re-opens at 252° baseline
+- [ ] Does NOT fire if any auto-fix is still pending /inbox approval (all must be shipped or explicitly approved)
+- [ ] Cannot replay in the same browser session (non-replay rule)
+- [ ] Bell sequence does not fire on the first scan ever — only from second cycle onward (no data yet for "{N} changes shipped")
+- [ ] Total sequence duration: 1,600ms from ring-close start to ring re-open
+
+**Amendment v4 (2026-04-28) — Arc's "Wave" (preserved in v5.1):**
+- Add: 60ms stagger left-to-right wave on the small-multiples sparkline strip BEFORE the settle animation. 11 cells × 60ms = 660ms total wave, then 200ms settle. (~1 day frontend)
+
+**Dependencies:** F5 (/home), Activity Ring component, scan completion event (Inngest), agent action completion tracking
+
+**Effort estimate:** ~2 person-days
 
 **Priority: MVP**
 
@@ -914,7 +1023,40 @@ See full v4 spec for complete acceptance criteria. No changes in v5.
 
 ### Feature 24: Brief Re-Reading — quarterly trigger
 
-*(Spec unchanged from v4.)*
+**What it does:** Once per quarter, on the customer's first Monday login of the new quarter, Beamix opens to the Brief — not /home — for up to 3 seconds. The Brief is the founding document; revisiting it quarterly keeps it alive and current. Closer to a LoveFrom royal cypher ceremony than any SaaS interaction pattern.
+
+**Trigger:** First login of the quarter (Q1: Jan–Mar; Q2: Apr–Jun; Q3: Jul–Sep; Q4: Oct–Dec) on a Monday. Fires at most once per customer per quarter. Does not fire in the customer's first quarter (insufficient history).
+
+**Presentation:**
+- Full Brief page: cream paper, Fraunces clauses, standard Brief layout
+- One editorial line at bottom: "It's been three months. Anything to update?" — 13px Inter 400, ink-3
+- Two CTAs:
+  - "Looks good →" (primary, right): refreshes Brief date stamp atomically; quarter marks as reviewed; redirects to /home
+  - "Edit Brief →" (secondary, left): enters Brief editing flow in /settings → Brief tab
+- Auto-redirect: if no CTA clicked within 3 seconds, redirect to /home automatically
+- Customer can dismiss by clicking anywhere outside the two CTAs (same as "Looks good" — date stamps, quarter marks reviewed, redirects to /home)
+
+**State management:**
+- `brief_quarterly_reviews` table: `customer_id`, `quarter_key` (e.g., "2026-Q2"), `reviewed_at`, `action` ("looks_good" | "edit_brief")
+- Before any Monday login, middleware checks if current quarter has a review record for this customer. If not: Brief intercept. If yes: skip.
+
+**Why MVP:** The Brief is the constitutional document of every customer's account. A Brief that is never re-read drifts from reality within two quarters. The quarterly check costs 3 seconds of customer attention once per quarter. The "constitution stays alive" experience is the kind of thing that distinguishes Beamix from automation tools. Engineering cost: ~3pd.
+
+**Acceptance criteria:**
+- [ ] Triggers correctly: first Monday login of a new quarter, after customer's first quarter on platform
+- [ ] Does NOT trigger in the customer's first quarter of use
+- [ ] Full Brief page renders correctly: cream paper, Fraunces clauses, editorial line, two CTAs
+- [ ] "Looks good →" click: updates `brief_quarterly_reviews` record atomically, redirects to /home within 200ms
+- [ ] "Edit Brief →" click: navigates to /settings → Brief tab editing flow
+- [ ] Auto-redirect to /home after 3 seconds if neither CTA clicked — timer visible as a subtle 3-second countdown line under the CTAs (1px ink-4, fading left-to-right)
+- [ ] Dismiss (click outside CTAs) behaves as "Looks good →"
+- [ ] Fires at most once per customer per quarter — subsequent Monday logins that quarter go directly to /home
+- [ ] Timezone-aware: "Monday" is evaluated in customer's local timezone (derived from their account settings or browser)
+- [ ] Does not interrupt if customer is in the middle of an /inbox approval flow (session detection: only fires on clean /home navigation, not mid-session tab switches)
+
+**Dependencies:** Brief table (Tier 0), `brief_quarterly_reviews` table (new — add to Tier 0 Supabase migration), middleware, F13 (/settings Brief tab)
+
+**Effort estimate:** ~3 person-days
 
 **Priority: MVP**
 
@@ -922,7 +1064,44 @@ See full v4 spec for complete acceptance criteria. No changes in v5.
 
 ### Feature 25: Receipt-That-Prints card
 
-*(Spec unchanged from v4.)*
+**What it does:** On the morning the Monthly Update PDF is generated (1st of the month, customer-local time), /home renders one new element above the Evidence Strip: a cream-paper card 96px tall with a paper-fold visual, Geist Mono date stamp, and a Fraunces 300 italic line reading "Your Monthly Update is ready." The card is the day-of moment — it exists only on the day it should. The email already notifies; this is the in-product presence.
+
+**Visual treatment:**
+- Card height: 96px
+- Background: cream paper (matching `--color-cream` system token)
+- Rough.js fold mark: deterministic seed keyed to `report_id` — a single vertical fold line, centered
+- Date stamp: Geist Mono, 12px, ink-3, format: "APR · 2026"
+- Body line: Fraunces 300 italic, 18px, ink-1: "Your Monthly Update is ready."
+- CTA: "Read it →" — 13px Inter 500, brand-blue link, navigates to /reports/[report_id]
+- Positioned: immediately above the Evidence Strip, below the KPI cards row
+
+**Entrance animation (one-time):**
+- 600ms paper-fold motion: clip-path reveal mimicking a sheet sliding from beneath another sheet
+- Easing: `cubic-bezier(0.34, 0.0, 0.0, 1.0)` (the same stamping curve used by the Seal — material consistency)
+- Animates in once on the morning it appears. Does not re-animate on page reload within the 24h window.
+
+**Lifetime:**
+- Appears within 1 hour of PDF generation on the 1st of the month (customer-local time)
+- Stays visible for 24 hours
+- After 24 hours: opacity-fades out over 600ms and disappears. Report is accessible in /reports going forward.
+- Does not appear if customer navigated to /reports and read the report within the 24h window
+
+**Why MVP:** The day-of moment for the renewal anchor artifact. The Monthly Update is the product's most important retention document; the Receipt-That-Prints is the in-product ceremony marking its arrival. Engineering cost: ~1pd. Sarah will tell another founder about it.
+
+**Acceptance criteria:**
+- [ ] Card appears on /home within 1 hour of PDF generation on the 1st of the month (customer-local time)
+- [ ] Card is 96px tall, cream paper background, Rough.js fold mark (deterministic per report_id), Geist Mono date stamp, Fraunces 300 italic "Your Monthly Update is ready."
+- [ ] Entrance animation: 600ms clip-path paper-fold, fires once on first render within 24h window. Does not re-animate on page reload.
+- [ ] "Read it →" link navigates to correct /reports/[report_id]
+- [ ] Card stays visible for 24 hours from appearance time
+- [ ] After 24 hours: 600ms opacity-fade out. Card removed from DOM after fade.
+- [ ] If customer opens /reports/[report_id] within 24h window: card marked as read, fades out on next /home load (within 10 minutes)
+- [ ] If Monthly Update PDF generation fails, card does not appear — no orphaned "ready" cards for failed reports
+- [ ] Card renders correctly on mobile (full width, 96px height maintained)
+
+**Dependencies:** F14 (Monthly Update PDF generation, Reporter agent), F13 (/reports page), /home layout (F5), React-PDF
+
+**Effort estimate:** ~1 person-day
 
 **Priority: MVP**
 
@@ -953,7 +1132,34 @@ See full v4 spec for complete acceptance criteria. No changes in v5.
 
 ### Feature 28: "What Beamix Did NOT Do" Monthly Update line
 
-*(Spec unchanged from v4.)*
+**What it does:** One line on Monthly Update PDF Page 6, positioned just above the closing Seal. Pattern: "Beamix considered {N} changes this month and rejected {M}. Rejection log: [link]." The line converts restraint into a visible product feature. It is one of the highest-leverage trust signals in the entire system — visible evidence that Beamix is deliberate, not indiscriminate.
+
+**Data source:** `agent_jobs` table where `status = 'rejected'` for the customer's account in the given month period. `N` = total changes evaluated (all agent_jobs in period). `M` = rejected count. Both are factual counts from existing data.
+
+**Visual treatment:**
+- 13px Inter 400, `--color-ink-3`, single line
+- Positioned: just above closing Seal on Page 6 of Monthly Update PDF
+- The link "Rejection log: [link]" navigates to a filtered /scans view for that customer showing only rejected agent_jobs for the period
+
+**Rejection log view:**
+- Existing /scans page, filtered by: status = rejected AND date range = the report's month
+- No new page needed — URL parameter filter on existing /scans
+
+**Why MVP:** One line. The data already exists (`agent_jobs.status`). Zero UI work beyond the PDF template change and one filter parameter on /scans. Trust signal disproportionate to implementation cost.
+
+**Acceptance criteria:**
+- [ ] Line appears on Monthly Update PDF Page 6 just above closing Seal
+- [ ] Typography: 13px Inter 400, ink-3
+- [ ] Pattern: "Beamix considered {N} changes this month and rejected {M}. Rejection log: [link]"
+- [ ] N and M are accurate counts from `agent_jobs` table for the customer + report period
+- [ ] Link navigates to /scans filtered by status=rejected AND report date range
+- [ ] If M = 0 (no rejections): line reads "Beamix evaluated {N} changes this month and published all {N}." (no link)
+- [ ] If N = 0 (no activity this month): line is omitted entirely
+- [ ] Line does not appear on pages other than Page 6 of the Monthly Update PDF
+
+**Dependencies:** F14 (Monthly Update PDF), `agent_jobs` table (existing), /scans (F9) URL-parameter filtering
+
+**Effort estimate:** Less than 1 person-day
 
 **Priority: MVP**
 
@@ -961,7 +1167,39 @@ See full v4 spec for complete acceptance criteria. No changes in v5.
 
 ### Feature 29: Printable A4 ops card in /settings
 
-*(Spec unchanged from v4.)*
+**What it does:** A new sub-page within /settings titled "Print operations summary." When printed or exported to PDF, it produces a single A4 portrait page summarizing the customer's Beamix configuration and active state. Yossi uses this to print one card per client and give it to the client's internal team. Marcus pins one in his workspace. The ops card makes Beamix legible to stakeholders who don't log in.
+
+**Page content (single A4 portrait):**
+- **Section 1 — Truth File essentials:** business name, key voice words (up to 5), never-say terms (up to 5), content tone
+- **Section 2 — Active workflows:** workflow name + trigger type + last run time (one line each)
+- **Section 3 — Active agents:** agent name + autonomy level + last action + last action date (one line each)
+- **Section 4 — Upcoming:** next 3 scheduled fire times (date + workflow/agent name)
+- **Footer:** "Generated by Beamix · [date] · beamixai.com" in Geist Mono 9pt, ink-4
+
+**Design:**
+- Primary typeface: Geist Mono throughout — clinical, no decoration
+- Color: ink-2 on white paper (not cream — this is an ops document, not an artifact)
+- No Rough.js, no Fraunces, no seals, no brand marks beyond footer text
+- Print stylesheet: `@media print` — hides all product chrome, renders only card content
+- "Print" button opens browser print dialog with correct print stylesheet active
+- PDF export option: "Download as PDF" uses React-PDF (optional; browser print dialog is the primary path)
+
+**Why MVP:** Total cost: one page, one print stylesheet, no new data fetching (all data already exists). Yossi will print one per client. Marcus will pin one. The ops card is the physical presence of Beamix in the customer's non-digital workflow.
+
+**Acceptance criteria:**
+- [ ] Sub-page accessible from /settings navigation as "Print operations summary"
+- [ ] Page renders correctly in browser (non-print view) as a readable summary
+- [ ] "Print" button opens browser print dialog with `@media print` stylesheet applied. Card prints to single A4 portrait page.
+- [ ] All data on card is current at print time (not cached from last page load)
+- [ ] Geist Mono throughout, ink-2 on white (not cream)
+- [ ] No decorative elements — no Rough.js, no Seal, no Fraunces outside footer
+- [ ] Footer: "Generated by Beamix · [date] · beamixai.com" in Geist Mono 9pt, ink-4
+- [ ] Yossi can print 12 client cards (one per client, switching clients in the switcher) in under 2 minutes — performance target for the switcher + print flow combined
+- [ ] Brief binding line NOT present on ops card print output (it is an artifact surface, not a product page)
+
+**Dependencies:** F13 (/settings), multi-client switcher (for Yossi's 12-client use), F19 (workflow data), Truth File (F3)
+
+**Effort estimate:** Less than 1 person-day
 
 **Priority: MVP**
 
@@ -994,7 +1232,56 @@ See full v4 spec for complete acceptance criteria. No changes in v5.
 
 ### Feature 31: Brief binding line at every product page bottom
 
-*(Spec unchanged from v4.)*
+**What it does:** A small Fraunces 300 italic line, anchored 24px above the page chrome footer, present on every product page. It rotates daily through the 4 Brief clauses — deterministically, by `hash(date + customer_id) mod 4`, so every customer sees a different clause on the same day. Silent furniture. Not a notification. Not a badge. Not interactive beyond the Edit Brief link. Ive's ambient brand presence — the constitution made visible everywhere.
+
+**Visual treatment:**
+- 13px Fraunces 300 italic
+- `--color-ink-3`
+- Centered
+- Anchored 24px above page chrome footer
+- Pattern: `"{Brief clause text}" — clause N of M · Edit Brief →`
+- The clause text is quoted (Fraunces italic) and preceded by an opening quotation mark, followed by a closing one
+- "— clause N of M · Edit Brief →" is 12px Inter 400, ink-4 (not Fraunces)
+- No animation on page load. No badge. No hover state beyond the standard "Edit Brief →" link hover.
+
+**Rotation logic:**
+- `clauseIndex = hash(YYYY-MM-DD + customer_id) mod numClauses`
+- Deterministic: same customer sees same clause all day. Different customers may see different clauses the same day.
+- Updates at customer's local midnight
+
+**Product pages where binding line appears:**
+- /home
+- /inbox
+- /workspace
+- /scans
+- /competitors
+- /crew
+- /schedules
+- /settings (all tabs)
+
+**Pages where binding line does NOT appear (artifact and disclosure surfaces have own treatments):**
+- /scan public (acquisition surface — not the product)
+- /reports/[id] (artifact surface — Monthly Update has own Seal treatment)
+- /security (disclosure surface — no binding line, no ambient brand)
+- Any public-facing permalink page
+
+**Why MVP:** Single shared component. ~1 person-day of work. Creates a persistent ambient connection between every product interaction and the founding document. The constitution becomes the wallpaper of the product — in the best possible sense.
+
+**Acceptance criteria:**
+- [ ] Binding line present on all listed product pages: /home, /inbox, /workspace, /scans, /competitors, /crew, /schedules, /settings
+- [ ] Binding line absent on: /scan public, /reports/[id], /security, public permalink pages
+- [ ] Typography: 13px Fraunces 300 italic, ink-3, centered
+- [ ] Anchored 24px above page chrome footer on all listed pages
+- [ ] Pattern: `"{clause text}" — clause N of M · Edit Brief →`
+- [ ] Rotation: deterministic by `hash(date + customer_id) mod numClauses` — updates at local midnight
+- [ ] No animation, no badge, no entrance effect
+- [ ] "Edit Brief →" link navigates to /settings → Brief tab
+- [ ] If customer has not yet approved a Brief (edge case: early onboarding state), binding line shows placeholder: "Your Brief is being prepared." — no clause text, no Edit link
+- [ ] Renders correctly on mobile (wraps to 2 lines if needed; Fraunces italic clause text on first line, attribution on second)
+
+**Dependencies:** Brief data (F2/F3), F13 (/settings Brief tab), shared layout component (PageChrome)
+
+**Effort estimate:** ~1 person-day
 
 **Priority: MVP**
 
@@ -1010,7 +1297,38 @@ See full v4 spec for complete acceptance criteria. No changes in v5.
 
 ### Feature 33: Team Seats and Role Permissions
 
-*(Spec unchanged from v4.)*
+**Feature ID:** F33
+**Surface:** /settings → Team tab (new tab); /inbox approval actions; /settings → Billing
+
+**What it does:**
+Multi-seat access with two roles. Seat allotments: Discover = 1 seat (owner only), Build = 2 seats (owner + 1), Scale = 5 seats. Each invite is email-based. Roles: Owner (full access, billing, cancel, Brief re-sign) and Editor (can approve/reject /inbox items, view all data, cannot cancel, cannot re-sign Brief, cannot change billing). No Viewer role at MVP (deferred to MVP-1.5 — the edge case of read-only access is low frequency at wedge-launch scale).
+
+**Voice and microcopy:**
+- Invite button: *"Invite a teammate"*
+- Role picker: *"Owner — full access, including billing"* / *"Editor — approve, review, and monitor. No billing access."*
+- Invite email subject: *"[Name] invited you to manage [Business Name] on Beamix"*
+- No AI labels in invite email — reads as human invitation.
+
+**User story:** As Marcus, I want to add Leila as an Editor so that she can handle daily /inbox approvals without having access to billing or the ability to re-sign the Brief.
+
+**Acceptance criteria:**
+- [ ] /settings → Team tab shows current seats, available seats for tier, and invite form (email address + role selector).
+- [ ] Invitation: Resend email with a 72-hour expiry link. Recipient creates Beamix account (or logs in) and is added to the account.
+- [ ] Owner role: full access to all surfaces including Brief re-sign, billing, cancel, seat management, white-label config.
+- [ ] Editor role: can view all data, approve/reject/request-changes in /inbox, view /workspace, trigger manual agent runs. Cannot: re-sign Brief, access Billing tab, cancel subscription, manage other seats, change white-label config.
+- [ ] Seat limit enforced: Discover 1, Build 2, Scale 5. Attempting to invite beyond limit shows an upgrade prompt.
+- [ ] Owner can remove a seat at any time. Removed Editor immediately loses access (next page load).
+- [ ] Only one Owner per account. Owner transfer is available (under /settings → Team) — requires email confirmation from both current Owner and new Owner.
+- [ ] Yossi context: per-client white-label config is in the client-switcher context. An Editor added to a Scale account can see all clients and approve /inbox items across all clients — same as the Owner. Per-client access restriction is MVP-1.5 (requires per-client role scoping).
+- [ ] Audit log entry created on: invite sent, invite accepted, seat removed, Owner transferred.
+- [ ] Paddle billing: seats are not separately billed at MVP. The tier price includes the seat allotment. Scale's 5 seats are included in the $499/mo.
+
+**Build effort:** M — new `account_members` table, invite flow (Resend), role-based UI gates on Brief re-sign and Billing tab, seat-count enforcement.
+
+**Edge cases:**
+1. Editor approves an /inbox item that the Owner later reverses via rollback: both the Editor's approval and the Owner's rollback appear in the audit log with the actor's name.
+2. Invited user already has a Beamix account on a different email: they accept the invite with their existing login. The invite is linked to the email address, not to a Beamix account ID — allow the recipient to choose which Beamix account to use when accepting.
+3. Account reaches seat limit and tries to add another seat during a multi-client sprint: the upgrade prompt appears with one-click upgrade to next tier. If already on Scale: the prompt offers to contact sales for custom seat expansion (MVP-1.5 feature — at MVP, Scale is the ceiling).
 
 **Priority: MVP**
 
@@ -1018,7 +1336,59 @@ See full v4 spec for complete acceptance criteria. No changes in v5.
 
 ### Feature 34: Customer Data Export (DSAR + Self-Service)
 
-*(Spec unchanged from v4.)*
+**Feature ID:** F34
+**Surface:** /settings → Privacy & Data tab (new tab); /security page (already spec'd — links to this flow)
+
+**What it does:**
+Self-service export from /settings. Customer selects which data categories to include, requests the package, and receives a download link via email within 24 hours. For simple single-account exports the download is ready immediately (< 1s for accounts under 12 months). For agency-scale exports (Yossi, 12 clients) the export is queued and delivered within 4 hours. GDPR Article 20 right to portability is satisfied by this feature.
+
+**Data categories available for export:**
+- **Scans** — all scan results, per-engine data, historical scores (JSON + CSV)
+- **Brief** — all Brief versions with timestamps (JSON + PDF)
+- **Truth File** — full Truth File JSONB with version history (JSON)
+- **Recommendations** — all generated recommendations with status (approved/rejected/pending) (CSV)
+- **Agent actions** — full action ledger with provenance envelopes, Brief clause references, before/after diffs (JSON)
+- **Lead Attribution** — call log, UTM click log (CSV)
+- **Monthly Updates** — PDF archive of all Monthly Update PDFs generated
+- **Account metadata** — account created date, tier history, billing summary (not payment card data)
+
+**Voice and microcopy:**
+- Tab label: *"Privacy & Data"*
+- Export button: *"Export my data"*
+- Confirmation: *"Your export is being prepared. You'll receive a download link at [email] within 24 hours."* (Or: *"Your export is ready. Download now."* for instant-ready cases.)
+- GDPR note on page: *"Under GDPR Article 20, you have the right to receive your data in a portable format. This export satisfies that right."*
+- No AI labels on any export content.
+
+**User story:** As Marcus (and Aria), I want to export all of my Beamix data in standard formats so that I can verify what's stored and retain it if we ever switch tools.
+
+**Acceptance criteria:**
+- [ ] /settings → Privacy & Data tab present for all tiers.
+- [ ] Customer can select one or more data categories and click "Export selected."
+- [ ] Export package is a ZIP file containing the selected categories in their specified formats.
+- [ ] Accounts under 12 months of data with < 500 agent actions: export is synchronous (ready on page, no email needed). Larger exports: Inngest job, email delivery within 4 hours.
+- [ ] Monthly Update PDFs included as individual files (not re-rendered — use the stored PDFs from /reports).
+- [ ] Export download link is a signed URL (expires 48 hours). Customer can re-request at any time.
+- [ ] GDPR DSAR flow: customer can also submit a formal DSAR request from this page, which generates a support ticket with 30-day SLA. /security page documents the DSAR endpoint and SLA.
+- [ ] Yossi on Scale: export is per-client (client-switcher context). "Export all clients" option generates one ZIP per client, delivered in a single archive. Scoped to that agency's data only.
+- [ ] Agent actions export includes: action_id, agent_name, brief_clause_ref, brief_clause_text_at_time, before_state, after_state, validation_outcome, customer_decision (approved/rejected), timestamp.
+- [ ] Truth File exported in JSON Schema-conformant format (already in F3 acceptance criteria — this feature wires the UI to that export function).
+- [ ] Export does NOT include: payment card data (Paddle-held), other customers' data, internal Beamix operational logs.
+
+**The /settings → Privacy & Data tab must also include (per Q8 resolution):**
+- [ ] Storage region statement: *"Your data is stored in [Supabase region — e.g., Europe West 1]. This is set at account creation and cannot be changed."*
+- [ ] Encryption statement: *"All data is encrypted in transit (TLS 1.2+) and at rest (AES-256)."*
+- [ ] Training opt-out: *"Beamix does not use your content or your customers' data to train AI models. This is a contractual commitment in our DPA."* Link to /security page for full DPA.
+- [ ] Data retention summary: Brief and Truth File retained indefinitely while account is active; scan results retained 24 months (rolling); agent action ledger retained 24 months; Monthly Update PDFs retained 24 months.
+- [ ] Sub-processors list: link to /security page sub-processors section.
+- [ ] DSAR request link: *"Request a copy or deletion of your data"* — triggers the DSAR flow.
+- [ ] Section header: *"Your data, on your terms."*
+
+**Build effort:** M — Inngest export job, ZIP assembly, signed URL delivery via Resend, per-category serializers (most data is already stored in structured tables).
+
+**Edge cases:**
+1. Customer requests export during an active agent run: export is queued; the agent run completes before export captures the final state. Brief export captures the version active at time of request.
+2. Customer exports, then cancels, then re-activates: export history (the list of prior export requests) is retained in /settings even during the cancellation period.
+3. Yossi exports one client's data to hand off to that client directly: the export ZIP contains no cross-client data. Yossi receives the ZIP and forwards it. Beamix does not send it directly to the end-client.
 
 **Priority: MVP**
 
@@ -1059,7 +1429,45 @@ Accounts that provision a Twilio number (via Phase 6 brief-co-author) but never 
 
 ### Feature 36: Domain Migration Flow
 
-*(Spec unchanged from v4.)*
+**Feature ID:** F36
+**Surface:** /settings → Profile tab → Domain field; migration wizard (full-screen flow, modal-style)
+
+**What it does:**
+Customer initiates a domain change from /settings → Profile. A guided 4-step migration wizard runs:
+1. **Confirm new domain** — customer enters new domain, Beamix runs a quick ownership check (DNS TXT record or meta-tag verification, same pattern as Twilio verification).
+2. **Review what changes** — Beamix shows a plain-English diff: "Your Brief will be updated to reference acme.dev. Your 47 scan results will remain in history labeled as acme-saas.com. Your Twilio number is placed on acme-saas.com — you'll need to update it."
+3. **Update Brief** — customer reviews Brief with new domain inline, re-signs (Seal ceremony). Brief gets a new version under F32 versioning.
+4. **Update Lead Attribution** — customer is shown a fresh developer snippet for the new domain. "Send to your developer" button (same as onboarding Step 2) fires the new snippet email.
+
+**Scan history merge policy:** Historical scans under the old domain are retained in /scans, labeled "Old domain (acme-saas.com)." New scans run against the new domain. The two series are displayed together in /scans with a domain-change marker at the inflection date.
+
+**Agent retraining:** On next scheduled scan cycle after domain migration, all 6 MVP agents re-run their baseline analysis against the new domain. Citation Fixer and FAQ Agent use new domain URLs in all future outputs.
+
+**Voice and microcopy:**
+- Settings trigger: *"Changing your domain? This takes 3 minutes and keeps your full history."*
+- Wizard step 2: *"Here's what migrates automatically and what needs your attention."*
+- Post-migration confirmation: *"Domain updated to acme.dev. Your Brief has been re-signed and Beamix is preparing a fresh analysis of your new domain."*
+
+**User story:** As Sarah (rebranding to Acme Cloud), I want to migrate my domain without losing my scan history or having to start onboarding over so that my attribution numbers and Brief remain continuous.
+
+**Acceptance criteria:**
+- [ ] Domain field in /settings → Profile is editable. Clicking "Change domain" opens the migration wizard.
+- [ ] Domain ownership verification: DNS TXT record or HTML meta-tag method. Customer has 72 hours to complete verification. Wizard paused (not blocked) until verified.
+- [ ] Step 2 plain-English diff shows: Brief domain references, number of historical scans (labeled old), Twilio placement status, UTM URL status.
+- [ ] Brief re-sign required (Seal ceremony, same spec as F32 re-author). Migration cannot complete without re-signed Brief.
+- [ ] Old domain scans retained in /scans history, labeled with old domain. Domain-change marker appears as a divider row at the inflection date.
+- [ ] Agent Memory (`agent_memory` table) entries linked to old domain: retained for provenance. New agent runs write to new domain context.
+- [ ] Twilio numbers are NOT automatically moved to the new domain — customer must update their website. Developer snippet email is re-sent with new domain context.
+- [ ] Inngest job queued after migration completion: runs all 6 MVP agents on new domain baseline. Customer sees "Beamix is analyzing your new domain" on /home for up to 30 minutes.
+- [ ] If customer abandons wizard mid-flow (closes modal): domain is NOT changed. Wizard state is saved for 24 hours so they can resume.
+- [ ] One domain migration permitted per 90 days (prevents abuse). If limit hit: customer sees a message to contact support.
+
+**Build effort:** M — migration wizard UI, DNS verification service (reuse Twilio verification pattern), Brief re-version trigger, scan history labeling, Inngest post-migration baseline job.
+
+**Edge cases:**
+1. Customer migrates domain but the new domain scan finds the score is dramatically worse than the old domain: the Brief re-sign ceremony is followed immediately by the post-migration baseline run. /home shows the new score with a "Domain migration: fresh start" explanatory note.
+2. Yossi migrates one client's domain while 11 other clients are running normally: migration is fully per-client. Other clients are unaffected.
+3. Customer has a Twilio number active on the old domain and never updates their website after migrating: the old number continues to log calls under the old domain label in Lead Attribution history. These calls are labeled "Old domain" in /settings → Lead Attribution, not silently dropped.
 
 **Priority: MVP**
 
@@ -1075,7 +1483,56 @@ Accounts that provision a Twilio number (via Phase 6 brief-co-author) but never 
 
 ### Feature 38: Subscription Pause
 
-*(Spec unchanged from v4.)*
+**Feature ID:** F38
+**Surface:** /settings → Billing tab → "Pause subscription" option (distinct from "Cancel")
+
+**What it does:**
+Customer can pause their subscription for 1 or 3 months. During a pause: no billing, no agent runs, no Monday Digest, no new inbox items. The account enters a "Paused" state — functionally similar to read-only mode from F35, but with a defined resume date and no data retention countdown (data is fully intact, not on a deletion clock).
+
+**Paddle API support:** Paddle supports subscription pauses via their subscription management API. Pause creates a `pause_collection` on the subscription with a resume date. At resume date, billing resumes automatically on the existing plan. No new checkout required.
+
+**During pause:**
+- Login: full access (read-only — browse historical data)
+- Scheduled agent runs: suspended
+- Monday Digest: suspended
+- Lead Attribution: Twilio numbers remain active, calls log (but no agent reactions)
+- UTM URLs: active, clicks log (no agent reactions)
+- Brief + Truth File + scan history: fully accessible
+- /inbox: visible (shows items from before pause), no new items
+
+**On resume:**
+- Billing resumes on the resume date
+- First agent run scheduled within 24 hours of resume
+- Day 0 T+10min welcome email does NOT resend (not a new customer)
+- A "Welcome back" email fires: *"Beamix is back at work. Your first scan since your pause will run tonight."*
+- No re-onboarding required
+
+**Voice and microcopy:**
+- Pause option: *"Take a break — pause for 1 or 3 months. Your data stays intact. Billing pauses. Agents rest."*
+- Confirm modal: *"Beamix will pause on [date] and resume on [resume date]. You'll be billed again then."*
+- Pause active banner on /home: *"Beamix is paused until [date]. Your data is safe — resume early anytime."*
+- Resume email: *"Beamix is back at work."*
+
+**User story:** As Dani, I want to pause my subscription during my slow season so that I'm not paying for a service my team isn't using, without losing my history or having to re-onboard in October.
+
+**Acceptance criteria:**
+- [ ] /settings → Billing tab shows "Pause subscription" as a secondary option below "Cancel subscription."
+- [ ] Pause options: 1 month or 3 months (radio buttons). Resume date calculated and shown before confirmation.
+- [ ] Paddle API: `POST /subscriptions/{id}/pause` with `resume_at` timestamp. On Paddle-side resume, standard billing cycle resumes.
+- [ ] During pause: all scheduled Inngest jobs for this account are suspended (check subscription_status before each run). Twilio numbers remain active and logging.
+- [ ] "Resume early" button in /settings during pause: fires Paddle `POST /subscriptions/{id}/resume` immediately. Billing resumes from current date (prorated).
+- [ ] On automatic resume date: Inngest job triggers first post-pause scan within 24 hours. "Welcome back" email fires within 15 minutes of resume.
+- [ ] No Day 1-6 cadence emails on resume (not a new customer). Only the "Welcome back" email.
+- [ ] Yossi context: pause is per-account, not per-client. All 12 client accounts pause simultaneously.
+- [ ] Maximum 2 pauses per 12 months (prevents pause abuse as a substitute for cancellation).
+- [ ] Pause is not available during trial period (not applicable at MVP — trial is 14-day money-back, not a free trial account state).
+
+**Build effort:** S — Paddle pause API integration, subscription_status = 'paused' state handling, Inngest subscription-status check on every job, "Welcome back" email template, Billing tab UI additions.
+
+**Edge cases:**
+1. Customer pauses, then their pause period overlaps with a Monthly Update generation date: the Reporter agent does not run during pause. The Monthly Update for the paused month is skipped. No retroactive catch-up on resume — the Monthly Update simply does not exist for that month (noted in /reports with status "Paused — not generated").
+2. Customer resumes early on the same day a Monday Digest was scheduled: the Monday Digest fires on the next Monday (not same-day — Inngest job checks if the current day is Monday and whether a digest has already sent this week before firing).
+3. Customer on annual plan pauses: Paddle pause on annual subscription pauses the next renewal date accordingly. Annual billing is not prorated for a mid-year pause — the pause extends the subscription end date by the pause duration. Confirm this behavior with Paddle's API documentation before shipping.
 
 **Priority: MVP**
 
@@ -1083,7 +1540,47 @@ Accounts that provision a Twilio number (via Phase 6 brief-co-author) but never 
 
 ### Feature 39: Competitor Removal and False-Positive Management
 
-*(Spec unchanged from v4.)*
+**Feature ID:** F39
+**Surface:** /competitors → per-row action; competitor detail panel
+
+**What it does:**
+Extends the existing /competitors table (F10) with a "Remove" action on any competitor row — both KG-detected and customer-added. Removing a competitor removes it from the active set, logs the removal in the audit log, and instructs all relevant agents to exclude it from future work.
+
+**Removal flow:**
+1. Customer clicks "Remove" on a competitor row (or opens the competitor detail panel and clicks "Remove competitor").
+2. A confirmation modal appears: *"Remove [Competitor Name]? Beamix will stop tracking them and won't mention them in future content. This does not undo past agent work."*
+3. On confirm: competitor is moved to a "Removed" list (not deleted — retained for audit/rollback). The competitor no longer appears in the main /competitors table. All 6 MVP agents receive an updated exclusion list.
+4. Removed competitors are visible in a collapsed "Removed" section at the bottom of /competitors — customer can "Restore" a removed competitor at any time.
+
+**Agent retraining:** On next scan cycle after removal, Citation Fixer and FAQ Agent read the exclusion list and do not generate content targeting removed competitors.
+
+**Audit log:** Removal is logged in the agent action ledger with: customer_id, removed_competitor_domain, removal_reason (optional free-text), timestamp, actor (Owner or Editor per F33).
+
+**Voice and microcopy:**
+- Remove button: *"Remove competitor"*
+- Confirmation modal: *"Remove [Name]? Beamix stops tracking them and won't mention them in future recommendations. Past work isn't affected."*
+- Restored badge: *"You removed this competitor on [date]."* (shown in restored row)
+
+**User story:** As Sarah, I want to remove a competitor that Beamix auto-detected but that isn't actually my competitor so that agents don't waste credits generating content targeting the wrong company.
+
+**Acceptance criteria:**
+- [ ] "Remove" action available on every row in /competitors table — both KG-detected ("Beamix detected" badge rows) and customer-added rows.
+- [ ] Removal moves competitor to a `removed` state (not deletion). Removed list accessible via "Show removed" toggle at bottom of /competitors.
+- [ ] Confirmation modal: shows competitor name, one-sentence plain-English explanation of what changes. Optional free-text "Reason for removing" field (not required).
+- [ ] On removal: agent exclusion list updated. All future Inngest agent runs read exclusion list before generating any competitor-targeting content.
+- [ ] Removal does NOT roll back past agent work. Past /inbox items approved for competitors that were later removed remain in the action ledger as-is.
+- [ ] "Restore" action on removed competitors: moves competitor back to active. Agents re-include them on next cycle. No re-confirmation needed.
+- [ ] Removing a KG-detected competitor does NOT affect the KG itself (global Beamix data). It only removes the competitor from this customer's active set.
+- [ ] Audit log entry on removal and on restore: actor, timestamp, competitor domain, reason (if provided).
+- [ ] If customer removes all 5 KG-detected competitors and adds 0 custom competitors: /competitors shows "No competitors tracked" empty state with a prompt to add custom competitors.
+- [ ] KG-detected competitor does NOT automatically re-add to the active list if it's in the customer's exclusion list. The exclusion list takes precedence over KG discovery. Hard rule.
+
+**Build effort:** XS — additional row action in /competitors table, exclusion_list field on agent context, status column on competitors table (active/removed), audit log entry.
+
+**Edge cases:**
+1. Customer removes a competitor, then a new scan re-detects them via the KG: the exclusion list takes precedence. Not re-added.
+2. Customer removes a competitor and later sees that competitor in a Monday Digest (because the Digest template referenced the competitor in historical context): the Monday Digest should not reference removed competitors in new paragraphs. Historical lines already generated are not retroactively edited.
+3. Yossi removes a competitor for Client A but that same competitor is valid for Client B: competitor exclusion lists are per-client. Removing a competitor in Client A's context has no effect on Client B's competitor tracking.
 
 **Priority: MVP**
 
@@ -1091,7 +1588,48 @@ Accounts that provision a Twilio number (via Phase 6 brief-co-author) but never 
 
 ### Feature 40: Multi-Domain Scale Tier — Seat and Domain Model
 
-*(Spec unchanged from v4. No changes in v5.)*
+**Feature ID:** F40
+**Surface:** Pricing page (Framer — out of this repo, but pricing model must be documented); /settings → Billing tab; client onboarding flow (abbreviated); multi-client cockpit
+
+**Pricing model decision (locked in this document):**
+
+| Tier | Domains included | Add-on domains | Notes |
+|---|---|---|---|
+| Discover $79 | 1 | N/A | Single domain, owner-only |
+| Build $189 | 1 | N/A | Single domain, 2 seats (F33) |
+| Scale $499 | 5 domains | $49/domain/month | Yossi's entry point; 12-client agency buys 5 included + 7 add-ons = $499 + 7×$49 = $842/mo |
+
+**Rationale:** Scale at $499 with unlimited domains would undermine per-domain value. A $49/domain add-on is lower than Beamix's per-domain cost of service at scale (scan engine cost + agent compute) and well below what Yossi bills clients (₪9,000–₪15,000/month per client). This model aligns incentives: Yossi pays proportionally as he grows.
+
+**White-label per-client config (locked by Board Decision #16 — not relitigated):**
+Each domain on Scale has its own white-label config slot. Config is accessed from the multi-client cockpit → select client → "Brand settings." Not from /settings account-level.
+
+**Multi-client cockpit:**
+The multi-client cockpit is the Scale-tier /home equivalent for agency operators. It is a table view, not the standard /home rings-and-evidence layout.
+
+**Cockpit columns:** Client name / Domain / AI Score (delta vs last week) / /Inbox count / Agents in error (0 is green) / Monthly Update status (Draft/Sent/Overdue) / Attribution headline (one-line)
+
+**Cockpit row actions:** Open client dashboard (switches client context), Approve all pending /inbox items (single-client bulk-approve, already in F6), Trigger manual scan.
+
+**User story:** As Yossi, I want a single table showing all 12 of my clients' current status so that my morning review takes 5 minutes, not 25.
+
+**Acceptance criteria:**
+- [ ] Scale tier includes 5 domains. Each additional domain is $49/month, billed via Paddle add-on product.
+- [ ] /settings → Billing tab shows: current domain count, included domains (5), add-on domains purchased, per-domain add-on price, "Add a domain" button.
+- [ ] "Add a domain" button: triggers Paddle add-on checkout for $49/month, then routes to full 4-step onboarding ceremony (including Brief signing). Every new domain added on Scale gets the full onboarding ceremony — no abbreviated flow. The "abbreviated 2-step" language from old onboarding spec is retired.
+- [ ] Multi-client cockpit: visible on Scale tier at /home when multi-client context is detected (2+ domains active). Single-domain Scale accounts see standard /home.
+- [ ] Cockpit shows: Client name / Score delta / Inbox count / Agents in error / Monthly Update status / Attribution headline.
+- [ ] Per-client white-label config accessible from cockpit → client row → "Brand settings." Not from top-level /settings.
+- [ ] "Powered by Beamix" footer (Geist Mono 9pt, --color-ink-4) default ON per-client, toggleable.
+- [ ] Domain deletion: Scale customer can remove a domain from their account. The domain's data enters read-only mode (same as F35 cancellation model, 90 days). The $49/month add-on is cancelled via Paddle at next billing cycle.
+- [ ] Cockpit Brief binding line (F31): present at cockpit footer, rotating through clauses of whichever client is most recently active.
+
+**Build effort:** M — Paddle add-on product ($49/domain), multi-client cockpit view (new table view of /home for Scale multi-domain), domain count enforcement, per-domain onboarding trigger.
+
+**Edge cases:**
+1. Yossi's client count drops from 12 to 8 (3 clients leave): he cancels 4 add-on domains via Paddle. The 4 removed domains enter 90-day read-only mode per F35. At-domain-limit enforcement is checked at next billing cycle.
+2. Scale customer with 1 domain upgrades to multi-client: they add their first additional domain via "Add a domain." The cockpit view activates automatically once the second domain is onboarded.
+3. Two Yossi-type agencies are both Scale customers: there is no cross-account visibility. Each agency's client data is fully isolated behind Supabase RLS.
 
 **Priority: MVP**
 
@@ -1141,7 +1679,28 @@ The Phase 7 (brief-signing) footer now includes a quiet "Security & DPA" link th
 
 ### Feature 44: /changelog as canonical surface
 
-*(Spec unchanged from v4.)*
+**Feature ID:** F44
+**Surface:** New route `/changelog` (public, indexed by Google + AI engines).
+
+**User story:** As Marcus, I want to see what Beamix shipped this week so I know my vendor is alive — and as the press / AI engines, I want a citable artifact about Beamix's shipping cadence.
+
+**Acceptance criteria:**
+- [ ] `/changelog` route (public, no auth required)
+- [ ] Cream paper editorial register (matches Monthly Update aesthetic)
+- [ ] Weekly entries (Fridays) — every customer-impacting ship
+- [ ] Each entry: dateline (Geist Mono 11px ALL CAPS), Fraunces 300 italic editorial title, ≤200 words body (Inter), 1 hero image or animated GIF (motion respects prefers-reduced-motion)
+- [ ] Reading time signal at top of each entry: "3 min read"
+- [ ] Brief grounding citation at bottom of each entry (rotating; F31 pattern)
+- [ ] "Subscribe via email" CTA (Resend + RSS feed)
+- [ ] Voice canon Model B (single-character "Beamix"; no agent names externally)
+- [ ] /changelog gets its own OG share card (cream paper, dateline, Seal)
+- [ ] /changelog/[slug] permalinks (each entry has stable URL)
+- [ ] Quiet week: no entry; previous entry stays at top
+- [ ] Major release week: multiple entries (still date-stamped per ship)
+
+**Voice + microcopy:** "Friday, April 24 — We taught the FAQ Agent how Marcus's customers actually phrase questions. (3 min read)"
+
+**Build effort:** S (~3 person-days; relies on existing CMS or markdown-files-in-repo pattern)
 
 **Priority: MVP**
 
@@ -1149,15 +1708,50 @@ The Phase 7 (brief-signing) footer now includes a quiet "Security & DPA" link th
 
 ### Feature 45: Compact mode toggle
 
-*(Spec unchanged from v4.)*
+**Feature ID:** F45
+**Surface:** Per-page toggle on /inbox, /scans, /crew (and other dense list views).
+
+**User story:** As Yossi (12-client agency), I drown in current spacing. I need denser views to scan multiple clients without scrolling.
+
+**Acceptance criteria:**
+- [ ] Toggle in page header: 2-state segmented control (`Comfortable | Compact`); default `Comfortable`
+- [ ] Yossi auto-default rule: if user has ≥2 active client domains → `Compact` auto-set on first /home visit (one-time, then sticky)
+- [ ] Compact /inbox: 40px row height (down from 56px); 13px Inter; tighter visible action buttons
+- [ ] Compact /scans: 32px row height (down from 56px); engine column micro-strip preserved; per-row hover detail still works
+- [ ] Compact /crew: 48px row height (down from 72px); monogram size table per Round 1 (16px monogram in compact; 32px in comfortable)
+- [ ] localStorage persistence per page (key: `beamix-density-{page}`)
+- [ ] Cream-paper-register surfaces (Brief, Monthly Update, /changelog, /trust) NEVER compact — toggle hidden on those pages
+- [ ] Compact does NOT change typography hierarchy (still readable; no smaller-than-13px body)
+- [ ] Yossi removes 2nd client (drops to 1 client): compact stays sticky (don't downgrade automatically)
+- [ ] Print stylesheet: always full-spacing (compact does not apply to print)
+
+**Build effort:** XS (~2 person-days — simple state toggle + CSS class swap)
 
 **Priority: MVP**
 
 ---
 
-### Feature 46: Editorial error pages
+### Feature 46: Editorial error pages (404/500/maint/status)
 
-*(Spec unchanged from v4.)*
+**Feature ID:** F46
+**Surface:** /404, /500, /maintenance, /status.
+
+**User story:** As any user, when something breaks, I want the page to feel like Beamix — not a generic Next.js framework error.
+
+**Acceptance criteria:**
+- [ ] All 4 pages cream paper register, single Fraunces 300 italic line, Seal at top, dateline (Geist Mono "April 28, 2026 — 14:23 GMT")
+- [ ] /404: "We couldn't find that page. The URL may have moved." + "[Take me home →]" CTA
+- [ ] /500: "Something broke. Beamix is logging it now. Try again, or check our status." + status link
+- [ ] /maintenance: "Beamix is performing scheduled maintenance. Returning at 03:00 GMT." + status link
+- [ ] /status: external page (status.beamixai.com via Better Stack or equivalent) with current incident + 90-day uptime
+- [ ] All pages have F31 Brief binding line at bottom
+- [ ] All pages logged to Sentry / observability (404 vs 500 vs maintenance distinguished)
+- [ ] /500 during database outage: page must serve from edge (no DB dependency)
+- [ ] /maintenance: scheduled in advance; banner appears 24h before; redirects to /maintenance during window
+
+**Voice + microcopy:** Single-character; calm; no apologies-as-disclaimers ("Sorry!" banned).
+
+**Build effort:** S (~2 person-days for all 4 pages + status page setup)
 
 **Priority: MVP**
 
