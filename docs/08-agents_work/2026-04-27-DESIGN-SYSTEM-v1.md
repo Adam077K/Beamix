@@ -1,5 +1,5 @@
 # Beamix Visual Design System v1
-Date: 2026-04-27
+Date: 2026-04-27 (amended 2026-04-28)
 Status: CANONICAL — all page-level specs and frontend implementations reference this document.
 Source synthesis: Master Designer brief (9,183 words), Frame 5 v2 locked decisions, References Masterlist, Home Premium Refs.
 
@@ -8,6 +8,18 @@ Source synthesis: Master Designer brief (9,183 words), Frame 5 v2 locked decisio
 ## How to use this document
 
 This is a frontend-executable spec. Every value is a pixel count, hex color, millisecond duration, or named curve. A developer should be able to build any Beamix component from this document without asking design questions. Where a decision is explained, it is explained once — in that section only. Skip explanations and read the spec tables.
+
+---
+
+## Voice canon (cross-spec rule, locked 2026-04-28)
+
+**Model B is the canonical voice model across all surfaces:**
+
+- **Where agents are named** (`Schema Doctor`, `Citation Fixer`, `FAQ Agent`, `Competitor Watch`, `Trust File Auditor`, `Reporter`, etc.): /home (Evidence Strip, Crew at Work, Recent Activity), /crew (the personnel directory), /workspace (the courier-flow execution viewer), /inbox row attribution columns. These are the surfaces where the customer is *inside* the system and orientation requires per-agent identity.
+- **Where ONLY "Beamix" appears** (single-character externally): all emails (Monday Digest, event-triggered, Monthly Update email body), Monthly Update PDF (signed "— Beamix"), /scan public surface, public permalinks, OG share cards, marketing site copy, /onboarding seal (signs "— Beamix" — the prior "— your crew" draft is retired).
+- **White-label exception:** Scale-tier digests sign as the agency's name (with optional "Powered by Beamix" footer in Geist Mono 9pt at `--color-ink-4`). Even there, agent names never appear.
+
+A frontend lint rule should detect agent class names in email/PDF/permalink output strings and flag.
 
 ---
 
@@ -160,7 +172,7 @@ Two exceptions with a specific use case each:
 |---|---|
 | /home | 1180px |
 | /scans, /competitors, /crew table | 1340px |
-| /inbox | 880px |
+| /inbox | 1280px *(corrected 2026-04-28 — was 880, contradicted /inbox spec which uses 1280 for the 3-pane Linear pattern)* |
 | The Brief (onboarding step 3) | 720px |
 | Monthly Update permalink | 720px |
 | /workspace | 1300px (sidebar included) |
@@ -201,9 +213,11 @@ Dark mode shadows use white-biased rgba:
 
 ---
 
-## 2. The 4-Mark Sigil System
+## 2. The Sigil System — 3 Marks + 1 Behavior + 1 Host
 
-These four marks are Beamix's visual identity. Together they signal that Beamix is a practice, not a dashboard. They appear only where listed. Their absence on admin surfaces is as intentional as their presence elsewhere.
+Beamix's visual identity is **3 marks (Ring, Seal, Monogram) + 1 behavior (Trace) + 1 host (Margin)**. Together they signal that Beamix is a practice, not a dashboard. They appear only where listed. Their absence on admin surfaces is as intentional as their presence elsewhere.
+
+The typology was clarified 2026-04-28 (Kare's call): the **Trace** is a *behavior* of text Beamix has touched within ≤24h, not a member of the mark family. The **Margin** is a *host/stage* — a surface where agent fingerprints accumulate — not a mark in its own right. Promoting them to marks bloated the sigil family with non-marks; the cleaner typology below is canon.
 
 ---
 
@@ -237,24 +251,28 @@ interface ActivityRingProps {
 
 The arc span is always 252° regardless of score. The score lives inside the ring as a number, not as fill percentage. The ring is not a progress bar. It is a frame.
 
+**Geometry-only, no motion (locked 2026-04-28).** The Ring's purpose is **brand identity** — a frame around the score, like a medallion or cartouche around a numeral. **It does NOT encode state.** State is communicated by the `TopbarStatus` dot. The Ring renders at full geometry at `t=0`; no entrance animation, no gap-pulse. The motion that previously dressed the Ring (`motion/ring-draw`, `motion/ring-pulse`) is cut from the system.
+
 **States.**
 
 | State | Visual |
 |---|---|
-| Idle (no active agents) | Static arc at full opacity. No animation. |
-| Acting (any agent running) | Gap terminus pulses: opacity 0.4 → 1.0, 1200ms ease-in-out, infinite loop. Arc itself static. |
-| Cycle complete (weekly scan + all fixes applied) | Arc draws to full circle (gap closes) over 800ms, holds 600ms, then re-opens at 252° with new baseline. This single closure is the weekly visual reward. |
-| First load on /home | Arc draws in from 0 to 252° over 1500ms as part of the onboarding boot sequence. |
+| All sessions, all loads | Static arc at full opacity. No animation. The Ring is a still photograph. |
+| Cycle complete (weekly scan + all fixes applied) | Arc draws to full circle (gap closes) over 800ms via `motion/ring-close`, holds 600ms, then re-opens at 252° with new baseline. **This is the only motion the Ring carries.** Coordinated with `F23 Cycle-Close Bell` — surrounding KPI sparklines settle to final positions (200ms ease) and the status sentence rewrites once. |
 
-**When to use the Ring.** /home above-fold (primary, live, pulsing). /scan public hero (draws during reveal, then static). Monthly Update PDF header (static, cycle-snapshot). OG share card (static). Marketing site hero (CSS animation).
+**Sub-96px replacement (size lock).** At sizes <96px, the Ring is **REPLACED by the Seal** — the gap and terminus dot do not survive at small sizes. **Favicon = Seal at 16×16, never Ring.** Topbar 24px sigil mark = Seal. Ring is reserved for /home above-fold + /scan public + Monthly Update PDF header (96px+).
 
-**When NOT to use the Ring.** Anywhere inside product chrome except /home. Never in table rows, never in cards, never in the sidebar, never in /inbox items.
+**When to use the Ring.** /home above-fold (96px+, static). /scan public hero (96px+, static). Monthly Update PDF header (120px, static). OG share card (96px, static). Marketing site hero (CSS-rendered; marketing surface may animate independently).
+
+**When NOT to use the Ring.** Anywhere inside product chrome except /home. Never in table rows, never in cards, never in the sidebar, never in /inbox items. Never below 96px diameter — drop to Seal.
 
 ---
 
-### 2.2 The Trace
+### 2.2 The Trace (behavior, not mark)
 
-**What it is.** A faint hand-drawn underline beneath text that Beamix has modified within the past 24 hours. Rough.js path, roughness 0.6, color `--color-brand` at 28–30% opacity, stroke 1.5px. Ambient evidence that work happened here.
+**What it is.** A *behavior* of text Beamix has touched within the past 24 hours: a faint hand-drawn underline beneath that text. Rough.js path, roughness 0.6, color `--color-brand` at 28–30% opacity, stroke 1.5px. Ambient evidence that work happened here.
+
+**Demoted from mark to behavior (2026-04-28).** The Trace is not a sigil. It is a *behavior* attached to recently-modified text — a temporal property of the underlying word, not a standalone visual element. This reframing limits where it appears: only on text the system *knows* an agent touched in the last 24h.
 
 **Technical spec.**
 
@@ -270,9 +288,17 @@ roughjs config for Trace:
 Placement: 2px below text baseline, full text width + 4px overhang each side
 ```
 
-**Behavior.** The Trace appears on text in /home (recent activity paragraph, crew activity rows), /competitors (Rivalry Strip editorial summary), /inbox filter label when an agent just acted, /workspace step output. It persists for 24 hours after the agent action, then fades out over 2 hours (opacity 0.28 → 0, 7200000ms — the slow fade is itself an ambient signal of recency). On initial appearance, fade-in over 300ms.
+**Permitted surfaces (4, locked 2026-04-28).** The Trace appears on exactly four surfaces:
+1. `/home` recent-activity rows
+2. `/competitors` editorial summary (Rivalry Strip prose)
+3. `/workspace` step output (text the agent just generated)
+4. Monday Digest email header
 
-**When NOT to use the Trace.** Never in /settings, /schedules, /scans table data (data is clinical — no ambient marks on clinical surfaces), never on headings, never on UI chrome (labels, nav items, buttons).
+It persists for 24 hours after the agent action, then fades out over 2 hours (opacity 0.28 → 0, 7200000ms — the slow fade is itself an ambient signal of recency). On initial appearance, fade-in over 300ms.
+
+**Cut from (2026-04-28).** The Trace is **removed** from: /security left rail, /inbox filter labels, Workflow Builder inspector, /onboarding signature, /scans table rows. These surfaces previously carried Traces; they no longer do.
+
+**When NOT to use the Trace.** Never in /settings, /schedules, /scans table data (data is clinical — no ambient marks on clinical surfaces), never on headings, never on UI chrome (labels, nav items, buttons), never on the 5 surfaces explicitly cut above.
 
 ---
 
@@ -280,67 +306,130 @@ Placement: 2px below text baseline, full text width + 4px overhang each side
 
 **What it is.** A small Rough.js-rendered mark derived from the Beamix logo star/cross shape, 16×16 to 32×32 depending on context. Appears at moments of completion, approval, or authorship. The product's signature.
 
-**Sizes by context.**
+**The Seal is a STAMP, not a drawing. The Seal is stamped, not drawn.** The metaphor is a wax seal pressed into paper — fast contact, brief hold, ink bleeding out from the contact point. This metaphor governs both the geometry and the motion.
+
+**Sizes by context (5 contexts, locked 2026-04-28).**
 
 | Context | Size | Notes |
 |---|---|---|
 | Monthly Update PDF top (header) | 24×24 | Static, ink-3 color |
 | Monthly Update PDF bottom (closing) | 32×32 | Static, ink color — the closing seal is always bigger, broadsheet tradition |
-| Brief completion (onboarding step 3) | 24×24 | Animated draw on approval |
-| Inbox approve button hover | 16×16 | Foreshadowing — draws while user hovers, complete on click |
+| Brief completion (onboarding step 3) | 24×24 | Animated stamp on approval |
 | OG share card corner | 24×24 | Static |
-| /scan public artifact footer | 20×20 | Static |
 | Monthly Update email header | 20×20 | Static |
 
-**Animation (seal-draw).**
+**Cut contexts (2026-04-28).** The Seal is **removed** from:
+- `/inbox` approve-button-hover foreshadowing — DELETED. Seal fires on **click only**, never on hover. (Foreshadowing-on-hover is animation theatre — the seal announces itself before authorship occurs.)
+- `/scan` public artifact footer — DELETED. The permalink is not an artifact being signed at view time; the Ring carries authorship there.
+
+**Geometry lock per size (Tier 0 design task).** Seal geometry needs **separately-tuned 16/20/24/32/48px versions, not scaled.** A 16×16 Seal is its own design, not the 32×32 reduced. Lock total path length, stroke width per size, corner roundness, gap proportion, and optical center for each size before MVP. Test static (no animation) at each size on white paper, cream paper, and PDF.
+
+**Cultural-readability lock.** The Seal is **NOT a Star of David** (six-pointed) and **NOT a Christian cross**. Lock as a **chamfered plus sign** OR a **4-pointed asterisk**. Document the chosen geometry in brand guidelines explicitly.
+
+**Animation (seal-draw, re-curved 2026-04-28 to 540ms stamping).**
 
 ```
-trigger: user clicks "Approve" on Brief or Inbox item
-curve: cubic-bezier(0.4, 0, 0.2, 1)
-duration: 800ms
-method: stroke-dashoffset from full path length → 0 (draws the outline)
-follow: on completion (800ms), scale from 1.0 → 1.05 → 1.0 over 50ms (a tiny settle)
-color: --color-ink at 80% opacity, not brand-blue — the seal is authorship, not action
+trigger: user clicks "Approve" on Brief, or Monthly Update render
+curve: stamping curve — see breakdown below
+duration: 540ms total (240ms path + 100ms hold + 200ms ink-bleed)
+method:
+  Phase 1 (0–240ms): path-draw via stroke-dashoffset, fast tight curve
+                     cubic-bezier(0.34, 0.0, 0.0, 1.0) — the stamp lands
+  Phase 2 (240–340ms): 100ms hold — the seal rests on the paper
+  Phase 3 (340–540ms): ink-bleed — stroke opacity fades from 60% to 100% (full)
+                       cubic-bezier(0.4, 0, 0.2, 1)
+color: --color-ink at 80% opacity at full bleed, not brand-blue — the seal is authorship, not action
 ```
 
-**Implementation note.** Export the Beamix logo star/cross as an SVG path. Total path length via `element.getTotalLength()`. Animate `stroke-dasharray: [length]` and `stroke-dashoffset: [length → 0]`. Use `will-change: stroke-dashoffset`.
+The previous 800ms slow-trace curve is retired. Seal is stamped, not drawn.
 
-**When NOT to use the Seal.** Never in navigation, never on data charts, never on buttons as a state indicator, never as a decoration. The seal means "Beamix has signed this artifact." If there is no artifact being signed or completed, no seal.
+**Implementation note.** Export the Beamix logo star/cross as an SVG path *per size* (5 paths, not one scaled). Total path length via `element.getTotalLength()`. Animate `stroke-dasharray: [length]` and `stroke-dashoffset: [length → 0]` for Phase 1; animate `stroke-opacity` 0.6 → 1.0 for Phase 3. Use `will-change: stroke-dashoffset, stroke-opacity`.
+
+**When NOT to use the Seal.** Never in navigation, never on data charts, never on buttons as a state indicator, never on hover (click only), never as a decoration. The seal means "Beamix has signed this artifact." If there is no artifact being signed or completed, no seal.
 
 ---
 
-### 2.4 The Margin
+### 2.4 The Margin (host surface for agent fingerprints)
 
-**What it is.** A 24px-wide vertical strip on the left edge of artifact surfaces (digests, scan rows, reports, /workspace). Over time, Rough.js agent-fingerprint marks accumulate here — small drawn circles in each agent's color, one per action. The margin is the product's memory made visible.
+**What it is.** The Margin is a **host/stage** — not a mark. It is the typographic edge of an artifact (printer's margin) where Rough.js agent fingerprint marks accumulate over time as a record of what each agent did, when. The Margin is the *page*; the fingerprints are what's *on* the page. Reframed 2026-04-28 from "mark" to "host."
 
 **Visual spec.**
 
 ```
-Width: 24px
-Background: same as the artifact surface (transparent over paper/cream)
-Marks: 12–16px Rough.js circles, roughness 0.8, each agent has a fixed color
-  Schema Doctor: #6366F1
-  Citation Fixer: #10B981
-  FAQ Agent: #F59E0B
-  Competitor Watch: #EF4444
-  Trend Spotter: #8B5CF6
-  Brand Voice Guard: #EC4899
-  Content Refresher: #0EA5E9
-  (remaining agents: use the semantic palette cycling through remaining hues)
+Width: 24px on PDF, 16px on Monday Digest email
+Background: same as the artifact surface (transparent over cream)
+Marks: 12–16px Rough.js circles, roughness 0.8, each agent has a fixed color and fingerprint path (see §2.5)
 Mark spacing: 8px vertical between marks
 ```
 
-**Where the Margin appears.** /scans table rows (each row's left 24px). /workspace step list (each step's left 24px). Monthly Update PDF (full-height left margin of the document). Monday Digest email (full-height left strip). /home "Receipts" section rows. /competitors table rows.
+**Temporal decay (Ive's lock 2026-04-28).** Marks fade with age:
+- Current week: 100% opacity
+- Prior month: 20% opacity
+- Archived (older): 6% opacity
 
-**CrewMonogram vs. Margin mark.** The Margin mark is 12–16px, ambient, accumulated. The CrewMonogram component (see Section 4) is 16–96px, prominent, labeled. Different tools for different contexts.
+The Margin becomes a *visible memory* of agent activity, with recency reading at full strength and history reading as ghosted ink.
+
+**Permitted surfaces (2 only at MVP, locked 2026-04-28).**
+1. **Monthly Update PDF** — full-height left margin of the document, with temporal decay applied row-by-row.
+2. **Monday Digest email** — 16px left strip with same temporal decay.
+
+**Surfaces where Margin is CUT (2026-04-28 — frees 24px per row).**
+- `/scans` table rows — CUT. Recover 24px for actual data per Tufte.
+- `/workspace` step list — CUT. The hand-drawn step connector is the structure.
+- `/home` Receipts section rows — CUT. Row width returns to data.
+- `/competitors` table rows — CUT.
+
+The Margin appears on **artifact surfaces only**, never on product chrome. Three legends agreed (Rams, Tufte, Kare) that placing the Margin on product chrome was vestigial; it is now host-only.
+
+**CrewMonogram vs. Margin fingerprint.** The Margin fingerprint is 12–16px, ambient, accumulated, decays with age. The CrewMonogram component (see Section 4.11) is 16–96px, prominent, labeled, no decay. Different tools for different contexts. Both derive from the same agent fingerprint function (see §2.5).
+
+---
+
+### 2.5 Agent Fingerprint Function (BRAND CANON)
+
+Each Beamix agent has a *fingerprint*: a Rough.js path generated from a fixed seed derived from the agent's UUID. This fingerprint is used:
+- As the agent's monogram circle (every CrewMonogram surface)
+- As the agent's mark in the Margin (Monthly Update PDF, Monday Digest)
+- As the agent's signature on Brief grounding citations
+- As the agent's small mark beside actions in any artifact
+
+Across every surface, every scale, every register: **the same drawn shape recurs for that agent.** A user on Beamix for two years has seen Schema Doctor's exact scribble 3,000 times. Recognition becomes pre-cognitive — the scribble becomes the agent.
+
+**The function.**
+
+```typescript
+// In brand canon (NOT codebase), per Kare's discipline:
+seed(agentUuid: string) → path: SVG_path_data
+```
+
+The function:
+- Maps agent UUID → deterministic Rough.js seed → SVG path
+- Generates ONE path per agent, fixed at agent creation
+- Never re-rendered, never re-randomized, never "freshened up in v2"
+- Documented in this spec, not in the codebase
+- Forbidden to change across versions (the way changing the Apple logo is forbidden)
+
+**Honesty about what this is.**
+
+These are NOT hand-drawn marks. They are **stamps**: machine-generated marks WITH hand-drawn texture, derived from agent identity, fixed for the agent's lifetime. The Seal is stamped, not drawn. The same metaphor extends to monograms.
+
+**MVP commitment.**
+
+- Lock all 18 agent UUIDs and their resulting fingerprints before MVP launch
+- Lock all 18 agent colors (currently 11 are placeholder "cycle through palette" — replace with explicit hex values, cultural-readability tested at 12px on cream paper)
+- Roadmap: replace 2-letter monogram scaffolding with 18 unique hand-drawn glyphs by month 6 (a real design project, not MVP scope)
+
+**The brand becomes the function.** Copying the function = copying the company.
 
 ---
 
 ## 3. Motion Vocabulary
 
-12 tokens. All implementation-ready. Reduced-motion fallback designed first — the animation is the enhancement, not the default.
+Reduced-motion fallback designed first — the animation is the enhancement, not the default.
 
 Global rule: never repeat entrance animations within the same session. Once the score has counted up, it stays at the final value on subsequent navigations. Motion communicates state transitions, not presence.
+
+**Surgery applied 2026-04-28 (per Ive's "5 motions, 1 curve was wrong" critique + Rams cuts).** Cut tokens: `motion/ring-pulse`, `motion/ring-draw`, `motion/microcopy-rotate`, `motion/signature-stroke`. Modified tokens: `motion/seal-draw` (re-curved to 540ms stamping), `motion/score-fill` (now first-session-only), `motion/path-draw` (sparklines render static; first-load score-trend only). Distinct curves now assigned per moment — no more shared `cubic-bezier(0.4, 0, 0.2, 1)` across 5 unrelated motions.
 
 ---
 
@@ -348,43 +437,64 @@ Global rule: never repeat entrance animations within the same session. Once the 
 
 | Token | Trigger | Property animated | Curve | Duration | Reduced-motion fallback |
 |---|---|---|---|---|---|
-| `motion/score-fill` | First page load per session | `counter` from 0 to current value (use `CountUp` or CSS counter animation) | `cubic-bezier(0.16, 1, 0.3, 1)` (ease-out-expo) | 800ms | Score appears instantly at final value |
-| `motion/ring-draw` | Onboarding step 5 boot, /scan public reveal | `stroke-dashoffset` full length → 0 | `cubic-bezier(0.4, 0, 0.2, 1)` | 1500ms | Arc appears fully drawn |
-| `motion/ring-pulse` | Continuous while any agent active | Gap mark `opacity` 0.4 → 1.0 → 0.4, infinite | `cubic-bezier(0.4, 0, 0.6, 1)` (sine-like ease-in-out) | 1200ms | Static gap at full opacity |
-| `motion/ring-close` | Weekly cycle complete | `stroke-dashoffset` to close the gap over 800ms | `cubic-bezier(0.4, 0, 0.2, 1)` | 800ms, hold 600ms, reopen | Arc redraws at new baseline on next refresh |
-| `motion/path-draw` | First page load per session (sparklines + score trend) | `clip-path: inset(0 100% 0 0)` → `clip-path: inset(0 0% 0 0)` | `cubic-bezier(0.4, 0, 0.2, 1)` | 1000ms | Sparkline appears fully drawn |
+| `motion/score-fill` | **First scan ever only.** On returning sessions, score appears at final value instantly. (`firstSession: true` gate required.) | `counter` from 0 to current value (use `CountUp` or CSS counter animation) | `cubic-bezier(0.16, 1, 0.3, 1)` (ease-out-expo) | 800ms | Score appears instantly at final value |
+| ~~`motion/ring-draw`~~ | **DELETED 2026-04-28.** Ring renders at full geometry at `t=0`. No entrance animation. | — | — | — | — |
+| ~~`motion/ring-pulse`~~ | **DELETED 2026-04-28.** Ring no longer pulses. `motion/topbar-status` is the canonical "agent acting" signal. | — | — | — | — |
+| `motion/ring-close` | Weekly cycle complete (`F23 Cycle-Close Bell`) | `stroke-dashoffset` to close the gap; coordinated with surrounding KPI sparklines settling (200ms ease) AND status sentence rewriting once | `cubic-bezier(0.4, 0, 0.2, 1)` | 800ms close, 600ms hold, then reopen at 252° baseline | Arc redraws at new baseline on next refresh |
+| `motion/path-draw` | **First-load /home score-trend only — once per session per page.** Sparklines elsewhere render static at `t=0`. | `clip-path: inset(0 100% 0 0)` → `clip-path: inset(0 0% 0 0)` | `cubic-bezier(0.4, 0, 0.6, 1)` (quick reveal — distinct from card/seal curves) | 1000ms | Trend appears fully drawn |
 | `motion/trace-fade` | Trace enters viewport, or on first /home load at 600ms | `opacity` 0 → 0.28 | `linear` | 300ms | Trace appears at final opacity |
 | `motion/pill-spring` | Status change on StatusToken | `scale` 0.96 → 1.04 → 1.0 | `cubic-bezier(0.34, 1.56, 0.64, 1)` (back-out, mild overshoot) | 280ms | Token appears at final state |
-| `motion/card-entrance` | Decision Card becomes visible (conditional on /home) | `translateY` 6px → 0, `opacity` 0 → 1 | `cubic-bezier(0.34, 1.56, 0.64, 1)` | 200ms | Card appears in place |
-| `motion/seal-draw` | Brief approval, Inbox approve click, Monthly Update render | `stroke-dashoffset` path length → 0, then scale 1.0 → 1.05 → 1.0 | `cubic-bezier(0.4, 0, 0.2, 1)` | 800ms draw + 50ms settle | Seal appears complete |
-| `motion/signature-stroke` | Brief approval, fires after `motion/seal-draw` completes | Fraunces "— your crew" text `opacity` 0 → 1 + a left-to-right clip-path reveal | `cubic-bezier(0.4, 0, 0.2, 1)` | 600ms (starts 800ms after seal begins) | Signature appears in place |
-| `motion/microcopy-rotate` | Continuous on active step in /workspace | Substep text `opacity` 1 → 0, new text `opacity` 0 → 1 (cross-fade) | `linear` for opacity | 200ms cross-fade, 800ms hold per string | Static "Working..." text |
-| `motion/topbar-status` | Continuous while any agent active | Topbar dot `opacity` 0.6 → 1.0 → 0.6, infinite | `cubic-bezier(0.4, 0, 0.6, 1)` | 1600ms (deliberately slower than ring-pulse) | Static dot at full opacity |
+| `motion/card-entrance` | Decision Card becomes visible (conditional on /home) | `translateY` 6px → 0, `opacity` 0 → 1 | `cubic-bezier(0.34, 1.56, 0.64, 1)` (back-out) | 200ms | Card appears in place |
+| `motion/seal-draw` | Brief approval click, Monthly Update render | **Phase 1 (0–240ms):** `stroke-dashoffset` path length → 0 (path-draw). **Phase 2 (240–340ms):** 100ms hold. **Phase 3 (340–540ms):** `stroke-opacity` 0.6 → 1.0 (ink-bleed). | **Phase 1:** `cubic-bezier(0.34, 0.0, 0.0, 1.0)` (stamping). **Phase 3:** `cubic-bezier(0.4, 0, 0.2, 1)` (ink). | 540ms total | Seal appears complete |
+| `motion/seal-fade-signature` | Replaces deleted `motion/signature-stroke`. Fires after `motion/seal-draw` completes. | Fraunces "— Beamix" text `opacity` 0 → 1 (no clip-path reveal, no letter-by-letter draw) | `linear` | 300ms (starts at 540ms) | Signature appears in place |
+| ~~`motion/signature-stroke`~~ | **DELETED 2026-04-28.** The Seal IS the signature. A typed wordmark drawn letter-by-letter is the same gesture twice. Replaced with `motion/seal-fade-signature` (300ms opacity fade). | — | — | — | — |
+| ~~`motion/microcopy-rotate`~~ | **DELETED 2026-04-28.** /workspace step text is now a single static line ("Working." or step-verb-noun summary). Personality is not feedback. | — | — | — | — |
+| `motion/topbar-status` | Continuous while any agent active | Topbar dot `opacity` 0.6 → 1.0 → 0.6, infinite | `cubic-bezier(0.4, 0, 0.6, 1)` (sine ease-in-out) | 1600ms | Static dot at full opacity |
 | `motion/row-hover` | Table or list row `mouseenter` | Row background `opacity` 0 → 0.03 (applies `--color-ink` at 3% opacity) | `linear` | 100ms | Instant background change |
 
-### 3.2 /home first-load orchestration (1.6s total budget)
+**Distinct curves per moment (Ive's fix 2026-04-28).** The previous spec had 5 motions sharing `cubic-bezier(0.4, 0, 0.2, 1)`. That was wrong — every motion was acting like the same gesture. Each moment now gets a deliberate curve:
 
+| Moment | Curve | Why |
+|---|---|---|
+| Seal stamping (Phase 1) | `cubic-bezier(0.34, 0.0, 0.0, 1.0)` | Fast contact, hard land — a stamp |
+| Seal ink-bleed (Phase 3) | `cubic-bezier(0.4, 0, 0.2, 1)` | Smooth opacity ramp |
+| Path-draw (sparkline once-per-session) | `cubic-bezier(0.4, 0, 0.6, 1)` | Quick reveal, no overshoot |
+| Card entrance | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Back-out — paper settles, mild overshoot |
+| Pill spring | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Back-out — token state-change pop |
+| Topbar status pulse | `cubic-bezier(0.4, 0, 0.6, 1)` | Sine ease-in-out — breathing |
+
+### 3.2 /home first-load orchestration (1.3s total budget — reduced from 1.6s after motion surgery)
+
+**Returning sessions (the common case):**
 ```
-0ms     Skeleton renders — Ring static, score at 0, sparkline empty, traces absent
-100ms   motion/score-fill begins (800ms)
-100ms   motion/path-draw begins (1000ms)
-600ms   motion/trace-fade begins across all visible traces, staggered 50ms each
+0ms     Page renders fully — Ring at full geometry, score at final value, sparklines static.
+0ms     motion/topbar-status begins (continuous if acting)
+0ms     motion/trace-fade may fire on traces that just entered the 24h window (300ms each)
+```
+Returning sessions have **no entrance choreography**. The page is the page from the first frame.
+
+**First scan ever (one-time only — `firstSession: true`):**
+```
+0ms     Skeleton renders — Ring at full geometry already, score at 0, score-trend sparkline empty, traces absent
+100ms   motion/score-fill begins (800ms) — first-scan-ever only
+100ms   motion/path-draw begins on /home score-trend ONLY (1000ms) — once per session
+600ms   motion/trace-fade fires across visible traces, staggered 50ms each
 900ms   score-fill ends, score lands at final value
 1100ms  path-draw ends
 1100ms  motion/card-entrance fires if Decision Card is present (200ms)
-1100ms  motion/ring-pulse begins (continuous if acting)
 1100ms  motion/topbar-status begins (continuous if acting)
-1300ms  card-entrance ends
-1600ms  all entrance motion complete
+1300ms  card-entrance ends — all entrance motion complete
 ```
 
-After 1600ms the page is static except for ring-pulse and topbar-status (continuous when system is active) and cursor interactions.
+After 1300ms the page is static except for `motion/topbar-status` (continuous when system is active) and cursor interactions. **The Ring is never animated on entrance.** The `F23 Cycle-Close Bell` (Monday cycle-close) is the only Ring motion.
 
 ### 3.3 Suppression rules
 
-- All entrance animations (score-fill, ring-draw, path-draw, card-entrance, trace-fade) fire once per session per page. If user navigates away and back, they see the final state instantly.
+- All entrance animations (score-fill, path-draw, card-entrance, trace-fade) fire once per session per page. If user navigates away and back, they see the final state instantly.
+- `motion/score-fill` is further gated by `firstSession: true` — fires only on the first scan ever. On returning sessions, score appears at final value instantly.
+- `motion/path-draw` is further gated to `/home` score-trend, once per session per page. All other sparklines render static at `t=0`.
 - `prefers-reduced-motion: reduce` → apply all reduced-motion fallbacks from the token table. Implement via `@media (prefers-reduced-motion: reduce)` in global CSS, not in component logic.
-- Never run `motion/ring-pulse` or `motion/topbar-status` when the system is idle. The pulse means something. A pulsing product that is not acting is lying.
+- Never run `motion/topbar-status` when the system is idle. The pulse means something. A pulsing product that is not acting is lying. (`motion/ring-pulse` is deleted from the system as of 2026-04-28 — no Ring animation outside `motion/ring-close`.)
 
 ---
 
@@ -557,9 +667,28 @@ The Trace appears under the object string if `hasTrace` is true and the action i
 
 Represents a single AI engine (ChatGPT, Perplexity, Gemini, etc.) with its mini-score and delta.
 
+**Engines are utility, never anthropomorphized (locked 2026-04-28).** `EngineChip` uses clean `--radius-chip` 8px rectangles — **no Rough.js, no jitter, no per-engine seed.** Hand-drawn discipline is reserved for Beamix's agents only. *We drew our crew; we did not draw OpenAI.* This rule extends to /scan storyboard engine bubbles — clean 96px circles, no Rough.js.
+
+**Engine abbreviation table (locked 2026-04-28).** All 11 engines render as 2-letter abbreviations in 11px Inter 500 caps with 0.06em tracking. Render all 11 side-by-side at 11px before MVP to confirm legibility.
+
+| Engine | Abbreviation | Notes |
+|---|---|---|
+| ChatGPT | **CG** | Audit at 11px — consider GP if CG ↔ GR confusion at small sizes |
+| Perplexity | **PX** | |
+| Gemini | **GM** | |
+| Claude | **CL** | |
+| AI Overviews | **AO** | Renamed from "AI" 2026-04-28 — collision with category meaning |
+| Grok | **GR** | |
+| You.com | **YC** | |
+| Bing Copilot | **CP** | Renamed from MS 2026-04-28 — clearer |
+| Meta AI | **MA** | |
+| Mistral | **MI** | |
+| DeepSeek | **DS** | |
+
 ```tsx
 interface EngineChipProps {
   name: string;           // "ChatGPT"
+  abbreviation: string;   // "CG"
   score: number;          // 0–100
   delta: number;          // signed, e.g. +3 or -1
   status: 'active' | 'inactive' | 'locked';
@@ -568,7 +697,7 @@ interface EngineChipProps {
 }
 ```
 
-Sizing: 56px height, 12px horizontal padding, 16px minimum width.
+Sizing: 56px height, 12px horizontal padding, 16px minimum width. Clean rectangle, `--radius-chip` (8px), no Rough.js.
 
 States:
 
@@ -670,22 +799,33 @@ Circle representing an agent. Used in /crew roster, /workspace step list, /inbox
 ```tsx
 interface CrewMonogramProps {
   agentType: AgentType;
-  size: 'sm' | 'md' | 'lg' | 'hero';  // 16 / 32 / 48 / 96px
+  size: 'micro' | 'sm' | 'md' | 'lg' | 'hero';  // <16 / 16 / 32 / 48 / 96px
 }
 ```
 
-Size map:
+**Locked 2026-04-28: 2-letter monograms across all surfaces.** Three of the 18 agents start with C (Citation Fixer = CF, Content Refresher = CR, Competitor Watch = CW); single-letter would collide. 2-letter is non-negotiable until 18 unique hand-drawn glyphs ship in month 6 (post-MVP roadmap).
+
+**Size table (locked 2026-04-28).**
+
+| Range | Treatment | Notes |
+|---|---|---|
+| **<16px (micro)** | Color disc only — NO letters | Color does the work at small scale. Letters illegible. |
+| **16–32px (sm/md)** | 2-letter monogram, InterDisplay 500 caps | Examples: SD (Schema Doctor), CF (Citation Fixer), CW (Competitor Watch), CR (Content Refresher) |
+| **48px+ (lg/hero)** | 2-letter monogram + name label below | Full identity at hero scale |
 
 | Size token | Diameter | Font size | Use |
 |---|---|---|---|
-| sm | 16px | 8px | EvidenceCard, table row inline |
+| micro | <16px | — (disc only) | Margin fingerprint marks, dense table rows |
+| sm | 16px | 8px | EvidenceCard, table row inline (with letters) |
 | md | 32px | 14px | /crew card top-left, /inbox agent filter |
-| lg | 48px | 20px | /workspace agent list |
-| hero | 96px | 40px | /crew agent profile page |
+| lg | 48px | 20px | /workspace agent list (with name label below) |
+| hero | 96px | 40px | /crew agent profile page (with name label below) |
 
-Rendering: Rough.js circle, roughness 0.8, fixed seed per `agentType`. Each agent has a fixed color from the Margin color table (see Section 2.4). The agent's initial or glyph is centered in the circle.
+Rendering: Rough.js circle frame derived from the **agent fingerprint function** (see §2.5) — deterministic seed per agent UUID, roughness 0.8. Each agent has a fixed color (locked, all 18, before MVP — no more "cycle through palette" placeholders). The agent's 2-letter monogram in InterDisplay 500 caps is centered in the circle (sm and above).
 
-`roughness: 0.8` means the circle reads slightly organic, slightly drawn. The fixed seed means the same agent always has the same circle — their "portrait."
+The deterministic seed means the same agent always has the same circle — their "portrait." Cultural-readability tested at 12px on cream paper for all 18 colors before MVP lock.
+
+**Roadmap:** Replace 2-letter scaffolding with 18 unique hand-drawn glyphs by month 6. A real design project, not MVP scope.
 
 ---
 
@@ -741,68 +881,71 @@ Seven surfaces. Five moves that bind them into one system.
 
 ---
 
-### Move 1 — The Seal travels
+### Move 1 — The Seal travels (5 contexts, locked 2026-04-28)
 
-The Rough.js Beamix seal mark appears on every surface that carries a completed artifact or Beamix authorship:
+The Rough.js Beamix seal mark appears on **5 surfaces only** — scarcity is what makes a seal carry weight. Each size has its own separately-tuned geometry (per §2.3 lock).
 
 | Surface | Seal size | Position | State |
 |---|---|---|---|
-| Brief (product) | 24px | Bottom-right of the Brief container | Animated on signing |
+| Brief (onboarding step 3) | 24px | Bottom-right of the Brief container | Animated stamp on click (540ms, see §2.3) |
 | Monthly Update PDF | 24px top, 32px bottom | Top header region, bottom closing region | Static |
 | OG share card | 24px | Bottom-right corner | Static |
-| /scan public footer | 20px | Below CTA | Static |
-| Monday Digest email header | 20px | Right of "Beamix" wordmark | Static |
-| Event-triggered email | 16px | Next to from-line | Static |
+| Monthly Update email header | 20px | Right of "Beamix" wordmark | Static |
 
-The seal is always the same Rough.js path. The size varies. The roughness is 0.6 and the seed is fixed (the brand seed, not user-derived). The seal is always `--color-ink` at 80% opacity — it reads as authorship ink, not as a colorful brand badge.
+**Cut from (2026-04-28):** /inbox approve-button-hover (animation theatre — Seal fires on click only), /scan public artifact footer (the permalink is not an artifact being signed at view time — Ring carries authorship there).
+
+The seal is always derived from the brand-fixed seed (NOT user-derived). The seal is always `--color-ink` at 80% opacity — it reads as authorship ink, not as a colorful brand badge.
 
 ### Move 2 — The signature line travels
 
-`"— your crew"` in 22px Fraunces 300 italic appears at the end of every artifact Beamix authors. Verbatim, no variations.
+`"— Beamix"` in 22px Fraunces 300 italic appears at the end of every artifact Beamix authors. Verbatim, no variations. (The prior "— your crew" draft is retired per voice canon Model B at the top of this doc.)
 
 | Surface | Size | Placement |
 |---|---|---|
-| Brief (product, onboarding) | 22px | Below Brief text, after seal appears |
+| Brief (product, onboarding) | 22px | Below Brief text, appears via 300ms opacity fade after seal-draw completes |
 | Monthly Update PDF | 22px | Final line, after closing paragraph |
 | Monday Digest email | 18px | Last line before unsubscribe footer |
 | Event-triggered email | 18px | Last line |
 | /scan public CTA section | 22px | Below "Run weekly. Fix automatically." |
 | Marketing site footer | 18px | Final footer line |
 
-### Move 3 — The Activity Ring travels
+The signature appears via `motion/seal-fade-signature` (300ms opacity fade) where animation applies — never via letter-by-letter pen-stroke. The Seal is the signature; the typed wordmark is the read-back.
 
-The same Ring geometry (200px, 2px stroke, `--color-brand`, 30° gap at 1:30 position) appears across surfaces, in its contextually appropriate state:
+### Move 3 — The Activity Ring travels (geometry-only, no entrance animation)
+
+The same Ring geometry (96px+ only — see §2.1 size lock; below 96px, drop to Seal) appears across surfaces. **Ring renders at full geometry at `t=0` everywhere — no entrance animations.** The only Ring motion in the system is `motion/ring-close` on weekly cycle-close (`F23 Cycle-Close Bell`).
 
 | Surface | Ring state | Size |
 |---|---|---|
-| /home | Live, pulsing when acting | 200px |
-| /scan public (during reveal) | Draws from 0 to 252° as score appears | 200px |
+| /home | Static. Closes on Monday cycle-close (`F23`). | 200px |
+| /scan public hero | Static at full geometry on load (no draw-in animation) | 200px |
 | Monthly Update PDF | Static, cycle-snapshot | 120px |
 | OG share card | Static | 96px |
-| Marketing site hero | Animated (CSS, perpetual slow rotation of the gap mark) | Variable |
+| Marketing site hero | Marketing surface may animate independently (CSS, separate canon) | Variable |
 
-### Move 4 — Crew Traces travel
+### Move 4 — Crew Traces travel (4 surfaces, locked 2026-04-28)
 
-The Rough.js underline trace (roughness 0.6, 28% opacity, 1.5px stroke, `--color-brand`) appears under recently-touched text on multiple surfaces:
+The Rough.js underline trace (roughness 0.6, 28% opacity, 1.5px stroke, `--color-brand`) is a **behavior**, not a mark (see §2.2). It appears on text Beamix touched within ≤24h, on exactly 4 surfaces:
 
 | Surface | Where traces appear |
 |---|---|
-| /home | Editorial summary line, activity rows, KPI labels |
-| Monday Digest email | Nouns the agents acted on in the past 24h |
-| Monthly Update "What we did" | Specific numbers and entity names |
-| /workspace | Output panel: text the agent just generated |
+| /home | Recent-activity rows |
+| /competitors | Editorial summary (Rivalry Strip prose) |
+| /workspace | Step output: text the agent just generated |
+| Monday Digest email | Header (nouns the agents acted on in past 24h) |
 
-### Move 5 — The Margin travels
+**Cut (2026-04-28):** /security left rail, /inbox filter labels, Workflow Builder inspector, /onboarding signature, /scans table rows.
 
-The 24px left-edge vertical strip with accumulated Rough.js agent-fingerprint marks appears on every artifact:
+### Move 5 — The Margin travels (host surface, 2 contexts only)
+
+The Margin is a **host surface** (see §2.4) — not a mark. Agent fingerprints accumulate in the left margin with **temporal decay** (current week 100%, prior month 20%, archived 6%). Permitted on 2 surfaces only at MVP:
 
 | Surface | Margin presence |
 |---|---|
-| /scans table | Each row's left 24px |
-| /workspace step list | Step connector area |
-| Monthly Update PDF | Full-height left margin |
-| Monday Digest email | Full-height left strip (16px on email, screen narrower) |
-| /home "Receipts" | Row-level margin marks |
+| Monthly Update PDF | Full-height left margin (24px wide) with row-by-row temporal decay |
+| Monday Digest email | Full-height left strip (16px on email, screen narrower) with same temporal decay |
+
+**Cut from (2026-04-28):** /scans table rows (recovered 24px for actual data per Tufte), /workspace step list, /home "Receipts", /competitors table rows. The Margin is artifact-only.
 
 ---
 
@@ -819,20 +962,22 @@ The 24px left-edge vertical strip with accumulated Rough.js agent-fingerprint ma
 
 ---
 
-## 6. The 4 Visual Registers
+## 6. The 3 Visual Registers (collapsed from 4 on 2026-04-28)
 
 Every surface belongs to exactly one register. The register determines which tokens apply and which feel applies.
 
+**Collapsed 4 → 3 (Rams' call 2026-04-28).** "Editorial Artifact" + "Journey Canvas" overlapped by 80% — both cream paper, both Fraunces accents, both signed surfaces. Collapsed into one register: **Artifact**. The new typology: Artifact / Working / Disclosure.
+
 ---
 
-### Register 1 — Editorial Artifact
+### Register 1 — Artifact
 
-**Surfaces:** /scan public, Brief (onboarding step 3), Monthly Update PDF, email digest header (32px strip), OG share card.
+**Surfaces:** /scan public, Brief (onboarding step 3), Monthly Update PDF + permalink, Monday Digest header (32px strip), OG share card, Workflow Builder canvas (per Decision C lock — cream at 30% over paper-default).
 
-**When it applies:** Any surface that is an artifact the user could hold, print, or share. Not product chrome.
+**When it applies:** Any surface that is an artifact the user could hold, print, or share. Includes the Workflow Builder canvas — workflows are *composed* on cream paper like writing on a sheet. Not product chrome.
 
 **Token swaps:**
-- Background: `--color-paper-cream` (#F7F2E8)
+- Background: `--color-paper-cream` (#F7F2E8); Workflow Builder uses cream at 30% over paper-default
 - Primary body font: Fraunces 300 (instead of Inter)
 - Heading font: still InterDisplay for large numbers, but Fraunces for prose headings
 - Border: none on the artifact itself (the paper edge is the border)
@@ -843,69 +988,52 @@ Every surface belongs to exactly one register. The register determines which tok
 - Optical kerning: `font-kerning: normal`
 - No widows or orphans: `widows: 2; orphans: 2`
 - Margins: 96px web, 1.25in print
-- The Margin strip is present
-- The Seal is present
-- The signature line is present
+- The Margin (host surface) is present on Monthly Update PDF + Monday Digest only — see §2.4
+- The Seal is present on the 5 locked contexts (see §2.3)
+- The signature line ("— Beamix") is present
+- Cream-paper hex selection lock (Tier 0): print 3 swatches (#F7F2E8, #F4ECD8 — Stripe Press's cream — and one between), photograph under 3 light conditions, view on 3 displays, lock the chosen hex before MVP. The most consequential color in the system.
 
 ---
 
-### Register 2 — Journey Canvas
+### Register 2 — Working (was: Data Intelligence + Journey Canvas merged into product chrome)
 
-**Surfaces:** /workspace.
+**Surfaces:** /home, /inbox, /scans, /competitors, /workspace, /crew, /schedules.
 
-**When it applies:** When Beamix is actively executing a multi-step task and the user is watching.
-
-**Token swaps:**
-- Background: `--color-paper` (white — not cream; cream is for artifacts, not execution)
-- Rough.js step markers: roughness 0.8
-- Hand-drawn step connector lines: 1.5px, 28% opacity `--color-brand`
-- Active step pulse: `motion/ring-pulse` timing applied to the step circle
-- Microcopy rotation: `motion/microcopy-rotate` on active substep
-
-**Distinctive treatments:**
-- No horizontal dividers between steps — the hand-drawn connector line is the structure
-- Live output panel on the right renders the actual work being produced
-- SectionHeading is absent — the journey is self-evident
-
----
-
-### Register 3 — Data Intelligence
-
-**Surfaces:** /home, /competitors, /scans.
-
-**When it applies:** The primary data-facing product surfaces. The user is reading intelligence, not watching execution, not reviewing an artifact.
+**When it applies:** The user is inside the system, reading intelligence, watching agents work, or administrating. White product chrome. Where the work happens.
 
 **Token swaps:**
+- Background: `--color-paper` (white)
 - All standard tokens apply, no swaps
 - Tabular numerals enforced on every data element
-- Rough.js restricted to Crew Traces and Margin marks only
+- Rough.js restricted to Traces (4 surfaces — see §2.2) and CrewMonogram fingerprints
 - Clinical table grammar on /scans and /competitors
 - InterDisplay used for KPI hero numbers; Inter for everything else
 
 **Distinctive treatments:**
-- Per-engine strip uses `EngineChip` components
+- Per-engine strip uses `EngineChip` components (clean rectangles, no Rough.js — see §4.7)
 - Score cluster uses `ScoreDisplay` component
 - Activity feed uses `EvidenceCard` components with Traces
 - KPI cards use `CardSurface` with hover sparkline (sparkline appears on hover, fades on mouseout, no animation on hover sparkline — instant)
+- /workspace: hand-drawn step connector lines (1.5px, 28% opacity `--color-brand`), step output narration column (replaces walking figure per Decision D — Tufte cut + Ive narration column)
+- No `motion/ring-pulse`, no `motion/microcopy-rotate` — both deleted from the system
 
 ---
 
-### Register 4 — Admin Utility
+### Register 3 — Disclosure
 
-**Surfaces:** /inbox chrome (filter rail, list, action buttons), /crew chrome, /schedules, /settings.
+**Surfaces:** /security, /legal, /pricing receipts.
 
-**When it applies:** The user is configuring, administrating, or reviewing structured operational data. Minimum craft, maximum clarity.
+**When it applies:** The user is reading facts, terms, or compliance disclosures. Clinical, dateline-stamped, factual.
 
 **Token swaps:**
-- No Rough.js (except: /crew agent profiles each get one Rough.js monogram mark)
-- No Fraunces (except: /inbox empty state headline, /inbox review-debt counter)
-- No Crew Traces
-- No Seal (except: /inbox Approve button hover — foreshadowing the approval ceremony)
-- Base font size steps down to 14px (text-base at 14px, labels at 11px) in dense list contexts
+- Background: `--color-paper` (white)
+- No Rough.js, no Fraunces, no Traces, no Seal
+- Geist Mono used for datelines, version stamps, sub-processor tables
+- Base font size 14px in dense list contexts
 
-**Distinctive treatments:**
-- /schedules: Stripe-replica severity. The one craft move is the inline schedule-timeline on row expand (5 upcoming runs in Geist Mono, 11px caps, `--color-brand` dot for today)
-- /settings: Stripe-replica form grammar. Three deviations: Brief tab (full Brief with version history), Truth File tab (field-by-field editor with Margin marks showing which agent last consulted each field), Phone numbers tab (Geist Mono table)
+**/security HYBRID (Adam's lock — Decision A 2026-04-28).** /security uses an **Artifact-on-Disclosure hybrid** — cream paper background (Ive's argument: cream does emotional work, white does factual), white-paper-island spec blocks for the 6-stat ribbon and sub-processors table (Disclosure-clinical typography on white). The two registers are stacked, not blended — like a glass case in a wood-panelled room. Cream provides the editorial register; white islands provide the factual register. Document this hybrid explicitly.
+
+**Voice canon polish (Ive's call 2026-04-28).** /security §9: replace "refuses to publish" with "**cannot publish**". *Refuses* is volitional and slightly defensive; *cannot* is mechanical and final.
 
 ---
 
@@ -924,6 +1052,12 @@ These design choices must not appear in Beamix under any circumstances. The list
 - **Drop shadows on text.** Never. Not on headings, not on score numbers, not on labels.
 - **Per-engine logos in engine pills.** Engine chips do not use ChatGPT, Google, or Perplexity logos. They use the engine name in 11px caps with a Geist Mono feel. Including real brand logos creates trademark risk, visual noise, and makes locked-tier states visually inconsistent.
 - **Illustration-heavy empty states.** Only /inbox uses the `laptop-leaf` illustration. All other empty states use the headline-only variant. Illustrations are earned, not default.
+- **Ring as pulse-encoder.** The Ring is identity, not state. State is communicated by the `TopbarStatus` dot, never by Ring animation. (Locked 2026-04-28.)
+- **Margin column on product chrome rows.** The Margin is a host surface only. Permitted on Monthly Update PDF + Monday Digest email. Cut from /scans, /workspace, /home, /competitors row chrome. (Locked 2026-04-28.)
+- **Sparkline path-draw entrance animations.** Sparklines are static reading instruments. Animation creates a "wait-for-the-chart" moment contrary to their purpose. Render at full state at `t=0`. *Exception:* the score-trend on /home first-load fires `motion/path-draw` exactly once per session. (Locked 2026-04-28.)
+- **Pen-stroke wordmark animations.** The Seal IS the signature. A typed wordmark drawn letter-by-letter after the seal is the same gesture twice. Use a 300ms opacity fade after seal-draw if the wordmark needs to appear. (Locked 2026-04-28.)
+- **Engine bubbles with Rough.js.** Hand-drawn discipline is reserved for Beamix's actors. Engines are utility — clean rectangles for `EngineChip`, clean circles for /scan storyboard. No Rough.js, no jitter, no per-engine seed. *We drew our crew; we did not draw OpenAI.* (Locked 2026-04-28.)
+- **"AI" as engine abbreviation.** AI Overviews → **"AO"**. Collision with the category-name "AI" in a product literally about AI. (Renamed 2026-04-28.)
 
 ### Motion anti-patterns
 
@@ -1182,7 +1316,8 @@ export const AGENT_COLORS: Record<AgentType, string> = {
   trend_spotter: '#8B5CF6',
   brand_voice_guard: '#EC4899',
   content_refresher: '#0EA5E9',
-  // remaining agents cycle through remaining palette
+  // remaining 11 agent colors: TIER-0 LOCK before MVP — no more "cycle through palette" placeholders.
+  // Cultural-readability test all 18 hexes at 12px on cream paper. See §2.5 + §4.11.
 };
 ```
 
@@ -1221,7 +1356,6 @@ Apply `prefers-reduced-motion` globally:
 @media (prefers-reduced-motion: reduce) {
   /* All Framer Motion animations are suppressed via the hook below.
      Non-JS animations suppressed here: */
-  .animate-ring-pulse,
   .animate-topbar-status {
     animation: none !important;
     opacity: 1 !important;
@@ -1269,12 +1403,21 @@ All interactive elements carry visible focus indicators. No `outline: none` with
 **Type: artifact** Fraunces 300 22–28px SOFT 100 WONK 0 opsz 144
 **Spacing grid:** 4px micro / 8px base. Allowed: 4 8 12 16 24 48 72 120
 **Card radius:** 12px / chip: 8px / pill CTA: 9999px
-**Motion budget /home:** 1600ms total
-**Score count-up:** 800ms `cubic-bezier(0.16,1,0.3,1)`
-**Ring pulse:** 1200ms `cubic-bezier(0.4,0,0.6,1)` infinite (acting only)
-**Path draw:** 1000ms `cubic-bezier(0.4,0,0.2,1)`
-**Seal draw:** 800ms `cubic-bezier(0.4,0,0.2,1)`
+**Motion budget /home (returning):** 0ms — page renders fully at `t=0`
+**Motion budget /home (first scan ever only):** 1300ms total
+**Score count-up:** 800ms `cubic-bezier(0.16,1,0.3,1)` — first scan ever only
+**Ring pulse:** DELETED 2026-04-28. Use `motion/topbar-status` for "agent acting" signal.
+**Ring draw entrance:** DELETED 2026-04-28. Ring renders at full geometry at `t=0`.
+**Ring close:** 800ms `cubic-bezier(0.4,0,0.2,1)` (weekly cycle-close only — `F23 Cycle-Close Bell`)
+**Path draw:** 1000ms `cubic-bezier(0.4,0,0.6,1)` — /home score-trend, once per session only
+**Seal draw:** 540ms total — 240ms path `cubic-bezier(0.34,0,0,1)` + 100ms hold + 200ms ink-bleed `cubic-bezier(0.4,0,0.2,1)`
+**Signature fade:** 300ms linear opacity (replaces deleted signature-stroke pen-stroke)
+**Microcopy rotate:** DELETED 2026-04-28. Static "Working." per /workspace step.
 **Card entrance:** 200ms `cubic-bezier(0.34,1.56,0.64,1)`
-**Rough.js Trace:** roughness 0.6, 1.5px stroke, 28% brand-blue opacity
-**Rough.js Seal:** roughness 0.6, 1.5px stroke, 80% ink opacity
-**Rough.js Monogram:** roughness 0.8, fixed seed per agent type
+**Topbar status:** 1600ms `cubic-bezier(0.4,0,0.6,1)` infinite (acting only) — canonical "agent acting" signal
+**Rough.js Trace:** roughness 0.6, 1.5px stroke, 28% brand-blue opacity (4 surfaces only — see §2.2)
+**Rough.js Seal:** roughness 0.6, 1.5px stroke, 80% ink opacity (5 contexts only — see §2.3)
+**Rough.js Monogram:** roughness 0.8, deterministic seed per agent UUID (brand canon — see §2.5)
+**Engine abbreviations:** AO (NOT AI), CG, PX, GM, CL, GR, YC, CP, MA, MI, DS — clean rectangles only, no Rough.js
+**Sigil typology:** 3 marks (Ring, Seal, Monogram) + 1 behavior (Trace) + 1 host (Margin)
+**Visual registers:** 3 — Artifact / Working / Disclosure

@@ -159,15 +159,15 @@ This is the single most novel interaction on `/scan` and the share-worthy moment
    asking 11 AI engines about you …
 
       ⊕      ⊕      ⊕      ⊕      ⊕      
-   ChatGPT  Perplexity  Gemini  Claude  AIO  
+   ChatGPT  Perplexity  Gemini  Claude  AO  
 
       ⊕      ⊕      ⊕      ⊕      ⊕      ⊕
    Grok  You.com  Copilot  Meta  Mistral  DeepSeek
 ```
 
 **Engine bubble specs.**
-- Each bubble: 96px diameter, Rough.js circle (roughness 1.2, bowing 0.9, seed = hash of `scan_id` + engine name). Stroke `ink-2` 50% opacity at rest.
-- Inside the bubble: the engine's mark or first letter in 32px InterDisplay 500. Engine logos are NOT used (licensing risk + visual inconsistency). Instead, a single InterDisplay glyph or the engine's two-letter abbreviation (e.g., `CG`, `PX`, `GM`, `CL`, `AI`, `GR`, `YC`, `MS`, `MA`, `MI`, `DS`).
+- Each bubble: 96px diameter, **clean SVG circle (NOT Rough.js)** — Beamix's hand-drawn discipline is reserved for Beamix's own actors (agents, sigils, marks). Engines are utility — third-party services we monitor, not our crew. Stroke `ink-2` at 50% opacity at rest. (Engine treatment locked 2026-04-28 per Kare's call: "We drew our crew; we did not draw OpenAI.")
+- Inside the bubble: the engine's 2-letter abbreviation in 32px InterDisplay 500. Engine logos are NOT used (licensing risk + visual inconsistency). Two-letter abbreviations: `CG` (ChatGPT), `PX` (Perplexity), `GM` (Gemini), `CL` (Claude), `AO` (AI Overviews — renamed 2026-04-28 from `AI`, collision with category-name "AI"), `GR` (Grok), `YC` (You.com), `CP` (Bing Copilot — was `MS`, locked 2026-04-28 per Design System), `MA` (Meta), `MI` (Mistral), `DS` (DeepSeek).
 - Below each bubble: engine name in `text-xs` caps tracking (11px Inter 500, 0.10em, `ink-3`).
 - Bubbles arrange in a deliberately asymmetric two-row grid (5 + 6 layout). The asymmetry is the design — a perfect 11-on-a-circle would feel like a stock infographic. The asymmetric grid feels human.
 
@@ -650,6 +650,24 @@ Layout:
 - Below, with 48px gap: a small attribution table, 11 rows max, showing each call's source (engine, query, time, duration, recording link). Geist Mono 12px for data, Inter 13px for column headers. Cream rows alternate with `paper-elev` cream (slightly darker tone, ~3%).
 - Page footer: page number `2 / 6` in 11px Geist Mono `ink-4`, centered.
 
+**Page 2 redesign (2026-04-28 amendment — F22 AI Visibility Cartogram):**
+
+The Monthly Update Page 2 carries the AI Visibility Cartogram as its primary chart:
+
+- A 50-queries × 11-engines = 550-cell grid, ~880×600px, single-page artifact
+- Each cell 24×24px, color-coded:
+  - `--color-brand` if customer is cited in a top position (1-3) on this query/engine
+  - `--color-ink-3` if cited but late (4+)
+  - `--color-paper-elev` if not cited
+  - `rgba(239, 68, 68, 0.20)` (`--color-score-critical-soft`) if a competitor is cited instead
+- Each cell carries a 1-character glyph: position number (1-3) or competitor initial
+- Direct-labeled: queries down the left margin (11px Inter caps); engines across the top (11px Inter caps)
+- No animation, no gradient, no decoration — Tufte-canonical Beautiful Evidence
+
+The cartogram is also rendered on `/scans/[scan_id]` and as the OG share card. *The "John Snow cholera map of GEO."* The data is already collected (every scan captures per-engine per-query rank). Renderer = 550-cell HTML grid with conditional formatting.
+
+Page 2 was previously the lead-attribution headline + 11-row table; now it carries: (top) lead-attribution headline + 4 micro-charts (calls/day-30d, forms/day-30d, score/week-12w, citations/week-12w each at 120×80px) + (bottom) the cartogram.
+
 Discover-tier accounts that don't have Lead Attribution active receive a **modified Page 2** with the heading `WHAT YOU SHIPPED` and a different headline:
 > *"This month: **3 score gains** and **6 fixes shipped** without any work from you."*
 
@@ -664,15 +682,17 @@ Layout:
 
 ### Page 4 — What we did this month
 
-The narrative core. 5-7 specific actions, each as a self-contained one-paragraph block. Each block:
-- Eyebrow: the date in 12px Geist Mono `ink-3`, e.g., `APRIL 4`.
-- Headline: 18px Fraunces 300 `ink`, the action stated as a complete sentence: *"Beamix added 23 FAQ entries to /services/emergency-plumbing."*
-- Body: 14px Inter 400 `ink-2`, line-height 22px, 2-3 sentences explaining the *why* and the *outcome*: *"These entries respond to how Perplexity and ChatGPT phrase emergency-plumbing questions, not how brochures answer them. Eight of them are now cited in default answers; the others are gaining citations weekly."*
-- Permalink: `app.beamix.tech/scans/abc123` in 11px Geist Mono `brand-blue`.
+**Page 4 redesign (2026-04-28 — Tufte's small-multiples action timeline):**
 
-The action blocks are signed at the entity level as **"Beamix"** — *"Beamix added"*, *"Beamix fixed"*, *"Beamix watched"*, *"Beamix drafted"*. **Never "Schema Doctor added," never "Citation Fixer drafted."** This is the single-character rule from Frame 5 v2 — externally, the brand is one entity. The agent roster is internal architecture exposed only on `/crew`.
+Replaces prior 5-7 prose action blocks with a high-density action-bar timeline:
 
-Layout: 5-7 blocks vertically, 32px gap between blocks, 16px horizontal padding from page margins. Each block has a 1px hairline rule above it in `border` (the only non-typographic graphic on this page).
+- One row per agent action this month (typically 12-30 actions)
+- Each row: 11px Geist Mono date, 16×16 agent monogram (2-letter, deterministic seed), 13px verb+object sentence, **48×16px micro-bar showing score impact attributed to this action**
+- All bars zero-aligned on the same x-scale (visually comparable)
+- Sorted by impact (largest impact first)
+- Reader scans the bar column and sees in 3 seconds which actions moved the needle
+
+The action rows are signed at the entity level as **"Beamix"** — *"Beamix added"*, *"Beamix fixed"*, *"Beamix watched"*, *"Beamix drafted"*. **Never "Schema Doctor added," never "Citation Fixer drafted."** This is the single-character rule from Frame 5 v2 — externally, the brand is one entity. The agent roster is internal architecture exposed only on `/crew`. (Monograms in the row carry agent identity at a glance, but the verb subject remains "Beamix.")
 
 Page footer: `4 / 6`.
 
@@ -695,7 +715,14 @@ Layout:
 - Page eyebrow: `WHAT'S NEXT`.
 - 1-2 sentences forward-looking, in 18px Fraunces 300 `ink`:
   > *"Next month, Beamix will publish 18 FAQ drafts queued in your Inbox. Schema Doctor will validate each entry against your Truth File before publishing. Watch for your first citation on Claude — we're 2-3 weeks away."*
-- Below, 96px gap.
+- Below, 32px gap.
+- **Final line, just above the closing Seal (F28, locked 2026-04-28):**
+
+  > *"Beamix considered {N} changes this month and rejected {M}. Rejection log: [link]"*
+
+  13px Inter 400 `ink-3`, single line, centered. Converts restraint into a visible product feature.
+
+- Below, 64px gap.
 - The Beamix wax-seal mark, drawn (Rough.js, `brand-blue` 2px stroke, 48×48 — twice the size of the cover seal; the closing seal is always larger, broadsheet typesetting tradition). Centered horizontally.
 - Below the seal, with 24px gap: the signature line in 28px Fraunces 300 italic, opsz 144, `ink`:
   > *— Beamix*
@@ -716,7 +743,7 @@ The same content, rendered as a long-scrolling web page. Same cream-paper backgr
 - The Lead Attribution table on Page 2 has clickable call-recording links (open Twilio recording in a new tab).
 - A persistent top bar (only on the web version) gives `Download PDF` + `Share link` actions in 13px Inter `ink-3`, top-right.
 
-The web permalink is shareable. By default it is **public** — Monthly Updates are designed to be forwarded. (Sarah can flip a per-report privacy switch in `/reports` settings if she wants this one private; the default is public to preserve the forwarding mechanic.)
+The web permalink is shareable, **but private by default.** *(2026-04-28 board lock: this section's prior default-public draft was overridden. T&S explicitly rejected hybrid-redaction as new attack surface. The forwarding mechanic survives via the email PDF attachment — customers can forward the email to their CEO/board with the artifact embedded. To create a public link, the customer clicks an explicit "Generate share link" button in `/reports` settings — that gesture issues an unguessable nanoid URL with a 30-day default expiry, indexability blocked, rate-limited, multi-tenant-isolated routing per Trust & Safety §1.)*
 
 ## 3.3 PDF generation — the build approach
 
@@ -835,6 +862,15 @@ Take a screenshot of any element from any of the three editorial surfaces. Show 
 5. **The Margin column with Rough.js agent fingerprints** — present on `/scan` permalinks and Monthly Updates.
 
 If any of these five elements appears, a designer should think *"this is the AI-search-visibility company that does editorial PDFs."* That is the brand recognition target.
+
+**Margin temporal decay (2026-04-28 amendment per Ive):**
+
+Margin marks on Monthly Update PDF and Monday Digest header strip carry temporal decay:
+- Current week actions: 100% opacity
+- Prior month: 20% opacity
+- Archived (>3 months): 6% opacity
+
+The Margin becomes a horizon line: present is dense, past dissolves. Past actions visible but distant.
 
 ---
 

@@ -22,7 +22,7 @@ Two users, two cadences:
 - **Yossi (e-commerce ops, daily user).** Opens `/scans` after a Slack ping or a topbar dot pulse. Wants the latest row, the delta, what changed since last week, and proof of work. Reads the table, expands one row, closes the tab. Total time on page: ~90 seconds. He should never need to click into a detail page unless something is genuinely wrong.
 - **Sarah (founder, monthly user).** Opens `/scans` once a month before her board call or to send a permalink to a partner. Wants the trajectory line and one specific scan she can hand to someone else. She uses the share button. She rarely scrolls the table.
 
-Both need: the **4 work-attribute lenses (Done / Found / Researched / Changed)** as the primary mental model — every scan answers four questions in this order, and the page makes them filterable.
+Both need: the **4 work-attribute lenses (Done / Found / Researched / Changed)** as the primary mental model — every scan answers four questions in this order, and the page makes them filterable. *(2026-04-28 board lock: lenses implement as **action-classification tags** on every action — each agent action emits `lenses: string[]` array, /scans filter queries on this array. Not as agent-attribution buckets, because at MVP only 6 agents ship and 4 of the 11 referenced agents are deferred. Tag taxonomy: `done` = agent executed something / `found` = agent surfaced a gap or signal / `researched` = agent consulted external evidence / `changed` = agent modified an artifact. Actions can carry multiple tags. The tag taxonomy expands as new agents ship without UI changes.)*
 
 This is not a logs surface. It is a record. The grammar is closer to Stripe's payments table than to a CI dashboard. Calm, dense, sortable, copyable. Default-private. Permalinks are explicit.
 
@@ -76,12 +76,11 @@ Tab labels: 14px Inter 500, `--color-ink-3` inactive, `--color-ink` active. Hove
 
 Layout: CSS grid, fixed column template. Row height: **44px** (Stripe register; VDS calls 44px the compact density and we use it deliberately here — `/scans` is meant to scan many rows fast). Row dividers: 1px `--color-border`. No alternating row stripes. No outer border on the table itself — the page chrome is the frame.
 
-Grid template (1340px content width, minus 48px gutters = 1292px useable; 24px Margin strip on each row):
+Grid template (1340px content width, minus 48px gutters = 1292px useable; **Margin column CUT 2026-04-28** — the 24px is recovered for actual data):
 
 | Column | Width | Align |
 |---|---|---|
-| Margin (sigil) | 24px | — |
-| Scan ID | 168px | left |
+| Scan ID | 180px | left |
 | Date | 132px | left |
 | Score | 64px | right |
 | Δ | 56px | right |
@@ -89,14 +88,14 @@ Grid template (1340px content width, minus 48px gutters = 1292px useable; 24px M
 | Found | 56px | right |
 | Applied | 64px | right |
 | Status | 96px | left |
-| Lenses (mini-pills) | 240px | left |
+| Lenses (mini-pills) | 252px | left |
 | (flex) | flex | — |
 | Share | 40px | right |
 | Chevron | 24px | right |
 
-Total: 1268px + flex absorbs slack. Columns reflow proportionally below 1280px viewport (see A6 mobile).
+Total: 1284px + flex absorbs slack. Columns reflow proportionally below 1280px viewport (see A6 mobile).
 
-**Margin (24px).** Per VDS §2.4, the left strip carries Rough.js circles in the colors of the agents that contributed to this scan. One mark per contributing agent, 12–16px, 8px vertical between marks (clipped to row height — at 44px the row shows up to 2 marks; a small `+N` Geist Mono indicator at 9px appears at the bottom edge if more agents contributed). Margin is decorative-but-meaningful: hover any mark to see a 200ms-delayed tooltip with the agent name and action count.
+**Margin column CUT 2026-04-28.** Per Rams + Tufte + Kare convergence, the 24px Margin strip is removed from /scans table chrome. The Margin survives only on artifact surfaces (Monthly Update PDF, Monday Digest header strip) where the agent fingerprints function as a typographic feature. The 24px of horizontal real estate is recovered for actual data: Scan ID +12px, Lenses +12px. Agent contribution data is exposed via the row expansion's Done column, not the table chrome itself.
 
 **Scan ID.** 13px Geist Mono 400, `tnum ss01`, `--color-ink-2`. Format: `SCN-2026-04-27-0142`. Click-to-copy with a 16px Lucide copy icon revealed on row hover at `--color-ink-4`. On click, the icon morphs to a check for 1200ms (no animation — opacity swap), and a small toast slides up from bottom-right (`--shadow-md`, 8px radius, `--color-paper-elev`, "Permalink copied"). The copied URL is `beamix.tech/s/{scan_id}` — and is **default-private** (the recipient hits a 404 unless the customer has hit Share at least once).
 
@@ -106,7 +105,11 @@ Total: 1268px + flex absorbs slack. Columns reflow proportionally below 1280px v
 
 **Δ (delta from previous scan).** 14px Inter 500, `tnum`, semantic color: `--color-score-good` for positive, `--color-score-critical` for negative ≤ -5, `--color-ink-3` for ±0 to ±2 (noise band). Format: `+3`, `-1`, `±0`. No arrows in the table — the sign is the arrow. Delta on the very first scan: em-dash `—` in `--color-ink-4`.
 
-**Engines.** Inline strip of small engine dots. Each dot 8px diameter, 4px horizontal gap, color encoding the engine's score band (excellent/good/fair/critical from VDS semantic palette), `--color-paper-elev` background fill if the engine wasn't queried that scan. Hover a dot: 200ms-delay tooltip with engine name + score + delta. The dot order is fixed: ChatGPT, Perplexity, Gemini, Claude, Copilot, Grok, You.com, Mistral, AIO, Brave, DuckDuckGo (per current locked engine list — Discover sees only the first dot rendered, the rest as outlined empty circles).
+**Engines.** A 56px-wide engine micro-strip per row showing 11 columns at 4px wide × 12px max height. Each column's height encodes the engine's *delta* on this scan (0 = column floor; +12 = full height; -12 = full inverted height in --color-score-critical). Direct-readable as a sparkbar. Each column tooltipped on hover for precise engine name, current score, and delta.
+
+This replaces the prior 11-dot color-encoded design (Tufte critique 2026-04-28: invisible legend, double-encoded color, eyes don't bounce. The micro-strip is direct-readable.)
+
+Column order is fixed: ChatGPT, Perplexity, Gemini, Claude, Copilot, Grok, You.com, Mistral, AIO, Brave, DuckDuckGo. Engines not queried that scan render as empty 4×12 cells in `--color-paper-elev`. Discover tier shows only the first column populated; the rest render as empty cells.
 
 **Found.** Count of items the scan surfaced. 14px Inter 400, `tnum`, `--color-ink-2`. Click on the cell: opens the row's Found section directly (not the whole expansion).
 
@@ -239,9 +242,24 @@ Below the lead, the section body.
 
 Below the four lens sections, 72px gap. SectionHeading: "BY ENGINE".
 
-A table, full 880px width, one row per engine (up to 11). Columns: Engine, Score, Δ, Mentioned (Y/N + count), Citations (count), First-position queries (count), Last-position queries (count). Row height 56px (slightly taller than the main scans table because density isn't the goal here — readability is). Each row carries an inline 80px-wide perfect-freehand sparkline of the engine's score across the last 8 weeks, fading from `--color-ink-4` to `--color-brand` over time.
+A table, full 880px width, one row per engine (up to 11). Columns: Engine, Score, Δ, Mentioned (Y/N + count), Citations (count), First-position queries (count), Last-position queries (count). Row height 56px (slightly taller than the main scans table because density isn't the goal here — readability is). Each row carries an inline 80px-wide perfect-freehand sparkline of the engine's score across the last 8 weeks. **Single 1.5px brand-blue stroke** — no gradient, no fade. Renders at full state at t=0; no entrance animation. Sparklines are static reading instruments. *(Updated 2026-04-28 per Tufte: cut path-draw entrance animation; cut color-fade-from-ink-4-to-brand gradient. "Double-encodes time. Moiré of meaning. The x-axis already encodes time.")*
 
 Click an engine row: opens an engine-specific filter on `/scans` for the trailing 90 days, returning the user to the table view filtered to that engine.
+
+#### A4.3.5 11-engine small-multiples grid (Tufte's Section C, Opportunity 1 — added 2026-04-28)
+
+Replace the prior single aggregated-trend sparkline on /scans/[scan_id] with an 11-engine small-multiples grid:
+
+- 11 sparklines, each 96×40px
+- Layout: 4×3 grid with one cell empty (or housing a "summary" line that aggregates all 11)
+- Each sparkline carries the engine's score over the past 12 weeks
+- Direct-labeled with engine name in 11px Inter caps above the line
+- Below: current score and delta in 11px Geist Mono
+- Same brand-blue stroke (1.5px, perfect-freehand) on every cell
+- No axes, no grid, no fill — Tufte-canonical sparklines
+- Total footprint: ~480×180px (smaller than the single-aggregate sparkline it replaces) carrying 11× the information
+
+Pattern reading: the customer reads "ChatGPT and Perplexity climbing; Gemini flat; Claude dipped; Grok dropped 6 points last week" in one glance.
 
 #### A4.4 Audit log (right rail or bottom section)
 
@@ -483,27 +501,15 @@ Below the header, 32px gap. The strip itself.
 - **Gap shading:** the polygon between the two lines is filled with a semantic color at **12% opacity**:
   - `--color-score-good` (#10B981) at 12% if your line is above theirs (you lead)
   - `--color-score-critical` (#EF4444) at 12% if their line is above yours (you trail)
-  - The polygon recolors per-segment if the lines cross within the window, producing a literal "they overtook us in week 6" reading where the green changes to red at the crossover point.
+  - The polygon recolors per-segment when lines cross — green-soft when your line is winning, red-soft when their line is winning, neutral-soft at parity. This crossover behavior is Tufte-grade and ships at MVP despite the engineering complexity (custom geometry helper to compute polygon segments between two perfect-freehand lines and split at crossovers). Adam's lock 2026-04-28.
 
-#### B3.4 Path-draw race animation (first load of the panel)
+#### B3.4 Path-draw race animation — CUT 2026-04-28
 
-This is the locked motion moment. On first open of the panel for a given competitor in a given session:
+**Both lines (yours brand-blue, theirs ink-2 at 40%) render simultaneously, instantly, static. The polygon resolves at the same time. No stagger, no path-draw entrance.** *(Cut per Tufte: "creates hierarchy where there should be parity. The data is the parity." The 80ms stagger and 1200ms path-draw entrance are both removed.)*
 
-```
-0ms     Both lines at zero length. Gap polygon empty.
-0ms     Your line begins draw — clip-path: inset(0 100% 0 0) → inset(0 0% 0 0) over 1200ms cubic-bezier(0.4, 0, 0.2, 1).
-80ms    Their line begins draw — same animation, 80ms stagger. Ends at ~1280ms.
-0–1200ms  Gap polygon fills as both lines reveal — at each frame, the polygon's clip-path matches the slower of the two lines' x-progress.
-1280ms  Race complete. Both lines fully drawn.
-1280ms  Verdict pill animates in via motion/pill-spring (280ms back-out).
-1560ms  Static state.
-```
+The verdict pill still appears via `motion/pill-spring` (280ms back-out) on first open of the panel — that's a one-shot status-change motion, not a sparkline animation.
 
-**Why 80ms stagger.** It is the smallest perceptible offset that reads as "two horses, slightly asymmetric." Less than 80ms and they read as one composite line. More than 200ms and it reads as a sequence ("draw, then draw") rather than a race.
-
-**Why your line first.** The customer's eye should anchor on their own line first — that's the line whose movement they feel responsible for. The competitor's line then enters as the comparison. This is a small but deliberate hierarchy.
-
-**Engine-tab switch (panel open, user clicks a different engine in the strip's tab bar).** Both lines re-animate with `motion/path-draw` but at **800ms** instead of 1200ms (faster on re-read, slower on first sight). 0ms stagger this time — the user is comparing engines, not horses, so the lines should re-print together.
+**Engine-tab switch (panel open, user clicks a different engine).** Both lines re-render instantly at full state. No animation. No stagger.
 
 **Reduced-motion fallback** (`prefers-reduced-motion: reduce`): both lines render fully drawn, instantly. The gap polygon renders at final state. The verdict pill appears in place. The 80ms stagger is suppressed. No loss of information — the entire strip's data is conveyed by the static state; the animation is the enhancement, never the meaning.
 

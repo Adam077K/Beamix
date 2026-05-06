@@ -211,6 +211,53 @@
 
 ---
 
+### [2026-04-27] — Inngest tier: Free at MVP, Pro at ~5 paying customers
+**Decision:** MVP launches on Inngest free tier (50K steps/month, shorter wall-clock timeouts). Migrate to Pro ($150/mo) when paying customers ≥ 5 OR monthly steps usage hits 75-80% of free-tier ceiling, whichever comes first.
+**Rationale:** Cost discipline at pre-revenue stage. Free tier sufficient for first ~100 customers. Pro tier headroom isn't worth paying for until there's revenue to cover it. Revises board synthesis row 13 which had assumed Pro from day 1.
+**Decided by:** Adam (CEO)
+**Affects:** Tier 0 setup, agent runtime architecture (must fit free-tier wall-clock), DevOps migration runbook, cost model. Some agents (Long-form Authority Builder, Citation Predictor — both deferred past MVP) may need Pro tier on arrival; re-validate which MVP agents fit free-tier limits.
+**Reversible?** Yes (upgrade is one-click; downgrade is hard if usage exceeds tier).
+
+---
+
+### [2026-04-28] — Board meeting: 23 product/design/architecture decisions locked
+**Decision:** Adam confirmed all board decisions from the 9-seat / 3-round board meeting documented in `docs/08-agents_work/2026-04-27-BOARD-MEETING-SYNTHESIS.md`. The synthesis doc is the canonical record; this entry captures the consolidated lock. The 23 confirmed decisions:
+
+**Strategic (rows 1-15):**
+1. Monthly Update permalink default = **PRIVATE** with explicit "Generate share link." Forwarding via PDF email attachment. Hybrid-redaction model rejected.
+2. /crew layout = **Stripe-style table.** Yearbook DNA preserved as ceremonial state only (empty/first-load + per-agent profile pages).
+3. White-label digest signature = **Both, tier-gated.** Discover/Build = "Beamix" non-removable. Scale = agency-primary with "Powered by Beamix" footer in Geist Mono 9pt at `--color-ink-4`. Cream paper survives white-labeling.
+4. Voice canon = **Model B.** Agents named in product (`/home`, `/crew`, `/workspace`). "Beamix" on all external surfaces (emails, PDFs, permalinks, OG cards). Onboarding seal "— your crew" → "— Beamix."
+5. Workspace tier-gating = **All tiers** (including Discover).
+6. Marketplace install = **Build+ only.** Discover sees catalog read-only with upgrade CTA.
+7. Workflow Builder access = **Scale-only** to build/edit. Build can install pre-built workflows.
+8. Truth File schema = **Shared base + vertical-extensions** (Zod discriminatedUnion keyed by vertical_id, per-vertical schema versioning). Single Postgres row + JSONB.
+9. "Full-auto" semantics = **Conservative.** Even on Full-auto, validator's `uncertain` outcome routes to /inbox.
+10. Pre-publication validator binding = **Cryptographic signed-token** (60s TTL, draft-hash bound). First-party agents in same sandbox as future third-party.
+11. L2 site-integration = **Manual paste + Git-mode (GitHub PR) at MVP.** WordPress plugin parallel-builds, ships MVP-1.5.
+12. Real-time channel = **Supabase Realtime broadcast**, one channel per customer (`agent:runs:{customer_id}`), polling fallback at 10s.
+13. Inngest contract = Free tier at MVP; Pro at ~5 paying customers (already locked above).
+14. Day 1-6 silence cadence = **4 emails** plain-text Beamix register (D0+10min welcome / D2 first-finding / D4 review-debt nudge / D5 pre-Monday teaser). Skip Saturday/Sunday. Suppress if customer logged in that day.
+15. /security public page = **Ship at MVP.** Stripe-style 6-min security doc covering storage region, retention, DSAR flow, encryption, audit logs, no-training-on-customer-content DPA clause, sub-processors.
+
+**Critical corrections (rows 16-21):**
+16. White-label config is **PER-CLIENT**, not per-account. Lives inside multi-client switcher.
+17. Bulk-approve in /inbox at MVP (within single client). Cross-client bulk = MVP-1.5.
+18. Vertical-aware UI from Step 1 (kill plumber DNA in SaaS). SaaS = UTM-first Step 2; e-comm = Twilio-first.
+19. Truth File nightly integrity-hash job. Sev-1 alert + auto-pause-all-agents on >50% field loss in 24h.
+20. Scale-tier DPA includes mutual indemnification: Beamix indemnifies for content errors that pass pre-pub validation, capped lesser of (3× monthly subscription) or ($25K/incident).
+21. Workflow Builder dry-run = real LLM execution with `dry_run: true` flag. No mock-site sandbox needed.
+
+**Tensions resolved (rows 22-23):**
+22. Workflow Builder MVP scope = **Hybrid.** Day 1: full React Flow DAG editor + dry-run + 3-6 templates + manual/scheduled triggers + Brief grounding per node. Deferred to MVP-1.5: event triggers (`competitor.published`), workflow PUBLISHING to marketplace.
+23. Workflow PUBLISHING = **Defer to MVP-1.5.** Cross-tenant Truth File binding ships and gets 4 weeks of telemetry first. Marketplace at MVP = browse + install Beamix-curated workflows + install counts visible.
+
+**Decided by:** Adam (CEO) confirmed all 23 decisions on 2026-04-28 after the 9-seat board meeting (4 + 3 + 2 agents in 3 rounds).
+**Affects:** PRD-wedge-launch (10 features changed), 6 design specs, MARKETPLACE-spec (rewards section removed), DESIGN-SYSTEM (token clarifications), AUDIT-CONSOLIDATED (mark BLOCKERS #1, 2, 3, 4, 16, 17, 18, 19 as resolved), Tier 0 build sprint (19 person-days plumbing).
+**Reversible?** Hard. These shape every customer-facing surface and the build plan. Reversal requires re-running board.
+
+---
+
 ### [2026-05-05] — War Room Rethink: 4-Wave Plan, Awaiting Sign-off
 **Decision:** Execute a 4-wave rebuild of the agent infrastructure based on synthesis of 7 parallel audit + research streams. Wave 0 fixes 7 P0 bugs. Wave 1 moves `.agent/` → `.claude/`, adds permissions block, OTEL telemetry, hard model routing, risk-tiered QA. Wave 2 wires Linear → Claude via Routine + Vercel Edge bridge. Wave 3 adopts plugin bundling, vector memory MCP, Agent Teams. Full plan: `docs/08-agents_work/2026-05-05-war-room-rethink/00-SYNTHESIS.md`.
 **Rationale:** Today's setup (a) silently breaks (workers point at archived saas-platform/ path, 12 GSD execution agents reference missing binary), (b) leaks 32 GB across 72 worktrees, (c) costs ~$0.14/session before any work via 42K-token MANIFEST.json read, (d) treats QA as theater (0 invocations across 29 sessions despite shipping Paddle webhooks), (e) misses the entire Anthropic May-2026 production stack (Plugins, Agent Teams, Routines, OTEL, headless `claude -p`, GitHub Action), and (f) is coupled to upstream `gsa-startup-kit` npm package that could overwrite our customizations.
@@ -271,6 +318,10 @@
 **Decided by:** CEO (V4 synthesis after Adam's correction)
 **Affects:** All agent definitions (rewrite to role-based names), Linear setup (becomes canonical), Cloudflare Workers + Routines wiring, GitHub Actions, vendoring strategy from 6 OSS projects, the Bastion Mac becomes optional acceleration not critical path
 **Reversible?** Mostly yes. Personality names removal: hard but worth it (clarity > attachment). 24/7 architecture: yes (just turn off the Routines).
+
+---
+
+### [2026-05-06] — V3 Vision: Bastion Stack + Company-as-Org + Day-1 Flywheel
 **Decision:** V3 supersedes V2's economics. Adopt the Architect's $33/mo Bastion stack (8GB home Mac running Postgres+pgvector + Redis + Remote Control daemon + tmux farm of `claude -p --bare` = poor man's Devin) instead of V2's $295/mo cloud-overflow plan. Spawn 7 new "complete-company" agents by Day 30 (Customer Success, Sales, Brand Voice Guardian, CFO, Chief of Staff, Talent, Investor Update). Lock Day-1 data layer (8 tables, permanent retention) before MVP launches. Ship 5-Routine heartbeat ($5-15/mo). Implement Strategy Machinery (stop-loss + ANTI-ROADMAP fleet enforcement + 3 signal Routines). Risk-harden R1-R3 (Memory poisoning, prompt injection, cost runaway) BEFORE Wave 3. Adopt Adam-OS (energy-adaptive army via HealthKit, voice-erosion guardrail). Internal positioning reframe: "Bloomberg Terminal of AI Search funded by SMB subscription" (5 compounding datasets, uncatchable in 18 months). External messaging unchanged. Plan: `docs/08-agents_work/2026-05-05-war-room-rethink/00-V3-VISION.md`. New decisions D15-D22.
 **Rationale:** Visionary identified that current army is "throughput infrastructure, not flywheel" — every action dies, zero data accrues. Architect proved the $295/mo V2 plan was 9× over-budget — same capability fits in $33/mo with 8GB home Mac as Bastion. Chief of Staff identified missing "fleet heartbeat" (5 Routines) as the single biggest operating gap. Strategist identified missing "strategy machinery" (currently a backlog, not a strategy engine). Personal Systems identified Adam-as-human is unsupported (army builds product, nothing builds Adam). Risk Modeler identified 3 existential threats that block safe Wave 2 ship.
 **Decided by:** CEO (V3 board meeting synthesis: 6 specialized personas — Visionary, CoS, Strategist, Architect, Personal Systems, Risk Modeler)
