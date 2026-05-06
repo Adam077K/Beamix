@@ -5,6 +5,62 @@
 
 ---
 
+## [2026-05-06] agent-build | V4 spine agents (CEO + CTO + QA Lead) + setup guide
+- 3 researchers in parallel: R1 mined wshobson/agents + claude-flow for source .md files (5 patterns lifted: Workflow Position, "Use PROACTIVELY for X", model tier in frontmatter, Key Distinctions, Orchestrator-as-Ledger); R2 inventoried existing 423 local skills (muratcankoylan + obra grade-A; 4 stubs to replace) + recommended CEO/CTO skill stack (multi-agent-patterns + context-compression + dispatching-parallel-agents); R3 produced 750-line authoritative agent .md best-practices spec sourced to Anthropic docs
+- Critical finding from R3: subagents CANNOT spawn subagents — V4 architecture adapted: each C-suite (CEO, CTO, QA Lead) runs as its own main-thread Routine, not nested
+- Wrote V4 spine: .claude/agents/ceo.md (orchestrator-as-ledger), .claude/agents/cto.md (engineering chief, parallel worktree dispatcher), .claude/agents/qa-lead.md (independent gate, risk-tiered, only path to merge)
+- All 3 agents follow R3 best practices: Workflow Position + Key Distinctions + minimalist tools + isolation:worktree + inline mcpServers + JSON returns + cache-stable system prompts
+- Wrote SETUP-GUIDE-step-by-step.md tailored to existing repo state: gh CLI already authed; .github/workflows missing; .claude/agents/ exists; wrangler not installed
+- Output: docs/08-agents_work/2026-05-06-agent-build/ (R1+R2+R3 + SETUP guide)
+
+## [2026-05-06] env-map + linear-build | V4 Environment Map + Wave D Build Plan
+- Wrote `00-V4-ENVIRONMENT-MAP.md` — single "you are here" doc, 8 layers (Adam devices → channels → 24/7 cloud → data → agent org → skills/memory → Routines → Bastion). Cost picture, info flow, failure modes. The complete planned environment in one map.
+- Wrote `WAVE-D-LINEAR-SYSTEM-BUILD.md` — concrete 11-step Linear build plan. Adam-only steps clearly marked (~60-90 min total). Agent-doable steps ready to start.
+- Awaiting Adam greenlight to begin Step 1 (he creates Linear workspace) → I write Cloudflare Worker code → end-to-end test loop
+
+## [2026-05-06] rethink-v4 | Corporate OS — Linear is the company
+- Adam corrections after V3: drop Adam-OS, drop dates, role-based names not personas, Linear IS the canonical interface, workers use tools (not workers), runs 24/7 outside laptop, vendor from OSS
+- Org chart: Adam (board) → CEO → 5 C-suite (CTO/CPO/CMO/CBO/CCO) + independent QA Lead → ~20 team leads → ~35 workers
+- 24/7 architecture: Cloudflare Workers (free) + Anthropic Routines (paid in Max) + GitHub Actions (free) = critical path. Mac is dev acceleration only.
+- New spend: $0-8/mo (down from V3's $33, V2's $295)
+- 5 work patterns documented: file Linear ticket / DM CTO / worker proposes / routine fires / cross-functional feature build
+- Vendoring strategy from 6 OSS projects: wshobson/agents, spec-kit, BMAD, agent-os, SuperClaude, claude-flow
+- Autonomy mechanisms: 5 Routines + 3 signal Routines + Friday Retro that PR-edits agent .md files + worker "I noticed" reflections
+- Output: docs/08-agents_work/2026-05-05-war-room-rethink/00-V4-CORPORATE-OS.md. New decisions D23-D30.
+
+## [2026-05-06] rethink-v3 | The Bigger Vision board meeting
+- 6 specialized personas in parallel: Visionary, Chief of Staff, Strategist, Architect, Personal Systems, Risk Modeler
+- HARD CONSTRAINT RESET: $0 new software (Claude Max $100/mo only), 8GB home Mac, $20-50/mo cloud max
+- Architect: $33/mo new spend (89% cut from V2's $295) — Bastion = 8GB Mac + tmux farm of `claude -p --bare` = poor man's Devin
+- Visionary: Current army is "throughput infrastructure not flywheel" — reframe to "Bloomberg Terminal of AI Search funded by SMB subscription"
+- Visionary's bets: spawn 7 complete-company agents Day 30 (CS, Sales, Brand Voice, CFO, CoS, Talent, Investor); lock Day-1 data layer (8 tables, permanent retention)
+- Chief of Staff: 5-Routine heartbeat at $5-15/mo gives the fleet its missing operating rhythm
+- Strategist: stop-loss conditions + ANTI-ROADMAP fleet enforcement + 3 signal Routines + 4-board-meetings/mo cap
+- Personal Systems: Adam-OS missing entirely. iOS Shortcut idea capture + Energy-Adaptive Army (HealthKit Green/Yellow/Red) + Voice-Erosion Guardrail
+- Risk Modeler: 3 risks BLOCK Wave 3 ship — Memory poisoning (~6h), prompt injection (~8h), cost runaway+irreversible actions (~16h). Total ~42h
+- Output: 7 reports docs/08-agents_work/2026-05-05-war-room-rethink/14-19 + 00-V3-VISION.md
+- New decisions D15-D22
+
+## [2026-05-05] rethink-v2 | Autonomous-army blueprint (Wave 2)
+- 6 parallel agents: 1 architecture critic + 5 external researchers (hosted platforms, autonomous-org frameworks, remote control, AI-native company practices, memory + tokens)
+- Headline shift: Anthropic shipped the stack Oct 2025-Apr 2026 (Remote Control, Channels, Routines, Memory Tool, isolation:worktree, plugins, GitHub Action). Beamix's job is wire-in, not build.
+- Remote control: 4 official surfaces, $0/mo delta. Solo-founder canonical 2026 stack.
+- Hosted overflow: 3 picks at $295/mo (Routines + Cursor Background + Inngest+E2B)
+- Memory: Anthropic Memory Tool + Supabase pgvector — don't rent Letta/Mem0/Zep
+- Token-reduction: 55-75% input savings, $200-500/mo via 5 wins
+- Architecture: dissolve leads for Medium tasks, add async-spec-trust mode, keep CEO + QA-Lead independent
+- AI-native benchmarks to aim for: Block 69% AI-authored, Cursor Bugbot 80% resolution, Vercel removed-80%-tools = 3.5× faster
+- Output: 7 reports in docs/08-agents_work/2026-05-05-war-room-rethink/ (00-V2-SYNTHESIS + 08-13). New decisions D8-D14.
+
+## [2026-05-05] rethink | War room critical audit + ecosystem research
+- 7 parallel agents (3 internal auditors + 4 external researchers) dispatched
+- Internal: 7 P0 bugs in agents/skills/memory/worktrees (dead lineage, archived paths, zero QA gate, 32 GB worktree sprawl, $0.14/session skill discovery overhead)
+- External: Anthropic May-2026 stack (Plugins, Agent Teams, Routines, OTEL, headless `claude -p`) — Beamix uses 4 of 13 primitives
+- Linear MVP: ~$50/mo, same-day shippable via claude-code-action + single Routine + Vercel Edge bridge
+- QA upgrade: Cloudflare risk-tiered model ($0.98/median review across 48K MRs)
+- Output: 8 reports in docs/08-agents_work/2026-05-05-war-room-rethink/ (synthesis + 7 detail files)
+- Awaiting D1-D7 sign-off
+
 ## [2026-04-10] setup | Beamix Brain vault created
 - Created ~/BeamixBrain with symlinks to docs/, memory/, agents/, commands/
 - Installed plugins: 3D Graph, Obsidian Git, Dataview, Code Files, Claude Code MCP
