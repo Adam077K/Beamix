@@ -345,3 +345,13 @@
 **Decided by:** CEO + Research Lead (synthesis of QA + economics research)
 **Affects:** qa-lead.md, security-engineer.md, code-reviewer.md, new adversary-engineer agent
 **Reversible?** Yes (config-only)
+
+---
+
+### [2026-05-06] — WS1A: L2 Memory Tool = Mem0 (2-phase: cloud → OSS)
+**Decision:** L2 cross-session episodic memory = **Mem0**. Phase 1: cloud Hobby (free, no card, vendor MCP at `mcp.mem0.ai/mcp`) for fast integration-shape validation. Phase 2 (WS1F): migrate to Mem0 OSS self-host on existing Supabase Postgres+pgvector. Same engine in both phases. Rejected: Custom MCP/pgvector (4-6 weeks build), OpenAI Memory (deprecated), Letta (no native MCP), Zep+Graphiti (Series-A spend), Anthropic Memory Tool (file primitive, not retrieval system).
+**Decided by:** CEO (WS1A — 2 Sonnet researchers + Adam OSS follow-up)
+**Affects:** WS1B (Phase 1 bring-up), WS1D (Mem0 wrapper), WS1F (Phase 2 migration), all WS6 agents, `.mcp.json`
+**Reversible?** Easy. Apache 2.0, JSON/MCP contract, your data on your Postgres after Phase 2.
+**Status:** PROPOSED — pending Adam review.
+**See:** `docs/08-agents_work/MEMORY-DECISION-MATRIX.md` (full matrix + rationale), `docs/08-agents_work/sessions/2026-05-06-ceo-ws1a-memory-tools.md`, `docs/08-agents_work/2026-05-06-agent-build/HANDOFF-WS1B-L0-L5-stack-design.md`
