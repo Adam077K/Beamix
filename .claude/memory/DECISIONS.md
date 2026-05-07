@@ -355,3 +355,10 @@
 **Reversible?** Easy. Apache 2.0, JSON/MCP contract, your data on your Postgres after Phase 2.
 **Status:** PROPOSED — pending Adam review.
 **See:** `docs/08-agents_work/MEMORY-DECISION-MATRIX.md` (full matrix + rationale), `docs/08-agents_work/sessions/2026-05-06-ceo-ws1a-memory-tools.md`, `docs/08-agents_work/2026-05-06-agent-build/HANDOFF-WS1B-L0-L5-stack-design.md`
+
+---
+
+### [2026-05-06] — WS1B: L0-L5 stack designed; Mem0 issue #3400 closed; Phase 1 unblocked
+**Decision:** L0=CLAUDE.md (≤200 lines, WS1F compaction). L1=Claude Code session +/compact. L2=Mem0 (per WS1A). L3/L4/L5=pgvector tables in `memory.*` on existing Supabase, single embedding model `text-embedding-3-small` (~$0.10/mo total). Pre-flight = L0 + L2 last-10 only; L3/L4/L5 are MCP-callable on-demand. Phase 2 OSS host = Railway $5/mo (recommended).
+**Status:** PROPOSED — pending Adam review (5 open Qs in spec).
+**See:** `docs/08-agents_work/MEMORY-ARCHITECTURE.md`, `docs/08-agents_work/sessions/2026-05-06-ceo-ws1b-l0-l5-stack-design.md`
