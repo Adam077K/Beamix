@@ -362,3 +362,10 @@
 **Decision:** L0=CLAUDE.md (≤200 lines, WS1F compaction). L1=Claude Code session +/compact. L2=Mem0 (per WS1A). L3/L4/L5=pgvector tables in `memory.*` on existing Supabase, single embedding model `text-embedding-3-small` (~$0.10/mo total). Pre-flight = L0 + L2 last-10 only; L3/L4/L5 are MCP-callable on-demand. Phase 2 OSS host = Railway $5/mo (recommended).
 **Status:** PROPOSED — pending Adam review (5 open Qs in spec).
 **See:** `docs/08-agents_work/MEMORY-ARCHITECTURE.md`, `docs/08-agents_work/sessions/2026-05-06-ceo-ws1b-l0-l5-stack-design.md`
+
+---
+
+### [2026-05-07] — Bastion stays on home PC (not cloud VPS) — Anthropic ban risk
+**Decision:** Bastion = Adam's home Win10 PC (Max plan + subscription OAuth = intended use). Cloud VPS (Hetzner CX53 $27.99/mo evaluated) deferred. Trigger to revisit: hard reliability event OR shift to commercial agent fleet serving customers (then API-key billing). On VPS, OAuth is the Jan-2026 crackdown pattern (3.3% appeal rate); safe path = ANTHROPIC_API_KEY but adds ~$200-500/mo metered API cost.
+**Status:** PROPOSED — pending Adam review.
+**See:** `docs/08-agents_work/2026-05-07-bastion-bootstrap/BAN-RISK-RESEARCH.md`

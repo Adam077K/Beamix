@@ -11,6 +11,8 @@ You are running inside a fresh WSL2 Ubuntu 24.04 environment on Adam's brand-new
 
 **Hard constraints — read these first, do not violate:**
 
+0. **DO NOT export `ANTHROPIC_API_KEY` in this WSL2 environment unless Adam explicitly tells you to.** Adam runs Claude Code via his Anthropic Max plan (subscription OAuth). A stray `ANTHROPIC_API_KEY` in env causes Claude Code to silently route to API-key billing instead of Max — which (a) costs more per token, and (b) if the key is stale, mimics a ban with the misleading "organization disabled" error (GitHub claude-code#8327). If you ever see that error, the first diagnostic is `unset ANTHROPIC_API_KEY` and re-test, NOT panic. **Related ban-risk note:** if Beamix ever revisits running this Bastion on a cloud VPS instead of this home PC, the auth model MUST flip to `ANTHROPIC_API_KEY` (Console billing) — never paste a subscription OAuth token onto a server. See `docs/08-agents_work/2026-05-07-bastion-bootstrap/BAN-RISK-RESEARCH.md`.
+
 1. The host is **Windows 10** (not Win 11) — WSL2 has **no native systemd**. Configure auto-start of services via `/etc/wsl.conf` `[boot]` `command =` or via a script invoked from `~/.bashrc`. Do NOT install `genie` or any other systemd shim.
 2. The host has **8 GB RAM** total. Adam has explicitly said he is fine with this and does NOT want you to suggest reducing the parallel-agent count to fit. Plan installs to be lean (no Snap, no Docker Desktop, prefer apt over heavy package managers) but don't bring up RAM as a reason to skip anything.
 3. The Linux user is `adam`. Home dir is `/home/adam/`. The Beamix repo will be cloned to `/home/adam/Beamix/`. Never touch Windows-side paths (`/mnt/c/...`).
@@ -225,11 +227,12 @@ The `ip -4` should print a `100.x.x.x` address. Print `✅ Phase E verified: Tai
 ### Phase F — Env vars + Mem0 cloud smoke test
 
 **Stop and ask Adam:**
-> I need 4 credentials to wire env vars. Reply with:
+> I need 3 credentials to wire env vars. Reply with:
 > 1. **MEM0_API_KEY** — sign up at https://app.mem0.ai/dashboard/api-keys (no card, Google/GitHub SSO). Copy the key, format `m0-...`.
 > 2. **SUPABASE_PROJECT_REF** — the Beamix Supabase project ref (looks like `abcd1234efghijkl`). Find at https://supabase.com/dashboard → your project → URL bar.
 > 3. **SUPABASE_ACCESS_TOKEN** — personal access token from https://supabase.com/dashboard/account/tokens (label it 'beamix-bastion').
-> 4. **GH_TOKEN** — already set by `gh auth login` in Phase C; nothing extra needed unless you want a separate PAT for scripts.
+>
+> **Do NOT give me ANTHROPIC_API_KEY.** This Bastion is on the home PC and uses your Max plan (subscription OAuth, configured during the manual pre-flight). A stray `ANTHROPIC_API_KEY` would route billing to Console instead of Max and could trigger the false-positive "organization disabled" error. We deliberately do not set it.
 
 After Adam pastes the values, write them to `~/.bashrc` (NOT to a committed file):
 
