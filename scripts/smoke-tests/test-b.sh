@@ -20,7 +20,8 @@ echo
 FIRST_429=""
 RETRY_AFTER=""
 
-for i in $(seq 1 16); do
+FIRE_COUNT="${FIRE_COUNT:-30}"
+for i in $(seq 1 "$FIRE_COUNT"); do
   echo "--- Fire #$i ---"
   HTTP_CODE=$(curl -s -o "$TMPDIR/fire_$i.json" -w "%{http_code}" \
     -X POST "$FIRE_URL" \

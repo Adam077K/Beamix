@@ -17,21 +17,26 @@ echo "Started: $START_TS"
 echo "Working dir: $TMPDIR"
 echo
 
-# Export so subshells see the values
-export SMOKE_TOKEN FIRE_URL TMPDIR
-
-seq 1 6 | xargs -n 1 -P 6 -I{} bash -c '
-  i={}
-  HTTP_CODE=$(curl -s -o "$TMPDIR/fire_$i.json" -w "%{http_code}" \
+# Use background processes (&) + wait, not xargs.
+# macOS xargs has a line-length limit that long bearer tokens + URLs blow past.
+fire_one() {
+  local i="$1"
+  local code
+  code=$(curl -s -o "$TMPDIR/fire_$i.json" -w "%{http_code}" \
     -X POST "$FIRE_URL" \
     -H "Authorization: Bearer $SMOKE_TOKEN" \
     -H "anthropic-version: 2023-06-01" \
     -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
     -H "Content-Type: application/json" \
-    -d "{\"text\":\"smoke test concurrent $i\"}" || echo "000")
-  echo "Fire $i — HTTP $HTTP_CODE"
-  echo "$HTTP_CODE" > "$TMPDIR/code_$i.txt"
-'
+    -d "{\"text\":\"smoke test concurrent $i\"}" 2>/dev/null || echo "000")
+  echo "Fire $i — HTTP $code"
+  echo "$code" > "$TMPDIR/code_$i.txt"
+}
+
+for i in 1 2 3 4 5 6; do
+  fire_one "$i" &
+done
+wait
 
 # Tally results
 SUCCESS=0
