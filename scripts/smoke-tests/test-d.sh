@@ -25,8 +25,10 @@ seq 1 6 | xargs -n 1 -P 6 -I{} bash -c '
   HTTP_CODE=$(curl -s -o "$TMPDIR/fire_$i.json" -w "%{http_code}" \
     -X POST "$FIRE_URL" \
     -H "Authorization: Bearer $SMOKE_TOKEN" \
+    -H "anthropic-version: 2023-06-01" \
+    -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
     -H "Content-Type: application/json" \
-    -d "{\"trust_mode\":false,\"smoke_test\":true,\"concurrent\":$i}" || echo "000")
+    -d "{\"text\":\"smoke test concurrent $i\"}" || echo "000")
   echo "Fire $i — HTTP $HTTP_CODE"
   echo "$HTTP_CODE" > "$TMPDIR/code_$i.txt"
 '

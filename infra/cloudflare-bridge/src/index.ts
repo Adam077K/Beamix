@@ -1133,6 +1133,11 @@ async function fireRoutine(
   _env: BridgeEnv
 ): Promise<{ ok: boolean; status: number }> {
   // NOTE: never log bearerToken — per R3.12
+  // Anthropic Routines /fire API (2026-04-01 beta) accepts only { "text": "..." }
+  // as the body. The HMAC-signed trust spec is serialized as JSON wrapped in
+  // <beamix-spec>...</beamix-spec> sentinels so the Routine system prompt
+  // can extract and validate it before acting (matches WS2 §2D contract).
+  const specText = `<beamix-spec>${JSON.stringify(spec)}</beamix-spec>`;
   try {
     const resp = await fetch(
       `https://api.anthropic.com/v1/claude_code/routines/${routineId}/fire`,
@@ -1142,8 +1147,9 @@ async function fireRoutine(
           "Authorization": `Bearer ${bearerToken}`,
           "Content-Type": "application/json",
           "anthropic-version": "2023-06-01",
+          "anthropic-beta": "experimental-cc-routine-2026-04-01",
         },
-        body: JSON.stringify({ spec }),
+        body: JSON.stringify({ text: specText }),
       }
     );
     return { ok: resp.ok, status: resp.status };

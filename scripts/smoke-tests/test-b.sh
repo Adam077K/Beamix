@@ -25,8 +25,10 @@ for i in $(seq 1 16); do
   HTTP_CODE=$(curl -s -o "$TMPDIR/fire_$i.json" -w "%{http_code}" \
     -X POST "$FIRE_URL" \
     -H "Authorization: Bearer $SMOKE_TOKEN" \
+    -H "anthropic-version: 2023-06-01" \
+    -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
     -H "Content-Type: application/json" \
-    -d '{"trust_mode":false,"smoke_test":true,"fire_index":'"$i"'}' || echo "000")
+    -d '{"text":"smoke test fire #'"$i"'"}' || echo "000")
   echo "HTTP $HTTP_CODE"
   if [[ "$HTTP_CODE" == "429" && -z "$FIRST_429" ]]; then
     FIRST_429="$i"
@@ -34,8 +36,10 @@ for i in $(seq 1 16); do
     RETRY_AFTER=$(curl -s -D - -o /dev/null \
       -X POST "$FIRE_URL" \
       -H "Authorization: Bearer $SMOKE_TOKEN" \
+      -H "anthropic-version: 2023-06-01" \
+      -H "anthropic-beta: experimental-cc-routine-2026-04-01" \
       -H "Content-Type: application/json" \
-      -d '{"trust_mode":false,"smoke_test":true}' \
+      -d '{"text":"smoke test header probe"}' \
       | grep -i "retry-after" | awk '{print $2}' | tr -d '\r' || echo "missing")
     echo "Retry-After header value: $RETRY_AFTER"
     break
