@@ -2,6 +2,8 @@
 **Purpose:** the single "you are here" doc. Every component, where it lives, what it does, what it costs.
 **Audience:** Adam (the board). Read this once, hold it in your head, then we build.
 
+> **⚠ SUPERSEDED in part (2026-05-08):** Layer 8 (the Bastion) is dropped. The war room is now cloud-only. Adam's home PC has no special role. See `.claude/memory/DECISIONS.md` 2026-05-08 entry and `docs/08-agents_work/ORCHESTRATION.md` §Adam's 3 hard rules. The rest of this V4 map (Layers 1-7, the cost picture, the inbound/outbound flows) is still authoritative — read with that one supersession in mind.
+
 ---
 
 ## The 8 layers of the planned environment
