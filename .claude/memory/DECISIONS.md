@@ -4,6 +4,80 @@
 
 ---
 
+### [2026-05-08] — WS4: Connection Layer LOCKED (12 revision clusters + 5 Adam decisions)
+**Decision:** WS4 (Cloudflare bridge + Telegram bot + iOS Shortcut + 11 Inngest functions + Supabase observability migration + `/war-room` page + qa-lead-pass workflow + WS2 Zod schemas) LOCKED. 4 parallel adversarial critics produced 55 unique findings (1 CRITICAL / 19 HIGH / 25 MEDIUM / 10 LOW). 12 revision clusters (R1-R12) applied to code. 5 questions resolved by Adam (Q1-Q5). Security critic agent failed (truncation); coverage absorbed by bridge + Inngest critics' security findings.
+**Adam's 5 decisions (2026-05-08):**
+- **Q1:** ADD `telegram_send_failed` to `audit_log.status` enum (15 values total). Runbook contract honored over errata 1's 14-value list.
+- **Q2:** `parent_audit_log_id` FK uses `ON DELETE SET NULL`. Children survive 90-day parent retention; lineage chain is recoverable from `nonce`/`fan_in_key`. (Rejected RESTRICT for breaking retention permanently; rejected CASCADE for losing recent children.)
+- **Q3:** `row_kind text NOT NULL CHECK (row_kind IN ('routine_dispatch','internal_event'))` discriminator + partial UNIQUE on nonce ONLY for dispatch rows. Internal observability rows skip nonce; dispatch rows MUST have it (CHECK enforces). (Rejected throwaway-UUID model for double-purposing the column and obscuring intent.)
+- **Q4:** Per-Routine bearer tokens deferred to WS6. Shared `ROUTINE_CEO_ENTRY_POINT_TOKEN` ships in WS4 with documented FOLLOW-UP — WS6 must split before Routine A/B smoke tests run in production. Acceptable revoke-blast-radius risk during build phase.
+- **Q5:** ALLOW Auto-Unblock 3-cascade Telegram-ping. Cap = `MAX_UNBLOCK_CASCADE_DEPTH = 3`. After 3 cascades, write `audit_log.status = 'over_budget'` with `event_kind = 'auto_unblock_max_attempts'` AND fire `🚨 Auto-Unblock cascaded 3× under <ticket>. Manual intervention required.` to Telegram. Tagged in code as Q5 EXCEPTION (incident escalation, NOT cost alert) — narrow Q7 carve-out for structural-failure escalation only.
+**12 revision clusters applied:**
+- **R1 (CRITICAL):** Fan-in barrier rewritten to query Linear GraphQL (sibling sub-ticket states) instead of `audit_log.status`. The audit-log-based check was inverted twice over and would have hung every fan-out flow forever.
+- **R2 (HIGH):** Idempotent dispatch — `handleIssueCreated` now goes through KV nonce + DO lock; `FireCountDO` Durable Object replaces non-atomic KV `get/put` counter; all 3 affected Inngest functions use `step.sendEvent` (not `inngest.send` inside `step.run`).
+- **R3 (HIGH):** HMAC scope hardened — `X-Beamix-Timestamp` header on every signed request, 5-min skew rejection; iOS Shortcut payload embeds `nonce`; `/telegram` endpoint now HMAC-verifies via shared `verifyHmacSignature` helper; recursive canonical-JSON serializer replaces broken `JSON.stringify(spec, sortedTopLevelKeys)`; `audit_log.nonce` partial-UNIQUE-with-CHECK enforces presence for dispatch rows.
+- **R4 (HIGH):** DO lock alarm uses min-heap pattern — earliest-expiring lock owns the alarm; alarm handler reschedules for next-earliest surviving lock. Eliminates zombie-lock class.
+- **R5 (HIGH/MED):** Haiku tier classifier `AbortSignal.timeout(8000)` + moved AFTER `acquireLock`+`writeAuditLog` so slow Anthropic responses don't pin dispatch pipeline. Per-Routine token split deferred to WS6 (Q4 LOCKED).
+- **R6 (HIGH/MED):** Word-boundary `@mention` regex; `@board` → `agent:synthesizer` added to Telegram routing; `risk:irreversible` label now structurally enforced in qa-lead-pass.yml; case+whitespace-tolerant `qa_verdict: PASS` grep; multi-segment branch slug regex collapses internal slashes; iOS Shortcut reads bridge response status code + dictation-empty guard.
+- **R7 (HIGH × 4):** pgvector RAG embed pipeline was DEAD-ON-ARRIVAL (`changed_files` vs `changed_paths` typo). Standardized on `changed_paths`. Per-file try/catch in 3 embed functions. OpenAI batches capped at 100 inputs with `Retry-After` parsing. Filter excludes `.d.ts`, `.snap`, `__snapshots__/`, `.generated.ts`, `database.types.ts`.
+- **R8 (HIGH/MED):** Migration overhauled — `telegram_send_failed` enum value (Q1), `ON DELETE SET NULL` (Q2), `row_kind` discriminator + partial UNIQUE on nonce (Q3), `audit_log_aggregate_for_date(p_date)` SQL function created (no more silent-error-on-primary-path), `IF NOT EXISTS` everywhere (idempotent re-apply), agent-index `idx_audit_log_agent_ts`, `event_kind` column, `failures NOT NULL DEFAULT 0`, `runtime_s >= 0` CHECK.
+- **R9 (HIGH × 3 + MED × 4):** War-room safety — removed `as any` Supabase cast; ADAM_EMAIL throws at module load in production; `MAX_TRACE_DEPTH = 8` + visited-set cycle detection in `buildTraceNode`; `.limit(50)` on children query with truncation flag; `useEffect` (not `useState`) initializes async trace load; hybrid Realtime + 30s polling on TodaySection; `loading` state wired correctly.
+- **R10 (MED × 3):** `issues: read` GitHub permission added (bypass-comment lookup now works); inline `style={{ }}` props converted to Tailwind arbitrary values `[grid-template-columns:...]`; dark-mode hex variants on all status indicators (`#3370FF dark:#5A8FFF`, etc.).
+- **R11 (MED/LOW):** `runaway-watcher` trigger changed from "single-row > $1" to "session accrued cost > spec.budget × KILL_MULTIPLIER (1.2)" — sums via `nonce`/`parent_audit_log_id` chain. All `cost_usd` reads wrapped in `Number()` (Supabase numeric returns string). Auto-Unblock cascade depth guard (Q5). `validateChildScope` rejects negative remaining budget. `source_persona_round` regex-validated in Zod.
+- **R12 (LOW):** `/health` minimal response unauth + detailed state behind bearer; rotation script writes new secret to temp file, prints only path; trust spec adds `issued_by.telegram_chat_id` (Telegram fires no longer abuse `linear_user_id`); Shortcut README adds Keychain-stored API key as Option B; `claude_progress.status = 'killed'` writer added in runaway-watcher; agent-index, `runtime_s` CHECK, `event_kind` (covered in R8).
+**Smoke tests:** Sub-phase 0 deferred to operational deploy. A+B (cron exemption + Retry-After granularity) run as 24h background once Anthropic Routines are provisioned by Adam. C+D (Mem0 MCP load + concurrent fire) run synchronously before first production fire.
+**Files written/modified:**
+- `infra/cloudflare-bridge/src/{index.ts (+1100 lines), durable-object.ts (+min-heap alarm), routing.ts (+@board), audit.ts}`, `infra/cloudflare-bridge/scripts/rotate-bridge-hmac.ts`, `infra/cloudflare-bridge/{wrangler.toml (+FireCountDO binding+v2 migration), package.json, README.md}`
+- `infra/telegram-bot/{wrangler.toml, src/index.ts (+timestamp HMAC)}`, `infra/shortcuts/{Capture-Beamix-Idea.shortcut.json (+nonce+failure feedback+empty-dictation guard), README.md}`
+- `apps/web/supabase/migrations/20260508_war_room_observability.sql` (overhauled — 15-value enum + row_kind + partial UNIQUE + RPC function + idempotent)
+- `apps/web/src/inngest/functions/*.ts` (11 functions: fan-in-watcher Linear-rewritten, routine-timeout-watcher with Q5 cascade depth, parent-ticket-expiry-watcher, audit-log-rollup, cost-watchdog, runaway-watcher, embed-{decisions,sessions,brain,codebase,skills}); `apps/web/src/inngest/events.ts` (`changed_paths` standardized)
+- `apps/web/src/lib/embeddings/embed-corpus.ts` (batch + Retry-After), `apps/web/src/lib/orchestration/{spec.ts (+telegram_chat_id IssuedBy), board.ts (+source_persona_round regex)}`
+- `apps/web/src/app/(internal)/war-room/{layout.tsx, page.tsx, components/*, lib/queries.ts}` (auth + TraceTree + Realtime + dark-mode)
+- `.github/workflows/qa-lead-pass.yml` (+`issues: read` + `risk:irreversible` step + tolerant grep + multi-segment slug); `.github/pull_request_template.md`
+- `docs/08-agents_work/{WS4-CRITIQUE-AND-REVISIONS.md, WS4-CRITIQUE-FOR-HUMANS.md, sessions/2026-05-08-ceo-ws4-locked.md}` + 4 critic files at `2026-05-08-agent-build/CRITIQUE-WS4-*.md`
+**Cumulative session cost:** ~$95-110 (within $150 cap; WS3+WS4 combined). WS3 ~$30, WS4 build $20-25, WS4 critics $20, synthesis $5, applied revisions $20-25.
+**Adam-action checklist (post-LOCK, cannot be done by agents):**
+1. Cloudflare Workers Paid plan upgrade ($5/mo) on Adam's Cloudflare account.
+2. `wrangler kv:namespace create BRIDGE_STATE_KV` + fill `wrangler.toml` placeholders.
+3. Cloudflare Worker deploy: `wrangler deploy` from `infra/cloudflare-bridge` (creates RoutineLock + FireCountDO Durable Objects via v1+v2 migrations).
+4. 10 standing Anthropic Routines provisioned in Anthropic Console with single shared CEO bearer token (Q4 deferred per-Routine split to WS6).
+5. Helicone proxy configured for product API (NOT Routines).
+6. Linear webhook secret + bot user accounts (one per agent).
+7. Telegram bot via BotFather; set `BRIDGE_HMAC_SECRET` shared between bridge + bot.
+8. Apply migration on staging first (`mcp__supabase__apply_migration`), then production.
+9. Run smoke tests A/B (24h background) and C/D (synchronous) once provisioning complete.
+**Decided by:** CEO (this session, Opus 4.7) + Adam Q1-Q5 sign-off on 2026-05-08.
+**Affects:** WS5 (synthesis master doc folds in WS3+WS4 — UNBLOCKED); WS6 (60+ agent .md files now have stable trust spec contract + per-Routine token split is the first WS6 task — UNBLOCKED); production deploy (Adam-action checklist must complete before first fire).
+**Reversible?** R1+R7 are mechanical fixes (no rollback needed). R2-R6 + R8 + R10-R12 reversible via git. R9 reversible. Q1-Q3 (migration changes) HARD to reverse after data accumulates — Q3 row_kind discriminator in particular is forever (column rename = hours of zero-downtime migration on a populated table).
+**Status:** LOCKED — Adam approved 2026-05-08.
+**See:** `docs/08-agents_work/WS4-CRITIQUE-AND-REVISIONS.md`, `docs/08-agents_work/WS4-CRITIQUE-FOR-HUMANS.md`, `docs/08-agents_work/sessions/2026-05-08-ceo-ws4-locked.md`, `docs/08-agents_work/2026-05-08-agent-build/CRITIQUE-WS4-{bridge,inngest,supabase,war-room}.md`, `docs/08-agents_work/SMOKE-TESTS-WS4.md`, `docs/08-agents_work/CONNECTIONS.md`.
+
+---
+
+### [2026-05-08] — WS3: Tech Stack BOM, DR runbooks, Scaling Cliffs LOCKED
+**Decision:** WS3 (war-room tech stack + 10 DR runbooks + cost instrumentation + scaling cliffs) LOCKED per `docs/08-agents_work/TECH-STACK.md` (BOM) + 10 runbook files at `docs/07-history/runbooks/`. War-room incremental new spend = **$5/mo** (Cloudflare Workers Paid). Mem0 stays free Hobby; upgrade to Starter $19/mo on-demand only when Hobby exhausts (Adam Q1). Inngest Pro corrected to **$75/mo** (was $150/mo in 2026-04-27 entry; verified via inngest.com/pricing on 2026-05-08). 7 critic-surfaced clusters of revisions (R1-R7 + R11) applied. R8/R9/R10 (procurement-grade compliance gaps) DROPPED from war-room scope after Adam's framing course-correction: war room is INTERNAL INFRA for Adam, not a customer-facing product; product-compliance items moved to `docs/security/PRODUCT-COMPLIANCE-BACKLOG.md`.
+**Adam's 8 decisions (2026-05-08):**
+- **Q1:** Mem0 stays free Hobby; upgrade to $19/mo Starter on-demand. Don't pre-pay.
+- **Q2-Q5:** DROPPED (procurement compliance moved to product workstream).
+- **Q6:** Write all 3 missing runbooks (Inngest, Vercel, Telegram).
+- **Q7:** **NO real-time cost alerts to Telegram.** Cost observed passively (`/war-room` page, monthly burn-down). Runaway-watcher silent kill stays as safety fence. Anthropic Console hard cap is backstop. System-status alerts (security, infrastructure failures) still ping; cost-rate alerts do not.
+- **Q8:** Inngest Pro $75/mo verified; DECISIONS.md 2026-04-27 entry corrected.
+**10 DR runbooks written:** anthropic-outage, linear-api-break, cloudflare-compromise, supabase-corruption, secret-rotation, github-compromise, mem0-outage, inngest-outage, vercel-outage, telegram-failure (each ~150-300 lines, Detection / Immediate / Mitigation / Recovery / Post-incident / Decision tree / Related signals / Telemetry checklist).
+**16 R4 procedural fixes applied to runbooks:** bridge-resume KV CLI, cloudflare-compromise self-lockout reorder, github-compromise PAT race, BRIDGE_HMAC_SECRET atomic-swap procedure, supabase-corruption non-circular forensic sources, mem0 inline fallback (KV side-buffer references removed), parallel-runbook redeploy fallback, anthropic-outage manual orphan replay, linear-api-break holding-queue references removed (fail-open accepted), Supabase service-role Inngest pause-drain procedure, SQL placeholder definition, mem0 Routine-side fallback (no KV flag), anthropic-outage 'escalate' defined, supabase-corruption Vercel deploy ordering gate, secret-rotation per-day smoke-test list, Friday Retro Routine `supabase` MCP grant added (ORCHESTRATION.md errata).
+**Cost-alert philosophy locked (Q7):** runaway-watcher silently kills sessions over `max_cost_usd × 1.2` (no Telegram), Anthropic Console $1500/mo hard cap is backstop, monthly burn-down at `docs/09-metrics/cost-burn-YYYY-MM.md` is passive surface, `/war-room` Vercel page shows live cost (passive). System-status Telegram alerts (Anthropic outage, Cloudflare compromise, QA Lead bypass) preserved.
+**ORCHESTRATION.md errata footer added (6 items):** audit_log.status enum extension, board-meeting cost correction ($5.83/meeting, $46/mo), Friday Retro supabase MCP grant, cost-watchdog Telegram pings stripped, Inngest Pro $75/mo, war-room scope note (internal infra not customer product).
+**DECISIONS.md hygiene:** pre-2026-04-15 entries (System Initialized, GSD→GSA, Supabase Auth, Paddle Only, Trial 7d, Pricing $49/$149/$349 [superseded], OpenRouter, Credit RPC, No n8n, scan_id) archived to `DECISIONS_ARCHIVE.md` per Adam's ≤50 active entries rule.
+**Smoke tests deferred to WS4 sub-phase 0:** A (cron Routine 15/day cap exemption), B (`/fire` cap Retry-After granularity), C (Mem0 MCP under 40 round-trips), D (concurrent Routine cap behavior). A+B run in background while WS4 build proceeds (Adam Q-plan-2 2026-05-08); C+D run synchronously before build commits.
+**Rationale:** WS3 deep design (TECH-STACK.md v0 + 7 DR runbooks) → 4 parallel Sonnet critics (BOM, DR, cost, procurement-adversary) → 57 unique findings (26 H / 21 M / 10 L) → CEO/Opus dense synthesis → technical-writer plain-language version → Adam decision (8 questions, 4 immediately answered, 4 partially deferred to product workstream after framing correction) → revisions applied unilaterally (R1-R7 + R11; R8-R10 dropped).
+**Decided by:** CEO (this session, Opus 4.7) + Adam Q1-Q8 sign-off on 2026-05-08.
+**Affects:** WS4 (smoke tests use the 4-test design; bridge code uses Workers Paid Durable Object dedup; audit_log enum extended with 6 new values; Friday Retro grants supabase; build phase proceeds with smoke A+B in parallel background); WS5 (synthesis master doc folds in TECH-STACK references); WS6 (Routine .md files use new MCP grants for Friday Retro; cost-watchdog Routine prompt strips Telegram-alert behavior; runaway-watcher Routine prompt makes kill action silent).
+**Reversible?** EASY for cost-alert decisions (config change). MEDIUM for Mem0 upgrade strategy (1-click). HARD for the war-room-scope-correction (would re-introduce 12 procurement items into war-room scope, but that contradicts Adam's stated intent). Other revisions are mechanical doc fixes.
+**Status:** LOCKED — Adam approved 2026-05-08.
+**Cost spent this phase:** ~$28-30 (within $30 cap; pre-flight $0.20, runbook design $5, 4 critics $15-18, synthesis $2.50, plain-language $3, integration edits $3, worker dispatches $5).
+**See:** `docs/08-agents_work/TECH-STACK.md`, `docs/08-agents_work/WS3-CRITIQUE-AND-REVISIONS.md`, `docs/08-agents_work/WS3-CRITIQUE-FOR-HUMANS.md`, `docs/07-history/runbooks/*.md` (10 files), `docs/security/PRODUCT-COMPLIANCE-BACKLOG.md`, `docs/08-agents_work/2026-05-06-agent-build/CRITIQUE-WS3-bom.md`, `docs/08-agents_work/2026-05-08-agent-build/CRITIQUE-WS3-{dr,cost,adversary}.md`, `docs/08-agents_work/sessions/2026-05-08-ceo-ws3-locked.md`, ORCHESTRATION.md errata footer.
+
+---
+
 ### [2026-05-08] — Bastion concept dropped. War room is cloud-only.
 **Decision:** Remove the "Bastion" (home PC as 24/7 host) from the architecture. The war room runs entirely in cloud services we already pay for: Anthropic Routines (runtime), Cloudflare Workers (bridge + Telegram relay), Vercel (Next.js + Inngest functions), Supabase (DB + Realtime + pgvector + audit_log + claude_progress + Mem0 OSS Phase 2 host). Adam's home Windows PC is a normal dev workstation with no special role — the war room runs whether it's on or off, off the grid, or replaced. The "Bastion" stack from V3 ($33/mo home Mac with tmux farm + Postgres mirror + Redis + MCP servers + Whisper + ONNX MiniLM + disler dashboard + Mem0 OSS) is superseded.
 **Rationale:** Three things changed since V3 (2026-05-06) made Bastion the core runtime: (1) WS1A locked Mem0 cloud + Supabase pgvector — Bastion lost its memory-host role; (2) WS2 confirmed Anthropic Routines run in Anthropic's cloud on the Max subscription — Bastion lost its agent-runtime role; (3) WS2 critique exposed that disler hooks fire to `localhost:4000` which Anthropic cloud containers cannot reach — Bastion lost most of its observability role. With those three gone, the Bastion was holding only "your dev workstation" + "optional Mem0 OSS Phase 2 host" — neither of which justifies a special architectural concept. Cleaner mental model: dev work happens on whichever machine Adam is using; Mem0 OSS Phase 2 (when WS1F migrates from cloud) hosts on Cloudflare Workers / Railway / Fly.io for ~$0-5/mo with cloud uptime independent of Adam's PC being on.
@@ -58,87 +132,9 @@
 
 ## Log
 
-### [DATE] — System Initialized
-**Decision:** 12-agent autonomous startup team configured with 426+ skills from antigravity-awesome-skills
-**Rationale:** Solo founder needs agents covering every startup role. Skills sourced from proven open-source repo.
-**Decided by:** Iris
-**Affects:** All agents
-**Reversible?** Yes
+*Pre-2026-04-15 entries (System Initialized, GSD→GSA, Supabase Auth, Paddle Only, Trial 7d, Pricing $49/$149/$349, OpenRouter, Credit RPC, No n8n) archived to `DECISIONS_ARCHIVE.md` on 2026-05-08 as part of WS3 lock.*
 
----
-
-### [2026-02-27] — GSD → GSA Rebrand
-**Decision:** Renamed all identifiers from GSD to GSA across the codebase (commands, paths, file names, /gsa: slash commands, gsa-tools.cjs, ~/.gsa config dir, gsa/ branch templates).
-**Rationale:** Align naming with GSA (Green Startup Academy) project identity. Exception: `subagent_type` in mcp_task calls remains `gsa-*` (e.g. gsa-planner, gsa-executor) because Cursor's mcp_task tool requires these exact enum values—changing them would break agent spawning.
-**Decided by:** Atlas
-**Affects:** .claude/commands/gsa/, gsa-tools.cjs, hooks, workflows, config defaults
-**Reversible?** Yes (search/replace + file renames)
-
----
-
-*Add new entries chronologically — newest at the bottom*
-
----
-
-### [2026-03-06] — Supabase Auth (not Clerk)
-**Decision:** Use Supabase Auth for all authentication flows.
-**Rationale:** Supabase handles both auth and DB — fewer vendors. Clerk was in the GSA template but never used.
-**Decided by:** Build Lead
-**Affects:** All auth routes, middleware, user_profiles table
-**Reversible?** Hard
-
----
-
-### [2026-03-06] — Paddle Only (not Stripe)
-**Decision:** Paddle is the sole payment provider. Stripe removed 2026-03-02.
-**Rationale:** Merchant of record — simplifies VAT/EU compliance. Webhook: `src/app/api/paddle/webhooks/route.ts`
-**Decided by:** CEO
-**Affects:** Billing, subscriptions, webhooks
-**Reversible?** Hard
-
----
-
-### [2026-03-06] — Trial = 7 days, Free Scan Retention = 30 days
-**Decision:** 7-day free trial starting from first dashboard visit. Free scan data visible for 30 days for all users (including non-paying). After 30 days, scan data expires. After trial, user must subscribe.
-**Rationale:** Shorter trial creates urgency. 30-day retention gives users time to decide without pressure.
-**Decided by:** CEO
-**Affects:** subscriptions table, free_scans table, dashboard redirect logic
-**Reversible?** Yes
-
----
-
-### [2026-03-06] — Pricing (FINAL — do not change without CEO sign-off)
-**Decision:** Starter $49/mo ($39 annual), Pro $149/mo ($119 annual), Business $349/mo ($279 annual)
-**Rationale:** Validated against competitive pricing analysis.
-**Decided by:** CEO
-**Affects:** pricing page, Paddle products, plan_tier enum
-**Reversible?** Hard
-
----
-
-### [2026-03-06] — OpenRouter as LLM Gateway
-**Decision:** All LLM calls route through OpenRouter (src/lib/openrouter.ts). No direct provider SDKs. Two keys: OPENROUTER_SCAN_KEY (scan engines) and OPENROUTER_AGENT_KEY (agent execution, QA, recommendations).
-**Rationale:** Unified billing, per-key spend tracking, easy model switching.
-**Decided by:** Build Lead
-**Affects:** scan/engine-adapter.ts, agents/llm-runner.ts, agents/qa-gate.ts, recommendations.ts
-**Reversible?** Yes
-
----
-
-### [2026-03-06] — Credit RPC Pattern
-**Decision:** hold_credits(p_user_id, p_amount, p_job_id) → confirm_credits(p_job_id) → release_credits(p_job_id). The job_id IS the hold reference.
-**Rationale:** Simple atomic pattern. Defined in 20260308_002_billing.sql, fixed in 20260318_reconciliation.sql.
-**Decided by:** Build Lead
-**Affects:** credit-guard.ts, execute.ts, agent_jobs table
-**Reversible?** Hard (DB function signatures)
-
----
-
-### [2026-03-06] — No n8n, URL param scan_id
-**Decision:** No n8n orchestration — direct LLM via OpenRouter. URL param is scan_id (not scan_token) everywhere.
-**Decided by:** CEO
-**Affects:** All scan URLs, DB columns, API params
-**Reversible?** Yes (scan_id), Hard (no n8n)
+*Active log starts here from the 2026-04-15 product rethink.*
 
 ---
 
@@ -251,11 +247,12 @@
 ---
 
 ### [2026-04-27] — Inngest tier: Free at MVP, Pro at ~5 paying customers
-**Decision:** MVP launches on Inngest free tier (50K steps/month, shorter wall-clock timeouts). Migrate to Pro ($150/mo) when paying customers ≥ 5 OR monthly steps usage hits 75-80% of free-tier ceiling, whichever comes first.
-**Rationale:** Cost discipline at pre-revenue stage. Free tier sufficient for first ~100 customers. Pro tier headroom isn't worth paying for until there's revenue to cover it. Revises board synthesis row 13 which had assumed Pro from day 1.
+**Decision:** MVP launches on Inngest free tier (50K executions/month, shorter wall-clock timeouts). Migrate to Pro (~~$150/mo~~ **$75/mo** — corrected 2026-05-08 via inngest.com/pricing verification; original entry quoted wrong figure) when paying customers ≥ 5 OR monthly executions usage hits 75-80% of free-tier ceiling, whichever comes first. Pro tier includes 1M executions + 100+ concurrent steps + granular metrics.
+**Rationale:** Cost discipline at pre-revenue stage. Free tier sufficient for first ~5 paying customers. Pro tier headroom isn't worth paying for until there's revenue to cover it. Revises board synthesis row 13 which had assumed Pro from day 1.
 **Decided by:** Adam (CEO)
 **Affects:** Tier 0 setup, agent runtime architecture (must fit free-tier wall-clock), DevOps migration runbook, cost model. Some agents (Long-form Authority Builder, Citation Predictor — both deferred past MVP) may need Pro tier on arrival; re-validate which MVP agents fit free-tier limits.
 **Reversible?** Yes (upgrade is one-click; downgrade is hard if usage exceeds tier).
+**2026-05-08 correction:** WS3 cost critic surfaced the $150/mo claim conflicted with Inngest's public pricing of $75/mo. Adam asked the CEO to verify; verified via WebFetch on inngest.com/pricing (2026-05-08). $75/mo locked.
 
 ---
 
