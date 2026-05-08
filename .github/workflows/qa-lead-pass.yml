@@ -43,30 +43,63 @@ jobs:
           TASK_SLUG=$(echo "$HEAD_BRANCH" | sed -E 's|^(feat\|fix\|chore)/||' | tr / -)
           echo "Task slug: ${TASK_SLUG}"
 
-          # ── Step 2: Look for session file matching the branch slug ──────────
+          # ── Step 2: Look for session file ───────────────────────────────────
+          # First try slug match: docs/08-agents_work/sessions/*-<task-slug>.md
+          # Fallback: any session file added/modified in this PR's diff (handles
+          # multi-phase PRs and CEO-orchestrator branches that don't follow the
+          # feat/<slug> convention — session files are named per phase, not per branch).
           SESSION_DIR="docs/08-agents_work/sessions"
           SESSION_FILE=""
 
           if [ -d "$SESSION_DIR" ]; then
-            # Find files matching *-<task-slug>.md (date prefix varies)
             SESSION_FILE=$(find "$SESSION_DIR" -maxdepth 1 -name "*-${TASK_SLUG}.md" -type f | sort | tail -1)
+          fi
+
+          if [ -z "$SESSION_FILE" ]; then
+            echo "No session file matching slug '${TASK_SLUG}'. Falling back to PR diff."
+            # List session files added/modified in this PR
+            CHANGED_SESSIONS=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json files \
+              --jq '[.files[].path | select(test("^docs/08-agents_work/sessions/.*\\.md$"))] | .[]' || echo "")
+            if [ -n "$CHANGED_SESSIONS" ]; then
+              echo "Found session files in PR diff:"
+              echo "$CHANGED_SESSIONS"
+              # Pick the most recently dated one (sort lexically)
+              SESSION_FILE=$(echo "$CHANGED_SESSIONS" | sort | tail -1)
+            fi
           fi
 
           echo "Session file found: ${SESSION_FILE:-none}"
 
           # ── Step 3: Check for qa_verdict: PASS in session file ──────────────
           # F11: Case-insensitive, whitespace-tolerant, handles quoted YAML values.
+          # Multi-session PRs: ALL changed session files must have qa_verdict: PASS.
           QA_PASS=false
           if [ -n "$SESSION_FILE" ] && [ -f "$SESSION_FILE" ]; then
-            if grep -qiE 'qa_verdict:[[:space:]]+"?PASS"?[[:space:]]*$' "$SESSION_FILE"; then
-              echo "✓ qa_verdict: PASS found in ${SESSION_FILE}"
-              QA_PASS=true
+            # If we fell back to PR diff, validate all changed sessions
+            if [ -n "${CHANGED_SESSIONS:-}" ]; then
+              ALL_PASS=true
+              for s in $CHANGED_SESSIONS; do
+                if [ ! -f "$s" ]; then continue; fi
+                if grep -qiE 'qa_verdict:[[:space:]]+"?PASS"?[[:space:]]*$' "$s"; then
+                  echo "✓ qa_verdict: PASS in $s"
+                else
+                  echo "✗ qa_verdict: PASS missing in $s"
+                  grep "qa_verdict" "$s" || echo "  (no qa_verdict line at all)"
+                  ALL_PASS=false
+                fi
+              done
+              if [ "$ALL_PASS" = "true" ]; then QA_PASS=true; fi
             else
-              echo "✗ qa_verdict: PASS not found in ${SESSION_FILE}"
-              grep "qa_verdict" "$SESSION_FILE" || echo "(no qa_verdict line at all)"
+              if grep -qiE 'qa_verdict:[[:space:]]+"?PASS"?[[:space:]]*$' "$SESSION_FILE"; then
+                echo "✓ qa_verdict: PASS found in ${SESSION_FILE}"
+                QA_PASS=true
+              else
+                echo "✗ qa_verdict: PASS not found in ${SESSION_FILE}"
+                grep "qa_verdict" "$SESSION_FILE" || echo "(no qa_verdict line at all)"
+              fi
             fi
           else
-            echo "✗ No session file found for slug: ${TASK_SLUG}"
+            echo "✗ No session file found for slug or in PR diff"
           fi
 
           # ── Step 4: Check for bypass label ─────────────────────────────────

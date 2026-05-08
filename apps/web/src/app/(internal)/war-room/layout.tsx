@@ -1,23 +1,27 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
-// F2: Hard-fail in production if ADAM_EMAIL is not set — silent misconfiguration = silent lockout.
-// In development, warn and allow the page to render (access will still be denied without a match).
-if (process.env.NODE_ENV === 'production' && !process.env['ADAM_EMAIL']) {
-  throw new Error('ADAM_EMAIL env var required in production — war-room access would be impossible without it')
-}
-if (process.env.NODE_ENV !== 'production' && !process.env['ADAM_EMAIL']) {
-  console.warn('ADAM_EMAIL not set — war-room access disabled in dev (all requests will redirect)')
-}
-
-const ADAM_EMAIL = process.env['ADAM_EMAIL'] ?? ''
-
+// F2: Fail-closed at REQUEST time when ADAM_EMAIL is missing, not at module load.
+// Module-load throws break Vercel's `next build` (collect-page-data step runs in
+// NODE_ENV=production but Vercel injects runtime secrets only at runtime, not build).
+// In dev, a missing env var still warns at console + redirects on access.
 export const metadata = {
   title: 'War Room — Beamix Internal',
   robots: 'noindex,nofollow',
 }
 
 export default async function WarRoomLayout({ children }: { children: React.ReactNode }) {
+  const ADAM_EMAIL = process.env['ADAM_EMAIL'] ?? ''
+  if (!ADAM_EMAIL) {
+    if (process.env.NODE_ENV === 'production') {
+      // Production runtime: fail-closed loud + visible. Don't 500; redirect home.
+      console.error('[war-room] ADAM_EMAIL env var missing in production — access denied')
+    } else {
+      console.warn('[war-room] ADAM_EMAIL not set — access disabled in dev')
+    }
+    redirect('/')
+  }
+
   // F1: Remove `as any` — let TypeScript infer the properly typed Supabase client.
   const supabase = await createClient()
   const {
@@ -32,7 +36,7 @@ export default async function WarRoomLayout({ children }: { children: React.Reac
   // Must be Adam's email — war room is Adam-only.
   // F1: Destructure email from the typed user object directly (no cast needed).
   const { email } = user
-  if (!ADAM_EMAIL || !email || email.toLowerCase() !== ADAM_EMAIL.toLowerCase()) {
+  if (!email || email.toLowerCase() !== ADAM_EMAIL.toLowerCase()) {
     redirect('/')
   }
 
