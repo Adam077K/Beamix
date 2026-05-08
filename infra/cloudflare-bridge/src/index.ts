@@ -37,8 +37,19 @@ import { RoutineLock } from "./durable-object";
 export { RoutineLock };
 
 // ---------------------------------------------------------------------------
-// FireCountDO — atomic per-day fire cap (R2: replaces non-atomic KV get/put)
+// FireCountDO — atomic ROLLING-24h-window fire cap (R2 + Adam 2026-05-08)
 // ---------------------------------------------------------------------------
+// Replaces calendar-day bucketing (which had a midnight-burst hole: 15 fires
+// at 23:59 + 15 at 00:01 = 30 fires in 2 minutes). Now stores fire timestamps
+// in the last 24h; on each increment, prunes timestamps > 24h old then checks
+// remaining count against cap. Strict 24h spacing matches Adam's rule:
+// "first routine of the day = exactly 24h from the last."
+//
+// Storage shape: `timestamps` key = number[] (epoch ms, sorted ascending).
+// Storage cost: max 15 × 8 bytes = 120 bytes per DO instance.
+
+const ROLLING_WINDOW_MS = 24 * 60 * 60 * 1000; // 24h
+const TIMESTAMPS_KEY = "fire_timestamps";
 
 export class FireCountDO {
   private state: DurableObjectState;
@@ -50,36 +61,65 @@ export class FireCountDO {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const action = url.pathname.slice(1); // "increment" | "get"
-    const maxPerDay = parseInt(url.searchParams.get("max") ?? "15", 10);
+    const maxPerWindow = parseInt(url.searchParams.get("max") ?? "15", 10);
 
     if (action === "increment") {
-      return Response.json(await this.increment(maxPerDay));
+      return Response.json(await this.increment(maxPerWindow));
     }
     if (action === "get") {
-      const today = new Date().toISOString().slice(0, 10);
-      const count = (await this.state.storage.get<number>(today)) ?? 0;
-      return Response.json({ count });
+      const now = Date.now();
+      const timestamps = (await this.state.storage.get<number[]>(TIMESTAMPS_KEY)) ?? [];
+      const live = timestamps.filter((t) => now - t < ROLLING_WINDOW_MS);
+      const oldestLive = live.length > 0 ? live[0] : null;
+      return Response.json({
+        count: live.length,
+        oldest_fire_ms: oldestLive,
+        oldest_fire_age_minutes: oldestLive ? Math.floor((now - oldestLive) / 60000) : null,
+      });
     }
     return Response.json({ error: "unknown action" }, { status: 400 });
   }
 
   /**
-   * Atomically increment the daily fire count.
+   * Atomically check rolling-24h count against cap, append new timestamp if allowed.
    * Uses state.storage.transaction() for strong consistency.
+   *
+   * Returns { allowed, currentCount, retry_after_ms } where retry_after_ms is the
+   * time until the oldest fire in the window expires (i.e., when capacity opens up).
    */
-  async increment(maxPerDay: number): Promise<{ allowed: boolean; currentCount: number }> {
-    const today = new Date().toISOString().slice(0, 10);
-    let result: { allowed: boolean; currentCount: number } = { allowed: false, currentCount: 0 };
+  async increment(
+    maxPerWindow: number
+  ): Promise<{ allowed: boolean; currentCount: number; retry_after_ms?: number }> {
+    const now = Date.now();
+    let result: { allowed: boolean; currentCount: number; retry_after_ms?: number } = {
+      allowed: false,
+      currentCount: 0,
+    };
 
     await this.state.storage.transaction(async (txn) => {
-      const current = (await txn.get<number>(today)) ?? 0;
-      if (current >= maxPerDay) {
-        result = { allowed: false, currentCount: current };
+      const stored = (await txn.get<number[]>(TIMESTAMPS_KEY)) ?? [];
+      // Prune timestamps older than 24h (keep sorted ascending)
+      const live = stored.filter((t) => now - t < ROLLING_WINDOW_MS);
+
+      if (live.length >= maxPerWindow) {
+        // At cap. Tell caller when next slot opens (when oldest fire ages out).
+        const oldestExpiresAt = live[0] + ROLLING_WINDOW_MS;
+        result = {
+          allowed: false,
+          currentCount: live.length,
+          retry_after_ms: Math.max(0, oldestExpiresAt - now),
+        };
+        // Persist pruned list (cheaper future reads)
+        if (live.length !== stored.length) {
+          await txn.put(TIMESTAMPS_KEY, live);
+        }
         return;
       }
-      const next = current + 1;
-      await txn.put(today, next);
-      result = { allowed: true, currentCount: next };
+
+      // Allowed — append now to the list
+      const updated = [...live, now];
+      await txn.put(TIMESTAMPS_KEY, updated);
+      result = { allowed: true, currentCount: updated.length };
     });
 
     return result;
@@ -201,8 +241,11 @@ const IdeaCaptureSchema = z.object({
 const SPEC_START = "---BEAMIX-SPEC-V1-START---";
 const SPEC_END   = "---BEAMIX-SPEC-V1-END---";
 
-// Max /fire calls per day on Max 5× plan (per ORCHESTRATION.md §2B)
-const MAX_FIRES_PER_DAY_MAX5X = 15;
+// Max /fire calls in any rolling 24h window (Max 5× plan baseline = 15).
+// Adam 2026-05-08: hard rolling-window cap prevents midnight burst AND silent
+// overage billing to the Console-billed ANTHROPIC_API_KEY. When upgraded to
+// Max 20× ($200/mo), bump this to 60.
+const MAX_FIRES_PER_24H = 15;
 
 // Max timestamp skew (seconds) for HMAC-signed requests (R3)
 const MAX_TIMESTAMP_SKEW_SECONDS = 300;
@@ -374,21 +417,22 @@ async function releaseLock(
 }
 
 // ---------------------------------------------------------------------------
-// Fire count guard (per-day cap) — uses FireCountDO for atomic increment (R2)
+// Fire count guard (rolling-24h-window cap) — uses FireCountDO for atomic
+// check-and-append. Single DO instance for all fires (no calendar bucket).
+// Adam 2026-05-08: rolling 24h prevents the midnight-burst hole.
 // ---------------------------------------------------------------------------
 
 async function checkFireCountGuard(
   fireCountDO: DurableObjectNamespace,
-  maxPerDay: number
-): Promise<{ allowed: boolean; currentCount: number }> {
-  // All daily counts go to the same DO instance keyed by date
-  const today = new Date().toISOString().slice(0, 10);
-  const id = fireCountDO.idFromName(`fire-count:${today}`);
+  maxPerWindow: number
+): Promise<{ allowed: boolean; currentCount: number; retry_after_ms?: number }> {
+  // All fires go to one global DO instance — rolling window across all time.
+  const id = fireCountDO.idFromName("fire-count:rolling-24h");
   const stub = fireCountDO.get(id);
   const resp = await stub.fetch(
-    new Request(`https://do/increment?max=${encodeURIComponent(maxPerDay)}`)
+    new Request(`https://do/increment?max=${encodeURIComponent(maxPerWindow)}`)
   );
-  return await resp.json() as { allowed: boolean; currentCount: number };
+  return await resp.json() as { allowed: boolean; currentCount: number; retry_after_ms?: number };
 }
 
 // ---------------------------------------------------------------------------
@@ -825,7 +869,7 @@ async function handleCommentCreated(
   // Per-day fire count guard — atomic via FireCountDO (R2)
   const { allowed, currentCount } = await checkFireCountGuard(
     env.FIRE_COUNT_DO,
-    MAX_FIRES_PER_DAY_MAX5X
+    MAX_FIRES_PER_24H
   );
   if (!allowed) {
     // Queue to Inngest delayed event instead of dropping
@@ -1088,7 +1132,7 @@ async function handleTelegram(request: Request, env: BridgeEnv): Promise<Respons
   const telegramSpec = buildTelegramSpec(text, routingLabel, chatId);
 
   // Nonce + fire count guard (atomic FireCountDO — R2)
-  const { allowed } = await checkFireCountGuard(env.FIRE_COUNT_DO, MAX_FIRES_PER_DAY_MAX5X);
+  const { allowed } = await checkFireCountGuard(env.FIRE_COUNT_DO, MAX_FIRES_PER_24H);
   if (!allowed) {
     await sendTelegramMessage(
       env.TELEGRAM_BOT_TOKEN,
