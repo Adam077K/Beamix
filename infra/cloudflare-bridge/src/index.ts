@@ -595,8 +595,13 @@ export default {
       );
     }
 
-    // ---------- POST /linear ----------
-    if (request.method === "POST" && url.pathname === "/linear") {
+    // ---------- POST /linear (with alias /linear-webhook) ----------
+    // Linear's webhook UI commonly hints at "/linear-webhook"; accept both paths
+    // so a configuration-time URL choice doesn't silently fall through to 404.
+    if (
+      request.method === "POST" &&
+      (url.pathname === "/linear" || url.pathname === "/linear-webhook")
+    ) {
       return handleLinear(request, env);
     }
 
