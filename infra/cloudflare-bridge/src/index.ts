@@ -31,6 +31,7 @@ import {
   TELEGRAM_MENTION_TO_LABEL,
   findRoutingLabel,
   parseTierLabel,
+  resolveRoutineId,
 } from "./routing";
 import { RoutineLock } from "./durable-object";
 
@@ -977,9 +978,13 @@ async function handleIssueCreated(
   }
 
   // For board-meeting label: fire CEO with a minimal synth-only spec
-  const routineId = LINEAR_LABEL_TO_ROUTINE["board-meeting"];
-  if (!routineId || routineId.startsWith("PLACEHOLDER")) {
-    return Response.json({ ok: true, ignored: true });
+  // Resolves Routine ID from env (set via `wrangler secret put ROUTINE_CEO_ENTRY_POINT_ID`).
+  const routineId = resolveRoutineId("board-meeting", env);
+  if (!routineId) {
+    console.log(
+      `[bridge] Issue:${issue.identifier} board-meeting fire skipped — ROUTINE_CEO_ENTRY_POINT_ID env var is not set. Run: wrangler secret put ROUTINE_CEO_ENTRY_POINT_ID`
+    );
+    return Response.json({ ok: true, ignored: true, reason: "no_routine_id" });
   }
 
   const token = env.ROUTINE_CEO_ENTRY_POINT_TOKEN;
@@ -991,6 +996,9 @@ async function handleIssueCreated(
   );
   const nonceFresh = await checkAndStoreNonce(env.BRIDGE_STATE_KV, boardSpec.nonce, nonceWindow);
   if (!nonceFresh) {
+    console.log(
+      `[bridge] Issue:${issue.identifier} board-meeting deduplicated by KV nonce (replay or concurrent retry).`
+    );
     return Response.json({ ok: true, deduplicated: true });
   }
 
@@ -998,8 +1006,15 @@ async function handleIssueCreated(
   const lockKey = `${routineId}:${issue.id}`;
   const acquired = await acquireLock(env.ROUTINE_LOCK, lockKey);
   if (!acquired) {
+    console.log(
+      `[bridge] Issue:${issue.identifier} board-meeting deduplicated by DO lock (concurrent retry).`
+    );
     return Response.json({ ok: true, deduplicated: true });
   }
+
+  console.log(
+    `[bridge] Issue:${issue.identifier} board-meeting firing — routineId=${routineId.slice(0, 12)}... nonce=${boardSpec.nonce.slice(0, 8)}...`
+  );
 
   await writeAuditLog(
     { status: "fired", agent: "cloudflare-bridge", linear_ticket: issue.identifier, spec: boardSpec as unknown as Record<string, unknown> },
@@ -1009,10 +1024,16 @@ async function handleIssueCreated(
 
   const fireResult = await fireRoutine(routineId, token, boardSpec, env);
   if (!fireResult.ok) {
+    console.error(
+      `[bridge] Issue:${issue.identifier} Anthropic /fire failed — status=${fireResult.status}`
+    );
     await releaseLock(env.ROUTINE_LOCK, lockKey);
     return Response.json({ error: "anthropic /fire failed", status: fireResult.status }, { status: 502 });
   }
 
+  console.log(
+    `[bridge] Issue:${issue.identifier} fired board-meeting Routine successfully.`
+  );
   return Response.json({ ok: true, fired: true, board_meeting: true });
 }
 

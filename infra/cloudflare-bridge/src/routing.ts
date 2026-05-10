@@ -49,6 +49,56 @@ export const LINEAR_LABEL_TO_ROUTINE: Record<string, string> = {
 };
 
 /**
+ * Maps a Linear routing label to the Worker-env var name holding the
+ * Anthropic Routine ID (trig_<id>). Adam sets these via `wrangler secret put`
+ * once the Routines are provisioned in claude.ai.
+ *
+ * Labels not in this map (or whose env var is unset) cause handleIssueCreated
+ * to log a "[bridge] no routine ID configured for label=..." and return
+ * ignored:true — never silently 200 with no audit_log.
+ *
+ * Q4 (deferred to WS6): C-suite labels currently share the CEO Routine ID +
+ * token until per-Routine provisioning lands. ROUTINE_CEO_ENTRY_POINT_ID
+ * value is reused for board-meeting + all 6 C-suite labels.
+ */
+export const ROUTINE_ID_ENV_KEY: Record<string, keyof BridgeEnv> = {
+  "agent:ceo":                  "ROUTINE_CEO_ENTRY_POINT_ID",
+  "agent:morning-digest":       "ROUTINE_MORNING_DIGEST_ID",
+  "agent:eod-sync":             "ROUTINE_EOD_SYNC_ID",
+  "agent:auto-unblock":         "ROUTINE_AUTO_UNBLOCK_ID",
+  "agent:monday-standup":       "ROUTINE_MONDAY_STANDUP_ID",
+  "agent:friday-retro":         "ROUTINE_FRIDAY_RETRO_ID",
+  "agent:competitor-signal":    "ROUTINE_COMPETITOR_SIGNAL_ID",
+  "agent:customer-voice":       "ROUTINE_CUSTOMER_VOICE_SIGNAL_ID",
+  "agent:geo-algorithm":        "ROUTINE_GEO_ALGORITHM_SIGNAL_ID",
+  "agent:synthesizer":          "ROUTINE_SYNTHESIZER_ID",
+  // C-suite reuse CEO Routine until WS6
+  "agent:cto":                  "ROUTINE_CEO_ENTRY_POINT_ID",
+  "agent:cmo":                  "ROUTINE_CEO_ENTRY_POINT_ID",
+  "agent:cpo":                  "ROUTINE_CEO_ENTRY_POINT_ID",
+  "agent:cbo":                  "ROUTINE_CEO_ENTRY_POINT_ID",
+  "agent:cco":                  "ROUTINE_CEO_ENTRY_POINT_ID",
+  "agent:qa-lead":              "ROUTINE_CEO_ENTRY_POINT_ID",
+  // Board-meeting persona routing
+  "decision_type:vendor":       "ROUTINE_SYNTHESIZER_ID",
+  "decision_type:strategic":    "ROUTINE_SYNTHESIZER_ID",
+  "board-meeting":              "ROUTINE_CEO_ENTRY_POINT_ID",
+};
+
+/**
+ * Resolves the Anthropic Routine ID for a Linear routing label by reading
+ * env at request time. Returns null if the label has no mapping or the
+ * env var is unset/empty — caller logs and returns ignored:true.
+ */
+export function resolveRoutineId(label: string, env: BridgeEnv): string | null {
+  const envKey = ROUTINE_ID_ENV_KEY[label];
+  if (!envKey) return null;
+  const value = env[envKey];
+  if (typeof value !== "string" || value.length === 0) return null;
+  return value;
+}
+
+/**
  * Maps the per-Routine env var name to look up in the Worker env.
  * Used by the bridge to select the correct bearer token for /fire.
  *
@@ -140,6 +190,20 @@ export interface BridgeEnv {
   ROUTINE_CUSTOMER_VOICE_SIGNAL_TOKEN: string;
   ROUTINE_GEO_ALGORITHM_SIGNAL_TOKEN: string;
   ROUTINE_SYNTHESIZER_TOKEN: string;
+
+  // Per-Routine Anthropic Routine IDs (trig_<id> values from claude.ai Routines page).
+  // Set via `wrangler secret put ROUTINE_<NAME>_ID`. Empty/unset → label silently
+  // ignored at handleIssueCreated / handleCommentCreated (with a [bridge] log line).
+  ROUTINE_CEO_ENTRY_POINT_ID?: string;
+  ROUTINE_MORNING_DIGEST_ID?: string;
+  ROUTINE_EOD_SYNC_ID?: string;
+  ROUTINE_AUTO_UNBLOCK_ID?: string;
+  ROUTINE_MONDAY_STANDUP_ID?: string;
+  ROUTINE_FRIDAY_RETRO_ID?: string;
+  ROUTINE_COMPETITOR_SIGNAL_ID?: string;
+  ROUTINE_CUSTOMER_VOICE_SIGNAL_ID?: string;
+  ROUTINE_GEO_ALGORITHM_SIGNAL_ID?: string;
+  ROUTINE_SYNTHESIZER_ID?: string;
 
   // Allowlist
   ALLOWED_ISSUERS: string; // comma-separated Linear user IDs
