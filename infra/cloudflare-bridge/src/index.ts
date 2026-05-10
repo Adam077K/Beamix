@@ -324,8 +324,13 @@ async function verifyHmacSignature(
 
 /**
  * Verifies a Linear webhook signature.
- * Linear sends the HMAC-SHA-256 hex in the `X-Hub-Signature` header (with "sha256=" prefix).
- * Linear signatures cover only the body (no timestamp header on Linear's side).
+ *
+ * Linear sends a hex HMAC-SHA-256 in the `linear-signature` header (no prefix).
+ * The signature covers the raw request body. There is no timestamp header
+ * on Linear's side (no replay-skew window).
+ *
+ * Some forks/relays may rewrap as `X-Hub-Signature` (GitHub style, with
+ * "sha256=" prefix) — accept both headers defensively.
  */
 async function verifyLinearWebhook(
   body: string,
@@ -333,6 +338,7 @@ async function verifyLinearWebhook(
   secret: string
 ): Promise<boolean> {
   if (!signatureHeader) return false;
+  // Strip "sha256=" prefix if a GitHub-style relay wrapped the signature.
   const sig = signatureHeader.startsWith("sha256=")
     ? signatureHeader.slice(7)
     : signatureHeader;
@@ -679,11 +685,26 @@ async function handleLinear(request: Request, env: BridgeEnv): Promise<Response>
   const rawBody = await request.text();
 
   // Step 1: HMAC verify Linear webhook signature
-  const signature = request.headers.get("X-Hub-Signature");
+  // Linear's actual header is `linear-signature` (lowercase). Some relays/forks
+  // re-wrap as `X-Hub-Signature` (GitHub style); accept both.
+  const signature =
+    request.headers.get("linear-signature") ??
+    request.headers.get("X-Hub-Signature");
   const isValid = await verifyLinearWebhook(rawBody, signature, env.LINEAR_WEBHOOK_SECRET);
   if (!isValid) {
+    // Log the headers we DID see so future debugging doesn't require re-deploys.
+    const seenHeaders = Array.from(request.headers.keys())
+      .filter((h) => h.toLowerCase().includes("signature") || h.toLowerCase().includes("linear"))
+      .join(",");
+    console.error(
+      `[bridge] Linear HMAC verification failed. signature_header_present=${!!signature} seen_signature_headers=[${seenHeaders}]`
+    );
     await writeAuditLog(
-      { status: "rule_violation", agent: "cloudflare-bridge" },
+      {
+        status: "rule_violation",
+        agent: "cloudflare-bridge",
+        event_kind: "linear_hmac_failed",
+      },
       env.SUPABASE_URL,
       env.SUPABASE_SERVICE_ROLE_KEY
     );
