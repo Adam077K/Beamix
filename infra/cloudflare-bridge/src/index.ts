@@ -732,8 +732,14 @@ async function handleLinear(request: Request, env: BridgeEnv): Promise<Response>
 
   if (!isIssueCreated && !isCommentCreated) {
     // Not a relevant event — acknowledge and drop
-    return Response.json({ ok: true, ignored: true });
+    console.log(
+      `[bridge] webhook ignored — type=${webhook.type} action=${webhook.action}. Bridge only processes Issue:create and Comment:create.`
+    );
+    return Response.json({ ok: true, ignored: true, type: webhook.type, action: webhook.action });
   }
+  console.log(
+    `[bridge] webhook accepted — type=${webhook.type} action=${webhook.action}`
+  );
 
   // Check linear_paused
   const linearPaused = await env.BRIDGE_STATE_KV.get("bridge:linear_paused");
