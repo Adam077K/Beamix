@@ -964,7 +964,10 @@ async function handleIssueCreated(
   // Issue:created without a spec comment is only routed if it has a board-meeting label
   // All other routing goes through Comment:created (spec path above)
   if (routingLabel !== "board-meeting") {
-    return Response.json({ ok: true, ignored: true });
+    console.log(
+      `[bridge] Issue:${issue.identifier} ignored — labels=[${labels.join(",")}] routingLabel=${routingLabel ?? "none"}. Only 'board-meeting' fires from Issue:created; other routing requires a spec comment.`
+    );
+    return Response.json({ ok: true, ignored: true, labels, routingLabel });
   }
 
   // For board-meeting label: fire CEO with a minimal synth-only spec
