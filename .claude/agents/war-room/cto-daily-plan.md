@@ -4,7 +4,7 @@ description: >
   Fires daily at 10:30. Reads open Linear tickets, last EOD Sync, runaway-watcher
   reports, last 24h audit_log, and pgvector RAG on codebase + decisions. Plans the
   day's parallel-ready work for the 100-worker agent army. Outputs Linear ticket +
-  3-5 bullet Telegram summary.
+  3-5 bullet summary.
 model: claude-opus-4-7
 color: blue
 maxTurns: 30
@@ -16,7 +16,7 @@ budget:
   max_cost_usd: 1.50
   max_runtime_minutes: 20
   max_tool_calls: 50
-delivery: both
+delivery: linear-ticket
 mcpServers:
   - linear
   - supabase
@@ -49,13 +49,13 @@ skills:
 
 ## Cost cap
 Max cost per fire: $1.50. Max runtime: 20 min. Max tool calls: 50.
-Halt + Telegram-ping Adam if approaching the cap.
+Halt + post Linear comment if approaching the cap.
 
 ## Escalation
 <!-- WS6-6B: Adam + CEO will write this — when to halt + how to escalate -->
 
 ## Delivery
-Channel: both (Linear ticket + Telegram). Format: day's parallel-ready work breakdown + 3-5 bullet summary.
+Channel: linear-ticket. Format: day's parallel-ready work breakdown + 3-5 bullet summary.
 
 ## Fire signal (Routines only)
 <!-- WS6-6B: Adam + CEO will write this — HMAC trust spec extraction + audit_log writes -->

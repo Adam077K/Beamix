@@ -15,7 +15,7 @@ budget:
   max_cost_usd: 1.00
   max_runtime_minutes: 15
   max_tool_calls: 40
-delivery: both
+delivery: linear-ticket
 mcpServers:
   - linear
   - supabase
@@ -48,7 +48,7 @@ skills:
 
 ## Cost cap
 Max cost per fire: $1.00. Max runtime: 15 min. Max tool calls: 40.
-Halt + Telegram-ping Adam if approaching the cap.
+Halt + post Linear comment if approaching the cap.
 
 ## Escalation
 <!-- WS6-6B: Adam + CEO will write this — when to halt + how to escalate -->

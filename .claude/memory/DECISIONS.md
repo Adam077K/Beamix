@@ -4,6 +4,20 @@
 
 ---
 
+### [2026-05-11] — WS5 LOCKED — War Room Master synthesis doc
+
+**Decision:** WS5 (synthesis master document for the war-room rethink) is LOCKED. The technical master at `docs/08-agents_work/WAR-ROOM-MASTER.md` (520 lines) is the single source of truth for everything WS1A-WS4 produced; the plain-English companion at `docs/08-agents_work/WAR-ROOM-MASTER-FOR-HUMANS.md` (~3,300 words, 13 min read) is the read-once onboarding doc for any future agent or human picking up the war room.
+
+**Scope:** Synthesizes WS1A (Mem0 decision), WS1B (L0-L5 memory architecture), WS2 (ORCHESTRATION + spawning matrix + trust spec contract), WS3 (TECH-STACK BOM + DR runbooks + scaling cliffs), WS4 (Connection Layer + smoke tests + production deploy verification).
+
+**Why locked now:** WS4 DEPLOY VERIFIED proved the design works end-to-end. The master doc froze the architecture before WS6 (agent .md files) starts adding implementation detail on top.
+
+**Reversible?** Master doc is forward-only as a snapshot — it'll be updated as a separate WS6/WS7 entry when material changes happen. Plain-English companion is regenerated from the master when needed.
+**Status:** LOCKED.
+**See:** `docs/08-agents_work/WAR-ROOM-MASTER.md`, `docs/08-agents_work/WAR-ROOM-MASTER-FOR-HUMANS.md`.
+
+---
+
 ### [2026-05-11] — WS4 PRODUCTION DEPLOY VERIFIED — Pipeline live end-to-end
 
 **Decision:** WS4 is no longer just LOCKED in code — it is **operationally live** as of 2026-05-11. The Linear → Cloudflare bridge → Anthropic Routine → Supabase audit_log pipeline fires end-to-end in production, with verifiable side effects on every layer.

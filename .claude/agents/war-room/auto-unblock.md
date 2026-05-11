@@ -3,7 +3,7 @@ name: auto-unblock
 description: >
   Event-triggered. Fires on routine.timeout events from the Inngest watcher.
   Reads stuck Routine spec, audit_log trail, and Linear ticket state. Attempts
-  self-resolution (max 3 cascades) then Telegram-pings Adam if unresolvable.
+  self-resolution (max 3 cascades) then posts a Linear comment to Adam if unresolvable.
 model: claude-sonnet-4-6
 color: red
 maxTurns: 30
@@ -15,7 +15,7 @@ budget:
   max_cost_usd: 0.50
   max_runtime_minutes: 10
   max_tool_calls: 25
-delivery: telegram
+delivery: linear-ticket
 mcpServers:
   - linear
   - supabase
@@ -48,13 +48,13 @@ skills:
 
 ## Cost cap
 Max cost per fire: $0.50. Max runtime: 10 min. Max tool calls: 25.
-Halt + Telegram-ping Adam if approaching the cap.
+Halt + post Linear comment if approaching the cap.
 
 ## Escalation
 <!-- WS6-6B: Adam + CEO will write this — when to halt + how to escalate -->
 
 ## Delivery
-Channel: telegram. Format: unblocking action confirmation OR escalation ping to Adam.
+Channel: linear-ticket. Format: unblocking action confirmation OR escalation comment to Adam.
 
 ## Fire signal (Routines only)
 <!-- WS6-6B: Adam + CEO will write this — HMAC trust spec extraction + audit_log writes -->

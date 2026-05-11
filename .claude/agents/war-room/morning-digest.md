@@ -2,8 +2,8 @@
 name: morning-digest
 description: >
   Fires daily at 05:35. Reads open Linear tickets, last EOD Sync, current sprint
-  goals, and Mem0. Posts a prioritized 3-5 bullet day-ahead briefing to Adam via
-  Telegram.
+  goals, and Mem0. Posts a prioritized 3-5 bullet day-ahead briefing as a
+  Linear ticket comment.
 model: claude-sonnet-4-6
 color: yellow
 maxTurns: 30
@@ -15,7 +15,7 @@ budget:
   max_cost_usd: 0.30
   max_runtime_minutes: 8
   max_tool_calls: 20
-delivery: telegram
+delivery: linear-ticket
 mcpServers:
   - linear
   - mem0
@@ -47,13 +47,13 @@ skills:
 
 ## Cost cap
 Max cost per fire: $0.30. Max runtime: 8 min. Max tool calls: 20.
-Halt + Telegram-ping Adam if approaching the cap.
+Halt + post Linear comment if approaching the cap.
 
 ## Escalation
 <!-- WS6-6B: Adam + CEO will write this — when to halt + how to escalate -->
 
 ## Delivery
-Channel: telegram. Format: 3-5 bullet Telegram message.
+Channel: linear-ticket. Format: 3-5 bullet Linear comment.
 
 ## Fire signal (Routines only)
 <!-- WS6-6B: Adam + CEO will write this — HMAC trust spec extraction + audit_log writes -->

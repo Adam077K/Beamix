@@ -48,7 +48,7 @@ skills:
 
 ## Cost cap
 Max cost per fire: $0.75. Max runtime: 12 min. Max tool calls: 30.
-Halt + Telegram-ping Adam if approaching the cap.
+Halt + post Linear comment if approaching the cap.
 
 ## Escalation
 <!-- WS6-6B: Adam + CEO will write this — when to halt + how to escalate -->

@@ -16,14 +16,14 @@ Body sections are empty placeholders. Frontmatter is complete.
 | Filename | Role | Model | Schedule / Trigger |
 |---|---|---|---|
 | `advisor-daily-thinking.md` | Multi-domain Advisor Brief — business, tech, GTM, contrarian synthesis | claude-opus-4-7 | Daily 05:30 (`30 5 * * *`) |
-| `morning-digest.md` | Day-ahead briefing from Linear + Mem0 — 3-5 bullets via Telegram | claude-sonnet-4-6 | Daily 05:35 (`35 5 * * *`) |
-| `competitor-pulse.md` | Competitor diff monitor — Telegram only on material changes | claude-sonnet-4-6 | Daily 05:40 (`40 5 * * *`) |
+| `morning-digest.md` | Day-ahead briefing from Linear + Mem0 — 3-5 bullets as a Linear comment | claude-sonnet-4-6 | Daily 05:35 (`35 5 * * *`) |
+| `competitor-pulse.md` | Competitor diff monitor — Linear comment only on material changes | claude-sonnet-4-6 | Daily 05:40 (`40 5 * * *`) |
 | `geo-algorithm-signal.md` | Weekly GEO algorithm trend report from Beamix scan data | claude-opus-4-7 | Sunday 05:45 (`45 5 * * 0`) |
-| `cto-daily-plan.md` | Army-of-100 daily work breakdown — Linear ticket + Telegram | claude-opus-4-7 | Daily 10:30 (`30 10 * * *`) |
+| `cto-daily-plan.md` | Army-of-100 daily work breakdown — Linear ticket | claude-opus-4-7 | Daily 10:30 (`30 10 * * *`) |
 | `content-idea-generator.md` | 3 ranked content ideas with hooks — Linear "Content" tickets | claude-sonnet-4-6 | Daily 10:35 (`35 10 * * *`) |
 | `monday-standup.md` | Week-ahead sprint plan — Linear sprint planning ticket | claude-sonnet-4-6 | Monday 10:40 (`40 10 * * 1`) |
 | `friday-retro.md` | Weekly retro — what shipped, slipped, learned + action items | claude-sonnet-4-6 | Friday 15:30 (`30 15 * * 5`) |
-| `eod-sync.md` | Day recap + tomorrow's priorities — Linear ticket + Telegram | claude-sonnet-4-6 | Daily 20:30 (`30 20 * * *`) |
+| `eod-sync.md` | Day recap + tomorrow's priorities — Linear ticket | claude-sonnet-4-6 | Daily 20:30 (`30 20 * * *`) |
 | `auto-unblock.md` | Self-healing for stuck Routines — 3 cascade max, then Adam ping | claude-sonnet-4-6 | event-triggered (`routine.timeout`) |
 | `synthesizer.md` | Board meeting synthesis — locked decision JSON + DECISIONS.md update | claude-opus-4-7 | event-triggered (`@board` command) |
 

@@ -3,7 +3,7 @@ name: advisor-daily-thinking
 description: >
   Fires daily at 05:30. Synthesizes HackerNews, AI/SEO news, X/Twitter, TechCrunch,
   Beamix Mem0, and last 7d audit_log into a multi-domain Advisor Brief. Posts to
-  Linear "Advisor" project + Telegram so Adam reads it on the 06:30-07:45 commute.
+  Linear "Advisor" project so Adam reads it on the 06:30-07:45 commute.
 model: claude-opus-4-7
 color: gold
 maxTurns: 30
@@ -15,7 +15,7 @@ budget:
   max_cost_usd: 2.00
   max_runtime_minutes: 15
   max_tool_calls: 50
-delivery: both
+delivery: linear-ticket
 mcpServers:
   - linear
   - supabase
@@ -49,13 +49,13 @@ skills:
 
 ## Cost cap
 Max cost per fire: $2.00. Max runtime: 15 min. Max tool calls: 50.
-Halt + Telegram-ping Adam if approaching the cap.
+Halt + post Linear comment if approaching the cap.
 
 ## Escalation
 <!-- WS6-6B: Adam + CEO will write this — when to halt + how to escalate -->
 
 ## Delivery
-Channel: both (Linear "Advisor" project + Telegram). Format: ~500-1000 word Advisor Brief with sections: Today's interesting · Worth questioning · New idea · News that matters.
+Channel: linear-ticket (Linear "Advisor" project). Format: ~500-1000 word Advisor Brief with sections: Today's interesting · Worth questioning · New idea · News that matters.
 
 ## Fire signal (Routines only)
 <!-- WS6-6B: Adam + CEO will write this — HMAC trust spec extraction + audit_log writes -->

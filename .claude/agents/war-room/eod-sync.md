@@ -3,7 +3,7 @@ name: eod-sync
 description: >
   Fires daily at 20:30. Reads today's commits, today's audit_log, and current
   Linear sprint state. Produces a day's recap + tomorrow's priorities posted to
-  Linear ticket + Telegram.
+  a Linear ticket.
 model: claude-sonnet-4-6
 color: indigo
 maxTurns: 30
@@ -15,7 +15,7 @@ budget:
   max_cost_usd: 0.30
   max_runtime_minutes: 8
   max_tool_calls: 20
-delivery: both
+delivery: linear-ticket
 mcpServers:
   - linear
   - supabase
@@ -48,13 +48,13 @@ skills:
 
 ## Cost cap
 Max cost per fire: $0.30. Max runtime: 8 min. Max tool calls: 20.
-Halt + Telegram-ping Adam if approaching the cap.
+Halt + post Linear comment if approaching the cap.
 
 ## Escalation
 <!-- WS6-6B: Adam + CEO will write this — when to halt + how to escalate -->
 
 ## Delivery
-Channel: both (Linear ticket + Telegram). Format: day recap + tomorrow's priorities.
+Channel: linear-ticket. Format: day recap + tomorrow's priorities.
 
 ## Fire signal (Routines only)
 <!-- WS6-6B: Adam + CEO will write this — HMAC trust spec extraction + audit_log writes -->
