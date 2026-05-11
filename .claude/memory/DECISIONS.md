@@ -4,6 +4,63 @@
 
 ---
 
+### [2026-05-11] — WS4 PRODUCTION DEPLOY VERIFIED — Pipeline live end-to-end
+
+**Decision:** WS4 is no longer just LOCKED in code — it is **operationally live** as of 2026-05-11. The Linear → Cloudflare bridge → Anthropic Routine → Supabase audit_log pipeline fires end-to-end in production, with verifiable side effects on every layer.
+
+**Verification artifact:** Linear ticket **ADA-20** ("smoke-test-e2e-pipeline-A"), created 2026-05-11 10:49 UTC. Produced:
+1. Bridge HMAC pass (`linear-signature` header)
+2. `findRoutingLabel("board-meeting")` matched
+3. `resolveRoutineId("board-meeting", env)` returned `trig_016HLUqwYqQA2sQjEEiNWw2u` from env-driven config
+4. KV nonce dedup + `FireCountDO` rolling-24h check passed
+5. `RoutineLock` Durable Object acquired
+6. `audit_log` row written: `status='fired', row_kind='routine_dispatch', linear_ticket='ADA-20', nonce=<uuid>, spec includes _signature` — Q3 schema honored
+7. POST to `https://api.anthropic.com/v1/claude_code/routines/trig_016HLUqwYqQA2sQjEEiNWw2u/fire` with `anthropic-beta: experimental-cc-routine-2026-04-01` + sentinel-wrapped spec in `text` body returned HTTP 200
+8. Anthropic Console "Runs" page for `ceo-entry-point` confirms a new run at 13:49 (was empty before this test)
+
+**Cumulative bridge deploys this phase (chronological):**
+| Version ID | What it fixed |
+|---|---|
+| `dc48d641-...` (2026-05-08) | Initial deploy with KV + DO bindings |
+| (multiple intermediate) | Linear webhook path alias, audit_log writer respecting Q3 schema, linear-signature header, Issue-create vs Issue-update log discrimination, env-driven Routine IDs, rolling-24h FireCountDO, anthropic-beta header, /text body format |
+| `c948a2e6-...` (2026-05-11) | Token regenerate via Playwright + new `ROUTINE_CEO_ENTRY_POINT_TOKEN`. First successful fire. |
+| `41fd708` (commit, deploy pending) | `anthropic_error` audit row on non-2xx Anthropic response (board-meeting path) |
+
+**Wrangler secrets state (11 set on bridge worker):** `BRIDGE_HMAC_SECRET, LINEAR_WEBHOOK_SECRET, SHORTCUT_SECRET, ANTHROPIC_API_KEY, ROUTINE_CEO_ENTRY_POINT_TOKEN, ROUTINE_CEO_ENTRY_POINT_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, LINEAR_API_KEY, TELEGRAM_BOT_TOKEN, ADAM_TELEGRAM_CHAT_ID, ALLOWED_ISSUERS`.
+
+**Other 10 Routines (per ROUTINE-ROSTER.md):** NOT yet provisioned. Each will need its own `ROUTINE_<NAME>_ID` + `ROUTINE_<NAME>_TOKEN` secret pair before its `Issue:created` path is fireable. WS6 task.
+
+**Deferred (Adam said "not need" 2026-05-11):**
+- **Telegram bot worker** — code exists at `infra/telegram-bot/`, `BRIDGE_HMAC_SECRET`/`BRIDGE_INTERNAL_URL`/`ADAM_TELEGRAM_CHAT_ID` not yet set, KV namespace placeholder unfilled. Skip until needed.
+- **iOS Shortcut** — code exists at `infra/shortcuts/Capture-Beamix-Idea.shortcut.json`, URL placeholder fixed to `YOUR_CF_ACCOUNT.workers.dev` pattern (commit `c750884`). Skip until needed.
+
+**Smoke test results:**
+- **Test A** (cron exemption from 15/day cap): MOOT — Adam's discovery 2026-05-08 that Anthropic doesn't 429 at 15/day; instead overages bill silently against Console-billed `ANTHROPIC_API_KEY`. Bridge `FireCountDO` enforces the hard 24h rolling cap (15) so overage billing is prevented at source.
+- **Test B** (Retry-After granularity): WARN at 16 fires, all 200. Confirmed Anthropic overages silently rather than 429. Bridge rolling-window cap is the protective layer.
+- **Test C** (Mem0 stability): SKIPPED per Adam.
+- **Test D** (concurrent fire): PASS — 6/6 concurrent fires returned HTTP 200. Bridge needs no semaphore.
+
+**Architectural learnings surfaced during deploy (now in code/docs):**
+1. **Anthropic doesn't 429 at the 15/day cap — it silently routes overage to Console-billed `ANTHROPIC_API_KEY`.** Bridge enforces via `FireCountDO` rolling-24h window (Adam decision: not calendar-day, prevents midnight-burst). Constant = `MAX_FIRES_PER_24H = 15`.
+2. **Routines on Max subscription = 5h-window quota. Adam aligns 4 fire-windows per day (05:30 / 10:30 / 15:30 / 20:30)** to maximize Max quota across the day. Documented in `docs/08-agents_work/ROUTINE-ROSTER.md`.
+3. **CEO interactive, not a Routine.** Adam 2026-05-08 pivot. 11 specialized Routines slotted into the 4-window schedule; the originally-planned CEO/CMO/CPO/CBO/CCO Routine receivers are dropped in favor of Adam running CEO interactively on his machine.
+4. **Linear webhook header is `linear-signature` (NOT GitHub-style `X-Hub-Signature`).** Bridge accepts both for defensive compatibility.
+5. **Anthropic Routines `/fire` API requires the `anthropic-beta: experimental-cc-routine-2026-04-01` header AND `{"text": "..."}` body (not the structured `{spec: {...}}` body originally designed).** Bridge wraps the HMAC-signed trust spec in `<beamix-spec>...</beamix-spec>` sentinels inside the `text` field. Routine system prompts will extract + validate the spec from the text.
+6. **Linear `Issue:created` only fires on `board-meeting` label.** All other agent routing requires a `Comment:created` event with a sentinel-bracketed spec comment (per WS2 §2B design).
+7. **Routine IDs vs bearer tokens are TWO distinct values** (`trig_...` ≠ `sk-ant-oat01-...`). Both must be configured separately via wrangler secrets.
+
+**Decided by:** CEO (this session, Opus 4.7) + Adam through E2E verification flow on 2026-05-11.
+**Verified by:** Agent A (`general-purpose` with Playwright + Supabase MCP), full report at `docs/08-agents_work/sessions/2026-05-11-ceo-ws4-deployed.md`.
+**Affects:**
+- **WS5 (synthesis master doc):** UNBLOCKED — start now.
+- **WS6 (agent .md files):** UNBLOCKED. First WS6 tasks: write Routine .md files per ROUTINE-ROSTER.md, provision the other 10 Anthropic Routines + tokens, populate `ROUTINE_<NAME>_ID` + `ROUTINE_<NAME>_TOKEN` wrangler secrets, set the 4-window cron schedules in Anthropic Console.
+- **Cost:** ~$200/mo Max-quota Routine spend projected (per ROUTINE-ROSTER.md). No incremental API billing until/unless Adam upgrades to Max 20×.
+**Reversible?** Code is reversible via git. Operational state (live KV namespace, Durable Objects with 5-min lock TTL, real audit_log rows) is forward-only. The 8 historical `rule_violation` + `fired` rows from the diagnostic period are now harmless noise in audit_log.
+**Status:** LOCKED & DEPLOYED.
+**See:** `docs/08-agents_work/sessions/2026-05-11-ceo-ws4-deployed.md`, `docs/08-agents_work/ROUTINE-ROSTER.md`, `docs/08-agents_work/ADAM-CHECKLIST-WS4-DEPLOY.md`, audit_log row for ADA-20 (`status=fired, row_kind=routine_dispatch, ts=2026-05-11 10:49:50 UTC`).
+
+---
+
 ### [2026-05-08] — WS4: Connection Layer LOCKED (12 revision clusters + 5 Adam decisions)
 **Decision:** WS4 (Cloudflare bridge + Telegram bot + iOS Shortcut + 11 Inngest functions + Supabase observability migration + `/war-room` page + qa-lead-pass workflow + WS2 Zod schemas) LOCKED. 4 parallel adversarial critics produced 55 unique findings (1 CRITICAL / 19 HIGH / 25 MEDIUM / 10 LOW). 12 revision clusters (R1-R12) applied to code. 5 questions resolved by Adam (Q1-Q5). Security critic agent failed (truncation); coverage absorbed by bridge + Inngest critics' security findings.
 **Adam's 5 decisions (2026-05-08):**
