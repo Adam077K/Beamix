@@ -256,7 +256,7 @@
       "_note": "SHORTCUT_SECRET must be set in the Shortcut's Text action below. The signature is sha256=HMAC-SHA256(SHORTCUT_SECRET, TimestampSeconds + newline + RequestBody). See README.md §HMAC signing for implementation options.",
       "WFWorkflowActionIdentifier": "is.workflow.actions.downloadurl",
       "WFWorkflowActionParameters": {
-        "WFURL": "https://beamix-bridge.workers.dev/idea-capture",
+        "WFURL": "https://beamix-bridge.YOUR_CF_ACCOUNT.workers.dev/idea-capture",
         "WFHTTPMethod": "POST",
         "WFHTTPBodyType": "JSON",
         "WFHTTPHeaders": {
