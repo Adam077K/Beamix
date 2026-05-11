@@ -878,3 +878,31 @@ If smoke-test A fails (cron Routines DO count against cap) and Adam upgrades to 
 ---
 
 **End of WS2 deliverable.** WS3 (BOM) and WS4 (connection layer) are unblocked. WS6 has its agent-design template inputs.
+
+---
+
+## ERRATA — applied 2026-05-08 during WS3 lock
+
+Surgical corrections to this WS2-LOCKED document, surfaced by the WS3 critique pass. The architectural decisions remain unchanged; these are mechanical fixes.
+
+### Errata 1 — `audit_log.status` enum extension (R1 of WS3 revisions)
+The §2G schema enum (`fired | accepted | complete | blocked | timeout | over_budget | anomaly | rule_violation`) is extended to include three additional values: **`anthropic_error | linear_api_error | mem0_error | rate_limited | lock_lost | webhook_storm`**. The DR runbooks reference these values as detection signals; the WS4 migration (`<date>_war_room_observability.sql`) MUST include them in the enum or `CHECK` constraint. Without these values, runbook detection signals fail silently when bridge tries to insert the row.
+
+### Errata 2 — Board-meeting per-meeting cost (corrects §2F R6.5)
+The "$3/meeting cap × 8/month = $24/mo" math omitted Round 2 (cross-critique). True per-meeting cap including Round 0 (de-anchored framings, ~$0.03), Round 1 (6 personas writing JSON, ~$2.40), Round 2 (each persona reads 5 others + writes, ~$2.40), Round 3 (Synthesizer Opus, ~$1.00) is approximately **$5.83/meeting**, and the monthly cap at 8 meetings is approximately **$46.64/mo**. The board-meeting frequency cap (8/month) is unchanged. Revised cost line for the war-room cost summary: board-meeting Max-subscription token consumption = ~$46/mo (absorbed by the $100/mo Max budget — reduces Routine capacity by $46/mo when the board-meeting budget is fully consumed in a month, NOT new dollar spend).
+
+### Errata 3 — Friday Retro Routine MCP grants (corrects §2E Routine #6, R4-F18)
+Friday Retro Routine's MCP grants in §2E are listed as `linear, github, mem0, pgvector`. The runbooks rely on Friday Retro to query `audit_log` for incidents the week's runbook tags. That requires `supabase` MCP. **Updated grants for Routine #6:** `linear, github, mem0, pgvector, supabase`. WS6 Routine .md file for friday-retro must reflect this addition.
+
+### Errata 4 — Cost-watchdog Telegram pings stripped (Adam Q7 2026-05-08)
+The §2C Inngest function table includes `cost-watchdog` and `runaway-watcher`. **Adam locked on 2026-05-08:** the war room does NOT push real-time cost alerts to Telegram. The `cost-watchdog` function is REPURPOSED: it still runs hourly to update the monthly burn-down report, but it does NOT send Telegram alerts on threshold breach. The `runaway-watcher` keeps its silent kill action (revoke per-Routine bearer token if `cost_usd > 1.2 × spec.max_cost_usd`) but does NOT send Telegram alerts on kill. System-status alerts (Anthropic outage, Cloudflare compromise, QA Lead bypass attempt) still ping Telegram — those are infrastructure failures, not cost rate. Cost is observed passively via `/war-room` page and the monthly burn-down report at `docs/09-metrics/cost-burn-YYYY-MM.md`.
+
+### Errata 5 — Inngest Pro pricing (corrects ORCHESTRATION.md cost summary, also DECISIONS.md 2026-04-27)
+Inngest Pro is **$75/mo** (1M executions, 100+ concurrent steps), not $150/mo as cited in the locked DECISIONS.md 2026-04-27 entry. Verified via inngest.com/pricing on 2026-05-08. The §cost summary's note about Inngest is unchanged ("$0 — Free 50K runs/mo; war-room burns ~6.5K"); the Pro upgrade trigger is at 5 paying customers (per the locked decision).
+
+### Errata 6 — War-room scope note (course correction 2026-05-08)
+The §procurement section in TECH-STACK.md and the cross-cutting GDPR / multi-tenancy / sub-processor / DPA framing throughout V4 + V3 docs implied that war-room operations needed customer-facing compliance artifacts. **Adam corrected this on 2026-05-08:** the war room is internal infra (Adam's AI agent army that builds Beamix-the-product). It has no paying customers. Customer-facing compliance (sub-processor lists, ZDR claims, IR SLAs, cyber liability insurance, deputy operators, EU SCCs) applies to Beamix-the-product. WS3 deferred those 12 items to a product-side workstream tracked at `docs/security/PRODUCT-COMPLIANCE-BACKLOG.md`. The war-room itself maintains operational hygiene (HMAC-bridged trust spec, 90-day secret rotation, DR runbooks for war-room dependencies, audit log of every agent action, Cloudflare Workers Paid Durable Object idempotency) — but does NOT publish a `/security` page.
+
+---
+
+**End of errata.** No WS2 architectural decision is reversed; these corrections are mechanical. The full WS3 revision rationale is at `docs/08-agents_work/WS3-CRITIQUE-AND-REVISIONS.md`.

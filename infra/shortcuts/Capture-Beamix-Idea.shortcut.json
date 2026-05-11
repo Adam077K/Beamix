@@ -1,0 +1,396 @@
+{
+  "_comment": "Apple Shortcuts export format (simplified JSON spec). Import via AirDrop or Files app on iPhone. See README.md for import instructions.",
+  "WFWorkflowName": "Capture Beamix Idea",
+  "WFWorkflowIcon": {
+    "WFWorkflowIconStartColor": 255,
+    "WFWorkflowIconGlyphNumber": 59511
+  },
+  "WFWorkflowInputContentItemClasses": [],
+  "WFWorkflowActions": [
+    {
+      "_comment": "Step 1: Prompt Adam for voice input",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.dictatetext",
+      "WFWorkflowActionParameters": {
+        "WFSpeechLanguage": "he-IL",
+        "WFDictateTextActionStartImmediately": true,
+        "CustomOutputName": "RawDictation"
+      }
+    },
+    {
+      "_comment": "Step 2: Store dictation result",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.setvariable",
+      "WFWorkflowActionParameters": {
+        "WFVariableName": "RawDictation",
+        "WFInput": {
+          "Value": {
+            "attachmentsByRange": {
+              "{NSRange: 0, 1}": {
+                "OutputName": "Dictated Text",
+                "Type": "ActionOutput"
+              }
+            },
+            "string": "{RawDictation}"
+          },
+          "WFSerializationType": "WFTextTokenString"
+        }
+      }
+    },
+    {
+      "_comment": "Step 2b: R6 — check for empty dictation before calling Anthropic. If RawDictation is empty, alert and stop.",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.conditional",
+      "WFWorkflowActionParameters": {
+        "WFCondition": "Equals",
+        "WFConditionalActionString": "",
+        "WFInput": {
+          "Value": {
+            "attachmentsByRange": {
+              "{NSRange: 0, 1}": {
+                "VariableName": "RawDictation",
+                "Type": "Variable"
+              }
+            },
+            "string": "{RawDictation}"
+          },
+          "WFSerializationType": "WFTextTokenString"
+        }
+      }
+    },
+    {
+      "_comment": "Step 2b (if empty): show alert and exit shortcut",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.alert",
+      "WFWorkflowActionParameters": {
+        "WFAlertActionMessage": "No voice detected. Please try again.",
+        "WFAlertActionTitle": "Beamix"
+      }
+    },
+    {
+      "_comment": "Step 2b (if empty): exit shortcut",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.exit",
+      "WFWorkflowActionParameters": {}
+    },
+    {
+      "_comment": "Step 2b (end if empty block)",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.conditional",
+      "WFWorkflowActionParameters": {
+        "WFConditionalActionType": "End If"
+      }
+    },
+    {
+      "_comment": "Step 3: Ask Anthropic Haiku to convert dictation to a Linear ticket title + body. Also generates a UUID nonce (R3 replay prevention).",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.downloadurl",
+      "WFWorkflowActionParameters": {
+        "WFURL": "https://api.anthropic.com/v1/messages",
+        "WFHTTPMethod": "POST",
+        "WFHTTPBodyType": "JSON",
+        "WFHTTPHeaders": {
+          "Value": {
+            "WFDictionaryFieldValues": [
+              {
+                "WFItemType": 0,
+                "WFKey": {
+                  "Value": {
+                    "string": "x-api-key"
+                  },
+                  "WFSerializationType": "WFTextTokenString"
+                },
+                "WFValue": {
+                  "Value": {
+                    "string": "YOUR_ANTHROPIC_API_KEY_HERE"
+                  },
+                  "WFSerializationType": "WFTextTokenString"
+                }
+              },
+              {
+                "WFItemType": 0,
+                "WFKey": {
+                  "Value": {
+                    "string": "anthropic-version"
+                  },
+                  "WFSerializationType": "WFTextTokenString"
+                },
+                "WFValue": {
+                  "Value": {
+                    "string": "2023-06-01"
+                  },
+                  "WFSerializationType": "WFTextTokenString"
+                }
+              },
+              {
+                "WFItemType": 0,
+                "WFKey": {
+                  "Value": {
+                    "string": "Content-Type"
+                  },
+                  "WFSerializationType": "WFTextTokenString"
+                },
+                "WFValue": {
+                  "Value": {
+                    "string": "application/json"
+                  },
+                  "WFSerializationType": "WFTextTokenString"
+                }
+              }
+            ]
+          },
+          "WFSerializationType": "WFDictionaryFieldValue"
+        },
+        "WFRequestVariable": {
+          "Value": {
+            "WFDictionaryFieldValues": [
+              {
+                "WFItemType": 0,
+                "WFKey": {
+                  "Value": {
+                    "string": "model"
+                  },
+                  "WFSerializationType": "WFTextTokenString"
+                },
+                "WFValue": {
+                  "Value": {
+                    "string": "claude-haiku-4-5"
+                  },
+                  "WFSerializationType": "WFTextTokenString"
+                }
+              },
+              {
+                "WFItemType": 0,
+                "WFKey": {
+                  "Value": {
+                    "string": "max_tokens"
+                  },
+                  "WFSerializationType": "WFTextTokenString"
+                },
+                "WFValue": {
+                  "Value": {
+                    "string": "400"
+                  },
+                  "WFSerializationType": "WFTextTokenString"
+                }
+              },
+              {
+                "WFItemType": 0,
+                "WFKey": {
+                  "Value": {
+                    "string": "messages"
+                  },
+                  "WFSerializationType": "WFTextTokenString"
+                },
+                "WFValue": {
+                  "Value": {
+                    "string": "[{\"role\":\"user\",\"content\":\"Convert this raw voice note into a Linear ticket. Reply with ONLY valid JSON: {\\\"title\\\": \\\"<short one-line title>\\\", \\\"body\\\": \\\"<1-3 sentence description>\\\", \\\"nonce\\\": \\\"<generate a random UUID v4>\\\"}. Raw note: {RawDictation}\"}]"
+                  },
+                  "WFSerializationType": "WFTextTokenString"
+                }
+              }
+            ]
+          },
+          "WFSerializationType": "WFDictionaryFieldValue"
+        },
+        "CustomOutputName": "AnthropicResponse"
+      }
+    },
+    {
+      "_comment": "Step 4: Parse the Haiku JSON response — extract content[0].text",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.getvalueforkey",
+      "WFWorkflowActionParameters": {
+        "WFInput": {
+          "Value": {
+            "attachmentsByRange": {
+              "{NSRange: 0, 1}": {
+                "OutputName": "AnthropicResponse",
+                "Type": "ActionOutput"
+              }
+            },
+            "string": "{AnthropicResponse}"
+          },
+          "WFSerializationType": "WFTextTokenString"
+        },
+        "WFDictionaryKey": "content[0].text",
+        "CustomOutputName": "TicketJSON"
+      }
+    },
+    {
+      "_comment": "Step 5: Compute Unix timestamp (seconds) for X-Beamix-Timestamp header (R3 HMAC hardening)",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.date",
+      "WFWorkflowActionParameters": {
+        "WFDateActionMode": "Current Date",
+        "CustomOutputName": "NowDate"
+      }
+    },
+    {
+      "_comment": "Step 5b: Format timestamp as Unix epoch seconds",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.format.date",
+      "WFWorkflowActionParameters": {
+        "WFDateFormatStyle": "Custom",
+        "WFDateFormat": "X",
+        "WFInput": {
+          "Value": {
+            "attachmentsByRange": {
+              "{NSRange: 0, 1}": {
+                "OutputName": "NowDate",
+                "Type": "ActionOutput"
+              }
+            },
+            "string": "{NowDate}"
+          },
+          "WFSerializationType": "WFTextTokenString"
+        },
+        "CustomOutputName": "TimestampSeconds"
+      }
+    },
+    {
+      "_comment": "Step 6: Build the bridge /idea-capture request body (TicketJSON already contains nonce from Haiku)",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.setvariable",
+      "WFWorkflowActionParameters": {
+        "WFVariableName": "RequestBody",
+        "WFInput": {
+          "Value": {
+            "string": "{TicketJSON}"
+          },
+          "WFSerializationType": "WFTextTokenString"
+        }
+      }
+    },
+    {
+      "_comment": "Step 7: POST to bridge /idea-capture with HMAC signature (R3: signature covers TimestampSeconds + newline + RequestBody)",
+      "_note": "SHORTCUT_SECRET must be set in the Shortcut's Text action below. The signature is sha256=HMAC-SHA256(SHORTCUT_SECRET, TimestampSeconds + newline + RequestBody). See README.md §HMAC signing for implementation options.",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.downloadurl",
+      "WFWorkflowActionParameters": {
+        "WFURL": "https://beamix-bridge.YOUR_CF_ACCOUNT.workers.dev/idea-capture",
+        "WFHTTPMethod": "POST",
+        "WFHTTPBodyType": "JSON",
+        "WFHTTPHeaders": {
+          "Value": {
+            "WFDictionaryFieldValues": [
+              {
+                "WFItemType": 0,
+                "WFKey": {
+                  "Value": { "string": "Content-Type" },
+                  "WFSerializationType": "WFTextTokenString"
+                },
+                "WFValue": {
+                  "Value": { "string": "application/json" },
+                  "WFSerializationType": "WFTextTokenString"
+                }
+              },
+              {
+                "WFItemType": 0,
+                "WFKey": {
+                  "Value": { "string": "X-Beamix-Signature" },
+                  "WFSerializationType": "WFTextTokenString"
+                },
+                "WFValue": {
+                  "Value": { "string": "COMPUTE_HMAC_VIA_HAIKU_STEP_BELOW" },
+                  "WFSerializationType": "WFTextTokenString"
+                },
+                "_note": "Replace COMPUTE_HMAC_VIA_HAIKU_STEP_BELOW with sha256=HMAC-SHA256(SHORTCUT_SECRET, TimestampSeconds + newline + RequestBody). See README.md §HMAC signing."
+              },
+              {
+                "WFItemType": 0,
+                "WFKey": {
+                  "Value": { "string": "X-Beamix-Timestamp" },
+                  "WFSerializationType": "WFTextTokenString"
+                },
+                "WFValue": {
+                  "Value": {
+                    "attachmentsByRange": {
+                      "{NSRange: 0, 1}": {
+                        "VariableName": "TimestampSeconds",
+                        "Type": "Variable"
+                      }
+                    },
+                    "string": "{TimestampSeconds}"
+                  },
+                  "WFSerializationType": "WFTextTokenString"
+                }
+              }
+            ]
+          },
+          "WFSerializationType": "WFDictionaryFieldValue"
+        },
+        "WFRequestVariable": {
+          "Value": {
+            "string": "{RequestBody}"
+          },
+          "WFSerializationType": "WFTextTokenString"
+        },
+        "CustomOutputName": "BridgeResponse"
+      }
+    },
+    {
+      "_comment": "Step 8: Check bridge response status and show success or failure notification (R6: no more hardcoded success message)",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.conditional",
+      "WFWorkflowActionParameters": {
+        "WFCondition": "Equals",
+        "WFConditionalActionString": "200",
+        "WFInput": {
+          "Value": {
+            "attachmentsByRange": {
+              "{NSRange: 0, 1}": {
+                "OutputName": "BridgeResponse",
+                "key": "status_code",
+                "Type": "ActionOutput"
+              }
+            },
+            "string": "{BridgeResponse.status_code}"
+          },
+          "WFSerializationType": "WFTextTokenString"
+        }
+      }
+    },
+    {
+      "_comment": "Step 8 (success branch): show success notification with ticket identifier",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.notification",
+      "WFWorkflowActionParameters": {
+        "WFNotificationActionTitle": "Beamix",
+        "WFNotificationActionBody": {
+          "Value": {
+            "attachmentsByRange": {
+              "{NSRange: 0, 1}": {
+                "OutputName": "BridgeResponse",
+                "key": "identifier",
+                "Type": "ActionOutput"
+              }
+            },
+            "string": "Idea captured ✓ — {BridgeResponse.identifier}"
+          },
+          "WFSerializationType": "WFTextTokenString"
+        }
+      }
+    },
+    {
+      "_comment": "Step 8 (else — failure branch)",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.conditional",
+      "WFWorkflowActionParameters": {
+        "WFConditionalActionType": "Else"
+      }
+    },
+    {
+      "_comment": "Step 8 (failure): show error notification with error details",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.notification",
+      "WFWorkflowActionParameters": {
+        "WFNotificationActionTitle": "Beamix ✗",
+        "WFNotificationActionBody": {
+          "Value": {
+            "attachmentsByRange": {
+              "{NSRange: 0, 1}": {
+                "OutputName": "BridgeResponse",
+                "key": "error",
+                "Type": "ActionOutput"
+              }
+            },
+            "string": "Capture FAILED: {BridgeResponse.error}"
+          },
+          "WFSerializationType": "WFTextTokenString"
+        }
+      }
+    },
+    {
+      "_comment": "Step 8 (end if response check)",
+      "WFWorkflowActionIdentifier": "is.workflow.actions.conditional",
+      "WFWorkflowActionParameters": {
+        "WFConditionalActionType": "End If"
+      }
+    }
+  ]
+}
