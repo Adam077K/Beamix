@@ -1027,6 +1027,29 @@ async function handleIssueCreated(
     console.error(
       `[bridge] Issue:${issue.identifier} Anthropic /fire failed — status=${fireResult.status}`
     );
+    // Audit_log gap fix (Agent A finding 2026-05-11):
+    // Write an explicit anthropic_error row so the failure is queryable later.
+    // Without this, the prior 'fired' row would be ambiguous — could mean
+    // "bridge attempted" OR "Anthropic accepted." Now they're distinguishable.
+    await writeAuditLog(
+      {
+        status: "anthropic_error",
+        agent: "cloudflare-bridge",
+        linear_ticket: issue.identifier,
+        row_kind: "internal_event",
+        event_kind: `anthropic_fire_${fireResult.status}`,
+        nonce: boardSpec.nonce,
+        spec: {
+          event: "anthropic_fire_failed",
+          http_status: fireResult.status,
+          routine_id: routineId,
+          original_nonce: boardSpec.nonce,
+          ts: new Date().toISOString(),
+        },
+      },
+      env.SUPABASE_URL,
+      env.SUPABASE_SERVICE_ROLE_KEY
+    );
     await releaseLock(env.ROUTINE_LOCK, lockKey);
     return Response.json({ error: "anthropic /fire failed", status: fireResult.status }, { status: 502 });
   }
