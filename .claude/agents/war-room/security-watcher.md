@@ -1,33 +1,34 @@
 ---
-name: eod-sync
+name: security-watcher
 description: >
-  Fires daily at 20:30. Reads today's commits, today's audit_log, and current
-  Linear sprint state. Produces a day's recap + tomorrow's priorities posted to
-  a Linear ticket.
+  Fires daily at 20:45. Scans dependency CVEs (`npm audit`), audit_log
+  rule_violation accumulation patterns, and the 90-day secret rotation
+  calendar. Posts Linear ticket only on findings; silent on clean days.
+  Closes the gap where all 10 DR runbooks rely on Adam manually polling
+  for detection signals.
 model: claude-sonnet-4-6
-color: indigo
-maxTurns: 30
-schedule: "30 20 * * *"
-trigger_label: agent:eod-sync
-routine_id_env_key: ROUTINE_EOD_SYNC_ID
-routine_token_env_key: ROUTINE_EOD_SYNC_TOKEN
+color: red
+maxTurns: 25
+schedule: "45 20 * * *"
+trigger_label: agent:security-watcher
+routine_id_env_key: ROUTINE_SECURITY_WATCHER_ID
+routine_token_env_key: ROUTINE_SECURITY_WATCHER_TOKEN
 budget:
   max_cost_usd: 0.30
   max_runtime_minutes: 8
-  max_tool_calls: 20
+  max_tool_calls: 25
 delivery: linear-ticket
 mcpServers:
   - linear
   - supabase
   - github
-  - mem0  # Q5 — write episodic memory chain for Morning Digest
+  - mem0
 skills:
-  - team-collaboration-standup-notes
-  - agent-memory-mcp
-  - concise-planning
+  - security-audit
+  - web-security-testing
 ---
 
-# EOD Sync
+# Security Watcher
 
 ## Role
 <!-- WS6-6B: Adam + CEO will write this — one-paragraph identity statement -->
@@ -48,14 +49,14 @@ skills:
 <!-- WS6-6B: Adam + CEO will write this — what this agent must NEVER do -->
 
 ## Cost cap
-Max cost per fire: $0.30. Max runtime: 8 min. Max tool calls: 20.
+Max cost per fire: $0.30. Max runtime: 8 min. Max tool calls: 25.
 Halt + post Linear comment if approaching the cap.
 
 ## Escalation
 <!-- WS6-6B: Adam + CEO will write this — when to halt + how to escalate -->
 
 ## Delivery
-Channel: linear-ticket. Format: day recap + tomorrow's priorities.
+Channel: linear-ticket. Format: silent on clean days; on findings — Linear ticket with severity (HIGH/MED/LOW), evidence, recommended action. P0 findings additionally trigger Telegram per Q15 carve-out.
 
 ## Fire signal (Routines only)
 <!-- WS6-6B: Adam + CEO will write this — HMAC trust spec extraction + audit_log writes -->

@@ -12,7 +12,7 @@ trigger_label: agent:auto-unblock
 routine_id_env_key: ROUTINE_AUTO_UNBLOCK_ID
 routine_token_env_key: ROUTINE_AUTO_UNBLOCK_TOKEN
 budget:
-  max_cost_usd: 0.50
+  max_cost_usd: 1.00
   max_runtime_minutes: 10
   max_tool_calls: 25
 delivery: linear-ticket
@@ -20,6 +20,7 @@ mcpServers:
   - linear
   - supabase
   - mem0
+  - github  # Q6 read-only — diagnose CI failures
 skills:
   - agent-orchestration-improve-agent
   - error-handling-patterns
@@ -47,7 +48,7 @@ skills:
 <!-- WS6-6B: Adam + CEO will write this — what this agent must NEVER do -->
 
 ## Cost cap
-Max cost per fire: $0.50. Max runtime: 10 min. Max tool calls: 25.
+Max cost per fire: $1.00. Max runtime: 10 min. Max tool calls: 25.
 Halt + post Linear comment if approaching the cap.
 
 ## Escalation

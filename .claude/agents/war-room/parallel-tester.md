@@ -9,6 +9,10 @@ color: yellow
 spawned_by: cto-daily-plan
 isolation: worktree
 maxTurns: 20
+budget:
+  max_cost_usd: 1.00
+  max_runtime_minutes: 20
+  max_tool_calls: 50
 mcpServers:
   - supabase
   - github
@@ -40,8 +44,8 @@ skills:
 <!-- WS6-6B: Adam + CEO will write this — what this agent must NEVER do -->
 
 ## Cost cap
-Max cost per fire: scoped per task. Max runtime: cto-daily-plan sets per-task budget.
-Halt + report back to cto-daily-plan if approaching the cap.
+Max cost per task: $1.00 hard cap. Max runtime: 20 min.
+Halt + report back to spawning agent if approaching the cap.
 
 ## Escalation
 <!-- WS6-6B: Adam + CEO will write this — when to halt + how to escalate -->

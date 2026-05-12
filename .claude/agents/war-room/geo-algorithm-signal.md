@@ -7,12 +7,12 @@ description: >
 model: claude-opus-4-7
 color: teal
 maxTurns: 30
-schedule: "45 5 * * 0"
+schedule: "30 10 * * 0"
 trigger_label: agent:geo-algorithm
 routine_id_env_key: ROUTINE_GEO_ALGORITHM_SIGNAL_ID
 routine_token_env_key: ROUTINE_GEO_ALGORITHM_SIGNAL_TOKEN
 budget:
-  max_cost_usd: 1.50
+  max_cost_usd: 2.50
   max_runtime_minutes: 20
   max_tool_calls: 40
 delivery: linear-ticket
@@ -48,7 +48,7 @@ skills:
 <!-- WS6-6B: Adam + CEO will write this — what this agent must NEVER do -->
 
 ## Cost cap
-Max cost per fire: $1.50. Max runtime: 20 min. Max tool calls: 40.
+Max cost per fire: $2.50. Max runtime: 20 min. Max tool calls: 40.
 Halt + post Linear comment if approaching the cap.
 
 ## Escalation

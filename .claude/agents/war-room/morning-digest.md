@@ -7,7 +7,7 @@ description: >
 model: claude-sonnet-4-6
 color: yellow
 maxTurns: 30
-schedule: "35 5 * * *"
+schedule: "35 5 * * 2-5"
 trigger_label: agent:morning-digest
 routine_id_env_key: ROUTINE_MORNING_DIGEST_ID
 routine_token_env_key: ROUTINE_MORNING_DIGEST_TOKEN

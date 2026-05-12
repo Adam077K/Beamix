@@ -1,13 +1,14 @@
 ---
 name: cto-daily-plan
 description: >
-  Fires daily at 10:30. Reads open Linear tickets, last EOD Sync, runaway-watcher
-  reports, last 24h audit_log, and pgvector RAG on codebase + decisions. Plans the
-  day's parallel-ready work for the 100-worker agent army. Outputs Linear ticket +
-  3-5 bullet summary.
+  Fires daily at 10:30. Reads open Linear tickets, last EOD Sync, audit_log anomaly
+  entries, and pgvector RAG on codebase + decisions. Produces a "work proposal for
+  Adam" — a day's parallel-ready work breakdown that Adam reviews and dispatches
+  interactively (CTO Plan is a Routine — fire-and-terminate — and cannot spawn
+  workers itself; workers are Task subagents Adam spawns in his CEO session).
 model: claude-opus-4-7
 color: blue
-maxTurns: 30
+maxTurns: 50
 schedule: "30 10 * * *"
 trigger_label: agent:cto-daily-plan
 routine_id_env_key: ROUTINE_CTO_DAILY_PLAN_ID

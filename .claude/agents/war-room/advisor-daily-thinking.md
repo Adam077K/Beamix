@@ -24,7 +24,7 @@ mcpServers:
 skills:
   - deep-research
   - multi-agent-brainstorming
-  - prompt-engineering
+  - startup-metrics-framework
 ---
 
 # Advisor Daily Thinking

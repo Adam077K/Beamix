@@ -38,8 +38,8 @@ skills:
 <!-- WS6-6B: Adam + CEO will write this — what this agent must NEVER do -->
 
 ## Cost cap
-Max cost per fire: scoped per task. Max runtime: cto-daily-plan sets per-task budget.
-Halt + report back to spawning agent if approaching the cap.
+Max cost per task: $0.50 hard cap. Max runtime: 10 min.
+Halt + emit `worker.stuck` Inngest event if approaching the cap.
 
 ## Escalation
 <!-- WS6-6B: Adam + CEO will write this — when to halt + how to escalate -->

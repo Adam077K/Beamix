@@ -9,7 +9,12 @@ color: purple
 spawned_by: cto-daily-plan
 isolation: none
 maxTurns: 20
+budget:
+  max_cost_usd: 0.75
+  max_runtime_minutes: 15
+  max_tool_calls: 40
 mcpServers:
+  - linear  # D4 R2-A — read-only Linear for ticket context
   - mem0
   - context7
   - web
@@ -40,8 +45,8 @@ skills:
 <!-- WS6-6B: Adam + CEO will write this — what this agent must NEVER do -->
 
 ## Cost cap
-Max cost per fire: scoped per task. Max runtime: cto-daily-plan sets per-task budget.
-Halt + report back to cto-daily-plan if approaching the cap.
+Max cost per task: $0.75 hard cap. Max runtime: 15 min.
+Halt + report back to spawning agent if approaching the cap.
 
 ## Escalation
 <!-- WS6-6B: Adam + CEO will write this — when to halt + how to escalate -->

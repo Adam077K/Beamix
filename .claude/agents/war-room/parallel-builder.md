@@ -8,6 +8,11 @@ color: blue
 spawned_by: cto-daily-plan
 isolation: worktree
 maxTurns: 20
+budget:
+  max_cost_usd: 2.00
+  max_runtime_minutes: 30
+  max_tool_calls: 80
+supabase_scope: read-only  # Q9/D4 — DDL goes through parallel-deployer only
 mcpServers:
   - linear
   - supabase
@@ -40,8 +45,8 @@ skills:
 <!-- WS6-6B: Adam + CEO will write this — what this agent must NEVER do -->
 
 ## Cost cap
-Max cost per fire: scoped per task. Max runtime: cto-daily-plan sets per-task budget.
-Halt + report back to cto-daily-plan if approaching the cap.
+Max cost per task: $2.00 hard cap (cto-daily-plan may allocate less; this is the ceiling). Max runtime: 30 min.
+Halt + report back to spawning agent if approaching the cap.
 
 ## Escalation
 <!-- WS6-6B: Adam + CEO will write this — when to halt + how to escalate -->

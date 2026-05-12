@@ -6,16 +6,22 @@ description: >
   decisions conforming to board.ts schema. Posts to Linear + updates DECISIONS.md.
 model: claude-opus-4-7
 color: emerald
-maxTurns: 30
+maxTurns: 20
 schedule: "event-triggered"
 trigger_label: agent:synthesizer
 routine_id_env_key: ROUTINE_SYNTHESIZER_ID
 routine_token_env_key: ROUTINE_SYNTHESIZER_TOKEN
 budget:
-  max_cost_usd: 1.00
+  max_cost_usd: 2.50
   max_runtime_minutes: 15
   max_tool_calls: 40
 delivery: linear-ticket
+round_sequence:
+  - persona-visionary
+  - persona-architect
+  - persona-strategist
+  - persona-aria
+supabase_scope: rls-scoped  # Q9 — RLS-scoped writes only (decisions table + audit_log row_kind='decision')
 mcpServers:
   - linear
   - supabase
@@ -47,7 +53,7 @@ skills:
 <!-- WS6-6B: Adam + CEO will write this — what this agent must NEVER do -->
 
 ## Cost cap
-Max cost per fire: $1.00. Max runtime: 15 min. Max tool calls: 40.
+Max cost per fire: $2.50. Max runtime: 15 min. Max tool calls: 40.
 Halt + post Linear comment if approaching the cap.
 
 ## Escalation

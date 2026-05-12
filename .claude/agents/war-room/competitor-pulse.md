@@ -6,11 +6,11 @@ description: >
   are detected — silent on no-change days.
 model: claude-sonnet-4-6
 color: orange
-maxTurns: 30
+maxTurns: 15
 schedule: "40 5 * * *"
-trigger_label: agent:competitor-signal
-routine_id_env_key: ROUTINE_COMPETITOR_SIGNAL_ID
-routine_token_env_key: ROUTINE_COMPETITOR_SIGNAL_TOKEN
+trigger_label: agent:competitor-pulse
+routine_id_env_key: ROUTINE_COMPETITOR_PULSE_ID
+routine_token_env_key: ROUTINE_COMPETITOR_PULSE_TOKEN
 budget:
   max_cost_usd: 0.40
   max_runtime_minutes: 10
@@ -23,7 +23,6 @@ mcpServers:
 skills:
   - competitive-landscape
   - search-specialist
-  - deep-research
 ---
 
 # Competitor Pulse
