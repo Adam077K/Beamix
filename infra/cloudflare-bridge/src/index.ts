@@ -29,6 +29,7 @@ import {
   LINEAR_LABEL_TO_ROUTINE,
   ROUTINE_TOKEN_ENV_KEY,
   TELEGRAM_MENTION_TO_LABEL,
+  detectBoardCommand,
   findRoutingLabel,
   parseTierLabel,
   resolveRoutineId,
@@ -777,11 +778,72 @@ async function handleCommentCreated(
 
   const comment = commentResult.data;
 
-  // Step 3 (R3.2): Extract spec ONLY from sentinel-bracketed comment body.
-  // Ticket bodies are NEVER parsed as spec sources.
-  const specJson = extractSpecFromComment(comment.body);
+  // Q14 — @board shortcut (WS6 6C): If comment contains `@board` as a
+  // word-boundary mention, the bridge synthesizes a minimal trust spec
+  // server-side and fires Synthesizer. This bypasses the
+  // sentinel-bracketed-spec requirement for Adam's interactive board
+  // meeting calls. Still subject to:
+  //   - HMAC webhook signature verification (already done at route layer)
+  //   - ALLOWED_ISSUERS allowlist (single-user gate)
+  //   - Nonce uniqueness + DO lock (replay + race protection)
+  //   - audit_log lifecycle (fired → accepted → terminal)
+  const boardLabel = detectBoardCommand(comment.body);
+  let specJson: string | null;
+  if (boardLabel) {
+    // Issuer must be in ALLOWED_ISSUERS — same gate as sentinel path
+    const allowedIssuers = env.ALLOWED_ISSUERS.split(",").map((s) => s.trim()).filter(Boolean);
+    if (!allowedIssuers.includes(comment.user.id)) {
+      console.log(`[bridge] @board denied — user=${comment.user.id} not in ALLOWED_ISSUERS`);
+      return Response.json({ error: "issuer not in allowlist" }, { status: 403 });
+    }
+
+    const now = new Date();
+    const expires = new Date(now.getTime() + 300_000); // 5-min window
+    const syntheticSpec = {
+      spec_version: "1.0" as const,
+      trust_mode: true,
+      nonce: crypto.randomUUID(),
+      issued_at: now.toISOString(),
+      expires_at: expires.toISOString(),
+      issued_by: {
+        kind: "adam" as const,
+        linear_user_id: comment.user.id,
+        telegram_chat_id: null,
+      },
+      linear_ticket: comment.issue?.identifier,
+      scope: {
+        intent: "board" as const,
+        domain: "research" as const,
+        constraints: [],
+        definition_of_done: "Synthesizer produces locked decision JSON conforming to board.ts",
+        out_of_scope: ["non-board decisions", "code changes"],
+      },
+      budget: {
+        max_cost_usd: 2.5,
+        max_runtime_minutes: 15,
+        max_tool_calls: 40,
+      },
+      escalation: {
+        channel: "linear-comment" as const,
+        format: "freeform" as const,
+        blocker_threshold_minutes: 15,
+      },
+      audit: {
+        session_file_required: true,
+        decisions_md_entry_required: true,
+        audit_log_table: "audit_log" as const,
+      },
+    };
+    specJson = JSON.stringify(syntheticSpec);
+    console.log(`[bridge] @board detected — synthesized spec, routing to ${boardLabel}`);
+  } else {
+    // Step 3 (R3.2): Extract spec ONLY from sentinel-bracketed comment body.
+    // Ticket bodies are NEVER parsed as spec sources.
+    specJson = extractSpecFromComment(comment.body);
+  }
+
   if (!specJson) {
-    // No sentinel block in this comment — not a spec trigger, ignore
+    // No sentinel block AND no @board mention — not a spec trigger, ignore
     return Response.json({ ok: true, ignored: true });
   }
 
@@ -842,12 +904,17 @@ async function handleCommentCreated(
     return Response.json({ error: "nonce replay detected" }, { status: 409 });
   }
 
-  // Determine the routing label and Routine ID
+  // Determine the routing label and Routine ID.
+  // Q14: if this is an @board fire, routingLabel comes from detectBoardCommand
+  //      (resolved earlier and stored as boardLabel). Otherwise resolve from
+  //      ticket labels as usual. Resolution reads env at request time via
+  //      resolveRoutineId — placeholder map is documentation only.
   const issueLabels = (comment.issue?.labels ?? []).map((l) => l.name);
-  const routingLabel = findRoutingLabel(issueLabels);
-  const routineId = routingLabel ? LINEAR_LABEL_TO_ROUTINE[routingLabel] : null;
+  const routingLabel = boardLabel ?? findRoutingLabel(issueLabels);
+  const routineId = routingLabel ? resolveRoutineId(routingLabel, env) : null;
 
-  if (!routineId || routineId.startsWith("PLACEHOLDER")) {
+  if (!routineId) {
+    console.log(`[bridge] no routine ID configured for label=${routingLabel ?? "(none)"}`);
     return Response.json(
       { error: "no Routine configured for this label", label: routingLabel },
       { status: 422 }
