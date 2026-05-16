@@ -1,7 +1,7 @@
 {
   "version": "2.1.0",
   "generated": "2026-05-16",
-  "totalSkills": 131,
+  "totalSkills": 145,
   "skills": [
     {
       "name": "agent-evaluation",
@@ -52,6 +52,19 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/ai-engineer/SKILL.md"
+    },
+    {
+      "name": "anthropic-routines",
+      "description": "How to write a Beamix Routine .md file: required frontmatter fields (schedule, routine_id_env_key, budget, trust-spec parsing), body conventions, and MCP grant patterns. Use when authoring or refining",
+      "tags": [
+        "orchestration",
+        "agents",
+        "routines",
+        "beamix-specific"
+      ],
+      "source": "beamix-authored 2026-05-16",
+      "risk": "low",
+      "path": ".agent/skills/anthropic-routines/SKILL.md"
     },
     {
       "name": "api-design-principles",
@@ -138,6 +151,58 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/auth-implementation-patterns/SKILL.md"
+    },
+    {
+      "name": "beamix-brand-quality-bar",
+      "description": "Beamix billion-dollar-feel design rules: color palette v4.0 (blue #3370FF accent), typography system (InterDisplay + Inter + Fraunces + Geist Mono), spacing, animation budget, and empty-state requirem",
+      "tags": [
+        "design",
+        "frontend",
+        "brand",
+        "beamix-specific"
+      ],
+      "source": "beamix-authored 2026-05-16",
+      "risk": "low",
+      "path": ".agent/skills/beamix-brand-quality-bar/SKILL.md"
+    },
+    {
+      "name": "beamix-scan-architecture",
+      "description": "Beamix's GEO scan pipeline: Perplexity research phase, three engine queries (ChatGPT, Gemini, Perplexity), Gemini Flash analysis, result storage in scan_engine_results, and the OPENROUTER_SCAN_KEY vs ",
+      "tags": [
+        "ai",
+        "backend",
+        "scan",
+        "beamix-specific"
+      ],
+      "source": "beamix-authored 2026-05-16",
+      "risk": "low",
+      "path": ".agent/skills/beamix-scan-architecture/SKILL.md"
+    },
+    {
+      "name": "beamix-voice-canon",
+      "description": "Beamix Model B voice canon: when to name agents vs when to say 'Beamix', the no-AI-disclosure rule, banned buzzwords, and Hebrew+English dual-language parity expectations. Use for any copy, email, UI ",
+      "tags": [
+        "copywriting",
+        "brand",
+        "voice",
+        "beamix-specific"
+      ],
+      "source": "beamix-authored 2026-05-16",
+      "risk": "low",
+      "path": ".agent/skills/beamix-voice-canon/SKILL.md"
+    },
+    {
+      "name": "board-meeting-protocol",
+      "description": "The Beamix 4-round board-meeting protocol: R0 framing, R1 independent verdicts, R2 cross-critique, R3 fresh-context synthesis. Includes JSON output schema per round, persona routing rules, and Zod val",
+      "tags": [
+        "orchestration",
+        "strategy",
+        "decision-making",
+        "beamix-specific"
+      ],
+      "source": "beamix-authored 2026-05-16",
+      "risk": "low",
+      "path": ".agent/skills/board-meeting-protocol/SKILL.md"
     },
     {
       "name": "brainstorming",
@@ -620,6 +685,19 @@
       "path": ".agent/skills/launch-strategy/SKILL.md"
     },
     {
+      "name": "linear-mvp-recipe",
+      "description": "Beamix's locked Linear label vocabulary, sub-ticket creation pattern, and single-synthesis-comment style. Use whenever any CEO or C-suite agent interacts with Linear tickets, creates sub-tickets, or p",
+      "tags": [
+        "workflow",
+        "linear",
+        "orchestration",
+        "beamix-specific"
+      ],
+      "source": "beamix-authored 2026-05-16",
+      "risk": "low",
+      "path": ".agent/skills/linear-mvp-recipe/SKILL.md"
+    },
+    {
       "name": "llm-app-patterns",
       "description": "Production-ready patterns for building LLM applications. Covers RAG pipelines, agent architectures, prompt IDEs, and LLMOps monitoring. Use when designing AI applications, implementing RAG, buildin...",
       "tags": [
@@ -665,6 +743,19 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/mcp-builder/SKILL.md"
+    },
+    {
+      "name": "mem0-patterns",
+      "description": "Mem0 episodic memory write/read patterns for Beamix agents: mandatory metadata fields, retry policy, and fallback to Anthropic Memory Tool after 3 failures. Use when any C-suite or lead agent reads or",
+      "tags": [
+        "memory",
+        "agents",
+        "ai",
+        "beamix-specific"
+      ],
+      "source": "beamix-authored 2026-05-16",
+      "risk": "low",
+      "path": ".agent/skills/mem0-patterns/SKILL.md"
     },
     {
       "name": "minimalist-ui",
@@ -753,6 +844,19 @@
       "path": ".agent/skills/onboarding-cro/SKILL.md"
     },
     {
+      "name": "paddle-integration",
+      "description": "Beamix billing patterns using Paddle: webhook signature verification, checkout session creation, customer portal URL generation, price ID conventions, and subscription lifecycle. Stripe is not used — ",
+      "tags": [
+        "billing",
+        "backend",
+        "payments",
+        "beamix-specific"
+      ],
+      "source": "beamix-authored 2026-05-16",
+      "risk": "low",
+      "path": ".agent/skills/paddle-integration/SKILL.md"
+    },
+    {
       "name": "page-cro",
       "description": "",
       "tags": [
@@ -781,6 +885,20 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/payment-integration/SKILL.md"
+    },
+    {
+      "name": "pgvector-rag-beamix",
+      "description": "Querying Beamix's five RAG corpora stored in Supabase pgvector: DECISIONS, sessions, codebase, brain, and skills. Use when any CEO, CTO, or Research-Lead agent needs semantic search over internal know",
+      "tags": [
+        "rag",
+        "database",
+        "ai",
+        "memory",
+        "beamix-specific"
+      ],
+      "source": "beamix-authored 2026-05-16",
+      "risk": "low",
+      "path": ".agent/skills/pgvector-rag-beamix/SKILL.md"
     },
     {
       "name": "playwright-skill",
@@ -867,6 +985,19 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/prompt-engineering-patterns/SKILL.md"
+    },
+    {
+      "name": "qa-gate-protocol",
+      "description": "Beamix's 4-tier QA gate: Trivial/Lite/Full/Irreversible classification, reviewer assignment, evaluator-optimizer pattern, multi-judge setup, Codex CLI graceful degradation, and bypass rules. Use when ",
+      "tags": [
+        "quality",
+        "testing",
+        "security",
+        "beamix-specific"
+      ],
+      "source": "beamix-authored 2026-05-16",
+      "risk": "low",
+      "path": ".agent/skills/qa-gate-protocol/SKILL.md"
     },
     {
       "name": "radix-ui-design-system",
@@ -1072,6 +1203,19 @@
       "path": ".agent/skills/stripe-integration/SKILL.md"
     },
     {
+      "name": "supabase-rls-beamix",
+      "description": "Beamix RLS conventions: per-user row-level security, service-role bypass patterns for Inngest jobs, war-room table deny-all policies, and audit_log write permissions. Use when writing or reviewing any",
+      "tags": [
+        "database",
+        "security",
+        "supabase",
+        "beamix-specific"
+      ],
+      "source": "beamix-authored 2026-05-16",
+      "risk": "low",
+      "path": ".agent/skills/supabase-rls-beamix/SKILL.md"
+    },
+    {
       "name": "systematic-debugging",
       "description": "Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes",
       "tags": [],
@@ -1139,6 +1283,19 @@
       "source": "https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering/tree/main/skills/tool-design",
       "risk": "safe",
       "path": ".agent/skills/tool-design/SKILL.md"
+    },
+    {
+      "name": "trust-spec-contracts",
+      "description": "The Beamix R3.x security model for agent-to-agent trust: HMAC signature verification, nonce replay prevention, sentinel-bracketed spec parsing, and issuer allowlists. Use when building or auditing the",
+      "tags": [
+        "security",
+        "orchestration",
+        "war-room",
+        "beamix-specific"
+      ],
+      "source": "beamix-authored 2026-05-16",
+      "risk": "low",
+      "path": ".agent/skills/trust-spec-contracts/SKILL.md"
     },
     {
       "name": "ui-visual-validator",
@@ -1242,6 +1399,19 @@
       "path": ".agent/skills/vercel-react-view-transitions/SKILL.md"
     },
     {
+      "name": "war-room-orchestration",
+      "description": "How CEO and C-suite dispatch work through the Beamix war-room trust-spec system: Linear label routing, Cloudflare bridge, HMAC-signed specs, fan-out/fan-in via Inngest, and audit_log enforcement. Use ",
+      "tags": [
+        "orchestration",
+        "agents",
+        "war-room",
+        "beamix-specific"
+      ],
+      "source": "beamix-authored 2026-05-16",
+      "risk": "low",
+      "path": ".agent/skills/war-room-orchestration/SKILL.md"
+    },
+    {
       "name": "wcag-audit-patterns",
       "description": "Conduct WCAG 2.2 accessibility audits with automated testing, manual verification, and remediation guidance. Use when auditing websites for accessibility, fixing WCAG violations, or implementing ac...",
       "tags": [
@@ -1271,6 +1441,19 @@
       "path": ".agent/skills/web-security-testing/SKILL.md"
     },
     {
+      "name": "worktree-isolation-pattern",
+      "description": "The exact git worktree create, detect, and clean pattern for Beamix workers: detect-or-create from main-repo-root, child worktree commands, branch naming conventions (feat/fix/chore), atomic commits, ",
+      "tags": [
+        "git",
+        "workflow",
+        "workers",
+        "beamix-specific"
+      ],
+      "source": "beamix-authored 2026-05-16",
+      "risk": "low",
+      "path": ".agent/skills/worktree-isolation-pattern/SKILL.md"
+    },
+    {
       "name": "writing-plans",
       "description": "Use when you have a spec or requirements for a multi-step task, before touching code",
       "tags": [],
@@ -1289,5 +1472,5 @@
       "path": ".agent/skills/xss-html-injection/SKILL.md"
     }
   ],
-  "_note": "Regenerated 2026-05-16 — Phase 0 harvest of 14 Beamix-specific skills from .claude/skills/ that the original audit missed (audit treated .agent/skills/ as canonical; .claude/skills/ had 14 newer skills)."
+  "_note": "Regenerated 2026-05-16 — Phase 0 harvest of 14 Beamix-specific skills from .claude/skills/ that the original audit missed (audit treated .agent/skills/ as canonical; .claude/skills/ had 14 newer skills). | Phase 3 added 14 Beamix-authored skills (2026-05-16)."
 }
