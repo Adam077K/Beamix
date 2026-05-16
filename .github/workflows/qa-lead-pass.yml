@@ -57,9 +57,12 @@ jobs:
 
           if [ -z "$SESSION_FILE" ]; then
             echo "No session file matching slug '${TASK_SLUG}'. Falling back to PR diff."
-            # List session files added/modified in this PR
-            CHANGED_SESSIONS=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json files \
-              --jq '[.files[].path | select(test("^docs/08-agents_work/sessions/.*\\.md$"))] | .[]' || echo "")
+            # List session files added/modified in this PR.
+            # F14: use gh api --paginate (gh pr view --json files caps at 100 files;
+            # large rethink/refactor PRs touching 300+ files would silently miss
+            # session files outside that window).
+            CHANGED_SESSIONS=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate \
+              --jq '.[].filename | select(test("^docs/08-agents_work/sessions/.*\\.md$"))' || echo "")
             if [ -n "$CHANGED_SESSIONS" ]; then
               echo "Found session files in PR diff:"
               echo "$CHANGED_SESSIONS"
