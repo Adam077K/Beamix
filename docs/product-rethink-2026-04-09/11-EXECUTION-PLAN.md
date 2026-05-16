@@ -81,7 +81,7 @@ Complete these before starting Wave 0. Some can run in parallel with Wave 0 exec
 
 - [ ] Create Paddle products: Discover monthly/annual, Build monthly/annual, Scale monthly/annual, $19 top-up
 - [ ] Get all 7 Paddle price IDs → add to `.env.local` and Vercel env vars
-- [ ] Configure DNS: `notify.beamix.tech` → Resend (SPF, DKIM, DMARC records)
+- [ ] Configure DNS: `notify.beamixai.com` → Resend (SPF, DKIM, DMARC records)
 - [ ] Run DB migration on Supabase staging → verify tables and RLS
 - [ ] Run `supabase gen types typescript` → commit `database.types.ts`
 - [ ] Set up Sentry project → get DSN → add to env vars
@@ -197,7 +197,7 @@ API routes owned by Worker 2:
 - `GET /api/plan/features` — feature entitlement map for current user
 
 **Backend Worker 3 — backend-developer: Email + notifications + daily caps**
-- Email system: Wire Resend to send from `notify.beamix.tech`. 6 priority templates: welcome, scan-complete, daily-digest, payment-failed, budget-75%, budget-100%. Daily digest aggregation cron (7am, max 1 email/day per user)
+- Email system: Wire Resend to send from `notify.beamixai.com`. 6 priority templates: welcome, scan-complete, daily-digest, payment-failed, budget-75%, budget-100%. Daily digest aggregation cron (7am, max 1 email/day per user)
 - In-app notification center: insert to `notifications` table on all key events, read endpoint with pagination, mark-read endpoint
 - Daily cap enforcement: middleware check on agent run routes reads `daily_cap_usage` table; increments on each run; resets at midnight UTC
 - Credit budget alerts: 75% threshold → instant email + notification insert; 100% → email + notification + auto-pause all schedules
