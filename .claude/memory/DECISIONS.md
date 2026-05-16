@@ -4,6 +4,102 @@
 
 ---
 
+### [2026-05-16] — BOARD VERDICT on agent rethink — SHIP with hard scope reduction + 5-day cap
+
+**Decision:** The 6-persona board meeting (Visionary, Strategist, Architect, Risk-Modeler, Customer-Voice, Broad-Adversary) reviewed the agent rethink plan in 4 rounds (R0 framings, R1 independent, R2 cross-critique, R3 synthesis). Adam accepted the synthesis 2026-05-16.
+
+**Verdict:** SHIP with hard scope reduction. Execute **Phases 0 + 1 + 6-subset only** (~4 person-days). Defer Phases 2-5 and 7 to post-first-revenue. **5-calendar-day hard cap** on execution. Product work begins Day 6 regardless of completion state.
+
+**10 locked decisions (with source_persona_round citation — Zod-validated, no hallucination):**
+
+1. **Phase 0 ships immediately** (already executed this session — orphan skills + GSD agents archived, .agent/agents/ deleted, renames done) — universal consensus including Broad-Adversary | broad-adversary-r2 | easy
+2. **5-calendar-day hard cap** on entire rethink execution. Day 5 = hard stop. Product work begins Day 6 regardless | risk-modeler-r2 | easy
+3. **Scope reduction:** Phases 0 + 1 + 6-subset only (~4 person-days). Phases 2-5 and 7 defer to post-first-revenue | architect-r2 | easy
+4. **Deterministic file-path tier-floor YAML map** replaces the Haiku tier classifier (10 lines, zero LLM cost, ships Phase 1 Day 1) | risk-modeler-r1 → architect-r2 changed mind | easy
+5. **FM-12 (plan abandonment) is the #1 ranked risk** at 50-65% probability. Mitigated by 5-day cap + clean Phase 2 stopping point | risk-modeler-r2 | easy
+6. **Codex CLI graceful-degradation clause:** if `codex review --diff` fails (auth expired, binary not found, CLI breaking change), proceed with Claude-only multi-judge + audit_log row `status: codex_unavailable`. Never hard-block merges | architect-r1 | easy
+7. **Mem0 vendor lock-in formally accepted** (this entry constitutes the acceptance). 6-month review trigger = 2026-11-16. Write-ahead queue (Supabase `mem0_pending_writes`) + export pipeline design deferred to Phase 3 (post-first-revenue) | strategist-r1 + r2 | hard
+8. **Full-tier QA threshold = 300 LOC** during pre-revenue MVP sprint (not 100). Feature-flagged API/DB code → Lite tier with mandatory post-sprint Full review. Reverts to 100 LOC after first paying customer | strategist-r2 | easy
+9. **Product work begins Day 6** regardless of which phases completed. Rethink does NOT block product work. Phases 3-7 execute in parallel with product sprints OR defer to post-first-revenue | visionary-r2 | easy
+10. **PostToolUse typecheck hook scoped to edited files only** (per-file `tsc --noEmit`, not full monorepo `pnpm typecheck`). <1s latency vs 3-8s. Prevents FM-13 (typecheck cascade session timeout) | architect-r1 | easy
+
+**4 open questions (deferred to in-flight decisions during Phase 1 execution):**
+
+- **OQ-1:** Phase 1 scope — does CTO+CPO authoring fit in 4 person-days, or only schema standardization of existing files?
+- **OQ-2:** Phases 3-7 trigger — first scan? first revenue? first production agent failure?
+- **OQ-3:** Is Phase 1 itself premature? Broad-Adversary + Customer-Voice R2 said "Phase 0 only"; 4 others overruled
+- **OQ-4:** Auto-Unblock per-ticket idempotency (FM-2 mitigation) — ship date if Phase 4 is deferred?
+
+**Preserved dissent — Broad-Adversary KILL (formal record):**
+
+Verdict: KILL. Thesis-collapse probability 65% (R2, down from 70% in R1). Thesis: "Plan #5 in a project with 0% plan-completion rate. 37 days zero customer-facing commits. Existing system works. Ship Phase 0 only, then a real customer feature this week."
+
+Vindication conditions (monitoring triggers — if any fires, board reconvenes with Adversary's recommendation as default):
+1. FM-12 fires: rethink abandoned mid-Phase-1 leaving half-migrated system
+2. 5-day cap violated (execution bleeds into week 2+)
+3. Plan #6 proposed before first customer-facing feature ships
+4. Day 30 (2026-06-15) post-rethink with zero customer-facing features shipped
+
+If any of these triggers, the Adversary was right and the board was wrong. Adam must reconvene the board OR unilaterally pivot to "Phase 0 only + ship product."
+
+**Board overruled the KILL on scope-reduction grounds, not on thesis grounds.** Final locked scope (4 person-days, Phases 0+1+6-subset) is closer to "Phase 0 only + ship product" than to the original 7-phase plan. The KILL is preserved as a real possibility, not paraphrased away.
+
+**Sources (12 R1+R2 review artifacts, all under `docs/08-agents_work/2026-05-16-agent-rethink/board-review/`):**
+- R1-visionary.md, R1-strategist.md, R1-architect.md, R1-risk-modeler.md, R1-customer-voice.md, R1-broad-adversary.md
+- R2-visionary.md, R2-strategist.md, R2-architect.md, R2-risk-modeler.md, R2-customer-voice.md, R2-broad-adversary.md
+- R3-synthesis.md (the locked synthesis)
+
+**Affects:**
+- Next CEO session: brief for Phase 1 with hard 5-day cap + scope reduction
+- All future agent specs: 300-LOC threshold rule (until first paying customer)
+- Mem0 integration: 6-month review trigger set 2026-11-16
+- QA-Lead behavior: file-path tier-floor map is the deterministic enforcement
+- PostToolUse hook design: per-file `tsc --noEmit` scoping
+- DECISIONS.md monitoring: 4 Broad-Adversary vindication triggers active until 2026-06-15
+
+**Reversibility:** 9 of 10 locked decisions are EASY-reversible (file deletes, prompt edits, schedule changes). 1 of 10 (Mem0 lock-in #7) is HARD-reversible with the 6-month export-pipeline trigger as the safety valve.
+
+---
+
+### [2026-05-16] — AGENT RETHINK — C-suite org locked, 13 workers, 4-tier QA with Codex second-opinion
+
+**Decision:** Reorganize the Beamix agent system from 3 coexisting models (legacy 9-lead + new C-suite + GSD pipeline, 36+ files) into a focused production architecture: CEO (Opus 4.7) → 6 C-suite (CTO/CPO/CMO/CBO/QA-Lead/Research-Lead) + design-lead under CPO → 13 workers + 11 standing Routines + 7 board personas. CCO is folded into CPO (no separate customer chief at this stage). The 4-tier QA gate (Trivial/Lite/Full/Irreversible) becomes the structural enforcement layer with Claude primary judge + ChatGPT Codex CLI as a second-perspective reviewer on Full+ tiers (interactive sessions only — Anthropic Routines fall back to multi-Claude judges since Codex CLI isn't available in the Anthropic Routine cloud).
+
+**Rationale:** The existing system had two CEO files in two directories with divergent operating models; CTO referenced workers (`backend-engineer`) that don't exist as files (`backend-developer`); 12 GSD-pipeline agents (6,800 lines) had zero live callers; 305 of 430 skills were orphans (~680K dormant tokens). The rethink: standardize identity (C-suite), standardize naming (`-engineer`), standardize schema (declarative frontmatter + 8-section body), cut dead weight (305 orphan skills + 10 GSD agents → `.archive/`), add 14 Beamix-specific skills the war-room needs (`war-room-orchestration`, `linear-mvp-recipe`, `mem0-patterns`, `qa-gate-protocol`, etc.), and structurally enforce the 4-tier QA gate via PostToolUse hooks + qa-lead-pass.yml + Codex CLI invocation from Bash.
+
+**Supersedes:**
+- [2026-04-15] 9-lead org model (build/product/design/qa/devops/data/growth/business/research-lead) — replaced by C-suite (CTO/CPO/CMO/CBO/QA-Lead/Research-Lead). devops-lead → devops-engineer (worker demotion). data-lead → data-engineer (worker demotion). build-lead, product-lead, growth-lead, business-lead → archived after C-suite replacements ship.
+
+**Affects:**
+- All `.claude/agents/*.md` files (renames, refactors, schema standardization)
+- `.agent/agents/` (deleted — canonical is `.claude/agents/`)
+- `.agent/skills/` (305 orphans archived; MANIFEST regenerated)
+- `CLAUDE.md` (rewritten to C-suite model)
+- `.claude/settings.json` (strict Bash allowlist; PostToolUse extension for lint+typecheck)
+- `.github/workflows/qa-lead-pass.yml` (XML `<verdict>PASS</verdict>` parsing + tier check)
+
+**Reversibility:**
+- EASY: agent renames + skill archive moves (git revert)
+- MEDIUM: CLAUDE.md rewrite (manual restore from git history)
+- HARD: schema standardization across 30+ files (mechanical refactor; reverse would be larger work than redo)
+
+**Phasing:**
+- Phase 0 (hygiene, this session): archive orphans, rename workers, update CLAUDE.md/settings/qa-lead-pass.yml, log decisions
+- Phase 1-7 (deferred to follow-up CEO sessions): schema standardization, author CPO/CMO/CBO, author 14 skills, author 11 Routine .md files, author 7 board personas, hooks (Codex CLI integration), Promptfoo CI, /war-room dashboard refinement
+
+**Plan documents (read-once source of truth):**
+- `docs/08-agents_work/2026-05-16-agent-rethink/01-AGENT-INVENTORY.md` (current state audit)
+- `docs/08-agents_work/2026-05-16-agent-rethink/02-SKILLS-AUDIT.md` (430→110 skills + 14 new)
+- `docs/08-agents_work/2026-05-16-agent-rethink/03-EXTERNAL-RESEARCH.md` (10 GitHub repos to steal from)
+- `docs/08-agents_work/2026-05-16-agent-rethink/04-QA-QUALITY-RESEARCH.md` (4-tier matrix + evaluator-optimizer)
+- `docs/08-agents_work/2026-05-16-agent-rethink/05-MASTER-PLAN.md` (the full plan, 1138 lines)
+- `docs/08-agents_work/2026-05-16-agent-rethink/06-DECISIONS-LOG.md` (all 40 interview decisions)
+
+**40 interview decisions (compressed):**
+CEO=Opus-4.7 · CCO folded into CPO · CBO single · Design under CPO · 13 workers (merged qa-eng→test-eng, adversary→security-eng Full mode, product-designer→frontend-eng) · `-engineer` naming · debugger+codebase-mapper refactored to ~250 lines · workers don't write Linear · Trivial = deterministic hook only · Codex CLI via Bash on Full+ (local sessions only) · 2-of-3 majority for Irreversible · per-PR bypass no TTL · Mem0 primary + Anthropic Memory Tool auto-fallback · USER-INSIGHTS = CPO+CMO only · skills+C-suite parallel · 90d archive · 1 sub-ticket per worker · PR per worker · CTO Daily Plan + Content Idea auto-create tickets · loud Telegram for Morning Digest/Advisor/EOD · iOS/Telegram deferred · pgvector = DECISIONS+sessions+brain+skills · `.agent/agents/` deleted · Phase 0 in-session · Routines already provisioned · Promptfoo yes Phase 7 · 3 different rubric prompts for multi-judge · subscription-bound cost (Max + ChatGPT Plus, future Max 20×) · /war-room minimal rebuild after research · Codex local-only accepted · /war-room minimal+useful · Trivial via PR with branch protection · auto-fallback Mem0 3 retries · colors per CLAUDE.md table · 50-entry DECISIONS cap · Mem0 metadata 5 required fields · 7 board personas kept · 13 slash commands rewritten · GSD orphans archived · strict Bash allowlist · done signal = 7 days clean operation.
+
+---
+
 ### [2026-05-13] — WS6 PROPOSED — War-Room Agent Roster + Bridge Cleanup
 
 **Status:** PROPOSED — becomes LOCKED after Adam executes `docs/08-agents_work/ADAM-CHECKLIST-WS6-PROVISIONING.md` and smoke fires verify all 11 new Routines.
