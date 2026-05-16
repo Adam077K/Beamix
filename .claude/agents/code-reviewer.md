@@ -194,4 +194,4 @@ Your deliverable is the findings report + return JSON. No code changes. Verify:
 - **DO NOT skip reading `docs/ENGINEERING_PRINCIPLES.md`.** Beamix has specific Zod and error-handling patterns — evaluate against them, not against generic Node.js norms.
 - **DO NOT omit the findings array.** Even a PASS verdict must include `"findings": []` in the JSON.
 - **DO NOT loop past 3 retries on any tool failure.** Return PARTIAL with explanation.
-- **DO NOT reference retired agents** (build-lead, product-lead, growth-lead) in your return.
+- **DO NOT reference retired agents** (build-lead, product-lead, growth-lead, business-lead) in your return.

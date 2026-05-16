@@ -5,6 +5,7 @@ description: >
   from a board meeting. Runs the 4-round synthesis protocol and outputs locked
   decisions conforming to board.ts schema. Posts to Linear + updates DECISIONS.md.
 model: claude-opus-4-7
+tools: [Read, Write, Edit, Bash, Glob, Grep, Task]
 color: emerald
 maxTurns: 20
 schedule: "event-triggered"
@@ -29,7 +30,7 @@ mcpServers:
 skills:
   - multi-agent-brainstorming
   - architecture-decision-records
-  - prompt-engineering
+  - prompt-engineering-patterns
 ---
 
 # Synthesizer

@@ -17,7 +17,7 @@ mcpServers:
   - linear  # D4 R2-A — read-only Linear for ticket context
   - mem0
   - context7
-  - web
+  - context7
 skills:
   - deep-research
   - search-specialist

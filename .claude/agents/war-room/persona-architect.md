@@ -13,7 +13,7 @@ mcpServers:
   - context7
 skills:
   - architecture-decision-records
-  - software-architecture
+  - architecture
 ---
 
 # Persona: Architect

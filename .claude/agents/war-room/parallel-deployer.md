@@ -16,6 +16,7 @@ budget:
 mcpServers:
   - supabase
   - github
+  - linear
 skills:
   - vercel-deployment
   - deployment-procedures

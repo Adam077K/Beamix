@@ -19,7 +19,7 @@ delivery: linear-ticket
 mcpServers:
   - linear
   - mem0
-  - web
+  - context7
 skills:
   - competitive-landscape
   - search-specialist

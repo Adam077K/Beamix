@@ -20,15 +20,19 @@ Set the badge color of the current session in the Claude Code UI. Use this to vi
 ### Layer 2 — Team Leads
 | Agent | Color |
 |-------|-------|
-| build-lead | `blue` |
+| cto | `blue` |
 | research-lead | `purple` |
 | design-lead | `pink` |
 | qa-lead | `red` |
-| devops-lead | `orange` |
-| data-lead | `teal` |
-| product-lead | `green` |
-| growth-lead | `yellow` |
-| business-lead | `emerald` |
+| research-lead | `purple` |
+| design-lead | `pink` |
+| qa-lead | `red` |
+| devops-engineer | `orange` |
+| data-engineer | `teal` |
+| cpo | `green` |
+| cmo | `yellow` |
+| cbo | `emerald` |
+| cco | `amber` |
 
 ### Layer 3 — Workers
 | Agent | Color |
@@ -55,7 +59,7 @@ Set the badge color of the current session in the Claude Code UI. Use this to vi
 ## Example
 ```
 /color gold       → CEO primary instance
-/color blue       → build-lead or backend-engineer
+/color blue       → cto or backend-engineer
 /color red        → qa-lead or security-engineer
 ```
 

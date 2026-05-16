@@ -25,17 +25,16 @@ All code workers use isolated git worktrees. QA gate mandatory before merge.
 
 - [[agents/ceo]] — Entry point for all tasks. Questions, team assembly, delegation.
 
-## Layer 2 — Team Leads
+## Layer 2 — C-suite
 
-- [[agents/build-lead]] — All code work (features, fixes, refactors)
-- [[agents/research-lead]] — Competitors, market, tech evaluation
-- [[agents/design-lead]] — UI/UX, screens, design systems
-- [[agents/qa-lead]] — Security + test gate before merge
-- [[agents/devops-lead]] — Deployments, CI/CD, Vercel
-- [[agents/data-lead]] — SQL, metrics, dashboards
-- [[agents/product-lead]] — PRDs, user stories, roadmaps
-- [[agents/growth-lead]] — Copy, SEO, email, GTM
-- [[agents/business-lead]] — Pricing, financials, OKRs
+- [[agents/cto]] — All engineering (folds the former build-lead role); spawns engineering workers
+- [[agents/cpo]] — Product: PRDs, roadmap, RICE, specs (folds product-lead)
+- [[agents/cmo]] — Growth: copy, SEO/GEO, email, GTM, CRO (folds growth-lead; USER-INSIGHTS.md hard gate)
+- [[agents/cbo]] — Business: pricing, financials, OKRs, unit econ (folds business-lead)
+- [[agents/cco]] — Customer: support, onboarding, retention, churn (NEW role)
+- [[agents/qa-lead]] — Independent quality gate; 4-tier risk; PASS/BLOCK (cannot be overridden)
+- [[agents/research-lead]] — All research; reports to CEO directly
+- [[agents/design-lead]] — UI/UX, design systems; reports under CPO
 
 ## Layer 3 — Workers
 

@@ -20,9 +20,9 @@ mcpServers:
   - linear
   - mem0
 skills:
-  - team-collaboration-standup-notes
-  - agent-memory-mcp
-  - concise-planning
+  - documentation-templates
+  - mem0-patterns
+  - writing-plans
 ---
 
 # Morning Digest

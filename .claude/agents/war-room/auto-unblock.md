@@ -22,9 +22,9 @@ mcpServers:
   - mem0
   - github  # Q6 read-only — diagnose CI failures
 skills:
-  - agent-orchestration-improve-agent
+  - multi-agent-patterns
   - error-handling-patterns
-  - workflow-orchestration-patterns
+  - multi-agent-patterns
 ---
 
 # Auto-Unblock

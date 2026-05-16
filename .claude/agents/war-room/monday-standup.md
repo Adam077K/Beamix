@@ -20,8 +20,8 @@ mcpServers:
   - linear
   - mem0
 skills:
-  - team-collaboration-standup-notes
-  - concise-planning
+  - documentation-templates
+  - writing-plans
   - product-manager-toolkit
 ---
 

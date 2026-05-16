@@ -7,6 +7,7 @@ description: >
   Closes the gap where all 10 DR runbooks rely on Adam manually polling
   for detection signals.
 model: claude-sonnet-4-6
+tools: [Read, Write, Edit, Bash, Glob, Grep]
 color: red
 maxTurns: 25
 schedule: "45 20 * * *"
