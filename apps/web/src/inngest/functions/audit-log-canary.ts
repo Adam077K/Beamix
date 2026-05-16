@@ -90,8 +90,8 @@ async function writeFailureCount(count: number): Promise<void> {
 }
 
 /**
- * Fire a Telegram P0 alert via the notify.beamixai.com bridge
- * (direct Bot API post — notify.beamixai.com forwards to Telegram).
+ * Fire a Telegram P0 alert via the notify.beamix.tech bridge
+ * (direct Bot API post — notify.beamix.tech forwards to Telegram).
  *
  * If TELEGRAM_BOT_TOKEN is absent: log + write audit_log row and return.
  * Never throws — failure to alert must not crash the canary.
@@ -191,9 +191,9 @@ export const auditLogCanary = inngest.createFunction(
       });
 
       if (error) {
-        return { success: false, error: error.message };
+        return { success: false as const, error: error.message };
       }
-      return { success: true };
+      return { success: true as const, error: undefined as string | undefined };
     });
 
     // ----------------------------------------------------------------
@@ -203,7 +203,7 @@ export const auditLogCanary = inngest.createFunction(
     const readResult = await step.run('read-canary', async () => {
       if (!writeResult.success) {
         // Write already failed — skip read, report failure.
-        return { success: false, error: 'write step failed — skipping read', count: 0 };
+        return { success: false as const, error: 'write step failed — skipping read', count: 0, rowId: undefined as string | undefined };
       }
 
       const supabase = createServiceRoleClient();
@@ -220,19 +220,20 @@ export const auditLogCanary = inngest.createFunction(
         .limit(2); // limit 2 so we can detect duplicates too
 
       if (error) {
-        return { success: false, error: error.message, count: 0 };
+        return { success: false as const, error: error.message, count: 0, rowId: undefined as string | undefined };
       }
 
       const count = (data ?? []).length;
       if (count !== 1) {
         return {
-          success: false,
+          success: false as const,
           error: `Expected exactly 1 canary row, got ${count}`,
           count,
+          rowId: undefined as string | undefined,
         };
       }
 
-      return { success: true, rowId: data![0]!.id, count };
+      return { success: true as const, rowId: data![0]!.id, count, error: undefined as string | undefined };
     });
 
     const cycleSuccess = writeResult.success && readResult.success;
