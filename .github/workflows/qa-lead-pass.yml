@@ -202,14 +202,44 @@ jobs:
             SESSION_FILE=$(find "$SESSION_DIR" -maxdepth 1 -name "*-${TASK_SLUG}.md" -type f | sort | tail -1)
           fi
 
+          # F14: fallback to PR diff via paginated gh api when slug doesn't match
+          # (large rethink/refactor PRs touching 300+ files exceed gh pr view's
+          # 100-file cap; use --paginate on the raw API to inspect all files)
+          if [ -z "$SESSION_FILE" ]; then
+            echo "No session file matching slug '${TASK_SLUG}'. Falling back to PR diff."
+            CHANGED_SESSIONS=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate \
+              --jq '.[].filename | select(test("^docs/08-agents_work/sessions/.*\\.md$"))' || echo "")
+            if [ -n "$CHANGED_SESSIONS" ]; then
+              echo "Found session files in PR diff:"
+              echo "$CHANGED_SESSIONS"
+              SESSION_FILE=$(echo "$CHANGED_SESSIONS" | sort | tail -1)
+            fi
+          fi
+
           echo "Session file: ${SESSION_FILE:-none}"
 
           if [ -z "$SESSION_FILE" ] || [ ! -f "$SESSION_FILE" ]; then
             echo ""
             echo "❌ BLOCKED — risk:irreversible label requires a session file with tier: full or tier: irreversible."
-            echo "   No session file found for slug: ${TASK_SLUG}"
+            echo "   No session file found for slug: ${TASK_SLUG} or in PR diff"
             echo "   Per CONNECTIONS.md §B + 2026-05-16 board decision #3: risk:irreversible requires full or irreversible tier review."
             exit 1
+          fi
+
+          # Multi-session PRs: ALL session files in the PR diff must carry an acceptable tier
+          if [ -n "${CHANGED_SESSIONS:-}" ]; then
+            ALL_OK=true
+            for s in $CHANGED_SESSIONS; do
+              if [ ! -f "$s" ]; then continue; fi
+              if grep -qiE 'tier:[[:space:]]+"?(full|irreversible)"?[[:space:]]*$' "$s"; then
+                echo "✓ Acceptable tier in $s"
+              else
+                echo "✗ Missing tier: full|irreversible in $s"
+                grep "tier" "$s" || echo "  (no tier line)"
+                ALL_OK=false
+              fi
+            done
+            [ "$ALL_OK" = "true" ] && exit 0 || exit 1
           fi
 
           if grep -qiE 'tier:[[:space:]]+"?(full|irreversible)"?[[:space:]]*$' "$SESSION_FILE"; then
