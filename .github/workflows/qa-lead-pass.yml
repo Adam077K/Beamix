@@ -163,9 +163,10 @@ jobs:
           exit 1
 
       # ── F13: risk:irreversible enforcement ─────────────────────────────────
-      # Per CONNECTIONS.md §B: a PR carrying risk:irreversible MUST have a
-      # tier: full review in its session file. Lite-tier PASS is not sufficient.
-      - name: Enforce tier:full for risk:irreversible PRs
+      # Per CONNECTIONS.md §B + 2026-05-16 board verdict (decision #3):
+      # a PR carrying risk:irreversible MUST have either `tier: full` or
+      # `tier: irreversible` in its session file. Lite/trivial-tier are insufficient.
+      - name: Enforce tier:full|irreversible for risk:irreversible PRs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -187,7 +188,7 @@ jobs:
             exit 0
           fi
 
-          echo "risk:irreversible label detected — checking for tier: full in session file"
+          echo "risk:irreversible label detected — checking for tier: full|irreversible in session file"
 
           # Re-derive slug the same way as the QA gate step
           TASK_SLUG=$(echo "$HEAD_BRANCH" | sed -E 's|^(feat\|fix\|chore)/||' | tr / -)
@@ -202,20 +203,21 @@ jobs:
 
           if [ -z "$SESSION_FILE" ] || [ ! -f "$SESSION_FILE" ]; then
             echo ""
-            echo "❌ BLOCKED — risk:irreversible label requires a session file with tier: full."
+            echo "❌ BLOCKED — risk:irreversible label requires a session file with tier: full or tier: irreversible."
             echo "   No session file found for slug: ${TASK_SLUG}"
-            echo "   Per CONNECTIONS.md §B: risk:irreversible label requires tier: full review."
+            echo "   Per CONNECTIONS.md §B + 2026-05-16 board decision #3: risk:irreversible requires full or irreversible tier review."
             exit 1
           fi
 
-          if grep -qiE 'tier:[[:space:]]+"?full"?[[:space:]]*$' "$SESSION_FILE"; then
-            echo "✓ tier: full found in ${SESSION_FILE} — risk:irreversible requirement satisfied"
+          if grep -qiE 'tier:[[:space:]]+"?(full|irreversible)"?[[:space:]]*$' "$SESSION_FILE"; then
+            FOUND_TIER=$(grep -iE 'tier:[[:space:]]+"?(full|irreversible)"?[[:space:]]*$' "$SESSION_FILE" | head -1)
+            echo "✓ Acceptable tier found in ${SESSION_FILE}: ${FOUND_TIER}"
             exit 0
           else
             echo ""
-            echo "❌ BLOCKED — risk:irreversible label requires tier: full review per CONNECTIONS.md §B."
+            echo "❌ BLOCKED — risk:irreversible label requires tier: full or tier: irreversible per board decision #3."
             echo "   Session file found: ${SESSION_FILE}"
-            echo "   tier: full NOT present in session frontmatter."
+            echo "   Neither tier: full nor tier: irreversible present in session frontmatter."
             grep "tier" "$SESSION_FILE" || echo "(no tier line found)"
             exit 1
           fi

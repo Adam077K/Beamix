@@ -39,8 +39,8 @@ All code workers use isolated git worktrees. QA gate mandatory before merge.
 
 ## Layer 3 — Workers
 
-- [[agents/backend-developer]] — API routes, server logic
-- [[agents/frontend-developer]] — React components, UI
+- [[agents/backend-engineer]] — API routes, server logic
+- [[agents/frontend-engineer]] — React components, UI
 - [[agents/database-engineer]] — Schema, migrations, queries
 - [[agents/ai-engineer]] — LLM integration, RAG, agents
 - [[agents/security-engineer]] — OWASP audit, auth review

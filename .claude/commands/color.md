@@ -33,8 +33,8 @@ Set the badge color of the current session in the Claude Code UI. Use this to vi
 ### Layer 3 — Workers
 | Agent | Color |
 |-------|-------|
-| backend-developer | `blue` |
-| frontend-developer | `pink` |
+| backend-engineer | `blue` |
+| frontend-engineer | `pink` |
 | database-engineer | `teal` |
 | ai-engineer | `purple` |
 | security-engineer | `red` |
@@ -57,7 +57,7 @@ Set the badge color of the current session in the Claude Code UI. Use this to vi
 ## Example
 ```
 /color gold       → CEO primary instance
-/color blue       → build-lead or backend-developer
+/color blue       → build-lead or backend-engineer
 /color red        → qa-lead or security-engineer or debugger
 ```
 
