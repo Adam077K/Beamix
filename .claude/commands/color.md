@@ -42,10 +42,8 @@ Set the badge color of the current session in the Claude Code UI. Use this to vi
 | code-reviewer | `gray` |
 | researcher | `purple` |
 | technical-writer | `gray` |
-| executor | `blue` |
-| debugger | `red` |
-| planner | `green` |
-| verifier | `teal` |
+| design-critic | `gray` |
+| supabase-cleaner | `teal` |
 
 ## Rules
 
@@ -58,7 +56,7 @@ Set the badge color of the current session in the Claude Code UI. Use this to vi
 ```
 /color gold       → CEO primary instance
 /color blue       → build-lead or backend-engineer
-/color red        → qa-lead or security-engineer or debugger
+/color red        → qa-lead or security-engineer
 ```
 
 ## Combined with /name

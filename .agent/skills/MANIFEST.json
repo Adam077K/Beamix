@@ -1,7 +1,7 @@
 {
-  "version": "2.0.0",
+  "version": "2.1.0",
   "generated": "2026-05-16",
-  "totalSkills": 117,
+  "totalSkills": 131,
   "skills": [
     {
       "name": "agent-evaluation",
@@ -348,6 +348,16 @@
       "path": ".agent/skills/deep-research/SKILL.md"
     },
     {
+      "name": "deploy-to-vercel",
+      "description": "Deploy applications and websites to Vercel. Use when the user requests deployment actions like \"deploy my app\", \"deploy and give me the link\", \"push this live\", or \"create a preview deployment\".",
+      "tags": [
+        "devops"
+      ],
+      "source": "beamix-harvested-from-.claude-skills",
+      "risk": "unknown",
+      "path": ".agent/skills/deploy-to-vercel/SKILL.md"
+    },
+    {
       "name": "deployment-procedures",
       "description": "Production deployment principles and decision-making. Safe deployment workflows, rollback strategies, and verification. Teaches thinking, not scripts.",
       "tags": [
@@ -365,6 +375,16 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/design-orchestration/SKILL.md"
+    },
+    {
+      "name": "design-taste-frontend",
+      "description": "Senior UI/UX Engineer. Architect digital interfaces overriding default LLM biases. Enforces metric-based rules, strict component architecture, CSS hardware acceleration, and balanced design engineerin",
+      "tags": [
+        "design"
+      ],
+      "source": "beamix-harvested-from-.claude-skills",
+      "risk": "unknown",
+      "path": ".agent/skills/design-taste-frontend/SKILL.md"
     },
     {
       "name": "dispatching-parallel-agents",
@@ -445,6 +465,16 @@
       "path": ".agent/skills/embedding-strategies/SKILL.md"
     },
     {
+      "name": "emilkowal-animations",
+      "description": "Emil Kowalski's animation best practices for web interfaces. Use when writing, reviewing, or implementing animations in React, CSS, or Framer Motion. Triggers on tasks involving transitions, easing, g",
+      "tags": [
+        "design"
+      ],
+      "source": "beamix-harvested-from-.claude-skills",
+      "risk": "unknown",
+      "path": ".agent/skills/emilkowal-animations/SKILL.md"
+    },
+    {
       "name": "error-handling-patterns",
       "description": "Master error handling patterns across languages including exceptions, Result types, error propagation, and graceful degradation to build resilient applications. Use when implementing error handling...",
       "tags": [
@@ -513,6 +543,16 @@
       "path": ".agent/skills/frontend-developer/SKILL.md"
     },
     {
+      "name": "full-output-enforcement",
+      "description": "Overrides default LLM truncation behavior. Enforces complete code generation, bans placeholder patterns, and handles token-limit splits cleanly. Apply to any task requiring exhaustive, unabridged outp",
+      "tags": [
+        "beamix-specific"
+      ],
+      "source": "beamix-harvested-from-.claude-skills",
+      "risk": "unknown",
+      "path": ".agent/skills/full-output-enforcement/SKILL.md"
+    },
+    {
       "name": "gdpr-data-handling",
       "description": "Implement GDPR-compliant data handling with consent management, data subject rights, and privacy by design. Use when building systems that process EU personal data, implementing privacy controls, o...",
       "tags": [
@@ -542,6 +582,26 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/github-actions-templates/SKILL.md"
+    },
+    {
+      "name": "high-end-visual-design",
+      "description": "Teaches the AI to design like a high-end agency. Defines the exact fonts, spacing, shadows, card structures, and animations that make a website feel expensive. Blocks all the common defaults that make",
+      "tags": [
+        "design"
+      ],
+      "source": "beamix-harvested-from-.claude-skills",
+      "risk": "unknown",
+      "path": ".agent/skills/high-end-visual-design/SKILL.md"
+    },
+    {
+      "name": "humanizer",
+      "description": "Remove signs of AI-generated writing from text. Use when editing or reviewing",
+      "tags": [
+        "beamix-specific"
+      ],
+      "source": "beamix-harvested-from-.claude-skills",
+      "risk": "unknown",
+      "path": ".agent/skills/humanizer/SKILL.md"
     },
     {
       "name": "inngest",
@@ -605,6 +665,16 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/mcp-builder/SKILL.md"
+    },
+    {
+      "name": "minimalist-ui",
+      "description": "Clean editorial-style interfaces. Warm monochrome palette, typographic contrast, flat bento grids, muted pastels. No gradients, no heavy shadows.",
+      "tags": [
+        "design"
+      ],
+      "source": "beamix-harvested-from-.claude-skills",
+      "risk": "unknown",
+      "path": ".agent/skills/minimalist-ui/SKILL.md"
     },
     {
       "name": "multi-agent-brainstorming",
@@ -849,6 +919,16 @@
       "path": ".agent/skills/readme/SKILL.md"
     },
     {
+      "name": "redesign-existing-projects",
+      "description": "Upgrades existing websites and apps to premium quality. Audits current design, identifies generic AI patterns, and applies high-end design standards without breaking functionality. Works with any CSS ",
+      "tags": [
+        "design"
+      ],
+      "source": "beamix-harvested-from-.claude-skills",
+      "risk": "unknown",
+      "path": ".agent/skills/redesign-existing-projects/SKILL.md"
+    },
+    {
       "name": "requesting-code-review",
       "description": "Use when completing tasks, implementing major features, or before merging to verify work meets requirements",
       "tags": [],
@@ -972,6 +1052,16 @@
       "path": ".agent/skills/startup-metrics-framework/SKILL.md"
     },
     {
+      "name": "stitch-design-taste",
+      "description": "Semantic Design System Skill for Google Stitch. Generates agent-friendly DESIGN.md files that enforce premium, anti-generic UI standards — strict typography, calibrated color, asymmetric layouts, perp",
+      "tags": [
+        "design"
+      ],
+      "source": "beamix-harvested-from-.claude-skills",
+      "risk": "unknown",
+      "path": ".agent/skills/stitch-design-taste/SKILL.md"
+    },
+    {
       "name": "stripe-integration",
       "description": "Implement Stripe payment processing for robust, PCI-compliant payment flows including checkout, subscriptions, and webhooks. Use when integrating Stripe payments, building subscription systems, or ...",
       "tags": [
@@ -1089,6 +1179,26 @@
       "path": ".agent/skills/vector-database-engineer/SKILL.md"
     },
     {
+      "name": "vercel-cli-with-tokens",
+      "description": "Deploy and manage projects on Vercel using token-based authentication. Use when working with Vercel CLI using access tokens rather than interactive login — e.g. \"deploy to vercel\", \"set up vercel\", \"a",
+      "tags": [
+        "devops"
+      ],
+      "source": "beamix-harvested-from-.claude-skills",
+      "risk": "unknown",
+      "path": ".agent/skills/vercel-cli-with-tokens/SKILL.md"
+    },
+    {
+      "name": "vercel-composition-patterns",
+      "description": "React composition patterns that scale. Use when refactoring components with",
+      "tags": [
+        "devops"
+      ],
+      "source": "beamix-harvested-from-.claude-skills",
+      "risk": "unknown",
+      "path": ".agent/skills/vercel-composition-patterns/SKILL.md"
+    },
+    {
       "name": "vercel-deployment",
       "description": "Expert knowledge for deploying to Vercel with Next.js Use when: vercel, deploy, deployment, hosting, production.",
       "tags": [
@@ -1097,6 +1207,39 @@
       "source": "vibeship-spawner-skills (Apache 2.0)",
       "risk": "safe",
       "path": ".agent/skills/vercel-deployment/SKILL.md"
+    },
+    {
+      "name": "vercel-react-best-practices",
+      "description": "React and Next.js performance optimization guidelines from Vercel Engineering. This skill should be used when writing, reviewing, or refactoring React/Next.js code to ensure optimal performance patter",
+      "tags": [
+        "devops",
+        "frontend"
+      ],
+      "source": "beamix-harvested-from-.claude-skills",
+      "risk": "unknown",
+      "path": ".agent/skills/vercel-react-best-practices/SKILL.md"
+    },
+    {
+      "name": "vercel-react-native-skills",
+      "description": "React Native and Expo best practices for building performant mobile apps. Use",
+      "tags": [
+        "devops",
+        "frontend"
+      ],
+      "source": "beamix-harvested-from-.claude-skills",
+      "risk": "unknown",
+      "path": ".agent/skills/vercel-react-native-skills/SKILL.md"
+    },
+    {
+      "name": "vercel-react-view-transitions",
+      "description": "Guide for implementing smooth, native-feeling animations using React's View Transition API (`<ViewTransition>` component, `addTransitionType`, and CSS view transition pseudo-elements). Use this skill ",
+      "tags": [
+        "devops",
+        "frontend"
+      ],
+      "source": "beamix-harvested-from-.claude-skills",
+      "risk": "unknown",
+      "path": ".agent/skills/vercel-react-view-transitions/SKILL.md"
     },
     {
       "name": "wcag-audit-patterns",
@@ -1146,5 +1289,5 @@
       "path": ".agent/skills/xss-html-injection/SKILL.md"
     }
   ],
-  "_note": "Regenerated after Phase 0 hygiene 2026-05-16 — 308 orphan skills archived to .archive/skills-orphans-2026-05-16/"
+  "_note": "Regenerated 2026-05-16 — Phase 0 harvest of 14 Beamix-specific skills from .claude/skills/ that the original audit missed (audit treated .agent/skills/ as canonical; .claude/skills/ had 14 newer skills)."
 }

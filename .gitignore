@@ -22,3 +22,6 @@ node_modules/
 # dotenv
 .env
 .env.local
+
+# Runtime artifacts
+.claude/scheduled_tasks.lock

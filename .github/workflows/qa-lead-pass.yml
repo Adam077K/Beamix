@@ -165,6 +165,93 @@ jobs:
           echo "Session file found:        ${SESSION_FILE:-none}"
           exit 1
 
+      # ── F15: file-path tier-floor enforcement ──────────────────────────────
+      # Per 2026-05-16 board decision #4: deterministic file-path tier-floor map
+      # at .claude/qa-tier-floor.yml sets the MINIMUM risk tier any PR touching
+      # those paths must carry. The label-based check below (F13) is the
+      # COMPLEMENT — it enforces what the YAML demanded.
+      - name: Auto-tier from file-path tier-floor map
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          MAP_FILE=".claude/qa-tier-floor.yml"
+          if [ ! -f "$MAP_FILE" ]; then
+            echo "ℹ️  No $MAP_FILE — skipping auto-tier (label-based enforcement only)"
+            exit 0
+          fi
+
+          # Tier ranking (higher = stricter)
+          declare -A RANK
+          RANK[trivial]=0
+          RANK[lite]=1
+          RANK[full]=2
+          RANK[irreversible]=3
+
+          # List PR files (paginated)
+          CHANGED_FILES=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename')
+          echo "Changed files: $(echo "$CHANGED_FILES" | wc -l)"
+
+          # Extract patterns from YAML (simple parser; assumes `- pattern: "..."` followed by `tier: ...`)
+          REQUIRED_TIER="trivial"
+          REQUIRED_RANK=0
+          MATCH_REASON=""
+
+          while IFS= read -r file; do
+            current_pattern=""
+            while IFS= read -r line; do
+              case "$line" in
+                *"- pattern:"*)
+                  current_pattern=$(echo "$line" | sed -E 's/.*- pattern:[[:space:]]*"?([^"]+)"?.*/\1/')
+                  ;;
+                *"tier:"*)
+                  tier=$(echo "$line" | sed -E 's/.*tier:[[:space:]]*([a-z]+).*/\1/')
+                  # Convert glob pattern to bash extglob via simple match (handles ** and *)
+                  case "$file" in
+                    $current_pattern|${current_pattern//\*\*/\*})
+                      this_rank=${RANK[$tier]:-0}
+                      if [ "$this_rank" -gt "$REQUIRED_RANK" ]; then
+                        REQUIRED_RANK=$this_rank
+                        REQUIRED_TIER=$tier
+                        MATCH_REASON="$file matches $current_pattern → tier:$tier"
+                      fi
+                      ;;
+                  esac
+                  current_pattern=""
+                  ;;
+              esac
+            done < "$MAP_FILE"
+          done <<< "$CHANGED_FILES"
+
+          echo "Required tier floor: $REQUIRED_TIER (rank $REQUIRED_RANK)"
+          [ -n "$MATCH_REASON" ] && echo "Reason: $MATCH_REASON"
+
+          # If the floor is irreversible, the PR must already carry the risk:irreversible label.
+          # The label triggers the F13 step below which enforces tier: full|irreversible in the session file.
+          if [ "$REQUIRED_TIER" = "irreversible" ]; then
+            HAS_LABEL=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json labels \
+              --jq '[.labels[].name] | contains(["risk:irreversible"])')
+            if [ "$HAS_LABEL" != "true" ]; then
+              echo ""
+              echo "❌ BLOCKED — file-path tier-floor requires risk:irreversible label."
+              echo "   Reason: $MATCH_REASON"
+              echo "   Add the 'risk:irreversible' label or remove the affected file(s)."
+              exit 1
+            fi
+            echo "✓ risk:irreversible label present — F13 will enforce session-file tier"
+          fi
+
+          # If the floor is full but no risk:irreversible label, the session file
+          # must still carry tier: full (or higher). We surface this as a soft hint
+          # — full enforcement of full-tier sessions is Phase 6+ work.
+          if [ "$REQUIRED_TIER" = "full" ]; then
+            echo "ℹ️  Floor is 'full' — session file should declare tier: full|irreversible"
+            echo "    (Phase 6 will mechanically enforce this; for now, reviewer awareness)"
+          fi
+
       # ── F13: risk:irreversible enforcement ─────────────────────────────────
       # Per CONNECTIONS.md §B + 2026-05-16 board verdict (decision #3):
       # a PR carrying risk:irreversible MUST have either `tier: full` or

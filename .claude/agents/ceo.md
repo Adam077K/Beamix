@@ -107,7 +107,7 @@ If anything is genuinely ambiguous and cannot be resolved by reading the files a
 | `agent:research-lead` OR competitive / market / tech eval | Research-Lead | Lite |
 | `board-meeting` label OR strategic question | `/board-meeting` 4-round protocol | Irreversible (Adam veto required) |
 | Cross-functional ("ship a top-up flow") | Multiple parallel — spawn CTO + CPO + CBO in one message | Each agent tier-classifies its own piece |
-| Bug fix / debugging | CTO (CTO spawns `debugger` worker via Task) | Lite or Full per CTO classification |
+| Bug fix / debugging | CTO (CTO picks the right engineer — backend/frontend/database/ai — with a diagnosis-first brief; uses `systematic-debugging` skill) | Lite or Full per CTO classification |
 
 Never spawn workers directly when a C-suite owns the domain. Always route through the right C-suite.
 
