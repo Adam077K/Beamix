@@ -5,6 +5,20 @@
 
 ---
 
+## [2026-05-16] agent-rethink-board-review | 4-round board meeting; SHIP verdict with 5-day cap; Broad-Adversary KILL preserved
+- 6 personas ran R0 framings + R1 independent + R2 cross-critique + R3 synthesizer. All 13 fires complete.
+- R1 verdict: 5 SHIP + 1 KILL (Broad-Adversary, 70% abandonment probability). R2 convergence: all 5 SHIP voters narrowed materially toward Adversary's position.
+- 10 locked decisions including: Phase 0 immediate (already done), 5-day hard cap, scope reduction to Phases 0+1+6-subset (~4 person-days), deterministic file-path tier-floor map (replaces Haiku classifier), FM-12 plan-abandonment as #1 risk, Mem0 lock-in formally accepted with 6-month review trigger, Full-tier QA threshold raised to 300 LOC pre-revenue, product work begins Day 6 regardless.
+- 4 vindication triggers active until 2026-06-15: if any fires, the Adversary was right.
+- Adam accepted the synthesis. DECISIONS.md updated. Board-review artifacts at docs/08-agents_work/2026-05-16-agent-rethink/board-review/.
+
+## [2026-05-16] agent-rethink | C-suite org locked, 40 interview decisions, Phase 0 hygiene executing
+- 4 research streams completed: agent inventory (36 files, 22 active, 12 GSD orphans, 11 missing Routines, 4 missing C-suite); skills audit (430 → 110 keep, 305 archive, 14 new to author); external research (10 GitHub repos: anthropic-cookbook, disler hooks, wshobson agents, ComposioHQ, claude-code-spec-workflow); QA patterns (4-tier matrix, evaluator-optimizer XML verdict, cross-family judge, multi-judge 2-of-3 majority).
+- Master plan written: `docs/08-agents_work/2026-05-16-agent-rethink/05-MASTER-PLAN.md` (1138 lines).
+- 10-batch interview with Adam locked 40 decisions: C-suite (CEO Opus-4.7 → CTO/CPO/CMO/CBO/QA-Lead/Research-Lead), 13 workers with `-engineer` naming, 4-tier QA + Codex CLI second-opinion on Full+, Mem0 primary + Anthropic Memory Tool auto-fallback, .agent/agents/ deleted, Promptfoo Phase 7, subscription-bound cost model.
+- Decisions log: `docs/08-agents_work/2026-05-16-agent-rethink/06-DECISIONS-LOG.md`.
+- Phase 0 (hygiene) executing in this session: archive 305 orphan skills + 10 GSD agents (background agent), rename workers to `-engineer`, rewrite CLAUDE.md, harden settings.json+qa-lead-pass.yml, log decisions.
+
 ## [2026-05-06] agent-build | V4 spine agents (CEO + CTO + QA Lead) + setup guide
 - 3 researchers in parallel: R1 mined wshobson/agents + claude-flow for source .md files (5 patterns lifted: Workflow Position, "Use PROACTIVELY for X", model tier in frontmatter, Key Distinctions, Orchestrator-as-Ledger); R2 inventoried existing 423 local skills (muratcankoylan + obra grade-A; 4 stubs to replace) + recommended CEO/CTO skill stack (multi-agent-patterns + context-compression + dispatching-parallel-agents); R3 produced 750-line authoritative agent .md best-practices spec sourced to Anthropic docs
 - Critical finding from R3: subagents CANNOT spawn subagents — V4 architecture adapted: each C-suite (CEO, CTO, QA Lead) runs as its own main-thread Routine, not nested
