@@ -193,7 +193,7 @@ Synthesizer writes locked decisions to DECISIONS.md via Supabase and pgvector af
 
 ### Q10 — Should every Telegram send write an audit log entry?
 
-Most Routines deliver output via Telegram (through `notify.beamix.tech`). The question is whether to record each send attempt in the audit log.
+Most Routines deliver output via Telegram (through `notify.beamixai.com`). The question is whether to record each send attempt in the audit log.
 
 **Options:**
 - **A (recommended):** Every Telegram send writes an `audit_log` row: status goes from `telegram_send_attempt` to `telegram_send_succeeded` or `telegram_send_failed`. Full traceability — you can see which messages were delivered and which dropped.

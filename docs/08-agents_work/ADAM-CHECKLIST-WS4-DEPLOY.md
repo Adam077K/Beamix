@@ -288,7 +288,7 @@ curl -s -o /dev/null -w "%{http_code}\n" \
 **Bot user accounts (one per agent — WS6 creates them; for now just one bot):**
 
 1. Linear → Settings → Members → **Invite member**.
-2. Email: `bot+ceo@beamix.tech` (or any unique email — use `+ceo` suffix on your existing email if your provider supports it).
+2. Email: `bot+ceo@beamixai.com` (or any unique email — use `+ceo` suffix on your existing email if your provider supports it).
 3. Role: Member (full read/write).
 4. Send invite. Open the invite email → set password → log in → note the user ID (Settings → Account → Show user ID).
 5. Add this user ID to `ALLOWED_ISSUERS` (Step 4i).

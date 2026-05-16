@@ -90,8 +90,8 @@ async function writeFailureCount(count: number): Promise<void> {
 }
 
 /**
- * Fire a Telegram P0 alert via the notify.beamix.tech bridge
- * (direct Bot API post — notify.beamix.tech forwards to Telegram).
+ * Fire a Telegram P0 alert via the notify.beamixai.com bridge
+ * (direct Bot API post — notify.beamixai.com forwards to Telegram).
  *
  * If TELEGRAM_BOT_TOKEN is absent: log + write audit_log row and return.
  * Never throws — failure to alert must not crash the canary.

@@ -113,7 +113,7 @@
 11. **F13 — `cloudflare-compromise.md` SQL forensic query placeholders undefined.** Add a step before the query: "Determine `$compromise_start` from Cloudflare audit log (timestamp of first unrecognized API token use). `$compromise_end` is now (NOW())."
 12. **F14 — `mem0-outage.md` flip-flag depends on bridge logic that doesn't exist.** Either add `memory_provider` field to ORCHESTRATION.md §2D spec schema + bridge logic to read `mem0:fallback_active` KV flag, OR remove the flag mechanism and document fallback as "Routines themselves detect Mem0 errors and fall back to Anthropic Memory Tool inline." **Recommendation: the inline fallback is simpler.** Update `mem0-outage.md` accordingly.
 13. **F15 — `anthropic-outage.md` "escalate" with no target.** Replace "If persists, escalate" with "If persists 30 min: Telegram-ping Adam P0; manual Anthropic Status check; consider declaring full outage."
-14. **F16 — `supabase-corruption.md` Vercel deploy ordering race.** Add: "Confirm MAINTENANCE_MODE deploy is live in Vercel dashboard BEFORE applying deploy lock. Verify via `curl https://beamix.tech/api/health` returns 503."
+14. **F16 — `supabase-corruption.md` Vercel deploy ordering race.** Add: "Confirm MAINTENANCE_MODE deploy is live in Vercel dashboard BEFORE applying deploy lock. Verify via `curl https://beamixai.com/api/health` returns 503."
 15. **F17 — `secret-rotation.md` 4-day stagger has no per-day smoke-test list.** Add a per-day verification table mapping which secrets rotated → which paths to smoke-test that day.
 16. **F18 — Friday Retro lacks `supabase` MCP grant** so it cannot read `audit_log` to discover incidents the runbooks tagged. **Update ORCHESTRATION.md §2E Routine #6** (Friday Retro) MCP grants to add `supabase`. Errata footer.
 

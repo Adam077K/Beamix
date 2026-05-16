@@ -180,7 +180,7 @@ Inngest down >2h AND manual fan-in unmanageable?
 Inngest also hosts product-side functions (`scan-free`, `scan-manual`, `agent-execute`, `embed-*`, `email-*`). A full Inngest outage affects:
 - **Customer-facing scans:** new scans queue but won't execute until Inngest returns. The Beamix product UI should handle gracefully (async scan pattern already implemented).
 - **Agent execution jobs:** queued agent jobs stall. No data loss; Inngest dead-letter queue replays on recovery.
-- **This is a product concern, not a war-room concern.** Flag to the Beamix product status page (TBD: `status.beamix.tech`) if outage >30 min. That escalation is outside this runbook's scope.
+- **This is a product concern, not a war-room concern.** Flag to the Beamix product status page (TBD: `status.beamixai.com`) if outage >30 min. That escalation is outside this runbook's scope.
 
 ---
 
