@@ -110,7 +110,7 @@ WS1A locked L2 to Mem0 (2-phase: cloud → OSS). WS1B's job is to (a) put per-la
 
 `MEM0_API_KEY` set in shell env (`~/.zshrc`) and a project-local `.env.local` (gitignored). Adam runs `export MEM0_API_KEY=m0-...` after signup at app.mem0.ai. Restart Claude Code session — MCP loads automatically.
 
-**Tool wiring (Phase 2).** Same `.mcp.json` shape; `url` flips to self-hosted endpoint (likely `https://mem0-server.beamix.tech/mcp/` or a Tailscale-internal URL). API key swap to a self-hosted token. WS1F handles the cutover and a one-shot row migration via Postgres dump/restore.
+**Tool wiring (Phase 2).** Same `.mcp.json` shape; `url` flips to self-hosted endpoint (likely `https://mem0-server.beamixai.com/mcp/` or a Tailscale-internal URL). API key swap to a self-hosted token. WS1F handles the cutover and a one-shot row migration via Postgres dump/restore.
 
 **Eviction / lifecycle.**
 - `confidence: low` → 30-day TTL (auto-prune via Mem0 metadata filter, scheduled Inngest job)

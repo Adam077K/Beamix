@@ -31,7 +31,7 @@
 2. **Halt write traffic.** Two paths:
    - **Vercel:** push a deploy that returns 503 from `/api/*` routes (env var `MAINTENANCE_MODE=true`).
    - **Supabase:** flip the project to read-only mode (Project Settings → Pause Project — caveat: this halts ALL traffic including `/war-room` page reads, prefer Vercel approach if `/war-room` access is needed during incident).
-2.5. **Verify MAINTENANCE_MODE deploy is live BEFORE applying the deploy lock in step 5.** Run `curl https://beamix.tech/api/health` (replace with actual product URL); confirm returns 503 with maintenance message. Only proceed to step 5 after this is confirmed. If step 2 deploy is still in progress, wait for it to complete; if step 5 lock is applied during deploy, the deploy is cancelled and product continues serving traffic to corrupted DB.
+2.5. **Verify MAINTENANCE_MODE deploy is live BEFORE applying the deploy lock in step 5.** Run `curl https://beamixai.com/api/health` (replace with actual product URL); confirm returns 503 with maintenance message. Only proceed to step 5 after this is confirmed. If step 2 deploy is still in progress, wait for it to complete; if step 5 lock is applied during deploy, the deploy is cancelled and product continues serving traffic to corrupted DB.
 3. **Snapshot current state.** Run a full `pg_dump` via Supabase dashboard → Backups → Manual Backup. Even if corrupted, this is forensic evidence.
 4. **Identify scope.** Which table(s)? Which rows? Run:
    ```sql

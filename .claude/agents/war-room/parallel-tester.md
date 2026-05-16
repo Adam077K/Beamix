@@ -97,7 +97,7 @@ Call `mcp__github__create_review_comment` on the PR with the structured test rep
 
 ## Anti-patterns
 
-- **Never run tests against production URLs.** The `staging_url` must be a Vercel preview URL (`*.vercel.app`) — never `beamix.tech` or `app.beamix.tech`.
+- **Never run tests against production URLs.** The `staging_url` must be a Vercel preview URL (`*.vercel.app`) — never `beamixai.com` or `app.beamixai.com`.
 - **Never update snapshot tests without explicit ticket approval.** If a visual snapshot test fails, report it as a failure — do not auto-update the snapshot. Snapshot updates require a dedicated ticket.
 - **Never modify test fixture data in Supabase.** Read test fixtures; do not INSERT, UPDATE, or DELETE any rows — staging data integrity must be preserved for reproducibility.
 - **Never merge the PR.** A PASS verdict means the code is testable; merge requires Adam approval after QA PASS.

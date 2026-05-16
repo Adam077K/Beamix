@@ -40,7 +40,7 @@ Baseline: ORCHESTRATION.md §2E per-Routine grants table. Each grant evaluated a
 
 ## Cross-cutting concerns
 
-**Telegram:** Routines 1, 2, 3, 5, 9, 10, 11 deliver to Telegram via HTTP to `notify.beamix.tech` (Cloudflare Worker) — not an MCP. `TELEGRAM_BOT_TOKEN` in Cloudflare secret store only.
+**Telegram:** Routines 1, 2, 3, 5, 9, 10, 11 deliver to Telegram via HTTP to `notify.beamixai.com` (Cloudflare Worker) — not an MCP. `TELEGRAM_BOT_TOKEN` in Cloudflare secret store only.
 
 **pgvector RAG:** R5 and R11 use pgvector — rides the Supabase grant. WS6 .md files annotate: "Supabase: includes pgvector RAG."
 

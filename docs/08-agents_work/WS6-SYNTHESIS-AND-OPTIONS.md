@@ -146,7 +146,7 @@ Options:
 
 ### Q10 — Telegram delivery model (audit-log every Telegram, or fire-and-forget?)
 
-Many Routines deliver to Telegram via HTTP to `notify.beamix.tech`. This is not an MCP — it's a Worker HTTP call. Options for observability:
+Many Routines deliver to Telegram via HTTP to `notify.beamixai.com`. This is not an MCP — it's a Worker HTTP call. Options for observability:
 
 - **A:** Every Telegram send writes an `audit_log` row with `status='telegram_send_attempt'` → `telegram_send_succeeded` or `telegram_send_failed`. Full traceability.
 - **B:** Fire-and-forget; only log on failure.
@@ -173,7 +173,7 @@ Compress overnight Linear activity + open blockers + sprint goal into a 3-5 bull
 - Mem0 entries tagged `priority:high` from last 7 days
 
 ## Outputs
-- 1 Telegram message to ADAM_TELEGRAM_CHAT_ID via notify.beamix.tech
+- 1 Telegram message to ADAM_TELEGRAM_CHAT_ID via notify.beamixai.com
 - Format: "🌅 [date]\n• 3-5 bullets sorted by urgency\n⚠️ blockers in red\n✅ wins in green"
 - max 350 words
 
@@ -184,7 +184,7 @@ Compress overnight Linear activity + open blockers + sprint goal into a 3-5 bull
 4. Linear MCP: get yesterday's EOD ticket (search agent:eod-sync, created>=yesterday)
 5. Mem0: query priority:high tags
 6. Synthesize: 3-5 bullets ranked by urgency
-7. POST notify.beamix.tech/telegram with formatted message
+7. POST notify.beamixai.com/telegram with formatted message
 8. audit_log row: status='telegram_send_succeeded'
 
 ## Anti-patterns
@@ -226,7 +226,7 @@ Per critic + roster locks, the following are settled:
 
 - **`claude-opus-4-7` vs `claude-opus-4-6` doc fix in CLAUDE.md** — minor cleanup, 6C task.
 - **CTO Daily Plan reading pgvector RAG** depends on WS1C (pgvector custom MCP) — at minimum, the Supabase grant lets it issue raw SQL against the `embedding` column.
-- **Telegram bot deploy** — secrets unfinished per WS4-deploy session; not blocking WS6 because Telegram routes are passive (notify.beamix.tech HTTP, not a Routine receiver).
+- **Telegram bot deploy** — secrets unfinished per WS4-deploy session; not blocking WS6 because Telegram routes are passive (notify.beamixai.com HTTP, not a Routine receiver).
 
 ---
 

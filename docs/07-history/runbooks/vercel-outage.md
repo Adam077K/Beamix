@@ -20,8 +20,8 @@
 | Signal | Where | Threshold |
 |---|---|---|
 | Vercel Status page red/degraded | https://vercel-status.com | Any active incident |
-| Beamix product 5xx rate spike | Vercel Analytics / external uptime monitor (UptimeRobot free tier on `https://app.beamix.tech`) | ≥3 consecutive 5xx responses |
-| `/war-room` page returns 5xx or times out | UptimeRobot free tier monitor on `https://app.beamix.tech/war-room` | ≥1 failure (page is auth-gated but a 200→500 state change is distinguishable from 200→401) |
+| Beamix product 5xx rate spike | Vercel Analytics / external uptime monitor (UptimeRobot free tier on `https://app.beamixai.com`) | ≥3 consecutive 5xx responses |
+| `/war-room` page returns 5xx or times out | UptimeRobot free tier monitor on `https://app.beamixai.com/war-room` | ≥1 failure (page is auth-gated but a 200→500 state change is distinguishable from 200→401) |
 | Inngest function executions begin failing | Inngest dashboard — function run history shows `Error: fetch to Vercel function failed` | ≥3 in 5 min |
 | `claude_progress` heartbeat from `cost-watchdog` stops | Supabase `claude_progress` table | No new row from `cost-watchdog` in 90 min (same signal as `inngest-outage.md`) |
 | Vercel deploy webhook stops | GitHub Actions — `qa-lead-pass` check stops posting status | Any PR > 10 min without a check update |
@@ -95,7 +95,7 @@ If any session shows `session_cost > 2.0`, inspect and pause manually via Anthro
 
 This is a product concern, not a war-room concern, but document the cross-impact here for completeness.
 
-- Customer-facing product (`app.beamix.tech`) is unavailable for the duration.
+- Customer-facing product (`app.beamixai.com`) is unavailable for the duration.
 - No customer actions are possible: scans don't run (Inngest also down), agent execution queued, dashboard inaccessible.
 - **Status page:** Post a status update to the Beamix product status page. Status page setup: **TBD — flag as a pre-MVP deliverable.** If no status page exists at time of incident, post manually to the Beamix support email and any active customer Slack channels (if any exist at the time).
 - **Data integrity:** No data loss. Pending Inngest jobs replay on recovery (Inngest dead-letter queue). Supabase is independent of Vercel.
@@ -109,8 +109,8 @@ Helicone proxies Anthropic API calls from product code via a base URL set in Ver
 
 ## Recovery (Vercel platform returns)
 
-1. **Confirm Vercel green.** Status page clears. Verify via `curl -I https://app.beamix.tech` returning a 2xx or auth redirect (not 5xx).
-2. **Verify `/war-room` page renders.** Open `https://app.beamix.tech/war-room` — confirm page loads with live `claude_progress` rows appearing.
+1. **Confirm Vercel green.** Status page clears. Verify via `curl -I https://app.beamixai.com` returning a 2xx or auth redirect (not 5xx).
+2. **Verify `/war-room` page renders.** Open `https://app.beamixai.com/war-room` — confirm page loads with live `claude_progress` rows appearing.
 3. **Verify Inngest functions resume.** Check Inngest dashboard for function executions. Confirm `cost-watchdog` writes a new `claude_progress` row within 90 min of Vercel recovery.
 4. **Replay Inngest dead-letter queue.** See `inngest-outage.md` §Recovery for the replay procedure. Apply now.
 5. **Verify product is functional.** Run a smoke-test scan via Beamix product to confirm the full stack is healthy. Check Helicone dashboard for resumed request logging.
@@ -180,7 +180,7 @@ War-room observability gap: Vercel down for duration, Adam works without /war-ro
 
 ## Related signals
 
-- UptimeRobot alert on `app.beamix.tech` and `app.beamix.tech/war-room` (Telegram channel: system-status)
+- UptimeRobot alert on `app.beamixai.com` and `app.beamixai.com/war-room` (Telegram channel: system-status)
 - Vercel Status page incident
 - Inngest dashboard `Error: fetch to Vercel function failed`
 - `claude_progress` heartbeat from `cost-watchdog` stops (90-min silence)
@@ -188,9 +188,9 @@ War-room observability gap: Vercel down for duration, Adam works without /war-ro
 
 ## Telemetry to verify is wired
 
-- [ ] UptimeRobot free tier monitors configured for `https://app.beamix.tech` AND `https://app.beamix.tech/war-room` with Telegram webhook alerts (WS4 deliverable)
+- [ ] UptimeRobot free tier monitors configured for `https://app.beamixai.com` AND `https://app.beamixai.com/war-room` with Telegram webhook alerts (WS4 deliverable)
 - [ ] Telegram webhook for UptimeRobot alerts routes to the system-status channel (NOT the cost-alert channel — per Adam Q7)
 - [ ] `/war-room` page has a "Last updated" timestamp showing the age of its latest data — makes the observability gap visible at a glance (WS4 deliverable)
-- [ ] Beamix product status page exists at `status.beamix.tech` (pre-MVP deliverable — flag if missing)
+- [ ] Beamix product status page exists at `status.beamixai.com` (pre-MVP deliverable — flag if missing)
 - [ ] Supabase dashboard access confirmed not dependent on Vercel (it is not — native Supabase domain)
 - [ ] `cost-watchdog` heartbeat detection in `/war-room` page (shows "Inngest: OFFLINE" badge when heartbeat stale >90 min — same as inngest-outage.md telemetry)
