@@ -43,8 +43,8 @@ compatibility_date = "2026-04-01"
 binding = "BRIDGE_STATE_KV"
 # Adam: fill in the id after running:
 #   wrangler kv:namespace create BRIDGE_STATE_KV
-id = "PLACEHOLDER_KV_NAMESPACE_ID"
-preview_id = "PLACEHOLDER_KV_NAMESPACE_PREVIEW_ID"
+id = "88d6d23f0ac74ad4be7770699c19f076"
+preview_id = "cbf0146dbf184d64b2651779efd2ad85"
 
 [[durable_objects.bindings]]
 name = "ROUTINE_LOCK"

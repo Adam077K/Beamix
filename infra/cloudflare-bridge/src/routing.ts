@@ -150,12 +150,28 @@ export function parseTierLabel(labels: string[]): RoutineTier | null {
 /**
  * Finds the first agent: or decision_type: routing label from a list of labels.
  * Returns null if none found.
+ *
+ * Linear label-group support: when a label is in a Group called "agent" with
+ * leaf name "advisor", Linear's webhook returns the bare leaf ("advisor"),
+ * not "agent:advisor". This function reconstructs the canonical routing label
+ * by checking if a bare leaf matches a known "agent:<leaf>" route, and returns
+ * the canonical form.
  */
 export function findRoutingLabel(labels: string[]): string | null {
   const routingPrefixes = ["agent:", "decision_type:", "board-meeting"];
   for (const label of labels) {
     if (routingPrefixes.some((p) => label.startsWith(p) || label === p)) {
       return label;
+    }
+    // Linear label-group fallback: bare leaf name → "agent:<leaf>" if known.
+    const canonical = `agent:${label}`;
+    if (canonical in ROUTINE_ID_ENV_KEY) {
+      return canonical;
+    }
+    // decision_type group fallback (e.g. "vendor" → "decision_type:vendor")
+    const decisionCanonical = `decision_type:${label}`;
+    if (decisionCanonical in ROUTINE_ID_ENV_KEY) {
+      return decisionCanonical;
     }
   }
   return null;
