@@ -94,7 +94,7 @@ Branch: ceo-1-1776183146
    - Wave 0 (DB migration) must run first — blocks everything
 3. **Commission Research Lead** for Hebrew GEO benchmark (50 queries × 4 engines) — run parallel with build Week 1
 4. **Commission Research Lead** for 5 customer problem interviews with Israeli SMBs — run Week 1
-5. **Set up DNS** for notify.beamix.tech (Resend transactional email subdomain) — start warm-up 2 weeks before launch
+5. **Set up DNS** for notify.beamixai.com (Resend transactional email subdomain) — start warm-up 2 weeks before launch
 6. **Create Paddle products** for Discover/Build/Scale monthly + annual + $19 top-up pack (note: Build is now $189/$151)
 7. Get **Adam's explicit confirmation** on competitor limits (Discover 3 / Build 5 / Scale 20) — used in specs but never formally confirmed
 8. **Upgrade Inngest** to Pro ($75/mo) before any load testing

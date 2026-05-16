@@ -34,7 +34,7 @@ Context: Adam's last feedback was the product still felt "AI slop, half-blank, m
 
 ## What's DEPLOYED on production right now
 
-URL: https://beamix.vercel.app · Tester login: `tester@beamix.tech` / `Tester-Beamix-2026!`
+URL: https://beamix.vercel.app · Tester login: `tester@beamixai.com` / `Tester-Beamix-2026!`
 
 `main` branch includes (merged in the prior session):
 - Wave 0 + 1 + 2 Batch 1 + Batch 2 (original)

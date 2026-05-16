@@ -186,4 +186,4 @@ Every worker branch before merge:
 - Go/no-go criteria check: `docs/product-rethink-2026-04-09/11-EXECUTION-PLAN.md`
 - Inngest Pro upgrade ($75/mo) — free tier breaks at 10-15 users
 - Paddle sandbox products creation (7 price IDs needed)
-- Resend domain warm-up: `notify.beamix.tech` DNS (2-4 week lead time — start now)
+- Resend domain warm-up: `notify.beamixai.com` DNS (2-4 week lead time — start now)

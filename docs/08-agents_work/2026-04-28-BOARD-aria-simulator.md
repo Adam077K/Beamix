@@ -22,7 +22,7 @@ I scan the H2s: Storage, Retention, GDPR/DSAR, Encryption, Audit logs, No-traini
 
 **Encryption claims** — `AES-256 at rest. TLS 1.3 in transit. No exceptions.` That's the lede. Body says "AES-256, key-managed by Supabase and AWS KMS." OK, but they don't name the AES mode (GCM? CBC? CTR?), they don't name the password hashing algorithm, they don't name the TLS cipher suites, they don't name the key-rotation cadence on application-level keys, and they punt KMS to "we rely on Supabase + AWS KMS." That's the right delegation but it's a wave of the hand. **I want primitives spelled out.**
 
-**DSAR section** — four-row table for Articles 15, 17, 20, 33. "Wired to endpoints, not promises." The phrasing is good. The substance is OK — `/settings → Privacy → Export my data` runs an Inngest job, signed S3 URL valid 7 days. Article 17 says hard delete in 30 days, audit log retains hashed pointers, disclosed in DPA. Article 33 says <72h breach notification with a public incident page at `beamix.tech/incidents/[YYYY-MM-DD]-[slug]`. I keep this section. I screenshot it.
+**DSAR section** — four-row table for Articles 15, 17, 20, 33. "Wired to endpoints, not promises." The phrasing is good. The substance is OK — `/settings → Privacy → Export my data` runs an Inngest job, signed S3 URL valid 7 days. Article 17 says hard delete in 30 days, audit log retains hashed pointers, disclosed in DPA. Article 33 says <72h breach notification with a public incident page at `beamixai.com/incidents/[YYYY-MM-DD]-[slug]`. I keep this section. I screenshot it.
 
 What I did NOT find that I expected:
 - **No SOC 2 / ISO 27001 / Trust Center section.** There's nothing called "Compliance" or "Certifications."
@@ -86,7 +86,7 @@ That's seven gaps in 60 seconds. The page is *structurally right* and *substanti
 - Missing: incident page has zero entries at launch. The page says "empty at launch is honest, not damning" — fine, but make sure the empty state explicitly confirms the page exists and will be populated. No vendor SLA for resolution time (only detection/containment/restoration). No customer-side compensation policy on Sev-1.
 
 ### §11 Contact
-- `security@beamix.tech`, mailto link, 4-business-hour SLA, PGP key on request, vulnerability disclosures get 60-min pager.
+- `security@beamixai.com`, mailto link, 4-business-hour SLA, PGP key on request, vulnerability disclosures get 60-min pager.
 - Trust: PGP key existing matters. 60-min pager for vuln disclosures matters. The "we have a real security inbox, not a Zendesk queue" framing is right.
 - Missing: **no published `security.txt`** at `/.well-known/security.txt` (RFC 9116). This is a 30-second fix and it's how vuln researchers find disclosure contacts. **No bug-bounty.** Even a $500-minimum HackerOne or self-hosted bounty would be a strong signal that they treat external research as a real input. Aria reads "PGP key on request" and thinks: real, but fragile. Aria reads "we run a $500-$5K bounty on HackerOne" and thinks: this is a security org.
 
@@ -139,7 +139,7 @@ Five columns to add. Doable in a deploy.
 
 ## 6. The DPA / indemnification clause
 
-I can't grade what I can't read. The page references the DPA but doesn't link it. **Gap: no DPA published or linked from /security.** A Scale-tier vendor at $499/mo asking me to onboard MUST have a public DPA at `beamix.tech/legal/dpa`, accessible without sales contact. Stripe has it. Vercel has it. Linear has it. Anthropic has it. Beamix should have it.
+I can't grade what I can't read. The page references the DPA but doesn't link it. **Gap: no DPA published or linked from /security.** A Scale-tier vendor at $499/mo asking me to onboard MUST have a public DPA at `beamixai.com/legal/dpa`, accessible without sales contact. Stripe has it. Vercel has it. Linear has it. Anthropic has it. Beamix should have it.
 
 Without seeing the DPA, the questions I'll ask procurement to push back on:
 
@@ -193,7 +193,7 @@ But I do not forward Marcus a one-line "Beamix is solid." I send a list. I want 
 
 2. **Add a Compliance section with SOC 2 / ISO 27001 status, auditor name, and observation-period start date.** Even pre-certification, name the auditor (e.g., "We are in observation period with [Drata + Prescient Assurance], targeting Type II report Q4 2026") and link a public Trust Center (Drata Trust Center, Vanta, or self-hosted). The current "target Year 1 Q4" footnote in §5 is the wrong place and the wrong depth.
 
-3. **Add a Vulnerability Disclosure Policy + bug-bounty program.** Publish `/.well-known/security.txt` (RFC 9116) with `Contact: security@beamix.tech` and `Encryption: <PGP key URL>`. Run a public bounty on HackerOne with a $500 minimum / $5K maximum at MVP — that's $20K/year ceiling, cheaper than one breach. Right now the page has a security email; that's a contact, not a program. The presence of a bounty signals "we treat external research as input, not threat" — that's the maturity inflection.
+3. **Add a Vulnerability Disclosure Policy + bug-bounty program.** Publish `/.well-known/security.txt` (RFC 9116) with `Contact: security@beamixai.com` and `Encryption: <PGP key URL>`. Run a public bounty on HackerOne with a $500 minimum / $5K maximum at MVP — that's $20K/year ceiling, cheaper than one breach. Right now the page has a security email; that's a contact, not a program. The presence of a bounty signals "we treat external research as input, not threat" — that's the maturity inflection.
 
 4. **Publish the DPA at `/legal/dpa` (no gating) with: liability cap, IP indemnification covering AI-generated content, 48h breach-notification SLA, 30d sub-processor pre-notification with terminate-without-penalty on unresolved objection, and Beamix's cyber-liability insurance coverage stated.** Without the DPA, the page is a marketing document for a legal posture I can't verify.
 

@@ -50,7 +50,7 @@
 | `POST /api/agents/[jobId]/cancel` | `src/app/api/agents/[jobId]/cancel/route.ts` | Cancel agent job. |
 | `GET /api/billing/checkout` | `src/app/api/billing/checkout/route.ts` | Returns Paddle priceId + metadata. |
 | `POST /api/billing/portal` | `src/app/api/billing/portal/route.ts` | Paddle customer portal URL. |
-| `POST /api/webhooks/paddle` | `src/app/api/webhooks/paddle/route.ts` | Paddle webhook handler. References `app.beamix.tech` in hardcoded fallback. |
+| `POST /api/webhooks/paddle` | `src/app/api/webhooks/paddle/route.ts` | Paddle webhook handler. References `app.beamixai.com` in hardcoded fallback. |
 | `POST /api/onboarding/complete` | `src/app/api/onboarding/complete/route.ts` | Marks onboarding done. Routes to old flow, not /start. |
 | `GET /api/notifications` | `src/app/api/notifications/route.ts` | Fetch user notifications. |
 | `POST /api/notifications/read` | `src/app/api/notifications/read/route.ts` | Mark read. |
@@ -66,7 +66,7 @@
 | `PUT /api/inbox/[itemId]/edit` | `src/app/api/inbox/[itemId]/edit/route.ts` | Edit inbox item. |
 | `POST /api/internal/revalidate` | `src/app/api/internal/revalidate/route.ts` | Cache revalidation. |
 | `GET /api/health` | `src/app/api/health/route.ts` | Health check. |
-| `POST /api/auth/tester-login` | `src/app/api/auth/tester-login/route.ts` | Dev tester shortcut. References `tester@beamix.tech`. |
+| `POST /api/auth/tester-login` | `src/app/api/auth/tester-login/route.ts` | Dev tester shortcut. References `tester@beamixai.com`. |
 | `POST/GET /api/inngest` | `src/app/api/inngest/route.ts` | Inngest serve endpoint. |
 
 ### Components
@@ -151,11 +151,11 @@
 
 | Function ID | File | Notes |
 |---|---|---|
-| `scan-run` | `src/inngest/functions/scan-run.ts` | Real LLM calls via OpenRouter. Tier-aware engine selection. References `app.beamix.tech` in fallback URL. |
+| `scan-run` | `src/inngest/functions/scan-run.ts` | Real LLM calls via OpenRouter. Tier-aware engine selection. References `app.beamixai.com` in fallback URL. |
 | `agent-pipeline` | `src/inngest/functions/agent-pipeline.ts` | Full agent job lifecycle. Uses correct pricing ($79/$189/$499). |
 | `automation-dispatcher` | `src/inngest/functions/automation-dispatcher.ts` | Scheduled automation trigger. |
-| `budget-guard` | `src/inngest/functions/budget-guard.ts` | Cost circuit breaker. References `app.beamix.tech`. |
-| `daily-digest` | `src/inngest/functions/daily-digest.ts` | Daily digest email. References `app.beamix.tech`. |
+| `budget-guard` | `src/inngest/functions/budget-guard.ts` | Cost circuit breaker. References `app.beamixai.com`. |
+| `daily-digest` | `src/inngest/functions/daily-digest.ts` | Daily digest email. References `app.beamixai.com`. |
 | `scan-completed` | `src/inngest/functions/scan-completed.ts` | Post-scan hook. |
 | `url-probe` | `src/inngest/functions/url-probe.ts` | URL health probe. |
 
@@ -197,7 +197,7 @@ No Stripe, no n8n references found anywhere in `apps/web/`.
 | `src/app/(auth)/login/page.tsx` | 🟡 REWORK | Email+password only. T95 requires Google OAuth as primary CTA above email form. Layout needs Google "G" button. |
 | `src/app/(auth)/signup/page.tsx` | ❌ DELETE | Signup is absorbed into `/start` Phase 3 (`signup-overlay`). A standalone `/signup` route contradicts Option E. Users who land here should be redirected to `/start`. |
 | `src/app/(auth)/forgot-password/page.tsx` | ✅ KEEP | Password reset is still needed for email+password fallback users. |
-| `src/app/(auth)/layout.tsx` | 🟡 REWORK | Contains `beamix.tech` links (3 occurrences). Replace with `beamixai.com`. |
+| `src/app/(auth)/layout.tsx` | 🟡 REWORK | Contains `beamixai.com` links (3 occurrences). Replace with `beamixai.com`. |
 | `src/app/scan/page.tsx` | 🟡 REWORK | Public scan page — concept is correct per Option E (peer-public `/scan`). But current implementation uses `mockScanResult` hardcoded object. Must wire to real engine via `POST /api/scan/start` + result polling. Also needs "Claim this scan" CTA that routes to `/start?phase=results&scan_id=[id]`. Currently no `/scan/[scanId]` permalink — that route group is missing entirely. |
 | `src/app/(protected)/onboarding/page.tsx` | ❌ DELETE | Pre-rethink 2-step business form. Replaced entirely by `/start` 9-phase state machine. |
 | `src/app/(protected)/home/page.tsx` | 🟡 REWORK | Live data + correct tier names. Missing: Two-Tier state (Free Account vs Paid Customer). T112 requires account state detection and different render paths for free vs paid. Missing "Activate agents" CTA + sample data population (T113 F52). |
@@ -289,11 +289,11 @@ No Stripe, no n8n references found anywhere in `apps/web/`.
 | `src/lib/agents/coordination.ts` | ✅ KEEP | |
 | `src/lib/agents/types.ts` | ✅ KEEP | |
 | `src/lib/agents/prompts/` (all 11 files) | 🟡 REWORK | Only keep 6 MVP prompts: `query_mapper`, `content_optimizer`, `faq_builder`, `schema_generator`, `entity_builder`, `offsite_presence_builder`. Archive non-MVP prompts to `src/lib/agents/prompts/_deferred/` — do not delete (they are reused at MVP-2). |
-| `src/lib/llm/router.ts` | 🟡 REWORK | References `beamix.tech` in `HTTP-Referer` header. Update to `beamixai.com`. |
+| `src/lib/llm/router.ts` | 🟡 REWORK | References `beamixai.com` in `HTTP-Referer` header. Update to `beamixai.com`. |
 | `src/lib/llm/cost.ts` | ✅ KEEP | |
-| `src/lib/resend/client.ts` | 🟡 REWORK | Default `FROM` email references `notify.beamix.tech`. Update to `notify.beamixai.com`. |
+| `src/lib/resend/client.ts` | 🟡 REWORK | Default `FROM` email references `notify.beamixai.com`. Update to `notify.beamixai.com`. |
 | `src/lib/resend/send.ts` | ✅ KEEP | |
-| `src/lib/resend/templates/` (6 templates) | 🟡 REWORK | 6 of 18 required Resend templates exist (T146 requires all 18). Existing 6 need domain references updated: `beamix.tech` → `beamixai.com`. |
+| `src/lib/resend/templates/` (6 templates) | 🟡 REWORK | 6 of 18 required Resend templates exist (T146 requires all 18). Existing 6 need domain references updated: `beamixai.com` → `beamixai.com`. |
 | `src/lib/supabase/client.ts` | ✅ KEEP | |
 | `src/lib/supabase/server.ts` | ✅ KEEP | |
 | `src/lib/supabase/middleware.ts` | ✅ KEEP | |
@@ -303,7 +303,7 @@ No Stripe, no n8n references found anywhere in `apps/web/`.
 | `src/lib/scan/query-mapper.ts` | ✅ KEEP | |
 | `src/lib/security/rate-limit.ts` | ✅ KEEP | |
 | `src/lib/security/ssrf.ts` | ✅ KEEP | |
-| `src/lib/seed/tester-demo.ts` | 🟡 REWORK | Extensive `beamix.tech` references (40+ occurrences). Replace all with `beamixai.com`. Also: this file is used by the tester-login API route. It represents Free Account sample data — good concept, but must align to Two-Tier model (T113 F52 sample data for Free Account /home). |
+| `src/lib/seed/tester-demo.ts` | 🟡 REWORK | Extensive `beamixai.com` references (40+ occurrences). Replace all with `beamixai.com`. Also: this file is used by the tester-login API route. It represents Free Account sample data — good concept, but must align to Two-Tier model (T113 F52 sample data for Free Account /home). |
 | `src/lib/notifications/insert.ts` | ✅ KEEP | |
 | `src/lib/suggestions/rules.ts` | ✅ KEEP | |
 | `src/lib/suggestions/write.ts` | ✅ KEEP | |
@@ -328,11 +328,11 @@ No Stripe, no n8n references found anywhere in `apps/web/`.
 |---|---|---|
 | `src/inngest/client.ts` | ✅ KEEP | |
 | `src/inngest/events.ts` | 🟡 REWORK | Add new events for Option E flow: `start/phase.advanced`, `start/abandoned`, `brief/signed`, `brief/undo.requested`. |
-| `src/inngest/functions/scan-run.ts` | 🟡 REWORK | Fix hardcoded `app.beamix.tech` fallback URL. Scale tier engine list is empty — extend to 11. |
+| `src/inngest/functions/scan-run.ts` | 🟡 REWORK | Fix hardcoded `app.beamixai.com` fallback URL. Scale tier engine list is empty — extend to 11. |
 | `src/inngest/functions/agent-pipeline.ts` | ✅ KEEP | Pricing correct. Trim to 6 MVP agents in config. |
 | `src/inngest/functions/automation-dispatcher.ts` | ✅ KEEP | |
-| `src/inngest/functions/budget-guard.ts` | 🟡 REWORK | Fix hardcoded `app.beamix.tech` URL. |
-| `src/inngest/functions/daily-digest.ts` | 🟡 REWORK | Fix hardcoded `app.beamix.tech` URL. |
+| `src/inngest/functions/budget-guard.ts` | 🟡 REWORK | Fix hardcoded `app.beamixai.com` URL. |
+| `src/inngest/functions/daily-digest.ts` | 🟡 REWORK | Fix hardcoded `app.beamixai.com` URL. |
 | `src/inngest/functions/scan-completed.ts` | ✅ KEEP | |
 | `src/inngest/functions/url-probe.ts` | ✅ KEEP | |
 
@@ -350,7 +350,7 @@ No Stripe, no n8n references found anywhere in `apps/web/`.
 | `apps/web/tailwind.config.ts` | 🟡 REWORK | T58: add 10 named easing curves. T96: add free/paid account token groups. T98: update focus ring to solid 2px. |
 | `apps/web/tsconfig.json` | ✅ KEEP | Strict mode on. Fine. |
 | `apps/web/eslint.config.mjs` | 🟡 REWORK | T59: add 3 custom ESLint rules. |
-| `apps/web/.env.example` | 🟡 REWORK | T95: add `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`. Remove any `beamix.tech` defaults. Verify all 25 Vercel env vars from INFRA-STATE-COMPLETE.md are documented. |
+| `apps/web/.env.example` | 🟡 REWORK | T95: add `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`. Remove any `beamixai.com` defaults. Verify all 25 Vercel env vars from INFRA-STATE-COMPLETE.md are documented. |
 | `apps/web/src/app/layout.tsx` | 🟡 REWORK | T60/T93 font additions. |
 
 ---
@@ -421,13 +421,13 @@ These files must be deleted. Each deletion is safe — nothing else imports thes
 
 ### Domain string replacement (mechanical — all in one PR)
 
-These files contain `beamix.tech` that must become `beamixai.com`. This is safe string replacement with no logic change.
+These files contain `beamixai.com` that must become `beamixai.com`. This is safe string replacement with no logic change.
 
 | File | Occurrences |
 |---|---|
 | `apps/web/src/app/api/webhooks/paddle/route.ts` | 1 (fallback APP_BASE_URL) |
 | `apps/web/src/app/api/auth/tester-login/route.ts` | 1 (tester email default) |
-| `apps/web/src/app/(auth)/layout.tsx` | 3 (href + "Back to beamix.tech" copy) |
+| `apps/web/src/app/(auth)/layout.tsx` | 3 (href + "Back to beamixai.com" copy) |
 | `apps/web/src/app/(auth)/signup/page.tsx` | 2 (terms + privacy links) — moot if file is deleted |
 | `apps/web/src/inngest/functions/scan-run.ts` | 1 (baseUrl fallback) |
 | `apps/web/src/inngest/functions/daily-digest.ts` | 1 (APP_BASE_URL fallback) |
@@ -444,13 +444,13 @@ These files contain `beamix.tech` that must become `beamixai.com`. This is safe 
 |---|---|
 | `apps/web/src/middleware.ts` | Replace `/onboarding` redirect target with `/start`. Add account-state logic for Two-Tier model (T112). Update matcher to also cover `/start` partial-auth states. |
 | `apps/web/src/app/(auth)/login/page.tsx` | Add Google OAuth primary CTA per T95. Reposition email+password as secondary ("Or use email"). Wire `supabase.auth.signInWithOAuth({ provider: 'google' })`. |
-| `apps/web/src/app/(auth)/layout.tsx` | Update 3 `beamix.tech` links to `beamixai.com`. |
+| `apps/web/src/app/(auth)/layout.tsx` | Update 3 `beamixai.com` links to `beamixai.com`. |
 | `apps/web/src/app/page.tsx` | Update root redirect logic: unauthenticated → `/start`; authed → `/home`. |
 | `apps/web/src/lib/supabase/client.ts` | Keep as-is. |
 | `apps/web/src/lib/supabase/server.ts` | Keep as-is. |
 | `apps/web/src/lib/supabase/middleware.ts` | Keep as-is. |
 | `apps/web/src/lib/supabase/service.ts` | Keep as-is. |
-| `apps/web/src/app/api/webhooks/paddle/route.ts` | Fix `beamix.tech` fallback. No other logic change. |
+| `apps/web/src/app/api/webhooks/paddle/route.ts` | Fix `beamixai.com` fallback. No other logic change. |
 | `apps/web/src/app/layout.tsx` | Add variable Inter (T60) + conditional Heebo (T93) + subset Fraunces (T60). |
 | `apps/web/tailwind.config.ts` | T58: 10 named easing curves. T96: account state tokens. T98: focus ring. |
 | `apps/web/next.config.ts` | T60/T93 font strategy. Add `/signup` → `/start` permanent redirect. |
@@ -463,7 +463,7 @@ These files contain `beamix.tech` that must become `beamixai.com`. This is safe 
 | `apps/web/src/lib/agents/prompts/` | Move 5 non-MVP prompts to `_deferred/` subdirectory. |
 | `apps/web/src/lib/resend/client.ts` | Fix domain fallback. |
 | `apps/web/src/lib/resend/templates/*.ts` | Fix domain references in all 6 existing templates. |
-| `apps/web/src/lib/seed/tester-demo.ts` | Replace all 40+ `beamix.tech` URLs with `beamixai.com`. |
+| `apps/web/src/lib/seed/tester-demo.ts` | Replace all 40+ `beamixai.com` URLs with `beamixai.com`. |
 | `apps/web/src/lib/llm/router.ts` | Fix HTTP-Referer header. |
 
 ### Database migrations to keep
@@ -814,7 +814,7 @@ If any fail: stop and investigate before proceeding.
 
 ### Step 3 — Domain string replacement (PR: `fix/retire-beamix-tech-domain`)
 
-One PR. Mechanically replace all `beamix.tech` occurrences in the 10 files listed in §5. No logic changes.
+One PR. Mechanically replace all `beamixai.com` occurrences in the 10 files listed in §5. No logic changes.
 
 Files touched: `paddle/route.ts`, `tester-login/route.ts`, `(auth)/layout.tsx`, `scan-run.ts`, `daily-digest.ts`, `budget-guard.ts`, `llm/router.ts`, `resend/client.ts`, `tester-demo.ts`.
 

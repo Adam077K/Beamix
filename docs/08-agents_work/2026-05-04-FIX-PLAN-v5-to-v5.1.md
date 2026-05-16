@@ -367,7 +367,7 @@ After applying all patches:
 1. Re-run feature parity audit (v4 → v5.1) — verify no "Spec unchanged from v4" pointers remain
 2. Re-run cross-doc consistency audit — verify Phase numbering aligned across all docs
 3. Re-run build plan integrity audit — verify T119, T120 in Tier 1; T132 split applied; new tickets present
-4. Spot-check: open `2026-05-04-PRD-wedge-launch-v5.1.md` and search for "beamix.tech" — should be zero matches
+4. Spot-check: open `2026-05-04-PRD-wedge-launch-v5.1.md` and search for "beamixai.com" — should be zero matches
 5. Spot-check: open Build Plan v3.1 and verify all dependency notes updated for tier promotions
 
 ---

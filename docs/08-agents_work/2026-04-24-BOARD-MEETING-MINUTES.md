@@ -245,7 +245,7 @@ Recommendation Cascade is demoted to "default list-reveal rule" (CSS + Motion st
 
 **The positions:**
 - **Reductionist:** CTA bar is fine. Keep it minimal.
-- **Storyteller:** **SHAREABLE. This is the single most important section in the critique.** Four artifacts per scan: Scan Card PNG, permalink replay URL, referral link, video. "The score, good or bad, is emotionally charged data. Every shared card carries beamix.tech attribution. Add one shareable Scan Card and free-to-paid conversion doubles."
+- **Storyteller:** **SHAREABLE. This is the single most important section in the critique.** Four artifacts per scan: Scan Card PNG, permalink replay URL, referral link, video. "The score, good or bad, is emotionally charged data. Every shared card carries beamixai.com attribution. Add one shareable Scan Card and free-to-paid conversion doubles."
 - **Executor:** Engineering is 1-2 weeks (dynamic OG image generation + share modal UI). Feasible post-Phase-2.
 - **Advocate:** The CTA copy matters more than the format. "Save results + fix these issues — $79/mo, 14-day money-back guarantee, cancel from Settings in 2 clicks." Honest pricing beats vague save-your-results.
 - **Motion Craftsman:** Not addressed.
@@ -266,7 +266,7 @@ Recommendation Cascade is demoted to "default list-reveal rule" (CSS + Motion st
 - **Executor:** Additional product surface. Budget separately.
 - **Advocate:** Not discussed.
 - **Motion Craftsman:** Not discussed.
-- **Futurist:** **"State of GEO" at `stateof.beamix.tech` — live index + weekly newsletter + agent gallery + scan of the week + annual report. Beamix's Stripe Press.**
+- **Futurist:** **"State of GEO" at `stateof.beamixai.com` — live index + weekly newsletter + agent gallery + scan of the week + annual report. Beamix's Stripe Press.**
 - **Moat Strategist:** **"Beamix GEO Index — first public benchmark. Profound has the 'Profound Index'; Beamix should publish a public GEO Visibility Score for any domain, free, no signup. Link-worthy resource. Press coverage. Top of funnel AND data collection. None of the 15 competitors have done this for SMB."**
 
 **What's actually at stake:** Whether Beamix builds content authority or just ships a product. Two senior seats (Futurist, Moat Strategist) both flagged this as a category-defining move.
@@ -310,7 +310,7 @@ Recommendation Cascade is demoted to "default list-reveal rule" (CSS + Motion st
 The board independently surfaced these — v2 did not contain them:
 
 - **Shareable Scan Card** (Storyteller + Futurist + Moat implicit) — 4 artifacts per scan (PNG, auto-GIF, permalink, Twitter thread). The cheapest viral loop and the single biggest v2 omission. 1-2 weeks engineering. Potentially 2-5x conversion lift.
-- **Beamix GEO Index** (Moat Strategist + Futurist) — public domain scanner, no signup. `beamix.tech/scan/[domain]`. Link magnet, PR asset, SEO engine, top-of-funnel.
+- **Beamix GEO Index** (Moat Strategist + Futurist) — public domain scanner, no signup. `beamixai.com/scan/[domain]`. Link magnet, PR asset, SEO engine, top-of-funnel.
 - **State of GEO content authority** (Moat Strategist + Futurist) — weekly newsletter + annual report + agent gallery + public benchmark database. 24-month compound moat.
 - **12-second vertical list scan for recurring scans** (Reductionist) — replaces mandatory Stage for scan #2+. In-page, not modal. Matches v2's own R2 research.
 - **Memory-as-infrastructure** (Futurist) — episodic + semantic + relational + narrative. Platform that makes every other feature 10x more valuable. Lightweight memory-lite at MVP.
@@ -408,7 +408,7 @@ Not a new direction — a revised v2 absorbing the critical catches and best-ide
 - Stage modal with 8 frames, 26 seconds (Motion Craftsman's timing), skip button from Frame 3
 - Inline vertical list fallback for recurring scans (Reductionist's 12s pattern)
 - **Shareable Scan Card: PNG + permalink URL** (Storyteller's ship-critical addition)
-- Public `beamix.tech/s/[scan-id]` permalink replay
+- Public `beamixai.com/s/[scan-id]` permalink replay
 - Engine pills with 1-letter monograms (defer SVG logos until licensing clears)
 
 **Week 4 — Beamie placeholder + polish:**
@@ -419,7 +419,7 @@ Not a new direction — a revised v2 absorbing the critical catches and best-ide
 - Dismiss in one click (all seats agree)
 - Aria-live region for every state change (Advocate WCAG 4.1.3 fix)
 - Per-page heading pass (InterDisplay 40px on all H1s, 28px on H2s)
-- **Public GEO Index ships alongside: `beamix.tech/check-my-site`** (Moat Strategist's Moat 3)
+- **Public GEO Index ships alongside: `beamixai.com/check-my-site`** (Moat Strategist's Moat 3)
 - **Framer marketing site gets Stage demo video in hero** (Moat Strategist's Track D)
 
 ### Week 5-8 (after Adam's decisions):
@@ -459,7 +459,7 @@ Not a new direction — a revised v2 absorbing the critical catches and best-ide
 | 10 | Hebrew/RTL priority | 0 mentions in 651 lines | **BLOCKER — fix before Phase 2. RTL addendum + Hebrew-display font + copywriter** | [ ] |
 | 11 | Marketing site unification | "Explicitly no marketing changes" | **Unify — Framer Stage demo video + Beamie hero illustration within 30 days of Phase 2** | [ ] |
 | 12 | Shareable Scan Card | Not in v2 | **SHIP in Week 3. PNG + permalink at MVP, GIF + thread Month 2. Cheapest viral loop** | [ ] |
-| 13 | Public GEO Index tool | Not in v2 | **SHIP in Week 4. `beamix.tech/check-my-site`, no signup, same engine** | [ ] |
+| 13 | Public GEO Index tool | Not in v2 | **SHIP in Week 4. `beamixai.com/check-my-site`, no signup, same engine** | [ ] |
 | 14 | State of GEO newsletter | Not in v2 | **Start before v2 ships. 800 words weekly. 24-month compound moat** | [ ] |
 | 15 | Tool vs company framing | Tool | **Tool first (pays bills), architect for company (memory + data + content + Hebrew moats)** | [ ] |
 

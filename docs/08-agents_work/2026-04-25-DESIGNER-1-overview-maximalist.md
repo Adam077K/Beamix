@@ -21,7 +21,7 @@ This is the Stripe / Mercury / Notion / Vercel pattern, not the Linear pattern. 
 
 ### Sarah's morning (Tel Aviv dentist, 2-chair practice)
 
-**07:42** — She opens Beamix on her iPad over coffee. The URL she lands on is `app.beamix.tech/home`. She sees, in order from top to bottom:
+**07:42** — She opens Beamix on her iPad over coffee. The URL she lands on is `app.beamixai.com/home`. She sees, in order from top to bottom:
 
 1. **Hero score block** — large `47` with `↑ +6 since Monday`, a 12-week sparkline running underneath, semantic color (amber: "Fair"), a one-line plain-Hebrew diagnosis: "אתה מוזכר ב-3 מתוך 9 מנועי AI. תיקון אחד יקפיץ אותך."
 2. **Action zone — "Top 3 fixes ready to run"** — three RecommendationCards, each with estimated-impact pill ("+4 score") and a "Run →" CTA. A single primary button: "Run all top fixes — 14 credits."

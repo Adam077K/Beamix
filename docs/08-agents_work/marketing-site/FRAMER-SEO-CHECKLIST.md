@@ -38,7 +38,7 @@
 
 ### Contacts `/contacts`
 - **Title:** `Contact Beamix — Questions About AI Search Visibility`
-- **Description:** `Have a question about Beamix, pricing, or how AI search visibility works? Get in touch at support@beamix.tech.`
+- **Description:** `Have a question about Beamix, pricing, or how AI search visibility works? Get in touch at support@beamixai.com.`
 - **OG Title:** `Get in Touch with Beamix`
 - **OG Description:** `Questions about AI search visibility? We'd love to hear from you.`
 
@@ -69,12 +69,12 @@ Add this in Framer: **Site Settings > Custom Code > Start of `<head>` tag**
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "Beamix",
-  "url": "https://beamix.tech",
-  "logo": "https://beamix.tech/logo/beamix_logo_blue_Primary.png",
+  "url": "https://beamixai.com",
+  "logo": "https://beamixai.com/logo/beamix_logo_blue_Primary.png",
   "description": "Beamix scans your business across AI engines, shows where you rank, and uses AI agents to fix it.",
   "contactPoint": {
     "@type": "ContactPoint",
-    "email": "support@beamix.tech",
+    "email": "support@beamixai.com",
     "contactType": "customer support"
   },
   "sameAs": []
@@ -148,7 +148,7 @@ Add this in Framer: **Site Settings > Custom Code > Start of `<head>` tag**
 
 Do these in Framer's UI:
 
-- [ ] **Custom domain:** Connect `beamix.tech` (or your domain) in Site Settings > Domains. Add 2 A records + 1 CNAME in DNS.
+- [ ] **Custom domain:** Connect `beamixai.com` (or your domain) in Site Settings > Domains. Add 2 A records + 1 CNAME in DNS.
 - [ ] **Page titles:** Set unique title for each page (copy from above)
 - [ ] **Meta descriptions:** Set unique description for each page (copy from above)
 - [ ] **OG images:** Upload a 1200x630px branded social card for each page (Page Settings > Page Images > Social Preview)

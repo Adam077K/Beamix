@@ -2,7 +2,7 @@
 
 > **Audit date:** April 9, 2026
 > **SEO Health Score:** 39/100 (Poor → target 75+ after fixes)
-> **Site:** https://beamix.tech (Framer)
+> **Site:** https://beamixai.com (Framer)
 
 **Note:** Structured data (Organization, SoftwareApplication, FAQ schemas) ARE working — confirmed via Google Rich Results Test. Audit agents couldn't detect them because WebFetch doesn't execute Framer's client-side script injection.
 
@@ -27,17 +27,17 @@ A GEO platform without llms.txt is a credibility gap. Create a page at `/llms.tx
 Beamix scans your business across ChatGPT, Gemini, Claude, Perplexity, and 10+ AI engines. It shows where you rank, diagnoses why you're missing, and uses 16 AI agents to produce the content that gets you recommended.
 
 ## Product
-- Website: https://beamix.tech
+- Website: https://beamixai.com
 - Category: GEO (Generative Engine Optimization) / SaaS
 - Target: Small and medium businesses (5-200 employees)
 - Pricing: Starter $49/mo, Pro $149/mo, Business $349/mo
 
 ## Key Pages
-- Features: https://beamix.tech/features
-- Pricing: https://beamix.tech/pricing
-- Company: https://beamix.tech/company
-- Blog: https://beamix.tech/blog
-- Contact: https://beamix.tech/contacts
+- Features: https://beamixai.com/features
+- Pricing: https://beamixai.com/pricing
+- Company: https://beamixai.com/company
+- Blog: https://beamixai.com/blog
+- Contact: https://beamixai.com/contacts
 
 ## How It Works
 1. Scan: Query 10+ AI engines with real prompts about your industry and location

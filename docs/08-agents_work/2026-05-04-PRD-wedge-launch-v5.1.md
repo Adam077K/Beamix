@@ -5,7 +5,7 @@
 **Author:** Product Lead
 **Lock authority:** PRD v4 locked decisions (Board Meeting 2026-04-27 + Design Board 2 2026-04-28) + Onboarding Audit 2026-05-04 (12 findings) + Flow Architecture Synthesis 2026-05-04 (Option E + 6 new findings) + 13 Adam-locked decisions (Q1–Q13, 2026-05-04)
 **Predecessors:** PR #52 (v1) → PR #53 (v3 + Build Plan v1) → PR #54 (Round 2/3 synthesis + Aria persona + PRD v4 amendments) → PR #55 (PRD v4 canonical) → PR #56 (onboarding audit synthesis) → PR #57 (flow architecture synthesis + Option E) → this v5 consolidation
-**Domain:** beamixai.com (all `beamix.tech` references retired). Customer-facing brand name remains **Beamix** — never write "BeamixAI."
+**Domain:** beamixai.com (all `beamixai.com` references retired). Customer-facing brand name remains **Beamix** — never write "BeamixAI."
 
 > **DEPRECATION NOTICE:** PRD v4, v3, v2, and v1 are superseded in their entirety. All acceptance criteria in prior versions are retired. Do not reopen decisions locked in v4 or earlier. The 23 Board Meeting locked decisions, the 5 contested design decisions from Board 2, and the 13 Adam-locked decisions (Q1–Q13) from 2026-05-04 are all locked in this document and are not subject to reopening.
 
@@ -2699,7 +2699,7 @@ All domain infrastructure live and verified. Updated 2026-05-04.
 | Google Search Console | beamixai.com verified and indexed | Live (configured 2026-04-29) |
 | Bing Webmaster Tools | beamixai.com verified | Live (configured 2026-04-29) |
 
-**Product at app.beamixai.com:** Production deployment live as of 2026-04-29. All references in this document use `beamixai.com`, `app.beamixai.com`, and `notify.beamixai.com`. The old domain `beamix.tech` is retired. Customer-facing brand name remains **Beamix** — never write "BeamixAI."
+**Product at app.beamixai.com:** Production deployment live as of 2026-04-29. All references in this document use `beamixai.com`, `app.beamixai.com`, and `notify.beamixai.com`. The old domain `beamixai.com` is retired. Customer-facing brand name remains **Beamix** — never write "BeamixAI."
 
 ---
 

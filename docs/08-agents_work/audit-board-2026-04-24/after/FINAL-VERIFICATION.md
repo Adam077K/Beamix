@@ -3,7 +3,7 @@
 **Date:** 2026-04-24
 **Commit verified:** `98921a24c18339105835d5988d621b737ecd4dcc` (PR #47 — fix(labels): apply agentTypeLabel on inbox/automation/archive)
 **Production deploy:** Vercel deployment id `4473303276`, environment=Production, state=**success** (created 2026-04-24T11:59:35Z)
-**Tester URL:** https://beamix.vercel.app/ (logged in as `tester@beamix.tech`)
+**Tester URL:** https://beamix.vercel.app/ (logged in as `tester@beamixai.com`)
 **Viewport:** 1440×900
 
 ---

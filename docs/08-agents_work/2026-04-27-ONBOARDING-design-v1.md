@@ -544,7 +544,7 @@ The rotation includes one line that names the future cadence: *"Monday digest co
 
 ### 4.1 Free /scan public → signup flow (the dominant path)
 
-The customer ran a free public scan at `/scan` (or `beamix.tech/scan` if hosted on Framer), saw their score, hit a CTA "Run weekly. Fix automatically." → Paddle checkout → returned to product. They expect Beamix to know who they are.
+The customer ran a free public scan at `/scan` (or `beamixai.com/scan` if hosted on Framer), saw their score, hit a CTA "Run weekly. Fix automatically." → Paddle checkout → returned to product. They expect Beamix to know who they are.
 
 **What carries forward:** `scan_id` is appended to the Paddle return URL. On `/onboarding/1` mount, the server fetches the scan record and pre-fills:
 - `website` (always)

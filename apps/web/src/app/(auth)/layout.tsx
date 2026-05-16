@@ -13,7 +13,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="w-full max-w-[400px]">
         {/* Logo mark */}
         <div className="flex justify-center mb-8">
-          <Link href="https://beamix.tech" aria-label="Beamix home">
+          <Link href="https://beamixai.com" aria-label="Beamix home">
             <Image
               src="/logo/beamix_logo_blue_Primary.png"
               alt="Beamix"
@@ -33,10 +33,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         {/* Footer */}
         <p className="text-center mt-5 text-xs text-gray-400">
           <Link
-            href="https://beamix.tech"
+            href="https://beamixai.com"
             className="hover:text-gray-600 transition-colors focus-visible:outline-none focus-visible:underline"
           >
-            &larr; Back to beamix.tech
+            &larr; Back to beamixai.com
           </Link>
         </p>
       </div>

@@ -23,7 +23,7 @@ export async function POST() {
     )
   }
 
-  const testerEmail = process.env['TESTER_EMAIL'] ?? 'tester@beamix.tech'
+  const testerEmail = process.env['TESTER_EMAIL'] ?? 'tester@beamixai.com'
   const testerPassword = process.env['TESTER_PASSWORD'] ?? 'Tester-Beamix-2026!'
 
   try {

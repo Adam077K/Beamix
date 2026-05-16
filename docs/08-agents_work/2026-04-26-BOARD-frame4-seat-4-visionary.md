@@ -133,7 +133,7 @@ The Monday Digest, as Frame 4 designs it, opens like this:
 >
 > *— Your crew*
 >
-> *[See the receipts](https://app.beamix.tech/digests/2026-04-27)*
+> *[See the receipts](https://app.beamixai.com/digests/2026-04-27)*
 
 That paragraph is the entire product's voice in seven sentences. It is signed. It is dated. It is referenced to the Standing Order. It links to a permanent receipt. The receipt is **a public-by-default page** the customer can share — that is the viral artifact the prior frames missed entirely. (More on this below.)
 
@@ -159,7 +159,7 @@ Frames 1, 2, and 3 are products. Frame 4 is a platform thesis disguised as a GEO
 
 Frames 1-3 missed the most powerful surface: **public receipts.**
 
-Every weekly digest, every scan result, every white-label PDF in Frame 4 has a **public permalink**. By default. Like a Notion page. Like a Substack issue. Like a GitHub commit. Sarah can share `app.beamix.tech/firms/sarahs-plumbing/digests/2026-04-27` with anyone — her business partner, an investor, a customer — and it renders as a beautifully-typeset, brand-consistent, read-only page that says *"this is what my GEO firm did this week."*
+Every weekly digest, every scan result, every white-label PDF in Frame 4 has a **public permalink**. By default. Like a Notion page. Like a Substack issue. Like a GitHub commit. Sarah can share `app.beamixai.com/firms/sarahs-plumbing/digests/2026-04-27` with anyone — her business partner, an investor, a customer — and it renders as a beautifully-typeset, brand-consistent, read-only page that says *"this is what my GEO firm did this week."*
 
 This is the **viral / share / publishable layer** that the prior frames missed. The mechanic is identical to Stripe's payment receipts (every transaction has a permalink), Linear's issue links (every issue is shareable), Vercel's deploy URLs (every deploy is a URL). Beamix's version: every digest is a URL, every scan is a URL, every report is a URL.
 

@@ -457,9 +457,9 @@ Beamix arrives at signup with the top 20 competitors **already populated for thi
 ### The "Beamix for X" sub-brand path
 
 This is the GTM unlock. Once vertical knowledge graphs exist, Beamix can spin up vertical-specific marketing surfaces:
-- **beamix.tech/plumbers** — landing page with plumber-specific copy, plumber-specific case studies, plumber-specific Brief
-- **beamix.tech/dentists** — same for dental
-- **beamix.tech/saas** — same for SaaS
+- **beamixai.com/plumbers** — landing page with plumber-specific copy, plumber-specific case studies, plumber-specific Brief
+- **beamixai.com/dentists** — same for dental
+- **beamixai.com/saas** — same for SaaS
 
 This is **programmatic SEO + vertical specialization** as a single GTM motion. Each landing page ranks for "GEO for [vertical]" queries. The vertical wedge feeds itself.
 
@@ -539,7 +539,7 @@ The vertical intelligence layer (Section 5) is **the single biggest engineering 
 
 ### Q3 to Seat 4 (the futurist / second-order thinker)
 
-The predictive layer (Section 4) — citation probability, score trajectory, competitor-move forecasting, engine-update impact — depends entirely on Beamix accumulating a **proprietary AI-engine response dataset** before competitors do. Profound has a 2-year head start at the enterprise tier; AthenaHQ has a basic version. **What's the data-velocity strategy that lets Beamix close the gap and compound past them?** Specifically: should we run "shadow scans" on free-tier signups (running additional engines/queries beyond what the customer paid for, to fill out the platform corpus)? Should we launch a free public tool — `beamix.tech/check-my-site` — that runs scans against everyone, even non-customers, just to enrich the dataset? And what does it cost in raw scan-spend (residential proxies, API calls) to reach data parity with Profound at year 2?
+The predictive layer (Section 4) — citation probability, score trajectory, competitor-move forecasting, engine-update impact — depends entirely on Beamix accumulating a **proprietary AI-engine response dataset** before competitors do. Profound has a 2-year head start at the enterprise tier; AthenaHQ has a basic version. **What's the data-velocity strategy that lets Beamix close the gap and compound past them?** Specifically: should we run "shadow scans" on free-tier signups (running additional engines/queries beyond what the customer paid for, to fill out the platform corpus)? Should we launch a free public tool — `beamixai.com/check-my-site` — that runs scans against everyone, even non-customers, just to enrich the dataset? And what does it cost in raw scan-spend (residential proxies, API calls) to reach data parity with Profound at year 2?
 
 ---
 

@@ -238,7 +238,7 @@ async function callOpenRouter(
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': process.env['OPENROUTER_SITE_URL'] ?? 'https://beamix.tech',
+      'HTTP-Referer': process.env['OPENROUTER_SITE_URL'] ?? 'https://beamixai.com',
       'X-Title': 'Beamix',
     },
     body: JSON.stringify(body),

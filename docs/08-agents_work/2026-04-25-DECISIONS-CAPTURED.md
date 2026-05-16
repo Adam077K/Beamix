@@ -80,7 +80,7 @@ Plan by scope + dependency + quality bar. No weeks, no sprints, no days.
 
 - Memory layer for Beamie (when Beamie returns)
 - Shareable Scan Card (defer; revisit when product is right)
-- Public GEO Index `beamix.tech/check-my-site` (defer; revisit when product is right)
+- Public GEO Index `beamixai.com/check-my-site` (defer; revisit when product is right)
 - State of GEO newsletter (defer; revisit when product is right)
 - Cast of 5 characters (defer with Beamie)
 

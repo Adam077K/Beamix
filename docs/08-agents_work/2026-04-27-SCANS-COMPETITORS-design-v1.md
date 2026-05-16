@@ -97,7 +97,7 @@ Total: 1284px + flex absorbs slack. Columns reflow proportionally below 1280px v
 
 **Margin column CUT 2026-04-28.** Per Rams + Tufte + Kare convergence, the 24px Margin strip is removed from /scans table chrome. The Margin survives only on artifact surfaces (Monthly Update PDF, Monday Digest header strip) where the agent fingerprints function as a typographic feature. The 24px of horizontal real estate is recovered for actual data: Scan ID +12px, Lenses +12px. Agent contribution data is exposed via the row expansion's Done column, not the table chrome itself.
 
-**Scan ID.** 13px Geist Mono 400, `tnum ss01`, `--color-ink-2`. Format: `SCN-2026-04-27-0142`. Click-to-copy with a 16px Lucide copy icon revealed on row hover at `--color-ink-4`. On click, the icon morphs to a check for 1200ms (no animation — opacity swap), and a small toast slides up from bottom-right (`--shadow-md`, 8px radius, `--color-paper-elev`, "Permalink copied"). The copied URL is `beamix.tech/s/{scan_id}` — and is **default-private** (the recipient hits a 404 unless the customer has hit Share at least once).
+**Scan ID.** 13px Geist Mono 400, `tnum ss01`, `--color-ink-2`. Format: `SCN-2026-04-27-0142`. Click-to-copy with a 16px Lucide copy icon revealed on row hover at `--color-ink-4`. On click, the icon morphs to a check for 1200ms (no animation — opacity swap), and a small toast slides up from bottom-right (`--shadow-md`, 8px radius, `--color-paper-elev`, "Permalink copied"). The copied URL is `beamixai.com/s/{scan_id}` — and is **default-private** (the recipient hits a 404 unless the customer has hit Share at least once).
 
 **Date.** 14px Inter 400, `--color-ink-2`. Format: `Apr 27, 9:14am`. Older than 7 days: drops the time and shows "Apr 14". Older than 1 year: shows "Apr 14, 2025". Tooltip on hover shows full ISO timestamp in Geist Mono.
 
@@ -286,7 +286,7 @@ If the scan is already public (the customer hit Share + Make Public previously),
 The customer hits Share inside the modal, ticks "Make this public" (checkbox, default off), then clicks "Get shareable link". The product generates a unique signed URL of the form:
 
 ```
-beamix.tech/s/{scan_id}?k={share_key}
+beamixai.com/s/{scan_id}?k={share_key}
 ```
 
 The `share_key` is a 16-char nonce. Anyone with the URL sees the public artifact page; without `k`, the URL 404s.
@@ -308,7 +308,7 @@ Register: **Editorial Artifact** (per VDS §6.1). This is the one place `/scans`
 - 12-week trajectory chart (same as A4.1, 720px wide, on cream).
 - The four lens sections, condensed: each section's lead line (22px Fraunces 300 on cream) + the top 5 items only. No audit log on the public page.
 - Engine-by-engine table, condensed to 5 columns (Engine, Score, Δ, Mentioned, Citations).
-- Footer CTA strip: cream-paper, 96px tall, "Run your own scan →" 22px Inter 500 + a brand PillButton lg "Scan my site" (links to `beamix.tech/scan` — the public free-scan landing). Then 24px gap, then the Beamix wordmark + signature line "— your crew" in 22px Fraunces 300 italic.
+- Footer CTA strip: cream-paper, 96px tall, "Run your own scan →" 22px Inter 500 + a brand PillButton lg "Scan my site" (links to `beamixai.com/scan` — the public free-scan landing). Then 24px gap, then the Beamix wordmark + signature line "— your crew" in 22px Fraunces 300 italic.
 - SealMark 20px at the very bottom-right of the footer (per VDS Move 1).
 
 **Mobile public page:** stacks vertically. Score cluster collapses to centered Ring (96px) + score number above the Ring on the left, delta + status below. Engine table becomes a card list. Lens sections each become a single column.

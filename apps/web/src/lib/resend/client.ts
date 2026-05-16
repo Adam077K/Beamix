@@ -1,7 +1,7 @@
 /**
  * client.ts — Resend singleton client.
  *
- * All transactional email goes through notify.beamix.tech.
+ * All transactional email goes through notify.beamixai.com.
  * From address is controlled by the RESEND_FROM_EMAIL env var.
  */
 
@@ -20,4 +20,4 @@ export function getResendClient(): Resend {
 
 /** Default From address for all Beamix transactional email. */
 export const FROM_ADDRESS =
-  process.env['RESEND_FROM_EMAIL'] ?? 'hello@notify.beamix.tech';
+  process.env['RESEND_FROM_EMAIL'] ?? 'hello@notify.beamixai.com';

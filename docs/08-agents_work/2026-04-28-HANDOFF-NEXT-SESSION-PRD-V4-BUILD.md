@@ -91,7 +91,7 @@ The current state:
 3. **8 prerequisites still owed by Adam (from prior session's handoff):**
    - Inngest account + signing/event keys
    - Supabase staging connection string + service_role_key
-   - DNS access for notify.beamix.tech (DKIM/SPF/DMARC)
+   - DNS access for notify.beamixai.com (DKIM/SPF/DMARC)
    - DPA indemnification cap confirmation
    - Tech E&O insurance binding status
    - Workflow Builder full-DAG editor at MVP (re-confirm)

@@ -220,7 +220,7 @@ Locked decisions in `docs/product-rethink-2026-04-09/` folder:
 ### Current `apps/web/`
 - 32,225 lines (mix of correct infra + pre-rethink features)
 - Already clean: pricing correct ($79/$189/$499); no Stripe; no n8n
-- Pre-rethink junk: old 2-step onboarding; standalone `/signup`; mock-only `/scan`; 5 dead home variants; 40+ `beamix.tech` strings
+- Pre-rethink junk: old 2-step onboarding; standalone `/signup`; mock-only `/scan`; 5 dead home variants; 40+ `beamixai.com` strings
 
 ### Hard reset approved
 Adam confirmed 2026-05-05: hard reset of `apps/web/src/` (not surgical). Reasoning: the rethink + planning is "completely different" from original; agent-driven development means time/effort is near-zero.

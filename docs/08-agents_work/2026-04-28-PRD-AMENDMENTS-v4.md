@@ -96,7 +96,7 @@
 
 **Acceptance criteria:**
 - `/.well-known/security.txt` published at MVP launch (zero-cost configuration)
-- HackerOne program live at MVP+30: $500 minimum bounty, $20K annual ceiling, scope = beamix.tech + api.beamix.tech + customer dashboards
+- HackerOne program live at MVP+30: $500 minimum bounty, $20K annual ceiling, scope = beamixai.com + api.beamixai.com + customer dashboards
 - Public disclosure page at `/trust/disclosure` — explains scope, payouts, response SLA (5 business days for triage, 30 for fix-or-mitigation)
 - Acknowledgments page: monthly-updated list of researchers who reported valid issues (name + handle + month; opt-out available)
 
@@ -171,7 +171,7 @@
 - /404: "We couldn't find that page. The URL may have moved." + "[Take me home →]" CTA
 - /500: "Something broke. Beamix is logging it now. Try again, or check our status." + status link
 - /maintenance: "Beamix is performing scheduled maintenance. Returning at 03:00 GMT." + status link
-- /status: external page (status.beamix.tech via Better Stack or equivalent) with current incident + 90-day uptime
+- /status: external page (status.beamixai.com via Better Stack or equivalent) with current incident + 90-day uptime
 - All pages have F31 Brief binding line at bottom
 - All pages logged to Sentry / observability (404 vs 500 vs maintenance distinguished)
 

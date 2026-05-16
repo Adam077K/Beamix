@@ -1,1 +1,1 @@
-Resend email templates and helpers — transactional email via notify.beamix.tech.
+Resend email templates and helpers — transactional email via notify.beamixai.com.

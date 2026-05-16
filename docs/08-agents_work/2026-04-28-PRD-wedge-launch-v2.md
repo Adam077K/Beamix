@@ -145,7 +145,7 @@ The following infrastructure must be built and verified before any agent touches
 6. **Truth File integrity-hash nightly job** (Sev-1 alert + auto-pause-all-agents on >50% field loss in 24h)
 7. **Build-time pipeline:** opentype.js Fraunces signature extractor + per-agent Rough.js monogram generator + per-customer seal generator (Inngest job at signup)
 8. **Cost ceiling instrumentation** (per-customer monthly scan-cost ledger + alarm)
-9. **Resend setup** + send-volume tier + bounce handler + DKIM/SPF/DMARC on notify.beamix.tech
+9. **Resend setup** + send-volume tier + bounce handler + DKIM/SPF/DMARC on notify.beamixai.com
 10. **DPA + /security page + privacy posture documentation** (technical-writer + legal advisor)
 
 ---
@@ -780,7 +780,7 @@ All Day 1-6 emails are default-ON for weeks 1–4 of a new account. After week 4
 
 ### Feature 20: /security public page (NEW)
 
-**What it does:** A Stripe-style 6-minute-readable public security and privacy page at `beamix.tech/security` (or `/trust`). The goal is to pass CTO review (the "Aria buyer gate") without requiring a sales call. Marcus's CTO Aria will read this before month 3. Without it, the Build → Scale upgrade for B2B SaaS founders doesn't happen.
+**What it does:** A Stripe-style 6-minute-readable public security and privacy page at `beamixai.com/security` (or `/trust`). The goal is to pass CTO review (the "Aria buyer gate") without requiring a sales call. Marcus's CTO Aria will read this before month 3. Without it, the Build → Scale upgrade for B2B SaaS founders doesn't happen.
 
 **Coverage sections (readable prose, not only bullets):**
 
@@ -804,14 +804,14 @@ All Day 1-6 emails are default-ON for weeks 1–4 of a new account. After week 4
 
 8. **Sub-processors list:** Supabase (DB + Auth), Twilio (phone attribution), Paddle (billing — merchant of record), Resend (email), Anthropic (Claude API), OpenAI (GPT API), Google (Gemini API), Perplexity (Sonar API). Maintained at this URL.
 
-9. **Security disclosure contact:** security@beamix.tech (or dedicated form). Response SLA: 72 hours for triage.
+9. **Security disclosure contact:** security@beamixai.com (or dedicated form). Response SLA: 72 hours for triage.
 
 10. **In-progress certifications:** SOC 2 Type II target Year 1 Q4. GDPR Article 44 compliance (EU region) at MVP-1.5.
 
 **Why MVP:** This is not a polish item — it is the "Aria buyer gate" for every B2B SaaS sale. Marcus's CTO will read it before month 3. Without it, the Build → Scale upgrade fails for the entire B2B SaaS cohort. It is also trivial to build relative to its sales value (technical-writer + 3 person-days).
 
 **Acceptance criteria:**
-- [ ] /security (or /trust) page live at beamix.tech at MVP launch — not a redirect to a PDF, a real page
+- [ ] /security (or /trust) page live at beamixai.com at MVP launch — not a redirect to a PDF, a real page
 - [ ] Page is readable in 6 minutes at normal pace (target: 900–1200 words)
 - [ ] All 10 sections above have at least a paragraph of plain prose — not only bullets
 - [ ] Sub-processors list maintained and linked from the page
@@ -939,7 +939,7 @@ All Day 1-6 emails are default-ON for weeks 1–4 of a new account. After week 4
 **Acceptance criteria:**
 - Given it is the first Monday of the month, when the Monthly Update email arrives, then the first visible line is the lead-attribution headline ("In [month], 9 AI-attributed sessions — up from 0 last month")
 - Given I open the PDF, when I see page 1, then there is a pull-quote in 64px Fraunces that captures a specific attribution event in one sentence — the sentence I would forward to my board
-- Given I want to share the report, when I click "Generate share link" in /reports, then I get a private unguessable URL (`beamix.tech/r/{nanoid21}`) with optional 30-day expiry — the action feels deliberate, not automatic
+- Given I want to share the report, when I click "Generate share link" in /reports, then I get a private unguessable URL (`beamixai.com/r/{nanoid21}`) with optional 30-day expiry — the action feels deliberate, not automatic
 
 ---
 
@@ -960,7 +960,7 @@ All Day 1-6 emails are default-ON for weeks 1–4 of a new account. After week 4
 **Story 7.1:** As a CTO co-founder who my CEO just told "check out this Beamix security page before we renew," I want to read a plain-prose security posture document in 6 minutes so that I can say "ok" to the renewal without asking for a vendor security questionnaire.
 
 **Acceptance criteria:**
-- Given I navigate to beamix.tech/security, when the page loads, then I see a 6-minute-readable document (not a PDF download, not a gated form)
+- Given I navigate to beamixai.com/security, when the page loads, then I see a 6-minute-readable document (not a PDF download, not a gated form)
 - Given I read the DSAR section, when I look for GDPR Article 15/17/20/33 endpoints, then they are all present with SLA and delivery format
 - Given I read the no-training clause, when I find it, then it says explicitly "Beamix does not use your Truth File, Brief, scan results, or agent outputs to train general AI models"
 - Given I read the audit log section, when I see the retention spec, then it says "7-year immutable retention" — and I understand I could reconstruct every agent action if I needed to
@@ -1096,7 +1096,7 @@ The following are explicitly deferred. Do not build, do not design, do not ship.
 
 - **Third-party Agent SDK and external developer program** — Year 1 (marketplace at MVP is Beamix-curated workflows only)
 - **EU region data residency** (separate Supabase project) — MVP-1.5
-- **White-label custom subdomain** (e.g., yossiagency.beamix.tech) — Year 1 (per-client white-label of PDF/email ships at MVP)
+- **White-label custom subdomain** (e.g., yossiagency.beamixai.com) — Year 1 (per-client white-label of PDF/email ships at MVP)
 - **Predictive Layer** (Citation Predictor ML model, Score Trajectory Forecasting, Competitor-Move Forecasting) — Year 1
 - **House Memory** as queryable natural-language archive — Year 1.5
 - **Content Studio** (Cursor-for-content co-authoring) — Year 1.5
