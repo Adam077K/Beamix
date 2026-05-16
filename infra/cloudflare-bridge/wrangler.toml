@@ -6,22 +6,34 @@ compatibility_date = "2026-04-01"
 # Values are NEVER stored inline here.
 [vars]
 # Injected secrets (placeholders — set via `wrangler secret put <VAR>`):
+# Updated 2026-05-13 (WS6 6C — 12-Routine roster locked).
+# Per-Routine bearer tokens (Q4 split locked — no shared CEO token):
+#   ROUTINE_ADVISOR_DAILY_THINKING_TOKEN    — Advisor Daily Thinking
+#   ROUTINE_MORNING_DIGEST_TOKEN            — Morning Digest
+#   ROUTINE_COMPETITOR_PULSE_TOKEN          — Competitor Pulse (renamed from COMPETITOR_SIGNAL)
+#   ROUTINE_GEO_ALGORITHM_SIGNAL_TOKEN      — GEO Algorithm Signal (weekly Sunday)
+#   ROUTINE_CTO_DAILY_PLAN_TOKEN            — CTO Daily Plan
+#   ROUTINE_CONTENT_IDEA_GENERATOR_TOKEN    — Content Idea Generator
+#   ROUTINE_MONDAY_STANDUP_TOKEN            — Monday Standup (weekly Mon)
+#   ROUTINE_FRIDAY_RETRO_TOKEN              — Friday Retro (weekly Fri)
+#   ROUTINE_EOD_SYNC_TOKEN                  — EOD Sync
+#   ROUTINE_SECURITY_WATCHER_TOKEN          — Security Watcher (Q11 NEW)
+#   ROUTINE_AUTO_UNBLOCK_TOKEN              — Auto-Unblock (event-triggered)
+#   ROUTINE_SYNTHESIZER_TOKEN               — Synthesizer (event-triggered @board)
+#
+# Per-Routine IDs (trig_<id> from claude.ai Routines page):
+#   ROUTINE_<NAME>_ID  — same 12 names as above, set via `wrangler secret put`.
+#
+# Legacy (kept for backwards-compat — WS4 deploy artifacts, no longer routed):
+#   ROUTINE_CEO_ENTRY_POINT_ID / ROUTINE_CEO_ENTRY_POINT_TOKEN
+#
+# Bridge core:
 #   BRIDGE_HMAC_SECRET             — HMAC key used to sign outbound trust-mode specs
 #   LINEAR_WEBHOOK_SECRET          — HMAC key for verifying inbound Linear webhooks
 #   ANTHROPIC_API_KEY              — Console-billed API key (NOT subscription OAuth)
-#   ROUTINE_CEO_ENTRY_POINT_TOKEN  — Per-Routine bearer token for CEO Entry-point
-#   ROUTINE_MORNING_DIGEST_TOKEN   — Per-Routine bearer token for Morning Digest
-#   ROUTINE_EOD_SYNC_TOKEN         — Per-Routine bearer token for EOD Sync
-#   ROUTINE_AUTO_UNBLOCK_TOKEN     — Per-Routine bearer token for Auto-Unblock
-#   ROUTINE_MONDAY_STANDUP_TOKEN   — Per-Routine bearer token for Monday Standup
-#   ROUTINE_FRIDAY_RETRO_TOKEN     — Per-Routine bearer token for Friday Retro
-#   ROUTINE_COMPETITOR_SIGNAL_TOKEN       — Per-Routine bearer token for Competitor Signal
-#   ROUTINE_CUSTOMER_VOICE_SIGNAL_TOKEN   — Per-Routine bearer token for Customer Voice Signal
-#   ROUTINE_GEO_ALGORITHM_SIGNAL_TOKEN    — Per-Routine bearer token for GEO Algorithm Signal
-#   ROUTINE_SYNTHESIZER_TOKEN      — Per-Routine bearer token for Synthesizer
 #   ALLOWED_ISSUERS                — Comma-separated Linear user IDs (Adam + bot accounts)
 #   SHORTCUT_SECRET                — HMAC bearer secret for iOS Shortcut /idea-capture
-#   TELEGRAM_BOT_TOKEN             — Telegram Bot API token
+#   TELEGRAM_BOT_TOKEN             — Telegram Bot API token (Telegram bot deferred — Q15 P0 carve-out only)
 #   ADAM_TELEGRAM_CHAT_ID          — Adam's personal Telegram chat ID
 #   SUPABASE_URL                   — Supabase project URL (e.g. https://xyz.supabase.co)
 #   SUPABASE_SERVICE_ROLE_KEY      — Supabase service role key (server-side only)
@@ -31,8 +43,8 @@ compatibility_date = "2026-04-01"
 binding = "BRIDGE_STATE_KV"
 # Adam: fill in the id after running:
 #   wrangler kv:namespace create BRIDGE_STATE_KV
-id = "PLACEHOLDER_KV_NAMESPACE_ID"
-preview_id = "PLACEHOLDER_KV_NAMESPACE_PREVIEW_ID"
+id = "88d6d23f0ac74ad4be7770699c19f076"
+preview_id = "cbf0146dbf184d64b2651779efd2ad85"
 
 [[durable_objects.bindings]]
 name = "ROUTINE_LOCK"

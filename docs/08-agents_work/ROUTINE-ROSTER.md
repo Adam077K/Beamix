@@ -6,6 +6,11 @@ supersedes: ORCHESTRATION.md §2E (10 standing Routines design — CEO Routine d
 inputs_to: WS6 (Routine .md files get written from this roster)
 ---
 
+> **2026-05-11 UPDATE — Telegram deferred:** Adam locked Telegram bot deploy as out-of-scope for WS6.
+> All Routines deliver via **Linear ticket only** until Telegram is wired in a later workstream.
+> The `Delivery` columns below that mention Telegram are historical — treat them as "Linear ticket" for now.
+> Reference: WS6 Phase 6A-bis plan. Routine .md files in `.claude/agents/war-room/` are already updated.
+
 # Routine Roster
 
 ## Architecture pivot (2026-05-08)

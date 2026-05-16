@@ -4,6 +4,70 @@
 
 ---
 
+### [2026-05-13] — WS6 PROPOSED — War-Room Agent Roster + Bridge Cleanup
+
+**Status:** PROPOSED — becomes LOCKED after Adam executes `docs/08-agents_work/ADAM-CHECKLIST-WS6-PROVISIONING.md` and smoke fires verify all 11 new Routines.
+
+**Locked design decisions (Q1-Q15, 2026-05-12):** see `.claude/agents/war-room/INDEX.md` for the full Q-list. Highlights:
+- **Q11 ADD `security-watcher`** Routine (daily 20:45, Sonnet, +$9/mo) — closes the gap where all 10 DR runbooks rely on Adam manually polling.
+- **Q12 REJECT `ai-search-rank-tracker`** — Beamix product itself will track its own AI-SERP in the future; war room defers.
+- **Q13 RECLASSIFY personas + workers as NOT Routines** — 4 personas and 6 workers are Task subagent templates only. Final Routine count: 12 (not 21). Saves 10 claude.ai slots + 20 wrangler secrets.
+- **Q14 WIRE `@board` Linear comment handler** — bridge now detects `@board` in a Linear comment, synthesizes a trust spec server-side (5-min expiry, scope.intent='board'), and fires Synthesizer. No more silent deadlock.
+- **Q15 NARROW Q7** — Telegram P0 allowed for 3 specific anomaly carve-outs (canary write failure ≥2 cycles, fire-rate spike >1.5× spec.max_fires_per_day, audit_log schema validation failure). Routine cost reporting remains silent.
+- **Q4 Per-Routine token split RESOLVED** — every Routine has its own bearer token. No shared-CEO-token blast radius.
+- **Q8 routing.ts cleanup** — stripped 8 stale labels (agent:ceo, agent:cto, agent:cmo, agent:cpo, agent:cbo, agent:cco, agent:qa-lead, agent:customer-voice). Renamed agent:competitor-signal → agent:competitor-pulse. Added 4 new env keys.
+
+**Architectural fixes from deep review (HX1-HX3):**
+- HX1: CTO Daily Plan is a "work proposal for Adam," NOT an autonomous dispatcher. Routines fire-and-terminate — they cannot spawn Task subagents. Worker dispatch happens interactively in Adam's CEO session.
+- HX2: Synthesizer invokes 4 personas via Task tool in `round_sequence` order: visionary → architect → strategist → aria. Personas are not standalone Routines.
+- HX3: Auto-Unblock has hard 3-cascade max. On cascade 4: escalate to Adam (Linear comment + Telegram P0 per Q15 carve-out). Triggers: `routine.timeout` (from Inngest) or `worker.stuck` (from parallel-watcher).
+
+**Single highest-leverage hardening landed:**
+- `apps/web/src/inngest/functions/audit-log-canary.ts` (D5 CC4) — 15-min cron writes `row_kind='internal_event'` with `spec.event_kind='canary'` via service-role + reads back. Two consecutive failures = Q15 carve-out → Telegram P0 (logged + `telegram_p0_pending` audit row until Telegram bot is deployed).
+
+**Files in scope:**
+- `.claude/agents/war-room/*.md` — 22 agent files (12 Routines + 6 worker templates + 4 persona templates)
+- `.claude/agents/war-room/INDEX.md` — locked roster + provisioning checklist
+- `infra/cloudflare-bridge/src/routing.ts` — 12-Routine env map + per-Routine token split + `detectBoardCommand` for Q14
+- `infra/cloudflare-bridge/src/index.ts` — `@board` handler in `handleCommentCreated` (Q14); switched to env-driven `resolveRoutineId` instead of static placeholder map
+- `infra/cloudflare-bridge/wrangler.toml` — updated secret list comments
+- `apps/web/src/inngest/functions/audit-log-canary.ts` — NEW
+- `docs/08-agents_work/ADAM-CHECKLIST-WS6-PROVISIONING.md` — NEW (Adam-action checklist)
+- `docs/08-agents_work/WS6-DEEP-REVIEW-AND-DELTAS.md` + `WS6-DEEP-REVIEW-FOR-HUMANS.md` — 5-critic synthesis
+- `docs/08-agents_work/WS6-SYNTHESIS-AND-OPTIONS.md` + `WS6-DESIGN-FOR-HUMANS.md` — first synthesis
+
+**Affects:**
+- WS7 (worker dispatch flow): not yet started. Worker .md templates exist as scaffolds; live dispatch requires future workstream.
+- Anthropic Routine provisioning: Adam must execute `ADAM-CHECKLIST-WS6-PROVISIONING.md` to flip PROPOSED → LOCKED (11 Routines in claude.ai + 22 wrangler secrets + cron config).
+- Bridge production deploy: `wrangler deploy` after Step 2 of the checklist.
+
+**Cost:** ~$170/mo Max-quota Routine spend projected (per ROUTINE-ROSTER.md). No incremental API billing.
+
+**Reversible?** All code reversible via git. routing.ts changes do NOT remove the CEO Entry Point Routine itself (still provisioned from WS4, just not routed). Bridge cleanup is forward-only once deployed — stale label fires now return 422.
+
+**Status:** PROPOSED. Becomes LOCKED after Adam executes provisioning checklist + smoke fires green + QA Lead PASS on PR #72 + merge to main.
+
+**See:**
+- PR: https://github.com/Adam077K/beamix/pull/72
+- Adam checklist: `docs/08-agents_work/ADAM-CHECKLIST-WS6-PROVISIONING.md`
+- Roster: `.claude/agents/war-room/INDEX.md`
+
+---
+
+### [2026-05-11] — WS5 LOCKED — War Room Master synthesis doc
+
+**Decision:** WS5 (synthesis master document for the war-room rethink) is LOCKED. The technical master at `docs/08-agents_work/WAR-ROOM-MASTER.md` (520 lines) is the single source of truth for everything WS1A-WS4 produced; the plain-English companion at `docs/08-agents_work/WAR-ROOM-MASTER-FOR-HUMANS.md` (~3,300 words, 13 min read) is the read-once onboarding doc for any future agent or human picking up the war room.
+
+**Scope:** Synthesizes WS1A (Mem0 decision), WS1B (L0-L5 memory architecture), WS2 (ORCHESTRATION + spawning matrix + trust spec contract), WS3 (TECH-STACK BOM + DR runbooks + scaling cliffs), WS4 (Connection Layer + smoke tests + production deploy verification).
+
+**Why locked now:** WS4 DEPLOY VERIFIED proved the design works end-to-end. The master doc froze the architecture before WS6 (agent .md files) starts adding implementation detail on top.
+
+**Reversible?** Master doc is forward-only as a snapshot — it'll be updated as a separate WS6/WS7 entry when material changes happen. Plain-English companion is regenerated from the master when needed.
+**Status:** LOCKED.
+**See:** `docs/08-agents_work/WAR-ROOM-MASTER.md`, `docs/08-agents_work/WAR-ROOM-MASTER-FOR-HUMANS.md`.
+
+---
+
 ### [2026-05-11] — WS4 PRODUCTION DEPLOY VERIFIED — Pipeline live end-to-end
 
 **Decision:** WS4 is no longer just LOCKED in code — it is **operationally live** as of 2026-05-11. The Linear → Cloudflare bridge → Anthropic Routine → Supabase audit_log pipeline fires end-to-end in production, with verifiable side effects on every layer.
