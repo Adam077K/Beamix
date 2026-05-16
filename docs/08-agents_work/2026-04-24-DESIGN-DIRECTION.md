@@ -237,7 +237,7 @@ Agent operation: "[Agent name] is analyzing your content..." with the agent's ic
 
 **Error states:**
 Design principle: warmth in apology, specificity in remedy. "That didn't work — we're on it" is rejected because it offers nothing actionable. Instead:
-- Supabase query failure: "We couldn't load your scans. Check your connection, then refresh. If it keeps happening, email us at hello@beamix.tech."
+- Supabase query failure: "We couldn't load your scans. Check your connection, then refresh. If it keeps happening, email us at hello@beamixai.com."
 - Agent execution failure: "[Agent name] ran into a problem and stopped. Your credits were not used. Run it again or contact support."
 - Scan failure: "This scan didn't complete. We'll retry automatically in 5 minutes — or you can start a fresh one."
 All error states include the Beamix character in its "concerned but not alarmed" pose (three-quarter view, slight lean forward).

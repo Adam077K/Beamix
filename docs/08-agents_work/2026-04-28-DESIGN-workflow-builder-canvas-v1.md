@@ -486,7 +486,7 @@ The disabled button uses `paper-elev` background, ink-4 text, `not-allowed` curs
 
 **Why ship the surface at MVP.** (1) Yossi explicitly OK'd the deferral *if* the surface exists — the surface is the contract. (2) Implementing it disabled now costs ~30 minutes; retrofitting later requires inspector restructuring. (3) `Read the roadmap →` is a real link to `/changelog#workflow-publishing` — a trust artifact in itself.
 
-**Shareable links** (private clone-via-URL, not a marketplace listing) DO ship at MVP. Toggle to "Shareable link" → a `paper-elev` row appears with Geist Mono URL `app.beamix.tech/workflows/share/abc123`, copy button, `Revoke` link. Handles the *"send my agency partner this workflow"* use case without touching the marketplace pipeline.
+**Shareable links** (private clone-via-URL, not a marketplace listing) DO ship at MVP. Toggle to "Shareable link" → a `paper-elev` row appears with Geist Mono URL `app.beamixai.com/workflows/share/abc123`, copy button, `Revoke` link. Handles the *"send my agency partner this workflow"* use case without touching the marketplace pipeline.
 
 ---
 

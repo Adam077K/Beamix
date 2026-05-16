@@ -18,7 +18,7 @@ export const budgetGuard = inngest.createFunction(
         .from('credit_pools')
         .select('user_id, used_amount, base_allocation, rollover_amount, topup_amount, alert_75_sent, alert_100_sent')
 
-      const baseUrl = process.env['NEXT_PUBLIC_APP_URL'] ?? 'https://app.beamix.tech'
+      const baseUrl = process.env['NEXT_PUBLIC_APP_URL'] ?? 'https://app.beamixai.com'
 
       for (const pool of pools ?? []) {
         const cap = (pool.base_allocation ?? 0) + (pool.rollover_amount ?? 0) + (pool.topup_amount ?? 0)

@@ -358,8 +358,8 @@
 
 ---
 
-### [2026-04-17] — Email Domain: notify.beamix.tech
-**Decision:** Transactional email via notify.beamix.tech (Resend). Cold outreach on separate subdomain. Main domain beamix.tech for website only.
+### [2026-04-17] — Email Domain: notify.beamixai.com
+**Decision:** Transactional email via notify.beamixai.com (Resend). Cold outreach on separate subdomain. Main domain beamixai.com for website only.
 **Rationale:** Protect transactional deliverability from cold email reputation damage.
 **Decided by:** CEO
 **Affects:** DNS config, Resend setup, EMAIL_FROM_ADDRESS env var

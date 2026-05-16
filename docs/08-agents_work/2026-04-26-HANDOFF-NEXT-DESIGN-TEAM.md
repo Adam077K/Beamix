@@ -148,7 +148,7 @@ NO timelines. Ship in dependency order.
 - Memory layer (Beamie-dependent)
 - Marketing site unification (post-product-validation)
 - Dark mode (post-launch)
-- Public GEO Index `beamix.tech/check-my-site` (architect for, ship later)
+- Public GEO Index `beamixai.com/check-my-site` (architect for, ship later)
 - State of GEO newsletter
 - Shareable Scan Card (PNG + permalink + Twitter thread + auto-GIF)
 - Multi-domain switcher infrastructure (chrome element — but Yossi's pricing model question still open)

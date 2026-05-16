@@ -253,7 +253,7 @@ Searched v5.1 for "v4" references that could guide build agents back to deprecat
 - `"(Spec unchanged from v4.)"` appears **0 times** in v5.1. All such stubs were replaced by FIX-PLAN patches P1–P13. Confirmed.
 - `"See full v4 spec"` appears **0 times** in v5.1. Critical FIX-PLAN item C-1 was resolved — F19 now has full inline ACs.
 - `"unchanged from v4"` appears in 2 contexts in v5.1: both are describing v4's source relation (e.g., "Seal ceremony unchanged from v4" as inline prose), not as spec-pointer stubs. No broken references remain.
-- `"beamix.tech"` appears **0 times** in v5.1 (confirmed by grep audit). Domain is clean.
+- `"beamixai.com"` appears **0 times** in v5.1 (confirmed by grep audit). Domain is clean.
 - `"BeamixAI"` appears **0 times** in v5.1 (confirmed). Brand name usage is clean.
 
 **Verdict:** No deprecated reference stubs remain as AC pointers in v5.1.
@@ -344,7 +344,7 @@ The following areas are fully clean — no AC gaps, no contradictions, no deprec
 - F47 (P11 data instrumentation): confirmed. Three new tables + daily Inngest job + `state_of_search_eligible` consent flag all present in F47 Amendment v5.
 - F23 (Arc's Wave): confirmed. "Amendment v4 (2026-04-28) — Arc's 'Wave' (preserved in v5.1)" explicitly called out in F23 with full spec: 60ms stagger left-to-right wave, 11 cells × 60ms = 660ms total wave, then 200ms settle.
 - T148, T149, T150, T151: all fully specified in v5.2 §6 with complete ACs and dependency chains.
-- Domain references: zero `beamix.tech`, zero `BeamixAI` in v5.1 or v5.2.
+- Domain references: zero `beamixai.com`, zero `BeamixAI` in v5.1 or v5.2.
 - All 6 design spec cross-referenced files: confirmed to exist on disk.
 - v5.1 AC checkpoint count: 540 (vs v5's 278) — confirms substantial restoration.
 

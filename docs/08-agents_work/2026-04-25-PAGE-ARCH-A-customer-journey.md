@@ -183,7 +183,7 @@ Churns if: switching clients painful, can't white-label reports, billing isn't s
 ### 4.3 Help / Documentation
 **Journey moment:** Sarah hits confusion ("what does FAQ schema mean?"). Yossi wants API docs.
 **Comparable products:** Linear has /docs route + ? cheatsheet. Stripe separate docs site. Granola in-app help drawer.
-**Verdict:** Help DRAWER triggered from ?, plus separate docs.beamix.tech for full reference. **No new sidebar page needed.**
+**Verdict:** Help DRAWER triggered from ?, plus separate docs.beamixai.com for full reference. **No new sidebar page needed.**
 
 ### 4.4 Notifications inbox (separate from review /inbox)
 **Critical naming clash to resolve:** Linear's "Inbox" = notifications. Beamix's "Inbox" = review queue (Linear's "Triage").
@@ -299,7 +299,7 @@ Similar to Otterly + Action Center. No agent-driven workflow. No review queue.
 
 4. **/archive death:** Confirm comfort with killing /archive as a top-level page and absorbing it into /inbox as "Completed" tab.
 
-5. **Public /scan in repo vs Framer:** /scan is currently in this repo. CLAUDE.md says marketing lives in Framer. Should /scan move to Framer at `beamix.tech/scan` with the product app starting at `app.beamix.tech`?
+5. **Public /scan in repo vs Framer:** /scan is currently in this repo. CLAUDE.md says marketing lives in Framer. Should /scan move to Framer at `beamixai.com/scan` with the product app starting at `app.beamixai.com`?
 
 ---
 

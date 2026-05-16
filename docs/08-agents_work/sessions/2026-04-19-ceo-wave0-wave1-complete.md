@@ -181,6 +181,6 @@ Multiple pre-rethink worktrees + unmerged `feat/*` branches still exist (e.g. `f
 
 1. **Token rotation discipline** — if the new Supabase PAT leaks through a `Read` on `.envrc` again, rotate again. Consider using a read-only restricted token scope if Supabase supports it (they don't as of this writing — PATs are all-or-nothing).
 2. **Inngest Pro upgrade pending** — free tier breaks at 10-15 users. Needs $75/mo upgrade before load test.
-3. **Resend domain warm-up** — `notify.beamix.tech` DNS not yet configured. 2-4 week lead time. Start immediately.
+3. **Resend domain warm-up** — `notify.beamixai.com` DNS not yet configured. 2-4 week lead time. Start immediately.
 4. **Paddle sandbox products not created** — 7 price IDs needed in env. All Paddle-wired routes will 4xx until this is done.
 5. **No production Supabase project yet** — all migrations land on a staging project. Prod project creation + migration apply is a Wave 2 devops task.

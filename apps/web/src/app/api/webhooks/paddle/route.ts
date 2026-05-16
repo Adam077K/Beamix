@@ -22,7 +22,7 @@ import { paymentFailedHtml, paymentFailedText } from '@/lib/resend/templates/pay
 const paddle = new Paddle(process.env['PADDLE_API_KEY'] ?? '')
 const webhookSecret = process.env['PADDLE_WEBHOOK_SECRET'] ?? ''
 
-const APP_BASE_URL = process.env['NEXT_PUBLIC_APP_URL'] ?? 'https://app.beamix.tech'
+const APP_BASE_URL = process.env['NEXT_PUBLIC_APP_URL'] ?? 'https://app.beamixai.com'
 
 export async function POST(req: Request) {
   const signature = req.headers.get('paddle-signature') ?? ''

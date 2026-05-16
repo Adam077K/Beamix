@@ -7,7 +7,7 @@
 - [No timelines in planning](feedback_no_timeline_planning.md) — Adam ships with agent army; don't include weeks/sprints/days in plans. Plan by scope + deps + quality bar.
 
 ## Reference
-- [Domain config](project_domain.md) — beamix.tech domain, notify.beamix.tech for transactional email
+- [Domain config](project_domain.md) — beamixai.com domain, notify.beamixai.com for transactional email
 - [Pricing v2 (locked)](project_pricing_v2.md) — Discover $79 / Build **$189** / Scale $499. Build is NOT $199 (NIS ceiling)
 
 ## Vision (2026-04-25)

@@ -47,7 +47,7 @@ Total board evidence: ~3,500 lines.
 10. Hebrew/RTL: BLOCKER — fix before Phase 2
 11. Marketing site unification: UNIFY (Beamie on Framer hero + Stage demo video)
 12. Shareable Scan Card: SHIP Week 3 (cheapest viral loop)
-13. Public GEO Index: SHIP Week 4 (`beamix.tech/check-my-site`)
+13. Public GEO Index: SHIP Week 4 (`beamixai.com/check-my-site`)
 14. State of GEO newsletter: START before v2 ships
 15. Tool vs company: Tool first, architect for company
 

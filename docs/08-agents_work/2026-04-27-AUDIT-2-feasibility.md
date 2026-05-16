@@ -284,7 +284,7 @@ Pick Supabase Realtime. Document the channel schema. All "live" UI subscribes.
 
 ### 3.2 Email send infrastructure — SHOULD-FIX
 
-**Spec says** (EDITORIAL §2.7): "From: `beamix@notify.beamix.tech`. Reply-to: `hello@beamix.tech`. DKIM/SPF/DMARC: full alignment on `notify.beamix.tech`. Per Resend best practices: domain verified, separate from transactional flow if scale demands."
+**Spec says** (EDITORIAL §2.7): "From: `beamix@notify.beamixai.com`. Reply-to: `hello@beamixai.com`. DKIM/SPF/DMARC: full alignment on `notify.beamixai.com`. Per Resend best practices: domain verified, separate from transactional flow if scale demands."
 
 **Missing:**
 - Resend account setup, domain verification, DKIM key generation — operational tasks that have to be done before Day 1 of customer signups (because the Monday Digest must send 7 days after the first customer signs).

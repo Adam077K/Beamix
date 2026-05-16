@@ -211,7 +211,7 @@ I deliberately **kept this under $50** and prioritized things that have no free 
 | Line item | $/mo | Why this and not free | Cancel order |
 |---|---|---|---|
 | **Anthropic Routines pad on existing Max** | $0 | Max plan covers 15 routines/day. Adam already pays Max. **Genuinely $0 incremental.** | n/a |
-| **Domain (control plane)** | $1 | `beamix-fleet.dev` or use existing `beamix.tech` subdomain. Effectively $0 if we reuse. | n/a |
+| **Domain (control plane)** | $1 | `beamix-fleet.dev` or use existing `beamixai.com` subdomain. Effectively $0 if we reuse. | n/a |
 | **Cloudflare Tunnel (alternate Tailscale)** | $0 | Free tier covers Adam's case. | n/a |
 | **Supabase Pro** | already paid | Adam is already on Pro for product. Agent uses same project. | n/a |
 | **OpenRouter top-up (fallback model gateway)** | $20 | When Claude API has incidents (happens), OpenRouter routes to Gemini/Grok/etc. without code change. $20 is ~6M Sonnet-equivalent tokens at OpenRouter spot. Pure insurance. | **first to cut** |
@@ -372,7 +372,7 @@ If Adam upgrades to a 32 GB Mac mini in the future ($800-ish), THEN we can host 
 | Anthropic API overage above Max (insurance) | $10 | Hard cap |
 | Backblaze B2 cold backup (Bastion) | $1 | Estimate |
 | UPS amortized (one-time $50 over 24mo) | $2 | Hardware |
-| Domain (already owned `beamix.tech`) | $0 | Reused |
+| Domain (already owned `beamixai.com`) | $0 | Reused |
 | Tailscale | $0 | Free tier |
 | Cloudflare Workers/KV/R2 | $0 | Free tier |
 | Vercel Hobby (fleet dashboard) | $0 | Reusing Pro plan Adam already has |

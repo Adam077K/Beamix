@@ -33,7 +33,7 @@ Round 1 noted Beamix targets SOC 2 Type II at Year 1 Q4. Stripe's lens: that's w
 
 Stripe doesn't ship a Trust Center because Stripe is so big it doesn't need to — the Stripe brand carries the trust. Beamix is not Stripe; Beamix is a 5-person company asking SMBs to give it the keys to their AI-visibility kingdom. **Beamix needs a Trust Center.**
 
-The MVP version is a single page at `beamix.tech/trust` separate from `/security`. The Trust Center renders, as live data, the controls that are continuously monitored:
+The MVP version is a single page at `beamixai.com/trust` separate from `/security`. The Trust Center renders, as live data, the controls that are continuously monitored:
 - Last vulnerability scan date + result
 - Last penetration test date + result + remediation status
 - Current employee MFA enrollment percentage (target 100%)
@@ -55,22 +55,22 @@ Stripe's DPA is one click from /security: a `View Data Processing Agreement →`
 Round 1 surfaced this. Lock it. ~12 lines, served as text/plain, signed with Beamix's PGP key:
 
 ```
-Contact: mailto:security@beamix.tech
-Contact: https://beamix.tech/security
+Contact: mailto:security@beamixai.com
+Contact: https://beamixai.com/security
 Expires: 2027-04-28T00:00:00.000Z
-Encryption: https://beamix.tech/security/pgp.asc
-Acknowledgments: https://beamix.tech/security/acknowledgments
+Encryption: https://beamixai.com/security/pgp.asc
+Acknowledgments: https://beamixai.com/security/acknowledgments
 Preferred-Languages: en, he
-Canonical: https://beamix.tech/.well-known/security.txt
-Policy: https://beamix.tech/security/disclosure-policy
-Hiring: https://beamix.tech/careers
+Canonical: https://beamixai.com/.well-known/security.txt
+Policy: https://beamixai.com/security/disclosure-policy
+Hiring: https://beamixai.com/careers
 ```
 
 Vulnerability-disclosure tooling (HackerOne, Bugcrowd's automated scanners) reads this file. Without it, Beamix is invisible to the security-research community. Two days of work; permanent trust signal. **Stripe ships this.** Beamix should.
 
 ### Delta 6 — The "Posture" PDF, named for what it is
 
-The downloadable PDF (Section 7 of the /security spec) is currently called "the security page as PDF." Rename it: **"Posture v1.0 · April 2026 · 6 pages"** — the document title on Page 1 (cover) reads `BEAMIX SECURITY POSTURE · v1.0`. When SOC 2 Type II ships, the Posture document gets a §0.1 line: *"SOC 2 Type II report available under NDA — request via security@beamix.tech."* The Posture is the document the Trust Center *links to* for narrative context. Two artifacts, two jobs: Posture = the doctrine; Trust Center = the live state. Stripe doesn't have a "Posture" because Stripe's customers accept Stripe's controls as given. Beamix does need one.
+The downloadable PDF (Section 7 of the /security spec) is currently called "the security page as PDF." Rename it: **"Posture v1.0 · April 2026 · 6 pages"** — the document title on Page 1 (cover) reads `BEAMIX SECURITY POSTURE · v1.0`. When SOC 2 Type II ships, the Posture document gets a §0.1 line: *"SOC 2 Type II report available under NDA — request via security@beamixai.com."* The Posture is the document the Trust Center *links to* for narrative context. Two artifacts, two jobs: Posture = the doctrine; Trust Center = the live state. Stripe doesn't have a "Posture" because Stripe's customers accept Stripe's controls as given. Beamix does need one.
 
 ### Delta 7 — "refuses to publish" → "cannot publish" (Voice canon polish, Round 1 #34)
 
@@ -211,7 +211,7 @@ Each chart is the kind of fact a TechCrunch journalist quotes; each chart is the
 - **Soft pre-launch** — Beamix's 50-200 customers get the report first via email, 7 days before public launch. Their version is co-branded: *"Your business is one of [N] referenced in this report."* This makes the report more shareable from the customer side.
 - **Embargoed press** — TechCrunch, The Verge, Search Engine Journal, Marketing Brew get the PDF under embargo 5 days before launch. Adam interviews 3-5 of them.
 - **Launch day** — Hacker News, Twitter, LinkedIn, Threads, Mastodon. Founder thread on each platform with the Cartogram as the lead image. Beamix's Twitter: 8-tweet thread, one chart per tweet.
-- **Permalink** — `beamix.tech/state-of-ai-search-2026`. Cream paper, single editorial page that is the report (long-form), with PDF download. The OG card is the Cartogram aggregate. Schema.org `Article` markup; AI engines cite it within 7 days.
+- **Permalink** — `beamixai.com/state-of-ai-search-2026`. Cream paper, single editorial page that is the report (long-form), with PDF download. The OG card is the Cartogram aggregate. Schema.org `Article` markup; AI engines cite it within 7 days.
 - **Print run — limited gift edition** — top 50 customers (those above $499/month plan) get a printed copy in the mail. This pairs with F26 (Print-Once-As-Gift, month 6) — the State of AI Search arrives separately, bigger format (8.5"×11" softcover, perfect-bound). Cost per unit: $18. Total cost: $900 for 50 units. **The reach: every TechCrunch journalist who Adam interviewed wants the print copy; some get it in the mail; one of them tweets a photo.**
 
 ### 4.5 The recommendation — ship at MVP
@@ -235,7 +235,7 @@ Beamix will ship a public API. The schema already exists (Truth File, audit log,
 
 **Proposal: at the moment the API has 5 paying API customers, not earlier.** Shipping /docs without API customers is theatre. With 5 paying customers (typically agencies + the ~10 largest Scale-tier customers), the API is real, the patterns are battle-tested, and the docs reflect reality. Estimated timing: month 6-9 post-MVP.
 
-Before /docs ships publicly, the *schema docs* ship. Round 1 §G item #5 already proposed this: `beamix.tech/schemas/` as a static site rendering the Truth File, audit log, Brief, and Monthly Update JSON Schemas in Stripe-API-docs split-view. This is the cheap brand move; it ships in 2 weeks and lives forever. Once the API has paying customers, /docs replaces /schemas.
+Before /docs ships publicly, the *schema docs* ship. Round 1 §G item #5 already proposed this: `beamixai.com/schemas/` as a static site rendering the Truth File, audit log, Brief, and Monthly Update JSON Schemas in Stripe-API-docs split-view. This is the cheap brand move; it ships in 2 weeks and lives forever. Once the API has paying customers, /docs replaces /schemas.
 
 ### 5.2 Architecture — split-view, code on the right
 
@@ -249,14 +249,14 @@ Stripe ships an in-page playground: every endpoint can be tested with the user's
 
 ### 5.4 Errors-as-design
 
-Stripe documents every error code as a first-class entity: every error has a permalink (`stripe.com/docs/error-codes/card_declined`), a description, a suggested fix, and example responses. Beamix should commit to this from day 1. Every Beamix API error code is documented at `beamix.tech/docs/errors/[code]`; the error response payload includes the URL:
+Stripe documents every error code as a first-class entity: every error has a permalink (`stripe.com/docs/error-codes/card_declined`), a description, a suggested fix, and example responses. Beamix should commit to this from day 1. Every Beamix API error code is documented at `beamixai.com/docs/errors/[code]`; the error response payload includes the URL:
 
 ```json
 {
   "error": {
     "code": "brief_clause_invalid",
     "message": "The Brief clause referenced does not exist in the customer's current Brief version.",
-    "documentation_url": "https://beamix.tech/docs/errors/brief_clause_invalid",
+    "documentation_url": "https://beamixai.com/docs/errors/brief_clause_invalid",
     "request_id": "req_2HJ9X8K2L1"
   }
 }
@@ -277,7 +277,7 @@ Round 1 locked F30: every agent action carries inline Brief grounding citation. 
     "clause_id": "br_clause_2",
     "clause_text": "Add structured data to product pages to improve AI search visibility.",
     "brief_version": "v1.2",
-    "brief_url": "https://beamix.tech/brief/v1.2"
+    "brief_url": "https://beamixai.com/brief/v1.2"
   }
 }
 ```
@@ -296,7 +296,7 @@ Cream paper #F4ECD8 full bleed. Top-left: Beamix wordmark + sigil 24px. Vertical
 
 > *"We couldn't find that. Either you typed something wrong, or we never wrote it."*
 
-48px below: a primary `Go home →` text-link (`--color-brand-text`, no button). Below that, 16px gap, in Geist Mono 11px `--color-ink-3`: `404 · beamix.tech`.
+48px below: a primary `Go home →` text-link (`--color-brand-text`, no button). Below that, 16px gap, in Geist Mono 11px `--color-ink-3`: `404 · beamixai.com`.
 
 That's the page. Three elements + the closing dateline. **Every Beamix surface is the same brand fabric.** The 404 is editorial because the brand register is editorial; nothing was added for the error page.
 
@@ -306,7 +306,7 @@ Same composition, different text:
 
 > *"Something went wrong. Beamix is logging it."*
 
-Below the line: `View status →` link to `beamix.tech/status` (a status page hosted on a separate domain — Statuspage.io or a self-rolled equivalent). Below: `500 · beamix.tech · Request ID: req_8KL2M9X3` in Geist Mono 11px. The Request ID is the support-ready-out-of-the-box affordance — when the customer emails support, they paste the ID and the on-call engineer can find the trace immediately.
+Below the line: `View status →` link to `beamixai.com/status` (a status page hosted on a separate domain — Statuspage.io or a self-rolled equivalent). Below: `500 · beamixai.com · Request ID: req_8KL2M9X3` in Geist Mono 11px. The Request ID is the support-ready-out-of-the-box affordance — when the customer emails support, they paste the ID and the on-call engineer can find the trace immediately.
 
 ### 6.3 Maintenance / scheduled-downtime
 
@@ -316,7 +316,7 @@ Same composition. Text varies:
 
 Below: a live countdown (the maintenance window's end time). Status page link. **Crucially: the status page itself follows the same cream-paper register.** Every Beamix surface that the customer touches is the same brand fabric — the status page, the 404, the 500, the API error pages, the email signature, the CLI banner. One brand, every scale, every surface.
 
-### 6.4 The status page (`beamix.tech/status`)
+### 6.4 The status page (`beamixai.com/status`)
 
 Cream paper. 8 system components in a vertical list (API, scan engine, agent system, validation, audit log, billing, email delivery, dashboard). Each component shows: name, current status (operational / degraded / outage), last-changed timestamp, last 90 days of uptime as a 90-cell color strip (Tufte's small-multiples again — uptime as bar). The overall system status at the top in 28px Fraunces italic: *"All systems operational"* or *"Degraded performance in scan engine."* Closing dateline + permalink.
 

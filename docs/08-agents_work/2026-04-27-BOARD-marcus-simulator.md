@@ -149,8 +149,8 @@ May 1, 7:00am. Email arrives. Plain text. Subject: *"Beamix · April 2026 update
 > April's Monthly Update is ready. The headline:
 > 9 attributed sessions and 1 conversion came in through Beamix-attributed channels — up from 0 last month.
 >
-> Read it: app.beamix.tech/reports/...
-> Download PDF: app.beamix.tech/reports/...pdf
+> Read it: app.beamixai.com/reports/...
+> Download PDF: app.beamixai.com/reports/...pdf
 >
 > — Beamix
 
@@ -216,7 +216,7 @@ One thing I want and don't see: a "tell me what this agent actually changed on m
 
 **13. T&S Truth File enforcement: cryptographic signed-token binding `validate()` to `propose()`.** ✅ AGREE — and this matters to me more than the board thinks. I'm a CEO with a CTO co-founder. Aria will read the security architecture before we hit month 3. If T&S says "the SDK refuses to publish without conformance" without a cryptographic primitive, Aria will laugh at it. Signed token, 60s TTL, bound to draft hash, hash mismatch fails — that's the only answer that survives a CTO security review. Ship this. The day Aria reads the security doc and nods, my renewal is locked.
 
-**14. T&S GDPR/DSAR posture: US-East default, SCCs for non-US, Article 15/17/20/33 endpoints.** ✅ AGREE — and this matters specifically because I have B2B EU customers. When my German enterprise customer asks "is your AI search vendor GDPR-compliant," I need to forward a one-page Beamix posture doc. Article 15 (access), 17 (deletion), 20 (portability), 33 (breach notification) endpoints are the load-bearing four. SCCs for the EU sub-processor relationship. Ship the posture doc as a public PDF on beamix.tech/legal so I can forward without asking for it. **This is a B2B-specific requirement the board might underweight; for a SaaS like mine, it's a deal-breaker if absent.**
+**14. T&S GDPR/DSAR posture: US-East default, SCCs for non-US, Article 15/17/20/33 endpoints.** ✅ AGREE — and this matters specifically because I have B2B EU customers. When my German enterprise customer asks "is your AI search vendor GDPR-compliant," I need to forward a one-page Beamix posture doc. Article 15 (access), 17 (deletion), 20 (portability), 33 (breach notification) endpoints are the load-bearing four. SCCs for the EU sub-processor relationship. Ship the posture doc as a public PDF on beamixai.com/legal so I can forward without asking for it. **This is a B2B-specific requirement the board might underweight; for a SaaS like mine, it's a deal-breaker if absent.**
 
 ---
 
@@ -226,7 +226,7 @@ One thing I want and don't see: a "tell me what this agent actually changed on m
 
 2. **My renewal email is the Day 14 attribution event, not the Day 30 Monthly Update.** The Monthly Update is the *artifact* I forward. The Day 14 event-triggered email — "a developer found you on Claude" — is the moment I emotionally renew. The board specced the Monthly Update beautifully. The board is under-investing in event-triggered moments between digests. Each attributed-click email is a micro-renewal. Build a small library: first attributed click, first signup attributed, first competitor displaced, score crosses a threshold. 4-6 events that fire when something concrete happens. They are cheaper to build than a Monthly Update and they hit harder per-dollar.
 
-3. **The CTO is a hidden buyer.** Aria doesn't pay the bill. But if Aria reads the security architecture and laughs at it, my renewal dies regardless of how many calls Beamix attributes. The board's T&S posture (signed-token binding, capability-based runtime, network egress block, GDPR posture doc) is the technical-credibility moat. Ship it visibly — a `/security` page on beamix.tech that any CTO can read in 6 minutes. This is the equivalent of Stripe's `stripe.com/docs/security`. Without it, I can't bring Aria along, and without Aria I can't justify upgrading to Scale at month 9.
+3. **The CTO is a hidden buyer.** Aria doesn't pay the bill. But if Aria reads the security architecture and laughs at it, my renewal dies regardless of how many calls Beamix attributes. The board's T&S posture (signed-token binding, capability-based runtime, network egress block, GDPR posture doc) is the technical-credibility moat. Ship it visibly — a `/security` page on beamixai.com that any CTO can read in 6 minutes. This is the equivalent of Stripe's `stripe.com/docs/security`. Without it, I can't bring Aria along, and without Aria I can't justify upgrading to Scale at month 9.
 
 ---
 

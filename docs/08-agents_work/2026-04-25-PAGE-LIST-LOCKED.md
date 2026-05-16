@@ -109,7 +109,7 @@ Yossi's export workflow lives here.
 ## Still open (NOT page-list, but pricing/strategy)
 
 - Multi-domain pricing model: $499 per account (20 domains incl) vs $499 per domain — drives whether Yossi exists as customer
-- /scan in this Next.js repo or move to Framer at beamix.tech/scan — hosting/deployment question
+- /scan in this Next.js repo or move to Framer at beamixai.com/scan — hosting/deployment question
 - Whether email-copy of scan results creates a `/scan/[scanId]` second public route
 
 These are downstream decisions, not page-list decisions.

@@ -174,7 +174,7 @@ Two v4 ACs appear to be dropped:
 
 Comprehensive search across v5 for forbidden domain references:
 
-**"beamix.tech" occurrences in v5:** Zero. The deprecation header and §14 Domain Infrastructure Status both confirm "old domain `beamix.tech` is retired." Clean.
+**"beamixai.com" occurrences in v5:** Zero. The deprecation header and §14 Domain Infrastructure Status both confirm "old domain `beamixai.com` is retired." Clean.
 
 **"BeamixAI" occurrences in v5:** Zero. Header states: "Customer-facing brand name remains **Beamix** — never write 'BeamixAI.'" §14 confirms. Clean.
 
@@ -358,7 +358,7 @@ The new AC for Free Account sample /inbox items was added inline without a label
 - §12 Outstanding Adam-Decisions — correctly states "None. All Q1–Q13 locked."
 - §13 Version History — accurate.
 - §14 Domain Infrastructure — all entries use beamixai.com correctly.
-- Domain audit — zero beamix.tech or BeamixAI references.
+- Domain audit — zero beamixai.com or BeamixAI references.
 
 ---
 

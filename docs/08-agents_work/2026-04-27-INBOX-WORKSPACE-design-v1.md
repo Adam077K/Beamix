@@ -735,7 +735,7 @@ This is on us. We're already looking into it.
 
 22px Fraunces italic 300 for the headline, 14px Inter 400 ink-2 for the body, brand-blue button + text-link. The voice is direct, owns the error, doesn't apologize preemptively. Per Worldbuilder voice rules: "Never apologizes preemptively."
 
-The status page link goes to a Linear-grade `beamix.tech/status` (per Worldbuilder Section 3 channel #6 Changelog adjacency). If the issue is Beamix-wide, the page reflects it.
+The status page link goes to a Linear-grade `beamixai.com/status` (per Worldbuilder Section 3 channel #6 Changelog adjacency). If the issue is Beamix-wide, the page reflects it.
 
 ### Item failed to apply post-approve
 

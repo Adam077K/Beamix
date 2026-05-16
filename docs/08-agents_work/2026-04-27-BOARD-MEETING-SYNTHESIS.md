@@ -152,7 +152,7 @@ Before any frontend or backend worker writes a component:
 6. **Truth File integrity-hash nightly job** — 1 day
 7. **Build-time pipeline:** opentype.js Fraunces signature extractor + per-agent Rough.js monogram generator + per-customer seal generator (Inngest job at signup) — 3 days
 8. **Cost ceiling instrumentation** (per-customer monthly scan-cost ledger + alarm) — 2 days
-9. **Resend setup + send-volume tier + bounce handler + DKIM/SPF/DMARC on notify.beamix.tech** — 1 day
+9. **Resend setup + send-volume tier + bounce handler + DKIM/SPF/DMARC on notify.beamixai.com** — 1 day
 10. **DPA + /security page + privacy posture documentation** (technical-writer + legal advisor) — 3 days
 
 **Total:** 19 person-days of plumbing before MVP build sprint. Quality bar holds; foundation makes the next 6-8 weeks of feature work safe.

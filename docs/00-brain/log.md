@@ -83,7 +83,7 @@
 
 ## 2026-04-17 — Board Meeting Day 3: Final Decisions + Audit
 - Pre-build audit: 5 agents found 7 P0 blockers, 5 contradictions — all resolved
-- Locked: no AI labels in content, day-1 auto-trigger pipeline, $19 top-up, annual pricing, Sonar QA, notify.beamix.tech
+- Locked: no AI labels in content, day-1 auto-trigger pipeline, $19 top-up, annual pricing, Sonar QA, notify.beamixai.com
 - Assisted vs autopilot validated (97% prefer review — Ahrefs/HubSpot research)
 - Documentation cleanup complete: 30+ docs updated, 14+ archived, 10 rethink docs finalized
 - All contradictions in 05/06/07/08 resolved (naming, pricing, tier access, settings tabs)

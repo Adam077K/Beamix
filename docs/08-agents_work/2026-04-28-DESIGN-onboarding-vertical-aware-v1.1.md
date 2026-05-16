@@ -207,7 +207,7 @@ Discover (3 engines): ~3.6s. Build (6): ~7.2s. Scale (11): ~13.2s.
 
 **📋 Copy snippet** — clipboard copy. 13px Geist Mono "Copied — paste into your dev's Slack" tick fades for 2s.
 
-**✉ Email to your dev** — 320px popover, email input pre-filled to `dev@{domain}` if detected. Templated email from `notify.beamix.tech`, signed *"— Beamix"*, subject *"Beamix · attribution snippet for {customer-name}"*. Plain-text body: *"{Customer} just signed up for Beamix and asked us to share this snippet with you. It tags AI-search traffic to {domain} so we can attribute clicks. Paste into your canonical-tag config or your `<head>`. Beamix will verify within 30 seconds of placement."* Attachment: `.txt` snippet. **No HTML email; no marketing flourish.** After Send: *"Sent to liam@acme-saas.com — Beamix will let you know when they paste it."*
+**✉ Email to your dev** — 320px popover, email input pre-filled to `dev@{domain}` if detected. Templated email from `notify.beamixai.com`, signed *"— Beamix"*, subject *"Beamix · attribution snippet for {customer-name}"*. Plain-text body: *"{Customer} just signed up for Beamix and asked us to share this snippet with you. It tags AI-search traffic to {domain} so we can attribute clicks. Paste into your canonical-tag config or your `<head>`. Beamix will verify within 30 seconds of placement."* Attachment: `.txt` snippet. **No HTML email; no marketing flourish.** After Send: *"Sent to liam@acme-saas.com — Beamix will let you know when they paste it."*
 
 ### 4.5 Verification
 

@@ -339,7 +339,7 @@ A reverse index for contributors who know what they want.
 | **The 23 board-locked decisions** | `docs/08-agents_work/2026-04-27-BOARD-MEETING-SYNTHESIS.md` |
 | **Yossi multi-client / agency mode** | `docs/08-agents_work/2026-04-28-DESIGN-multi-client-switcher-v1.md`; auto-memory `project_white_label_per_client.md` |
 | **Truth File schema** (discriminatedUnion + vertical-extensions) | `docs/08-agents_work/2026-05-04-PRD-wedge-launch-v5.1.md` §F3; Board Meeting Synthesis decision 8 |
-| **Beamix domain** (beamixai.com, not beamix.tech) | `docs/08-agents_work/2026-05-05-INFRA-STATE-COMPLETE.md`; auto-memory `project_domain.md` |
+| **Beamix domain** (beamixai.com, not beamixai.com) | `docs/08-agents_work/2026-05-05-INFRA-STATE-COMPLETE.md`; auto-memory `project_domain.md` |
 | **Color tokens** (hex values, dark mode) | `docs/08-agents_work/2026-04-27-DESIGN-SYSTEM-v1.md` §1.1 |
 | **Typography** (Inter, Fraunces, Geist Mono usage rules) | `docs/08-agents_work/2026-04-27-DESIGN-SYSTEM-v1.md` §1.2; `docs/BRAND_GUIDELINES.md` §Typography |
 | **Cream paper surfaces** (which surfaces never go dark) | `docs/08-agents_work/2026-04-28-DESIGN-BOARD-ROUND2-3-SYNTHESIS.md` cream-paper surface partition; PRD v5.1 §Architecture |
@@ -373,7 +373,7 @@ These files live at `~/.claude/projects/-Users-adamks-VibeCoding-Beamix/memory/`
 | `project_white_label_per_client.md` | White-label config is per-CLIENT (Yossi agency scenario), NOT per-account. |
 | `project_workflow_builder_mvp_scope.md` | Full DAG editor + dry-run ships day 1; event triggers + publishing → MVP-1.5. |
 | `project_beamie_deferred.md` | Persistent Beamie character is NOT in MVP; hand-drawn animations YES; companion NO until product base is done. |
-| `project_domain.md` | beamixai.com apex (Framer), app.beamixai.com (Vercel product), notify.beamixai.com (Resend). All beamix.tech references retired. |
+| `project_domain.md` | beamixai.com apex (Framer), app.beamixai.com (Vercel product), notify.beamixai.com (Resend). All beamixai.com references retired. |
 | `project_vision_company_not_tool.md` | Beamix is a category-leading company, not a tool. Past-MVP framing, full product quality. |
 | `project_framer_marketing_after_product.md` | Marketing site Framer work happens AFTER product is right — don't work on Framer until product is solid. |
 | `feedback_board_meeting_style.md` | Multi-agent critical brainstorming style; validate costs against real API pricing. |

@@ -232,7 +232,7 @@ A square (1200×1200) cream-paper render, deterministic per platform / per quota
 - The Citation Cartogram preview (Chart 1) at the top
 - The quotable rendered in Fraunces 300 roman
 - Beamix wordmark + colophon at the bottom
-- Permalink: `beamix.tech/state-of-ai-search/2026`
+- Permalink: `beamixai.com/state-of-ai-search/2026`
 
 When syndicated, each variant lands a different headline. The cream paper survives at OG-card scale (1200×1200) — tested per Ive's #F4ECD8 lock.
 
@@ -265,7 +265,7 @@ The competitor-watching cost is real: Profound and Goodie AI both have public-sc
 | Editorial designer (contractor — 1 person) | Layout, cartogram render polish, OG card design, 32-48 page InDesign / Figma comp | 3.0 |
 | Editorial writer (contractor — 1 person, B2B SaaS background) | Section drafts, quotable phrasing, methodology section | 2.5 |
 | Data analyst (contractor or in-house) | SQL queries against Beamix data lake, statistical significance testing, chart prep | 2.0 |
-| In-house engineer (~half-time of one) | Cartogram React component, OG card renderer, PDF export pipeline, beamix.tech/state-of-ai-search/2026 landing page | 1.5 |
+| In-house engineer (~half-time of one) | Cartogram React component, OG card renderer, PDF export pipeline, beamixai.com/state-of-ai-search/2026 landing page | 1.5 |
 | PR contractor (6-week engagement) | Outlet relations, embargo, founder podcast bookings, syndication coordination | 1.5 |
 | **Total** | | **12.5 person-weeks** |
 
@@ -345,7 +345,7 @@ A founder gets 2-4 quality earned-media hits per year. Stacking the report launc
 - Editorial designer composes 32-48 pages
 - 5 OG card variants
 - Print-run vendor sourced + sample copies received
-- Permalink page beamix.tech/state-of-ai-search/2026 designed + built
+- Permalink page beamixai.com/state-of-ai-search/2026 designed + built
 - Owner: editorial designer + 1 frontend engineer ; ~3 person-weeks
 
 **Block F — Press cycle (MVP launch + 75–95 days)**

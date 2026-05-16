@@ -8,13 +8,13 @@
 
 ## §1 — Domain + Brand Sweep
 
-**Canonical rule:** All `beamix.tech` references retired. Customer-facing brand = `Beamix`. App subdomain = `app.beamixai.com`. Email-from = `notify.beamixai.com`. "BeamixAI" must never appear in customer-facing copy.
+**Canonical rule:** All `beamixai.com` references retired. Customer-facing brand = `Beamix`. App subdomain = `app.beamixai.com`. Email-from = `notify.beamixai.com`. "BeamixAI" must never appear in customer-facing copy.
 
-### beamix.tech references
+### beamixai.com references
 
-**Verified clean across all 12 docs.** None of the 12 audited documents contain `beamix.tech`. The PRD v5.1 frontmatter explicitly states: "Domain: beamixai.com (all `beamix.tech` references retired)." The v5.2 amendments repeat this in their frontmatter. The INFRA-STATE-COMPLETE.md shows all DNS as `beamixai.com`. The Build Plan v3.1 domain infrastructure table uses `beamixai.com` throughout.
+**Verified clean across all 12 docs.** None of the 12 audited documents contain `beamixai.com`. The PRD v5.1 frontmatter explicitly states: "Domain: beamixai.com (all `beamixai.com` references retired)." The v5.2 amendments repeat this in their frontmatter. The INFRA-STATE-COMPLETE.md shows all DNS as `beamixai.com`. The Build Plan v3.1 domain infrastructure table uses `beamixai.com` throughout.
 
-Verdict: 🟢 Zero `beamix.tech` references in canonical docs.
+Verdict: 🟢 Zero `beamixai.com` references in canonical docs.
 
 ### "BeamixAI" customer-facing usage
 

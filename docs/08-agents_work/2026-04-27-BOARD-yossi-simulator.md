@@ -52,7 +52,7 @@ The /crew table grammar (BOARD converged) is RIGHT for me. Yearbook would have b
 
 End of month. 1st-of-month at 8:00 AM customer-local, 12 Monthly Update PDFs auto-generate per the EDITORIAL spec §3.
 
-**Where do I review them?** EDITORIAL §3.2 mentions `app.beamix.tech/reports/[report_id]` but the audit caught — `/reports` route is mentioned twice and never specced. Per CREW §7.2, I go to the Reporter agent profile → "Compose for a client" dropdown → select TechCorp → preview. **One client at a time.** Twelve clients = 12 separate page loads.
+**Where do I review them?** EDITORIAL §3.2 mentions `app.beamixai.com/reports/[report_id]` but the audit caught — `/reports` route is mentioned twice and never specced. Per CREW §7.2, I go to the Reporter agent profile → "Compose for a client" dropdown → select TechCorp → preview. **One client at a time.** Twelve clients = 12 separate page loads.
 
 **This doesn't scale.** Give me a `/reports` index: 12 rows, one per client, columns = [Client · Last generated · Status: Draft/Sent · Action: Review/Send/Edit]. I bulk-trigger "Generate for all" Sunday night, Monday morning I review each draft in a 3-pane Linear-style flow with J/K nav between client drafts. Same pattern as /inbox.
 
@@ -115,7 +115,7 @@ But: **don't slip MVP-1.5 to Year 1.** If publishing slips beyond 8 weeks post-l
 
 ## My verdicts on every board decision
 
-**1. Permalink default = private.** ✅ AGREE. If TechCorp's lead-attribution numbers were on a public URL by default and Acme's growth team Googled `site:reports.beamix.tech techcorp` and found it, I'm fired. Period.
+**1. Permalink default = private.** ✅ AGREE. If TechCorp's lead-attribution numbers were on a public URL by default and Acme's growth team Googled `site:reports.beamixai.com techcorp` and found it, I'm fired. Period.
 
 **2. /crew = table grammar.** ✅ AGREE. 18 agents × 12 clients = 216 cards. Yearbook is dead at my volume. Table with sticky header, sortable columns, bulk-select checkbox. As specified.
 

@@ -92,7 +92,7 @@ Duolingo turned "you missed a streak" into a cultural event. ([Duolingo streak-l
 
 Beamix's First Scan Reveal should produce a shareable artifact the user *wants* to send to their business partner. Something like:
 
-- A **Scan Card** — a stylized image showing "yoursite.com scored 34/100 across 7 AI engines" with the engine pills, the character, and a "Scan it yourself at beamix.tech" attribution. Downloadable PNG, sharable URL, pinnable to social.
+- A **Scan Card** — a stylized image showing "yoursite.com scored 34/100 across 7 AI engines" with the engine pills, the character, and a "Scan it yourself at beamixai.com" attribution. Downloadable PNG, sharable URL, pinnable to social.
 - A **Scan Replay link** — a public URL that replays the full 30-second animation for a specific scan. User sends to partner. Partner watches, sees Beamix, runs their own scan.
 - A **"Compared to industry" stat** — "34/100 — 71% of plumbing companies score lower than you. Perplexity mentions you, ChatGPT doesn't. Here's why."
 - A **video replay** — same replay link, but as a downloadable 30-second MP4 for LinkedIn/WhatsApp.
@@ -332,12 +332,12 @@ After the score materializes, **the score transforms into a Scan Card.** The Sca
 - Middle: The score ring at large scale — e.g. "34/100" with the color verdict ("Fair" in amber)
 - Engine breakdown: 7 pill icons in an arc, each colored by performance. Some green ✓, some red ✗.
 - Bottom: One insight, written by the product, in the character's voice: *"ChatGPT mentions you. Claude and Perplexity don't. Fixing your FAQ schema would help."*
-- Corner: "Scan yours at beamix.tech" + Beamix logo
+- Corner: "Scan yours at beamixai.com" + Beamix logo
 
 **Three share affordances, all optional, all one-click:**
 
 1. **"Copy image"** — downloads the Scan Card as PNG. User can drop it into WhatsApp, LinkedIn, Twitter.
-2. **"Share link"** — generates a public URL (e.g., `beamix.tech/scan/abc123`) that *replays the full 30-second Scan Reveal* from cached data. Anyone with the link can watch the animation + see the score card.
+2. **"Share link"** — generates a public URL (e.g., `beamixai.com/scan/abc123`) that *replays the full 30-second Scan Reveal* from cached data. Anyone with the link can watch the animation + see the score card.
 3. **"Get your own scan"** — a referral-coded link the user can send to a partner. Their partner can run a free scan. User gets credit if partner signs up.
 
 ### Why this is the whole marketing strategy
@@ -356,7 +356,7 @@ The share is *not bolted on to the scan.* The share IS the scan's emotional conc
 - **Scarcity:** One Scan Card per scan. The card has a date. Running a new scan creates a new card.
 - **Evolution:** Later scans show the delta — "You improved from 34 → 47 in 3 weeks" — a visual transformation arc across scans.
 - **Comparison:** "You scored higher than 62% of businesses in your industry." (Requires aggregate data; available after ~50 scans in the same category.)
-- **Attribution:** Every shared card carries beamix.tech attribution. Every replay URL has beamix.tech framing. The viral loop is built-in.
+- **Attribution:** Every shared card carries beamixai.com attribution. Every replay URL has beamixai.com framing. The viral loop is built-in.
 
 ### The Duolingo streak-lost model applied:
 

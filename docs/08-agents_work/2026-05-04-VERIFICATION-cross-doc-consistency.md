@@ -118,7 +118,7 @@ The Option E Spec Phase 9 (paid-activation modal) Discover card reads: "14-day m
 
 ### Finding 3.3 — STALE LANGUAGE: Option E Spec recovery email domain
 
-The Option E Spec §3 (State machine, Transition events) says: "Recovery emails: sent from `notify@notify.beamix.tech`." The correct domain is `notify.beamixai.com` (locked throughout PRD v5 and Build Plan v3). `beamix.tech` is explicitly retired in the PRD v5 preamble. This is a stale domain reference in the Option E Spec.
+The Option E Spec §3 (State machine, Transition events) says: "Recovery emails: sent from `notify@notify.beamixai.com`." The correct domain is `notify.beamixai.com` (locked throughout PRD v5 and Build Plan v3). `beamixai.com` is explicitly retired in the PRD v5 preamble. This is a stale domain reference in the Option E Spec.
 
 **Severity: 🔴 RED — Domain error (though in an internal state-machine comment, it could propagate to email config).**
 
@@ -236,13 +236,13 @@ Build Plan v3 T115: "Voice canon Model B compliance: emails signed '— Beamix' 
 
 ## §7 — Domain Consistency
 
-### Finding 7.1 — CRITICAL: `beamix.tech` still appears in Option E Spec
+### Finding 7.1 — CRITICAL: `beamixai.com` still appears in Option E Spec
 
-The Option E Spec §3 (Transition events) contains: "Recovery emails: sent from `notify@notify.beamix.tech`."
+The Option E Spec §3 (Transition events) contains: "Recovery emails: sent from `notify@notify.beamixai.com`."
 
-The correct address is `notify.beamixai.com`. PRD v5 preamble: "Domain: beamixai.com (all `beamix.tech` references retired)." Build Plan v3 Domain Infrastructure table: "Resend: notify.beamixai.com (Verified)." PRD v5 F14: Resend emails on `notify.beamixai.com`.
+The correct address is `notify.beamixai.com`. PRD v5 preamble: "Domain: beamixai.com (all `beamixai.com` references retired)." Build Plan v3 Domain Infrastructure table: "Resend: notify.beamixai.com (Verified)." PRD v5 F14: Resend emails on `notify.beamixai.com`.
 
-This is the only `beamix.tech` reference found in any of the six documents. It's in the Option E Spec state machine section.
+This is the only `beamixai.com` reference found in any of the six documents. It's in the Option E Spec state machine section.
 
 **Severity: 🔴 RED — Stale domain in canonical spec. If a developer copies this config it will misconfigure email routing.**
 
@@ -428,7 +428,7 @@ This is another cascade of Finding 1.1: PRD v5 §4's data carry-over table still
 |----|---------|----------|--------|
 | C-1 | Phase numbering schema drift: PRD v5 uses Phase 4 = paddle-inline (inside /start); Option E Spec + Build Plan use Phase 4 = vertical-confirm (Paddle deferred to /home). All PRD v5 cross-references to phases 4–9 are off-by-one relative to Option E Spec / Build Plan. | PRD v5 §4, F2, F12, F35, F42, F51 vs. Option E Spec + Build Plan T101–T109 | Will cause systematic implementation errors at every PRD→ticket mapping |
 | C-2 | PRD v5 §4 data carry-over table says `paddle_subscription_id` created at Phase 4 inside /start. Q6 + Option E Spec say Paddle is on /home post-onboarding. Direct contradiction of locked decision Q6. | PRD v5 §4 data carry-over table | Agent activation, Twilio provisioning, trial clock anchor all wrong |
-| C-3 | Option E Spec §3 state machine says recovery emails sent from `notify@notify.beamix.tech`. Correct domain is `notify.beamixai.com`. `beamix.tech` is explicitly retired. | Option E Spec §3 Transition events | Will misconfigure Resend email routing if copied directly |
+| C-3 | Option E Spec §3 state machine says recovery emails sent from `notify@notify.beamixai.com`. Correct domain is `notify.beamixai.com`. `beamixai.com` is explicitly retired. | Option E Spec §3 Transition events | Will misconfigure Resend email routing if copied directly |
 | C-4 | Money-back guarantee cap disclosure placed at "Phase 7 (brief-signing)" in PRD v5 F35/F54, but at "T109 Phase 8 Complete" in Build Plan v3. Different phases due to cascade from C-1. | PRD v5 F35, F54 vs. Build Plan v3 T116 | Frontend team will implement cap disclosure in wrong phase |
 
 ### 🟡 IMPORTANT (fix before content freeze or first build sprint)

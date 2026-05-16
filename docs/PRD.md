@@ -230,7 +230,7 @@ GEO score trends up over time. 8-week sparkline on Home page. Performance Tracke
 | Database | Supabase (PostgreSQL + Auth + RLS) |
 | Background Jobs | Inngest (7 registered functions — scans, agents, crons, rules engine) |
 | Payments | Paddle (subscriptions + webhooks, HMAC verified) — NOT Stripe |
-| Email | Resend + React Email (domain: notify.beamix.tech) |
+| Email | Resend + React Email (domain: notify.beamixai.com) |
 | LLM — Claude | Direct Anthropic SDK (80% of calls — cheaper + resilient) |
 | LLM — Others | OpenRouter for Gemini, GPT, Perplexity (scan engines + fallback) |
 | Deployment | Vercel + Supabase Cloud |

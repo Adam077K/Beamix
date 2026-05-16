@@ -197,14 +197,14 @@ Opening:
 > — Citation Fixer is drafting 11 FAQ entries for your top-query pages.
 > — Competitor Watch ran your first competitor sweep. Profound published 2 new comparison pages this week.
 >
-> One thing needs you: app.beamix.tech/inbox
+> One thing needs you: app.beamixai.com/inbox
 >
 > Your first Monday Digest lands next Monday at 8am. That's when you'll see the week's full scorecard.
 >
 > — Beamix
 
 **Length:** 8-10 sentences. Plain text body, cream-paper header strip.
-**CTA:** `app.beamix.tech/inbox` — raw link, no button. Operator-grade.
+**CTA:** `app.beamixai.com/inbox` — raw link, no button. Operator-grade.
 **Register:** Monday Digest register. Same voice. No congratulations. No "you're all set!" No exclamation points.
 **Send condition:** Fires 10 minutes after onboarding Step 4 (Truth File) completion. Does not fire if customer is still active on /home (session active). Not a "welcome" email — Beamix does not celebrate; it reports.
 
@@ -226,7 +226,7 @@ Opening:
 >
 > It found 4 schema errors blocking citation on Perplexity and Claude. Fixes are drafted and waiting for your approval. This takes 2 minutes.
 >
-> → app.beamix.tech/inbox/[item_id]
+> → app.beamixai.com/inbox/[item_id]
 >
 > — Beamix
 
@@ -250,7 +250,7 @@ Opening:
 >
 > This week's scan ran last night. Score is at 43 (up 2 from your scan on signup). Engine breakdown is in your inbox too.
 >
-> → app.beamix.tech/inbox
+> → app.beamixai.com/inbox
 >
 > — Beamix
 
@@ -272,7 +272,7 @@ Opening:
 >
 > This week Beamix ran your first full scan (score: 43), drafted 11 FAQ entries, and identified 2 competitor moves. Three items are in your inbox. The digest will summarize everything.
 >
-> If you want to review what's pending before Monday: app.beamix.tech/inbox
+> If you want to review what's pending before Monday: app.beamixai.com/inbox
 >
 > — Beamix
 
@@ -298,7 +298,7 @@ Opening:
 Beamix's content is not AI-citable today because the Framer site is mostly UI marketing copy — short headlines, feature bullets, pricing tables. Claude, Perplexity, and ChatGPT cite *authoritative, specific, long-form content* when answering questions. The Framer site has none.
 
 **Move 1 — Publish one authoritative definitional page: "What is GEO (Generative Engine Optimization)?"**
-This query is answered inconsistently by every AI engine. A 1,200-word page on beamix.tech that defines GEO, explains how it differs from SEO, gives a 5-step framework, and cites 3 studies becomes the canonical reference. AI engines cite definitional pages constantly. This is the single most AI-citable content type. Framer supports blog/CMS publishing. Write it now, optimize for the query cluster "generative engine optimization," "AI search visibility," "GEO marketing." Target: cited in Perplexity within 60 days of indexing.
+This query is answered inconsistently by every AI engine. A 1,200-word page on beamixai.com that defines GEO, explains how it differs from SEO, gives a 5-step framework, and cites 3 studies becomes the canonical reference. AI engines cite definitional pages constantly. This is the single most AI-citable content type. Framer supports blog/CMS publishing. Write it now, optimize for the query cluster "generative engine optimization," "AI search visibility," "GEO marketing." Target: cited in Perplexity within 60 days of indexing.
 
 **Move 2 — Add structured schema to the /scan public page.**
 The public /scan page is Beamix's highest-traffic surface and currently has no FAQ schema. Adding `FAQPage` schema to 5 questions ("how does AI search visibility work?", "what is a GEO score?") gives Beamix's own domain AI-engine citations for the exact questions its customers are asking. The /scan page gets the schema; the Framer marketing blog gets the long-form.

@@ -93,7 +93,7 @@ A weekly auto-generated PDF in your inbox is the opposite of viral. It is opt-ou
 **What to do instead:**
 - Kill the Weekly Board Report as a *push* artifact.
 - Keep it as a *pull* artifact: any time, customer can generate a "this month's snapshot" PDF, branded, public link. They send it when *they* need to. (This is what every successful SMB SaaS does — Mailchimp's reports, Hootsuite's reports, ClickUp's exports.)
-- The actual viral surface is the **public scan page** at `beamix.tech/scan/[id]`, because *that's* what a Sarah types into Slack to her colleague: "look how bad we are at AI search." That has a built-in reason to share. Lean into that 10x. Make every scan page a beautiful public asset that ranks on Google for "[brandname] AI visibility." That's distribution.
+- The actual viral surface is the **public scan page** at `beamixai.com/scan/[id]`, because *that's* what a Sarah types into Slack to her colleague: "look how bad we are at AI search." That has a built-in reason to share. Lean into that 10x. Make every scan page a beautiful public asset that ranks on Google for "[brandname] AI visibility." That's distribution.
 
 ### 4. The price ladder ($79 / $189 / $499) is too compressed and shaped wrong. You will not get to a billion this way.
 

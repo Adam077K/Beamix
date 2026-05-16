@@ -5,7 +5,7 @@
 **Author:** Product Lead
 **Lock authority:** Board Meeting Synthesis 2026-04-27 (23 locked decisions) + Design Board 2 Synthesis 2026-04-28 (5 contested locks) + Audit 3 Customer Journey Coherence Review 2026-04-27 (F32–F40) + Design Board Round 2/3 Synthesis 2026-04-28 (F41–F47 + design-system canon)
 **Predecessors:** PR #53 (v3 + Build Plan v1) + PR #54 (Round 2/3 synthesis + Aria persona + PRD v4 amendments)
-**Domain:** beamixai.com (updated 2026-04-29 — all prior `beamix.tech` references replaced). Customer-facing brand name remains **Beamix** — never write "BeamixAI."
+**Domain:** beamixai.com (updated 2026-04-29 — all prior `beamixai.com` references replaced). Customer-facing brand name remains **Beamix** — never write "BeamixAI."
 
 > **DEPRECATION NOTICE:** PRD v3, v2, and v1 are superseded in their entirety. All acceptance criteria in prior versions are retired; the criteria here replace them. Do not reopen decisions locked in v3 or earlier. The 5 contested design decisions from Board 2 and all 23 Board Meeting locked decisions remain locked in this document.
 
@@ -2556,7 +2556,7 @@ All domain infrastructure configured 2026-04-29. Status: complete.
 | Google Search Console | beamixai.com verified and indexed | Configured 2026-04-29 |
 | Bing Webmaster Tools | beamixai.com verified | Configured 2026-04-29 |
 
-All references in this document use `beamixai.com`, `app.beamixai.com`, and `notify.beamixai.com`. The old domain `beamix.tech` is retired. Customer-facing brand name remains **Beamix** — never write "BeamixAI" in any copy, email, or UI.
+All references in this document use `beamixai.com`, `app.beamixai.com`, and `notify.beamixai.com`. The old domain `beamixai.com` is retired. Customer-facing brand name remains **Beamix** — never write "BeamixAI" in any copy, email, or UI.
 
 ---
 

@@ -286,7 +286,7 @@ export default function SignupPage() {
         <p className="text-center text-xs text-gray-400 leading-relaxed">
           By creating an account you agree to our{' '}
           <Link
-            href="https://beamix.tech/terms"
+            href="https://beamixai.com/terms"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-500 hover:text-gray-700 underline underline-offset-2 transition-colors"
@@ -295,7 +295,7 @@ export default function SignupPage() {
           </Link>{' '}
           and{' '}
           <Link
-            href="https://beamix.tech/privacy"
+            href="https://beamixai.com/privacy"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-500 hover:text-gray-700 underline underline-offset-2 transition-colors"

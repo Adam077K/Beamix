@@ -83,7 +83,7 @@ Experts: DevOps, CTO
 ### Infrastructure
 - Inngest Pro ($75/mo) — required before launch.
 - Supabase Pro (verify PITR enabled) — required for data safety.
-- Resend: start domain warm-up for notify.beamix.tech 2 weeks before launch.
+- Resend: start domain warm-up for notify.beamixai.com 2 weeks before launch.
 - Add /api/health endpoint that validates all env vars on deploy.
 
 ### Security Requirements (in all worker briefs)

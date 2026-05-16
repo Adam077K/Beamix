@@ -387,7 +387,7 @@ Generated server-side via Vercel OG (`next/og`) the moment the scan completes. T
 - Center-right: the Activity Ring drawn around the score number. 280px arc, 96px number. Same rendering as the live page.
 - Below the score: the 1-line diagnosis in 22px Fraunces italic 300, max 1 line, ellipsis if too long.
 - Bottom-right: the Beamix wax-seal (Rough.js, 32×32), then `— Beamix` in 16px Geist Mono.
-- Bottom-left: tiny `app.beamix.tech/scan/[scan_id]` URL in 12px Geist Mono `ink-3`.
+- Bottom-left: tiny `app.beamixai.com/scan/[scan_id]` URL in 12px Geist Mono `ink-3`.
 
 The whole image is *one composition*, not a templated card with overlays. Every element is positioned for the specific score and domain. Beamix's OG image is the cream-paper register's most concentrated form: it is what the brand looks like in 1.6 megapixels.
 
@@ -421,12 +421,12 @@ Microcopy rules for `/scan`:
 
 ## 2.0 Format decision: **HTML with cream-paper header strip, plain-text-equivalent body, and a permalink**
 
-The Worldbuilder argued for plain-text-default. The Master Designer argued for cream-paper-header HTML. After weighing both, the call is **hybrid HTML**: a 32px-tall cream-paper header strip with the Beamix wordmark + sigil, then a body rendered in clean Inter that *reads like plain text* (no marketing graphics, no embedded screenshots, no buttons-in-tables, no gradient backgrounds). The body uses a single accent color (brand-blue) for permalinks. The signature is Fraunces italic. Every digest also has a public permalink at `app.beamix.tech/digest/[digest_id]` for the user.
+The Worldbuilder argued for plain-text-default. The Master Designer argued for cream-paper-header HTML. After weighing both, the call is **hybrid HTML**: a 32px-tall cream-paper header strip with the Beamix wordmark + sigil, then a body rendered in clean Inter that *reads like plain text* (no marketing graphics, no embedded screenshots, no buttons-in-tables, no gradient backgrounds). The body uses a single accent color (brand-blue) for permalinks. The signature is Fraunces italic. Every digest also has a public permalink at `app.beamixai.com/digest/[digest_id]` for the user.
 
 **Justification.**
 - Plain-text-default is right *philosophically* (operator-grade signal, no marketing-template feel) but wrong in *2026 deliverability*: many email providers strip plain-text from the rich-rendering pipeline, hurt the engagement metrics that drive inbox placement, and make it harder for the user to recognize the email as Beamix at a glance. The 32px cream strip + sigil is the recognition signal that takes 80ms of eye time. Without it, the email looks like the seventh of seventy emails Sarah received that morning.
 - However: the *body* must read as plain-text-equivalent. No background-color cells. No embedded imagery beyond the header. No buttons that aren't links. The visual restraint inside the body is the operator-grade discipline; the cream header is the brand recognition.
-- A permalink lives at `app.beamix.tech/digest/[digest_id]` for any user who prefers the web version, who wants to forward the rich rendering, or who wants to read on a device that strips HTML.
+- A permalink lives at `app.beamixai.com/digest/[digest_id]` for any user who prefers the web version, who wants to forward the rich rendering, or who wants to read on a device that strips HTML.
 
 **This decision satisfies both arguments.** The brand is immediately recognizable; the body respects the operator's attention.
 
@@ -479,14 +479,14 @@ The digest is a single-column 600px-wide email. Apple Mail / Gmail / Outlook all
 │  What we did                                             │
 │                                                          │
 │  Mon · Added 11 FAQ entries to /services/emergency.      │
-│        → app.beamix.tech/scans/abc123                    │
+│        → app.beamixai.com/scans/abc123                    │
 │                                                          │
 │  Tue · Fixed structured-data errors on /pricing.         │
-│        → app.beamix.tech/scans/abc124                    │
+│        → app.beamixai.com/scans/abc124                    │
 │                                                          │
 │  Thu · Drafted competitor response to Profound's new     │
 │        comparison page. Awaiting your approval.          │
-│        → app.beamix.tech/inbox/abc125                    │
+│        → app.beamixai.com/inbox/abc125                    │
 │                                                          │
 │  ─────                                                   │
 │                                                          │
@@ -500,18 +500,18 @@ The digest is a single-column 600px-wide email. Apple Mail / Gmail / Outlook all
 │  One thing needs you                                     │
 │                                                          │
 │  → Approve a homepage hero rewrite. ~30 seconds.         │
-│    app.beamix.tech/inbox/abc125                          │
+│    app.beamixai.com/inbox/abc125                          │
 │                                                          │
 │  ─────                                                   │
 │                                                          │
-│  Read this on the web → app.beamix.tech/digest/wk-17     │
+│  Read this on the web → app.beamixai.com/digest/wk-17     │
 │                                                          │
 │                                                          │
 │  — Beamix                                                │
 │                                                          │
 │ ──────────────────────────────────────────────────────── │
 │  pause digests · unsubscribe · report content            │
-│  Beamix · beamix.tech                                    │
+│  Beamix · beamixai.com                                    │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -539,7 +539,7 @@ The digest is a single-column 600px-wide email. Apple Mail / Gmail / Outlook all
 
 **Signature.** `— Beamix` in **22px Fraunces 300 italic, opsz 144**, `ink`. 32px above the footer. This is the only Fraunces in the entire email body — the editorial seal. Email clients that don't load custom fonts fall back to system serif italic, which is acceptable; the italic + em-dash glyph carries the signature's identity.
 
-**Footer.** 11px Inter `ink-4`. Three actions separated by middle-dots (`·`): `pause digests`, `unsubscribe`, `report content`. Below: `Beamix · beamix.tech`. All footer links are `ink-4` underlined.
+**Footer.** 11px Inter `ink-4`. Three actions separated by middle-dots (`·`): `pause digests`, `unsubscribe`, `report content`. Below: `Beamix · beamixai.com`. All footer links are `ink-4` underlined.
 
 ## 2.3 Voice — examples of good and bad copy
 
@@ -600,9 +600,9 @@ The Discover digest is shorter on purpose — fewer signals, but the signature i
 
 ## 2.7 Reply-to and infrastructure
 
-- From: `beamix@notify.beamix.tech`
-- Reply-to: `hello@beamix.tech` (a real human reads these; one-Customer-Lead model per Frame 5 v2)
-- DKIM/SPF/DMARC: full alignment on `notify.beamix.tech`
+- From: `beamix@notify.beamixai.com`
+- Reply-to: `hello@beamixai.com` (a real human reads these; one-Customer-Lead model per Frame 5 v2)
+- DKIM/SPF/DMARC: full alignment on `notify.beamixai.com`
 - Per Resend best practices: domain verified, separate from transactional flow if scale demands
 
 ---
@@ -727,12 +727,12 @@ Layout:
 - Below the seal, with 24px gap: the signature line in 28px Fraunces 300 italic, opsz 144, `ink`:
   > *— Beamix*
 - Below, 16px gap: in 11px Geist Mono `ink-3`, centered: `Generated April 27, 2026 by Beamix for Acme Plumbing.`
-- Below, 8px gap: the report's permalink `app.beamix.tech/reports/abc-123-456` in 11px Geist Mono `ink-3`.
+- Below, 8px gap: the report's permalink `app.beamixai.com/reports/abc-123-456` in 11px Geist Mono `ink-3`.
 - Bottom of the page (footer): `6 / 6`.
 
 The closing page is the *artifact moment*. The seal is hand-drawn. The signature is Fraunces italic. The permalink is Geist Mono — this is technical truth. Three voices in three lines, choreographed.
 
-## 3.2 The web permalink (`app.beamix.tech/reports/[report_id]`)
+## 3.2 The web permalink (`app.beamixai.com/reports/[report_id]`)
 
 The same content, rendered as a long-scrolling web page. Same cream-paper background. Same typography (Fraunces loaded via Google Fonts with `display: 'block'`; same Geist Mono and Inter).
 
@@ -813,8 +813,8 @@ April's Monthly Update is ready. The headline:
 47 calls and 12 form submissions came in through
 Beamix-attributed channels — up 4.2× vs March.
 
-Read it: app.beamix.tech/reports/[report_id]
-Download PDF: app.beamix.tech/reports/[report_id].pdf
+Read it: app.beamixai.com/reports/[report_id]
+Download PDF: app.beamixai.com/reports/[report_id].pdf
 
 — Beamix
 ```

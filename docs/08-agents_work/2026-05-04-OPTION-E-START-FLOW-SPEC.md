@@ -495,7 +495,7 @@ The state machine has **14 named states**. Names are UPPERCASE_SNAKE_CASE in the
 - **Button clicks:** primary CTAs on each phase trigger named transitions (see §2).
 - **Time-based:** Phase 2 signup overlay surfaces at T+10 s. Phase 5/6/7 autosave-on-blur. Recovery emails fire at Day 1/3/7/14 post-abandonment.
 - **Webhook-driven:** Paddle webhooks (subscription_created, payment_failed, refund_issued). Inngest events (scan-complete, agent-job-finished).
-- **Recovery emails:** sent from `notify@notify.beamix.tech`, cream-paper editorial register, Fraunces 300 italic for one-line italic clauses, voice canon Model B.
+- **Recovery emails:** sent from `notify@notify.beamixai.com`, cream-paper editorial register, Fraunces 300 italic for one-line italic clauses, voice canon Model B.
 
 ### Recovery paths from ABANDONED_MID_FLOW
 
@@ -594,7 +594,7 @@ The Phase 8 secondary CTA `[ Share this with my CTO ]` opens a small modal with 
 
 ### "Come back later" recovery emails
 
-Sent from `notify@notify.beamix.tech`. Cream-paper editorial register (HTML + cream gradient header strip 32 px tall using `--color-paper-cream`). Fraunces 300 italic for one-clause italic moments. Heebo for Hebrew. Voice canon Model B (signed "— Beamix").
+Sent from `notify@notify.beamixai.com`. Cream-paper editorial register (HTML + cream gradient header strip 32 px tall using `--color-paper-cream`). Fraunces 300 italic for one-clause italic moments. Heebo for Hebrew. Voice canon Model B (signed "— Beamix").
 
 - **Day 3:** subject: *"What your CTO needs to see."* Body: 80-word note explaining what /home/share shows; embedded link.
 - **Day 7:** subject: *"3 things we'd ship in week 1."* Body: list of 3 specific findings + sample drafts; CTA: `[ Activate ]`.

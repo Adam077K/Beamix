@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '2mb',
     },
   },
-  allowedDevOrigins: ['beamix.tech', '*.beamix.tech', 'localhost:3000', '127.0.0.1:3000'],
+  allowedDevOrigins: ['beamixai.com', '*.beamixai.com', 'localhost:3000', '127.0.0.1:3000'],
   images: {
     remotePatterns: [
       {

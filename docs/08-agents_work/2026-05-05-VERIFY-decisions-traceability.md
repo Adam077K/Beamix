@@ -451,14 +451,14 @@ Source: `docs/08-agents_work/2026-04-27-BOARD-MEETING-SYNTHESIS.md` (all 23 lock
 
 | Decision | Primary record | Also in | Signal |
 |---|---|---|---|
-| Domain: beamixai.com (LIVE) | PRD v5.1 header ("Domain: beamixai.com") + deprecation notice | MEMORY.md project_domain.md (still shows beamix.tech — see note) | 🟡 (MEMORY.md domain file may be stale — references notify.beamix.tech; notify.beamixai.com is the active domain per v5.1 Tier 0 item 9) |
+| Domain: beamixai.com (LIVE) | PRD v5.1 header ("Domain: beamixai.com") + deprecation notice | MEMORY.md project_domain.md (still shows beamixai.com — see note) | 🟡 (MEMORY.md domain file may be stale — references notify.beamixai.com; notify.beamixai.com is the active domain per v5.1 Tier 0 item 9) |
 | Brand: "Beamix" (never "BeamixAI") | PRD v5.1 header, v5.2 header, all docs | MEMORY.md | 🟢 |
 | Stack: Next.js 16 + React 19 + Supabase + Paddle + Inngest + Resend + Cloudflare DNS | PRD v5.1 Domain Infrastructure Status §14 | CLAUDE.md stack section | 🟢 |
 | No Stripe, no n8n | MEMORY.md LOCKED DECISIONS, CLAUDE.md | PRD v5.1 F4 (Paddle only) | 🟢 |
 | Google OAuth primary auth | PRD v5.1 Tier 0 item 13, Q9 lock | Flow architecture synthesis | 🟢 |
 | Inngest free tier → migrate at ~5 paying customers | MEMORY.md project_inngest_tier_strategy.md | PRD v5.1 Tier 0 item 3, v5.2 §4 R5 | 🟢 |
 
-**Note on domain:** `MEMORY.md` index entry `project_domain.md` references `notify.beamix.tech` for transactional email. PRD v5.1 Tier 0 item 9 specifies `notify.beamixai.com`. This is a stale cross-reference. Not a decision gap — the v5.1 canonical domain is correct — but the MEMORY.md index entry should be updated.
+**Note on domain:** `MEMORY.md` index entry `project_domain.md` references `notify.beamixai.com` for transactional email. PRD v5.1 Tier 0 item 9 specifies `notify.beamixai.com`. This is a stale cross-reference. Not a decision gap — the v5.1 canonical domain is correct — but the MEMORY.md index entry should be updated.
 
 ---
 
@@ -535,8 +535,8 @@ The following items are documented as pending and are NOT gaps in the decision r
 - The obligation to have a cap is locked. The specific dollar amount ($25K/incident cap) is noted in the Board 1 synthesis but is pending Adam's lawyer confirmation.
 - **Recommended fix:** Once lawyer call happens, lock the cap amount in F21 acceptance criteria in PRD v5.1.
 
-**5. MEMORY.md domain index entry stale (notify.beamix.tech vs notify.beamixai.com)**
-- Minor but could cause confusion if agents read the MEMORY.md index and try to configure notify.beamix.tech.
+**5. MEMORY.md domain index entry stale (notify.beamixai.com vs notify.beamixai.com)**
+- Minor but could cause confusion if agents read the MEMORY.md index and try to configure notify.beamixai.com.
 - **Recommended fix:** Update `~/.claude/projects/-Users-adamks-VibeCoding-Beamix/memory/project_domain.md` to reflect notify.beamixai.com.
 
 **6. Block primitive interfaces (18 types) — no dedicated Tier 0 ticket in Build Plan**
@@ -570,7 +570,7 @@ Every decision is durably recorded. There are zero 🔴 Critical gaps. Six 🟡 
 2. Author `2026-05-05-QA-GATE-PROCESS-v1.md` (T151 — Tier 0)
 3. Author `2026-05-05-DESIGN-public-scan-permalink-v1.md` (prerequisite for T149)
 4. Lock DPA indemnification cap dollar amount in F21 after Adam's lawyer call
-5. Update `project_domain.md` memory file from notify.beamix.tech → notify.beamixai.com
+5. Update `project_domain.md` memory file from notify.beamixai.com → notify.beamixai.com
 6. Confirm block primitive TypeScript interfaces are covered by Tier 0 item 1 or add sub-ticket
 
 None of these gaps represent lost decisions. All locked decisions are durably recorded in at least one file that survives session resets. Safe to commit the master handoff with these 6 items tracked as follow-up actions.

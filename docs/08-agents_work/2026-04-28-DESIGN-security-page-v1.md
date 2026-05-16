@@ -2,7 +2,7 @@
 Date: 2026-04-28
 Author: Senior Product Designer (security/trust surfaces)
 Status: Implementation-ready. Reference DESIGN-SYSTEM-v1.md for tokens; BOARD-trust-safety.md for content.
-Surface: `beamix.tech/security` (Next.js page in `apps/web/`, NOT Framer)
+Surface: `beamixai.com/security` (Next.js page in `apps/web/`, NOT Framer)
 Voice canon: external surface — "Beamix," never agent names.
 Register: Editorial Artifact (cream paper, Fraunces accents, calm density).
 
@@ -76,7 +76,7 @@ The first 3 seconds when Aria opens the URL on his MacBook. He should know immed
 - Top-left, 48px from page top: Beamix wordmark (`Beamix` in 16px InterDisplay 500, `--color-ink`) + the cross/star sigil mark in `--color-brand`, 24px tall total.
 - Top-right, same baseline: `text-xs` caps tracking 0.10em `--color-ink-3`, reading: `SECURITY · v1.0 · LAST REVIEWED APR 27 2026`. Three pieces, separated by middle-dot. **The date is the trust signal.** A document without a review date is theatre; with one, it's a maintained artifact.
 - 96px gap, then the hero headline: **"How Beamix protects your data, in detail."** `text-h1` (48px InterDisplay 500, `cv11`, `--color-ink`), max-width 720px, line-height 56px. The phrase "in detail" is the load-bearing word — it tells Aria the page is not a marketing summary.
-- 24px below, the subhead in Fraunces italic: *"This page is the technical posture our customers' CTOs read before approving Beamix as a vendor. If you find a gap, write to us."* `text-serif-lg` (28px Fraunces 300 italic, opsz 144, soft 100, `ss01`, `--color-ink-2`). Two-line max. **The subhead does two jobs**: it acknowledges the CTO reader directly (Aria thinks: "this was written for me"), and it invites correction (Aria thinks: "they take this seriously enough to publish a contact for it"). The "write to us" is hyperlinked (in `--color-brand-text`) to `mailto:security@beamix.tech` — pre-filled subject `Security disclosure / question`.
+- 24px below, the subhead in Fraunces italic: *"This page is the technical posture our customers' CTOs read before approving Beamix as a vendor. If you find a gap, write to us."* `text-serif-lg` (28px Fraunces 300 italic, opsz 144, soft 100, `ss01`, `--color-ink-2`). Two-line max. **The subhead does two jobs**: it acknowledges the CTO reader directly (Aria thinks: "this was written for me"), and it invites correction (Aria thinks: "they take this seriously enough to publish a contact for it"). The "write to us" is hyperlinked (in `--color-brand-text`) to `mailto:security@beamixai.com` — pre-filled subject `Security disclosure / question`.
 - 48px below the subhead: a 6-stat ribbon. Six fact-pills, single horizontal row at 1240px, 4 of 6 visible on tablet, 2-up stacked on mobile.
 
 **The 6-stat ribbon** (single most important on-page element for the 60-second reader):
@@ -152,7 +152,7 @@ This is the single most-demanded section by procurement reviewers. **It must be 
 | 15 | Access | `/settings → Privacy → Export my data` runs an Inngest job that assembles a JSON bundle (profile, TF, scans, agent actions, /inbox items, audit log last 12 months). Delivered as signed S3 URL valid 7 days. | 7 days | 30 days (GDPR Article 12) |
 | 17 | Erasure | `/settings → Privacy → Delete my account` initiates the cancel cascade. Hard delete completes within 30 days of request. Audit log retains hashed pointers under legitimate-interest carve-out (disclosed in DPA). | 30 days | 30 days |
 | 20 | Portability | Export format is JSON. Truth File exports as JSON Schema-conformant — anti-lock-in by design. Customer can import into any future system. | 7 days | 30 days |
-| 33 | Breach notification | Personal data breach → affected customers notified within 72h of confirmation. Template lives in incident runbook; on-call engineer triggers it. Public incident page on `beamix.tech/incidents/[YYYY-MM-DD]-[slug]`. | <72h | 72h (legal ceiling) |
+| 33 | Breach notification | Personal data breach → affected customers notified within 72h of confirmation. Template lives in incident runbook; on-call engineer triggers it. Public incident page on `beamixai.com/incidents/[YYYY-MM-DD]-[slug]`. | <72h | 72h (legal ceiling) |
 
 Table rows alternate cream and `--color-paper-elev` (cream tint, 3% darker) for readability. Headers in `text-xs` caps `--color-ink-3`. Body cells `text-base`. Hyperlinks (`/settings → Privacy → Export my data`) styled in `--color-brand-text` with hover-underline.
 
@@ -255,7 +255,7 @@ COMMS — Sev-2     ≤ 4 hours (signed CEO email + public incident page)
 POST-MORTEM       ≤ 14 days (Sev-1) / 7 days (Sev-2)
 ```
 
-A small text link below the spec: `View public incident log →` pointing to `beamix.tech/incidents` (which lists post-mortems chronologically; empty at launch is honest, not damning).
+A small text link below the spec: `View public incident log →` pointing to `beamixai.com/incidents` (which lists post-mortems chronologically; empty at launch is honest, not damning).
 
 ---
 
@@ -267,7 +267,7 @@ The closing section. See Section 6 of this spec.
 
 ### Closing
 
-After Section 11, with 96px gap: a centered hand-drawn Beamix seal (Rough.js, `--color-brand` 2px stroke, 32×32, deterministic seed) followed 24px below by the signature line in Fraunces 300 italic 28px: *"— Beamix"*. Below the signature, 16px gap, in `text-mono` `--color-ink-3` centered: `Generated APR 27 2026. Reviewed quarterly. Last review: APR 27 2026.` Below that, 8px gap, the page's permalink: `beamix.tech/security` in `text-mono` `--color-ink-4`.
+After Section 11, with 96px gap: a centered hand-drawn Beamix seal (Rough.js, `--color-brand` 2px stroke, 32×32, deterministic seed) followed 24px below by the signature line in Fraunces 300 italic 28px: *"— Beamix"*. Below the signature, 16px gap, in `text-mono` `--color-ink-3` centered: `Generated APR 27 2026. Reviewed quarterly. Last review: APR 27 2026.` Below that, 8px gap, the page's permalink: `beamixai.com/security` in `text-mono` `--color-ink-4`.
 
 This closing seal is the **only Rough.js illustration on the entire page** other than the inline Traces beneath section headings. The visual restraint is the design — `/scan` and the Monthly Update use Rough.js liberally because they are reveal artifacts; this page is a disclosure document. **Every reduction is a deliberate trust signal.**
 
@@ -322,11 +322,11 @@ The classic security-page mistake is no CTA: the page reads like a static legal 
 **Visual treatment.** Section 11 of the page (the closing section before the seal). White-paper-island full-width inside the 720px reading column, 96px tall. Inside, three lines:
 
 1. Eyebrow: `WRITE TO US` in `text-xs` caps 0.10em `--color-ink-3`.
-2. Email address as the focal element: `security@beamix.tech` in `text-h3` (22px InterDisplay 500 `--color-ink`) — copyable on click (clipboard API + 600ms toast: "Copied").
+2. Email address as the focal element: `security@beamixai.com` in `text-h3` (22px InterDisplay 500 `--color-ink`) — copyable on click (clipboard API + 600ms toast: "Copied").
 3. Below in `text-sm` Inter 400 `--color-ink-2`: *"For security disclosures, vendor-review questions, and sub-processor change subscriptions. Average response: same business day. PGP key on request."*
-4. Right-aligned: a primary action button. Pill shape (`--radius-pill`, the only pill on the page — restraint), 44px tall, `--color-brand` background, white text 14px Inter 500. Label: `Compose email`. On click: opens `mailto:security@beamix.tech?subject=Security%20question%20re%20Beamix` with a small body template. **Clicking does NOT open a form modal** — it opens the user's actual mail client. Procurement reviewers prefer mail; their tooling logs sent emails to vendor tickets automatically.
+4. Right-aligned: a primary action button. Pill shape (`--radius-pill`, the only pill on the page — restraint), 44px tall, `--color-brand` background, white text 14px Inter 500. Label: `Compose email`. On click: opens `mailto:security@beamixai.com?subject=Security%20question%20re%20Beamix` with a small body template. **Clicking does NOT open a form modal** — it opens the user's actual mail client. Procurement reviewers prefer mail; their tooling logs sent emails to vendor tickets automatically.
 
-**Email handling on the receiving end (operational, not visual):** `security@beamix.tech` is monitored by the on-call engineer with a 4-business-hour SLA for first response. Auto-reply confirms receipt with a ticket reference. Vulnerability disclosures (subject contains "vuln" or "CVE") are routed to a separate channel with 60-minute pager response. PGP key is published at `beamix.tech/security/pgp.asc` (referenced in the email auto-reply, not on the page itself — keeps the page calm).
+**Email handling on the receiving end (operational, not visual):** `security@beamixai.com` is monitored by the on-call engineer with a 4-business-hour SLA for first response. Auto-reply confirms receipt with a ticket reference. Vulnerability disclosures (subject contains "vuln" or "CVE") are routed to a separate channel with 60-minute pager response. PGP key is published at `beamixai.com/security/pgp.asc` (referenced in the email auto-reply, not on the page itself — keeps the page calm).
 
 **Why an email and not a form:** a form is a customer-support pattern. Security disclosure is a peer-to-peer engineering communication. Aria emails. The procurement reviewer emails. Forms get dropped into Zendesk and lost; emails go to a watched mailbox. This single design choice signals "we have a real security inbox, not a customer-support queue."
 
@@ -345,7 +345,7 @@ Aria reads the web page on his MacBook, then forwards the PDF to his cofounder L
 - **Page 3:** Sections 04 (Encryption), 05 (Audit logs), 06 (No-training clause). The contractual no-training quote is rendered as a Fraunces-italic block-quote with a 2px left rule — same treatment as on web.
 - **Page 4:** Sections 07 (Twilio), 08 (Sub-processors table). The sub-processors table is the largest single element on the page; it gets two-thirds of Page 4.
 - **Page 5:** Sections 09 (Pre-publication validation, with the 100-word cryptographic primitive paragraph), 10 (Incident response). The 100-word paragraph is set in **18px Fraunces 300, indented 32px left, with a 2px `--color-brand` left rule** — to mark it as the central technical claim.
-- **Page 6 (closing):** Section 11 (Contact), closing seal (32×32, twice the cover seal — broadsheet tradition), Fraunces signature *"— Beamix"*, generated date in Geist Mono, permalink `beamix.tech/security`. Page footer `6 / 6`.
+- **Page 6 (closing):** Section 11 (Contact), closing seal (32×32, twice the cover seal — broadsheet tradition), Fraunces signature *"— Beamix"*, generated date in Geist Mono, permalink `beamixai.com/security`. Page footer `6 / 6`.
 
 **Generation pipeline.** Same React-PDF (`@react-pdf/renderer`) approach as the Monthly Update. Component tree: `<SecurityPosture mode="pdf" />` and `<SecurityPosture mode="web" />` — shared content, different layout primitives. Fonts (Inter, InterDisplay, Fraunces variable-axis, Geist Mono) registered via `Font.register()`. Rough.js seal pre-rendered to SVG server-side via Node + JSDOM + Rough.js with deterministic seed.
 
@@ -392,11 +392,11 @@ Aria reads the web page on his MacBook, then forwards the PDF to his cofounder L
 This page **must be cited** when a prospect asks Claude / Perplexity / ChatGPT "is Beamix secure?" or "where does Beamix store data?". Engineering for that is structural, not stylistic.
 
 - **Meta tags.** `<title>Security at Beamix · How we protect your data</title>` (60 chars). `<meta name="description" content="Beamix's full security posture: encryption, GDPR/DSAR, sub-processors, no-training-on-customer-content, audit logs, and incident response. Reviewed quarterly.">` (160 chars).
-- **Canonical.** `<link rel="canonical" href="https://beamix.tech/security">`.
+- **Canonical.** `<link rel="canonical" href="https://beamixai.com/security">`.
 - **Open Graph + Twitter card.** `og:title` matches `<title>`. `og:description` matches meta description. `og:image` = a custom 1200×630 OG image rendered server-side: cream paper, Beamix wordmark + sigil, the headline *"How Beamix protects your data"* in 64px Fraunces, a closing seal bottom-right. Same React-PDF/Vercel-OG component as the rest of the brand.
 - **Schema.org markup** (JSON-LD in page `<head>`):
   - `WebPage` with `@type: WebPage`, `name`, `description`, `dateModified` (the last-reviewed date — auto-bumped on deploy).
-  - `Organization` for Beamix with `name`, `url`, `contactPoint` for `security@beamix.tech` (`@type: ContactPoint`, `contactType: "Security"`, `email`, `availableLanguage: ["English"]`).
+  - `Organization` for Beamix with `name`, `url`, `contactPoint` for `security@beamixai.com` (`@type: ContactPoint`, `contactType: "Security"`, `email`, `availableLanguage: ["English"]`).
   - `FAQPage` containing the 11 sections as `Question` / `Answer` pairs — this is the load-bearing piece for AI citation. Each section's eyebrow becomes the question (e.g., *"How does Beamix handle GDPR data subject access requests?"*); the section's lede + first paragraph become the answer text.
 - **Structured headings + lists.** Every section starts with a declarative heading. Every spec block is a real `<dl>` (description list) with `<dt>` labels and `<dd>` values — AI extractors read this as structured key-value pairs.
 - **Sitemap inclusion.** `/security` listed in `sitemap.xml` with `<priority>0.8</priority>` (high; this is a critical landing page).

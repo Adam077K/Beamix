@@ -688,7 +688,7 @@ Three error tiers:
 - Body (15px Inter 400 `ink-2`): *"This is on our side. We're already alerted. Try refreshing in a minute, or:"*
 - Two buttons:
   - `Retry now` (brand-blue primary)
-  - `Status page →` (ghost, links to `status.beamix.tech`)
+  - `Status page →` (ghost, links to `status.beamixai.com`)
 - Signature line at the bottom (14px Fraunces italic 300 `ink-3`): *"— your crew"* (yes, even the error page is signed)
 
 This is the **only** moment cream paper appears in product chrome. It is justified because an error page IS an artifact — Beamix is communicating with the user, not running the product.

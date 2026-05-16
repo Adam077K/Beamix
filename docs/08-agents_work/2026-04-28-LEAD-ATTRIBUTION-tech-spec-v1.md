@@ -456,7 +456,7 @@ export async function GET(
   if (!attrUrl) {
     // Graceful degradation: redirect to customer's homepage if URL not found
     return NextResponse.redirect(
-      `https://${customerId}.beamix.tech`, // fallback — ideally store domain
+      `https://${customerId}.beamixai.com`, // fallback — ideally store domain
       { status: 302 }
     );
   }
@@ -517,7 +517,7 @@ async function hashIp(ip: string): Promise<string> {
 ```html
 <!-- Customer pastes this on every page of their site -->
 <script
-  src="https://notify.beamix.tech/attr.js"
+  src="https://notify.beamixai.com/attr.js"
   data-customer-id="cus_abc123"
   data-api-key="bx_live_xxxxxxxxxxxxxx"
   crossorigin="anonymous"
@@ -535,7 +535,7 @@ The snippet executes the following logic (implementation deferred):
 (function() {
   var CUSTOMER_ID = document.currentScript.dataset.customerId;
   var API_KEY = document.currentScript.dataset.apiKey;
-  var ENDPOINT = 'https://api.beamix.tech/attribution/event';
+  var ENDPOINT = 'https://api.beamixai.com/attribution/event';
 
   // 1. Capture landing context
   var sessionId = getOrCreateSessionId();  // localStorage, 30-min TTL
@@ -593,7 +593,7 @@ Schema validation: Zod. Rate limit: 100 events/customer/minute. GDPR: no IP stor
 
 ### Verification Check
 
-When customer clicks "Verify install" in the `/attribution/install` modal, Beamix sends a server-side HEAD request to the customer's domain. If `X-Beamix-Installed: true` is present in the response headers (customer adds this via their CMS/CDN), the install is verified. Fallback: Beamix parses the HTML response for the presence of `notify.beamix.tech/attr.js` in script tags.
+When customer clicks "Verify install" in the `/attribution/install` modal, Beamix sends a server-side HEAD request to the customer's domain. If `X-Beamix-Installed: true` is present in the response headers (customer adds this via their CMS/CDN), the install is verified. Fallback: Beamix parses the HTML response for the presence of `notify.beamixai.com/attr.js` in script tags.
 
 ---
 
@@ -828,7 +828,7 @@ The install handoff surface is a full-page modal (not a drawer) triggered from:
 │  │                                              │   │
 │  │  YOUR ATTRIBUTION URL                        │   │  ← text-xs eyebrow
 │  │  ┌────────────────────────────────────────┐  │   │
-│  │  │ https://beamix.tech/api/attr/... [Copy]│  │   │
+│  │  │ https://beamixai.com/api/attr/... [Copy]│  │   │
 │  │  └────────────────────────────────────────┘  │   │
 │  │                                              │   │
 │  │  [Send to your developer  ↗]  [Verify install]│  │
@@ -846,7 +846,7 @@ The install handoff surface is a full-page modal (not a drawer) triggered from:
 **Verify install flow:**
 1. Click "Verify install" → loading state
 2. `GET /api/attribution/verify?customer_id={id}` — server-side HEAD request to customer's domain
-3. Check for `X-Beamix-Installed: true` header OR presence of `notify.beamix.tech/attr.js` in HTML
+3. Check for `X-Beamix-Installed: true` header OR presence of `notify.beamixai.com/attr.js` in HTML
 4. Success: green check + "Verified — attribution tracking active"
 5. Failure: amber warning + "Not detected yet — this is normal if your developer hasn't deployed. Try again after deployment."
 
@@ -880,7 +880,7 @@ Attribution URL
 ───────────────
 Use this URL wherever Beamix has published AI-targeted content:
 
-  https://beamix.tech/api/attr/{customer_id}/{proxy_id}
+  https://beamixai.com/api/attr/{customer_id}/{proxy_id}
 
 It redirects to your actual page after logging the click. No cookies.
 No tracking pixels. Just a logged redirect.
@@ -890,7 +890,7 @@ Verify the install
 ──────────────────
 After deploying, visit:
 
-  https://app.beamix.tech/attribution/install
+  https://app.beamixai.com/attribution/install
 
 Click "Verify install." Beamix will check automatically.
 
@@ -900,7 +900,7 @@ Questions? Reply to this email.
 — Beamix
 ```
 
-The email uses plain-text register. No HTML formatting. Signed "— Beamix." Sent via Resend from `notify.beamix.tech`. The plain-text format is intentional — developer emails look better in monospace clients and read more credibly than HTML templates.
+The email uses plain-text register. No HTML formatting. Signed "— Beamix." Sent via Resend from `notify.beamixai.com`. The plain-text format is intentional — developer emails look better in monospace clients and read more credibly than HTML templates.
 
 ---
 
@@ -1112,7 +1112,7 @@ export const attributionEvangelismTrigger = inngest.createFunction(
           : 'an AI engine';
 
         await resend.emails.send({
-          from: 'Beamix <hello@notify.beamix.tech>',
+          from: 'Beamix <hello@notify.beamixai.com>',
           to: customer.email,
           subject: `We earned the first one.`,
           text: buildEvangelismEmailText(sourceLabel, customerId),

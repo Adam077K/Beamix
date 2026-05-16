@@ -24,7 +24,7 @@ Then: decide whether to tackle Competitors RPC adapter, Hebrew copy pass, or des
 
 ## What's shipped on production `main` (as of 2026-04-22)
 
-Production URL: https://beamix.vercel.app · Tester login: `tester@beamix.tech` / `Tester-Beamix-2026!`
+Production URL: https://beamix.vercel.app · Tester login: `tester@beamixai.com` / `Tester-Beamix-2026!`
 
 ### The 15 Wave 3 merge commits (from PR #21 onward)
 | PR | Commit | What landed |

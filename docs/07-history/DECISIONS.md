@@ -13,7 +13,7 @@ Each entry answers three questions: **What** was decided, **why** this over alte
 ---
 
 ### [2026-04-17] Board Meeting Day 3: Final Decisions + Pre-Build Audit
-**Decision:** Locked remaining open items: no AI labels in content output, day-1 auto-trigger pipeline, $19 top-up pack, annual pricing at launch, Sonar citation verification, email domain (notify.beamix.tech). Assisted-vs-autopilot validated by research (97% prefer review). Pre-build audit completed by 5 agents.
+**Decision:** Locked remaining open items: no AI labels in content output, day-1 auto-trigger pipeline, $19 top-up pack, annual pricing at launch, Sonar citation verification, email domain (notify.beamixai.com). Assisted-vs-autopilot validated by research (97% prefer review). Pre-build audit completed by 5 agents.
 **Context:** Third day of board meeting. 5-agent stress test (product, tech, business, UX, research) found 7 P0 blockers + 5 spec contradictions — all resolved. Documentation cleanup complete (30+ docs updated, 14+ archived).
 **Made by:** CEO (Adam) with full agent board
 **Status:** Active

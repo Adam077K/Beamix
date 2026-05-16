@@ -415,8 +415,8 @@ All items from `04-OPEN-QUESTIONS.md` are now closed.
 - "Publish" from Beamix = drops into Inbox/Archive. User copies to their website manually in MVP-1.
 
 ### Email Infrastructure
-- Domain: beamix.tech (NOT beamix.io)
-- Transactional email: notify.beamix.tech subdomain (Resend)
+- Domain: beamixai.com (NOT beamix.io)
+- Transactional email: notify.beamixai.com subdomain (Resend)
 - Cold outreach: separate subdomain + separate provider (NOT Resend)
 - Main domain: website only, no direct email sending
 - Protects transactional deliverability from cold email reputation damage

@@ -108,7 +108,7 @@ Three supported pricing models at MVP-1.5:
 
 **Python is secondary.** Published as `beamix-sdk` on PyPI. Generated from the same OpenAPI/JSON-Schema source as the TypeScript SDK to guarantee parity. Released at MVP-1.5. Recommended for data-science-heavy agents (e.g., agents that want pandas / scikit). Performance and feature parity with TS within 1 minor version.
 
-Both SDKs target the same versioned REST/GraphQL surface (`api.beamix.tech/v1`) with the same auth model (developer API keys scoped to a developer account; the SDK injects them).
+Both SDKs target the same versioned REST/GraphQL surface (`api.beamixai.com/v1`) with the same auth model (developer API keys scoped to a developer account; the SDK injects them).
 
 ### 2.2 Agent lifecycle
 
@@ -229,13 +229,13 @@ Criteria: top 10 in **Most-Used** OR top 5 in **Most-Improvement** OR Hall-of-Fa
 Criteria: top 3 in Most-Improvement, judged annually. Frequency: once a year, announced at the Hall of Fame event. Mechanic: $25K, $15K, $10K cash grant, no strings, paid via wire / Stripe Atlas equivalent. Total: $50K/year. Comms angle: "Beamix is paying developers for outcomes, not vanity."
 
 **Type D — Co-marketing.**
-Criteria: any agent that wins a monthly leaderboard plus opt-in. Frequency: ongoing. Mechanic: joint case study (Beamix produces, developer reviews), blog feature on `beamix.tech/blog`, social amplification, conference speaking slot at the annual event. Cost: marketing time, no cash.
+Criteria: any agent that wins a monthly leaderboard plus opt-in. Frequency: ongoing. Mechanic: joint case study (Beamix produces, developer reviews), blog feature on `beamixai.com/blog`, social amplification, conference speaking slot at the annual event. Cost: marketing time, no cash.
 
 **Type E — Free Beamix Scale subscription for active developers.**
 Criteria: developer with ≥1 listed agent and ≥10 active installs. Frequency: ongoing while criteria hold. Mechanic: free Scale tier ($499/mo value) on the developer's own Beamix account so they can dogfood their own agents. Total cost: marginal (we cap at 200 active developers in year 2).
 
 **Type F — Annual Marketplace Hall of Fame.**
-Criteria: top 1 in each dimension for the calendar year, plus 3 editorial picks ("Innovation", "Vertical Excellence", "Community Choice"). Frequency: annual, announced at the Beamix Annual event (live + livestreamed). Mechanic: physical trophy, permanent badge on listing, $25K bonus to overall winner, induction into a "Hall of Fame" page on `beamix.tech/marketplace/hall-of-fame`. The event is itself a marketing surface.
+Criteria: top 1 in each dimension for the calendar year, plus 3 editorial picks ("Innovation", "Vertical Excellence", "Community Choice"). Frequency: annual, announced at the Beamix Annual event (live + livestreamed). Mechanic: physical trophy, permanent badge on listing, $25K bonus to overall winner, induction into a "Hall of Fame" page on `beamixai.com/marketplace/hall-of-fame`. The event is itself a marketing surface.
 
 ### 3.4 Anti-gaming guardrails
 
@@ -250,7 +250,7 @@ Criteria: top 1 in each dimension for the calendar year, plus 3 editorial picks 
 Reward state is visible to three audiences:
 
 - **Customers** see badges on cards (Top Rated, Most Improvement, etc.) and reward carousels on `/marketplace`. They don't see economic rewards.
-- **Developers** see their reward state in the developer dashboard (`developers.beamix.tech`): current rank in each dimension, distance to next tier, projected payout, historical rewards. This is the engagement loop for developers.
+- **Developers** see their reward state in the developer dashboard (`developers.beamixai.com`): current rank in each dimension, distance to next tier, projected payout, historical rewards. This is the engagement loop for developers.
 - **Public** sees the Hall of Fame page and the annual report (we publish marketplace stats yearly — total payouts, top developers, growth — to build the platform's reputation).
 
 ---

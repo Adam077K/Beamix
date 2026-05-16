@@ -135,7 +135,7 @@ export const scanRun = inngest.createFunction(
       const userEmail: string = profile?.email ?? ''
       const firstName: string = profile?.first_name ?? 'there'
       const businessName: string = business.biz?.name ?? 'Your business'
-      const baseUrl = process.env['NEXT_PUBLIC_APP_URL'] ?? 'https://app.beamix.tech'
+      const baseUrl = process.env['NEXT_PUBLIC_APP_URL'] ?? 'https://app.beamixai.com'
       const enginesScanned = engines.length
 
       if (userEmail) {

@@ -25,7 +25,7 @@ Beamix is not a GEO audit tool. It is the first company that does GEO work for y
 - Dark mode — post-launch.
 - Memory layer for Beamie — architect for it, ship without it.
 - Rive runtime — architect for it (when Beamie returns), ship without it now.
-- Public GEO Index (`beamix.tech/check-my-site`) — deferred, high-ROI viral loop, ship after core.
+- Public GEO Index (`beamixai.com/check-my-site`) — deferred, high-ROI viral loop, ship after core.
 - Shareable Scan Card — deferred, ship after core.
 - State of GEO newsletter — deferred, content authority play.
 - Timelines, sprints, week estimates, "ship in Q2" language — never in this document or planning.
@@ -396,7 +396,7 @@ GEO-specific terms (English-retained):
 - Beamie persistent companion — Rive runtime scaffolded, state machine designed, ships when base product is complete
 - Memory layer — depends on Beamie; architect DB schema for conversation history now
 - Shareable Scan Card — viral loop; high-ROI when shipped; deferred until core is right
-- Public GEO Index (`beamix.tech/check-my-site`) — content authority play; deferred
+- Public GEO Index (`beamixai.com/check-my-site`) — content authority play; deferred
 - State of GEO newsletter — content marketing; deferred
 - Marketing site unification — Adam decides when product is right; Framer is separate
 - Dark mode — post-launch; design tokens structured for it from the start (use CSS custom properties)

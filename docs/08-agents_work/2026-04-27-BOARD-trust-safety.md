@@ -20,7 +20,7 @@ The threat model is not "competitor scrapes the public web." It is the **Yossi-t
 |---|---|---|
 | Initial state | Private (auth-required) | same |
 | Share-link generation | Explicit click in /reports → "Generate share link" | per-client config |
-| Link format | `beamix.tech/r/{nanoid21}` (122-bit entropy) | white-label subdomain Year 1 |
+| Link format | `beamixai.com/r/{nanoid21}` (122-bit entropy) | white-label subdomain Year 1 |
 | Indexability | `X-Robots-Tag: noindex, nofollow` + `robots.txt` block | same |
 | Default expiry | 30 days, renewable | unlimited (override available) |
 | Password protection | not available | available (bcrypt-hashed) |
@@ -162,7 +162,7 @@ Every published workflow has a "kill" capability in Beamix admin: one click susp
 
 **Escalation.** Severity 2 (>50 customers, no data loss, no compliance breach). On-call paged <5min. Within 30min: confirm scope via DB query. Within 1h: kill switch on v1.3.7. Within 2h: bulk rollback initiated.
 
-**Comms.** Within 4h: targeted email signed Beamix CEO: *"On [date], a Schema Doctor update caused malformed structured data. We've reverted it. Here's exactly what happened, what we changed, what we're doing differently."* Public incident page on `beamix.tech/incidents/2026-MM-DD-schema-doctor`.
+**Comms.** Within 4h: targeted email signed Beamix CEO: *"On [date], a Schema Doctor update caused malformed structured data. We've reverted it. Here's exactly what happened, what we changed, what we're doing differently."* Public incident page on `beamixai.com/incidents/2026-MM-DD-schema-doctor`.
 
 **Rollback.** Per F18 every action stores revert payload. Bulk rollback API takes action_ids, queues Inngest job per action, verifies via post-revert scan. Google reindex lag (2-8 weeks) acknowledged honestly: "rich snippets return as Google re-crawls."
 

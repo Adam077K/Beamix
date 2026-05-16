@@ -4,7 +4,7 @@ import { sendEmail } from '@/lib/resend/send'
 import { dailyDigestHtml, dailyDigestText } from '@/lib/resend/templates/daily-digest'
 import type { DigestItem } from '@/lib/resend/templates/daily-digest'
 
-const APP_BASE_URL = process.env['NEXT_PUBLIC_APP_URL'] ?? 'https://app.beamix.tech'
+const APP_BASE_URL = process.env['NEXT_PUBLIC_APP_URL'] ?? 'https://app.beamixai.com'
 
 export const dailyDigest = inngest.createFunction(
   { id: 'daily-digest' },
