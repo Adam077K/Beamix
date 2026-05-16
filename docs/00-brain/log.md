@@ -182,3 +182,11 @@
 - Cross-session memory: 4 new entries (Inngest tier, voice canon Model B, white-label per-client, Workflow Builder scope)
 - Build is unblocked for Tier 0 sprint (~19 person-days plumbing)
 
+
+## [2026-05-16] ceo-rethink-phase1 | Phase 0 hygiene + Phase 1 schema/QA infra shipped
+- Phase 0: 308 orphan skills archived (MANIFEST 167KB→47KB); 13 GSD agents archived; .agent/agents/ deleted; workers renamed to -engineer; CLAUDE.md rewritten to C-suite
+- Phase 1: file-path tier-floor YAML + PostToolUse per-file typecheck hook + qa-lead-pass.yml extended for tier:irreversible + all 22 .claude/agents/*.md standardized to 07b template
+- Models corrected: ceo/research-lead/ai-engineer/security-engineer/researcher → opus-4-7
+- Vindication triggers: 5-day cap respected (1 day); FM-12 not triggered
+- Next: Day 6 pivot to product per board decision #9 — use canonical handoff at docs/product-rethink-2026-04-09/build-prep-2026-05-13/13-CEO-HANDOFF-PROMPT.md
+- Session: docs/08-agents_work/sessions/2026-05-16-ceo-phase1-rethink-execution.md
