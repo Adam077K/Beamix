@@ -25,6 +25,8 @@ skills:
   - beamix-scan-architecture
   - seo-content-writer
   - deep-research
+  - competitive-landscape
+  - search-specialist
 ---
 
 # GEO Algorithm Signal

@@ -23,6 +23,8 @@ mcpServers:
 skills:
   - competitive-landscape
   - search-specialist
+  - deep-research
+  - market-sizing-analysis
 ---
 
 # Competitor Pulse

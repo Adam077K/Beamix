@@ -14,6 +14,10 @@ skills:
   - react-patterns
   - nextjs-app-router-patterns
   - beamix-brand-quality-bar
+  - tailwind-design-system
+  - radix-ui-design-system
+  - react-ui-patterns
+  - frontend-design
 risk_tier_default: lite
 escalates_to: cto
 escalates_when: |
@@ -202,6 +206,18 @@ Include in your return JSON:
   "blockers": []
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Adding motion / micro-interaction | `emilkowal-animations` |
+| Accessibility pass on a screen | `wcag-audit-patterns` |
+| Page or route transitions | `vercel-react-view-transitions` |
+| Stripping a screen to minimum elements | `minimalist-ui` |
+| Visual diff / before-after capture | `screenshots` |
 
 ## Anti-patterns
 

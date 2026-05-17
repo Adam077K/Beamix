@@ -15,6 +15,9 @@ skills:
   - frontend-design
   - beamix-brand-quality-bar
   - beamix-voice-canon
+  - design-taste-frontend
+  - core-components
+  - minimalist-ui
 risk_tier_default: lite
 escalates_to: design-lead
 escalates_when: |
@@ -219,6 +222,16 @@ Include in your return JSON:
   "blockers": []
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Hero / marketing-grade visual moment | `high-end-visual-design` |
+| Accessibility pass on a screen | `wcag-audit-patterns` |
+| Refactoring an existing surface | `redesign-existing-projects` |
 
 ## Anti-patterns
 

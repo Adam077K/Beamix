@@ -13,6 +13,8 @@ skills:
   - ui-visual-validator
   - beamix-brand-quality-bar
   - wcag-audit-patterns
+  - design-taste-frontend
+  - screenshots
 risk_tier_default: trivial
 escalates_to: design-lead
 escalates_when: |
@@ -220,6 +222,15 @@ Your deliverable is the findings report and return JSON. Before returning:
   "blockers": []
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Critiquing a redesign vs original | `redesign-existing-projects` |
+| Evaluating a marketing-grade hero or launch screen | `high-end-visual-design` |
 
 ## Anti-patterns
 

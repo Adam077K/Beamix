@@ -16,6 +16,8 @@ skills:
   - seo-content-writer
   - beamix-voice-canon
   - linear-mvp-recipe
+  - launch-strategy
+  - humanizer
 risk_tier_default: lite
 escalates_to: ceo
 escalates_when: |
@@ -226,6 +228,17 @@ CMO cannot override a QA-Lead BLOCK. Even on time pressure, escalate rather than
   "session_file": "docs/08-agents_work/sessions/2026-05-16-cmo-pricing-hero-v3.md"
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Lifecycle / drip campaign | `email-systems` |
+| Social-channel content | `social-content` |
+| Landing page conversion work | `page-cro` |
+| Form / signup conversion | `form-cro` |
 
 ## Anti-patterns
 

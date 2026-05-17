@@ -27,6 +27,9 @@ mcpServers:
 skills:
   - security-audit
   - web-security-testing
+  - api-security-testing
+  - broken-authentication
+  - security-scanning-security-dependencies
 ---
 
 # Security Watcher

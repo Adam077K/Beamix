@@ -20,7 +20,9 @@ mcpServers:
 skills:
   - playwright-skill
   - e2e-testing-patterns
-  - e2e-testing-patterns
+  - testing-patterns
+  - unit-testing-test-generate
+  - e2e-testing
 ---
 
 # Parallel Tester

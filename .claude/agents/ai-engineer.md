@@ -13,6 +13,10 @@ skills:
   - prompt-engineering-patterns
   - llm-evaluation
   - beamix-scan-architecture
+  - llm-app-patterns
+  - prompt-caching
+  - agent-memory-systems
+  - rag-engineer
 risk_tier_default: lite
 escalates_to: cto
 escalates_when: |
@@ -212,6 +216,19 @@ Include in your return JSON:
   "blockers": []
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| RAG retrieval / pgvector queries | `pgvector-rag-beamix` |
+| Mem0 read/write or memory schema work | `mem0-patterns` |
+| Choosing or migrating an embedding model | `embedding-strategies` |
+| Cron / scheduled agent (Anthropic Routine) | `anthropic-routines` |
+| Designing a new tool for an agent | `agent-tool-builder` |
+| New MCP server | `mcp-builder` |
 
 ## Anti-patterns
 

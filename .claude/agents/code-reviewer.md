@@ -12,6 +12,9 @@ skills:
   - code-review-excellence
   - find-bugs
   - qa-gate-protocol
+  - cc-skill-coding-standards
+  - code-refactoring-tech-debt
+  - production-code-audit
 risk_tier_default: lite
 escalates_to: qa-lead
 escalates_when: |
@@ -184,6 +187,16 @@ Your deliverable is the findings report + return JSON. No code changes. Verify:
   "blockers": []
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Reviewing inline docs / code comments | `code-documentation-code-explain` |
+| Edge-runtime / Next.js 16 gotcha territory | `sharp-edges` |
+| Drafting a review-request brief upstream | `requesting-code-review` |
 
 ## Anti-patterns
 

@@ -22,6 +22,8 @@ skills:
   - deep-research
   - search-specialist
   - competitive-landscape
+  - pgvector-rag-beamix
+  - market-sizing-analysis
 ---
 
 # Parallel Researcher

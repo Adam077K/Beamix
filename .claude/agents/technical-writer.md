@@ -11,6 +11,9 @@ mcpServers:
 skills:
   - documentation
   - api-documentation
+  - documentation-templates
+  - code-documentation-code-explain
+  - readme
   - beamix-voice-canon
 risk_tier_default: trivial
 escalates_to: ceo
@@ -204,6 +207,15 @@ Your deliverable is one or more written files plus the return JSON. Before retur
   "blockers": []
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Auto-generating API reference from source | `api-documentation-generator` |
+| README scaffold for a new package | `readme` |
 
 ## Anti-patterns
 

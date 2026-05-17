@@ -12,6 +12,8 @@ skills:
   - deep-research
   - competitive-landscape
   - search-specialist
+  - market-sizing-analysis
+  - pgvector-rag-beamix
 risk_tier_default: trivial
 escalates_to: research-lead
 escalates_when: |
@@ -191,6 +193,15 @@ Your deliverable is the findings report (markdown) and the return JSON. Verify b
   "blockers": []
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Persisting findings into RAG corpus | `pgvector-rag-beamix` |
+| Recalling prior research on the same topic | `mem0-patterns` |
 
 ## Anti-patterns
 

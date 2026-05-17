@@ -15,6 +15,7 @@ skills:
   - architecture-decision-records
   - architecture
   - board-meeting-protocol
+  - architecture-patterns
 ---
 
 # Persona: Architect

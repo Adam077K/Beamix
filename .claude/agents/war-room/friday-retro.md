@@ -24,6 +24,8 @@ mcpServers:
 skills:
   - documentation-templates
   - startup-metrics-framework
+  - brainstorming
+  - mem0-patterns
 ---
 
 # Friday Retro

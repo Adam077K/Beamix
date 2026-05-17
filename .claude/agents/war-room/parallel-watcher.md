@@ -14,7 +14,8 @@ mcpServers:
 skills:
   - multi-agent-patterns
   - api-design-principles
-  - multi-agent-patterns
+  - error-handling-patterns
+  - debugging-strategies
 ---
 
 # Parallel Watcher

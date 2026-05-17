@@ -16,6 +16,8 @@ skills:
   - segment-cdp
   - linear-mvp-recipe
   - beamix-voice-canon
+  - page-cro
+  - form-cro
 risk_tier_default: lite
 escalates_to: ceo
 escalates_when: |
@@ -263,6 +265,17 @@ QA-Lead returns BLOCK → escalate to CEO with structured findings.
   "session_file": "docs/08-agents_work/sessions/2026-05-16-cco-onboarding-step3-churn.md"
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Lifecycle / activation emails | `email-systems` |
+| Microcopy across product surface | `copywriting` |
+| CX comms needing human tone | `humanizer` |
+| Voice consistency check on customer-facing string | `beamix-voice-canon` |
 
 ## Anti-patterns
 

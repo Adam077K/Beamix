@@ -14,6 +14,7 @@ skills:
   - deep-research
   - competitive-landscape
   - market-sizing-analysis
+  - search-specialist
   - pgvector-rag-beamix
   - mem0-patterns
 risk_tier_default: lite
@@ -195,6 +196,17 @@ Research-Lead does not merge code. No QA-Lead spawn required. However, before re
   "session_file": "docs/08-agents_work/sessions/2026-05-16-research-lead-geo-competitive.md"
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Spawning parallel researchers | `dispatching-parallel-agents` |
+| GTM / launch-context research | `launch-strategy` |
+| Producing PRD-grade inputs for CPO | `product-manager-toolkit` |
+| Persisting findings into RAG corpus | `pgvector-rag-beamix` |
 
 ## Anti-patterns
 

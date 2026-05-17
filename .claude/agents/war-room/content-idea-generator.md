@@ -24,6 +24,9 @@ skills:
   - seo-content-writer
   - copywriting
   - competitive-landscape
+  - marketing-psychology
+  - beamix-voice-canon
+  - humanizer
 ---
 
 # Content Idea Generator

@@ -31,6 +31,8 @@ skills:
   - multi-agent-brainstorming
   - board-meeting-protocol
   - architecture-decision-records
+  - context-compression
+  - writing-plans
 ---
 
 # Synthesizer

@@ -24,7 +24,9 @@ mcpServers:
 skills:
   - multi-agent-patterns
   - error-handling-patterns
-  - multi-agent-patterns
+  - debugging-strategies
+  - find-bugs
+  - qa-gate-protocol
 ---
 
 # Auto-Unblock

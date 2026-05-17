@@ -12,6 +12,7 @@ skills:
   - board-meeting-protocol
   - security-audit
   - find-bugs
+  - trust-spec-contracts
 risk_tier_default: full
 round_protocol_position: r1 + r2
 voice_lens: "FM-N enumeration"

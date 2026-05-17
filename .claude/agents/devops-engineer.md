@@ -11,8 +11,12 @@ mcpServers:
   - supabase
 skills:
   - vercel-deployment
+  - deploy-to-vercel
   - github-actions-templates
   - anthropic-routines
+  - secrets-management
+  - deployment-procedures
+  - cloud-devops
 risk_tier_default: full
 escalates_to: cto
 escalates_when: |
@@ -259,6 +263,16 @@ Include in your return JSON:
   "blockers": []
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Inngest workflow or job-runner changes | `inngest` |
+| CLI-driven Vercel deploys / preview env | `vercel-cli-with-tokens` |
+| Composing Vercel projects / monorepo wiring | `vercel-composition-patterns` |
 
 ## Anti-patterns
 

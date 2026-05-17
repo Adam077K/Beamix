@@ -11,6 +11,10 @@ skills:
   - security-audit
   - trust-spec-contracts
   - supabase-rls-beamix
+  - web-security-testing
+  - broken-authentication
+  - api-security-testing
+  - xss-html-injection
 risk_tier_default: full
 escalates_to: cto
 escalates_when: |
@@ -198,6 +202,17 @@ Include in your return JSON:
   ]
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Reviewing handling of customer PII or EU data | `gdpr-data-handling` |
+| `.env` / vendor-key / rotation surface | `secrets-management` |
+| Dependency CVE / `pnpm audit` follow-up | `security-scanning-security-dependencies` |
+| Auth flow / session / cookie review | `auth-implementation-patterns` |
 
 ## Anti-patterns
 

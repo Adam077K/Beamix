@@ -23,6 +23,8 @@ skills:
   - documentation-templates
   - writing-plans
   - product-manager-toolkit
+  - brainstorming
+  - mem0-patterns
 ---
 
 # Monday Standup

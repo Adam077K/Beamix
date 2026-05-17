@@ -12,6 +12,9 @@ skills:
   - security-audit
   - api-security-testing
   - find-bugs
+  - web-security-testing
+  - broken-authentication
+  - xss-html-injection
 risk_tier_default: full
 escalates_to: qa-lead
 escalates_when: |
@@ -199,6 +202,14 @@ Your return JSON is your only output. Include:
   "blockers": []
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| `.env` / secret exposure surface | `secrets-management` |
 
 ## Anti-patterns
 

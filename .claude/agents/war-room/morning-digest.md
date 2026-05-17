@@ -23,6 +23,8 @@ skills:
   - documentation-templates
   - mem0-patterns
   - writing-plans
+  - context-compression
+  - search-specialist
 ---
 
 # Morning Digest

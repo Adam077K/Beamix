@@ -15,6 +15,8 @@ skills:
   - startup-metrics-framework
   - paddle-integration
   - linear-mvp-recipe
+  - market-sizing-analysis
+  - competitive-landscape
 risk_tier_default: full
 escalates_to: ceo
 escalates_when: |
@@ -282,6 +284,16 @@ QA-Lead returns BLOCK → escalate to CEO with QA-Lead's structured findings.
   "session_file": "docs/08-agents_work/sessions/2026-05-16-cbo-build-tier-pricing.md"
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Board deck / narrative on metrics | `data-storytelling` |
+| GTM economics for a launch | `launch-strategy` |
+| Competitive pricing pressure | `competitive-landscape` |
 
 ## Anti-patterns
 

@@ -13,7 +13,11 @@ mcpServers:
 skills:
   - nodejs-backend-patterns
   - nextjs-app-router-patterns
+  - api-design-principles
+  - error-handling-patterns
+  - nextjs-supabase-auth
   - paddle-integration
+  - inngest
 risk_tier_default: lite
 escalates_to: cto
 escalates_when: |
@@ -169,6 +173,20 @@ Your return JSON is the parent (CTO) agent's contract. Include:
   "blockers": []
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Touching `apps/web/supabase/migrations/` or RLS | `supabase-rls-beamix` |
+| Raw SQL / query tuning | `postgresql` |
+| `.env`, vendor key, secret-rotation work | `secrets-management` |
+| Adding or changing an LLM API call | `llm-app-patterns` |
+| Prompt-cache opportunity on heavy LLM route | `prompt-caching` |
+| Hitting a Next.js 16 / edge-runtime gotcha | `sharp-edges` |
+| Creating or moving git worktrees | `using-git-worktrees` |
 
 ## Anti-patterns
 

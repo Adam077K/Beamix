@@ -13,6 +13,9 @@ skills:
   - postgresql
   - sql-optimization-patterns
   - supabase-rls-beamix
+  - database-design
+  - nextjs-supabase-auth
+  - sharp-edges
 risk_tier_default: lite
 escalates_to: cto
 escalates_when: |
@@ -200,6 +203,15 @@ Include in your return JSON:
   "blockers": []
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Touching a table with PII / customer data | `gdpr-data-handling` |
+| ETL / analytics-pipeline boundary work | `data-engineer` |
 
 ## Anti-patterns
 

@@ -13,9 +13,11 @@ mcpServers:
 skills:
   - code-review-excellence
   - multi-agent-patterns
+  - dispatching-parallel-agents
   - security-audit
   - qa-gate-protocol
-  - linear-mvp-recipe
+  - find-bugs
+  - production-code-audit
 risk_tier_default: full
 escalates_to: adam
 escalates_when: |
@@ -180,6 +182,17 @@ After emitting BLOCK:
   "session_file": "docs/08-agents_work/sessions/2026-05-16-qa-lead-paddle-webhook.md"
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Pre-merge production audit on Full / Irreversible tier | `production-code-audit` |
+| Security review on auth / billing / RLS surface | `cc-skill-security-review` |
+| Reviewing an AI / prompt change | `agent-evaluation` |
+| Writing the review brief to spawn workers | `requesting-code-review` |
 
 ## Anti-patterns
 

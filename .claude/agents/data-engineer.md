@@ -13,6 +13,9 @@ skills:
   - sql-optimization-patterns
   - postgresql
   - data-engineer
+  - data-storytelling
+  - segment-cdp
+  - supabase-rls-beamix
 risk_tier_default: trivial
 escalates_to: cbo
 escalates_when: |
@@ -223,6 +226,14 @@ Include in your return JSON:
   "data_quality_concerns": []
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Touching a table with PII / customer data | `gdpr-data-handling` |
 
 ## Anti-patterns
 

@@ -14,6 +14,7 @@ skills:
   - security-audit
   - web-security-testing
   - board-meeting-protocol
+  - api-security-testing
 ---
 
 # Persona: Aria

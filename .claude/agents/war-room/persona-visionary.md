@@ -14,6 +14,7 @@ skills:
   - market-sizing-analysis
   - board-meeting-protocol
   - multi-agent-brainstorming
+  - competitive-landscape
 ---
 
 # Persona: Visionary

@@ -14,6 +14,7 @@ skills:
   - startup-metrics-framework
   - board-meeting-protocol
   - competitive-landscape
+  - launch-strategy
 ---
 
 # Persona: Strategist

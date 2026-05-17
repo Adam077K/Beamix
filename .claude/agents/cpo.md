@@ -15,6 +15,7 @@ skills:
   - brainstorming
   - architecture-decision-records
   - writing-plans
+  - deep-research
 risk_tier_default: lite
 escalates_to: ceo
 escalates_when: |
@@ -268,6 +269,17 @@ QA-Lead verdict:
   "session_file": "docs/08-agents_work/sessions/2026-05-16-cpo-geo-citation-gap-report.md"
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Positioning vs competitors | `competitive-landscape` |
+| Market sizing for a new initiative | `market-sizing-analysis` |
+| Writing customer-visible copy in a spec | `beamix-voice-canon` |
+| Decision needs an ADR | `architecture-decision-records` |
 
 ## Anti-patterns
 

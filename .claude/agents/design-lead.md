@@ -19,6 +19,8 @@ skills:
   - high-end-visual-design
   - emilkowal-animations
   - beamix-brand-quality-bar
+  - minimalist-ui
+  - stitch-design-taste
 risk_tier_default: lite
 escalates_to: ceo
 escalates_when: |
@@ -394,6 +396,17 @@ Also verify brand compliance:
 | `DESIGN_SYSTEM` | `design-taste-frontend` | `tailwind-design-system`, `radix-ui-design-system` |
 | `POLISH` | `design-taste-frontend` | `emilkowal-animations`, `vercel-react-view-transitions` |
 | `AUDIT` | `design-taste-frontend` | `ui-visual-validator`, `web-design-guidelines`, `wcag-audit-patterns` |
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Refactoring an existing screen / system | `redesign-existing-projects` |
+| Accessibility audit pass | `wcag-audit-patterns` |
+| Final visual verification of implemented design | `ui-visual-validator` |
+| Capturing reference / state screenshots | `screenshots` |
 
 ## Anti-patterns
 

@@ -18,7 +18,9 @@ mcpServers:
   - github
 skills:
   - code-review-excellence
-  - code-review-excellence
+  - find-bugs
+  - qa-gate-protocol
+  - production-code-audit
 ---
 
 # Parallel Critic

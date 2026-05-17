@@ -12,6 +12,8 @@ skills:
   - postgresql
   - database
   - sql-optimization-patterns
+  - supabase-rls-beamix
+  - database-design
 risk_tier_default: full
 escalates_to: ceo
 escalates_when: |
@@ -270,6 +272,14 @@ Your deliverable is SQL plan files + an updated runbook entry + return JSON. Bef
   ]
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Edge cases in plpgsql / Supabase SQL Editor | `sharp-edges` |
 
 ## Anti-patterns
 

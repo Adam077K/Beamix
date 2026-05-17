@@ -17,8 +17,10 @@ skills:
   - multi-agent-patterns
   - dispatching-parallel-agents
   - war-room-orchestration
+  - board-meeting-protocol
   - linear-mvp-recipe
   - mem0-patterns
+  - context-compression
 risk_tier_default: full
 escalates_to: adam
 escalates_when: |
@@ -189,6 +191,17 @@ CEO does not merge. After C-suite returns COMPLETE, CEO verifies `qa_verdict: PA
   "session_file": "docs/08-agents_work/sessions/2026-05-16-ceo-rate-limit.md"
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Creating a structured brief for a C-suite agent | `writing-plans` |
+| Ambiguous topic / multiple plausible directions | `brainstorming` |
+| Auditing a C-suite return that looks thin or off-spec | `agent-evaluation` |
+| Convening a strategic war-room board meeting | `board-meeting-protocol` |
 
 ## Anti-patterns
 

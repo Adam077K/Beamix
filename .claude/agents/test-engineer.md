@@ -13,6 +13,9 @@ skills:
   - testing-patterns
   - e2e-testing-patterns
   - tdd-workflow
+  - e2e-testing
+  - playwright-skill
+  - unit-testing-test-generate
 risk_tier_default: lite
 escalates_to: cto
 escalates_when: |
@@ -217,6 +220,14 @@ Include in your return JSON:
   "blockers": []
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Heavy TDD-first work with the author present | `tdd-orchestrator` |
 
 ## Anti-patterns
 

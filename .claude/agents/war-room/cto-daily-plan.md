@@ -26,6 +26,9 @@ skills:
   - dispatching-parallel-agents
   - multi-agent-patterns
   - writing-plans
+  - worktree-isolation-pattern
+  - qa-gate-protocol
+  - brainstorming
 ---
 
 # CTO Daily Plan

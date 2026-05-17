@@ -18,6 +18,9 @@ skills:
   - nextjs-app-router-patterns
   - nodejs-backend-patterns
   - error-handling-patterns
+  - api-design-principles
+  - worktree-isolation-pattern
+  - nextjs-supabase-auth
 risk_tier_default: lite
 escalates_to: cto-daily-plan
 escalates_when: |

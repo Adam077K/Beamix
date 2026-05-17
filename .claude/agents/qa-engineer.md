@@ -12,6 +12,10 @@ skills:
   - unit-testing-test-generate
   - testing-patterns
   - qa-gate-protocol
+  - e2e-testing
+  - e2e-testing-patterns
+  - playwright-skill
+  - tdd-workflow
 risk_tier_default: lite
 escalates_to: qa-lead
 escalates_when: |
@@ -203,6 +207,16 @@ Include in your return JSON:
   "blockers": []
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| Heavy TDD-first feature with the author present | `tdd-orchestrator` |
+| Net-new unit suite for an untested module | `unit-testing-test-generate` |
+| Hunting an intermittent or regression bug | `find-bugs` |
 
 ## Anti-patterns
 

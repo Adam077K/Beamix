@@ -18,6 +18,8 @@ skills:
   - qa-gate-protocol
   - worktree-isolation-pattern
   - architecture-patterns
+  - architecture-decision-records
+  - writing-plans
 risk_tier_default: lite
 escalates_to: ceo
 escalates_when: |
@@ -194,6 +196,18 @@ After PASS: post a Linear sub-ticket comment on each worker branch (synthesis on
   "session_file": "docs/08-agents_work/sessions/2026-05-16-cto-rate-limit.md"
 }
 ```
+
+## Skills — load on demand
+
+Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+
+| When you're doing this... | Load this skill |
+|---|---|
+| System-design / new bounded context | `domain-driven-design` |
+| Refactor / tech-debt sweep | `code-refactoring-tech-debt` |
+| LLM cost spiking or prompt-cache opportunity | `prompt-caching` |
+| Gotcha hunting (Next.js / Vercel / edge runtime) | `sharp-edges` |
+| Designing a new MCP tool or agent capability | `mcp-builder` |
 
 ## Anti-patterns
 
