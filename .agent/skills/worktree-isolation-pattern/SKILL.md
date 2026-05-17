@@ -1,5 +1,6 @@
 ---
 name: worktree-isolation-pattern
+last_updated: 2026-05-17
 description: "The exact git worktree create, detect, and clean pattern for Beamix workers: detect-or-create from main-repo-root, child worktree commands, branch naming conventions (feat/fix/chore), atomic commits, and .worktrees/ gitignore enforcement."
 tags: [git, beamix-specific, workflow, workers]
 source: beamix-authored 2026-05-16
@@ -8,6 +9,10 @@ risk: low
 
 # Worktree Isolation Pattern
 
+## Quick reference
+
+> Every code worker creates a fresh worktree under `MAIN_REPO/.worktrees/<slug>`. Never edit main repo. Never edit another worker's worktree.
+
 ## When to use
 
 - Any code worker (backend-engineer, frontend-engineer, database-engineer, etc.) starting a new task
@@ -15,7 +20,7 @@ risk: low
 - Debugging "file not found" or "wrong branch" errors in a worker session
 - Authoring a new worker agent file that needs the worktree operating procedure
 
-## Do not use
+## When NOT to use
 
 - For non-code workers (technical-writer, researcher — no worktree needed)
 - For QA-Lead (QA-Lead reads, does not create worktrees)
@@ -171,6 +176,12 @@ Workers handle these without returning BLOCKED:
 3. **Unused imports** — auto-remove
 
 Everything else (architectural mismatch, missing spec clarity, scope expansion) → return `PARTIAL` with `needs_followup`. CTO decides.
+
+## See also
+
+- `using-git-worktrees` — [[using-git-worktrees]]
+- `qa-gate-protocol` — [[qa-gate-protocol]]
+- `finishing-a-development-branch` — [[finishing-a-development-branch]]
 
 ## Anti-patterns
 

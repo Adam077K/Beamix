@@ -1,5 +1,6 @@
 ---
 name: war-room-orchestration
+last_updated: 2026-05-17
 description: "How CEO and C-suite dispatch work through the Beamix war-room trust-spec system: Linear label routing, Cloudflare bridge, HMAC-signed specs, fan-out/fan-in via Inngest, and audit_log enforcement. Use when authoring or debugging any CEO/C-suite dispatch flow."
 tags: [orchestration, beamix-specific, agents, war-room]
 source: beamix-authored 2026-05-16
@@ -7,6 +8,10 @@ risk: low
 ---
 
 # War Room Orchestration
+
+## Quick reference
+
+> Routines fire on cron → orchestrate via Linear comments → fan-out via Inngest → fan-in via mem0. Never wait inline.
 
 ## When to use
 
@@ -16,7 +21,7 @@ risk: low
 - Building the Cloudflare bridge Worker
 - Understanding how trust_mode specs flow from Linear comment to Routine execution
 
-## Do not use
+## When NOT to use
 
 - For product feature work unrelated to the war-room control plane
 - When only a single-agent worktree task is needed (no fan-out)
@@ -166,6 +171,13 @@ status          text        -- fired | accepted | complete | blocked | timeout |
 cost_usd        numeric
 created_at      timestamptz
 ```
+
+## See also
+
+- `linear-mvp-recipe` — [[linear-mvp-recipe]]
+- `board-meeting-protocol` — [[board-meeting-protocol]]
+- `anthropic-routines` — [[anthropic-routines]]
+- `qa-gate-protocol` — [[qa-gate-protocol]]
 
 ## Anti-patterns
 

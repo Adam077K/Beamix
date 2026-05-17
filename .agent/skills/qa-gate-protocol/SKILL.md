@@ -1,5 +1,6 @@
 ---
 name: qa-gate-protocol
+last_updated: 2026-05-17
 description: "Beamix's 4-tier QA gate: Trivial/Lite/Full/Irreversible classification, reviewer assignment, evaluator-optimizer pattern, multi-judge setup, Codex CLI graceful degradation, and bypass rules. Use when QA-Lead is classifying a PR or CTO is routing a task to the correct tier."
 tags: [quality, beamix-specific, testing, security]
 source: beamix-authored 2026-05-16
@@ -8,6 +9,10 @@ risk: low
 
 # QA Gate Protocol
 
+## Quick reference
+
+> Trivial / Lite / Full / Irreversible. `qa-tier-floor.yml` sets minimum tier deterministically. `<verdict>PASS|BLOCK</verdict>` XML tag mandatory.
+
 ## When to use
 
 - QA-Lead assigning a risk tier to an incoming PR
@@ -15,7 +20,7 @@ risk: low
 - Authoring or refining `.claude/qa-tier-floor.yml`
 - Debugging why a merge was blocked or a bypass was rejected
 
-## Do not use
+## When NOT to use
 
 - For product unit/integration test authoring (that's test-engineer's job)
 - For performance testing (that's performance-engineer)
@@ -166,6 +171,13 @@ BYPASS REASON: <specific, non-generic reason>
 Full and Irreversible tiers: **cannot be bypassed under any circumstances.** The GitHub branch protection rule `qa-lead-pass.yml` enforces this structurally.
 
 Every bypass writes an `audit_log` row with `status: bypass_invoked` and the stated reason.
+
+## See also
+
+- `code-review-excellence` — [[code-review-excellence]]
+- `security-audit` — [[security-audit]]
+- `worktree-isolation-pattern` — [[worktree-isolation-pattern]]
+- `find-bugs` — [[find-bugs]]
 
 ## Anti-patterns
 

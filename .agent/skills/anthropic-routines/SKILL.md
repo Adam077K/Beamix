@@ -1,5 +1,6 @@
 ---
 name: anthropic-routines
+last_updated: 2026-05-17
 description: "How to write a Beamix Routine .md file: required frontmatter fields (schedule, routine_id_env_key, budget, trust-spec parsing), body conventions, and MCP grant patterns. Use when authoring or refining any file under .claude/agents/_routines/."
 tags: [orchestration, beamix-specific, agents, routines]
 source: beamix-authored 2026-05-16
@@ -8,6 +9,10 @@ risk: low
 
 # Anthropic Routines
 
+## Quick reference
+
+> Routines are triggers, not durable executors. Inngest owns durability. Always include `budget` + `routine_id_env_key` in frontmatter.
+
 ## When to use
 
 - Authoring a new Routine .md file under `.claude/agents/_routines/`
@@ -15,7 +20,7 @@ risk: low
 - Debugging why a Routine did not fire on its cron schedule
 - Understanding how a Routine receives and validates a trust spec
 
-## Do not use
+## When NOT to use
 
 - For interactive C-suite agents (they use the standard agent schema, not Routine schema)
 - For worker agents (workers are spawned via Task, not via `/fire`)
@@ -128,6 +133,13 @@ If any verification step fails: write audit_log row status=rejected, post Linear
 | `eod-sync` | 20:30 daily | Sonnet |
 | `auto-unblock` | Event-triggered (timeout) | Sonnet |
 | `synthesizer` | Event-triggered (board R3) | Opus |
+
+## See also
+
+- `war-room-orchestration` — [[war-room-orchestration]]
+- `trust-spec-contracts` — [[trust-spec-contracts]]
+- `linear-mvp-recipe` — [[linear-mvp-recipe]]
+- `board-meeting-protocol` — [[board-meeting-protocol]]
 
 ## Anti-patterns
 

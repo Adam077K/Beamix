@@ -1,5 +1,6 @@
 ---
 name: beamix-scan-architecture
+last_updated: 2026-05-17
 description: "Beamix's GEO scan pipeline: Perplexity research phase, three engine queries (ChatGPT, Gemini, Perplexity), Gemini Flash analysis, result storage in scan_engine_results, and the OPENROUTER_SCAN_KEY vs OPENROUTER_AGENT_KEY API key split. Use when implementing or debugging any scan-related API route or Inngest function."
 tags: [ai, beamix-specific, backend, scan]
 source: beamix-authored 2026-05-16
@@ -8,6 +9,10 @@ risk: low
 
 # Beamix Scan Architecture
 
+## Quick reference
+
+> Scan = 1 user click → 1 Inngest event → fan-out to engine adapters → fan-in to `scan_engine_results` → recommendations via Claude Haiku. Never block UI.
+
 ## When to use
 
 - Implementing a new scan engine adapter
@@ -15,7 +20,7 @@ risk: low
 - Adding a new analysis step to the scan pipeline
 - Understanding why two API keys are used instead of one
 
-## Do not use
+## When NOT to use
 
 - For agent jobs (agent execution is a separate pipeline under `src/inngest/functions/agent-execute.ts`)
 - For free scan vs authenticated scan differences — this covers both, but check the specific Inngest function
@@ -153,6 +158,13 @@ Prompts are identical across engines to ensure comparability of results. Do not 
 | Engines | ChatGPT + Gemini + Perplexity | Same (plan-gated for additional engines) |
 | Converted on signup | Yes — `free_scans.converted_user_id = user_id` | N/A |
 | API route | `/api/scan/start` with no auth header | `/api/scan/start` with session auth |
+
+## See also
+
+- `llm-app-patterns` — [[llm-app-patterns]]
+- `inngest` — [[inngest]]
+- `supabase-rls-beamix` — [[supabase-rls-beamix]]
+- `prompt-engineering-patterns` — [[prompt-engineering-patterns]]
 
 ## Anti-patterns
 

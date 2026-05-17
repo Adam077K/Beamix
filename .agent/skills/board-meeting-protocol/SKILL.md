@@ -1,5 +1,6 @@
 ---
 name: board-meeting-protocol
+last_updated: 2026-05-17
 description: "The Beamix 4-round board-meeting protocol: R0 framing, R1 independent verdicts, R2 cross-critique, R3 fresh-context synthesis. Includes JSON output schema per round, persona routing rules, and Zod validation requirements. Use for any strategic or irreversible decision."
 tags: [orchestration, beamix-specific, strategy, decision-making]
 source: beamix-authored 2026-05-16
@@ -8,6 +9,10 @@ risk: low
 
 # Board Meeting Protocol
 
+## Quick reference
+
+> R0 brief → R1 personas opening → R2 cross-critique → R3 synthesis → 1 verdict. Verdict in JSON; rationale in prose. No 5th round.
+
 ## When to use
 
 - Any decision tagged `board-meeting` in Linear
@@ -15,7 +20,7 @@ risk: low
 - Strategic questions (pricing changes, vendor locks, org model changes)
 - When CEO determines a decision requires cross-persona stress-testing
 
-## Do not use
+## When NOT to use
 
 - For implementation decisions (those route to CTO, tier:lite or full)
 - For quick tactical choices (use the normal CEO → C-suite path)
@@ -177,6 +182,13 @@ docs/08-agents_work/2026-05-16-agent-rethink/board-review/
 ```
 
 DECISIONS.md gets one entry citing all sources.
+
+## See also
+
+- `war-room-orchestration` — [[war-room-orchestration]]
+- `anthropic-routines` — [[anthropic-routines]]
+- `multi-agent-brainstorming` — [[multi-agent-brainstorming]]
+- `architecture-decision-records` — [[architecture-decision-records]]
 
 ## Anti-patterns
 

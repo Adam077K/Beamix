@@ -1,5 +1,6 @@
 ---
 name: beamix-voice-canon
+last_updated: 2026-05-17
 description: "Beamix Model B voice canon: when to name agents vs when to say 'Beamix', the no-AI-disclosure rule, banned buzzwords, and Hebrew+English dual-language parity expectations. Use for any copy, email, UI text, PDF, or marketing content."
 tags: [copywriting, beamix-specific, brand, voice]
 source: beamix-authored 2026-05-16
@@ -8,6 +9,10 @@ risk: low
 
 # Beamix Voice Canon — Model B
 
+## Quick reference
+
+> Agent names in product UI; `Beamix` on external docs. No AI disclosure. Three-word personality: Authoritative, Direct, Warm. HE + EN parity always.
+
 ## When to use
 
 - Writing any user-facing copy: UI labels, email templates, onboarding text, PDF reports
@@ -15,7 +20,7 @@ risk: low
 - Configuring agent names shown in the product dashboard
 - Writing HE (Hebrew) or EN (English) copy for any surface
 
-## Do not use
+## When NOT to use
 
 - For internal agent-to-agent communication (no voice canon required there)
 - For code comments (technical comments are direct and unbranded)
@@ -130,6 +135,13 @@ Ran queued 2 FAQ pages that address the ChatGPT and Perplexity gaps.
 
 — Beamix
 ```
+
+## See also
+
+- `copywriting` — [[copywriting]]
+- `marketing-psychology` — [[marketing-psychology]]
+- `humanizer` — [[humanizer]]
+- `seo-content-writer` — [[seo-content-writer]]
 
 ## Anti-patterns
 

@@ -1,5 +1,6 @@
 ---
 name: linear-mvp-recipe
+last_updated: 2026-05-17
 description: "Beamix's locked Linear label vocabulary, sub-ticket creation pattern, and single-synthesis-comment style. Use whenever any CEO or C-suite agent interacts with Linear tickets, creates sub-tickets, or posts comments."
 tags: [workflow, beamix-specific, linear, orchestration]
 source: beamix-authored 2026-05-16
@@ -8,6 +9,10 @@ risk: low
 
 # Linear MVP Recipe
 
+## Quick reference
+
+> Every ticket: 1 user-visible outcome + 1 Acceptance Criteria + 1 reviewer + 1 demo URL. No tickets without all four.
+
 ## When to use
 
 - Writing or refining any agent that touches Linear (CEO, CTO, CPO, CMO, CBO, CCO, QA-Lead, Research-Lead)
@@ -15,7 +20,7 @@ risk: low
 - Formatting a synthesis comment after task completion
 - Debugging why the Cloudflare bridge did not pick up a ticket
 
-## Do not use
+## When NOT to use
 
 - For product feature work unrelated to agent orchestration
 - When an agent does not have the `linear` MCP in its grant (workers never write to Linear)
@@ -145,6 +150,13 @@ Beamix — Strategy (board meetings)  ← Board meeting outputs
 ```
 
 Routines post to War Room and Strategy projects only. Product tickets live in Main.
+
+## See also
+
+- `war-room-orchestration` — [[war-room-orchestration]]
+- `anthropic-routines` — [[anthropic-routines]]
+- `qa-gate-protocol` — [[qa-gate-protocol]]
+- `writing-plans` — [[writing-plans]]
 
 ## Anti-patterns
 

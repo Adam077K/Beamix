@@ -1,5 +1,6 @@
 ---
 name: trust-spec-contracts
+last_updated: 2026-05-17
 description: "The Beamix R3.x security model for agent-to-agent trust: HMAC signature verification, nonce replay prevention, sentinel-bracketed spec parsing, and issuer allowlists. Use when building or auditing the Cloudflare bridge, writing trust spec validation code, or authoring agents that accept inbound specs."
 tags: [security, beamix-specific, orchestration, war-room]
 source: beamix-authored 2026-05-16
@@ -8,6 +9,10 @@ risk: low
 
 # Trust Spec Contracts
 
+## Quick reference
+
+> Every `/fire` payload: HMAC + nonce + expires_at + issued_by + scope. Verify all 5 before any side effect. Log to `audit_log` on every accept/reject.
+
 ## When to use
 
 - Building or auditing the Cloudflare bridge Worker
@@ -15,7 +20,7 @@ risk: low
 - Authoring a new trust spec to dispatch a Routine
 - Investigating a `status: rejected` row in `audit_log`
 
-## Do not use
+## When NOT to use
 
 - For product user authentication (that's Supabase Auth)
 - For API route security (that's Next.js middleware + RLS)
@@ -189,6 +194,13 @@ async function validateInboundSpec(rawSpec: unknown): Promise<TrustSpec> {
   return spec;
 }
 ```
+
+## See also
+
+- `anthropic-routines` — [[anthropic-routines]]
+- `security-audit` — [[security-audit]]
+- `supabase-rls-beamix` — [[supabase-rls-beamix]]
+- `secrets-management` — [[secrets-management]]
 
 ## Anti-patterns
 

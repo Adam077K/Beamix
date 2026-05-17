@@ -1,5 +1,6 @@
 ---
 name: pgvector-rag-beamix
+last_updated: 2026-05-17
 description: "Querying Beamix's five RAG corpora stored in Supabase pgvector: DECISIONS, sessions, codebase, brain, and skills. Use when any CEO, CTO, or Research-Lead agent needs semantic search over internal knowledge during pre-flight or research."
 tags: [rag, beamix-specific, database, ai, memory]
 source: beamix-authored 2026-05-16
@@ -8,6 +9,10 @@ risk: low
 
 # pgvector RAG — Beamix
 
+## Quick reference
+
+> pgvector for product-domain RAG only (scan corpora, competitor docs). Mem0 owns agent-to-agent state. ivfflat lists = sqrt(N).
+
 ## When to use
 
 - Pre-flight: "Has this architectural decision been made before?"
@@ -15,7 +20,7 @@ risk: low
 - CTO checking whether a migration pattern exists in the codebase corpus
 - CEO cross-referencing past board meeting outputs
 
-## Do not use
+## When NOT to use
 
 - For real-time product data (use Supabase MCP with `execute_sql` instead)
 - When you need the exact current source file (use Read or Glob — RAG gives semantic proximity, not file state)
@@ -121,6 +126,13 @@ CREATE INDEX ON rag_corpus (corpus, source_file);  -- filter fast before vector 
 - `decisions` corpus is near-real-time but always read `DECISIONS.md` directly for the authoritative record
 - Similarity < 0.7 = weak match; cite with confidence: low
 - Never synthesize a claim from RAG alone without cross-checking the source file for critical decisions
+
+## See also
+
+- `mem0-patterns` — [[mem0-patterns]]
+- `embedding-strategies` — [[embedding-strategies]]
+- `rag-engineer` — [[rag-engineer]]
+- `vector-database-engineer` — [[vector-database-engineer]]
 
 ## Anti-patterns
 

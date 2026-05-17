@@ -1,5 +1,6 @@
 ---
 name: paddle-integration
+last_updated: 2026-05-17
 description: "Beamix billing patterns using Paddle: webhook signature verification, checkout session creation, customer portal URL generation, price ID conventions, and subscription lifecycle. Stripe is not used — Paddle is the only payment provider."
 tags: [billing, beamix-specific, backend, payments]
 source: beamix-authored 2026-05-16
@@ -8,6 +9,10 @@ risk: low
 
 # Paddle Integration
 
+## Quick reference
+
+> Webhook signature verify FIRST. All state transitions in `subscriptions` table. Never trust client-side checkout state. Paddle = source of truth.
+
 ## When to use
 
 - Implementing or debugging billing API routes in `apps/web/src/app/api/billing/`
@@ -15,7 +20,7 @@ risk: low
 - Generating checkout links or customer portal URLs
 - CBO reviewing unit economics from live subscription data
 
-## Do not use
+## When NOT to use
 
 - Stripe is not in the Beamix stack. Any Stripe reference is legacy and should be removed.
 - For auth flows (Supabase Auth handles user auth)
@@ -149,6 +154,13 @@ current_period_start  timestamptz
 current_period_end    timestamptz
 trial_ends_at    timestamptz
 ```
+
+## See also
+
+- `supabase-rls-beamix` — [[supabase-rls-beamix]]
+- `secrets-management` — [[secrets-management]]
+- `error-handling-patterns` — [[error-handling-patterns]]
+- `api-design-principles` — [[api-design-principles]]
 
 ## Anti-patterns
 

@@ -1,5 +1,6 @@
 ---
 name: supabase-rls-beamix
+last_updated: 2026-05-17
 description: "Beamix RLS conventions: per-user row-level security, service-role bypass patterns for Inngest jobs, war-room table deny-all policies, and audit_log write permissions. Use when writing or reviewing any Supabase migration or RLS policy in this project."
 tags: [database, beamix-specific, security, supabase]
 source: beamix-authored 2026-05-16
@@ -8,6 +9,10 @@ risk: low
 
 # Supabase RLS — Beamix
 
+## Quick reference
+
+> Every table with user data needs RLS ENABLE + at least one policy. `auth.uid()` for user-owned. Service-role bypass = audit_log row.
+
 ## When to use
 
 - Writing a new migration that adds a table requiring RLS
@@ -15,7 +20,7 @@ risk: low
 - Debugging an "insufficient privilege" error from a product API route
 - Writing war-room table policies for agent observability tables
 
-## Do not use
+## When NOT to use
 
 - For application-layer auth (that's Supabase Auth + middleware)
 - For pgvector RAG query patterns (see `pgvector-rag-beamix`)
@@ -175,6 +180,13 @@ apps/web/supabase/migrations/YYYYMMDDHHMMSS_description.sql
 Example: `20260516120000_add_audit_log_indexes.sql`
 
 Each migration must be idempotent (safe to re-run). Use `IF NOT EXISTS`, `ON CONFLICT DO NOTHING`, `CREATE INDEX CONCURRENTLY IF NOT EXISTS`.
+
+## See also
+
+- `postgresql` — [[postgresql]]
+- `sql-optimization-patterns` — [[sql-optimization-patterns]]
+- `gdpr-data-handling` — [[gdpr-data-handling]]
+- `database-design` — [[database-design]]
 
 ## Anti-patterns
 

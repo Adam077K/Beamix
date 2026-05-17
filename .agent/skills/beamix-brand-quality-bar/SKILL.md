@@ -1,5 +1,6 @@
 ---
 name: beamix-brand-quality-bar
+last_updated: 2026-05-17
 description: "Beamix billion-dollar-feel design rules: color palette v4.0 (blue #3370FF accent), typography system (InterDisplay + Inter + Fraunces + Geist Mono), spacing, animation budget, and empty-state requirements. Use before any design implementation or design review."
 tags: [design, beamix-specific, frontend, brand]
 source: beamix-authored 2026-05-16
@@ -8,6 +9,10 @@ risk: low
 
 # Beamix Brand Quality Bar
 
+## Quick reference
+
+> Stripe / Linear / Apple / Anthropic-grade. Every space, button, letter intentional. If it would embarrass at YC demo day, it ships at half quality.
+
 ## When to use
 
 - Before implementing any UI component or page
@@ -15,7 +20,7 @@ risk: low
 - Checking whether a Framer marketing change or Next.js dashboard update is on-brand
 - Settling color, font, or spacing questions without asking Adam
 
-## Do not use
+## When NOT to use
 
 - For agent-to-agent communication design (this covers user-facing product and marketing surfaces only)
 
@@ -160,6 +165,13 @@ Empty state requirements:
   action={<Button variant="primary">Start your first scan</Button>}
 />
 ```
+
+## See also
+
+- `design-taste-frontend` — [[design-taste-frontend]]
+- `high-end-visual-design` — [[high-end-visual-design]]
+- `minimalist-ui` — [[minimalist-ui]]
+- `wcag-audit-patterns` — [[wcag-audit-patterns]]
 
 ## Anti-patterns
 

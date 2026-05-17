@@ -1,5 +1,6 @@
 ---
 name: mem0-patterns
+last_updated: 2026-05-17
 description: "Mem0 episodic memory write/read patterns for Beamix agents: mandatory metadata fields, retry policy, and fallback to Anthropic Memory Tool after 3 failures. Use when any C-suite or lead agent reads or writes episodic memory during pre-flight or post-task."
 tags: [memory, beamix-specific, agents, ai]
 source: beamix-authored 2026-05-16
@@ -8,6 +9,10 @@ risk: low
 
 # Mem0 Patterns
 
+## Quick reference
+
+> Mem0 = retrieve-then-write. Always recall before deciding. Anthropic Memory Tool auto-fallback after 3 retries. Vendor lock-in review 2026-11-16.
+
 ## When to use
 
 - Writing post-task episodic memory from any C-suite or lead agent
@@ -15,7 +20,7 @@ risk: low
 - Diagnosing memory retrieval misses or stale facts
 - Implementing the retry-with-fallback pattern
 
-## Do not use
+## When NOT to use
 
 - For workers (workers do not write to Mem0 directly — parent C-suite writes)
 - For code snippets or schema (use pgvector RAG corpus instead)
@@ -156,6 +161,12 @@ Inngest `mem0-retry` function drains this queue. Not implemented in MVP — fall
 | Architectural decisions | `DECISIONS.md` (append-only) |
 | Customer quotes (curated) | `USER-INSIGHTS.md` |
 | Session context (navigation) | `docs/08-agents_work/sessions/<file>.md` |
+
+## See also
+
+- `pgvector-rag-beamix` — [[pgvector-rag-beamix]]
+- `anthropic-routines` — [[anthropic-routines]]
+- `agent-memory-systems` — [[agent-memory-systems]]
 
 ## Anti-patterns
 
