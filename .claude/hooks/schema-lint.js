@@ -33,7 +33,7 @@ const REPO_ROOT = (() => {
 })();
 
 const AGENTS_DIR = path.join(REPO_ROOT, '.claude', 'agents');
-const MANIFEST_PATH = path.join(REPO_ROOT, '.agent', 'skills', 'MANIFEST.json');
+const MANIFEST_PATH = path.join(REPO_ROOT, '.claude', 'skills', 'MANIFEST.json');
 
 // ── 07b template checks ────────────────────────────────────────────────────
 

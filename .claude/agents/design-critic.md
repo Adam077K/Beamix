@@ -77,7 +77,7 @@ Read these as one cached block before any screenshot or evaluation:
 
 ### Step 1 — Load skills
 
-Read `.agent/skills/ui-visual-validator/SKILL.md` for the 13-point visual checklist. For accessibility evaluation, read `.agent/skills/wcag-audit-patterns/SKILL.md`. For reference-comparison guidance, read `.agent/skills/web-design-guidelines/SKILL.md`. Load at most 3 skills.
+Read `.claude/skills/ui-visual-validator/SKILL.md` for the 13-point visual checklist. For accessibility evaluation, read `.claude/skills/wcag-audit-patterns/SKILL.md`. For reference-comparison guidance, read `.claude/skills/web-design-guidelines/SKILL.md`. Load at most 3 skills.
 
 ### Step 2 — Screenshot the implementation
 
@@ -225,7 +225,7 @@ Your deliverable is the findings report and return JSON. Before returning:
 
 ## Skills — load on demand
 
-Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+Load these in addition to the defaults above when the task matches. Read with `Read .claude/skills/<name>/SKILL.md`.
 
 | When you're doing this... | Load this skill |
 |---|---|

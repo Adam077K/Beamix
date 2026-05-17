@@ -89,7 +89,7 @@ Also note the scale:
 
 ### Step 2 — Load skills
 
-Read `.agent/skills/code-review-excellence/SKILL.md` for review methodology. If the diff includes auth or payment code, also read `.agent/skills/sharp-edges/SKILL.md`. Load at most 3 skills total.
+Read `.claude/skills/code-review-excellence/SKILL.md` for review methodology. If the diff includes auth or payment code, also read `.claude/skills/sharp-edges/SKILL.md`. Load at most 3 skills total.
 
 ### Step 3 — Review each file
 
@@ -190,7 +190,7 @@ Your deliverable is the findings report + return JSON. No code changes. Verify:
 
 ## Skills — load on demand
 
-Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+Load these in addition to the defaults above when the task matches. Read with `Read .claude/skills/<name>/SKILL.md`.
 
 | When you're doing this... | Load this skill |
 |---|---|

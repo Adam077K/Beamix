@@ -91,7 +91,7 @@ rules:
   - pattern: ".claude/memory/**"
     tier: trivial
     reason: "Memory files — append-only, no runtime impact"
-  - pattern: ".agent/skills/**"
+  - pattern: ".claude/skills/**"
     tier: trivial
     reason: "Skill SKILL.md files — load-on-demand; reader-validated"
   - pattern: "**/*.md"

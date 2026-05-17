@@ -126,7 +126,7 @@ worktree_isolation: true
 context_files: [3-5 specific paths the worker must read]
 constraints: TypeScript strict, Zod on all inputs, no new deps without CTO approval
 success_criteria: measurable and specific
-skills_to_load: [2-3 names from .agent/skills/MANIFEST.json]
+skills_to_load: [2-3 names from .claude/skills/MANIFEST.json]
 return_format: structured JSON (status, branch, files_changed, commits, summary, decisions_made, blockers)
 documentation: write session file at docs/08-agents_work/sessions/YYYY-MM-DD-<worker>-<slug>.md
 ```
@@ -199,7 +199,7 @@ After PASS: post a Linear sub-ticket comment on each worker branch (synthesis on
 
 ## Skills — load on demand
 
-Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+Load these in addition to the defaults above when the task matches. Read with `Read .claude/skills/<name>/SKILL.md`.
 
 | When you're doing this... | Load this skill |
 |---|---|

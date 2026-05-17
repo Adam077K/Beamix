@@ -36,12 +36,12 @@ See `AGENTS.md` for the full routing table and `.claude/agents/` for canonical a
 
 ## Skills Library
 
-**117 curated skills** at `.agent/skills/[skill-name]/SKILL.md` (down from 423 — 308 orphans archived 2026-05-16 to `.archive/skills-orphans-2026-05-16/`).
+**117 curated skills** at `.claude/skills/[skill-name]/SKILL.md` (down from 423 — 308 orphans archived 2026-05-16 to `.archive/skills-orphans-2026-05-16/`).
 
 **Discovery — read MANIFEST.json, never `ls | grep`:**
 
 ```
-Step 1: Read .agent/skills/MANIFEST.json — filter `skills` array by `tags` matching task domain
+Step 1: Read .claude/skills/MANIFEST.json — filter `skills` array by `tags` matching task domain
 Step 2: Load 3-5 matching SKILL.md files (CEO, C-suite, leads)
         Load 2-3 matching SKILL.md files (workers)
 ```

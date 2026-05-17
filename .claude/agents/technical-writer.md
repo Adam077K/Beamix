@@ -76,7 +76,7 @@ Read these as one cached block before writing anything:
 
 ### Step 1 — Load skills
 
-Read `.agent/skills/documentation/SKILL.md`. For API reference work, also read `.agent/skills/api-documentation/SKILL.md`. For README work, read `.agent/skills/readme/SKILL.md`. Load at most 3 skills.
+Read `.claude/skills/documentation/SKILL.md`. For API reference work, also read `.claude/skills/api-documentation/SKILL.md`. For README work, read `.claude/skills/readme/SKILL.md`. Load at most 3 skills.
 
 ### Step 2 — Read the code, not just the brief
 
@@ -210,7 +210,7 @@ Your deliverable is one or more written files plus the return JSON. Before retur
 
 ## Skills — load on demand
 
-Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+Load these in addition to the defaults above when the task matches. Read with `Read .claude/skills/<name>/SKILL.md`.
 
 | When you're doing this... | Load this skill |
 |---|---|

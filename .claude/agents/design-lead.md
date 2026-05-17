@@ -52,7 +52,7 @@ pre_flight_reads:
   - CLAUDE.md
   - docs/BRAND_GUIDELINES.md
   - docs/PRODUCT_DESIGN_SYSTEM.md
-  - ".agent/skills/design-taste-frontend/SKILL.md (MANDATORY — anti-slop rules, 3-dial system)"
+  - ".claude/skills/design-taste-frontend/SKILL.md (MANDATORY — anti-slop rules, 3-dial system)"
   - "Linear ticket via mcp__linear__get_issue"
 ---
 
@@ -84,7 +84,7 @@ Read these as one cached block (do not re-read mid-session):
 1. `CLAUDE.md` — stack, conventions, MCP table, routing
 2. `docs/BRAND_GUIDELINES.md` — color (#3370FF primary accent), fonts (Inter/InterDisplay/Fraunces/Geist Mono), spacing (8px grid), voice
 3. `docs/PRODUCT_DESIGN_SYSTEM.md` — dashboard design tokens and patterns
-4. `.agent/skills/design-taste-frontend/SKILL.md` — MANDATORY base skill; anti-slop rules, 3-dial system (DESIGN_VARIANCE, MOTION_INTENSITY, VISUAL_DENSITY)
+4. `.claude/skills/design-taste-frontend/SKILL.md` — MANDATORY base skill; anti-slop rules, 3-dial system (DESIGN_VARIANCE, MOTION_INTENSITY, VISUAL_DENSITY)
 5. The Linear ticket via `mcp__linear__get_issue`
 
 ## Operating procedure
@@ -111,7 +111,7 @@ Classification determines:
 ### Step 2 — Load skills for task type
 
 MANDATORY for all tasks (loaded in pre-flight):
-- `.agent/skills/design-taste-frontend/SKILL.md` — anti-generic rules, 3-dial system, premium aesthetics
+- `.claude/skills/design-taste-frontend/SKILL.md` — anti-generic rules, 3-dial system, premium aesthetics
 
 Load 2–3 additional task-specific skills:
 
@@ -128,10 +128,10 @@ Conditional skills:
 - When using Stitch MCP: ALWAYS load `.claude/skills/stitch-design-taste/SKILL.md` — prevents generic Stitch output
 - When user asks for "minimal" or "editorial": load `.claude/skills/minimalist-ui/SKILL.md`
 - If animations are in scope: add `.claude/skills/emilkowal-animations/SKILL.md` (43 rules across 7 categories)
-- If CRO is relevant: add `page-cro`, `form-cro`, or `onboarding-cro` from `.agent/skills/`
+- If CRO is relevant: add `page-cro`, `form-cro`, or `onboarding-cro` from `.claude/skills/`
 - If accessibility is a focus: add `wcag-audit-patterns`
 
-**Skill path note:** Taste skills live in `.claude/skills/[name]/SKILL.md`. Original library skills live in `.agent/skills/[name]/SKILL.md`. From inside a worktree, use the main repo root:
+**Skill path note:** Taste skills live in `.claude/skills/[name]/SKILL.md`. Original library skills live in `.claude/skills/[name]/SKILL.md`. From inside a worktree, use the main repo root:
 ```bash
 MAIN_REPO=$(git worktree list | head -1 | awk '{print $1}')
 cat "$MAIN_REPO/.claude/skills/design-taste-frontend/SKILL.md"
@@ -399,7 +399,7 @@ Also verify brand compliance:
 
 ## Skills — load on demand
 
-Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+Load these in addition to the defaults above when the task matches. Read with `Read .claude/skills/<name>/SKILL.md`.
 
 | When you're doing this... | Load this skill |
 |---|---|

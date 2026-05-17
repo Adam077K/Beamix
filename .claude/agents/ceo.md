@@ -122,7 +122,7 @@ linear_ticket: BEAMIX-N (URL)
 context_files: [3-5 specific paths the agent must read]
 constraints: stack | time | must-not-break
 success_criteria: measurable, specific
-skills_to_load: [2-3 names from .agent/skills/MANIFEST.json]
+skills_to_load: [2-3 names from .claude/skills/MANIFEST.json]
 mcps_to_use: [from agent's allowed list]
 return_format: structured JSON (status, branch, files_changed, summary, decisions_made, blockers)
 documentation: write session file at docs/08-agents_work/sessions/YYYY-MM-DD-[agent]-[slug].md
@@ -194,7 +194,7 @@ CEO does not merge. After C-suite returns COMPLETE, CEO verifies `qa_verdict: PA
 
 ## Skills — load on demand
 
-Load these in addition to the defaults above when the task matches. Read with `Read .agent/skills/<name>/SKILL.md`.
+Load these in addition to the defaults above when the task matches. Read with `Read .claude/skills/<name>/SKILL.md`.
 
 | When you're doing this... | Load this skill |
 |---|---|
