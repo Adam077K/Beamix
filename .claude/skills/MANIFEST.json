@@ -34,26 +34,6 @@
       "path": ".agent/skills/agent-tool-builder/SKILL.md"
     },
     {
-      "name": "ai-agents-architect",
-      "description": "Expert in designing and building autonomous AI agents. Masters tool use, memory systems, planning strategies, and multi-agent orchestration. Use when: build agent, AI agent, autonomous agent, tool ...",
-      "tags": [
-        "ai"
-      ],
-      "source": "vibeship-spawner-skills (Apache 2.0)",
-      "risk": "unknown",
-      "path": ".agent/skills/ai-agents-architect/SKILL.md"
-    },
-    {
-      "name": "ai-engineer",
-      "description": "Build production-ready LLM applications, advanced RAG systems, and intelligent agents. Implements vector search, multimodal AI, agent orchestration, and enterprise AI integrations. Use PROACTIVELY for",
-      "tags": [
-        "ai"
-      ],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/ai-engineer/SKILL.md"
-    },
-    {
       "name": "anthropic-routines",
       "description": "How to write a Beamix Routine .md file: required frontmatter fields (schedule, routine_id_env_key, budget, trust-spec parsing), body conventions, and MCP grant patterns. Use when authoring or refining",
       "tags": [
@@ -243,16 +223,6 @@
       "path": ".agent/skills/cc-skill-security-review/SKILL.md"
     },
     {
-      "name": "clerk-auth",
-      "description": "Expert patterns for Clerk auth implementation, middleware, organizations, webhooks, and user sync Use when: adding authentication, clerk auth, user authentication, sign in, sign up.",
-      "tags": [
-        "security"
-      ],
-      "source": "vibeship-spawner-skills (Apache 2.0)",
-      "risk": "unknown",
-      "path": ".agent/skills/clerk-auth/SKILL.md"
-    },
-    {
       "name": "cloud-devops",
       "description": "Cloud infrastructure and DevOps workflow covering AWS, Azure, GCP, Kubernetes, Terraform, CI/CD, monitoring, and cloud-native development.",
       "tags": [
@@ -287,24 +257,6 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/code-review-excellence/SKILL.md"
-    },
-    {
-      "name": "code-reviewer",
-      "description": "Elite code review expert specializing in modern AI-powered code",
-      "tags": [],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/code-reviewer/SKILL.md"
-    },
-    {
-      "name": "commit",
-      "description": "Create commit messages following Sentry conventions. Use when committing code changes, writing commit messages, or formatting git history. Follows conventional commits with Sentry-specific issue re...",
-      "tags": [
-        "git"
-      ],
-      "source": "https://github.com/getsentry/skills/tree/main/plugins/sentry-skills/skills/commit",
-      "risk": "safe",
-      "path": ".agent/skills/commit/SKILL.md"
     },
     {
       "name": "competitive-landscape",
@@ -343,16 +295,6 @@
       "path": ".agent/skills/core-components/SKILL.md"
     },
     {
-      "name": "create-pr",
-      "description": "Create pull requests following Sentry conventions. Use when opening PRs, writing PR descriptions, or preparing changes for review. Follows Sentry's code review guidelines.",
-      "tags": [
-        "git"
-      ],
-      "source": "https://github.com/getsentry/skills/tree/main/plugins/sentry-skills/skills/create-pr",
-      "risk": "safe",
-      "path": ".agent/skills/create-pr/SKILL.md"
-    },
-    {
       "name": "data-engineer",
       "description": "Build scalable data pipelines, modern data warehouses, and real-time streaming architectures. Implements Apache Spark, dbt, Airflow, and cloud-native data platforms. Use PROACTIVELY for data pipeline",
       "tags": [],
@@ -387,14 +329,6 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/database-design/SKILL.md"
-    },
-    {
-      "name": "debugger",
-      "description": "Debugging specialist for errors, test failures, and unexpected behavior. Use proactively when encountering any issues.",
-      "tags": [],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/debugger/SKILL.md"
     },
     {
       "name": "debugging-strategies",
@@ -558,16 +492,6 @@
       "path": ".agent/skills/find-bugs/SKILL.md"
     },
     {
-      "name": "finishing-a-development-branch",
-      "description": "Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup",
-      "tags": [
-        "git"
-      ],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/finishing-a-development-branch/SKILL.md"
-    },
-    {
       "name": "form-cro",
       "description": "",
       "tags": [
@@ -588,36 +512,6 @@
       "path": ".agent/skills/frontend-design/SKILL.md"
     },
     {
-      "name": "frontend-dev-guidelines",
-      "description": "Opinionated frontend development standards for modern React + TypeScript applications. Covers Suspense-first data fetching, lazy loading, feature-based architecture, MUI v7 styling, TanStack Router...",
-      "tags": [
-        "frontend"
-      ],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/frontend-dev-guidelines/SKILL.md"
-    },
-    {
-      "name": "frontend-developer",
-      "description": "Build React components, implement responsive layouts, and handle client-side state management. Masters React 19, Next.js 15, and modern frontend architecture. Optimizes performance and ensures accessi",
-      "tags": [
-        "frontend"
-      ],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/frontend-developer/SKILL.md"
-    },
-    {
-      "name": "full-output-enforcement",
-      "description": "Overrides default LLM truncation behavior. Enforces complete code generation, bans placeholder patterns, and handles token-limit splits cleanly. Apply to any task requiring exhaustive, unabridged outp",
-      "tags": [
-        "beamix-specific"
-      ],
-      "source": "beamix-harvested-from-.claude-skills",
-      "risk": "unknown",
-      "path": ".agent/skills/full-output-enforcement/SKILL.md"
-    },
-    {
       "name": "gdpr-data-handling",
       "description": "Implement GDPR-compliant data handling with consent management, data subject rights, and privacy by design. Use when building systems that process EU personal data, implementing privacy controls, o...",
       "tags": [
@@ -626,16 +520,6 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/gdpr-data-handling/SKILL.md"
-    },
-    {
-      "name": "git-pr-workflows-git-workflow",
-      "description": "Orchestrate a comprehensive git workflow from code review through PR creation, leveraging specialized agents for quality assurance, testing, and deployment readiness. This workflow implements modern g",
-      "tags": [
-        "git"
-      ],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/git-pr-workflows-git-workflow/SKILL.md"
     },
     {
       "name": "github-actions-templates",
@@ -800,17 +684,6 @@
       "path": ".agent/skills/nextjs-app-router-patterns/SKILL.md"
     },
     {
-      "name": "nextjs-best-practices",
-      "description": "Next.js App Router principles. Server Components, data fetching, routing patterns.",
-      "tags": [
-        "frontend",
-        "git"
-      ],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/nextjs-best-practices/SKILL.md"
-    },
-    {
       "name": "nextjs-supabase-auth",
       "description": "Expert integration of Supabase Auth with Next.js App Router Use when: supabase auth next, authentication next.js, login supabase, auth middleware, protected route.",
       "tags": [
@@ -845,7 +718,7 @@
     },
     {
       "name": "paddle-integration",
-      "description": "Beamix billing patterns using Paddle: webhook signature verification, checkout session creation, customer portal URL generation, price ID conventions, and subscription lifecycle. Stripe is not used — ",
+      "description": "Beamix billing patterns using Paddle: webhook signature verification, checkout session creation, customer portal URL generation, price ID conventions, and subscription lifecycle. Stripe is not used \u2014 ",
       "tags": [
         "billing",
         "backend",
@@ -865,26 +738,6 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/page-cro/SKILL.md"
-    },
-    {
-      "name": "parallel-agents",
-      "description": "Multi-agent orchestration patterns. Use when multiple independent tasks can run with different domain expertise or when comprehensive analysis requires multiple perspectives.",
-      "tags": [
-        "ai"
-      ],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/parallel-agents/SKILL.md"
-    },
-    {
-      "name": "payment-integration",
-      "description": "Integrate Stripe, PayPal, and payment processors. Handles checkout flows, subscriptions, webhooks, and PCI compliance. Use PROACTIVELY when implementing payments, billing, or subscription features.",
-      "tags": [
-        "business"
-      ],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/payment-integration/SKILL.md"
     },
     {
       "name": "pgvector-rag-beamix",
@@ -931,17 +784,6 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/pricing-strategy/SKILL.md"
-    },
-    {
-      "name": "prisma-expert",
-      "description": "Prisma ORM expert for schema design, migrations, query optimization, relations modeling, and database operations. Use PROACTIVELY for Prisma schema issues, migration problems, query performance, re...",
-      "tags": [
-        "database",
-        "git"
-      ],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/prisma-expert/SKILL.md"
     },
     {
       "name": "product-manager-toolkit",
@@ -1184,23 +1026,13 @@
     },
     {
       "name": "stitch-design-taste",
-      "description": "Semantic Design System Skill for Google Stitch. Generates agent-friendly DESIGN.md files that enforce premium, anti-generic UI standards — strict typography, calibrated color, asymmetric layouts, perp",
+      "description": "Semantic Design System Skill for Google Stitch. Generates agent-friendly DESIGN.md files that enforce premium, anti-generic UI standards \u2014 strict typography, calibrated color, asymmetric layouts, perp",
       "tags": [
         "design"
       ],
       "source": "beamix-harvested-from-.claude-skills",
       "risk": "unknown",
       "path": ".agent/skills/stitch-design-taste/SKILL.md"
-    },
-    {
-      "name": "stripe-integration",
-      "description": "Implement Stripe payment processing for robust, PCI-compliant payment flows including checkout, subscriptions, and webhooks. Use when integrating Stripe payments, building subscription systems, or ...",
-      "tags": [
-        "business"
-      ],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/stripe-integration/SKILL.md"
     },
     {
       "name": "supabase-rls-beamix",
@@ -1216,14 +1048,6 @@
       "path": ".agent/skills/supabase-rls-beamix/SKILL.md"
     },
     {
-      "name": "systematic-debugging",
-      "description": "Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes",
-      "tags": [],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/systematic-debugging/SKILL.md"
-    },
-    {
       "name": "tailwind-design-system",
       "description": "Build scalable design systems with Tailwind CSS, design tokens, component libraries, and responsive patterns. Use when creating component libraries, implementing design systems, or standardizing UI...",
       "tags": [
@@ -1234,18 +1058,6 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/tailwind-design-system/SKILL.md"
-    },
-    {
-      "name": "tailwind-patterns",
-      "description": "Tailwind CSS v4 principles. CSS-first configuration, container queries, modern patterns, design token architecture.",
-      "tags": [
-        "frontend",
-        "ai",
-        "architecture"
-      ],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/tailwind-patterns/SKILL.md"
     },
     {
       "name": "tdd-orchestrator",
@@ -1275,14 +1087,6 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/testing-patterns/SKILL.md"
-    },
-    {
-      "name": "tool-design",
-      "description": "Build tools that agents can use effectively, including architectural reduction patterns",
-      "tags": [],
-      "source": "https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering/tree/main/skills/tool-design",
-      "risk": "safe",
-      "path": ".agent/skills/tool-design/SKILL.md"
     },
     {
       "name": "trust-spec-contracts",
@@ -1326,18 +1130,8 @@
       "path": ".agent/skills/using-git-worktrees/SKILL.md"
     },
     {
-      "name": "vector-database-engineer",
-      "description": "Expert in vector databases, embedding strategies, and semantic search implementation. Masters Pinecone, Weaviate, Qdrant, Milvus, and pgvector for RAG applications, recommendation systems, and similar",
-      "tags": [
-        "database"
-      ],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/vector-database-engineer/SKILL.md"
-    },
-    {
       "name": "vercel-cli-with-tokens",
-      "description": "Deploy and manage projects on Vercel using token-based authentication. Use when working with Vercel CLI using access tokens rather than interactive login — e.g. \"deploy to vercel\", \"set up vercel\", \"a",
+      "description": "Deploy and manage projects on Vercel using token-based authentication. Use when working with Vercel CLI using access tokens rather than interactive login \u2014 e.g. \"deploy to vercel\", \"set up vercel\", \"a",
       "tags": [
         "devops"
       ],
@@ -1364,28 +1158,6 @@
       "source": "vibeship-spawner-skills (Apache 2.0)",
       "risk": "safe",
       "path": ".agent/skills/vercel-deployment/SKILL.md"
-    },
-    {
-      "name": "vercel-react-best-practices",
-      "description": "React and Next.js performance optimization guidelines from Vercel Engineering. This skill should be used when writing, reviewing, or refactoring React/Next.js code to ensure optimal performance patter",
-      "tags": [
-        "devops",
-        "frontend"
-      ],
-      "source": "beamix-harvested-from-.claude-skills",
-      "risk": "unknown",
-      "path": ".agent/skills/vercel-react-best-practices/SKILL.md"
-    },
-    {
-      "name": "vercel-react-native-skills",
-      "description": "React Native and Expo best practices for building performant mobile apps. Use",
-      "tags": [
-        "devops",
-        "frontend"
-      ],
-      "source": "beamix-harvested-from-.claude-skills",
-      "risk": "unknown",
-      "path": ".agent/skills/vercel-react-native-skills/SKILL.md"
     },
     {
       "name": "vercel-react-view-transitions",
@@ -1420,14 +1192,6 @@
       "source": "community",
       "risk": "unknown",
       "path": ".agent/skills/wcag-audit-patterns/SKILL.md"
-    },
-    {
-      "name": "web-design-guidelines",
-      "description": "Review UI code for Web Interface Guidelines compliance. Use when asked to \\\\\\\"review my UI\\\\\\\", \\\\\\\"check accessibility\\\\\\\", \\\\\\\"audit design\\\\\\\", \\\\\\\"review UX\\\\\\\", or \\\\\\\"check my site aga...",
-      "tags": [],
-      "source": "community",
-      "risk": "unknown",
-      "path": ".agent/skills/web-design-guidelines/SKILL.md"
     },
     {
       "name": "web-security-testing",
@@ -1472,5 +1236,9 @@
       "path": ".agent/skills/xss-html-injection/SKILL.md"
     }
   ],
-  "_note": "Regenerated 2026-05-16 — Phase 0 harvest of 14 Beamix-specific skills from .claude/skills/ that the original audit missed (audit treated .agent/skills/ as canonical; .claude/skills/ had 14 newer skills). | Phase 3 added 14 Beamix-authored skills (2026-05-16)."
+  "_note": "Regenerated 2026-05-16 \u2014 Phase 0 harvest of 14 Beamix-specific skills from .claude/skills/ that the original audit missed (audit treated .agent/skills/ as canonical; .claude/skills/ had 14 newer skills). | Phase 3 added 14 Beamix-authored skills (2026-05-16).",
+  "meta": {
+    "last_updated": "2026-05-17",
+    "last_change": "Archived 25 unused skills to .archive/skills-unused-2026-05-17/"
+  }
 }
