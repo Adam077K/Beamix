@@ -3,7 +3,7 @@
 **When:** Destructive migration applied incorrectly, schema mismatch causes data loss, RLS bypass deletes rows, or Supabase platform-level corruption (rare).
 **Severity:** **P0.** Supabase holds: customer data, war-room `audit_log` + `audit_log_daily` + `claude_progress`, pgvector RAG corpora, Mem0 OSS Phase 2 data, Auth.
 **Owner today:** Adam.
-**Last reviewed:** 2026-05-08 (WS3 lock).
+**Last reviewed:** 2026-05-17 (Phase 7.5 re-test — structural pass, currency verified against 2026-05-16 agent rethink).
 
 ---
 

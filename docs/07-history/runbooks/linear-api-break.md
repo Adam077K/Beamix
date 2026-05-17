@@ -3,7 +3,7 @@
 **When:** Linear API returns errors at sustained rate, OR Linear introduces a breaking change to webhook/MCP/REST contract, OR Linear service is fully down.
 **Severity:** **P1.** Work continues but is invisible — agents can keep running on cached state, but Adam cannot file new tickets and bridge cannot route new work.
 **Owner today:** Adam.
-**Last reviewed:** 2026-05-08 (WS3 lock).
+**Last reviewed:** 2026-05-17 (Phase 7.5 re-test — structural pass, currency verified against 2026-05-16 agent rethink).
 
 ---
 

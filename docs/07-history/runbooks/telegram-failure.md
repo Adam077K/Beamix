@@ -3,7 +3,7 @@
 **When:** Telegram notification delivery stops. Includes Telegram service-wide outage, bot account flagged or suspended, bot token revoked, or Adam personally blocking the bot. Every other runbook's first action ("Telegram-ping Adam") depends on this channel. If it fails, all incident notifications fail simultaneously unless the fallback path fires correctly.
 **Severity:** **P1.** The war room is not directly impaired — Routines continue running, Inngest continues running, the product continues serving. But Adam is flying blind on all P1+ incidents for the duration.
 **Owner today:** Adam.
-**Last reviewed:** 2026-05-08 (WS3 lock).
+**Last reviewed:** 2026-05-17 (Phase 7.5 re-test — structural pass, currency verified against 2026-05-16 agent rethink).
 
 > **WAR ROOM SCOPE:** This runbook covers the war room (Adam's internal startup-OS), not the Beamix customer product. Telegram is the war room's primary escalation channel. The Beamix product does not depend on Telegram.
 

@@ -3,7 +3,7 @@
 **When:** Anthropic platform unavailable. Includes API outage, Routine platform outage, daily-cap exhaustion that mimics outage, or account suspension.
 **Severity:** **P0** if >30 min OR account suspension. **P1** if <30 min AND platform-wide (not account-specific).
 **Owner today:** Adam.
-**Last reviewed:** 2026-05-08 (WS3 lock).
+**Last reviewed:** 2026-05-17 (Phase 7.5 re-test — structural pass, currency verified against 2026-05-16 agent rethink).
 
 ---
 

@@ -3,7 +3,7 @@
 **When:** Inngest platform unavailable. Includes full platform outage, sustained function execution failures, or silent fan-in barrier stall (CEO synth never fires despite all sub-tickets closing Done).
 **Severity:** **P1.** Inngest is the durable-execution layer (ORCHESTRATION.md §2C). Routines themselves continue running on Anthropic Routines (independent of Inngest). What stops: fan-in synth re-fires, routine-timeout-watcher, runaway-watcher silent-kill action, parent-ticket-expiry-watcher, audit-log-rollup, all embed jobs.
 **Owner today:** Adam.
-**Last reviewed:** 2026-05-08 (WS3 lock).
+**Last reviewed:** 2026-05-17 (Phase 7.5 re-test — structural pass, currency verified against 2026-05-16 agent rethink).
 
 > **WAR ROOM SCOPE:** This runbook covers the war room (Adam's internal startup-OS agent army), not the Beamix customer product. Section §Cross-impact on product notes where the two overlap.
 

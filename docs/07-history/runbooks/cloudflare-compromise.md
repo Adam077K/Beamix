@@ -3,7 +3,7 @@
 **When:** Suspected unauthorized access to Cloudflare account, Worker code tampering, or leaked Cloudflare API token.
 **Severity:** **P0.** The bridge holds per-Routine bearer tokens, BRIDGE_HMAC_SECRET, Linear webhook secret, KV nonces, and the entire routing layer. Compromise = full war-room control.
 **Owner today:** Adam.
-**Last reviewed:** 2026-05-08 (WS3 lock).
+**Last reviewed:** 2026-05-17 (Phase 7.5 re-test — structural pass, currency verified against 2026-05-16 agent rethink).
 
 ---
 
