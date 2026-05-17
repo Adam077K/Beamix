@@ -50,7 +50,7 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
-          cache-dependency-path: apps/web/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Promptfoo
         if: steps.check-secret.outputs.secret_present == 'true'
