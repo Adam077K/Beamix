@@ -12,8 +12,9 @@ mcpServers:
 skills:
   - startup-financial-modeling
   - pricing-strategy
-  - market-sizing-analysis
   - startup-metrics-framework
+  - paddle-integration
+  - linear-mvp-recipe
 risk_tier_default: full
 escalates_to: ceo
 escalates_when: |

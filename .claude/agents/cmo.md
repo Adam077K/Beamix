@@ -14,8 +14,8 @@ skills:
   - copywriting
   - marketing-psychology
   - seo-content-writer
-  - page-cro
-  - email-systems
+  - beamix-voice-canon
+  - linear-mvp-recipe
 risk_tier_default: lite
 escalates_to: ceo
 escalates_when: |

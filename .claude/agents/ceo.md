@@ -16,9 +16,9 @@ mcpServers:
 skills:
   - multi-agent-patterns
   - dispatching-parallel-agents
-  - context-compression
-  - brainstorming
-  - architecture-decision-records
+  - war-room-orchestration
+  - linear-mvp-recipe
+  - mem0-patterns
 risk_tier_default: full
 escalates_to: adam
 escalates_when: |

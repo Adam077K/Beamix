@@ -13,8 +13,9 @@ mcpServers:
 skills:
   - onboarding-cro
   - marketing-psychology
-  - error-handling-patterns
   - segment-cdp
+  - linear-mvp-recipe
+  - beamix-voice-canon
 risk_tier_default: lite
 escalates_to: ceo
 escalates_when: |

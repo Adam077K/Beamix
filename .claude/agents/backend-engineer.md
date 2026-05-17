@@ -13,7 +13,7 @@ mcpServers:
 skills:
   - nodejs-backend-patterns
   - nextjs-app-router-patterns
-  - error-handling-patterns
+  - paddle-integration
 risk_tier_default: lite
 escalates_to: cto
 escalates_when: |

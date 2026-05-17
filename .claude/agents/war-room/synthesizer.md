@@ -29,8 +29,8 @@ mcpServers:
   - mem0
 skills:
   - multi-agent-brainstorming
+  - board-meeting-protocol
   - architecture-decision-records
-  - prompt-engineering-patterns
 ---
 
 # Synthesizer

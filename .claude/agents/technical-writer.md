@@ -11,7 +11,7 @@ mcpServers:
 skills:
   - documentation
   - api-documentation
-  - readme
+  - beamix-voice-canon
 risk_tier_default: trivial
 escalates_to: ceo
 escalates_when: |

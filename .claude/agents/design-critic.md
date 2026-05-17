@@ -11,7 +11,7 @@ mcpServers:
   - refero
 skills:
   - ui-visual-validator
-  - web-design-guidelines
+  - beamix-brand-quality-bar
   - wcag-audit-patterns
 risk_tier_default: trivial
 escalates_to: design-lead

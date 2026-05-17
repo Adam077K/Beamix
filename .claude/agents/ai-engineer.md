@@ -12,7 +12,7 @@ mcpServers:
 skills:
   - prompt-engineering-patterns
   - llm-evaluation
-  - rag-engineer
+  - beamix-scan-architecture
 risk_tier_default: lite
 escalates_to: cto
 escalates_when: |

@@ -9,9 +9,9 @@ color: charcoal
 isolation: none
 mcpServers: []
 skills:
-  - brainstorming
+  - board-meeting-protocol
   - find-bugs
-  - systematic-debugging
+  - brainstorming
 risk_tier_default: full
 round_protocol_position: r1 + r2
 voice_lens: "anti-roadmap supersession-tracker"

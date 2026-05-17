@@ -13,7 +13,7 @@ mcpServers:
 skills:
   - react-patterns
   - nextjs-app-router-patterns
-  - design-taste-frontend
+  - beamix-brand-quality-bar
 risk_tier_default: lite
 escalates_to: cto
 escalates_when: |

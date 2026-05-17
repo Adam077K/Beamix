@@ -12,6 +12,7 @@ maxTurns: 10
 mcpServers: []
 skills:
   - startup-metrics-framework
+  - board-meeting-protocol
   - competitive-landscape
 ---
 

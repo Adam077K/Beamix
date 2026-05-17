@@ -13,6 +13,7 @@ mcpServers:
 skills:
   - security-audit
   - web-security-testing
+  - board-meeting-protocol
 ---
 
 # Persona: Aria

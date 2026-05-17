@@ -13,9 +13,9 @@ mcpServers:
 skills:
   - deep-research
   - competitive-landscape
-  - search-specialist
   - market-sizing-analysis
-  - brainstorming
+  - pgvector-rag-beamix
+  - mem0-patterns
 risk_tier_default: lite
 escalates_to: ceo
 escalates_when: |

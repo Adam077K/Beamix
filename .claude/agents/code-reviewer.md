@@ -11,7 +11,7 @@ mcpServers:
 skills:
   - code-review-excellence
   - find-bugs
-  - sharp-edges
+  - qa-gate-protocol
 risk_tier_default: lite
 escalates_to: qa-lead
 escalates_when: |

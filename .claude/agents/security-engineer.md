@@ -9,8 +9,8 @@ isolation: worktree
 mcpServers: []
 skills:
   - security-audit
-  - web-security-testing
-  - cc-skill-security-review
+  - trust-spec-contracts
+  - supabase-rls-beamix
 risk_tier_default: full
 escalates_to: cto
 escalates_when: |

@@ -12,7 +12,7 @@ mcpServers:
 skills:
   - vercel-deployment
   - github-actions-templates
-  - deployment-procedures
+  - anthropic-routines
 risk_tier_default: full
 escalates_to: cto
 escalates_when: |

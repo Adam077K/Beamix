@@ -14,6 +14,8 @@ skills:
   - code-review-excellence
   - multi-agent-patterns
   - security-audit
+  - qa-gate-protocol
+  - linear-mvp-recipe
 risk_tier_default: full
 escalates_to: adam
 escalates_when: |

@@ -13,8 +13,8 @@ mcpServers:
   - playwright
 skills:
   - frontend-design
-  - web-design-guidelines
-  - core-components
+  - beamix-brand-quality-bar
+  - beamix-voice-canon
 risk_tier_default: lite
 escalates_to: design-lead
 escalates_when: |

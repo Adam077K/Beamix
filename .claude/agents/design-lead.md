@@ -18,7 +18,7 @@ skills:
   - design-orchestration
   - high-end-visual-design
   - emilkowal-animations
-  - ui-visual-validator
+  - beamix-brand-quality-bar
 risk_tier_default: lite
 escalates_to: ceo
 escalates_when: |

@@ -11,8 +11,8 @@ mcpServers:
   - ide
 skills:
   - postgresql
-  - database-design
   - sql-optimization-patterns
+  - supabase-rls-beamix
 risk_tier_default: lite
 escalates_to: cto
 escalates_when: |

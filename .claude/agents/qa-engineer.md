@@ -11,7 +11,7 @@ mcpServers:
 skills:
   - unit-testing-test-generate
   - testing-patterns
-  - e2e-testing-patterns
+  - qa-gate-protocol
 risk_tier_default: lite
 escalates_to: qa-lead
 escalates_when: |

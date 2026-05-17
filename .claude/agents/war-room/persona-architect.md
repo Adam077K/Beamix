@@ -14,6 +14,7 @@ mcpServers:
 skills:
   - architecture-decision-records
   - architecture
+  - board-meeting-protocol
 ---
 
 # Persona: Architect

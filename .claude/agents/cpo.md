@@ -1,7 +1,7 @@
 ---
 name: cpo
 description: "C-suite. Product chief. Owns PRDs, user stories, roadmap, RICE prioritization, acceptance criteria, and spec compliance after CTO ships. Spawned by CEO for feature specs, roadmap decisions, or post-ship DoD verification. Not for copy (CMO), financials (CBO), or code (CTO)."
-model: claude-sonnet-4-6
+model: claude-opus-4-7
 tools: [Read, Write, Edit, Bash, Glob, Grep, Task]
 maxTurns: 25
 color: green
@@ -11,7 +11,7 @@ mcpServers:
   - github
 skills:
   - product-manager-toolkit
-  - marketing-psychology
+  - linear-mvp-recipe
   - brainstorming
   - architecture-decision-records
   - writing-plans

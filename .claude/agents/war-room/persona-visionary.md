@@ -12,6 +12,7 @@ maxTurns: 10
 mcpServers: []
 skills:
   - market-sizing-analysis
+  - board-meeting-protocol
   - multi-agent-brainstorming
 ---
 
