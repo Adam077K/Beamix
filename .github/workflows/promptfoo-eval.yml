@@ -1,0 +1,99 @@
+name: Promptfoo Agent Regression Suite
+
+# Runs on PRs touching agent definitions or skills. Lets us catch:
+#   - Routing regressions (CEO routes wrong agent)
+#   - Return-contract drift (missing <verdict> tag, no JSON block)
+#   - Scope creep (agent does work outside its domain)
+#   - Layer-contract violations (CEO writes code, workers escalate badly)
+#
+# Cost ceiling: ~$2 per run (6 agents × ~14 scenarios × 2 providers).
+# Use ANTHROPIC_API_KEY (Console-billed, not OAuth) per Adam's January 2026 ban-risk memo.
+
+on:
+  pull_request:
+    paths:
+      - '.claude/agents/**'
+      - '.agent/skills/**'
+      - 'apps/web/promptfoo/**'
+      - '.github/workflows/promptfoo-eval.yml'
+
+jobs:
+  promptfoo-eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+
+      - name: Install Promptfoo
+        run: pnpm dlx promptfoo@latest --version
+
+      - name: Run Promptfoo eval
+        working-directory: apps/web
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PROMPTFOO_DISABLE_TELEMETRY: '1'
+          PROMPTFOO_DISABLE_SHARING: '1'
+        run: |
+          pnpm dlx promptfoo@latest eval \
+            -c promptfoo/promptfoo.config.yaml \
+            --output promptfoo-results.json \
+            --no-table
+        # If a regression fires, the eval exits non-zero and fails the job.
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: promptfoo-results
+          path: apps/web/promptfoo-results.json
+          retention-days: 30
+
+      - name: Comment summary on PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = 'apps/web/promptfoo-results.json';
+            if (!fs.existsSync(path)) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: '## Promptfoo Eval\n\nNo results file produced — see logs.',
+              });
+              return;
+            }
+            const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const stats = data.results?.stats || {};
+            const pass = stats.successes ?? 0;
+            const fail = stats.failures ?? 0;
+            const total = pass + fail;
+            const verdict = fail === 0 ? '✅ PASS' : '❌ BLOCK';
+            const body = [
+              `## Promptfoo Agent Regression — ${verdict}`,
+              '',
+              `**${pass}/${total}** scenarios passed.`,
+              '',
+              fail > 0 ? `**${fail} regression(s)** — see workflow logs and promptfoo-results.json artifact.` : '',
+              '',
+              '_Triggered by changes in `.claude/agents/`, `.agent/skills/`, or `apps/web/promptfoo/`._',
+            ].filter(Boolean).join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
