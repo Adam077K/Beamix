@@ -12,9 +12,10 @@ maxTurns: 20
 mcpServers:
   - supabase
 skills:
-  - agent-orchestration-improve-agent
-  - api-testing-observability-api-mock
-  - workflow-orchestration-patterns
+  - multi-agent-patterns
+  - api-design-principles
+  - error-handling-patterns
+  - debugging-strategies
 ---
 
 # Parallel Watcher

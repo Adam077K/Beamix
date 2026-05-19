@@ -3,7 +3,7 @@
 **When:** **Routine** = 90-day rotation cycle (P2). **Emergency** = suspected leak, compromise, or after another runbook fires (P0).
 **Severity:** **P2** routine, **P0** emergency.
 **Owner today:** Adam.
-**Last reviewed:** 2026-05-08 (WS3 lock).
+**Last reviewed:** 2026-05-17 (Phase 7.5 re-test — structural pass, currency verified against 2026-05-16 agent rethink).
 
 ---
 

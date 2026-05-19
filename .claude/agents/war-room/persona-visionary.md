@@ -11,8 +11,10 @@ round_protocol: "round-1-horizon"
 maxTurns: 10
 mcpServers: []
 skills:
-  - startup-business-analyst-market-opportunity
+  - market-sizing-analysis
+  - board-meeting-protocol
   - multi-agent-brainstorming
+  - competitive-landscape
 ---
 
 # Persona: Visionary

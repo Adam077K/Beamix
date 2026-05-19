@@ -20,11 +20,13 @@ mcpServers:
   - linear
   - supabase
   - mem0
-  - web
+  - context7
 skills:
   - deep-research
   - multi-agent-brainstorming
   - startup-metrics-framework
+  - launch-strategy
+  - brainstorming
 ---
 
 # Advisor Daily Thinking

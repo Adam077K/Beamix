@@ -20,7 +20,9 @@ mcpServers:
 skills:
   - playwright-skill
   - e2e-testing-patterns
-  - testing-qa
+  - testing-patterns
+  - unit-testing-test-generate
+  - e2e-testing
 ---
 
 # Parallel Tester
@@ -84,8 +86,8 @@ Glob `apps/web/tests/**/*.spec.ts` in the worktree. If `test_filter` was provide
 Use `mcp__playwright__*` tools to:
 - Navigate to the staging URL
 - Execute the identified test suites with the staging URL as `baseURL`
-- Capture screenshots on failure via `mcp__playwright__screenshot`
-- Capture network requests for failed API calls via `mcp__playwright__network_requests`
+- Capture screenshots on failure via `mcp__playwright__browser_take_screenshot`
+- Capture network requests for failed API calls via `mcp__playwright__browser_network_requests`
 
 **Step 5 — Collect results.**
 Read the Playwright test results. Count pass/fail/skip. For each failed test, capture: test name, file path, error message, first 5 lines of stack trace.

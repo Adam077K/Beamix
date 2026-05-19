@@ -11,13 +11,13 @@ Map the codebase and produce a structured health report.
 ## What This Does
 
 ### Step 1 — Codebase Mapping
-codebase-mapper runs with focus areas based on argument:
-- `architecture`: ARCHITECTURE.md, STRUCTURE.md
-- `quality`: CONVENTIONS.md, TESTING.md
-- `security`: CONCERNS.md focused on security
+CEO dispatches code-reviewer (in mapper mode) to walk the repo and update `.claude/memory/CODEBASE-MAP.md`:
+- `architecture` focus: top-level structure, module boundaries, dependency graph
+- `quality` focus: conventions adherence, test coverage gaps, lint debt
+- `security` focus: auth boundaries, secret usage, dependency risk
 - `all` (default): all focus areas
 
-Maps output written to `.claude/memory/CODEBASE-MAP.md`.
+Output written to `.claude/memory/CODEBASE-MAP.md` (refreshes the in-repo map).
 
 ### Step 2 — Code Review (Quality + Tech Debt)
 Code Reviewer scans entire codebase:

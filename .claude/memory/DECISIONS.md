@@ -73,7 +73,7 @@ If any of these triggers, the Adversary was right and the board was wrong. Adam 
 **Affects:**
 - All `.claude/agents/*.md` files (renames, refactors, schema standardization)
 - `.agent/agents/` (deleted — canonical is `.claude/agents/`)
-- `.agent/skills/` (305 orphans archived; MANIFEST regenerated)
+- `.claude/skills/` (305 orphans archived; MANIFEST regenerated)
 - `CLAUDE.md` (rewritten to C-suite model)
 - `.claude/settings.json` (strict Bash allowlist; PostToolUse extension for lint+typecheck)
 - `.github/workflows/qa-lead-pass.yml` (XML `<verdict>PASS</verdict>` parsing + tier check)

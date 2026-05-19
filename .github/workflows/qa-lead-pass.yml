@@ -57,9 +57,12 @@ jobs:
 
           if [ -z "$SESSION_FILE" ]; then
             echo "No session file matching slug '${TASK_SLUG}'. Falling back to PR diff."
-            # List session files added/modified in this PR
-            CHANGED_SESSIONS=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json files \
-              --jq '[.files[].path | select(test("^docs/08-agents_work/sessions/.*\\.md$"))] | .[]' || echo "")
+            # List session files added/modified in this PR.
+            # F14: use gh api --paginate (gh pr view --json files caps at 100 files;
+            # large rethink/refactor PRs touching 300+ files would silently miss
+            # session files outside that window).
+            CHANGED_SESSIONS=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate \
+              --jq '.[].filename | select(test("^docs/08-agents_work/sessions/.*\\.md$"))' || echo "")
             if [ -n "$CHANGED_SESSIONS" ]; then
               echo "Found session files in PR diff:"
               echo "$CHANGED_SESSIONS"
@@ -162,10 +165,98 @@ jobs:
           echo "Session file found:        ${SESSION_FILE:-none}"
           exit 1
 
+      # ── F15: file-path tier-floor enforcement ──────────────────────────────
+      # Per 2026-05-16 board decision #4: deterministic file-path tier-floor map
+      # at .claude/qa-tier-floor.yml sets the MINIMUM risk tier any PR touching
+      # those paths must carry. The label-based check below (F13) is the
+      # COMPLEMENT — it enforces what the YAML demanded.
+      - name: Auto-tier from file-path tier-floor map
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          MAP_FILE=".claude/qa-tier-floor.yml"
+          if [ ! -f "$MAP_FILE" ]; then
+            echo "ℹ️  No $MAP_FILE — skipping auto-tier (label-based enforcement only)"
+            exit 0
+          fi
+
+          # Tier ranking (higher = stricter)
+          declare -A RANK
+          RANK[trivial]=0
+          RANK[lite]=1
+          RANK[full]=2
+          RANK[irreversible]=3
+
+          # List PR files (paginated)
+          CHANGED_FILES=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename')
+          echo "Changed files: $(echo "$CHANGED_FILES" | wc -l)"
+
+          # Extract patterns from YAML (simple parser; assumes `- pattern: "..."` followed by `tier: ...`)
+          REQUIRED_TIER="trivial"
+          REQUIRED_RANK=0
+          MATCH_REASON=""
+
+          while IFS= read -r file; do
+            current_pattern=""
+            while IFS= read -r line; do
+              case "$line" in
+                *"- pattern:"*)
+                  current_pattern=$(echo "$line" | sed -E 's/.*- pattern:[[:space:]]*"?([^"]+)"?.*/\1/')
+                  ;;
+                *"tier:"*)
+                  tier=$(echo "$line" | sed -E 's/.*tier:[[:space:]]*([a-z]+).*/\1/')
+                  # Convert glob pattern to bash extglob via simple match (handles ** and *)
+                  case "$file" in
+                    $current_pattern|${current_pattern//\*\*/\*})
+                      this_rank=${RANK[$tier]:-0}
+                      if [ "$this_rank" -gt "$REQUIRED_RANK" ]; then
+                        REQUIRED_RANK=$this_rank
+                        REQUIRED_TIER=$tier
+                        MATCH_REASON="$file matches $current_pattern → tier:$tier"
+                      fi
+                      ;;
+                  esac
+                  current_pattern=""
+                  ;;
+              esac
+            done < "$MAP_FILE"
+          done <<< "$CHANGED_FILES"
+
+          echo "Required tier floor: $REQUIRED_TIER (rank $REQUIRED_RANK)"
+          [ -n "$MATCH_REASON" ] && echo "Reason: $MATCH_REASON"
+
+          # If the floor is irreversible, the PR must already carry the risk:irreversible label.
+          # The label triggers the F13 step below which enforces tier: full|irreversible in the session file.
+          if [ "$REQUIRED_TIER" = "irreversible" ]; then
+            HAS_LABEL=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json labels \
+              --jq '[.labels[].name] | contains(["risk:irreversible"])')
+            if [ "$HAS_LABEL" != "true" ]; then
+              echo ""
+              echo "❌ BLOCKED — file-path tier-floor requires risk:irreversible label."
+              echo "   Reason: $MATCH_REASON"
+              echo "   Add the 'risk:irreversible' label or remove the affected file(s)."
+              exit 1
+            fi
+            echo "✓ risk:irreversible label present — F13 will enforce session-file tier"
+          fi
+
+          # If the floor is full but no risk:irreversible label, the session file
+          # must still carry tier: full (or higher). We surface this as a soft hint
+          # — full enforcement of full-tier sessions is Phase 6+ work.
+          if [ "$REQUIRED_TIER" = "full" ]; then
+            echo "ℹ️  Floor is 'full' — session file should declare tier: full|irreversible"
+            echo "    (Phase 6 will mechanically enforce this; for now, reviewer awareness)"
+          fi
+
       # ── F13: risk:irreversible enforcement ─────────────────────────────────
-      # Per CONNECTIONS.md §B: a PR carrying risk:irreversible MUST have a
-      # tier: full review in its session file. Lite-tier PASS is not sufficient.
-      - name: Enforce tier:full for risk:irreversible PRs
+      # Per CONNECTIONS.md §B + 2026-05-16 board verdict (decision #3):
+      # a PR carrying risk:irreversible MUST have either `tier: full` or
+      # `tier: irreversible` in its session file. Lite/trivial-tier are insufficient.
+      - name: Enforce tier:full|irreversible for risk:irreversible PRs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -187,7 +278,7 @@ jobs:
             exit 0
           fi
 
-          echo "risk:irreversible label detected — checking for tier: full in session file"
+          echo "risk:irreversible label detected — checking for tier: full|irreversible in session file"
 
           # Re-derive slug the same way as the QA gate step
           TASK_SLUG=$(echo "$HEAD_BRANCH" | sed -E 's|^(feat\|fix\|chore)/||' | tr / -)
@@ -198,24 +289,55 @@ jobs:
             SESSION_FILE=$(find "$SESSION_DIR" -maxdepth 1 -name "*-${TASK_SLUG}.md" -type f | sort | tail -1)
           fi
 
+          # F14: fallback to PR diff via paginated gh api when slug doesn't match
+          # (large rethink/refactor PRs touching 300+ files exceed gh pr view's
+          # 100-file cap; use --paginate on the raw API to inspect all files)
+          if [ -z "$SESSION_FILE" ]; then
+            echo "No session file matching slug '${TASK_SLUG}'. Falling back to PR diff."
+            CHANGED_SESSIONS=$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate \
+              --jq '.[].filename | select(test("^docs/08-agents_work/sessions/.*\\.md$"))' || echo "")
+            if [ -n "$CHANGED_SESSIONS" ]; then
+              echo "Found session files in PR diff:"
+              echo "$CHANGED_SESSIONS"
+              SESSION_FILE=$(echo "$CHANGED_SESSIONS" | sort | tail -1)
+            fi
+          fi
+
           echo "Session file: ${SESSION_FILE:-none}"
 
           if [ -z "$SESSION_FILE" ] || [ ! -f "$SESSION_FILE" ]; then
             echo ""
-            echo "❌ BLOCKED — risk:irreversible label requires a session file with tier: full."
-            echo "   No session file found for slug: ${TASK_SLUG}"
-            echo "   Per CONNECTIONS.md §B: risk:irreversible label requires tier: full review."
+            echo "❌ BLOCKED — risk:irreversible label requires a session file with tier: full or tier: irreversible."
+            echo "   No session file found for slug: ${TASK_SLUG} or in PR diff"
+            echo "   Per CONNECTIONS.md §B + 2026-05-16 board decision #3: risk:irreversible requires full or irreversible tier review."
             exit 1
           fi
 
-          if grep -qiE 'tier:[[:space:]]+"?full"?[[:space:]]*$' "$SESSION_FILE"; then
-            echo "✓ tier: full found in ${SESSION_FILE} — risk:irreversible requirement satisfied"
+          # Multi-session PRs: ALL session files in the PR diff must carry an acceptable tier
+          if [ -n "${CHANGED_SESSIONS:-}" ]; then
+            ALL_OK=true
+            for s in $CHANGED_SESSIONS; do
+              if [ ! -f "$s" ]; then continue; fi
+              if grep -qiE 'tier:[[:space:]]+"?(full|irreversible)"?[[:space:]]*$' "$s"; then
+                echo "✓ Acceptable tier in $s"
+              else
+                echo "✗ Missing tier: full|irreversible in $s"
+                grep "tier" "$s" || echo "  (no tier line)"
+                ALL_OK=false
+              fi
+            done
+            [ "$ALL_OK" = "true" ] && exit 0 || exit 1
+          fi
+
+          if grep -qiE 'tier:[[:space:]]+"?(full|irreversible)"?[[:space:]]*$' "$SESSION_FILE"; then
+            FOUND_TIER=$(grep -iE 'tier:[[:space:]]+"?(full|irreversible)"?[[:space:]]*$' "$SESSION_FILE" | head -1)
+            echo "✓ Acceptable tier found in ${SESSION_FILE}: ${FOUND_TIER}"
             exit 0
           else
             echo ""
-            echo "❌ BLOCKED — risk:irreversible label requires tier: full review per CONNECTIONS.md §B."
+            echo "❌ BLOCKED — risk:irreversible label requires tier: full or tier: irreversible per board decision #3."
             echo "   Session file found: ${SESSION_FILE}"
-            echo "   tier: full NOT present in session frontmatter."
+            echo "   Neither tier: full nor tier: irreversible present in session frontmatter."
             grep "tier" "$SESSION_FILE" || echo "(no tier line found)"
             exit 1
           fi

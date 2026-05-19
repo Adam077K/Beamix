@@ -8,7 +8,7 @@ description: >
   workers itself; workers are Task subagents Adam spawns in his CEO session).
 model: claude-opus-4-7
 color: blue
-maxTurns: 50
+maxTurns: 30
 schedule: "30 10 * * *"
 trigger_label: agent:cto-daily-plan
 routine_id_env_key: ROUTINE_CTO_DAILY_PLAN_ID
@@ -24,8 +24,11 @@ mcpServers:
   - mem0
 skills:
   - dispatching-parallel-agents
-  - agent-orchestration-multi-agent-optimize
-  - concise-planning
+  - multi-agent-patterns
+  - writing-plans
+  - worktree-isolation-pattern
+  - qa-gate-protocol
+  - brainstorming
 ---
 
 # CTO Daily Plan

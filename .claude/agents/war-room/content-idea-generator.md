@@ -19,11 +19,14 @@ delivery: linear-ticket
 mcpServers:
   - linear
   - mem0
-  - web
+  - context7
 skills:
-  - seo-content-planner
+  - seo-content-writer
   - copywriting
   - competitive-landscape
+  - marketing-psychology
+  - beamix-voice-canon
+  - humanizer
 ---
 
 # Content Idea Generator

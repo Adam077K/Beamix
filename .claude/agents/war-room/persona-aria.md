@@ -10,10 +10,11 @@ color: red
 invoke_via: "@aria"
 round_protocol: "round-2-critic"
 mcpServers:
-  - web
 skills:
   - security-audit
-  - api-security-best-practices
+  - web-security-testing
+  - board-meeting-protocol
+  - api-security-testing
 ---
 
 # Persona: Aria

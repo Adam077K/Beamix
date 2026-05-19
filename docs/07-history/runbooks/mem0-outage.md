@@ -3,7 +3,7 @@
 **When:** Mem0 cloud platform unavailable, `mcp.mem0.ai/mcp` returns 5xx, OR Routines log sustained `memory_write_failed` errors.
 **Severity:** **P1.** Memory is L2 (cross-session episodic). Routines can continue running with degraded memory: in-session memory works, but cross-session retrieval is impaired. No data loss because session files (`docs/08-agents_work/sessions/`) are written in parallel.
 **Owner today:** Adam.
-**Last reviewed:** 2026-05-08 (WS3 lock).
+**Last reviewed:** 2026-05-17 (Phase 7.5 re-test — structural pass, currency verified against 2026-05-16 agent rethink).
 
 ---
 

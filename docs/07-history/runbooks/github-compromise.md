@@ -3,7 +3,7 @@
 **When:** Suspected unauthorized GitHub access — leaked PAT, force-push to `main`, branch protection bypass, new GitHub App install, or repo deletion attempt.
 **Severity:** **P0.** GitHub holds the source of truth for code, decisions, sessions, brain MOCs, agent .md files, and runbooks. Compromise = ability to inject malicious code into agents, exfiltrate IP, or damage the codebase irrecoverably without a local clone.
 **Owner today:** Adam.
-**Last reviewed:** 2026-05-08 (WS3 lock).
+**Last reviewed:** 2026-05-17 (Phase 7.5 re-test — structural pass, currency verified against 2026-05-16 agent rethink).
 
 ---
 

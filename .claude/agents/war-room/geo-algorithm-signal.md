@@ -1,7 +1,7 @@
 ---
 name: geo-algorithm-signal
 description: >
-  Fires every Sunday at 05:45. Reads Beamix scan results across competitor and
+  Fires every Sunday at 10:30. Reads Beamix scan results across competitor and
   customer sites plus AI-search SERP shifts. Produces a weekly GEO algorithm
   trend report posted to the Linear Advisor project.
 model: claude-opus-4-7
@@ -20,11 +20,13 @@ mcpServers:
   - linear
   - supabase
   - mem0
-  - web
+  - context7
 skills:
-  - geo-fundamentals
-  - seo-fundamentals
+  - beamix-scan-architecture
+  - seo-content-writer
   - deep-research
+  - competitive-landscape
+  - search-specialist
 ---
 
 # GEO Algorithm Signal

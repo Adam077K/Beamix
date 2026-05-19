@@ -3,7 +3,7 @@
 **When:** Vercel platform unavailable. Includes full platform outage, regional degradation, or deployment failures that take down the Beamix product, the `/war-room` observability page, or the Inngest function host.
 **Severity:** **P1.** A full Vercel outage simultaneously takes down: (a) the Beamix customer product — customer-facing concern, and (b) the `/war-room` page — war-room observability is gone. Routines themselves continue running on Anthropic Routines, which are independent of Vercel. Inngest functions are hosted on Vercel; they will fail during a Vercel outage.
 **Owner today:** Adam.
-**Last reviewed:** 2026-05-08 (WS3 lock).
+**Last reviewed:** 2026-05-17 (Phase 7.5 re-test — structural pass, currency verified against 2026-05-16 agent rethink).
 
 > **WAR ROOM SCOPE:** This runbook covers both the war room (Adam's internal startup-OS) AND the Beamix customer product because they share a Vercel project. Sections are labeled [WAR ROOM] or [PRODUCT] where they diverge.
 

@@ -20,21 +20,25 @@ Set the badge color of the current session in the Claude Code UI. Use this to vi
 ### Layer 2 — Team Leads
 | Agent | Color |
 |-------|-------|
-| build-lead | `blue` |
+| cto | `blue` |
 | research-lead | `purple` |
 | design-lead | `pink` |
 | qa-lead | `red` |
-| devops-lead | `orange` |
-| data-lead | `teal` |
-| product-lead | `green` |
-| growth-lead | `yellow` |
-| business-lead | `emerald` |
+| research-lead | `purple` |
+| design-lead | `pink` |
+| qa-lead | `red` |
+| devops-engineer | `orange` |
+| data-engineer | `teal` |
+| cpo | `green` |
+| cmo | `yellow` |
+| cbo | `emerald` |
+| cco | `amber` |
 
 ### Layer 3 — Workers
 | Agent | Color |
 |-------|-------|
-| backend-developer | `blue` |
-| frontend-developer | `pink` |
+| backend-engineer | `blue` |
+| frontend-engineer | `pink` |
 | database-engineer | `teal` |
 | ai-engineer | `purple` |
 | security-engineer | `red` |
@@ -42,10 +46,8 @@ Set the badge color of the current session in the Claude Code UI. Use this to vi
 | code-reviewer | `gray` |
 | researcher | `purple` |
 | technical-writer | `gray` |
-| executor | `blue` |
-| debugger | `red` |
-| planner | `green` |
-| verifier | `teal` |
+| design-critic | `gray` |
+| supabase-cleaner | `teal` |
 
 ## Rules
 
@@ -57,8 +59,8 @@ Set the badge color of the current session in the Claude Code UI. Use this to vi
 ## Example
 ```
 /color gold       → CEO primary instance
-/color blue       → build-lead or backend-developer
-/color red        → qa-lead or security-engineer or debugger
+/color blue       → cto or backend-engineer
+/color red        → qa-lead or security-engineer
 ```
 
 ## Combined with /name

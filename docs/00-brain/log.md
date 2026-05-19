@@ -182,3 +182,22 @@
 - Cross-session memory: 4 new entries (Inngest tier, voice canon Model B, white-label per-client, Workflow Builder scope)
 - Build is unblocked for Tier 0 sprint (~19 person-days plumbing)
 
+
+## [2026-05-16] ceo-rethink-phase1 | Phase 0 hygiene + Phase 1 schema/QA infra shipped
+- Phase 0: 308 orphan skills archived (MANIFEST 167KB→47KB); 13 GSD agents archived; .agent/agents/ deleted; workers renamed to -engineer; CLAUDE.md rewritten to C-suite
+- Phase 1: file-path tier-floor YAML + PostToolUse per-file typecheck hook + qa-lead-pass.yml extended for tier:irreversible + all 22 .claude/agents/*.md standardized to 07b template
+- Models corrected: ceo/research-lead/ai-engineer/security-engineer/researcher → opus-4-7
+- Vindication triggers: 5-day cap respected (1 day); FM-12 not triggered
+- Next: Day 6 pivot to product per board decision #9 — use canonical handoff at docs/product-rethink-2026-04-09/build-prep-2026-05-13/13-CEO-HANDOFF-PROMPT.md
+- Session: docs/08-agents_work/sessions/2026-05-16-ceo-phase1-rethink-execution.md
+
+## [2026-05-16] ceo-rethink-phases-0-through-6 | Adam overrode Day-6 pivot — full agent system completion
+- Phase 0 hygiene (308 orphans + 13 GSD + leads archived, CLAUDE.md C-suite, manifest 423→145)
+- Phase 1 schema + QA infra (tier-floor YAML + post-edit hook + 22 agents standardized + workflow paginate fix)
+- Phase 2 (4 new C-suite cpo/cmo/cbo/cco + 5 new/restructured workers qa-/adversary-/product-designer + data-/devops-engineer)
+- Phase 3 (14 Beamix-specific skills authored: war-room-orchestration, mem0-patterns, beamix-brand-quality-bar, etc.)
+- Phase 5 (3 missing personas: broad-adversary, customer-voice, risk-modeler)
+- Phase 6 (pre-tool-use.sh + stop.sh + schema-lint.js authored; hooks awaiting fresh-session wiring)
+- Wave 3 cleanups (legacy leads archived, war-room 26 skill refs + 6 cross-cutting bugs fixed)
+- DEFERRED: Phase 7 (Promptfoo) · war-room 10-file full 07b restructure · hook wiring · skill ref updates for new Phase 3 skills
+- Session: docs/08-agents_work/sessions/2026-05-16-ceo-phase1-rethink-execution.md

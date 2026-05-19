@@ -22,21 +22,20 @@
 
 ---
 
-## Layer 2: Team Leads
+## Layer 2: C-suite
 
-Team leads are dispatched by CEO. They plan worker tasks, coordinate parallel work, run QA gates, and write session memory.
+The C-suite is dispatched by CEO. Each owns one organizational domain end-to-end. The legacy 9-lead model was retired on 2026-05-16; build-lead/product-lead/growth-lead/business-lead folded into CTO/CPO/CMO/CBO. devops-lead/data-lead were demoted to -engineer workers under CTO.
 
 | Agent | File | Domain | Model |
 |-------|------|--------|-------|
-| **Build Lead** | `build-lead.md` | Code implementation: features, fixes, refactors. Manages worktrees, QA gate, merge confirmation. | Sonnet 4.6 |
-| **Research Lead** | `research-lead.md` | All research: competitive analysis, market sizing, tech evaluation, user research. Parallel researchers + synthesis. | Opus 4.6 |
-| **Design Lead** | `design-lead.md` | UI/UX: screens, components, design systems. Pencil MCP check, Frontend Developer, WCAG gate. | Sonnet 4.6 |
-| **QA Lead** | `qa-lead.md` | QA gate: OWASP check + test coverage. PASS/BLOCK verdict. Called before any merge. | Sonnet 4.6 |
-| **DevOps Lead** | `devops-lead.md` | Deployments: Vercel, CI/CD, monitoring. Requires QA PASS. Staging first, production after confirmation. | Sonnet 4.6 |
-| **Data Lead** | `data-lead.md` | Analytics: SQL, metrics dashboards, dbt, event tracking, Segment CDP. | Sonnet 4.6 |
-| **Product Lead** | `product-lead.md` | Product: PRDs, user stories, roadmaps, RICE scoring, acceptance criteria. Spec completeness gate. | Sonnet 4.6 |
-| **Growth Lead** | `growth-lead.md` | Marketing: copy, SEO, email, GTM launches. Requires USER-INSIGHTS.md. Customer language gate. | Sonnet 4.6 |
-| **Business Lead** | `business-lead.md` | Business: pricing, financials, RICE, OKRs, unit economics. Evidence classification + confidence levels. | Sonnet 4.6 |
+| **CTO** | `cto.md` | All engineering: code, infra, architecture. Spawns engineering workers. | Sonnet 4.6 |
+| **CPO** | `cpo.md` | Product: PRDs, roadmap, RICE, acceptance criteria, spec compliance. | Sonnet 4.6 |
+| **CMO** | `cmo.md` | Growth: copy, SEO/GEO, email, GTM, CRO. Requires USER-INSIGHTS.md (hard gate). | Sonnet 4.6 |
+| **CBO** | `cbo.md` | Business: pricing, financials, OKRs, unit econ, legal/compliance. Numbers first. | Sonnet 4.6 |
+| **CCO** | `cco.md` | Customer: support, onboarding, retention, churn analysis, customer voice. | Sonnet 4.6 |
+| **QA-Lead** | `qa-lead.md` | Independent quality gate. 4-tier risk classification, PASS/BLOCK verdict. Cannot be overridden. | Sonnet 4.6 (Opus on Full) |
+| **Research-Lead** | `research-lead.md` | All research: competitive, market sizing, tech eval, user research. Reports to CEO directly. | Opus 4.7 |
+| **Design-Lead** | `design-lead.md` | UI/UX: screens, components, design systems, design audits. Reports under CPO. | Sonnet 4.6 |
 
 ---
 
@@ -48,8 +47,8 @@ Workers receive structured briefs from leads, create worktrees (for code), execu
 
 | Agent | File | Job | Model |
 |-------|------|-----|-------|
-| **Backend Developer** | `backend-developer.md` | API routes, server logic. TypeScript strict, Zod validation. Git worktrees. | Sonnet 4.6 |
-| **Frontend Developer** | `frontend-developer.md` | React components, Tailwind + Shadcn/UI. Pencil MCP for designs. Git worktrees. | Sonnet 4.6 |
+| **Backend Developer** | `backend-engineer.md` | API routes, server logic. TypeScript strict, Zod validation. Git worktrees. | Sonnet 4.6 |
+| **Frontend Developer** | `frontend-engineer.md` | React components, Tailwind + Shadcn/UI. Pencil MCP for designs. Git worktrees. | Sonnet 4.6 |
 | **Database Engineer** | `database-engineer.md` | Schema design, migrations, queries. Supabase MCP. Never drops without confirmation. | Sonnet 4.6 |
 | **AI Engineer** | `ai-engineer.md` | LLM integration, RAG, embeddings. Every feature ships with eval + cost logging. | Opus 4.6 |
 | **Security Engineer** | `security-engineer.md` | OWASP audit, injection testing, auth review, npm audit. Structured severity findings. | Sonnet 4.6 |

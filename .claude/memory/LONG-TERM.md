@@ -41,8 +41,8 @@
 
 ## Skills System
 
-- 430 skills in .agent/skills/ — discover via MANIFEST.json, filter by tags
-- Discovery: Read .agent/skills/MANIFEST.json, filter by tags — never grep the directory
+- 430 skills in .claude/skills/ — discover via MANIFEST.json, filter by tags
+- Discovery: Read .claude/skills/MANIFEST.json, filter by tags — never grep the directory
 - Load max 2 skills per task, on-demand only
 
 ---

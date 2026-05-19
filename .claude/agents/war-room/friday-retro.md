@@ -22,8 +22,10 @@ mcpServers:
   - mem0
   - github
 skills:
-  - team-collaboration-standup-notes
+  - documentation-templates
   - startup-metrics-framework
+  - brainstorming
+  - mem0-patterns
 ---
 
 # Friday Retro
