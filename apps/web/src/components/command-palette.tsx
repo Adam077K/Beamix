@@ -46,12 +46,12 @@ export function CommandPalette({ open: controlledOpen, onOpenChange }: CommandPa
     const handleKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
-        setOpen((prev) => !prev)
+        setOpen(!isOpen)
       }
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
-  }, [setOpen])
+  }, [setOpen, isOpen])
 
   const navigate = useCallback(
     (href: string) => {

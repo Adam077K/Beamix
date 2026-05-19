@@ -15,6 +15,7 @@
  * - Timeout 5 seconds; response body cap 1 MB.
  */
 export async function validateExternalUrl(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   input: string
 ): Promise<{ ok: true; url: URL } | { ok: false; reason: string }> {
   throw new Error('not yet implemented — Wave 1 backend workers')
