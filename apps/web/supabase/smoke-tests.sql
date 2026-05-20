@@ -1,3 +1,4 @@
+-- NOTE: uses plpgsql DO blocks for test assertions. NOT a migration. Run: supabase db query --linked --file supabase/smoke-tests.sql
 -- smoke-tests.sql
 -- Wave 0 DB Foundation — RLS and cross-user denial assertions
 -- Run against remote with: supabase db query --linked --file supabase/smoke-tests.sql
