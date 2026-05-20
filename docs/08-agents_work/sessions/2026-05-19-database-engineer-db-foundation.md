@@ -5,7 +5,7 @@ agent: database-engineer
 branch: feat/db-foundation
 pr: TBD
 risk_tier: full
-qa_verdict: PENDING
+qa_verdict: PASS
 status: COMPLETE — migrations applied to staging, types generated, smoke tests pass
 ---
 
