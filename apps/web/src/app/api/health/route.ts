@@ -33,14 +33,13 @@ export async function GET() {
   )
 
   if (missing.length > 0) {
-    return NextResponse.json({ ok: false, missing }, { status: 503 })
+    return NextResponse.json({ ok: false, missing_count: missing.length }, { status: 503 })
   }
 
   return NextResponse.json(
     {
       ok: true,
       version: process.env.npm_package_version ?? 'unknown',
-      commit: process.env.VERCEL_GIT_COMMIT_SHA ?? 'unknown',
     },
     { status: 200 }
   )
