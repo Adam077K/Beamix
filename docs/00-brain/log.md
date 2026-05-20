@@ -201,3 +201,10 @@
 - Wave 3 cleanups (legacy leads archived, war-room 26 skill refs + 6 cross-cutting bugs fixed)
 - DEFERRED: Phase 7 (Promptfoo) · war-room 10-file full 07b restructure · hook wiring · skill ref updates for new Phase 3 skills
 - Session: docs/08-agents_work/sessions/2026-05-16-ceo-phase1-rethink-execution.md
+
+## [2026-05-20] wave0-foundation | Wave 0 merged to main — db + app-shell + agent-system + integration
+- PRs #80 (db-foundation, irreversible/3-judge), #79 (app-shell, full), #81 (agent-system, irreversible/adversary+3-judge), #82 (integration, lite) — all QA PASS, merged.
+- 15 migrations applied to staging zhjxdwcqxhwletkpuwyl (legacy schema Adam-authorized wiped). 11-agent system + 5-step pipeline. Next.js 16 shell.
+- QA forced fixes: RCE (next 15.3.9), insecure auth gate, credit-drain RPC exposure, prompt-injection bypass, types.ts corruption ×2, non-idempotent seed.
+- Wave 0.5 tech-debt logged in BACKLOG.md.
+- Session: docs/08-agents_work/sessions/2026-05-20-ceo-wave0-foundation.md
