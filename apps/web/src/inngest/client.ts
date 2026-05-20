@@ -8,7 +8,7 @@
  * after a job row is created and (for paid agents) credits are held.
  */
 
-import { Inngest, type EventSchemas } from 'inngest';
+import { Inngest, EventSchemas } from 'inngest';
 import type { AgentType, PlanTier } from '../lib/agents/types';
 
 /** Payload for `agent/run.requested` — mirrors `AgentJobInput`. */
@@ -49,5 +49,5 @@ function resolveEventKey(): string {
 export const inngest = new Inngest({
   id: 'beamix',
   eventKey: resolveEventKey(),
-  schemas: {} as unknown as EventSchemas<BeamixEvents>,
+  schemas: new EventSchemas().fromRecord<BeamixEvents>(),
 });
