@@ -95,7 +95,6 @@ async function persistCosts(
   const { error } = await getAdminClient().from('agent_costs').insert(rows);
   if (error) {
     // Cost rows are observability, not correctness — log and continue.
-    // eslint-disable-next-line no-console
     console.error(`agent_costs insert failed for job ${jobId}: ${error.message}`);
   }
 }

@@ -13,6 +13,22 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
 
+  // Align no-unused-vars with the underscore-prefix convention used throughout the codebase.
+  // Parameters prefixed with `_` (e.g. `_agentType`) are intentionally accepted for
+  // API-symmetry but never read — this pattern is standard TypeScript convention.
+  {
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
+  },
+
   // Service-role import boundary (H4)
   // Forbid importing server-only modules from client/public surfaces
   {
