@@ -100,15 +100,14 @@ CREATE INDEX topic_ledger_business_created_at_idx ON topic_ledger (business_id, 
 
 -- Topic ledger archive (365-day retention archive — monthly Inngest cron archive-old-topics)
 -- RLS identical to topic_ledger (owner read on business_id, service-role full)
+-- Note: LIKE ... INCLUDING ALL copies indexes from topic_ledger with auto-generated names.
+-- No explicit index creation needed — they are already included.
 CREATE TABLE topic_ledger_archive (LIKE topic_ledger INCLUDING ALL);
-
-CREATE INDEX topic_ledger_archive_business_id_idx ON topic_ledger_archive (business_id);
-CREATE INDEX topic_ledger_archive_business_created_at_idx ON topic_ledger_archive (business_id, registered_at);
 
 -- Cleanup function for page_locks (2h TTL)
 -- Wave 0 choice: LANGUAGE sql function (no pg_cron dependency); Inngest cron cleanup-page-locks
 -- calls this via RPC every 15 min. pg_cron avoided to reduce extension dependencies.
 CREATE OR REPLACE FUNCTION cleanup_page_locks() RETURNS void
 LANGUAGE sql AS $$
-  DELETE FROM page_locks WHERE locked_at < now() - interval '2 hours';
+  DELETE FROM page_locks WHERE created_at < now() - interval '2 hours';
 $$;

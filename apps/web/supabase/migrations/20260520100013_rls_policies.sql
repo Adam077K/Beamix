@@ -27,17 +27,17 @@ CREATE POLICY "plans: service_role write"
   USING (true)
   WITH CHECK (true);
 
--- TABLE: user_profiles  (Pattern A — user_id = auth.uid())
+-- TABLE: user_profiles  (Pattern A — id = auth.uid(); user_profiles.id IS the user uuid PK)
 ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "user_profiles: owner read"
   ON public.user_profiles FOR SELECT
-  USING (user_id = auth.uid());
+  USING (id = auth.uid());
 
 CREATE POLICY "user_profiles: owner write"
   ON public.user_profiles FOR ALL
-  USING (user_id = auth.uid())
-  WITH CHECK (user_id = auth.uid());
+  USING (id = auth.uid())
+  WITH CHECK (id = auth.uid());
 
 CREATE POLICY "user_profiles: service_role all"
   ON public.user_profiles FOR ALL

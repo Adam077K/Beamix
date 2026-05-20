@@ -179,10 +179,12 @@ $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 6. cleanup_page_locks
---    Replaces the void version from migration 06 (which incorrectly used locked_at).
+--    Replaces the void stub from migration 07.
+--    Must DROP first because PostgreSQL forbids changing return type via CREATE OR REPLACE.
 --    Deletes stale page_locks older than 2 hours using the actual created_at column.
 --    Returns deleted count.
 -- ─────────────────────────────────────────────────────────────────────────────
+DROP FUNCTION IF EXISTS public.cleanup_page_locks();
 CREATE OR REPLACE FUNCTION public.cleanup_page_locks()
 RETURNS int
 LANGUAGE sql
