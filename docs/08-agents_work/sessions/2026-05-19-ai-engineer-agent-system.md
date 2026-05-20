@@ -4,8 +4,8 @@ date: 2026-05-19
 agent: ai-engineer
 branch: feat/agent-system
 pr: https://github.com/Adam077K/Beamix/pull/81
-risk_tier: full
-tier: full
+risk_tier: irreversible
+tier: irreversible
 qa_verdict: PASS
 status: complete
 ---
