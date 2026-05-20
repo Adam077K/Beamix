@@ -30,8 +30,24 @@ export type BeamixEvents = {
   'agent/run.requested': { data: AgentRunRequestedData };
 };
 
+/**
+ * Resolve the Inngest event key. In production a missing key is a hard configuration
+ * error — silently sending with an empty key drops every event. In dev the Inngest
+ * dev server does not require a key, so an empty string is allowed there.
+ */
+function resolveEventKey(): string {
+  const key = process.env.INNGEST_EVENT_KEY;
+  if (!key) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Missing required environment variable: INNGEST_EVENT_KEY');
+    }
+    return '';
+  }
+  return key;
+}
+
 export const inngest = new Inngest({
   id: 'beamix',
-  eventKey: process.env.INNGEST_EVENT_KEY ?? '',
+  eventKey: resolveEventKey(),
   schemas: {} as unknown as EventSchemas<BeamixEvents>,
 });
