@@ -77,7 +77,6 @@ function requireEnv(key: string): string {
 
 /** Structured cost log line — one per LLM call, consumed by observability. */
 function logCost(req: LLMRequest, entry: CostEntry, cacheHit: boolean): void {
-  // eslint-disable-next-line no-console
   console.log(
     JSON.stringify({
       event: 'llm_call',
