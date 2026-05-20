@@ -30,4 +30,5 @@ VALUES
     500,  -- 500 agent credits/mo
     'placeholder_scale_monthly',     -- Wave 1 BE-2 updates to real Paddle price ID
     'placeholder_scale_annual'
-  );
+  )
+ON CONFLICT (tier) DO NOTHING;

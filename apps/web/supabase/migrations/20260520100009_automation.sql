@@ -63,4 +63,5 @@ CREATE TABLE system_kill_switch (
 
 -- Insert default row (singleton — no global pause on init)
 INSERT INTO system_kill_switch (id, paused_until, reason)
-VALUES (1, NULL, 'initial state');
+VALUES (1, NULL, 'initial state')
+ON CONFLICT (id) DO NOTHING;
