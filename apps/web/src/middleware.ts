@@ -25,15 +25,16 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session — MUST NOT be removed or the session will expire prematurely.
+  // Verify auth server-side — getUser() revalidates the JWT with Supabase Auth Server,
+  // unlike getSession() which only reads the cookie without server verification.
   // See: https://supabase.com/docs/guides/auth/server-side/nextjs
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
 
-  // Guard (protected) routes — redirect to /login when no session.
+  // Guard (protected) routes — redirect to /login when no authenticated user.
   const isProtected =
     pathname.startsWith('/home') ||
     pathname.startsWith('/inbox') ||
@@ -44,7 +45,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/settings') ||
     pathname.startsWith('/onboarding')
 
-  if (isProtected && !session) {
+  if (isProtected && !user) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
     loginUrl.searchParams.set('next', pathname)
