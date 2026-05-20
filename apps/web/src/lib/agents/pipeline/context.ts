@@ -11,6 +11,7 @@
 import { getAdminClient } from '../db/admin-client';
 import { getAgentConfig } from '../config/registry';
 import { AgentError } from '../errors';
+import { sanitizeBusinessName, sanitizeScanUrl } from '../security/input-guard';
 import type {
   AgentJobInput,
   AgentPipelineContext,
@@ -71,13 +72,21 @@ async function loadBusinessContext(input: AgentJobInput): Promise<BusinessContex
     industry,
   );
 
+  // `name` and `website_url` originate from user input (onboarding / scan import).
+  // Sanitize them here, at the single point they enter `BusinessContext`, so every
+  // downstream consumer (renderBusinessBlock, fallbackSummary) receives values that
+  // are already control-char-stripped, length-capped, and jailbreak-rejected.
+  const name = sanitizeBusinessName(data.name ?? '');
+  const rawUrl = data.website_url ?? '';
+  const scanUrl = rawUrl ? sanitizeScanUrl(rawUrl) : '';
+
   return {
     businessId: data.id,
-    name: data.name,
+    name,
     industry,
     location: data.location ?? '',
     services: data.services ?? [],
-    scanUrl: data.website_url,
+    scanUrl,
     ymylCategory,
     language: normalizeLanguage(data.language),
   };
