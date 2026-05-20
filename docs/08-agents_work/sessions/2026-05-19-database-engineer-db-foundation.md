@@ -3,8 +3,9 @@ session: database-engineer-db-foundation
 date: 2026-05-19
 agent: database-engineer
 branch: feat/db-foundation
-pr: TBD
+pr: https://github.com/Adam077K/Beamix/pull/80
 risk_tier: irreversible
+tier: irreversible
 qa_verdict: PASS
 qa_tier: irreversible
 qa_judges_pass: 3of3
