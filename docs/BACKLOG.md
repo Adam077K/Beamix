@@ -81,3 +81,16 @@
 - Shopify plugin
 - n8n orchestration (using Inngest directly)
 - Stripe (using Paddle — merchant of record)
+
+## Wave 0.5 — Tech debt (from Wave 0 irreversible-tier judge findings)
+
+- **RLS WITH CHECK gap** — `content_items` / `inbox_items` (and `automation_schedules`, `notifications`) owner-write policies validate `user_id = auth.uid()` but not `business_id` ownership; an authenticated user can write rows carrying another tenant's `business_id` (invisible to victim, but data pollution). Extend WITH CHECK with `business_id IN (SELECT id FROM businesses WHERE user_id = auth.uid())`.
+- **Non-atomic daily-cap increment** — `incrementDailyCap` is read-modify-write; concurrent jobs across agents for one user can exceed cap. Replace with an atomic `INSERT … ON CONFLICT DO UPDATE SET used_today = used_today + 1` DB RPC.
+- **`updateJobStage` swallows DB errors** — `pipeline/runner.ts`; a DB partition leaves `agent_jobs` stale and risks credit double-hold on Inngest retry. Add error propagation; verify `hold_credits` idempotency on retry.
+- **`buildPipelineContext` ownership check** — does not verify `businessId` belongs to `userId`; IDOR risk if Inngest events become injectable. Enforce in the Wave 1 API route that emits the event.
+- **`allocate_monthly_credits` trust boundary** — accepts arbitrary `p_plan_id` with no DB check against the user's active subscription. Harden before first paid customer.
+- **Uncontrolled-text columns** — `scans.status` / `scans.scan_type`, `credit_transactions.transaction_type`, `agent_job_outputs.content_format` lack CHECK constraints or enums.
+- **`credit_holds.job_id`** has no FK to `agent_jobs(id)` — orphaned holds possible.
+- **Non-retryable `LLMProviderError`** not wrapped in Inngest `NonRetriableError` — wastes retries on 4xx.
+- **Redundant `plans_tier_idx`** — `plans.tier` UNIQUE already indexes it; drop the explicit index.
+- **CSP `nonce`** — app-shell ships `unsafe-inline`; replace with per-request nonce (was scoped to Wave 0.5 by spec).
