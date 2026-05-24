@@ -113,7 +113,7 @@
 | **Gross profit** | $999 - $74.30 | **$924.70** | |
 | **Gross margin** | $924.70 / $999 | **92.6%** | |
 
-**60-day refund exposure: $2,072.60** (2 months × $999 + $148.60 COGS) (assumed)
+**60-day refund exposure: $2,146.60** (2 × $999 + 2 × $74.30 COGS) (assumed)
 
 **24-month capped LTV:**
 
@@ -215,20 +215,20 @@
 | Tier | Count | Per-customer exposure | Total exposure |
 |------|-------|----------------------|----------------|
 | Starter (50 customers) | 50 | $1,082.20 | $54,110 |
-| Growth (30 customers) | 30 | $2,072.60 | $62,178 |
+| Growth (30 customers) | 30 | $2,146.60 | $64,398 |
 | Scale (15 customers) | 15 | $3,240.30 | $48,605 |
 | Professional (5 customers) | 5 | $5,497.90 | $27,490 |
-| **Total worst case** | **100** | | **$192,383** (assumed) |
+| **Total worst case** | **100** | | **$194,603** (assumed) |
 
 **At 12% refund rate (Quicksprout fact):**
 
 | Tier | Refunds expected | Cash at risk |
 |------|----------------|-------------|
 | Starter | 6 | $6,493 |
-| Growth | 3.6 → 4 | $8,290 |
+| Growth | 3.6 → 4 | $8,586 |
 | Scale | 1.8 → 2 | $6,481 |
 | Professional | 0.6 → 1 | $5,498 |
-| **12% case total** | **13** | **$26,762** (assumed) |
+| **12% case total** | **13** | **$27,058** (assumed) |
 
 **Cash needed pre-revenue-recognition (day 61):** The COGS outlay before first day-61 revenue event depends on ramp pace. Estimated $5,000-$15,000 COGS exposure before first recognized revenue at 10-20 customer ramp (assumed). This is well within reach without external funding.
 
@@ -239,8 +239,8 @@
 ### Table 1: Refund rate vs blended gross margin (net of refund cost)
 
 Base mix: 50% Starter / 30% Growth / 15% Scale / 5% Professional.
-Blended ARPC: $499×0.5 + $999×0.3 + $1,499×0.15 + $2,499×0.05 = $874.30 (assumed)
-Blended gross margin before refunds: 92.6% × $874.30 = $809.60 gross profit per customer.
+Blended ARPC: $499×0.5 + $999×0.3 + $1,499×0.15 + $2,499×0.05 = $899.00 (assumed)
+Blended gross margin before refunds: 92.6% × $899.00 = $832.47 gross profit per customer.
 
 | Refund rate | Net gross profit per customer (accounts for refund cash outflow) | Net gross margin % |
 |-------------|------------------------------------------------------------------|-------------------|
@@ -253,19 +253,19 @@ Blended gross margin before refunds: 92.6% × $874.30 = $809.60 gross profit per
 
 | Mix (Starter/Growth/Scale/Pro) | Blended ARPC |
 |-------------------------------|-------------|
-| 50/30/15/5 (base — assumed) | $874.30 |
+| 50/30/15/5 (base — assumed) | $899.00 |
 | 60/25/10/5 (starter-heavy) | $796.40 |
 | 40/35/20/5 (growth-heavy) | $974.20 |
 | 30/30/25/15 (enterprise-tilted) | $1,198.70 |
 
 ### Table 3: Month-6 retention vs blended LTV (24-month, base mix)
 
-| Month-6 retention | Blended LTV (base mix ARPC $874) |
+| Month-6 retention | Blended LTV (base mix ARPC $899) |
 |------------------|----------------------------------|
-| 90% | $874 × 24 × 0.6561 = $13,753 (assumed) |
-| 80% | $874 × 24 × 0.4096 = $8,596 (assumed) |
-| 70% | $874 × 24 × 0.2401 = $5,036 (assumed) |
-| 60% | $874 × 24 × 0.1296 = $2,718 (assumed) |
+| 90% | $899 × 24 × 0.6561 = $14,138 (assumed) |
+| 80% | $899 × 24 × 0.4096 = $8,831 (assumed) |
+| 70% | $899 × 24 × 0.2401 = $5,177 (assumed) |
+| 60% | $899 × 24 × 0.1296 = $2,797 (assumed) |
 
 ---
 
@@ -274,7 +274,7 @@ Blended gross margin before refunds: 92.6% × $874.30 = $809.60 gross profit per
 | Tier | Price | Total COGS | Gross profit | Gross margin | 60-day refund exposure | Break-even refund rate | CAC ceiling (80% ret.) |
 |------|-------|-----------|-------------|-------------|----------------------|----------------------|----------------------|
 | Starter | $499 | $42.10 | $456.90 | 91.6% | $1,082 | 52.2% | $4,672 |
-| Growth | $999 | $74.30 | $924.70 | 92.6% | $2,073 | 52.4% | $3,275 |
+| Growth | $999 | $74.30 | $924.70 | 92.6% | $2,147 | 52.4% | $3,275 |
 | Scale | $1,499 | $121.15 | $1,377.85 | 91.9% | $3,240 | 52.2% | $4,912 |
 | Professional | $2,499 | $249.45 | $2,249.55 | 90.0% | $5,498 | 50.0% | $8,184 |
 

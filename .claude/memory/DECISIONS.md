@@ -11,7 +11,7 @@
 **Sub-decisions locked:**
 1. **North star metric = Month-3 retention rate.** Replaces free-scan completion. Justified by 45-90 day GEO time-to-result. Target: 80% base, 70% watch trigger, 88% pricing-power signal. Reversibility: easy.
 2. **Blended gross margin = 92.6% central case.** Derived from per-tier COGS model (Paddle fee = fact; LLM/support COGS = assumed). Break-even refund rate ~52% across all tiers. Reversibility: easy (model update with cohort data).
-3. **Founding-100 12% refund case = $26,762 cash at risk.** Worst-case (100% refund) = $192,383. Both are manageable without external funding. Reversibility: easy (planning model).
+3. **Founding-100 12% refund case = $27,058 cash at risk.** Worst-case (100% refund) = $194,603. Both are manageable without external funding. Reversibility: easy (planning model). *(Corrected 2026-05-24 from $26,762 / $192,383 per QA-Lead PR #84 finding — Growth tier 60-day refund exposure was off by 1 month of COGS.)*
 4. **Insurance procurement: $1M GL + $500K-$1M E&O, expected $800-$2,150/year.** Provider shortlist: Hibub first, then Phoenix. Adam-blocker before customer #1. Reversibility: easy.
 5. **ToS v1 draft created.** All 15 required clauses. Marked DRAFT — requires Israeli lawyer review before publication. Liability cap = 12 months fees paid. Customer indemnification clause included. Reversibility: hard once published + customer #1 accepts.
 6. **Product SPECIFICATION.md is now legacy reference only.** BUSINESS_MODEL.md supersedes all $79/$189/$499 references. CPO to add deprecation notice to PRODUCT_SPECIFICATION.md in separate session.

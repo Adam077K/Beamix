@@ -41,8 +41,8 @@ How to financially document, model, and operationally plan the pivot from self-s
 - Blended gross margin central case: **92.6%** (assumed — Paddle fee is fact; LLM/support COGS are assumed)
 - Break-even refund rate per tier: **~50-52%** (all tiers) — business absorbs refunds up to 50% before cohort gross profit goes negative
 - CAC ceiling per tier (LTV:CAC = 3, 80% retention): Starter $4,672 / Growth $3,275 / Scale $4,912 / Professional $8,184 (all assumed)
-- Founding-100 worst case (100% refund): **$192,383** (assumed)
-- Founding-100 central case (12% refund, Quicksprout fact): **$26,762** (assumed)
+- Founding-100 worst case (100% refund): **$194,603** (assumed; corrected from $192,383 per QA-Lead PR #84 P2 fix 2026-05-24)
+- Founding-100 central case (12% refund, Quicksprout fact): **$27,058** (assumed; corrected from $26,762 per QA-Lead PR #84 P2 fix 2026-05-24)
 - Cash needed before first revenue recognition (day 61): **$5,000-$15,000** (assumed)
 
 ## Insurance action
