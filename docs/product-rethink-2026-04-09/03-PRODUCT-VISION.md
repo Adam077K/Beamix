@@ -1,14 +1,16 @@
-# Beamix Product Vision — Redesign Proposal (2026-04-09)
+# Beamix Product Vision — *Updated 2026-05-23 — agency pivot*
 
-STATUS: PROPOSAL — Not yet approved by Adam. Requires review and decisions on open questions (see 04-OPEN-QUESTIONS.md).
+STATUS: LOCKED. Agency pivot decisions ratified 2026-05-23. Old "tool" framing superseded.
+
+> *Updated 2026-05-23 — agency pivot.* Beamix is a **done-for-you GEO agency**, delivered as software, priced $499–$2,499/mo. Customers pay for outcomes. Agents work invisibly in the background. The customer sees a visibility score moving, queries won, weekly digests of wins — never an agent name, never a credit counter, never a raw scan tool. Source: `.claude/memory/DECISIONS.md` 2026-05-23 entry.
 
 ---
 
-## Core Thesis
+## Core Thesis *(Updated 2026-05-23 — agency pivot)*
 
-Beamix is NOT a dashboard. It's an **AI agency for SMBs** — a team of AI agents that does the GEO work for you, like professionals, but transparent and affordable.
+Beamix is a **done-for-you GEO agency wrapped in software**. Not a tool. Not a dashboard. The product is the outcome: AI-search visibility delivered, with traceability, with approval gates on customer-as-author actions, and with a 60-day no-questions money-back guarantee. Tooling is hidden — agents do the work. Customers see results.
 
-**The positioning no competitor occupies:** Full agentic GEO execution at SMB pricing ($79-$499/mo vs $1,500-$30,000/mo agencies).
+**The positioning no competitor occupies:** Done-for-you GEO at SMB pricing ($499-$2,499/mo) vs $2,000-$8,000/mo agencies vs $0-$500/mo dashboards (Profound, Athena HQ, Otterly). We're the only ones delivering both the work *and* the price point that fits a sub-$5M-ARR SaaS or a single-location dental practice.
 
 ---
 
@@ -90,11 +92,19 @@ Everything maps to 4 stages:
 
 ---
 
-## Proposed UX Model: The GEO Roadmap
+## UX Model: Outcomes Dashboard *(Updated 2026-05-23 — agency pivot)*
 
-### Replace "Agent Hub" with "GEO Roadmap"
+### Outcomes-only dashboard. Hide all tooling.
 
-Instead of users browsing 7+ agent cards and figuring out what to run, they see a personalized roadmap:
+**Old "GEO Roadmap" framing (below) is superseded.** Customers no longer see a roadmap of actions to take — Beamix takes the actions and the customer sees outcomes. The dashboard surfaces only: visibility score per engine, weekly wins, top winning queries, approval queue (1-click), weekly digest archive, and a "How we got this" drill-down trail.
+
+The roadmap concept below is preserved as ops/internal context only — it describes how agents *plan*, not what the customer sees.
+
+---
+
+### (Internal ops only) The GEO Roadmap
+
+Internally, agents still operate on a roadmap of actions to deliver. This is invisible to the customer.
 
 ```
 YOUR GEO ROADMAP
@@ -137,15 +147,18 @@ Users should feel like they have a GEO team working for them:
 
 ---
 
-## Proposed Pricing Alignment
+## Pricing Alignment *(Updated 2026-05-23 — agency pivot)*
 
-Current pricing ($79/$189/$499) maps to:
+Old $79/$189/$499 tiers are RETIRED. Current pricing (per decision #9, #11):
 
-| Tier | Scan | On-Site Agents | Off-Site Agents | Intelligence |
-|------|------|---------------|----------------|-------------|
-| **Discover $79/mo** | 3 engines, weekly | Content Optimizer, FAQ Builder, Schema Gen | Citation Builder (guided) | Basic query tracking |
-| **Build $189/mo** | 4+ engines, daily | All on-site + Content Refresher, Blog Strategist | All off-site agents | Full query intelligence |
-| **Scale $499/mo** | All engines, unlimited | All agents, priority execution | All + dedicated strategy | Competitor tracking + performance |
+| Tier | Locations | Engines | Schema/mo | FAQs/mo | Citations/mo | Outreach/mo | Publishing | SLA |
+|---|---|---|---|---|---|---|---|---|
+| **Starter $499/mo** | 1 | 3 | 4 | 2 | 5 | — | WP/Webflow/Shopify | 48h |
+| **Growth $999/mo** | 3 | 5 | 12 | 6 | 15 | — | + Ghost / paste-ready Wix/Squarespace | 24h |
+| **Scale $1,499/mo** | Unlimited | 7 | 24 | 10 | 30 | 10 | + GBP/Yelp/Apple/GTM/SendGrid | 12h |
+| **Professional $2,499/mo** | Unlimited | 7+custom | Unlimited | 16 | Unlimited | 30 | + Custom CMS | 4h + Slack |
+
+All tiers month-to-month with 60-day no-questions money-back guarantee. Full tier matrix lives in `docs/product-rethink-2026-04-09/06-PRICING-V2.md`.
 
 ---
 
