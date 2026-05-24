@@ -201,3 +201,9 @@
 - Wave 3 cleanups (legacy leads archived, war-room 26 skill refs + 6 cross-cutting bugs fixed)
 - DEFERRED: Phase 7 (Promptfoo) · war-room 10-file full 07b restructure · hook wiring · skill ref updates for new Phase 3 skills
 - Session: docs/08-agents_work/sessions/2026-05-16-ceo-phase1-rethink-execution.md
+
+- [2026-05-23] CEO grill session: agency pivot. 15 decisions locked. Pivot from $79/$189/$499 tool to $499/$999/$1,499/$2,499 done-for-you agency. 60-day money-back, 3-vertical launch ICP, 7 new + 4 repurposed customer-facing agents. Research: tasks a98bc6df7d83e15e2 + a4684aa23fdeb01f7.
+- Session: docs/08-agents_work/sessions/2026-05-23-ceo-agency-pivot-grill.md
+- Next dispatch: CPO + CMO + CBO + CTO parallel
+
+- [2026-05-23 evening] All 4 C-suite leads completed agency-pivot dispatch. 38 planning files edited + 18 new files created (7 agent PRDs, 3 vertical landing pages, DM templates, Wave 3 brief, ToS draft v1, insurance plan, unit econ tier model). 5 session files written. North star changed to month-3 retention. CTO sequencing decision A10: Wave 3 after Wave 2 ships to customer #1. Adam-blockers: insurance + lawyer ToS review.
