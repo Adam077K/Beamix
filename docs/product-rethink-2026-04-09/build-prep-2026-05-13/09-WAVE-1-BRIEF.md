@@ -82,6 +82,118 @@ CEO spawns the following workers in parallel after Wave 0.5 + design-lead approv
 
 Workers 1+2 are coupled (share `brand_fingerprints` shape) — CTO writes the JSON schema once before either spawns. Workers 3+4+5 are parallel. Worker 6 sequences AFTER Adam updates Paddle.
 
+---
+
+## INFRA GAP SCOPING — 2026-05-24 (READ AFTER AGENCY PIVOT, OVERRIDES BELOW WHERE NOTED)
+
+*Updated 2026-05-24 — infrastructure gap scoping. Source: `docs/08-agents_work/sessions/2026-05-24-cto-infra-gap-scoping.md` (sub-decisions B1, B2, B4, B6).*
+
+Cross-team synthesis surfaced 4 Wave-1-affecting infrastructure gaps not yet scoped. Each gap below is locked, sequenced, and assigned an Adam-blocker tag (`AB-N`) tracked in `06-ADAM-CHECKLIST.md` §2026-05-24.
+
+### W1.INFRA-1 — Discovery booking vendor pick = Cal.com (free Individual tier)
+
+**Decision (B1):** Cal.com (open-source, Individual tier free, self-hostable later) — NOT Calendly, NOT custom.
+
+**Why:** Free tier covers single Adam-host through customer #50 with $0/mo. Embeddable web component avoids iframe quirks. Same OSS codebase upgrades to multi-host pool at customer #51 via Cal.com Teams ($15/user/mo) without integration rewrite. Calendly ($10–15/mo per user) locks Beamix to paid SaaS day-1 and has weaker embed quality. Custom build rejected — 1-2 worker-weeks vs 4 hours.
+
+**Integration shape (W1.2 frontend + backend addendum):**
+- Cal.com web component embedded on `/discovery/book` (FE worker `fe-discovery-funnel` scope).
+- Embed via `<Cal.com inline />` component reading `NEXT_PUBLIC_CALCOM_DISCOVERY_LINK` env (e.g. `beamix/discovery-call`).
+- Cal.com webhook `booking.created` → POST to new endpoint `/api/discovery/booked` → writes `discovery_bookings` row (already in W1.1 scope) + emits Inngest event `discovery.scheduled`. Backend worker `be-brand-discovery` scope addendum.
+- Webhook signature: HMAC verified against `CALCOM_WEBHOOK_SECRET` env (Cal.com dashboard → Webhooks).
+- Time-zone handling: Cal.com handles client TZ detection natively; backend stores booking in UTC + customer TZ; Inngest reminder cron resolves customer-local time.
+- No-show / reschedule handling: Cal.com sends `booking.rescheduled` and `booking.canceled` webhooks → backend updates `discovery_bookings.status`. On no-show (no `joined_at` within 15 min of `scheduled_at`), Inngest job `discovery.no-show` fires → re-engagement email via Resend template `discovery_no_show_invite`. After 2 no-shows, lead auto-flagged for Adam manual review.
+
+**Effort:** S (≤2 days FE + ½-day BE webhook).
+**Risk tier:** Full (customer-facing funnel critical path — already Full per W1.2).
+**Adam action (AB-1):** Cal.com signup → connect Google Calendar → create event type "Beamix Discovery Call (20-min)" → set availability → capture embed URL/ID + webhook secret → paste into env.
+
+### W1.INFRA-2 — Voice/chat infrastructure for Discovery agent = text-only at launch
+
+**Decision (B2):** Text-only streaming chat (Anthropic Sonnet via server-sent events). NO voice at launch. Voice deferred to MVP+90.
+
+**Why:** Voice vendor pricing as of 2026-05-24 (recall: cite real pricing):
+- Vapi: $0.05/min platform + LLM/TTS pass-through ≈ **$0.08–0.20/min net**
+- Retell: $0.07–0.15/min all-in
+- ElevenLabs Conversational: $0.10–0.20/min
+- OpenAI Realtime API: ~$0.06/min input + $0.24/min output ≈ **$0.15–0.30/min net**
+
+A 20-minute discovery call at $0.20/min = $4 per call on top of the underlying LLM cost. At 50 discoveries/month that's $200/mo for voice infra alone, vs $0 for text. Text also avoids telephony complexity, transcription QA loop, accent-failure modes, and per-jurisdiction call-recording legal compliance.
+
+The Discovery agent's job is structured 20-question extraction → text is fully sufficient. Voice is a "nice when validated" feature, not an MVP gate.
+
+**Cost per discovery call (text-only):** ~20 turns × ~2K tokens avg context × Sonnet pricing ≈ **$0.20–0.40 per discovery call**. Well within agency margin.
+
+**Supersedes:** W1.1 brief language "text, then voice if available" — now LOCKED to text-only at launch.
+
+**Integration shape (W1.1 ai-engineer addendum):**
+- Discovery agent already in scope (`docs/04-features/specs/agent-discovery.md`).
+- Chat UI: server-sent events stream from `/api/discovery/turn` → Anthropic Sonnet streaming → token-by-token render on `/discovery/session/[booking_id]`.
+- Voice adapter STUB only at `apps/web/src/lib/agents/discovery/voice-adapter.ts` — implements an interface `VoiceSession { connect(), sendUtterance(), close() }` whose only implementation at launch is a `NoopVoiceAdapter` that throws on `connect()`. MVP+90 plugs in a Vapi/Retell impl without touching the discovery orchestrator.
+
+**Effort:** S (chat-streaming infrastructure is standard Anthropic SDK).
+**Risk tier:** Full (customer-facing agent — already Full per W1.1).
+**Adam action:** None at Wave 1. (Voice vendor pick deferred to MVP+90 with real customer data.)
+
+### W1.INFRA-3 — Resend DNS gap (DNS not actually live)
+
+**Decision (B4):** GAP FOUND. `06-ADAM-CHECKLIST.md` line 383 claims "Resend + DNS — Domain configured; keys in Vercel env" but live `dig` lookups on 2026-05-24 returned EMPTY for every Resend-required record on `notify.beamixai.com`. API key is captured; DNS is NOT live. Emails will be rejected or land in spam.
+
+**Gaps (Adam action required BEFORE Wave 1 BE-3 ships):**
+1. **SPF TXT on `notify.beamixai.com`** — `v=spf1 include:_spf.resend.com ~all`
+2. **DKIM CNAME** — `resend._domainkey.notify.beamixai.com` → Resend-provided CNAME target (read from Resend dashboard → Domains)
+3. **DMARC TXT on `_dmarc.beamixai.com` apex** — `v=DMARC1; p=none; rua=mailto:adam419067@gmail.com`
+4. **Subdomain CNAME** (if Resend dashboard provides one) — `notify.beamixai.com → <resend-target>`
+
+**Resend tier escalation trigger (UPDATED — supersedes vague tier discussion):**
+- Free tier = 3,000 emails/mo + 100/day cap.
+- **Projected agency-pivot volume:** weekly digest × N customers (Sunday burst at 16:00 customer-local) + ~3 transactional × signup + Day-1 onboarding chain × N + refund/cancel/approval-link emails.
+- At 10 customers: ~80 weekly digests + ~600 transactional = ~680/mo (free tier covers).
+- At 50 customers: ~3,400/mo + Sunday digest bursts (50 digests in ≤1hr window — easily breaches 100/day burst cap).
+- **Upgrade to Resend Pro ($20/mo, 50K emails/mo, 50/sec rate, dedicated IP option) at ~10 paying customers** — NOT 50. Pro gives headroom for digest burst windows.
+
+**Wave 1 BE-3 addendum:** Add a startup-time DNS self-check: on Inngest function init, run a `dig` against the 3 required records; if any missing, refuse to start the `weekly_digest` and `welcome_onboarded` cron schedules and log a Sentry P0. Fails fast vs silently delivering to spam.
+
+**Adam action (AB-2):** Add 4 DNS records at Cloudflare DNS → click Verify in Resend dashboard → send test email → confirm inbox delivery.
+**Risk tier:** n/a (Adam DNS config), but blocks Wave 1 BE-3.
+
+### W1.INFRA-4 — Free-scan rate limit re-aligned for lead-magnet flow
+
+**Decision (B6):** Original Wave 1 BE-2 spec (per-IP 5/hr + Turnstile) was sized for tool-product framing (free scan = viral score share). Under agency framing, free scan is a LEAD MAGNET feeding `/discovery/book` — fewer scans per visitor are expected, conversion-to-discovery matters more than raw scan throughput.
+
+**Supersedes:** Wave 1 BE-2 line "`/api/scan/free` 5/hr per IP".
+
+**New rate-limit spec:**
+
+| Vector | Old (tool framing) | New (agency framing) |
+|---|---|---|
+| Per-IP `/api/scan/free` | 5/hour | **3/day** (24h window), `Retry-After: 86400` header on breach |
+| Per-email | not enforced | **1/day** (email captured at soft email-gate; second submit within 24h same email blocks with "We already scanned this — check your inbox.") |
+| Cloudflare Turnstile | required (E8) | required (unchanged) |
+| Per-domain (scanned URL) | not enforced | **2/week** (prevents competitor-domain harvesting via repeated free scans) |
+| Allowlist | none | **CIDR allowlist `RATE_LIMIT_ALLOWLIST` env var** + signed-token allowlist (see below) |
+| `/api/discovery/book` (new) | n/a | per-IP 5/day, per-email 1/day |
+
+**Defense-in-depth (anti-abuse):**
+1. Cloudflare Turnstile (already E8 — keeps fully).
+2. IP rate limit via `@upstash/ratelimit` (already BE-2 scope; switch from 5/hr to 3/day).
+3. Email rate limit via Supabase row check (NEW — adds ~50 LOC to BE-2's `/api/scan/free` handler; new table `scan_rate_overrides` or reuse `audit_log`).
+4. Domain rate limit (NEW — same row-check pattern, key = scanned URL host).
+5. Honeypot field on the `/scan` form (visible-to-bots `<input style="display:none" name="middlename">`; if filled, server silently returns 200 with bogus scan_id + logs `audit_log` row `event_kind=honeypot_triggered`).
+6. WHOIS/parked-domain check before LLM spend — reject scan if WHOIS < 30 days old AND not on Adam-allowlist. Uses `whoiser` (already in Wave 2 W2.4 verification scope; lifted to free-scan critical path).
+
+**Adam-network allowlist UX:**
+- Static CIDR allowlist via `RATE_LIMIT_ALLOWLIST` env (comma-separated, e.g. `203.0.113.0/24,198.51.100.42/32`).
+- Signed-token allowlist for warm-network DM recipients: Adam shares cold DMs with link `https://app.beamixai.com/scan?adamkey=<24h-token>`. Token = HMAC-SHA256 of `(YYYY-MM-DD, ADAMKEY_SALT)` env. Server adds requester IP to a Supabase `rate_limit_overrides` table for 24h. Removes friction for prospects without exposing rate-limit bypass to the open web.
+
+**Wave 1 BE-2 addendum:** Implement the 6-layer stack above in `apps/web/src/lib/scan/rate-limit.ts`. Existing Turnstile + per-IP code stays; per-email + per-domain + honeypot + WHOIS + allowlist are net-new.
+
+**Effort:** S (additive to existing BE-2 rate-limit work).
+**Risk tier:** Full (free-scan is critical-path customer surface; abuse = direct LLM cost amplification).
+**Adam action (AB-6, optional):** Provide list of static IPs (home, office, VPN) for `RATE_LIMIT_ALLOWLIST`. Not blocking.
+
+---
+
 ### Legacy Wave 1 sections to skip or re-interpret
 
 Below this section, the legacy Wave 1 brief discusses tool-product features (credit pools, Inbox 3-pane review flow, agent execution chat UI, `/dashboard/agents` page, etc.). **These are killed or transformed:**

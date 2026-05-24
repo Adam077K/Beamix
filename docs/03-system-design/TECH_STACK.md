@@ -90,6 +90,39 @@ APPLE_BUSINESS_CONNECT_PARTNER_KEY=                # Wave 4
 
 **Updated trigger: upgrade to Inngest Pro at ~3 paying customers** (down from 5). Free tier 50K steps/month is consumed faster with publishing workers active.
 
+### 0.9 Infrastructure vendor picks — *Updated 2026-05-24 — infrastructure gap scoping*
+
+*Source: `docs/08-agents_work/sessions/2026-05-24-cto-infra-gap-scoping.md` (sub-decisions B1, B2, B3).*
+
+| Vendor / Surface | Pick | Tier (launch) | Cost (launch) | Upgrade trigger | Used by |
+|---|---|---|---|---|---|
+| **Discovery booking** | **Cal.com** (open-source) | Individual (free) | $0/mo | Customer #51 → upgrade to Cal.com Teams ($15/user/mo) for multi-host pool | Wave 1 W1.2 frontend funnel |
+| **Discovery agent voice/chat** | **Anthropic Sonnet streaming chat (text-only)** | Direct API | ~$0.20–0.40 per call | Voice deferred to MVP+90 (then re-evaluate Vapi $0.05–0.15/min platform + LLM/TTS ≈ $0.08–0.20/min net, Retell $0.07–0.15/min, ElevenLabs $0.10–0.20/min, OpenAI Realtime $0.15–0.30/min) | Wave 1 W1.1 Discovery agent |
+| **WordPress plugin distribution** | **HYBRID — self-hosted `.zip` (day-1) + WP.org marketplace (parallel submission)** | Free | $0/mo | n/a (free distribution) | Wave 3 Integration 1 |
+
+**Cal.com integration env vars:**
+```
+NEXT_PUBLIC_CALCOM_DISCOVERY_LINK=beamix/discovery-call
+CALCOM_WEBHOOK_SECRET=<from Cal.com dashboard>
+```
+
+**Voice adapter stub:** `apps/web/src/lib/agents/discovery/voice-adapter.ts` exports a `VoiceSession` interface; the only launch implementation is `NoopVoiceAdapter` (throws on connect). MVP+90 voice vendor plugs in via this interface without touching the discovery orchestrator.
+
+**WordPress plugin distribution env vars:**
+```
+WP_PLUGIN_UPDATE_HMAC_KEY=<32-byte hex>   # signs plugin update download URLs
+WP_PLUGIN_DOWNLOAD_TTL_SECONDS=300        # signed-URL TTL
+```
+
+**Vendor escalation costs (post-MVP, informational):**
+
+| Surface | Free → Paid trigger | Paid cost |
+|---|---|---|
+| Cal.com Individual → Teams | Customer #51 (multi-host pool needed) | $15/user/mo |
+| Resend Free → Pro | ~10 paying customers (3K/mo cap + 100/day burst breach risk on Sunday digest) | $20/mo (50K emails/mo, 50/sec rate) |
+| Inngest Free → Pro | ~3 paying customers (was 5; agency pivot added 4 new crons — see §0.7) | $75/mo |
+| Supabase Free → Pro (prod) | Wave 2 cutover (daily PITR required for EU customers) | $25/mo |
+
 ### 0.8 Deprecations from agency pivot
 
 | Library / dep | Status | Action |

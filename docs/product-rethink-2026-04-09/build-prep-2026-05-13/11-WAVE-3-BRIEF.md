@@ -102,6 +102,41 @@ For each integration: API auth, scopes, rate limits, retry/failure handling, app
 
 Plugin code lives in `apps/web/integrations/wordpress-plugin/` (separate sub-package; published to wordpress.org plugin directory once approved).
 
+#### Distribution + build-ownership scoping — *Updated 2026-05-24 — infrastructure gap scoping*
+
+*Source: `docs/08-agents_work/sessions/2026-05-24-cto-infra-gap-scoping.md` (sub-decision B3).*
+
+**Distribution pick: HYBRID — self-hosted `.zip` (Wave 3 day-1) + wordpress.org marketplace (parallel submission).**
+
+**Why:** wordpress.org review lead time = 2–4 weeks AND first-submission rejection rate is high (must comply with plugin guidelines, GPL license, no obfuscated code, security review). Blocking Wave 3 launch on WP.org approval is a hard NO. Self-hosted .zip ships on day 1 with worse UX (manual upload, no auto-update). Once WP.org approves (typically v1.1), customers can switch to the WP.org-installed version (publish migration note in plugin's `readme.txt`).
+
+**Build owner: backend-engineer in our fleet.** NOT a WP-specialist contractor. WordPress plugin code is PHP/WP REST API/JS — within backend-engineer scope per Layer Contract. Contractor adds coordination overhead, IP-leak risk, and single-point-of-failure dependency.
+
+**Plugin architecture:**
+- PHP plugin shell + WP REST API consumer + Beamix OAuth-style flow (admin clicks "Connect to Beamix" → opens Beamix dashboard → Beamix issues Application Password back via callback → stored in `wp_options` encrypted).
+- **Scope minimization (security-engineer enforces):** requests only `read`, `edit_posts`, `edit_pages`, `manage_categories`, `upload_files`. NEVER `manage_options` (would let plugin change WP admin settings — out of scope and a security review red flag).
+- **Update mechanism — self-hosted version:** in-plugin "Check for updates" button polls `https://app.beamixai.com/api/wp-plugin/version` → if newer, downloads .zip; admin clicks "Install update". Update endpoint signs the .zip download URL (HMAC, 5-min TTL) so plugin can't be tricked into installing a malicious binary.
+- **Update mechanism — WP.org version:** automatic via standard WP plugin updater (WordPress.org SVN release pipeline).
+- **Heartbeat endpoint** (already in scope above): plugin POSTs to `https://app.beamixai.com/api/wp-plugin/heartbeat` every 6h with site URL + plugin version + WP version → backend writes to `publishing_credentials.last_health_check`.
+
+**Branding rules per WP marketplace guidelines:**
+- Plugin display name: **"Beamix GEO Connector"** (NOT "Beamix" alone — too generic for WP.org index; collisions and SEO confusion).
+- Description must NOT promise SEO ranking improvements (WP.org forbids "guaranteed results" or "rank #1" claims).
+- Must include GDPR/privacy disclosure linking to `app.beamixai.com/privacy`.
+- Author = "Beamix Ltd" with verified beamixai.com URL.
+- License: GPL v2 or later (mandatory for WP.org).
+- Plugin must NOT include any obfuscated/minified PHP — WP.org reviewers reject obfuscation.
+
+**Effort:** M (3–5 worker-days for plugin + integration + WP.org submission packaging).
+**Risk tier:** Irreversible (already Irreversible per top of Integration 1).
+
+**Adam action (AB-5):**
+1. Register `Beamix Ltd` author account at wordpress.org/plugins (free, instant).
+2. Set up SVN credentials WordPress requires for marketplace submissions (Adam supplies once; backend-engineer uses for submission).
+3. Confirm plugin display name (default: "Beamix GEO Connector").
+
+**NO action blocks Wave 3 day-1 launch.** Self-hosted .zip path requires zero Adam input beyond Wave 3 spawn. WP.org submission is parallel + non-blocking.
+
 ---
 
 ### Integration 2 — Schema injection via Google Tag Manager (MVP)

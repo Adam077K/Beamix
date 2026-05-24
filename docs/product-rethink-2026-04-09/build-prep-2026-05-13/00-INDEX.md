@@ -18,6 +18,28 @@ Pre-flight artifacts produced before Wave 0 spawns. Closes the gaps flagged in `
 
 **Tiers killed:** Old $79 Discover / $189 Build / $499 Scale tiers. New tiers: Starter $499 / Growth $999 / Scale $1,499 / Professional $2,499. `plan_tier` enum migrates accordingly — see `05-DB-MIGRATION-PLAN.md`.
 
+## Infrastructure prerequisites — *Updated 2026-05-24 — infrastructure gap scoping*
+
+*Source: `docs/08-agents_work/sessions/2026-05-24-cto-infra-gap-scoping.md` (sub-decisions B1–B6).*
+
+6 infrastructure gaps surfaced 2026-05-24 in cross-team synthesis. All now scoped in-place. Adam blockers tagged `AB-N` and tracked in `06-ADAM-CHECKLIST.md` §2026-05-24.
+
+| # | Gap | Pick | Wave gate | Adam blocker |
+|---|---|---|---|---|
+| 1 | Discovery booking | **Cal.com** (Individual free; Teams at #51) — see `09-WAVE-1-BRIEF.md` §W1.INFRA-1 + `docs/03-system-design/TECH_STACK.md` §0.9 | Wave 1 W1.2 | AB-1 (Cal.com signup + Google Calendar OAuth + capture embed URL/secret) |
+| 2 | Discovery agent voice/chat | **Text-only Sonnet streaming** at launch; voice deferred to MVP+90 — see `09-WAVE-1-BRIEF.md` §W1.INFRA-2 + `TECH_STACK.md` §0.9 | Wave 1 W1.1 | None (Adam decision-confirm only) |
+| 3 | Beamix WordPress plugin | **Hybrid distribution** — self-hosted `.zip` Wave 3 day-1 + WP.org marketplace parallel submission — see `11-WAVE-3-BRIEF.md` Integration 1 §Distribution + `TECH_STACK.md` §0.9 | Wave 3 | AB-5 (WordPress.org Beamix Ltd publisher account + SVN creds — NOT day-1 blocking) |
+| 4 | Resend DNS + tier | DNS gap FOUND (Adam must add 4 records before BE-3 ships); tier upgrade trigger lowered to ~10 customers ($20/mo Pro) — see `09-WAVE-1-BRIEF.md` §W1.INFRA-3 + `06-ADAM-CHECKLIST.md` §2026-05-24 | Wave 1 BE-3 | AB-2 (SPF + DKIM + DMARC + subdomain CNAME at Cloudflare DNS + Resend verify) |
+| 5 | Paddle setup | 8 new agency-tier products required (Starter monthly+annual first); old SKUs archive (not delete); top-up SKU killed — see `06-ADAM-CHECKLIST.md` §2026-05-24 | Wave 1 BE-2 (`be-tier-rename`) | AB-3 (sandbox login resolved, 8 products + price IDs + vendor ID + public key + notification secret); AB-4 (lawyer ToS review before flipping to production billing) |
+| 6 | Free-scan rate-limit + abuse | Re-aligned for lead-magnet flow: per-IP 3/day + per-email 1/day + per-domain 2/week + Turnstile + honeypot + WHOIS + Adam-network signed-token allowlist — see `09-WAVE-1-BRIEF.md` §W1.INFRA-4 | Wave 1 BE-2 | AB-6 (static IP allowlist for `RATE_LIMIT_ALLOWLIST` env — optional polish) |
+
+**Wave 1 spawn dependency map:**
+- W1.1 (Discovery agent) needs gaps 2 confirmed.
+- W1.2 (free-scan → discovery funnel) needs gap 1 (Cal.com env captured).
+- BE-2 (`be-tier-rename`) needs gap 5 (Paddle 8 products at minimum Starter pair).
+- BE-3 (transactional email) needs gap 4 (Resend DNS verified).
+- All BE-2 work touching `/api/scan/free` includes gap 6 rate-limit spec.
+
 ## Current state (as of 2026-05-16)
 
 | Layer | State |

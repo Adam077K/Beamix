@@ -397,3 +397,105 @@ Adam ran the Comet auto-pilot prompt + manual cleanup. Status of every section a
 ### Wave 0 spawn status: ✅ UNBLOCKED
 
 Foundation work (DB schema, agent system skeleton, app shell) has no dependency on the 3 deferred items. Wave 0 can spawn from a fresh CEO session immediately. The 3 deferred items must be resolved before their respective downstream waves.
+
+---
+
+## 2026-05-24 — Infrastructure gap action items
+
+*Updated 2026-05-24 — infrastructure gap scoping. Source: `docs/08-agents_work/sessions/2026-05-24-cto-infra-gap-scoping.md`.*
+
+Cross-team synthesis on 2026-05-24 surfaced 6 infrastructure gaps. The 5 actions below are NEW Adam-blockers on top of the existing checklist. They sequence per the wave-gate dependency map in `00-INDEX.md` §Infrastructure prerequisites.
+
+### Correction to 2026-05-16 Completion log
+
+**Resend + DNS status was incorrectly logged as "Done" on line 383.** Live DNS verification on 2026-05-24 (`dig` on `notify.beamixai.com`, `_dmarc.beamixai.com`, `resend._domainkey.beamixai.com`) returned EMPTY for all Resend-required records. The Resend API key IS in env; the DNS is NOT live. This blocks Wave 1 BE-3. See AB-2 below.
+
+### AB-1 — Cal.com discovery booking setup [BLOCKING for Wave 1 W1.2]
+
+- [ ] Sign up at cal.com (Individual tier, free)
+- [ ] Connect Google Calendar via Cal.com app marketplace
+- [ ] Create event type: name "Beamix Discovery Call (20-min)", duration 20 min, buffer 5 min, availability set per Adam's schedule
+- [ ] Configure webhook: Dashboard → Webhooks → Add → URL `https://app.beamixai.com/api/discovery/booked`, events `BOOKING_CREATED`, `BOOKING_RESCHEDULED`, `BOOKING_CANCELED`
+- [ ] Capture and add to Vercel env (Preview + Production):
+  ```
+  NEXT_PUBLIC_CALCOM_DISCOVERY_LINK=beamix/discovery-call    # the embed slug from Cal.com
+  CALCOM_WEBHOOK_SECRET=<from Cal.com Webhooks settings>
+  ```
+- [ ] Upgrade trigger noted: at customer #51, evaluate Cal.com Teams ($15/user/mo) for multi-host pool. NOT blocking now.
+
+### AB-2 — Resend DNS records [BLOCKING for Wave 1 BE-3 transactional email]
+
+- [ ] Log into Resend dashboard → Domains → `notify.beamixai.com` → copy the 3 DNS records shown (Resend provides exact values; do NOT invent)
+- [ ] Add at Cloudflare DNS for `beamixai.com`:
+  - [ ] SPF TXT on `notify.beamixai.com`: `v=spf1 include:_spf.resend.com ~all`
+  - [ ] DKIM CNAME: `resend._domainkey.notify.beamixai.com` → Resend-provided target
+  - [ ] DMARC TXT on `_dmarc.beamixai.com`: `v=DMARC1; p=none; rua=mailto:adam419067@gmail.com`
+  - [ ] Subdomain CNAME (if Resend dashboard provides one): `notify.beamixai.com → <resend-target>`
+- [ ] Click "Verify" in Resend dashboard. Wait up to 30 min for propagation.
+- [ ] Send a test email via Resend dashboard to `adam419067@gmail.com` to confirm INBOX delivery (NOT spam folder).
+- [ ] Bookmark `https://resend.com/settings/billing` — upgrade trigger = monthly send approaches 2,500 (Pro tier $20/mo at ~10 paying customers per agency-pivot volume projection).
+
+### AB-3 — Paddle 8 new agency-tier products [BLOCKING for Wave 1 BE-2 `be-tier-rename`]
+
+- [ ] Resolve `sandbox-vendors.paddle.com` login (password reset or fresh sandbox account)
+- [ ] **PRIORITY: Create Starter monthly + Starter annual FIRST** (Wave 1 BE-2 blocks only on these two; the other 6 can be created in parallel with Wave 1)
+- [ ] Create 8 new products in Sandbox (assume 10% annual discount — CBO validates final % before production):
+  - [ ] Starter monthly $499 / annual $5,388 ($449/mo billed annually)
+  - [ ] Growth monthly $999 / annual $10,788 ($899/mo billed annually)
+  - [ ] Scale monthly $1,499 / annual $16,188 ($1,349/mo billed annually)
+  - [ ] Professional monthly $2,499 / annual $26,988 ($2,249/mo billed annually)
+- [ ] Capture and add to Vercel env (Preview + Production):
+  ```
+  PADDLE_VENDOR_ID=...
+  PADDLE_PUBLIC_KEY=...
+  PADDLE_API_KEY=...
+  PADDLE_NOTIFICATION_SECRET=...
+  PADDLE_PRICE_STARTER_MONTHLY=pri_...
+  PADDLE_PRICE_STARTER_ANNUAL=pri_...
+  PADDLE_PRICE_GROWTH_MONTHLY=pri_...
+  PADDLE_PRICE_GROWTH_ANNUAL=pri_...
+  PADDLE_PRICE_SCALE_MONTHLY=pri_...
+  PADDLE_PRICE_SCALE_ANNUAL=pri_...
+  PADDLE_PRICE_PROFESSIONAL_MONTHLY=pri_...
+  PADDLE_PRICE_PROFESSIONAL_ANNUAL=pri_...
+  ```
+- [ ] Refund policy stays "Custom — partial refunds allowed" (held-revenue accounting in backend controls actual amounts per CTO A4).
+- [ ] **Archive (do NOT delete) old products: Discover monthly $79 / Discover annual $63, Build monthly $189 / Build annual $151, Scale monthly $499 / Scale annual $399, and the $19 top-up SKU.** Historical webhooks reference these; deletion breaks audit trail.
+- [ ] **KILL the $19 top-up SKU concept** — agency tiers don't use credit top-ups; deliverables are tier-gated. Do NOT create a top-up product for the new tiers.
+
+### AB-4 — Lawyer ToS review [BLOCKING for flipping Paddle to production billing]
+
+- [ ] Schedule Israeli or UK SaaS lawyer for ~2-hour engagement, ~$500–1,500
+- [ ] Lawyer reviews `docs/legal/TERMS_OF_SERVICE_v1_DRAFT.md` (15-clause v1 from grill session)
+- [ ] Publish lawyer-reviewed ToS at `app.beamixai.com/terms`
+- [ ] **HARD BLOCK: do NOT flip Paddle from Sandbox to Production billing until lawyer-approved ToS is published.** Wave 2 cutover gate.
+
+### AB-5 — WordPress plugin distribution prep [NON-BLOCKING for Wave 3 day-1]
+
+Self-hosted `.zip` distribution works without any of the below. These are only needed for the parallel WP.org marketplace submission (typical timeline: submit during Wave 3, approval lands at v1.1).
+
+- [ ] Register `Beamix Ltd` author account at https://wordpress.org/plugins/developers/add/ (free, instant)
+- [ ] Set up SVN credentials per WP.org instructions (one-time setup); supply to backend-engineer for use in plugin submission pipeline
+- [ ] Confirm plugin display name (default suggestion: "Beamix GEO Connector" — too-generic "Beamix" alone will collide on WP.org index)
+
+### AB-6 — Free-scan rate-limit allowlist [OPTIONAL polish]
+
+Not blocking; defaults work fine. This only matters if Adam wants to bypass rate limits from his own machines (cold-DM testing, founder-led demos, network proof-of-life).
+
+- [ ] Compile list of static IPs (home, office, VPN if any) in CIDR notation
+- [ ] Add to Vercel env: `RATE_LIMIT_ALLOWLIST=203.0.113.0/24,198.51.100.42/32` (comma-separated CIDR list)
+- [ ] Generate signed-token salt: `ADAMKEY_SALT=<32-byte hex>` — used to mint `?adamkey=<token>` URLs for warm-network DM recipients (24h auto-allowlist)
+
+### Updated wave-gate status
+
+| Wave | Status | Adam blockers |
+|---|---|---|
+| Wave 0 | ✅ UNBLOCKED (no infra dependencies) | None |
+| Wave 0.5 | ✅ UNBLOCKED | None |
+| Wave 1 W1.1 (Discovery agent) | 🟡 NEEDS AB-1 confirm only | AB-1 (decision lock to text-only) |
+| Wave 1 W1.2 (free-scan → discovery funnel) | 🟡 BLOCKED on AB-1 | AB-1 (Cal.com env captured) |
+| Wave 1 BE-2 (`be-tier-rename`) | 🟡 BLOCKED on AB-3 (Starter pair minimum) | AB-3 (Starter monthly + annual price IDs) |
+| Wave 1 BE-3 (transactional email) | 🟡 BLOCKED on AB-2 | AB-2 (Resend DNS verified) |
+| Wave 2 cutover (production billing) | 🟡 BLOCKED on AB-4 | AB-4 (lawyer-approved ToS published) |
+| Wave 3 day-1 (self-hosted .zip plugin) | ✅ UNBLOCKED | None |
+| Wave 3 WP.org marketplace submission (parallel) | 🟢 OPTIONAL, AB-5 | AB-5 (WP.org publisher account + SVN creds) |
