@@ -1,9 +1,67 @@
 # Legal Publishing Plan — T&Cs, Privacy, Cookies, DPA
 
-**Status:** Authoritative. Pre-Wave-2 blocker (must publish before customer #1 invoices).
+**Status:** Authoritative. Updated 2026-05-23 — agency pivot. Pre-Wave-2 blocker (must publish before customer #1 invoices).
 **Owner:** Wave 2 Worker 5 (new — spawn as `technical-writer` + `frontend-developer` collab).
-**Resolves:** Missing-perspectives audit C2 + Adam-checklist amendment.
-**Date:** 2026-05-13.
+**Resolves:** Missing-perspectives audit C2 + Adam-checklist amendment + agency-pivot legal additions (decision #12, 2026-05-23).
+**Date:** 2026-05-13. *Updated 2026-05-23 — agency pivot.*
+
+## Agency-pivot legal additions (2026-05-23)
+
+The following clauses are REQUIRED in ToS v1 due to the agency model pivot (decision #12, locked 2026-05-23). These supersede or extend the self-serve T&C clauses below.
+
+### A. Customer warrants property ownership
+
+Customer represents and warrants that they own or have full legal authority over:
+- The website domain(s) and web properties connected to Beamix
+- The business name, brand assets, and content submitted in the brand brief
+- All platforms and accounts (GBP, Yelp, Apple Maps, SendGrid sub-account, CMS) to which Beamix is granted publish access
+
+Customer agrees that Beamix acts solely as agent for the customer when publishing on these properties. The customer is the publisher of record for all content.
+
+**Reversibility: requires-Adam-sign-off** — this clause is the primary legal protection for done-for-you publishing. Do not weaken.
+
+### B. Customer indemnifies on 3rd-party claims
+
+Customer shall indemnify, defend, and hold harmless Beamix and its directors, officers, agents, and contractors from any and all claims, damages, losses, costs, and expenses (including reasonable legal fees) arising from:
+1. Content approved by customer and published through Beamix's systems
+2. Claims that published content infringes a third party's intellectual property, defames a third party, or violates applicable law
+3. Any misrepresentation by customer regarding ownership of connected properties or accounts
+
+This indemnification survives cancellation or expiration of the subscription.
+
+**Reversibility: requires-Adam-sign-off** — this clause limits Beamix's exposure to content liability. Core protection for the agency model.
+
+### C. CAN-SPAM compliance for email-as-them
+
+When Beamix sends outreach emails on behalf of the customer (Scale/Professional tiers, pre-approved in weekly digest):
+- Customer remains the sender of record and must comply with CAN-SPAM Act (US), CASL (Canada), and equivalent laws in the customer's jurisdiction
+- Beamix will include the customer's physical business address and unsubscribe mechanism in all outreach emails
+- Customer must not direct Beamix to send to lists obtained without consent
+- Customer indemnifies Beamix for any CAN-SPAM/CASL violations arising from customer-directed outreach
+
+**Reversibility: medium** — removing outreach capability requires product change + ToS update.
+
+### D. Content approval gate as legal protection
+
+The approval gate (1-click approve in weekly digest) constitutes the customer's explicit authorization to publish. Beamix will not publish GEO content, blog posts, or outreach emails without this approval.
+
+- Each approval request includes: content preview, target platform, and customer-approved date stamp
+- Approval is logged with timestamp and stored for 7 years (Israeli tax law / GDPR audit purposes)
+- Customer cannot retroactively revoke approval for content already published (revocation applies to future publishes only)
+
+This language transfers editorial responsibility to the customer at the moment of approval.
+
+**Reversibility: easy** — this is process design, not a hard legal constraint.
+
+### E. Schema publishing safety
+
+Schema markup (JSON-LD) is published automatically (no approval gate) because it is technical metadata representing the customer's own business data. However:
+- Schema content is derived from the customer-submitted brand brief
+- Beamix does not add false claims to schema markup
+- Customer is responsible for the accuracy of business data in the brand brief
+- If schema is found to contain inaccurate data, customer must notify Beamix within 5 business days via `support@beamixai.com`
+
+**Reversibility: easy** — schema can be removed/corrected within 24 hours.
 
 Beamix serves EU traffic from Day 1. EU traffic without a cookie banner is a GDPR violation on day 1. T&Cs without a refund clause invites disputes that kill Paddle merchant standing. Both must exist before invoicing the first paying customer.
 
@@ -107,20 +165,28 @@ Draft via `legal-advisor` skill + Termly's SaaS T&Cs template, customized for:
 
 ## Refund policy — explicit copy
 
+*Updated 2026-05-23 — agency pivot. 14-day guarantee upgraded to 60-day no-questions.*
+
 Lives at `/legal/terms` §Refunds AND linked from Settings → Billing.
 
-> **14-day money-back guarantee.**
-> If you're not satisfied within 14 days of your first subscription charge, request a refund via `support@beamixai.com`. We refund within 5 business days to the original card via Paddle.
+> **60-day no-questions money-back guarantee.**
+> If we don't move your AI search visibility in 60 days, you don't pay. No questions, no phone tree, no contract. Cancel in one click from your dashboard.
 >
-> **Run-aware refund** (per fair-use policy): if you've consumed **50% or more** of your monthly AI Run allotment by the time you request the refund, the refund is **capped at 50% of the subscription price paid**. If you've consumed less than 50%, you receive a full refund. (Locked per ADQ-5, 2026-05-14.)
+> **Activation requirement:** To qualify for a refund, you must have completed the 3-step onboarding (discovery call + property connect + first scan). Customers who have not completed activation are not eligible for the money-back guarantee (you haven't given us the access we need to deliver results).
 >
-> **User-initiated runs only count toward the 50% threshold** (clarified 2026-05-16 by board verdict). Credit consumption used for the 50% threshold is **user-initiated runs only**. Runs initiated by Beamix automation (Day-1 onboarding chain, scheduled weekly scans, scheduled freshness checks) do NOT count toward the consumption threshold for refund-cap purposes. This is shown to the customer in their refund-request preview as: `Total runs used: X | Auto-runs (not counted): Y | Counted toward cap: X-Y`.
+> **No run-aware deduction** (agency model change from self-serve). Beamix delivers results, not credits. The money-back decision is based on whether your AI visibility moved in 60 days, not on how many agent runs were consumed.
 >
-> **Refund policy excerpt + receipt in Hebrew.** T&Cs and full Privacy Policy may remain English at launch (legal review cost). Refund policy excerpt, Paddle receipt (Paddle supports HE), and refund-processed email MUST ship in Hebrew at launch for IL customers (detected via `business.locale = 'he'` or IL phone country code).
+> **Founding Member cohort:** The first 100 customers receive the 60-day money-back guarantee. Subsequent cohorts may receive a 30-day window if the Founding Member refund rate exceeds 25%.
 >
-> **Top-up packs are non-refundable** once any AI Run from the pack has been consumed.
+> **One-per-account rule:** If you cancel and request a refund, then re-subscribe under any email or business name, you do not receive a second money-back window. The refund WAS the trial.
 >
-> **After 14 days,** cancel at any time via Settings → Billing. Access continues until the end of your paid period. No partial-month refunds.
+> **Refund policy excerpt + receipt in Hebrew.** T&Cs and full Privacy Policy may remain English at launch. Refund policy excerpt, Paddle receipt (Paddle supports HE), and refund-processed email MUST ship in Hebrew for IL customers (detected via `business.locale = 'he'` or IL phone country code).
+>
+> **After 60 days,** cancel at any time via Settings → Billing. Access continues until the end of your paid period. No partial-month refunds after the 60-day window.
+>
+> Customer keeps all work product (schema, content, citations, FAQs) regardless of refund status.
+
+*Reversibility: hard — refund policy changes require ToS update + customer notification for existing subscribers. The 60-day guarantee, once advertised publicly, becomes a brand commitment that is costly to shorten.*
 
 ---
 
