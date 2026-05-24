@@ -1,298 +1,154 @@
-# Beamix — Landing Page Copy
+# Beamix — Master Messaging Framework
 
-> **Last synced:** March 2026 — aligned with 03-system-design/
-
-**Version:** 1.1 | **Date:** 2026-02-28 | **Status:** Updated
-**Updated:** 2026-04-18 — Aligned with System Design v2.1. Trial: 7 days. Pricing: Discover $79, Build $189, Scale $499. 11 agents. 10 engines (3 phases). 23 pages. Hebrew-first positioning.
+*Updated 2026-05-23 — agency pivot*
+*v2.0 · Owner: CMO*
 
 ---
 
-## NAVIGATION
+## Category positioning
 
-| Element | Copy |
-|---|---|
-| Logo | BEAMIX |
-| Nav links | How It Works · Pricing · Blog |
-| CTA button | Start Free Scan |
-| Login | Log In |
-| Language toggle | EN \| HE |
+Beamix is a done-for-you GEO agency. We do the work of making your business visible in AI search — ChatGPT, Gemini, Perplexity, and more. You get outcomes. We handle everything else.
 
-**Dev note:** Transparent over hero, transitions to blur/white on scroll. Sticky.
+This is not a tool. This is not a dashboard. This is a service with a guarantee.
 
 ---
 
-## SECTION 1 — HERO
+## The guarantee (use verbatim — both languages)
 
-**Badge:** `✦  Now scanning across all major AI engines in real-time`
-*(Dev note: pulse animation on dot, fade-in first)*
+**EN:** "If we don't move your AI search visibility in 60 days, you don't pay. No questions, no phone tree, no contract. Cancel in one click."
 
-**Headline:**
-`Your competitors are showing up on ChatGPT.`
-`You're not.`
-
-**Subheadline:**
-`Beamix scans your business across every major AI engine —`
-`then its agents write the content that gets you ranked.`
-
-**Input placeholder:** `Enter your website URL, e.g. mycompany.com`
-**Button:** `Scan for Free →`
-*(Dev note: white floating card, #3370FF blue glow on focus, beams in illustration intensify on typing)*
-
-**Trust line:** `Free scan  ·  No account needed  ·  Results in 60 seconds`
-
-**Dev note — LLM logos:** The major AI engine logos (ChatGPT, Gemini, Claude, Perplexity, and others) appear as floating holographic satellite badges in the background illustration — part of the artwork, not separate UI. Each emits a light beam downward onto the city. Show the most recognizable logos — exact count TBD when AI engine coverage is finalized.
+**HE:** "60 ימים. אם לא הצלחנו לקדם אותך — כסף חזרה, בלי שאלות."
 
 ---
 
-## SECTION 2 — THE WAKE-UP CALL
+## Primary message — one sentence
 
-**Headline:**
-`Right now, someone is asking AI for your service.`
-`Here's what it sees.`
-
-**Label above animated component:** `Someone in Tel Aviv just asked ChatGPT:`
-
-**Prompt bubble:** `"What are the best insurance companies in Tel Aviv?"`
-
-**Animated response (types out, loops through industries):**
-```
-1.  Harel Insurance       ✦ mentioned
-2.  Phoenix Group         ✦ mentioned
-3.  Migdal Insurance      ✦ mentioned
-4.  AIG Israel            ✦ mentioned
-    ...
-    [Your Business]       ✗ Not mentioned
-```
-*(Dev note: "Your Business" row is faded, red X, struck. Other rows glow green. Cycles: Insurance → Moving → Law Firm → Restaurant → Real Estate)*
-
-**Transition line:** `"The same thing is happening in your industry."`
-
-**Stat:** `40% of businesses lost leads to AI search last year. Most found out too late.`
-*(Dev note: "40%" highlighted in blue #3370FF)*
+We get your business cited in AI search results — or you don't pay.
 
 ---
 
-## SECTION 3 — WHAT YOU'RE LOSING
+## Supporting messages (in priority order)
 
-**Label:** `THE COST OF BEING INVISIBLE`
-**Headline:** `Invisible in AI search means invisible to your next customer.`
-
-**Card 1 — Leads**
-Title: `Leads going to your competitor`
-Body: `AI search converts at 5x the rate of traditional Google search. Every query where you're absent is a customer who found your competitor first — and never looked back.`
-
-**Card 2 — Trust**
-Title: `Reviews and trust signals ignored`
-Body: `LLMs read your reviews before recommending you. Volume, recency, and the specific words customers use directly affect whether you get cited. Weak review presence means automatic deprioritization.`
-
-**Card 3 — Momentum**
-Title: `Competitors building a compounding lead`
-Body: `Businesses publishing AI-optimized content today are building a ranking advantage that compounds weekly. Every week without action makes them harder to outrank.`
+1. Done-for-you — we publish schema, citations, content, and listings on your behalf. You approve. We do the work.
+2. Outcomes dashboard — you see your AI visibility score per engine, weekly wins, and a full trail of what we did to get there. No agent names, no raw tooling.
+3. Transparent delivery — every action we take is logged. You can see exactly how your score moved and why.
+4. Vertical expertise — we serve B2B SaaS companies, law firms, and dental practices. We know your category and what AI engines look for in each one.
+5. No lock-in — month-to-month, one-click cancel, you keep all the work we produced.
 
 ---
 
-## SECTION 4 — HOW IT WORKS
+## What we are NOT
 
-**Label:** `HOW BEAMIX WORKS`
-**Headline:** `Scan. Diagnose. Fix. Repeat.`
+- Not a GEO dashboard (Profound, Otterly)
+- Not a general SEO agency
+- Not a content tool (Writesonic, Surfer)
+- Not an enterprise analytics platform
+- Not paid ads, social media management, or email marketing
 
-**Step 01 — Scan**
-`Enter your URL. We query every major AI engine with real prompts about your industry and location — the exact same way your customers search.`
-
-**Step 02 — Diagnose**
-`See exactly where you rank across every AI engine — and where your competitors outrank you. Understand the why, not just the what.`
-
-**Step 03 — Fix**
-`Our AI agents write the content, schema markup, and strategy that moves you up the rankings. Not a to-do list. Actual deliverables, ready to publish in minutes.`
-
-**Callout:** `"Not a dashboard. Beamix does the work for you."`
-
-**CTA:** `See It In Action — Free Scan →`
+We are GEO-only. That specificity is a feature.
 
 ---
 
-## SECTION 5 — PRICING
+## Three vertical-specific value propositions
 
-**Label:** `PRICING`
-**Headline:** `Start free. Upgrade when you see results.`
-**Subheadline:** `Everything your business needs to rank on AI search. No agency required.`
+### B2B SaaS — founder and VP Marketing voice
 
-**Toggle:** `Monthly  |  Annual` + `Save 20%` badge
+**Pain:** 73% of B2B buyers use AI search before a vendor demo. Only 14% of SaaS companies have a mature AI-visibility strategy. Your competitors are being cited in the research phase. You are not.
 
-### Free Scan — $0
-`See where your business stands across all major AI engines. Instant results, no account needed.`
+**Value prop:** Beamix gets your product cited in ChatGPT, Perplexity, and Gemini answers during the research phase — before buyers even visit your site.
 
-Features:
-- Scan across all major AI engines
-- Visibility Score
-- Top competitor ranking
-- 3 quick-win recommendations
+**Proof anchors:** Profound raised $1B Series C on this thesis. B2B SaaS companies investing in GEO today are building a discovery moat that compounds with every model update.
 
-Button: `Scan My Business — Free`
-
-### Discover — $79/mo *(Annual: $63/mo)*
-`For small businesses ready to fix their AI visibility and start ranking.`
-
-Features:
-- 4 AI engines scanned
-- 10 tracked queries
-- Weekly scans
-- 25 AI Runs/month
-- 3 competitors tracked
-- 4 agents: Content Writer, Blog Writer, FAQ Agent, Schema Optimizer
-- 7-day free trial (includes 5 free agent credits)
-
-Button: `Start Free Trial`
-Note: `7 days free · 5 agent credits included · No credit card required`
-
-### Build — $189/mo *(Annual: $151/mo)* `[Most Popular]`
-`For growing businesses serious about AI search visibility and consistent content output.`
-
-Features:
-- 8 AI engines scanned
-- 25 tracked queries
-- Scans every 3 days
-- 90 AI Runs/month
-- 5 competitors tracked
-- 10 agents
-- Trend charts + weekly digest
-- 7-day free trial (includes 5 free agent credits)
-
-Button: `Start Free Trial`
-Note: `7 days free · 5 agent credits included · No credit card required`
-
-### Scale — $499/mo *(Annual: $399/mo)*
-`For businesses that want daily intelligence, maximum output, and a serious competitive edge.`
-
-Features:
-- 10+ AI engines scanned
-- 75 tracked queries
-- Daily scans
-- 300 AI Runs/month
-- 10 competitors tracked
-- All 11 agents
-- Google AI Overviews tracking
-- PDF/CSV export
-- Daily digest + priority support + onboarding call
-- 7-day free trial (includes 5 free agent credits)
-
-Button: `Start Free Trial`
-Note: `7 days free · 5 agent credits included · No credit card required`
-
-**Add-on note:** `Need more AI Runs? Top up anytime: 25 runs for $15 · 90 runs for $35`
-
-### Pricing FAQ
-
-- *What is an "AI Run"?* → `One agent execution — one blog post, one schema file, one review analysis. One AI Run per execution, regardless of agent type.`
-- *Do unused AI Runs roll over?* → `Yes — up to 20% rolls over each month. We don't punish a slow month.`
-- *Can I cancel anytime?* → `Yes. No lock-in, no fees. Cancel in two clicks from your dashboard.`
+**Headline pattern:** "73% of your buyers used AI before their last vendor demo. Were you in the answer?"
 
 ---
 
-## SECTION 6 — SOCIAL PROOF
+### Solo and small law firms — managing partner voice
 
-**Label:** `WHAT SMB OWNERS SAY`
-**Headline:** `SMBs that switched from dashboards to doing.`
+**Pain:** Legal digital CPL runs $649–$784 — the highest of any industry. AI search is now part of how clients find lawyers. Law firms that appear in "best employment lawyer in [city]" AI answers are getting referral-quality calls without referral fees.
 
-> **Dev note — NO PLACEHOLDER QUOTES.**
-> This section should only go live with real testimonials from actual beta users.
-> Format to use when quotes are available: specific results, numbers, timeframes, outcomes.
-> Example format: "[Specific result] in [timeframe]. [One sentence about the difference Beamix made]."
-> — [First name, last initial], [Role], [Business type], [City]
->
-> Until real quotes are collected: **hide this section entirely** (do not render placeholder text or fake names).
+**Value prop:** Beamix positions your firm in AI-generated answers for the legal queries your clients ask — so you get consultation requests before they call your competitor.
+
+**Proof anchors:** Legal AI search is YMYL (Your Money Your Life) — AI engines weight trust signals heavily. We build those signals: structured citations, FAQ content, entity authority.
+
+**Headline pattern:** "Someone just asked ChatGPT for an employment lawyer in Tel Aviv. Here's who came up — and how to be next."
 
 ---
 
-## SECTION 7 — FINAL CTA
+### Single-location dental — owner-dentist voice
 
-**Headline:** `Still not sure AI can see your business?`
-**Subheadline:** `Find out in 60 seconds. No account. No credit card.`
+**Pain:** Dental practices already pay $800–$1,500/mo for local SEO. AI search is now part of how patients find dentists. "Best dentist near me" answers on ChatGPT and Google AI Overviews surface practices that have structured patient FAQ content and strong local entity signals.
 
-**Input placeholder:** `Enter your website URL...`
-**Button:** `Scan for Free →`
-**Trust line:** `Free scan  ·  No account needed  ·  Results in 60 seconds`
-**Social proof micro-copy:** `Join 500+ businesses already ranked on AI search.`
-*(Dev note: "500+" is a placeholder — update with real number at launch)*
+**Value prop:** Beamix gets your practice cited when patients ask AI engines for dentists in your city — and we do the work so you don't have to.
 
----
+**Proof anchors:** Google AI Overviews now appear on more than 50% of queries. Dental practices with complete GBP + schema + FAQ content appear 3× more often in local AI answers.
 
-## FOOTER
-
-**Logo:** `BEAMIX` | **Tagline:** `AI search visibility for every business.`
-
-**Product:** How It Works · Pricing · Free Scan · Blog
-**Company:** About · Contact
-**Legal:** Privacy Policy · Terms of Service
-
-`© 2026 Beamix. All rights reserved.`  |  `EN | HE`
+**Headline pattern:** "Patients are asking AI which dentist to call. Is your practice in the answer?"
 
 ---
 
-## PAGE META (SEO)
+## Pricing reference (use these numbers only)
 
-**Title:** `Beamix — Get Your Business Found on ChatGPT, Gemini, Claude & More`
+| Tier | Monthly |
+|------|---------|
+| Starter | $499/mo |
+| Growth | $999/mo |
+| Scale | $1,499/mo |
+| Professional | $2,499/mo |
 
-**Meta description:** `Beamix scans your business across every major AI engine, shows you where you rank, and uses AI agents to fix it. Free scan in 60 seconds. No credit card needed.`
+Old pricing ($79/$189/$499 Discover/Build/Scale) is retired. Never reference it.
 
-**OG Title:** `Is your business invisible to AI? Find out in 60 seconds.`
-
-**OG Description:** `Beamix scans every major AI engine for your business — then writes the content that gets you ranked. Free scan, no account needed.`
-
----
-
-## NANO BANANA 2 — HERO ILLUSTRATION PROMPT
-
-```
-Cinematic painterly illustration of a modern city skyline at night,
-viewed from slightly elevated angle, wide panoramic composition.
-Digital AI scan beams — electric blue rays of light —
-descend from a star-filled deep purple sky onto the city below.
-Some buildings glow warmly where beams touch them, others remain
-in dark shadow.
-
-In the sky above the city, multiple glowing holographic badges float
-like AI satellites — each emitting a beam downward onto the
-cityscape. The badges are circular, softly luminous, slightly
-transparent, like holograms — showing the logos/icons of major AI
-engines: OpenAI (ChatGPT), Google Gemini, Anthropic Claude,
-Perplexity, and others. Each badge has a subtle orbital glow ring
-around it. They are positioned at different heights and distances
-in the sky, not perfectly aligned — organic, floating, powerful.
-Each badge connects to a beam of light that scans the city below.
-
-Foreground: silhouettes of trees and rooftops. Mid-ground: dense
-urban skyline with lit windows. Background: vast night sky,
-scattered stars, deep indigo and violet aurora gradients.
-
-Color palette: midnight blue, deep purple, electric blue beams,
-warm amber window lights, soft white glow on the AI badge icons.
-Mood: technological wonder, hopeful, dramatic — not dystopian.
-Style: Studio Ghibli meets cyberpunk concept art, atmospheric
-painterly rendering, cinematic depth of field, volumetric light
-rays, soft film grain. Upper center intentionally open for UI overlay.
-Ultra-wide 21:9 aspect ratio.
-
-Style references: Studio Ghibli background art, Makoto Shinkai
-atmospheric lighting, cyberpunk concept art illustration.
-
-Negative prompt: photorealistic, photography, 3D render, flat
-vector, cartoon, anime characters, people, faces, text labels,
-daylight, dystopian, neon signs, cluttered composition
-```
+60-day no-questions money-back. Month-to-month. No contract.
 
 ---
 
-## HEBREW SUPPORT — IMPLEMENTATION NOTE
+## Funnel architecture
 
-**Language toggle:** `EN | HE` in navbar. Selection persists to localStorage + user account preference.
+Free scan → discovery call → onboarding → autopilot delivery → weekly digest → outcomes dashboard
 
-**RTL:** When Hebrew is active, full page switches to `dir="rtl"`. Use Tailwind logical properties throughout (`ps-`, `pe-`, `ms-`, `me-`) — never `pl-`/`pr-`. All component alignment reverses automatically.
+There is no self-serve setup. Every customer goes through a discovery call. The call is part of the value.
 
-**Translation files:** `src/i18n/en.json` (primary) + `src/i18n/he.json` (translated). Hebrew copy should be localized — not literal translation. Israeli business tone, Hebrew city names, natural phrasing.
+---
 
-**Content generation language:** Independent of UI language. Set separately in account preferences.
+## Voice and tone requirements
 
-**Hebrew copy status:** Not yet written. Produced as separate deliverable after English version is approved.
+- We = Beamix (not "our agents," not agent names)
+- Done-for-you framing everywhere: "we do X," "we publish X," "we track X"
+- Outcomes first: what changes for the customer, not how we produce it
+- Specific over vague: cite real numbers, name real AI engines, describe real deliverables
+- No buzzwords (see CONTENT_STYLE_GUIDE.md §3)
+- Hebrew and English carry equal weight — HE copy is authored in parallel, not translated
 
-**Pages requiring Hebrew:** `/` · `/scan/[id]` · `/pricing` · `/dashboard/*` · `/signup` · `/login`
+---
+
+## Channel application
+
+| Channel | Primary message emphasis |
+|---------|--------------------------|
+| Cold DMs (LinkedIn, email) | Free scan hook + vertical pain point |
+| Landing pages | Guarantee anchor + vertical-specific proof |
+| Framer marketing site | Done-for-you positioning + outcomes dashboard |
+| Weekly digest to customers | Wins this week + what we did to get there |
+| Blog / SEO content | Vertical-specific GEO guides + "State of AI Search" data |
+| Discovery call | Brand fingerprint + scope + first scan walkthrough |
+
+---
+
+## What NOT to say
+
+- "AI-powered" — every competitor says this. It means nothing.
+- Agent names in customer-facing copy — customers see outcomes, not the workforce
+- "Platform" or "tool" — we are an agency
+- "$79" / "$189" / "$499" — these tiers are retired
+- "7-day trial" or "14-day money-back" — the guarantee is 60 days, no questions
+
+---
+
+## Research provenance
+
+- 73% B2B buyers use AI: Gartner / McKinsey B2B buyer surveys 2024-2025
+- Only 14% have mature AI-visibility strategy: Forrester / industry benchmarks
+- Legal CPL $649-$784: WordStream / industry CPC data
+- Dental local SEO spend $800-$1,500: industry survey data
+- Profound $1B Series C: TechCrunch 2025
+- Footbridge Media 90-day analog: direct reference — $249/mo, no-questions refund, comparable service guarantee
