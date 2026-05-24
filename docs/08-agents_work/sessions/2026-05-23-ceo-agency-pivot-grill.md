@@ -46,7 +46,13 @@ Interactive "grill me" session: stress-testing a pivot from "GEO tool" to "done-
 
 ## Open decisions remaining
 
-All 15 decisions locked above. C-suite dispatch complete (CPO + CMO + CBO + CTO + CPO follow-up).
+All 15 decisions locked above. C-suite dispatch complete (CPO + CMO + CBO + CTO + CPO follow-up). 5 sub-decisions surfaced by leads ratified by CEO 2026-05-24 (see DECISIONS.md 2026-05-24 entry):
+
+1. ✅ North star = month-3 retention rate
+2. ✅ Wave 3 sequenced after Wave 2 ships to customer #1
+3. ✅ Strategy agent on Opus 4.7
+4. ✅ YMYL always-human approval gate
+5. ✅ Publishing actions = Irreversible QA tier
 
 ## Cross-team dispatch outcomes (2026-05-23 evening)
 
@@ -78,6 +84,13 @@ Old: free-scan completion. **New: month-3 retention rate** (per CBO decision, va
 2. CMO → Adam reviews 3 vertical landing pages + DM templates BEFORE Adam runs first 50 cold DMs
 3. CBO → Adam executes insurance procurement (Hibub contact) + lawyer ToS review
 4. CEO → Monitor customer #1 trial; validate gross margin assumptions at month 3
+
+## 2026-05-24 — CEO closeout actions executed
+
+- ✅ PR #84 opened with 5 commits + QA-Lead PASS verdict (Lite tier) + 2 P2 arithmetic fixes applied inline
+- ✅ 5 sub-decision ratifications locked in DECISIONS.md 2026-05-24 entry
+- ✅ CTO dispatched async to scope 6 infrastructure gaps (booking, voice chat, WP plugin distribution, Resend status, Paddle status, free-scan rate limit)
+- 🔵 Awaiting Adam: PR #84 merge approval + insurance procurement + lawyer ToS review + landing-page/DM approval
 
 ## Key research findings backing decisions
 

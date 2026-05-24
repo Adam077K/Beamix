@@ -4,6 +4,31 @@
 
 ---
 
+### [2026-05-24] — CEO ratifies 5 cross-team sub-decisions from agency pivot
+
+**Decision:** After all four C-suite leads (CPO/CMO/CBO/CTO) completed the agency-pivot dispatch on 2026-05-23, they surfaced 5 sub-decisions outside the original 15 locked in the grill session. CEO ratifies all 5 under user authorization ("run your part"). All 5 are downstream-actionable by Build-Lead, Design-Lead, and ai-engineer workers in the coming wave dispatches.
+
+**5 ratified sub-decisions:**
+
+1. **North star metric = Month-3 retention rate** (CBO recommendation). Replaces free-scan completion. Justified by 45–90 day GEO time-to-result reality: a free-scan-completion metric rewards a top-of-funnel signal that doesn't predict revenue retention. Month-3 retention validates the 60-day money-back guarantee economically and forces the org to optimize for sticky outcomes. Target: 80% base, 70% watch trigger, 88% pricing-power signal. **Reversibility: easy** (dashboard metric swap).
+
+2. **Wave 3 (publishing integrations) sequenced AFTER Wave 2 ships to customer #1, NOT in parallel** (CTO decision A10). Justified by dependency chain: publishing integrations against real customer properties require approval_queue + held_revenue_accounting + audit trail to be live first. Sequential reduces blast-radius risk. Flips to parallel only if customer #1 books before Wave 2 completes (acceptable degradation). **Reversibility: easy** (sequencing call, not code).
+
+3. **Strategy agent runs on Opus 4.7** (CPO decision). For Professional tier $2,499/mo monthly strategy review. Justified by heaviest reasoning workload (90-day multi-source synthesis across visibility scans + customer brand brief + competitor moves + content performance); cadence is monthly so cost per customer per month stays under $1; $2,499 ACV absorbs trivially. Conforms to locked model routing rule (Sonnet default, Opus for orchestration/planning/synthesis/design). **Reversibility: easy** (model swap).
+
+4. **YMYL always-human approval gate** across Brand-Brief Manager, Approval-Gate Writer, Customer Success, Strategy agents (CPO decision). When YMYL (Your Money Your Life — health, legal, financial) content is detected in customer brand brief or generated artifact, gating-rules force human approval regardless of tier defaults. YMYL fields are unwriteable by system_inferred source. Justified by Beamix's 3-vertical launch ICP (B2B SaaS + Legal + Dental) where 2 of 3 are YMYL-adjacent. Liability protection layered with the $1M E&O insurance. **Reversibility: hard once published** — but right call.
+
+5. **Publishing actions = Irreversible QA tier** (CTO decision A9). Every PR touching `apps/web/src/lib/publishing/<platform>/` triggers Full QA + multi-judge + Adam sign-off. Codified in `.claude/qa-tier-floor.yml`. Justified by real-world side effects on customer external systems (customer site, GBP, email-as-them, citation networks) — defaultable rollback in some cases (WP post deletion) but not all (sent emails, claimed citations). Defense-in-depth on the highest-blast-radius surface. **Reversibility: easy** (YAML entry).
+
+**Provenance:**
+- Sub-decisions 1, 2, 3, 4 surfaced in respective C-suite session files (2026-05-23-{cbo, cto, cpo}*.md)
+- Sub-decision 5 codified in CTO architectural decisions A8 + A9 (see 2026-05-23-cto-agency-pivot-wave-rescope.md)
+- Ratification authorized by user instruction "run your part" 2026-05-24
+
+**Session file:** `docs/08-agents_work/sessions/2026-05-23-ceo-agency-pivot-grill.md` (open decisions list updated to reflect ratifications)
+
+---
+
 ### [2026-05-23] — CBO — Agency pivot financial documentation + north star + ToS draft
 
 **Decision:** CBO session completing financial documentation for the 2026-05-23 agency pivot. Six existing docs rewritten, three new operational files created.

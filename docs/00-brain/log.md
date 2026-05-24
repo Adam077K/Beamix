@@ -209,3 +209,5 @@
 - [2026-05-23 evening] All 4 C-suite leads completed agency-pivot dispatch. 38 planning files edited + 18 new files created (7 agent PRDs, 3 vertical landing pages, DM templates, Wave 3 brief, ToS draft v1, insurance plan, unit econ tier model). 5 session files written. North star changed to month-3 retention. CTO sequencing decision A10: Wave 3 after Wave 2 ships to customer #1. Adam-blockers: insurance + lawyer ToS review.
 
 [2026-05-24] QA-Lead PASS — PR #84 agency-pivot doc update, Lite tier. 2 P2 arithmetic errors filed as tech-debt in UNIT_ECONOMICS_TIER_MODEL.md.
+
+- [2026-05-24] CEO closeout: PR #84 opened, QA-Lead PASS (Lite), 2 P2 arithmetic fixes applied inline. 5 sub-decisions ratified (north star, Wave 3 sequencing, Opus on Strategy, YMYL human-gate, Publishing Irreversible). CTO dispatched for 6-gap infra scoping. Adam-blockers: merge approval + insurance + lawyer + landing-page approval.
