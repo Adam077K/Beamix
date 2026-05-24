@@ -1,10 +1,136 @@
 # Beamix System Design — Master Document
 
-> **Version:** 2.2
+> **Version:** 2.3 *(Updated 2026-05-23 — agency pivot)*
 > **Date:** March 8, 2026
 > **Authors:** Morgan (CPO), Atlas (CTO), Sage (AI Engineer), Rex (Research Analyst)
 > **Replaces:** `ENGINEERING_PLAN.md` (v1.0)
-> **Status:** 4/7 MISSING gaps closed, 3/7 intentionally deferred with reasoning. 7/7 PARTIAL gaps upgraded.
+> **Status:** 4/7 MISSING gaps closed, 3/7 intentionally deferred with reasoning. 7/7 PARTIAL gaps upgraded. **2026-05-23: agency pivot — see §0 below; downstream tool-product sections retained for pattern reference but customer-facing surfaces (agent execution UI, credit pools UI, scan-as-dashboard-import) are KILLED.**
+
+---
+
+## §0 Agency Pivot Architecture Delta — 2026-05-23
+
+*This section is authoritative. Where downstream sections conflict, this delta wins. Source: `.claude/memory/DECISIONS.md` 2026-05-23 entry + `docs/08-agents_work/sessions/2026-05-23-cto-agency-pivot-wave-rescope.md`.*
+
+### 0.1 Surface model change
+
+Beamix is no longer a self-serve scan-and-recommend tool. It is a done-for-you agency where agents run continuously and customers see outcomes plus a 1-click approval queue. Customers **never** see agent names, credit counters, or raw scan tooling. Every customer-facing API returns outcome-shaped DTOs (`{ resource, status, evidence_url, approval_required }`).
+
+### 0.2 New architectural components
+
+| Component | Purpose | Decision ref |
+|---|---|---|
+| `brand_fingerprints` table | Stores discovery-call output as structured JSONB: voice, ICP, offerings, citations, do/don't list, owner identity. One per customer. | A1 |
+| `approval_queue` table | Every gated action (content publish, email-as-them, outreach) writes a row. Customer 1-click via signed token in weekly digest. 7-day expiry. | A2 |
+| `gating_rules` static config | `apps/web/src/lib/approval/rules.ts` — auto/gated decisions per action type. Auto = citations, listings, schema, scans. Gated = content publish, email-as-them, outreach. | A3 |
+| `revenue_events` ledger | Append-only. `received_at` (day 0) vs `booked_at` (day 61). ARR/MRR reads booked_at. Refund event flips `held_until → refunded_at`. | A4 |
+| `publishing_credentials` table | Per (customer, platform) encrypted OAuth token + scopes + expiry + health-check timestamp. Uses pgcrypto with `PUBLISHING_TOKEN_KEY` env. | A5 |
+| `deliverables_per_customer_per_month` table | Tier-gate consumption counters. Reset monthly on subscription anniversary. | A6 |
+| `weekly_digests` table + `digest-builder` Inngest cron | Composes the customer's weekly outcome digest with signed approval URLs + visibility deltas. | A7 |
+| `apps/web/src/lib/publishing/` layer | `BasePublisher` abstract class + per-platform clients (WordPress, GTM, SendGrid sub-account, paste-ready, GBP, Shopify, Webflow, Ghost, Yelp, Apple). All platform-specific code extends the base. | Wave 3 |
+| `business_verifications` + `refund_ban_list` tables | Domain + business verification at signup; re-signup block for refunded domain pairs. | Decision #8 guardrail 2 |
+| `founding_100_cohort` flag on subscriptions | First 100 paying customers tracked; refund-rate ≥25% triggers cohort tightening (60→30 day money-back). | Decision #8 guardrail 4 |
+| Customer-success agent | Inngest watchers monitor failed publishes, aging approvals, DNS verification stalls, visibility regression. | Wave 2 |
+
+### 0.3 Identity layer — Internal vs External
+
+Two distinct identity layers:
+
+- **Internal:** every agent has a name, prompt, model selection, eval criteria. Internal code in `apps/web/src/lib/agents/` is unchanged. Logs and audit traces preserve agent identity.
+- **External (customer-facing):** outcomes only. The API contract layer (`apps/web/src/app/api/`) translates internal agent results to outcome DTOs. A response that contains the string "Schema agent ran" is a code review blocker — engineering principle 9.
+
+### 0.4 Approval-queue state machine
+
+```
+Agent produces draft
+  → if gating_rules says gated:
+       write approval_queue row (state='pending', expires_at=now+7d)
+       attach to next weekly_digest
+       customer 1-clicks approve via signed URL → state='approved'
+       publisher worker fires → publishing_actions row + external API call
+       state='published'
+  → if gating_rules says auto:
+       publisher worker fires immediately
+       outcome appears in weekly_digest as "we did this"
+```
+
+States: `pending → approved → published`, `pending → rejected`, `pending → expired` (auto-publish only if customer opted in during onboarding, default off).
+
+### 0.5 Held-revenue accounting flow
+
+```
+Day 0:   Paddle webhook transaction.completed
+         → revenue_events row (received_at=now, booked_at=NULL)
+         → subscriptions.held_until = now + 60 days
+
+Day 1-59: customer can refund 1-click in dashboard
+         → refund webhook arrives
+         → refund_events row (append-only)
+         → subscriptions.held_until = now()
+         → Paddle refunds
+
+Day 60+: nightly revenue-booking-sweep cron
+         → flip booked_at=now() where no matching refund_event exists
+         → ARR/MRR dashboards now see this revenue
+```
+
+### 0.6 Publishing integration architecture
+
+All Wave 3 integrations share the `BasePublisher` shape:
+
+```
+abstract class BasePublisher {
+  abstract publish(action: PublishAction): Promise<PublishResult>
+  abstract rollback(publishingActionId: string): Promise<RollbackResult>
+  abstract healthCheck(credentialId: string): Promise<HealthStatus>
+  abstract disconnect(credentialId: string): Promise<void>
+}
+```
+
+Implementations:
+- `WordPressPublisher` (REST API + Beamix WP plugin) — MVP
+- `GTMPublisher` (schema injection via container API) — MVP
+- `SendGridSubaccountPublisher` (subuser API, DNS-verified) — MVP
+- `PasteReadyPublisher` (no external API; surfaces in dashboard) — MVP
+- `CitationPublisher` (BrightLocal as aggregator) — MVP
+- `GBPPublisher` (Google My Business) — Wave 3 stretch
+- `ShopifyPublisher` (Admin API, OAuth) — Wave 3 stretch
+- `WebflowPublisher` — Wave 4
+- `GhostPublisher` — Wave 4
+- `YelpPublisher` — Wave 4 (pending API status spike)
+- `ApplePublisher` — Wave 4
+
+Every concrete publisher uses the shared utilities: `tokens.ts`, `gates.ts`, `rate-limit.ts`, `audit.ts`, `retry.ts`. No platform-specific code may bypass these. Lint rule + `qa-tier-floor.yml` enforce.
+
+### 0.7 Killed architecture (do not reuse downstream)
+
+| Killed | Reason |
+|---|---|
+| `/dashboard/agents/[agent_id]` chat UI | Agents are internal-only (decision #7) |
+| Credit-pool UI + "AI Runs" counter | Replaced by tier-gate deliverables tracking (decision #7) |
+| Free-scan → `?scan_id=` onboarding import | Replaced by free-scan → discovery booking funnel (decision #6) |
+| `/api/agents/run` customer endpoint | Agents run autonomously on Inngest schedules; customer doesn't trigger them |
+| `recommendations` table as customer surface | Recommendations become internal agent inputs, not a customer page |
+| `plan_tier` enum values `('discover','build','scale')` | Replaced by `('starter','growth','scale','professional')` per decision #9 |
+| Old pricing $79/$189/$499 | Replaced by $499/$999/$1,499/$2,499 |
+
+### 0.8 Risk tier mapping for agency-pivot components
+
+| Component | Default risk tier |
+|---|---|
+| `brand_fingerprints` (migration + reads) | Full |
+| `approval_queue` (migration + state machine) | Full |
+| `publishing_credentials` (token encryption) | Irreversible |
+| `revenue_events` + `refund_events` (money flow) | Irreversible |
+| `deliverables_per_customer_per_month` | Lite |
+| `weekly_digests` table + cron | Lite |
+| Any `apps/web/src/lib/publishing/<platform>/` file | Irreversible |
+| Customer-success agent | Full |
+| Outcomes dashboard frontend | Full (craft reviewer required) |
+| `business_verifications` + ban list | Full (anti-fraud gate) |
+| Held-revenue Paddle webhook handler | Irreversible (Adam sign-off) |
+
+These floors encode in `.claude/qa-tier-floor.yml`. CTO cannot downgrade.
 
 ---
 

@@ -1,10 +1,101 @@
 # Wave 1 — Full Build (CEO Brief)
 
+*Updated 2026-05-23 — agency pivot. The section "AGENCY PIVOT RESCOPE" below supersedes the tool-product content further down. The legacy content is retained for reference and pattern reuse (security checklists, QA gate format, craft reviewer charter), but every product-surface description in the legacy section must be re-read through the agency lens.*
+
 **Paste this entire file into a fresh CEO session once Wave 0.5 has merged.**
 
 ---
 
-## Mission
+## AGENCY PIVOT RESCOPE — 2026-05-23 (READ FIRST, OVERRIDES BELOW)
+
+The 2026-05-23 agency pivot (`.claude/memory/DECISIONS.md` 2026-05-23 entry + `docs/08-agents_work/sessions/2026-05-23-ceo-agency-pivot-grill.md`) reshapes Wave 1. Below are the four scope changes; everything downstream that contradicts is superseded.
+
+### W1.1 — Brand-fingerprint storage + agent discovery flow (NEW)
+
+**Owner:** backend-engineer + ai-engineer (parallel)
+**Risk tier:** Full (touches identity contract for every customer-facing agent)
+
+- New table `brand_fingerprints` (see `docs/03-system-design/DATABASE_SCHEMA.md` agency-pivot delta).
+- New onboarding step "Agent discovery call" — Inngest function `discovery-call-orchestrator` invokes the Discovery agent (CPO PRD: `docs/04-features/specs/agent-discovery.md` — referenced, not duplicated here) which conducts a 20-question structured interview (text, then voice if available), stores transcript + structured extraction in `brand_fingerprints`.
+- Adam reviews every brand brief through customer #50 — UI gate: brand_fingerprint has `adam_reviewed_at` field, blocks downstream agents until populated.
+- New API endpoints: `POST /api/discovery/book`, `POST /api/discovery/start`, `POST /api/discovery/submit`, `GET /api/brand/me`.
+
+### W1.2 — Free-scan → discovery-booking funnel (REPLACES old import flow)
+
+**Owner:** frontend-engineer + backend-engineer
+**Risk tier:** Full (customer-facing funnel critical path)
+
+**KILLED:** The old "free scan → onboarding `?scan_id=` import → dashboard with pre-loaded data" flow. Decision #6 + #7 — free scan is the funnel front door, NOT the first dashboard scan.
+
+**SHIPS:**
+- Free scan page unchanged in look, but the post-scan CTA changes from "Sign up to track this" to "Book your free 20-minute discovery call to see how we'd fix it."
+- New page `/discovery/book` — Calendly-or-equivalent booking widget (Adam-led discovery for customer 1-50; agent-led from #51 on).
+- Free-scan record retained as breadcrumb (lead context) but NOT imported as the first paid scan.
+- Backend: `free_scans.discovery_booking_id` FK (nullable) linking lead to booked call.
+- Email after free-scan completion: "Here's what we found. Book a 20-min call to see how we'd fix it" (Resend template `free_scan_discovery_invite`).
+
+### W1.3 — Outcomes dashboard v1 (NO agent names, NO credit counters)
+
+**Owner:** frontend-engineer
+**Risk tier:** Full (customer surface + craft reviewer applies)
+
+**KILLED:** "AI Runs" credit counter UI, agent execution chat UI on customer side, raw scan tooling. Per decision #7.
+
+**SHIPS (v1 minimum):**
+- AI visibility score per engine (top of dashboard, big number per engine — ChatGPT, Gemini, Perplexity, Claude, Grok depending on tier)
+- Weekly wins panel ("This week we got you mentioned 4 more times in ChatGPT queries about X")
+- Top winning queries table (which prompts trigger your brand mentions)
+- Approval queue panel (shell only Wave 1; populated by Wave 2 + Wave 3 publish actions)
+- Weekly digest archive panel (list of past digests; content populated by Wave 2)
+- "How we got this" drill-down trail — every score change links to the underlying scan + the agent action that moved it (internal agent name hidden — customer sees outcome like "we updated your FAQ schema").
+
+**No agent identity ever exposed in customer UI or API responses.** Internal `apps/web/src/lib/agents/` retains identities. Customer-facing DTOs return outcome shapes only.
+
+### W1.4 — Approval-queue UI shell (NEW)
+
+**Owner:** frontend-engineer
+**Risk tier:** Full
+
+- New table `approval_queue` (see DATABASE_SCHEMA delta)
+- UI shell: list view, empty state, item-detail modal stub (full diff UI ships Wave 2)
+- Backend stubs: `GET /api/approval/queue`, `POST /api/approval/:id/approve`, `POST /api/approval/:id/reject` (logic stubbed; real publish action wires Wave 3)
+- Real items appear in queue once Wave 2 deliverables flow online
+
+### W1.5 — Tier rename + Paddle reconfig (BLOCKING for any billing work)
+
+**BLOCKER for Wave 1 backend work touching Paddle.** Per decision #9:
+
+- `plan_tier` enum: `('discover','build','scale')` → `('starter','growth','scale','professional')`. See `05-DB-MIGRATION-PLAN.md` agency-pivot delta.
+- Paddle products + price IDs: Adam reconfigures in Paddle dashboard for $499/$999/$1,499/$2,499. Old products archived. Wave 1 BE worker reads new price IDs from `06-ADAM-CHECKLIST.md` once Adam updates.
+- Marketing site (Framer) pricing page: CMO owns; not blocking Wave 1 product code.
+
+### Wave 1 worker dispatch (updated)
+
+CEO spawns the following workers in parallel after Wave 0.5 + design-lead approval:
+
+1. **`be-brand-discovery`** (backend-engineer) — `brand_fingerprints` table + discovery API endpoints + Inngest discovery-call-orchestrator
+2. **`ai-discovery-agent`** (ai-engineer) — Discovery agent prompt + extraction logic (PRD: `docs/04-features/specs/agent-discovery.md`)
+3. **`fe-discovery-funnel`** (frontend-engineer) — free-scan → /discovery/book flow + booking widget
+4. **`fe-outcomes-dashboard`** (frontend-engineer) — outcomes-shaped dashboard v1 (craft reviewer required)
+5. **`fe-approval-shell`** (frontend-engineer) — approval queue UI shell
+6. **`be-tier-rename`** (backend-engineer) — `plan_tier` enum migration + Paddle price ID config wiring
+
+Workers 1+2 are coupled (share `brand_fingerprints` shape) — CTO writes the JSON schema once before either spawns. Workers 3+4+5 are parallel. Worker 6 sequences AFTER Adam updates Paddle.
+
+### Legacy Wave 1 sections to skip or re-interpret
+
+Below this section, the legacy Wave 1 brief discusses tool-product features (credit pools, Inbox 3-pane review flow, agent execution chat UI, `/dashboard/agents` page, etc.). **These are killed or transformed:**
+
+- `Inbox 3-pane review` → repurposed as the approval-queue review modal (same UX pattern, different domain semantics)
+- `Suggestion runner + automation dispatcher` → REPURPOSED for internal use only — agents now run autonomously on Inngest schedules; the "suggestions" surface is internal/admin, not customer-facing
+- `Agent chat UI` (`/dashboard/agents/[agent_id]`) → KILLED. Customers never see agents.
+- `Credit hold/confirm/release` plumbing → KEPT internally for cost tracking, but credit_pools UI is killed. The deliverables_per_customer_per_month table (Wave 2) replaces credit_pools as the user-facing throttle.
+
+The security checklist (10 items), QA gate verdict format, craft reviewer charter — ALL CARRY FORWARD unchanged. Re-read them through the agency lens.
+
+---
+
+## Mission *(legacy — agency-pivot section above supersedes scope; security + QA pattern still apply)*
 
 The foundation is in place. Now build everything in parallel — 3 backend workers + 3 frontend workers + design-lead. Backend delivers real APIs against the shared types contract. Frontend builds against the same contract. No drift possible.
 

@@ -1,8 +1,103 @@
 # Technology Stack
 
-> **Last synced:** March 2026 — aligned with 03-system-design/
+> **Last synced:** March 2026 *(Updated 2026-05-23 — agency pivot: publishing libraries added in §0)*
 
-**Source of truth:** `docs/03-system-design/ARCHITECTURE.md` section 4.1
+**Source of truth:** `docs/03-system-design/ARCHITECTURE.md` section 4.1 + §0 agency pivot delta
+
+---
+
+## §0 Agency Pivot Stack Additions — 2026-05-23
+
+*Authoritative. New libraries + SDKs required for Wave 3 publishing integrations + Wave 2 verification + held-revenue. Source: `docs/08-agents_work/sessions/2026-05-23-cto-agency-pivot-wave-rescope.md`.*
+
+### 0.1 Publishing integration libraries
+
+| Library | Version (target) | Purpose | Risk |
+|---|---|---|---|
+| `@wordpress/api-fetch` or direct fetch + WP REST patterns | latest | WordPress REST API client | Medium — well-documented, stable |
+| Custom Beamix WordPress plugin | n/a (we ship it) | OAuth-style flow + schema-injection helper | High — plugin must pass wordpress.org review |
+| `@shopify/shopify-api` | ^11.x | Shopify Admin API client + OAuth | Medium |
+| `@webflow/api` | ^2.x | Webflow CMS API client (Wave 4) | Medium |
+| `@tryghost/admin-api` | ^1.x | Ghost Admin API client (Wave 4) | Low |
+| `@googleapis/mybusinessbusinessinformation` + `@googleapis/mybusinessaccountmanagement` | latest | Google My Business / Business Profile API | High — broad `business.manage` scope |
+| `@googleapis/tagmanager` | latest | Schema injection via GTM containers | Medium |
+| Yelp Fusion API (raw fetch) | n/a | Yelp business operations (Wave 4 — spike first) | UNKNOWN — Yelp restricted business write API in 2024 |
+| Apple Business Connect API | n/a (partner SDK) | Apple Maps location management (Wave 4) | High — partner-tier access required |
+| `@sendgrid/client` + `@sendgrid/mail` | ^8.x | SendGrid sub-account creation + sending | High — DNS alignment per-customer |
+| BrightLocal Citation Builder API client | custom (no official SDK) | Citation aggregator for top 30 directories | Medium — paid, white-label friendly |
+
+### 0.2 Verification + anti-fraud libraries
+
+| Library | Purpose |
+|---|---|
+| `whoiser` (npm) | WHOIS lookups for domain verification |
+| `dns` (Node native) | DNS resolution checks for SPF/DKIM/DMARC |
+| Spamhaus DBL via DNS query | Spam-reputation check |
+| Cloudflare Turnstile (already in stack) | Bot/abuse protection on free-scan + discovery-book |
+
+### 0.3 Encryption + token storage
+
+| Library | Purpose |
+|---|---|
+| `pgcrypto` (Postgres extension) | sym_encrypt for `publishing_credentials.encrypted_token`. Key in `PUBLISHING_TOKEN_KEY` env. |
+| Supabase Vault (optional, Wave 4+) | Centralized secrets if rotation gets complex |
+
+### 0.4 OAuth helpers
+
+| Library | Purpose |
+|---|---|
+| `openid-client` (npm) | Generic OAuth2 + OpenID Connect flows for Google APIs |
+| Custom OAuth state generator | CSRF state token + 5-minute TTL Redis-backed cache |
+
+### 0.5 Rate-limit + queue helpers
+
+| Library | Purpose |
+|---|---|
+| `p-queue` (npm) | Per-customer per-platform rate limiting in `publishing/rate-limit.ts` |
+| `@upstash/ratelimit` (already in stack) | Per-customer + per-IP API rate limits |
+| Inngest concurrency keys per customer | Prevents concurrent publish actions clobbering each other |
+
+### 0.6 New env variables (Wave 3)
+
+```
+PUBLISHING_TOKEN_KEY=<32-byte hex>                 # pgcrypto sym key
+WORDPRESS_OAUTH_CLIENT_ID=
+WORDPRESS_OAUTH_CLIENT_SECRET=
+SHOPIFY_APP_API_KEY=
+SHOPIFY_APP_API_SECRET=
+SHOPIFY_APP_SCOPES=
+GOOGLE_OAUTH_CLIENT_ID=                            # GBP + GTM share one Google OAuth app
+GOOGLE_OAUTH_CLIENT_SECRET=
+SENDGRID_MASTER_API_KEY=
+SENDGRID_PARENT_ACCOUNT_ID=
+BRIGHTLOCAL_API_KEY=
+WEBFLOW_OAUTH_CLIENT_ID=                           # Wave 4
+WEBFLOW_OAUTH_CLIENT_SECRET=                       # Wave 4
+GHOST_DEFAULT_VERSION=                             # Wave 4
+YELP_FUSION_API_KEY=                               # Wave 4
+APPLE_BUSINESS_CONNECT_PARTNER_KEY=                # Wave 4
+```
+
+### 0.7 Inngest tier upgrade trigger (UPDATED)
+
+`MEMORY.md` previously specified: free tier → Pro at ~5 paying customers. Agency pivot adds:
+- `digest-builder` cron (weekly per customer)
+- `revenue-booking-sweep` cron (nightly)
+- `publishing-token-refresh` cron (hourly)
+- `publishing-health-check` cron (every 6 hours per credential)
+- `founding-100-metrics` cron (daily)
+- Publishing worker invocations (1+ per gated action approval)
+
+**Updated trigger: upgrade to Inngest Pro at ~3 paying customers** (down from 5). Free tier 50K steps/month is consumed faster with publishing workers active.
+
+### 0.8 Deprecations from agency pivot
+
+| Library / dep | Status | Action |
+|---|---|---|
+| `recharts` (if used only for credit-pool charts) | Re-evaluate | Keep for visibility-score charts; drop credit-pool components |
+| Custom credit-pool RPCs in Supabase (`hold_credits`, `confirm_credits`, `release_credits`) | RETAIN internally | No longer customer-surface; keep for internal cost tracking |
+
+---
 
 ## Languages
 

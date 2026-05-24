@@ -1,10 +1,114 @@
 # Wave 2 — Polish & Launch (CEO Brief)
 
+*Updated 2026-05-23 — agency pivot. Wave 2 scope expanded with deliverables tracking, tier gates, weekly digest, held-revenue accounting, domain + business verification, and founding-100 cohort tracking. Hebrew/RTL and E2E QA carry forward but are now lower priority than the agency-pivot scope below.*
+
 **Paste this entire file into a fresh CEO session once Wave 1 has merged.**
 
 ---
 
-## Mission
+## AGENCY PIVOT RESCOPE — 2026-05-23 (READ FIRST, OVERRIDES BELOW)
+
+Decisions #2, #6, #8, #9, #11, #14 from the 2026-05-23 grill session translate into 6 new Wave 2 deliverables. CPO + ai-engineer + frontend-engineer + backend-engineer all touch Wave 2; tier gates and held-revenue are critical-path.
+
+### W2.1 — Deliverables tracking + tier gates (NEW, replaces credit_pools UI surface)
+
+**Owner:** backend-engineer + frontend-engineer (parallel)
+**Risk tier:** Full (touches every customer agent run)
+
+- New table `deliverables_per_customer_per_month` (see DATABASE_SCHEMA delta): columns `customer_id, month_anchor, schema_pushed_count, faq_published_count, citation_submitted_count, content_published_count, outreach_email_count, locations_count, engines_tracked_count`.
+- Tier-gate middleware reads from this table before any agent run. Limits per tier (from decision #11):
+
+| Tier | Locations | Engines | Prompts | Schema/mo | FAQs/mo | Citations/mo | Outreach/mo |
+|---|---|---|---|---|---|---|---|
+| Starter $499 | 1 | 3 | 25 | 4 | 2 | 5 | 0 |
+| Growth $999 | 3 | 5 | 75 | 12 | 6 | 15 | 0 |
+| Scale $1,499 | unlimited | 7 | 200 | 24 | 10 | 30 | 10 |
+| Professional $2,499 | unlimited | 7+custom | 500 | unlimited | 16 | unlimited | 30 |
+
+- Limit-exceeded behavior: agent run rejected with `LimitExceededError`, queued for next month-anchor reset. Customer-success agent notifies customer.
+- Counter increments on `BasePublisher.publish()` success (or successful gated approval → published).
+- Outcomes dashboard reads counters for the "deliverables used this month" panel.
+
+### W2.2 — Weekly digest generator (NEW)
+
+**Owner:** backend-engineer + ai-engineer
+**Risk tier:** Full (customer-facing email + content)
+
+- New table `weekly_digests` (DATABASE_SCHEMA delta): one row per customer per week with rendered HTML + signed approval URLs + visibility deltas + win highlights.
+- New Inngest cron `digest-builder` (`apps/web/src/inngest/functions/digest-builder.ts`) runs Sundays 16:00 customer-local time, assembles digest from `approval_queue` + `scan_engine_results` + `publishing_actions` of the past 7 days.
+- Digest writer agent (CPO PRD: `docs/04-features/specs/agent-digest-writer.md`) composes the narrative.
+- Sent via Resend; new template `weekly_digest.tsx`.
+- Customer 1-clicks "approve all" or per-item from the digest. Signed URLs land on `/approval/:id` with email-token auth.
+
+### W2.3 — Held-revenue accounting (NEW, money flow — IRREVERSIBLE)
+
+**Owner:** backend-engineer + security-engineer review
+**Risk tier:** Irreversible — Adam sign-off required
+
+- New columns on `subscriptions`: `held_until TIMESTAMPTZ` (set to subscription_created_at + 60 days), `held_revenue_amount NUMERIC` (cumulative held for the customer).
+- New table `revenue_events`: `customer_id, paddle_event_id, type ('charge'|'refund'|'release'), amount, received_at, booked_at (NULL until day 61)`.
+- New table `refund_events`: append-only ledger of every refund triggered (date, amount, paddle_event_id, customer_id, reason, founding_100_cohort BOOLEAN).
+- Paddle webhook `transaction.completed` writes `revenue_events` with `received_at=now()`, `booked_at=NULL`.
+- Nightly cron `revenue-booking-sweep` (`apps/web/src/inngest/functions/revenue-booking-sweep.ts`) flips `booked_at=now()` on any event where `received_at + 60 days < now()` AND no matching refund row exists.
+- ARR/MRR dashboards (admin only) read from `booked_at IS NOT NULL`. Cash-received vs booked-revenue split visible to Adam.
+- Refund webhook → `refund_events` row + `subscriptions.held_until = now()` (immediate cancel) + Paddle issues refund.
+
+### W2.4 — Domain + business verification at signup (NEW)
+
+**Owner:** backend-engineer
+**Risk tier:** Full (anti-fraud gate per decision #8 guardrail 2)
+
+- Add to onboarding flow: customer provides business website domain, Beamix runs verification:
+  - DNS check (domain resolves, not parked, not on Spamhaus DBL)
+  - WHOIS check (domain registered > 6 months OR has matching business name)
+  - Optional: GBP lookup, BBB lookup, LinkedIn company lookup (per-vertical)
+- Verification status stored in `business_verifications` table: `customer_id, domain, status ('verified'|'pending'|'failed'), checks JSONB, verified_at`.
+- Failed verification blocks subscription activation (Paddle checkout proceeds, refund triggered if checks fail post-payment).
+- Hard ban on re-signup: refunded customer + domain pair stored in `refund_ban_list`; new signup with same domain rejected.
+
+### W2.5 — Founding-100 cohort tracking + refund-rate audit_log (NEW)
+
+**Owner:** backend-engineer
+**Risk tier:** Lite (audit/analytics only, no customer surface)
+
+- New column `subscriptions.founding_100_cohort BOOLEAN` (true for first 100 paying customers).
+- Daily cron `founding-100-metrics` writes audit_log row: `event_kind='founding_100_metrics'`, `spec.cohort_size`, `spec.refund_rate_to_date`, `spec.refund_count`, `spec.churn_count`, `spec.month_anchor`.
+- If `refund_rate >= 0.25` → audit_log row `event_kind='founding_100_cohort_tighten_trigger'` + Telegram P0 to Adam (per guardrail 4).
+- Trigger response: next cohort cuts money-back window from 60 to 30 days (config flag, not code change).
+
+### W2.6 — Customer-success agent (NEW)
+
+**Owner:** ai-engineer
+**Risk tier:** Full (customer-facing communication)
+
+- Customer-success agent (CPO PRD: `docs/04-features/specs/agent-customer-success.md`) monitors customer health signals:
+  - Failed publishes → DM customer with context + 1-click reconnect
+  - Approval queue items aging > 5 days → digest reminder
+  - DNS verification stuck > 24h → hands-on email
+  - Visibility score regressing 2 weeks in a row → escalate to Adam during founding-100
+- Sends through customer's SendGrid sub-account (so emails look from Beamix, not from a no-reply alias).
+
+### Wave 2 worker dispatch (updated)
+
+CEO spawns the following workers in parallel after Wave 1 ships:
+
+1. **`be-deliverables-gates`** (backend-engineer) — table + middleware + tier-gate enforcement
+2. **`ai-digest-writer`** + **`be-digest-cron`** (ai-engineer + backend-engineer) — digest agent + Inngest cron
+3. **`be-held-revenue`** (backend-engineer, Irreversible — Adam reviews) — held-revenue tables + booking cron + refund webhook wiring
+4. **`be-domain-verification`** (backend-engineer) — verification pipeline + ban list
+5. **`be-founding-100-tracking`** (backend-engineer) — cohort flag + metrics cron + escalation trigger
+6. **`ai-customer-success`** (ai-engineer) — Customer-success agent prompt + Inngest watcher functions
+7. **`fe-outcomes-dashboard-v2`** (frontend-engineer) — outcomes dashboard reads from deliverables + revenue + digest tables (craft reviewer required)
+
+Workers 1+2+3+5 are parallel after Wave 1 merge. Workers 4+6+7 follow once tables exist. Held-revenue (worker 3) is the longest QA review — security-engineer + Adam sign-off required.
+
+### Legacy Wave 2 sections — still apply
+
+Hebrew/RTL pass (worker 1 of legacy section), E2E Playwright tests (worker 2), devops launch setup (worker 3), empty-state + mobile polish (worker 4) — **all still apply.** They just sequence after the agency-pivot Wave 2 work above. Legacy worker count expands from 4 to 11.
+
+---
+
+## Mission *(legacy — agency-pivot section above supersedes scope; QA pattern + craft reviewer carry forward)*
 
 All features are built. Wave 2 makes everything launch-ready: Hebrew/RTL, full QA pass with E2E tests, devops launch setup, empty-state + mobile polish. Deploy 4 parallel workers + qa-lead. After Wave 2 ships, Beamix is live.
 

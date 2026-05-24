@@ -1,8 +1,22 @@
 # Build-Prep — 2026-05-13
 
+*Updated 2026-05-23 — agency pivot. Wave 1 and Wave 2 rescoped. Wave 3 added.*
+
 Pre-flight artifacts produced before Wave 0 spawns. Closes the gaps flagged in `10-PRE-BUILD-AUDIT.md` (P0/P1) and packages every wave brief in ready-to-paste form.
 
 **Decision context:** Adam confirmed **hard reset** of `apps/web/` on 2026-05-13. Build proceeds per `11-EXECUTION-PLAN.md` — existing code is reference only. See `/Users/adamks/.claude/plans/i-want-you-to-warm-nebula.md` for the parent plan.
+
+## Agency pivot — 2026-05-23 (READ FIRST)
+
+15 decisions locked in `.claude/memory/DECISIONS.md` (2026-05-23 entry) and `docs/08-agents_work/sessions/2026-05-23-ceo-agency-pivot-grill.md`. Engineering impact:
+
+- **Waves 0 + 0.5: UNCHANGED.** Scaffold, Supabase, Auth, Paddle, Inngest baseline stay as-is.
+- **Wave 1: RESCOPED for agency model.** Brand-fingerprint storage + agent discovery flow, free-scan → discovery-booking funnel (NOT scan-to-dashboard-import), outcomes dashboard v1 (no agent names, no credit counters), approval-queue UI shell.
+- **Wave 2: RESCOPED for agency model.** Deliverables tracking + tier gates ($499/$999/$1,499/$2,499), weekly digest generator, held-revenue accounting, domain + business verification at signup, founding-100 cohort tracking + refund-rate audit_log.
+- **Wave 3: NEW.** Publishing integrations matrix (WP/Shopify/Webflow/Ghost/GBP/Yelp/Apple/SendGrid sub-account/GTM/paste-ready). See `11-WAVE-3-BRIEF.md`.
+- **CTO decisions A1–A10:** see `docs/08-agents_work/sessions/2026-05-23-cto-agency-pivot-wave-rescope.md`.
+
+**Tiers killed:** Old $79 Discover / $189 Build / $499 Scale tiers. New tiers: Starter $499 / Growth $999 / Scale $1,499 / Professional $2,499. `plan_tier` enum migrates accordingly — see `05-DB-MIGRATION-PLAN.md`.
 
 ## Current state (as of 2026-05-16)
 
@@ -35,9 +49,11 @@ Wave 0 can spawn now from a fresh CEO session — see `13-CEO-HANDOFF-PROMPT.md`
 10. `07-WAVE-0-BRIEF.md` → `10-WAVE-2-BRIEF.md` — ready-to-paste CEO briefs
 11. `12-AUDIT-FIX-REPORT.md` — what the 2026-05-13 audit + fix cycle changed
 
-### Wave gate order (board P0-B 2026-05-16)
+### Wave gate order (updated 2026-05-23 — agency pivot)
 
-`G0 → G0.5 → G-design-lead-approval (NEW) → G1 → G2 → Launch`
+`G0 → G0.5 → G-design-lead-approval → G1 (agency-rescoped) → G2 (agency-rescoped) → G3 (publishing integrations) → Launch`
+
+The new `G3` gate sits before launch. Wave 3 starts after Wave 2 ships AND paying customer #1 has onboarded — unless customer #1 books before Wave 2 completes, in which case CEO may flip Wave 3 to parallel-with-Wave-2.
 
 The `G-design-lead-approval` gate is new per the 2026-05-16 board verdict (P0-B). It sits between Wave 0.5 ship and Wave 1 FE spawn: design-lead delivers a half-day prep (typography scale, spring map, skeleton designs, 9 empty-state illustrations, Tier 1/2/3 animation budget, per-page reference anchors), Adam personally reviews, then writes "design-lead approved" in the wave thread before any FE worker spawns. See `09-WAVE-1-BRIEF.md` §Design-Lead Prep for the full deliverable spec.
 

@@ -28,6 +28,13 @@ How:
 7. **Every async op has an error path.** Happy-path-only code is incomplete code. Network calls, DB queries, and file operations must handle failures explicitly.
 8. **No N+1 queries.** Fetch related data with joins or batch calls. Loops that trigger individual DB queries are a deployment blocker.
 
+### Agency Pivot Principles (added 2026-05-23)
+
+9. **No agent names in customer-facing surfaces.** Customer-facing API responses, emails, and UI never expose internal agent identities (`agent_id`, `agent_name`, `agent_type`, or class names like "Schema agent" / "Discovery agent"). All customer-facing DTOs use outcome shapes: `{ resource, status, evidence_url, approval_required }`. Code review enforcement: any response object containing the keys `agent_id`/`agent_name`/`agent_type`, or values matching `/Discovery|Brand|Approval|Digest|Publisher|Strategy|Customer Success|FAQ|Schema|Citation|Visibility|Competitor/i` in customer endpoints, fails QA at Full tier. Internal logs and admin endpoints are exempt.
+10. **Every publishing action logs to `audit_log` and `publishing_actions`.** No code in `apps/web/src/lib/publishing/<platform>/` may call an external platform API without writing an `audit_log` row (`row_kind='business_event'`, `event_kind='publishing_action.*'`) AND a `publishing_actions` row (with `previous_state` snapshot where the platform supports it). Both writes are atomic with the API call (transaction wrapper). Missing audit row = automatic QA block at Irreversible tier.
+11. **Held-revenue accounting enforced at the billing layer.** Paddle webhooks write to `revenue_events` with `booked_at=NULL`; the `revenue-booking-sweep` cron flips `booked_at` only after day 60 AND only when no matching `refund_event` exists. ARR/MRR dashboards read from `booked_at IS NOT NULL` ONLY. Any code reading `revenue_events.received_at` for revenue reporting is a bug. The `subscriptions.held_until` column is the authoritative refund-window source; one-click cancel checks `held_until > now()` before allowing refund.
+12. **`refund_events` is append-only.** No code may UPDATE or DELETE rows in `refund_events`. The table has RLS policies denying UPDATE/DELETE even for service role. Refund reversals (rare) create a new compensating row, never modify the original. This is non-negotiable for audit/compliance.
+
 ---
 
 ## Tech Stack Decisions
