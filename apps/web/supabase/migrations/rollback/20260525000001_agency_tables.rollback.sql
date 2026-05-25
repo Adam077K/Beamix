@@ -5,6 +5,17 @@
 --
 -- Execution order: reverse of creation (drop dependent tables first).
 
+-- Drop 7 columns added to brand_fingerprints (emit_brand_fingerprint schema drift fix)
+DROP INDEX IF EXISTS public.idx_brand_fingerprints_brief_version_id;
+ALTER TABLE public.brand_fingerprints
+  DROP COLUMN IF EXISTS confidence_score,
+  DROP COLUMN IF EXISTS evidence_links,
+  DROP COLUMN IF EXISTS requires_human_approval,
+  DROP COLUMN IF EXISTS brief_version_id,
+  DROP COLUMN IF EXISTS competitor_set,
+  DROP COLUMN IF EXISTS approval_style,
+  DROP COLUMN IF EXISTS hard_nos;
+
 -- Drop triggers and trigger function
 DROP TRIGGER IF EXISTS refund_events_no_delete ON public.refund_events;
 DROP TRIGGER IF EXISTS refund_events_no_update ON public.refund_events;

@@ -82,13 +82,36 @@ CREATE TABLE IF NOT EXISTS brand_fingerprints (
   updated_at                 timestamptz NOT NULL DEFAULT now()
 );
 
+-- 7 columns required by emit_brand_fingerprint tool (ai-engineer P1 schema drift fix)
+ALTER TABLE public.brand_fingerprints
+  ADD COLUMN IF NOT EXISTS confidence_score        jsonb NOT NULL DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS evidence_links          jsonb NOT NULL DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS requires_human_approval boolean NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS brief_version_id        uuid NOT NULL DEFAULT gen_random_uuid(),
+  ADD COLUMN IF NOT EXISTS competitor_set          jsonb NOT NULL DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS approval_style          jsonb NOT NULL DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS hard_nos                jsonb NOT NULL DEFAULT '[]'::jsonb;
+
+-- confidence_score:        per-field confidence map { field: score_0_to_1 }
+-- evidence_links:          per-field provenance { field: "source:location" }
+-- requires_human_approval: YMYL gate — defaults true (secure-by-default; agent must explicitly clear)
+-- brief_version_id:        UUID emitted per emit_brand_fingerprint call; enables versioned briefs per customer
+-- competitor_set:          array of { domain, relationship } objects
+-- approval_style:          customer preferences: tone, escalation thresholds, ymyl_override boolean
+-- hard_nos:                array of forbidden phrases/topics
+
+CREATE INDEX IF NOT EXISTS idx_brand_fingerprints_brief_version_id
+  ON public.brand_fingerprints (brief_version_id);
+
 CREATE INDEX IF NOT EXISTS idx_brand_fingerprints_unreviewed
   ON brand_fingerprints (adam_reviewed_at)
   WHERE adam_reviewed_at IS NULL;
 
 COMMENT ON TABLE brand_fingerprints IS
   'Customer brand identity captured during discovery call. Service-role only writes. '
-  'adam_reviewed_at must be set before downstream agents run (customers #1-50 gate).';
+  'adam_reviewed_at must be set before downstream agents run (customers #1-50 gate). '
+  'requires_human_approval defaults true — agent must explicitly clear for YMYL content. '
+  'brief_version_id links to a specific emit_brand_fingerprint output version.';
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 2. approval_queue
