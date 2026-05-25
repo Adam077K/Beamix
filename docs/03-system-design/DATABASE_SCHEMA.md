@@ -1,9 +1,323 @@
-# Beamix — System Architecture Layer
+# Beamix — Database Schema
 
 > **Author:** Atlas (CTO)
-> **Date:** 2026-03-04
-> **Scope:** Complete system architecture for the Beamix GEO Platform — database, APIs, data flow, infrastructure, security, caching, and connections between all layers.
-> **Audience:** Engineering team building this system. Every design decision is justified. No code snippets. No pricing. No timelines.
+> **Date:** 2026-03-04 *(Updated 2026-05-23 — agency pivot)*
+> **Scope:** Complete database schema for the Beamix GEO Platform — tables, columns, indexes, RLS policies, RPCs.
+> **Audience:** Engineering team building this system. Every design decision is justified.
+
+---
+
+## §0 Agency Pivot Schema Delta — 2026-05-23
+
+*Authoritative. Tables below are additive to the schema; old tables retain shape but customer-facing surfaces are killed (see §0.4). Source: `.claude/memory/DECISIONS.md` 2026-05-23 + `docs/08-agents_work/sessions/2026-05-23-cto-agency-pivot-wave-rescope.md` (decisions A1–A10).*
+
+### 0.1 New tables (Wave 1)
+
+#### `brand_fingerprints` (Wave 1)
+
+```sql
+CREATE TABLE brand_fingerprints (
+  customer_id UUID PRIMARY KEY REFERENCES user_profiles(user_id) ON DELETE CASCADE,
+  voice JSONB NOT NULL,                   -- tone descriptors, banned words, must-use phrases
+  icp JSONB NOT NULL,                     -- ideal customer profile + segments
+  offerings JSONB NOT NULL,               -- products/services with positioning
+  authoritative_citations TEXT[],         -- external sources customer trusts
+  do_list TEXT[],
+  dont_list TEXT[],
+  owner_identity JSONB NOT NULL,          -- name, title, LinkedIn, photo URL — for email-as-them
+  discovery_transcript_url TEXT,
+  adam_reviewed_at TIMESTAMPTZ,           -- blocks downstream agents until set, customer #1-50
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- RLS: customer can read own row only. Service role reads all. No customer write.
+ALTER TABLE brand_fingerprints ENABLE ROW LEVEL SECURITY;
+CREATE POLICY brand_fingerprints_self_read ON brand_fingerprints FOR SELECT USING (auth.uid() = customer_id);
+```
+
+Indexes: PK on `customer_id`, btree on `adam_reviewed_at` (for unreviewed queue).
+RLS verified: customer reads own; brand-brief manager agent uses service role.
+
+#### `approval_queue` (Wave 1 shell, Wave 2 + 3 populate)
+
+```sql
+CREATE TYPE approval_state AS ENUM ('pending','approved','rejected','expired','published');
+CREATE TYPE approval_kind AS ENUM ('content_publish','email_as_them','outreach','schema_push','listing_update','citation_submit');
+
+CREATE TABLE approval_queue (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES user_profiles(user_id) ON DELETE CASCADE,
+  kind approval_kind NOT NULL,
+  state approval_state NOT NULL DEFAULT 'pending',
+  resource JSONB NOT NULL,                -- the draft content/post/email + platform target
+  evidence JSONB,                         -- why agent thinks this action moves the needle
+  approval_token TEXT NOT NULL UNIQUE,    -- for signed 1-click URL in email
+  digest_id UUID,                         -- FK to weekly_digests where it was surfaced
+  expires_at TIMESTAMPTZ NOT NULL,        -- default now + 7d
+  acted_at TIMESTAMPTZ,
+  published_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_approval_queue_customer_state ON approval_queue(customer_id, state) WHERE state IN ('pending','approved');
+CREATE INDEX idx_approval_queue_expires ON approval_queue(expires_at) WHERE state = 'pending';
+
+ALTER TABLE approval_queue ENABLE ROW LEVEL SECURITY;
+CREATE POLICY approval_queue_self ON approval_queue FOR SELECT USING (auth.uid() = customer_id);
+-- No customer write — only service role + token-validated POST endpoints
+```
+
+#### `business_verifications` + `refund_ban_list` (Wave 2)
+
+```sql
+CREATE TYPE verification_status AS ENUM ('verified','pending','failed');
+
+CREATE TABLE business_verifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES user_profiles(user_id) ON DELETE CASCADE,
+  domain TEXT NOT NULL,
+  status verification_status NOT NULL DEFAULT 'pending',
+  checks JSONB NOT NULL DEFAULT '{}',     -- {dns: ok, whois: ok, gbp: ok, ...}
+  verified_at TIMESTAMPTZ,
+  failed_reason TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE refund_ban_list (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email_hash TEXT NOT NULL,               -- sha256 of normalized email
+  domain TEXT NOT NULL,
+  banned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  reason TEXT NOT NULL,                   -- 'refund_then_resubscribe', 'abuse', 'fraud'
+  UNIQUE(email_hash, domain)
+);
+
+CREATE INDEX idx_refund_ban_email ON refund_ban_list(email_hash);
+CREATE INDEX idx_refund_ban_domain ON refund_ban_list(domain);
+```
+
+### 0.2 New tables (Wave 2)
+
+#### `deliverables_per_customer_per_month`
+
+```sql
+CREATE TABLE deliverables_per_customer_per_month (
+  customer_id UUID NOT NULL REFERENCES user_profiles(user_id) ON DELETE CASCADE,
+  month_anchor DATE NOT NULL,             -- first of month aligned to subscription anniversary
+  schema_pushed_count INT NOT NULL DEFAULT 0,
+  faq_published_count INT NOT NULL DEFAULT 0,
+  citation_submitted_count INT NOT NULL DEFAULT 0,
+  content_published_count INT NOT NULL DEFAULT 0,
+  outreach_email_count INT NOT NULL DEFAULT 0,
+  locations_active_count INT NOT NULL DEFAULT 1,
+  engines_tracked_count INT NOT NULL DEFAULT 3,
+  prompts_tracked_count INT NOT NULL DEFAULT 25,
+  PRIMARY KEY (customer_id, month_anchor)
+);
+
+ALTER TABLE deliverables_per_customer_per_month ENABLE ROW LEVEL SECURITY;
+CREATE POLICY deliverables_self ON deliverables_per_customer_per_month FOR SELECT USING (auth.uid() = customer_id);
+```
+
+#### `weekly_digests`
+
+```sql
+CREATE TABLE weekly_digests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES user_profiles(user_id) ON DELETE CASCADE,
+  week_start DATE NOT NULL,
+  week_end DATE NOT NULL,
+  body_html TEXT NOT NULL,
+  body_text TEXT NOT NULL,                -- plaintext fallback
+  approval_token TEXT NOT NULL UNIQUE,    -- master token for "review queue" link
+  sent_at TIMESTAMPTZ,
+  opened_at TIMESTAMPTZ,                  -- via Resend webhook
+  metrics JSONB NOT NULL,                 -- visibility deltas, win count, approval count
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(customer_id, week_start)
+);
+
+CREATE INDEX idx_weekly_digests_customer_week ON weekly_digests(customer_id, week_start DESC);
+```
+
+#### `revenue_events` + `refund_events` (held-revenue accounting, money flow)
+
+```sql
+CREATE TYPE revenue_event_type AS ENUM ('charge','refund','release','adjustment');
+
+CREATE TABLE revenue_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES user_profiles(user_id) ON DELETE RESTRICT,
+  paddle_event_id TEXT NOT NULL UNIQUE,
+  type revenue_event_type NOT NULL,
+  amount_cents INT NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  booked_at TIMESTAMPTZ,                  -- NULL until day 61, flipped by revenue-booking-sweep cron
+  notes JSONB
+);
+
+CREATE INDEX idx_revenue_events_customer ON revenue_events(customer_id);
+CREATE INDEX idx_revenue_events_booked_at ON revenue_events(booked_at) WHERE booked_at IS NOT NULL;
+CREATE INDEX idx_revenue_events_unbooked ON revenue_events(received_at) WHERE booked_at IS NULL;
+
+CREATE TABLE refund_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES user_profiles(user_id) ON DELETE RESTRICT,
+  paddle_event_id TEXT NOT NULL UNIQUE,
+  revenue_event_id UUID REFERENCES revenue_events(id),
+  amount_cents INT NOT NULL,
+  reason TEXT NOT NULL,
+  founding_100_cohort BOOLEAN NOT NULL DEFAULT false,
+  refunded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Append-only enforcement: deny UPDATE/DELETE via RLS even for service role
+ALTER TABLE refund_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY refund_events_no_modify ON refund_events FOR UPDATE USING (false);
+CREATE POLICY refund_events_no_delete ON refund_events FOR DELETE USING (false);
+```
+
+Add to `subscriptions`:
+
+```sql
+ALTER TABLE subscriptions ADD COLUMN held_until TIMESTAMPTZ;
+ALTER TABLE subscriptions ADD COLUMN held_revenue_amount_cents INT NOT NULL DEFAULT 0;
+ALTER TABLE subscriptions ADD COLUMN founding_100_cohort BOOLEAN NOT NULL DEFAULT false;
+```
+
+### 0.3 New tables (Wave 3)
+
+#### `publishing_credentials`
+
+```sql
+CREATE TYPE publishing_platform AS ENUM ('wordpress','shopify','webflow','ghost','gbp','yelp','apple','sendgrid','gtm','brightlocal');
+CREATE TYPE publishing_credential_status AS ENUM ('active','expired','revoked','health_check_failed');
+
+CREATE TABLE publishing_credentials (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES user_profiles(user_id) ON DELETE CASCADE,
+  platform publishing_platform NOT NULL,
+  encrypted_token TEXT NOT NULL,          -- pgcrypto.sym_encrypt(token, PUBLISHING_TOKEN_KEY)
+  refresh_token_encrypted TEXT,
+  scopes TEXT[] NOT NULL,
+  external_account_id TEXT,               -- e.g. shopify shop domain, WP site URL
+  external_account_meta JSONB,
+  expires_at TIMESTAMPTZ,
+  last_refreshed_at TIMESTAMPTZ,
+  last_health_check_at TIMESTAMPTZ,
+  status publishing_credential_status NOT NULL DEFAULT 'active',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(customer_id, platform, external_account_id)
+);
+
+ALTER TABLE publishing_credentials ENABLE ROW LEVEL SECURITY;
+CREATE POLICY publishing_credentials_self_read ON publishing_credentials FOR SELECT USING (auth.uid() = customer_id);
+-- No client-side write — only service role from publishing/* code paths
+-- encrypted_token never returned in API responses (engineering principle 9)
+```
+
+#### `publishing_actions` (audit/rollback ledger)
+
+```sql
+CREATE TYPE publishing_action_status AS ENUM ('queued','in_progress','success','failed','rolled_back');
+
+CREATE TABLE publishing_actions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES user_profiles(user_id) ON DELETE CASCADE,
+  credential_id UUID NOT NULL REFERENCES publishing_credentials(id),
+  approval_queue_id UUID REFERENCES approval_queue(id),
+  platform publishing_platform NOT NULL,
+  resource_type TEXT NOT NULL,            -- 'post', 'page', 'schema', 'citation', 'email', 'gbp_post'
+  resource_id_external TEXT,              -- platform-side ID once created
+  previous_state JSONB,                   -- snapshot for rollback (where supported)
+  proposed_state JSONB NOT NULL,
+  status publishing_action_status NOT NULL DEFAULT 'queued',
+  error_message TEXT,
+  attempts INT NOT NULL DEFAULT 0,
+  undo_endpoint TEXT,                     -- e.g. 'DELETE /wp/v2/posts/123'
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at TIMESTAMPTZ,
+  rolled_back_at TIMESTAMPTZ
+);
+
+CREATE INDEX idx_publishing_actions_customer ON publishing_actions(customer_id, created_at DESC);
+CREATE INDEX idx_publishing_actions_status ON publishing_actions(status) WHERE status IN ('queued','in_progress');
+
+ALTER TABLE publishing_actions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY publishing_actions_self ON publishing_actions FOR SELECT USING (auth.uid() = customer_id);
+```
+
+### 0.4 Tables marked for migration or retention
+
+| Table | Status | Action |
+|---|---|---|
+| `credit_pools` | Customer-facing dropped; retained internally for cost telemetry only | Remove RLS read policy for customer; keep service-role access |
+| `credit_transactions` | Same as above | Same |
+| `agent_jobs` | Retained — used internally for agent run tracking | RLS dropped from customer; service-role only |
+| `recommendations` | Surface killed; data used as internal agent input | RLS dropped from customer; service-role only |
+| `agent_outputs` | Retained internally | RLS dropped from customer |
+| `inbox_items` | Replaced semantically by `approval_queue` | Migrated to approval_queue (one-time data migration); legacy table archived |
+| `archive_items` | Replaced by `publishing_actions` (post-publish ledger) | Migrated; legacy table archived |
+| `free_scans` | Retained — lead context for discovery booking | Add `discovery_booking_id` FK (nullable) |
+
+### 0.5 Enum changes
+
+```sql
+-- plan_tier rename (replaces current ('discover','build','scale'))
+-- Migration strategy: since hard reset, define new enum from scratch in Wave 0 migration
+CREATE TYPE plan_tier AS ENUM ('starter','growth','scale','professional');
+
+-- agent_type — internal only, no customer exposure. Add new types per CPO PRDs:
+ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'discovery';
+ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'brand_brief_manager';
+ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'approval_gate_writer';
+ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'digest_writer';
+ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'customer_success';
+ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'publisher';
+ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'strategy';
+```
+
+### 0.6 RLS pattern for agency-pivot tables
+
+All customer-facing read tables follow the same pattern:
+
+```sql
+ALTER TABLE <table> ENABLE ROW LEVEL SECURITY;
+CREATE POLICY <table>_self_read ON <table>
+  FOR SELECT USING (auth.uid() = customer_id);
+```
+
+No customer-side INSERT, UPDATE, or DELETE on any agency-pivot table. All writes go through service-role-authenticated server code or signed approval tokens (for approval_queue state transitions).
+
+### 0.7 Indexes (mandatory)
+
+Every new table has at least:
+- PK index (auto)
+- Customer-scoped index (`customer_id` or `(customer_id, created_at DESC)`)
+- State/status index where applicable (partial index on pending states)
+
+### 0.8 Audit-log row kinds (new for agency pivot)
+
+`audit_log.row_kind = 'business_event'` with `event_kind` values:
+- `approval_queue.created`
+- `approval_queue.approved`
+- `approval_queue.rejected`
+- `approval_queue.expired`
+- `publishing_action.success`
+- `publishing_action.failed`
+- `publishing_action.rolled_back`
+- `revenue.charge_received`
+- `revenue.refunded`
+- `revenue.booked` (day 61 flip)
+- `founding_100_metrics` (daily)
+- `founding_100_cohort_tighten_trigger` (refund rate ≥25%)
+- `business_verification.passed`
+- `business_verification.failed`
+- `publishing_credential.connected`
+- `publishing_credential.disconnected`
+- `publishing_credential.expired`
 
 ---
 

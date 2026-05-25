@@ -1,41 +1,42 @@
-# Beamix — Strategic Foundation
+# Beamix — Strategic Foundation *(Updated 2026-05-23 — agency pivot)*
 
-> **Last synced:** March 2026 — aligned with 03-system-design/
+> **Last synced:** 2026-05-23 — agency pivot. Source of truth: `.claude/memory/DECISIONS.md` 2026-05-23 entry.
 
-> Strategic foundation for Beamix. For the complete system design (agents, DB, APIs, intelligence), see `docs/03-system-design/ARCHITECTURE.md`.
+> Strategic foundation for Beamix. For the agency-pivot decision matrix, see `docs/08-agents_work/sessions/2026-05-23-ceo-agency-pivot-grill.md`.
 >
 > **Repository:** https://github.com/Adam077K/Beamix
-> **Last Updated:** 2026-03-06 — Aligned with System Design v2.1
+> **Last Updated:** 2026-05-23 — Agency Pivot
 
 ---
 
-## 1. What Is Beamix?
+## 1. What Is Beamix? *(Updated 2026-05-23 — agency pivot)*
 
-**One-liner:** Beamix scans your business, shows you where you're invisible in AI search, then its agents do the work to fix it.
+**One-liner:** Beamix is a done-for-you GEO agency, delivered as software. We get your business cited by ChatGPT, Gemini, Perplexity and Claude — you approve content in one click and watch the score move.
 
-**Category:** GEO (Generative Engine Optimization) Platform for SMBs
+**Category:** Done-for-you GEO agency for SMBs (not a tool, not a dashboard).
 
-**Core differentiator:** Competitors show dashboards. Beamix does the work.
+**Core differentiator:** Competitors show dashboards. Agencies charge $2K–$8K/mo. Beamix does the work at SaaS price points ($499–$2,499/mo), with traceability, with a 60-day no-questions money-back.
 
 ---
 
-## 2. The Customer
+## 2. The Customer *(Updated 2026-05-23 — agency pivot, 3 launch ICPs)*
 
-**Primary persona:** Marketing manager or business owner at an SMB (5-200 employees)
+**Launch ICPs (3 verticals):**
+1. **B2B SaaS founder / VP marketing** at companies < $5M ARR
+2. **Solo / small-firm lawyer** ($1K–$3K/mo legal-marketing budget; highest digital CPL of any industry)
+3. **Owner-dentist at single-location dental practice** (established $800–$1,500/mo local-SEO spend)
 
-**Key traits:**
-- Non-technical — doesn't want to learn a tool, wants results
-- Budget-conscious — can't afford $10K+/month on Google Ads or agencies
-- Time-poor — wears multiple hats, needs things done for them
-- Forward-thinking — understands AI search is the future, wants to be early
+Full persona detail: [PERSONAS.md](./PERSONAS.md).
 
-**Examples:**
-- Marketing manager at a mid-size e-commerce company
-- Owner of a small insurance services company
-- Restaurant owner who knows people ask ChatGPT "best restaurants near me"
-- Any SMB owner losing leads because they're invisible in AI search
+**Common traits across all 3 ICPs:**
+- Will pay $499–$2,499/mo for outcomes; will NOT learn a tool
+- Approves work in one click via weekly digest; doesn't operate dashboards
+- Wants traceability ("show me what you did") and one-click cancel as trust signals
+- Forward-thinking about AI search but doesn't have time to figure it out themselves
 
-**NOT our customer (initially):** Agencies, enterprises, SEO professionals, technical marketers
+**Deferred to MVP+90:** HVAC / plumbing, real estate, DTC e-commerce, healthcare-non-dental.
+
+**NOT our customer:** Agencies (we replace them), enterprises (priced too low), DIY SEO professionals (we're not a tool).
 
 ---
 
@@ -180,28 +181,36 @@ Each of these maps to a specific agent capability in the product.
 
 ---
 
-## 10. Revenue Model
+## 10. Revenue Model *(Updated 2026-05-23 — agency pivot)*
 
-**Freemium + subscription:**
-- Free: Initial scan + basic results (limited detail). No "free" tier in DB — free = null `plan_tier`.
-- Paid: Full dashboard, AI agents, ongoing monitoring, content generation.
-- Trial: 7 days starting on **first dashboard visit** (not signup), capped at 5 agent credits.
+**Done-for-you subscription, 4 tiers, no free tier beyond the scan:**
 
-**Subscription tiers:**
+- **Free scan + discovery booking** — Sees the visibility gap. No paid product gating. Goal: book the discovery call.
+- **Paid subscription** — Done-for-you GEO delivery + outcomes dashboard + approval queue + weekly digest. Month-to-month.
+- **60-day no-questions money-back guarantee** — replaces the old 14-day money-back trial. Held-revenue accounting through day 60.
 
-| | Free Scan | Discover | Build | Scale |
+**Subscription tiers (RETIRED Discover/Build/Scale; current 4 tiers):**
+
+| | **Starter** | **Growth** | **Scale** | **Professional** |
 |---|---|---|---|---|
-| **Price** | $0 | $79/mo | $189/mo | $499/mo |
-| **Tracked queries** | 0 | 10 | 25 | 75 |
-| **AI Runs/month** | 0 | 25 | 90 | 300 |
-| **Scan frequency** | One-time | Weekly | Every 3 days | Daily |
-| **AI engines** | 4 (Phase 1) | 4 | 7 | 10 |
-| **Competitors tracked** | 0 | 3 | 5 | 10 |
+| **Price** | $499/mo | $999/mo | $1,499/mo | $2,499/mo |
+| **Locations** | 1 | 3 | Unlimited | Unlimited |
+| **AI engines tracked** | 3 | 5 | 7 | 7 + custom |
+| **Prompts/engine** | 25 | 75 | 200 | 500 |
+| **Schema/mo** | 4 | 12 | 24 | Unlimited |
+| **FAQs/mo** | 2 | 6 | 10 | 16 |
+| **Citations/mo** | 5 | 15 | 30 | Unlimited |
+| **Outreach emails/mo** | — | — | 10 | 30 |
+| **SLA** | 48h | 24h | 12h | 4h + Slack |
+| **Money-back** | 60-day | 60-day | 60-day | 60-day |
+
+Full tier matrix and deliverable details: [docs/product-rethink-2026-04-09/06-PRICING-V2.md](../product-rethink-2026-04-09/06-PRICING-V2.md).
 
 **Key pricing principles:**
-- Must be affordable for SMBs (NOT $250+/month like competitors)
-- Value must be obvious before payment is required (free scan → trial → paid)
-- Credit system: hold on job start → confirm on success → release on failure. Rollover cap: 20% of monthly allocation.
+- Customer pays for outcomes, not tools. No credit counters. No "AI Runs" UI.
+- Anchored against $2K–$8K/mo agencies — Beamix sits 50–80% below market.
+- Money-back is the trust mechanic. One-click cancel. Held-revenue through day 60.
+- Adam reviews every brand fingerprint through customer #50; then handoff to Brand-brief manager agent.
 
 ---
 

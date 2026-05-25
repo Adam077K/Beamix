@@ -1,8 +1,95 @@
 # Beamix MVP Execution Plan — Final
 
-## Context
+*Updated 2026-05-23 — agency pivot. See §Agency Pivot Engineering Delta below before reading legacy plan.*
 
-Beamix completed a full product rethink (April 2026). All decisions are documented in `docs/product-rethink-2026-04-09/` (14 files). This plan covers the MVP build from scratch — production-grade quality, shipped in waves at Adam's pace.
+## Agency Pivot Engineering Delta — 2026-05-23
+
+15 decisions locked at `.claude/memory/DECISIONS.md` 2026-05-23 entry. Engineering impact on the existing wave plan:
+
+### Components KEPT (unchanged from April 2026 rethink)
+
+- Wave 0 + 0.5: Supabase, Paddle base setup, Inngest client, Auth scaffolding, Shadcn primitives, Next.js + TypeScript config
+- Internal agent execution patterns (Inngest event-driven, 5-step pipeline, retry policy)
+- Credit-pool RPCs (`hold_credits`, `confirm_credits`, `release_credits`) — RETAINED for internal cost tracking
+- Visibility-score scan engine + AI-engine adapter pattern
+- Email infrastructure (Resend + React Email)
+- LLM gateway (OpenRouter, 2-key model — scan vs agent)
+- Security checklist (10 items, Wave 1+)
+- QA gate matrix (Trivial/Lite/Full/Irreversible), risk-tier YAML floor, qa-lead-pass workflow
+- Domain (`beamixai.com`), brand colors, fonts
+- Hebrew/RTL Wave 2 commitments
+- Per-PR review model, atomic commits, worktree isolation
+
+### Components RESCOPED (reshape, not rebuild)
+
+- **Free scan:** retained as a marketing tool, but post-scan CTA changes from "sign up to dashboard" to "book discovery call." Backend persists `free_scans` row as lead context.
+- **Onboarding flow:** simplified to discovery-booking instead of multi-step product setup. Discovery agent handles the deep config via conversation.
+- **Inbox 3-pane review UI:** repurposed as the approval-queue review modal. Same UX pattern, different semantic domain (approving content/email publishes, not internal agent outputs).
+- **Dashboard pages:** consolidated to outcomes + traceability shape. Score-per-engine, weekly wins, approval queue, digest archive, "how we got this" trail. Old 7-pages restructure (`/home`, `/inbox`, `/scans`, `/automation`, `/archive`, `/competitors`, `/settings`) collapses to: `/dashboard` (outcomes), `/approval-queue`, `/digest-archive`, `/integrations`, `/billing`, `/settings`.
+- **Content/FAQ + Schema + Citation agents:** repurposed — same internal logic, but output writes to `approval_queue` (gated) or `publishing_actions` (auto) instead of customer-facing tables.
+- **Visibility tracker:** repurposed as background scorer + win detector that feeds the digest writer.
+- **Pricing tiers:** $79/$189/$499 → $499/$999/$1,499/$2,499. Paddle products reconfigured by Adam before Wave 1 backend work touches billing.
+
+### Components KILLED (removed from customer surface; remove from code)
+
+- `/dashboard/agents/[agent_id]` chat UI — agents internal-only
+- `/dashboard/credits` page + "AI Runs" counter UI
+- `/api/agents/run` + `/api/agents/:type/execute` customer endpoints
+- `/api/recommendations/:id/run` (recommendations are internal agent input now)
+- Free-scan → `?scan_id=` onboarding import flow (replaced by discovery booking)
+- Customer-facing agent execution streaming (no Realtime channel per agent for customer)
+- Suggestion runner customer UI (suggestions become internal admin surface)
+- Recommendations page (internal data, no customer surface)
+- Tool-product trial mechanic (14-day money-back) — replaced by 60-day no-questions agency mechanic
+- Old `inbox_items` + `archive_items` table semantics (replaced by `approval_queue` + `publishing_actions`)
+
+### Components NEW (Wave 1 + 2 + 3)
+
+#### Wave 1 additions
+- Brand-fingerprint storage (table + Discovery + Brand-brief manager agents)
+- Discovery booking funnel (page + Calendly equivalent + Inngest orchestrator)
+- Outcomes-shaped dashboard v1 (no agent names, no credit counters)
+- Approval queue UI shell
+- `plan_tier` enum rename + Paddle product reconfig
+
+#### Wave 2 additions
+- Deliverables tracking + tier-gate middleware
+- Weekly digest generator (table + cron + agent + Resend template)
+- Held-revenue accounting (revenue_events + refund_events tables, booking cron, Paddle refund webhook handler)
+- Domain + business verification at signup
+- Founding-100 cohort tracking + refund-rate audit_log + Telegram P0 trigger
+- Customer-success agent
+
+#### Wave 3 NEW (entire wave)
+- Publishing integration matrix: WordPress (with Beamix plugin), GTM, SendGrid sub-account, paste-ready, citations via BrightLocal — all MVP
+- Wave 3 stretch: Google My Business, Shopify
+- Wave 4 deferred: Webflow, Ghost, Yelp (pending API spike), Apple Business Connect
+- `apps/web/src/lib/publishing/` shared layer (BasePublisher abstract class + tokens/gates/rate-limit/audit/retry utilities)
+- Approval-queue UI completion (diff view, edit-and-approve, signed-token email landings)
+- Publishing token-refresh + health-check Inngest crons
+
+### Wave sequencing (updated)
+
+| Wave | Status | Critical-path gate |
+|---|---|---|
+| Wave 0 | Unchanged. Spawn as planned. | `plan_tier` enum must use new values before Paddle products reference price IDs. |
+| Wave 0.5 | Unchanged. | None new. |
+| Wave 1 | Rescoped per `build-prep-2026-05-13/09-WAVE-1-BRIEF.md` §Agency Pivot Rescope. | Brand fingerprint must precede any other customer-facing agent run. |
+| Wave 2 | Rescoped per `build-prep-2026-05-13/10-WAVE-2-BRIEF.md` §Agency Pivot Rescope. Adds 6 critical deliverables. | Held-revenue accounting must ship before paying customer #1. Domain verification must ship before paying customer #1. |
+| Wave 3 | NEW per `build-prep-2026-05-13/11-WAVE-3-BRIEF.md`. | Sequenced AFTER Wave 2 ships and paying customer #1 onboards, unless customer #1 books before Wave 2 completes (then parallel — CEO decides). |
+
+### Engineering effort delta (rough)
+
+Agency pivot adds approximately:
+- Wave 1: +30% effort (brand fingerprint + discovery flow + outcomes-shape rebuild of dashboard)
+- Wave 2: +60% effort (held-revenue accounting is high-risk + deliverables tracking + digest + verification)
+- Wave 3: ENTIRELY NEW — 4 MVP integrations + 2 stretch ≈ comparable in effort to Wave 1
+
+These percentages assume Wave 1+2 baseline scopes from the April 2026 plan. The agency pivot does NOT shrink existing scope; it adds on top. Adam should expect ~50% more total engineering before paying customer #1.
+
+---
+
+## Context
 
 **Team:** Adam + AI agent workforce (no human devs)
 **Review model:** Per-PR — each worktree creates a PR, Adam reviews before merge

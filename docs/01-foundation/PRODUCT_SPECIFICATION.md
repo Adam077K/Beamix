@@ -1,22 +1,43 @@
-# Beamix — Product Specification
+# Beamix — Product Specification *(Updated 2026-05-23 — agency pivot)*
 
-> **Last synced:** March 2026 — aligned with 03-system-design/
+> **CRITICAL — READ THIS BANNER FIRST.** This document was authored 2026-02-27 / updated 2026-03-06 under the **self-serve tool framing** (Discover / Build / Scale at $79 / $189 / $499). On **2026-05-23 Beamix pivoted to a done-for-you agency model** with 4 new tiers (Starter $499 / Growth $999 / Scale $1,499 / Professional $2,499) and 60-day money-back. Many sections below are **superseded** by the agency-pivot specification.
+>
+> **Authoritative sources (in this order):**
+> 1. `.claude/memory/DECISIONS.md` 2026-05-23 entry (15 locked decisions)
+> 2. `docs/PRD.md` (master, updated 2026-05-23)
+> 3. `docs/product-rethink-2026-04-09/06-PRICING-V2.md` (updated 2026-05-23)
+> 4. `docs/product-rethink-2026-04-09/07-AGENT-ROSTER-V2.md` (updated 2026-05-23)
+> 5. `docs/product-rethink-2026-04-09/08-UX-ARCHITECTURE.md` (updated 2026-05-23 — outcomes dashboard above pre-pivot framing)
+> 6. `docs/04-features/specs/agent-*.md` (7 new agent PRDs, created 2026-05-23)
+>
+> **What changed (high-level):**
+> - **Pricing:** 4 tiers $499–$2,499/mo. Old $79/$189/$499 retired in full.
+> - **Trial mechanic:** 60-day no-questions money-back. Old 7-day trial and 14-day money-back retired.
+> - **Free scan flow:** No email at scan. Email captured at discovery booking. No "preview mode" dashboard.
+> - **Dashboard:** Outcomes / Approval Queue / Weekly Digest Archive / Traceability / Settings. Old 7-page Inbox/Scans/Automation/Archive/Competitors framing replaced.
+> - **Agents:** 7 new + 4 repurposed + 1 kept. Customer never sees agent names.
+> - **Personas:** 3 launch ICPs (B2B SaaS / Solo Lawyer / Single-Location Dental). Yael/Avi pre-pivot personas (sections 1A, 1B below) are NOT the launch personas — see `docs/01-foundation/PERSONAS.md`.
+> - **Tiered approval gates:** Auto on schema/citations/listings/scans. 1-click in digest on content/email/outreach. Mandatory human on YMYL.
+> - **Hybrid push:** Auto on stable APIs (WP/Shopify/Webflow/GBP/Yelp/Apple/SendGrid/GTM). Paste-ready on Wix/Squarespace/custom.
+>
+> **Pre-pivot content below is preserved for engineering reference** (page-level UX detail, acceptance criteria for components that survive, data schemas). Pricing tables, trial mechanics, and 11-agent roster are **OBSOLETE** — see authoritative sources above.
 
+---
+
+> **Pre-pivot frontmatter (preserved for changelog):**
+>
 > Part of the PRD. Translates the Strategic Foundation into buildable requirements.
 > **Repository:** https://github.com/Adam077K/Beamix
-
-**Version:** 1.2
-**Date:** 2026-02-27
-**Last Updated:** 2026-03-06 — synced with System Design v2.1
-**Author:** Morgan (CPO Agent)
-**Status:** Updated
-
-> **Source of truth:** `docs/01-foundation/PRODUCT_SPECIFICATION.md`
-> This document covers user journeys and high-level feature summary. For full page specs, data flows, and agent UX, defer to the system design.
 >
-> **Key numbers:** 23 pages, 90+ features across 10 modules, 11 AI agents, 10 AI scan engines (3 phases), 4 user journeys, 32 DB tables.
-> **Trial:** 7 days starting on first dashboard visit (not signup). Capped at 5 agent credits.
-> **Pricing tiers:** Discover ($79/mo) / Build ($189/mo) / Scale ($499/mo). No "Free" plan_tier in DB — free tier = null.
+> **Version:** 1.2
+> **Date:** 2026-02-27
+> **Last Updated:** 2026-03-06 — synced with System Design v2.1
+> **Author:** Morgan (CPO Agent)
+> **Status:** Updated → **SUPERSEDED IN PART 2026-05-23 by agency pivot**
+>
+> **Key numbers (PRE-PIVOT):** 23 pages, 90+ features across 10 modules, 11 AI agents, 10 AI scan engines (3 phases), 4 user journeys, 32 DB tables.
+> **Trial (PRE-PIVOT — RETIRED):** 7 days starting on first dashboard visit (not signup). Capped at 5 agent credits.
+> **Pricing tiers (PRE-PIVOT — RETIRED):** Discover ($79/mo) / Build ($189/mo) / Scale ($499/mo).
 
 ---
 

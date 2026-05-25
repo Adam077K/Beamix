@@ -1,9 +1,162 @@
 # Beamix System Design: AI & Intelligence Layer
 
 > **Author:** Sage (AI Engineer)
-> **Date:** March 2026
+> **Date:** March 2026 *(Updated 2026-05-23 — agency pivot. 7 new + 4 repurposed + 1 kept customer-facing agents added in §0. Existing per-task agent sections below RETAINED for internal implementation patterns.)*
 > **Scope:** Every LLM interaction, every AI pipeline, every intelligent feature in the Beamix platform
 > **Philosophy:** Direct LLM API integration via Next.js API routes + Inngest. No n8n. No traditional ML models. Pure LLM orchestration at scale.
+
+---
+
+## §0 Agency Pivot Agent Fleet — 2026-05-23
+
+*Authoritative. 7 new + 4 repurposed + 1 kept customer-facing agents. Each agent has a PRD owned by CPO under `docs/04-features/specs/agent-<name>.md` — referenced not duplicated here. Source: `.claude/memory/DECISIONS.md` 2026-05-23 decision #15.*
+
+### 0.1 Agent inventory (12 total customer-facing)
+
+#### NEW (7)
+
+| Agent | PRD path | Wave | Inngest trigger | Model | Purpose |
+|---|---|---|---|---|---|
+| Discovery | `docs/04-features/specs/agent-discovery.md` | 1 | `discovery.session.started` | Claude Sonnet 4.6 | 20-question structured interview during onboarding; captures voice, ICP, offerings, owner identity |
+| Brand-brief manager | `docs/04-features/specs/agent-brand-brief-manager.md` | 1 | `discovery.session.completed`, `brand.update.requested` | Claude Opus 4.7 | Synthesizes Discovery agent output into `brand_fingerprints` row; Adam reviews customer #1-50 |
+| Approval-gate writer | `docs/04-features/specs/agent-approval-gate-writer.md` | 2 | `content.draft.created`, `email.draft.created` | Claude Sonnet 4.6 | Writes the explanatory blurb on approval_queue rows ("Here's what we're proposing and why") |
+| Digest writer | `docs/04-features/specs/agent-digest-writer.md` | 2 | cron Sundays 16:00 customer-local | Claude Sonnet 4.6 | Composes the weekly digest narrative — wins, deltas, pending approvals |
+| Customer success | `docs/04-features/specs/agent-customer-success.md` | 2 | `customer.signal.*` (health watchers) | Claude Sonnet 4.6 | Monitors failed publishes, aging approvals, DNS stalls; sends from customer's SendGrid subuser |
+| Publisher | `docs/04-features/specs/agent-publisher.md` | 3 | `approval_queue.approved`, `auto.action.queued` | Claude Haiku 4.5 (action formatter) + platform API | Translates approved/auto action → platform-specific API payload + executes via BasePublisher |
+| Strategy | `docs/04-features/specs/agent-strategy.md` | 3 | monthly cron + `customer.strategy.requested` | Claude Opus 4.7 | Monthly strategy review per customer (Adam-led #1-50, agent-led from #51) |
+
+#### REPURPOSED (4)
+
+| Old role | New role | PRD path | Changes |
+|---|---|---|---|
+| Content/FAQ agent | Content/FAQ generator (drives approval_queue, not direct publish) | `docs/04-features/specs/agent-content-faq.md` | Output writes approval_queue row, not direct content_items row. No chat UI. |
+| Schema agent | Schema generator + GTM/platform pusher | `docs/04-features/specs/agent-schema.md` | Auto-publishes (not gated) per gating_rules. Writes publishing_actions row. |
+| Citation agent | Citation submitter (BrightLocal flow) | `docs/04-features/specs/agent-citation.md` | Auto-publishes. Per-tier monthly cap from deliverables_per_customer_per_month. |
+| Visibility tracker | Visibility scorer + win detector | `docs/04-features/specs/agent-visibility.md` | Runs in background; signals digest writer + customer-success agent on score deltas. |
+
+#### KEPT (1)
+
+| Agent | PRD path | Status | Notes |
+|---|---|---|---|
+| Competitor intelligence | `docs/04-features/specs/agent-competitor.md` | De-emphasized | Runs but its output feeds Strategy agent, not customer dashboard directly. |
+
+### 0.2 Orchestration pattern (Inngest event-driven)
+
+```
+customer signup
+  → emits 'customer.created'
+    → Discovery agent fires (on discovery booking confirm)
+      → emits 'discovery.session.completed' with brand_fingerprint_draft
+        → Brand-brief manager fires
+          → writes brand_fingerprints row (adam_reviewed_at NULL)
+          → emits 'brand.ready_for_review'
+            → notifies Adam (founding-100 phase)
+            → on adam_reviewed_at set: emits 'brand.approved'
+
+brand.approved
+  → spawns weekly Inngest schedule per customer:
+      - Visibility scanner (per tier cadence)
+      - Content/FAQ generator (per tier monthly count)
+      - Schema generator (per tier monthly count)
+      - Citation submitter (per tier monthly count)
+
+content.draft.created OR email.draft.created
+  → Approval-gate writer fires (rationale blurb)
+  → approval_queue row written (state=pending)
+
+approval_queue.approved
+  → Publisher agent fires
+  → BasePublisher.publish via platform-specific implementation
+  → publishing_actions row + audit_log row
+
+approval_queue.expired
+  → Customer-success agent fires (nudge)
+
+scan_engine_results delta detected
+  → Visibility scorer recomputes
+  → emits 'visibility.changed' with delta
+  → Digest writer accumulates for Sunday digest
+
+Sunday 16:00 customer-local
+  → digest-builder cron
+  → Digest writer composes
+  → Resend send via customer's SendGrid subuser
+```
+
+### 0.3 Identity-hiding contract (engineering principle 9)
+
+Every agent has an internal `agent_id` and `agent_type` enum value. These appear in:
+- Internal logs (`audit_log`, `agent_jobs`)
+- Internal admin dashboards (Adam-only)
+- Prompts (for self-reference if needed)
+
+These NEVER appear in:
+- Customer-facing API responses (`/api/dashboard/*`, `/api/approval/*`, `/api/digest/*`)
+- Customer-facing emails (digest, alerts, transactional)
+- Customer-facing UI labels
+- "How we got this" trail (replaced with outcome language: "we updated your FAQ schema" not "Schema agent ran")
+
+Code review enforcement: any agent-name leak fails QA at Full tier.
+
+### 0.4 Prompt versioning
+
+Per agent: `apps/web/src/lib/agents/<agent-type>/prompts/v<N>.ts`. Each prompt file is immutable once shipped. New version → new file + flag flip. Prompt rollback = flag flip back to previous version.
+
+Prompt eval criteria per agent live in PRDs (`docs/04-features/specs/agent-<name>.md`). Wave 2 qa-lead runs golden-case evals per the existing harness pattern.
+
+### 0.5 Model selection per agent
+
+| Agent | Model | Rationale |
+|---|---|---|
+| Discovery | Sonnet 4.6 | Conversational, needs warmth + structured extraction |
+| Brand-brief manager | Opus 4.7 | One-shot per customer, high-value synthesis |
+| Approval-gate writer | Sonnet 4.6 | Workhorse — short rationale per action |
+| Digest writer | Sonnet 4.6 | Weekly narrative — coherent + brand-voiced |
+| Customer success | Sonnet 4.6 | Empathy + technical context |
+| Publisher (formatter) | Haiku 4.5 | Mechanical payload formatting, cheap |
+| Strategy | Opus 4.7 | Monthly, high-stakes |
+| Content/FAQ generator | Sonnet 4.6 + Perplexity Sonar Pro (research) | Research-grounded generation |
+| Schema generator | Haiku 4.5 | Structured JSON-LD, deterministic |
+| Citation submitter | Haiku 4.5 | Form-fill formatting |
+| Visibility scorer | Haiku 4.5 (parsing) + Sonnet 4.6 (deltas) | High volume parsing + low-volume reasoning |
+| Competitor intelligence | Sonnet 4.6 | Periodic deep-dive |
+
+### 0.6 Cost guardrails per tier
+
+Per-customer monthly LLM cost ceiling per tier (enforced by `apps/web/src/lib/agents/cost-guard.ts`):
+
+| Tier | Monthly LLM budget | Hard cap action |
+|---|---|---|
+| Starter $499 | $35 | Pause non-critical agents; visibility scoring continues |
+| Growth $999 | $85 | Same |
+| Scale $1,499 | $150 | Same |
+| Professional $2,499 | $300 | Same |
+
+Customer-success agent surfaces cost-near-cap as a "we're working hard for you" insight, not as a limit (decision #7 — no resource counters customer-side).
+
+### 0.7 Eval gating
+
+Each agent must hit publish-ready rate ≥ 80% on golden test set before going live. CPO PRD per agent defines the golden set. Wave 2 qa-lead owns eval harness execution.
+
+### 0.8 Agent files in code
+
+```
+apps/web/src/lib/agents/
+  base/                  # BaseAgent abstract class + utilities
+  discovery/
+  brand-brief-manager/
+  approval-gate-writer/
+  digest-writer/
+  customer-success/
+  publisher/
+  strategy/
+  content-faq/
+  schema/
+  citation/
+  visibility/
+  competitor/
+  evals/                 # Golden test sets per agent
+```
 
 ---
 

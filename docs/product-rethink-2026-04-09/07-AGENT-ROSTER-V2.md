@@ -1,6 +1,62 @@
-# Beamix Agent Roster v2 — Board-Approved (2026-04-15)
+# Beamix Agent Roster v2 — *Updated 2026-05-23 — agency pivot*
 
-**STATUS: APPROVED**
+**STATUS: SUPERSEDED in part by agency-pivot agent fleet.**
+
+> *Updated 2026-05-23 — agency pivot.* The 11 MVP-1 agents below have been consolidated into 4 repurposed customer-facing agents + 1 kept (de-emphasized) and joined by 7 new agents. Customers never see agent names — agent names are internal-only.
+>
+> Source: `.claude/memory/DECISIONS.md` 2026-05-23 entry, decision #15.
+
+---
+
+## Customer-Facing Agent Fleet (Current — 2026-05-23)
+
+| # | Agent | Wave | Status | PRD |
+|---|---|---|---|---|
+| 1 | **Discovery agent** | 1 | NEW | `docs/04-features/specs/agent-discovery.md` |
+| 2 | **Brand-brief manager agent** | 1 | NEW | `docs/04-features/specs/agent-brand-brief-manager.md` |
+| 3 | **Approval-gate writer agent** | 2 | NEW | `docs/04-features/specs/agent-approval-gate-writer.md` |
+| 4 | **Digest writer agent** | 2 | NEW | `docs/04-features/specs/agent-digest-writer.md` |
+| 5 | **Customer success agent** | 2 | NEW | `docs/04-features/specs/agent-customer-success.md` |
+| 6 | **Publisher agent** | 3 | NEW | `docs/04-features/specs/agent-publisher.md` |
+| 7 | **Strategy agent** | 3 | NEW | `docs/04-features/specs/agent-strategy.md` |
+| 8 | **Content/FAQ agent** | repurposed (from Content Optimizer + FAQ Builder + Authority Blog Strategist + Freshness Agent) | LIVE | — (see below) |
+| 9 | **Schema agent** | repurposed (from Schema Generator + Entity Builder) | LIVE | — |
+| 10 | **Citation agent** | repurposed (from Off-Site Presence Builder + Review Presence Planner + Reddit Presence Planner) | LIVE | — |
+| 11 | **Visibility tracker agent** | repurposed (from Query Mapper + Performance Tracker) | LIVE | — |
+| 12 | **Competitor intelligence agent** | KEPT — de-emphasized | LIVE | — |
+
+**KILLED (no longer in roster):**
+- Freshness Agent — folded into Content/FAQ agent
+- Reddit Presence Planner — folded into Citation agent
+- Video SEO Agent — deferred to MVP+90
+
+**Customer-visibility rule (locked):** No agent name ever appears on a customer-facing surface. CMO copy review required on every page, email, digest, and dashboard widget. Internal ops, planning docs, and CPO/CTO specs may name agents freely.
+
+---
+
+## Repurposed Agents — How They Map
+
+| New customer-facing agent | Replaces (old roster) | Why merged |
+|---|---|---|
+| Content/FAQ agent | Content Optimizer + FAQ Builder + Authority Blog Strategist + Freshness Agent | Customer sees one outcome class ("content published"); internal agent should orchestrate format choice (rewrite vs FAQ vs long-form) and freshness automatically |
+| Schema agent | Schema Generator + Entity Builder | Schema-on-page and Wikidata/GBP entity work are the same value-chain step from the customer's POV |
+| Citation agent | Off-Site Presence Builder + Review Presence Planner + Reddit Presence Planner | All "place us on someone else's surface" actions; customer sees "5 citations placed this month" |
+| Visibility tracker agent | Query Mapper + Performance Tracker | Customer sees one number (visibility score) per engine; query mapping and performance measurement are both inside the same tracking loop |
+
+---
+
+## Original MVP-1 Roster (preserved for changelog — no longer customer-facing as separate names)
+
+**The original 11 MVP-1 agents below remain useful as engineering reference for how the internal agents work and what prompts/eval criteria each module uses.** They are no longer named in customer-facing copy, dashboards, or emails.
+
+Original heading preserved below for context.
+
+---
+
+# Original v2 Roster (Pre-Agency-Pivot)
+
+**Status:** Engineering reference only. Customer-facing fleet above supersedes for product/marketing/copy purposes.
+
 **Agents:** 11 MVP-1 + 1 MVP-2
 **Renames applied:** Freshness Agent (canonical name; early proposal used "Content Refresher") · Off-Site Presence Builder (was: Citation/Directory Builder)
 

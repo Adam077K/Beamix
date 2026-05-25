@@ -1,4 +1,169 @@
-# Beamix — Product Specification
+# Business Model — Done-For-You GEO Agency
+
+*Updated 2026-05-23 — agency pivot*
+
+> **Supersedes** all prior self-serve GEO tool business model descriptions. Old $79/$189/$499 Discover/Build/Scale SKUs are retired. This is the canonical business model document for the done-for-you agency model.
+>
+> The legacy product specification (Discover/Build/Scale tiers, self-serve AI Runs) is archived in `docs/01-foundation/PRODUCT_SPECIFICATION.md` for historical reference only.
+
+---
+
+## Category
+
+**Done-for-you GEO agency, sold as a monthly subscription.** Beamix delivers AI search visibility improvements on behalf of customers — agents do the work, customers see outcomes. No tool to learn. No dashboard to manage. Results in the inbox.
+
+This is NOT a SaaS tool. Customers do not run the product. Beamix's agents run on their behalf, with customer approval for content publishes and external outreach.
+
+---
+
+## How it works
+
+1. **Free scan** — Customer scans their business (no account required). Sees where they rank (or don't) across AI engines. Top-of-funnel hook.
+2. **Discovery booking** — Scan page prompts a discovery call. Agent-led; Adam-led through customer #50.
+3. **Brand brief** — Discovery agent captures business context, voice, competitor landscape, priority queries.
+4. **Subscription checkout** — Customer selects tier (Starter/Growth/Scale/Professional) via Paddle. No contract. Cancel anytime.
+5. **Ongoing delivery** — Every week: agents execute deliverables (schema, citations, GEO content, FAQs, outreach emails). Customer approves content publishes via 1-click in weekly digest. Auto-publish for citations/schema/listings.
+6. **Weekly digest** — Email + dashboard summary: what was done, what moved, what's next.
+7. **Outcomes dashboard** — AI visibility score per engine, weekly wins, top winning queries, "how we got this" drill-down.
+8. **Refund or retain** — 60-day no-questions money-back if no movement. Customer keeps all work product.
+
+---
+
+## Pricing tiers (locked 2026-05-23, requires Adam sign-off to change)
+
+*Reversibility: irreversible once billed to customer. Paddle price_ids created per tier.*
+
+| Tier | Monthly price | Tier highlights |
+|------|--------------|-----------------|
+| Starter | $499/mo | 1 location, 3 engines, 25 prompts, 4 schema/mo, 2 FAQs, 5 citations, WP/Webflow/Shopify, 48h SLA |
+| Growth | $999/mo | 3 locations, 5 engines, 75 prompts, 12 schema, 6 FAQs, 15 citations, +Ghost/Squarespace/Wix paste, 24h SLA |
+| Scale | $1,499/mo | Unlimited locations, 7 engines, 200 prompts, 24 schema, 10 FAQs, 30 citations, 10 outreach emails/mo, +GBP/Yelp/Apple Maps/GTM, discovery call, 12h SLA |
+| Professional | $2,499/mo | Unlimited everything, 7+ custom engines, 500 prompts, unlimited schema, 16 FAQs, unlimited citations, 30 outreach, custom CMS, deep discovery + monthly strategy review, custom content briefs, priority queue, 4h SLA + Slack |
+
+Old pricing ($79/$189/$499) is retired. Any existing document referencing Discover/Build/Scale self-serve tiers is superseded by this entry.
+
+---
+
+## Revenue recognition model (held-revenue accounting)
+
+**Decision #8 (locked 2026-05-23):** Cash is held for the first 60 days (the refund window). Revenue is recognized on day 61 when the refund window closes.
+
+- MRR from months 1-2 per customer is deferred revenue until day 61.
+- COGS for months 1-2 are expensed when incurred.
+- Cash from months 1-2 sits in a designated cash reserve (not operating account).
+
+**Accounting implication:** The business shows COGS outflow before revenue recognition for each new customer cohort. This is expected — it represents deferred revenue, not a loss.
+
+---
+
+## Trial / refund mechanic
+
+**60-day no-questions money-back guarantee.** No contract. Month-to-month. Cancel in one click from dashboard.
+
+Five guardrails (locked 2026-05-23):
+1. Activation requirement: customer must complete 3-step onboarding (discovery call + property connect + first scan) to qualify for refund.
+2. Domain + business verification at signup. Hard ban on re-signups under new emails.
+3. Held-revenue accounting through day 60.
+4. First 100 customers = "Founding Member" cohort. If refund rate >= 25%, tighten to 30-day window. Track weekly.
+5. One-per-account rule. Refund-then-resubscribe = no second money-back window.
+
+Customer keeps all work product regardless of refund decision.
+
+---
+
+## Approval gates (decision #2, locked 2026-05-23)
+
+| Action type | Gate |
+|-------------|------|
+| Citations, listings, schema push, scans | Auto (no approval required) |
+| GEO content publishing, email-as-them, external outreach | 1-click approve in weekly digest |
+
+No customer action = no publish. The approval gate is both a legal protection and a trust mechanism.
+
+---
+
+## Push mechanism (decision #3, locked 2026-05-23)
+
+| Integration | Method |
+|-------------|--------|
+| WordPress, Shopify, Webflow, GBP, Yelp, Apple Maps, SendGrid sub-account, schema via GTM | Full auto via stable APIs |
+| Wix, Squarespace, custom CMS | Paste-ready with 1-click instructions |
+
+---
+
+## Business model category in market terms
+
+- **Not:** SaaS tool (customers don't manage agents or credits)
+- **Not:** Traditional agency (no human writers or account managers at scale)
+- **Is:** Agent-operated done-for-you subscription service. Revenue model is closest to a managed-service retainer, priced like SaaS, delivered by autonomous agents with human oversight at critical gates.
+
+Comparable done-for-you GEO retainers run $2,000-$8,000/mo industry standard (fact — research runs 2026-05-23). Beamix at $499-$1,499 sits 50-80% below market.
+
+---
+
+## Cost structure summary
+
+See `docs/09-metrics/UNIT_ECONOMICS.md` for full per-tier COGS breakdown.
+
+| Tier | Gross margin | Main COGS driver |
+|------|-------------|-----------------|
+| Starter | ~92.7% | Paddle fee ($25.45) + support labor (~$7.50) |
+| Growth | ~92.6% | Paddle fee ($50.45) + support labor (~$12.50) |
+| Scale | ~92.3% | Paddle fee ($75.45) + support labor (~$22.50) |
+| Professional | ~91.3% | Paddle fee ($125.45) + strategy review labor (~$30) |
+
+Blended gross margin: ~92.6% (assumed — LLM costs negligible; support labor is the scaling risk post-50 customers).
+
+---
+
+## Launch ICP (decision #10, locked 2026-05-23)
+
+Three verticals at launch:
+1. **B2B SaaS < $5M ARR** — 73% of buyers now use AI search; only 14% have mature AI-visibility strategy (fact — research run tasks/a98bc6df7d83e15e2, 2026-05-23)
+2. **Solo + small law firms** — Digital CPL $649-$784/lead (fact — research 2026-05-23); $1K-$3K/mo budget; YMYL trust premium makes AI citations high-value
+3. **Single-location dental practices** — Established habit of paying $800-$1,500/mo for local SEO (fact — research 2026-05-23)
+
+HVAC, real estate, DTC, non-dental healthcare: deferred to MVP+90.
+
+---
+
+## Beachhead motion (decision #13, locked 2026-05-23)
+
+Zero paid acquisition until customer #50. Channels in order:
+1. Adam LinkedIn + Israeli SMB warm intros + cold DMs to 50 named businesses per vertical (customers 1-10)
+2. "State of AI Search" report + 3 vertical blog posts/week (customers 11-20)
+3. Free scan link + vertical community engagement (customers 21-30)
+4. $500 referral credit for case-study customers (customers 31-50)
+5. Paid acquisition unlocked at customer #51 with case study proof
+
+---
+
+## Insurance requirement (decision #12, locked 2026-05-23)
+
+$1M general liability insurance required BEFORE customer #1 invoiced. Adam-blocker. See `docs/business/INSURANCE_PROCUREMENT_PLAN.md`.
+
+---
+
+## Key constraints
+
+- No auto-publish for content without explicit customer approval
+- No uptime SLA at launch (best-effort). Premium SLA defers to MVP+90.
+- Liability cap: 12-month fees paid. Customer indemnifies on 3rd-party claims from approved content.
+- Israel governing law.
+- All pricing changes require Adam sign-off and CEO routing (irreversible once Paddle price_ids are live).
+
+---
+
+*Reversibility: medium — pricing changes require Paddle price_id recreation + customer communication.*
+*Any pricing change requires Adam sign-off and routes via CEO.*
+
+---
+
+## Legacy specification
+
+The legacy product specification (Discover/Build/Scale tiers, self-serve AI Runs model) is preserved below this line for historical reference only. It does not reflect the current business model.
+
+---
 
 > **Last synced:** March 2026 — aligned with 03-system-design/
 

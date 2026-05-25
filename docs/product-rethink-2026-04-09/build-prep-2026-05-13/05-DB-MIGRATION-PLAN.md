@@ -1,6 +1,86 @@
 # Database Migration Plan — Hard Reset Strategy
 
-Resolves **P0-4 / P0-6** in `../10-PRE-BUILD-AUDIT.md`. With Adam's 2026-05-13 hard-reset decision, the migration strategy simplifies: the new Supabase project ships a clean schema with `plan_tier ∈ ('discover','build','scale')` only. No starter/pro/business values are ever created.
+*Updated 2026-05-23 — agency pivot. Fresh schema now incorporates the agency-pivot tables. plan_tier enum values changed.*
+
+Resolves **P0-4 / P0-6** in `../10-PRE-BUILD-AUDIT.md`. With Adam's 2026-05-13 hard-reset decision, the migration strategy simplifies: the new Supabase project ships a clean schema. **2026-05-23 update:** `plan_tier` enum is now `('starter','growth','scale','professional')` per agency-pivot decision #9. Old discover/build/scale values are killed before any product code ships.
+
+---
+
+## §0 Agency Pivot Schema Additions — 2026-05-23
+
+Add four new migration files to the existing sequence:
+
+```
+apps/web/supabase/migrations/
+  20260523_13_agency_pivot_core.sql       # brand_fingerprints, approval_queue, business_verifications, refund_ban_list (Wave 1)
+  20260523_14_agency_pivot_tracking.sql   # deliverables_per_customer_per_month, weekly_digests (Wave 2)
+  20260523_15_agency_pivot_revenue.sql    # revenue_events, refund_events, subscriptions held_until + held_revenue + founding_100 columns (Wave 2 — irreversible tier)
+  20260523_16_agency_pivot_publishing.sql # publishing_credentials, publishing_actions, publishing enums (Wave 3 — irreversible tier)
+```
+
+Each file's full DDL is in `docs/03-system-design/DATABASE_SCHEMA.md` §0 Agency Pivot Schema Delta.
+
+### Plan tier rename (BLOCKING)
+
+The base migration `20260520_02_enums.sql` (Wave 0 deliverable) must define:
+
+```sql
+CREATE TYPE plan_tier AS ENUM ('starter','growth','scale','professional');
+```
+
+NOT the old `('discover','build','scale')`. **Update Wave 0 worker 1 brief before they spawn.** If Wave 0 has already shipped with the old enum, add a fixup migration:
+
+```sql
+-- 20260523_17_plan_tier_rename.sql
+BEGIN;
+ALTER TYPE plan_tier RENAME TO plan_tier_old;
+CREATE TYPE plan_tier AS ENUM ('starter','growth','scale','professional');
+ALTER TABLE subscriptions
+  ALTER COLUMN plan_tier TYPE plan_tier
+  USING (
+    CASE plan_tier::text
+      WHEN 'discover' THEN 'starter'::plan_tier
+      WHEN 'build' THEN 'growth'::plan_tier
+      WHEN 'scale' THEN 'scale'::plan_tier
+      ELSE 'starter'::plan_tier
+    END
+  );
+DROP TYPE plan_tier_old;
+COMMIT;
+```
+
+### Agent type enum additions (Wave 1)
+
+```sql
+-- 20260523_18_agent_type_additions.sql
+ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'discovery';
+ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'brand_brief_manager';
+ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'approval_gate_writer';
+ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'digest_writer';
+ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'customer_success';
+ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'publisher';
+ALTER TYPE agent_type ADD VALUE IF NOT EXISTS 'strategy';
+```
+
+### Tables retained but de-customer-faced
+
+These tables stay in the schema but lose customer RLS read policies (service-role only for internal use):
+- `credit_pools`, `credit_transactions` — internal cost tracking
+- `agent_jobs`, `agent_outputs`, `recommendations` — agent execution telemetry
+- `inbox_items`, `archive_items` — DEPRECATED. Wave 1 migration moves remaining data into `approval_queue` + `publishing_actions`, then drops these tables.
+
+### Migration risk tiers
+
+| Migration file | Risk tier |
+|---|---|
+| `20260523_13_agency_pivot_core.sql` | Full |
+| `20260523_14_agency_pivot_tracking.sql` | Full |
+| `20260523_15_agency_pivot_revenue.sql` | Irreversible — Adam sign-off (money flow) |
+| `20260523_16_agency_pivot_publishing.sql` | Irreversible — Adam sign-off (encrypted credentials) |
+| `20260523_17_plan_tier_rename.sql` (if needed) | Irreversible — Adam sign-off |
+| `20260523_18_agent_type_additions.sql` | Lite |
+
+All Irreversible migrations run on staging first, validated for 7 days, then production via Supabase CLI (per `MEMORY.md` `project_supabase_cli_db_workflow`).
 
 ---
 

@@ -4,6 +4,85 @@
 
 ---
 
+### [2026-05-24] — CEO ratifies 5 cross-team sub-decisions from agency pivot
+
+**Decision:** After all four C-suite leads (CPO/CMO/CBO/CTO) completed the agency-pivot dispatch on 2026-05-23, they surfaced 5 sub-decisions outside the original 15 locked in the grill session. CEO ratifies all 5 under user authorization ("run your part"). All 5 are downstream-actionable by Build-Lead, Design-Lead, and ai-engineer workers in the coming wave dispatches.
+
+**5 ratified sub-decisions:**
+
+1. **North star metric = Month-3 retention rate** (CBO recommendation). Replaces free-scan completion. Justified by 45–90 day GEO time-to-result reality: a free-scan-completion metric rewards a top-of-funnel signal that doesn't predict revenue retention. Month-3 retention validates the 60-day money-back guarantee economically and forces the org to optimize for sticky outcomes. Target: 80% base, 70% watch trigger, 88% pricing-power signal. **Reversibility: easy** (dashboard metric swap).
+
+2. **Wave 3 (publishing integrations) sequenced AFTER Wave 2 ships to customer #1, NOT in parallel** (CTO decision A10). Justified by dependency chain: publishing integrations against real customer properties require approval_queue + held_revenue_accounting + audit trail to be live first. Sequential reduces blast-radius risk. Flips to parallel only if customer #1 books before Wave 2 completes (acceptable degradation). **Reversibility: easy** (sequencing call, not code).
+
+3. **Strategy agent runs on Opus 4.7** (CPO decision). For Professional tier $2,499/mo monthly strategy review. Justified by heaviest reasoning workload (90-day multi-source synthesis across visibility scans + customer brand brief + competitor moves + content performance); cadence is monthly so cost per customer per month stays under $1; $2,499 ACV absorbs trivially. Conforms to locked model routing rule (Sonnet default, Opus for orchestration/planning/synthesis/design). **Reversibility: easy** (model swap).
+
+4. **YMYL always-human approval gate** across Brand-Brief Manager, Approval-Gate Writer, Customer Success, Strategy agents (CPO decision). When YMYL (Your Money Your Life — health, legal, financial) content is detected in customer brand brief or generated artifact, gating-rules force human approval regardless of tier defaults. YMYL fields are unwriteable by system_inferred source. Justified by Beamix's 3-vertical launch ICP (B2B SaaS + Legal + Dental) where 2 of 3 are YMYL-adjacent. Liability protection layered with the $1M E&O insurance. **Reversibility: hard once published** — but right call.
+
+5. **Publishing actions = Irreversible QA tier** (CTO decision A9). Every PR touching `apps/web/src/lib/publishing/<platform>/` triggers Full QA + multi-judge + Adam sign-off. Codified in `.claude/qa-tier-floor.yml`. Justified by real-world side effects on customer external systems (customer site, GBP, email-as-them, citation networks) — defaultable rollback in some cases (WP post deletion) but not all (sent emails, claimed citations). Defense-in-depth on the highest-blast-radius surface. **Reversibility: easy** (YAML entry).
+
+**Provenance:**
+- Sub-decisions 1, 2, 3, 4 surfaced in respective C-suite session files (2026-05-23-{cbo, cto, cpo}*.md)
+- Sub-decision 5 codified in CTO architectural decisions A8 + A9 (see 2026-05-23-cto-agency-pivot-wave-rescope.md)
+- Ratification authorized by user instruction "run your part" 2026-05-24
+
+**Session file:** `docs/08-agents_work/sessions/2026-05-23-ceo-agency-pivot-grill.md` (open decisions list updated to reflect ratifications)
+
+---
+
+### [2026-05-23] — CBO — Agency pivot financial documentation + north star + ToS draft
+
+**Decision:** CBO session completing financial documentation for the 2026-05-23 agency pivot. Six existing docs rewritten, three new operational files created.
+
+**Sub-decisions locked:**
+1. **North star metric = Month-3 retention rate.** Replaces free-scan completion. Justified by 45-90 day GEO time-to-result. Target: 80% base, 70% watch trigger, 88% pricing-power signal. Reversibility: easy.
+2. **Blended gross margin = 92.6% central case.** Derived from per-tier COGS model (Paddle fee = fact; LLM/support COGS = assumed). Break-even refund rate ~52% across all tiers. Reversibility: easy (model update with cohort data).
+3. **Founding-100 12% refund case = $27,058 cash at risk.** Worst-case (100% refund) = $194,603. Both are manageable without external funding. Reversibility: easy (planning model). *(Corrected 2026-05-24 from $26,762 / $192,383 per QA-Lead PR #84 finding — Growth tier 60-day refund exposure was off by 1 month of COGS.)*
+4. **Insurance procurement: $1M GL + $500K-$1M E&O, expected $800-$2,150/year.** Provider shortlist: Hibub first, then Phoenix. Adam-blocker before customer #1. Reversibility: easy.
+5. **ToS v1 draft created.** All 15 required clauses. Marked DRAFT — requires Israeli lawyer review before publication. Liability cap = 12 months fees paid. Customer indemnification clause included. Reversibility: hard once published + customer #1 accepts.
+6. **Product SPECIFICATION.md is now legacy reference only.** BUSINESS_MODEL.md supersedes all $79/$189/$499 references. CPO to add deprecation notice to PRODUCT_SPECIFICATION.md in separate session.
+
+**Confidence:** MEDIUM — all COGS assumed; upgrades to HIGH at month 3 with first 10+ customer cost logs.
+
+**Session file:** `docs/08-agents_work/sessions/2026-05-23-cbo-agency-pivot-financials.md`
+
+**Files edited:** docs/09-metrics/UNIT_ECONOMICS.md, docs/09-metrics/NORTH_STAR.md, docs/09-metrics/GROWTH.md, docs/01-foundation/BUSINESS_MODEL.md, docs/01-foundation/TARGET_MARKET.md, docs/product-rethink-2026-04-09/18-LEGAL-PUBLISHING-PLAN.md
+
+**Files created:** docs/09-metrics/UNIT_ECONOMICS_TIER_MODEL.md, docs/legal/TERMS_OF_SERVICE_v1_DRAFT.md, docs/business/INSURANCE_PROCUREMENT_PLAN.md
+
+---
+
+### [2026-05-23] — AGENCY PIVOT — 15 locked decisions from "grill me" session
+
+**Decision:** Pivot Beamix from a self-serve GEO tool ($79/$189/$499) to a done-for-you GEO agency ($499/$999/$1,499/$2,499) that hides agent names from customers and shows outcomes + traceability. Decisions locked in interactive grill session with research backing from 2 async research-lead runs (ICP/TTR/pricing/WTP + competitor mechanic + empirical conversion data).
+
+**15 locked decisions:**
+
+1. **Business model:** Done-for-you SaaS — self-serve checkout + agent-led onboarding + light dashboard + real publishing on customer's behalf
+2. **Approval gates:** Tiered — auto for citations/listings/schema/scans; 1-click approve in digest for content publishing, email-as-them, external outreach
+3. **Push mechanism:** Hybrid — full auto on stable APIs (WordPress, Shopify, Webflow, GBP, Yelp, Apple, SendGrid sub-account, schema via GTM); paste-ready 1-click instructions on Wix/Squarespace/custom CMS
+4. **Onboarding:** Agent discovery call day 1; Adam reviews/approves every brand brief through customer #50
+5. **Service scope:** GEO-only — schema, citations, GBP/listings, GEO-tuned content, AI-engine corpora, multi-engine visibility tracking. Not general SEO, paid ads, social, email marketing.
+6. **Tier strategy:** Free scan → discovery → tiered subscription. Old $79/$189/$499 SKUs killed. One product, one funnel.
+7. **Customer dashboard:** Outcomes + traceability — visibility score per engine, weekly wins, top winning queries, approval queue, weekly digest archive, plus "how we got this" drill-down. No agent names, no credit counters, no raw scan tooling.
+8. **Trial/refund mechanic:** 60-day no-questions money-back, month-to-month, no contract, one-click cancel in dashboard, customer keeps work product. Guardrails: activation requirement, domain+business verification, held-revenue accounting through day 60, first-100 "Founding Member" cohort cap, one-per-account refund rule.
+9. **Pricing tiers:** Starter $499 / Growth $999 / Scale $1,499 / Professional $2,499. Professional includes Adam-led monthly strategy review through customer #50, then agent-handled.
+10. **Launch ICP:** 3 verticals — B2B SaaS <$5M ARR + Solo/small law firms + Single-location dental. HVAC, real estate, DTC, healthcare-non-dental deferred to MVP+90. Three vertical-specific landing pages + discovery scripts.
+11. **Tier spec baseline:** locked deliverable matrix per tier (locations, engines tracked, prompts/engine, schema/mo, FAQs/mo, citations/mo, outreach emails, publishing integrations, SLA) — see session file.
+12. **Liability + SLA:** Standard SaaS — 12-month fees-paid liability cap, customer warrants property ownership, customer approves all content publishes, $1M general liability insurance, customer indemnifies on 3rd-party claims. No uptime SLA at launch (best-effort). Premium SLA defers to MVP+90.
+13. **Beachhead motion (customers 1–50):** Warm network + content + referral incentive. Adam personal LinkedIn + Israeli SMB warm intros + cold DMs to 50 named businesses/vertical. Then "State of AI Search" report + 3 vertical blog posts/week. Then $500 referral credit. Zero paid until customer #50 case studies exist.
+14. **Engineering sequencing:** Layer onto existing Wave 0/0.5/1/2. Waves 0+0.5 unchanged. Wave 1 rescoped (brand-fingerprint + discovery, free-scan→booking, outcomes dashboard v1, approval queue). Wave 2 rescoped (deliverables tracking + tier gates, digest, held-revenue accounting). Wave 3 NEW (publishing integrations matrix).
+15. **Customer-facing agent fleet:** 7 new (Discovery, Brand-brief manager, Approval-gate writer, Digest writer, Customer success, Publisher, Strategy) + 4 repurposed (Content/FAQ, Schema, Citation, Visibility tracker) + 1 kept (Competitor intelligence, de-emphasized).
+
+**Research provenance:** 2 async research-lead runs 2026-05-23 — `tasks/a98bc6df7d83e15e2` (ICP/TTR/pricing/WTP, 4 researchers Q1–Q4) + `tasks/a4684aa23fdeb01f7` (competitor mechanic table + empirical conversion data). Key citations: Quicksprout 12% money-back refund rate, Footbridge Media 90-day analog, Profound $1B Series C, B2B SaaS AI-buyer stats (73% / 51% / 14%), legal CPL $649–$784, Jay Abraham risk-reversal specificity.
+
+**Marketing copy locked:** EN "If we don't move your AI search visibility in 60 days, you don't pay. No questions, no phone tree, no contract. Cancel in one click." HE "60 ימים. אם לא הצלחנו לקדם אותך — כסף חזרה, בלי שאלות."
+
+**Next dispatch:** CPO writes 7 agent PRDs + tier-spec PRD; CMO writes 3 vertical landing pages + pricing copy + "State of AI Search" report outline + drafts the discovery DM templates; CBO models unit economics per tier and procures $1M general liability insurance + drafts ToS; CTO rescopes Wave 1+2 and writes Wave 3 brief.
+
+**Session file:** `docs/08-agents_work/sessions/2026-05-23-ceo-agency-pivot-grill.md`
+
+---
+
 ### [2026-05-16] — BOARD VERDICT on agent rethink — SHIP with hard scope reduction + 5-day cap
 
 **Decision:** The 6-persona board meeting (Visionary, Strategist, Architect, Risk-Modeler, Customer-Voice, Broad-Adversary) reviewed the agent rethink plan in 4 rounds (R0 framings, R1 independent, R2 cross-critique, R3 synthesis). Adam accepted the synthesis 2026-05-16.

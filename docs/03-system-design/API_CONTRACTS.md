@@ -1,9 +1,136 @@
-# Beamix — System Architecture Layer
+# Beamix — API Contracts
 
 > **Author:** Atlas (CTO)
-> **Date:** 2026-03-04
-> **Scope:** Complete system architecture for the Beamix GEO Platform — database, APIs, data flow, infrastructure, security, caching, and connections between all layers.
-> **Audience:** Engineering team building this system. Every design decision is justified. No code snippets. No pricing. No timelines.
+> **Date:** 2026-03-04 *(Updated 2026-05-23 — agency pivot)*
+> **Scope:** Customer-facing API contracts. Internal-only endpoints documented separately.
+> **Audience:** Engineering team. Every endpoint has a Zod schema, an auth requirement, a rate-limit budget, and a risk tier.
+
+---
+
+## §0 Agency Pivot API Delta — 2026-05-23
+
+*Authoritative. Endpoints added below; endpoints flagged DEPRECATED in §0.3 remain in code only as internal/admin endpoints — they MUST NOT be exposed at customer-facing paths after Wave 1 ships.*
+
+### 0.1 New customer-facing endpoints
+
+All return outcome-shaped DTOs. No endpoint returns agent names (engineering principle 9). All require Supabase Auth except where noted.
+
+#### Discovery flow (Wave 1)
+
+| Method | Path | Auth | Rate limit | Risk tier | Purpose |
+|---|---|---|---|---|---|
+| POST | `/api/discovery/book` | none (free-scan token) | 10/IP/hr | Full | Books discovery call from free-scan result page. Body: `{ free_scan_id, name, email, preferred_time_window, phone? }`. Returns `{ booking_id, confirmation_token }` + sends confirmation email. |
+| POST | `/api/discovery/start` | auth (customer) | 5/customer/day | Full | Begins agent-led discovery session. Returns `{ session_id, first_question }`. Internal: spawns Discovery agent. |
+| POST | `/api/discovery/submit` | auth | 10/customer/hr | Full | Submits a discovery answer or completes the session. Body: `{ session_id, answer, is_final }`. Returns `{ next_question }` or `{ brand_fingerprint_summary, requires_adam_review }`. |
+| GET | `/api/brand/me` | auth | 30/customer/hr | Lite | Returns the customer's brand fingerprint (their own only, redacted of internal fields). |
+
+#### Approval queue (Wave 1 shell, Wave 2 + 3 active)
+
+| Method | Path | Auth | Rate limit | Risk tier | Purpose |
+|---|---|---|---|---|---|
+| GET | `/api/approval/queue` | auth | 60/customer/hr | Full | Returns approval queue for current customer. Filterable by `state`, `kind`. Outcome-shaped DTOs only. |
+| GET | `/api/approval/:id` | auth OR signed token | 60/hr | Full | Single approval item with diff view payload. Token auth supports 1-click email flow. |
+| POST | `/api/approval/:id/approve` | auth OR signed token | 60/customer/hr | Full | Flips state to `approved`. Triggers publish worker. Idempotent. |
+| POST | `/api/approval/:id/reject` | auth OR signed token | 60/customer/hr | Full | Flips state to `rejected`. Logs reason if provided. |
+| POST | `/api/approval/:id/edit` | auth | 30/customer/hr | Full | Edit-and-approve combo. Body: `{ edits }` applied to resource, then state to `approved`. |
+
+#### Outcomes dashboard (Wave 1)
+
+| Method | Path | Auth | Rate limit | Risk tier | Purpose |
+|---|---|---|---|---|---|
+| GET | `/api/dashboard/outcomes` | auth | 30/customer/hr | Full | Returns visibility score per engine, weekly wins, top winning queries, deliverables-used vs tier-cap, approval-queue counts. ALL outcome-shaped. NO agent names. |
+| GET | `/api/dashboard/score-history` | auth | 60/customer/hr | Lite | Per-engine score history, last 90 days. |
+| GET | `/api/dashboard/wins` | auth | 60/customer/hr | Lite | Top wins this week (mention deltas, ranking gains). |
+| GET | `/api/dashboard/trail/:resource_id` | auth | 60/customer/hr | Full | "How we got this" drill-down — chain of scan + publish + visibility change. Internal agent identity redacted. |
+
+#### Weekly digest (Wave 2)
+
+| Method | Path | Auth | Rate limit | Risk tier | Purpose |
+|---|---|---|---|---|---|
+| GET | `/api/digest/latest` | auth | 30/customer/hr | Lite | Returns most recent digest. |
+| GET | `/api/digest/archive` | auth | 30/customer/hr | Lite | Paginated digest history. |
+| GET | `/api/digest/:id/view` | signed token | 60/hr | Lite | Email-link landing; same payload as `/api/digest/latest` for that week. |
+
+#### Publishing (Wave 3)
+
+| Method | Path | Auth | Rate limit | Risk tier | Purpose |
+|---|---|---|---|---|---|
+| POST | `/api/publish/:platform/:resource` | internal (service role) | n/a | Irreversible | Internal endpoint — fires the BasePublisher.publish for that platform. Not called by browser. Called by Inngest publisher worker after approval. |
+| POST | `/api/integrations/:platform/connect/start` | auth | 5/customer/hr | Full | Begins OAuth flow. Returns `{ redirect_url, state }`. |
+| GET | `/api/integrations/:platform/connect/callback` | auth + state token | 5/customer/hr | Full | OAuth callback. Stores encrypted token in `publishing_credentials`. |
+| POST | `/api/integrations/:platform/disconnect` | auth | 10/customer/hr | Full | Revokes token at platform + sets credential status to `revoked`. |
+| GET | `/api/integrations/health` | auth | 30/customer/hr | Lite | Health status per connected platform. |
+| POST | `/api/publish/:action_id/rollback` | auth + Adam approval | 5/customer/day | Irreversible | Customer-initiated undo. Only available where `publishing_actions.undo_endpoint IS NOT NULL`. |
+
+#### Billing + held-revenue (Wave 2)
+
+| Method | Path | Auth | Rate limit | Risk tier | Purpose |
+|---|---|---|---|---|---|
+| POST | `/api/billing/refund` | auth | 1/customer/day | Irreversible (Adam sign-off in code path) | 1-click cancel + refund within 60-day window. Triggers Paddle refund + writes `refund_events` + sets `held_until=now()`. |
+| GET | `/api/billing/status` | auth | 30/customer/hr | Lite | Returns subscription state, held_until, days remaining in money-back window, founding_100 flag. |
+
+#### Verification (Wave 2)
+
+| Method | Path | Auth | Rate limit | Risk tier | Purpose |
+|---|---|---|---|---|---|
+| POST | `/api/verify/domain` | auth | 5/customer/day | Full | Triggers domain verification run. Returns `{ verification_id, status }`. |
+| GET | `/api/verify/:id` | auth | 30/customer/hr | Lite | Poll for verification status. |
+
+### 0.2 Webhook handlers (server-to-server)
+
+| Path | Source | Auth | Risk tier | Purpose |
+|---|---|---|---|---|
+| `/api/webhooks/paddle` | Paddle | HMAC signature | Irreversible | `transaction.completed` → revenue_events row + held_until set. `transaction.refunded` → refund_events row. |
+| `/api/webhooks/sendgrid` | SendGrid | signed | Full | Bounce, complaint, delivery events per subuser. |
+| `/api/webhooks/shopify` | Shopify | HMAC | Full | `app/uninstalled`, theme change, etc. |
+| `/api/webhooks/wp-plugin` | Beamix WP plugin | shared secret + HMAC | Full | Plugin heartbeat, connection health. |
+
+### 0.3 Endpoints DEPRECATED (deleted or rebranded as internal)
+
+The following endpoints from the tool-product era are deprecated. They MUST NOT exist as customer-facing routes after Wave 1 ships. Where logic is still needed for internal agent execution, move to `/api/internal/*` (service-role authenticated only) and remove from any client-facing TypeScript route file.
+
+| Old endpoint | Status | Action |
+|---|---|---|
+| `POST /api/agents/run` | DEPRECATED | Agents now run autonomously via Inngest crons. Remove route. |
+| `POST /api/agents/:type/execute` | DEPRECATED | Same as above. |
+| `GET /api/credits` | DEPRECATED | Credit-pool UI is killed. If internal cost telemetry needs it, move to `/api/internal/credits` (admin only). |
+| `POST /api/recommendations/:id/run` | DEPRECATED | Recommendations are internal agent input now. Remove route. |
+| `GET /api/scan/start` (anonymous tool flow) | RETAINED for free-scan page | Keep — but post-scan CTA changes to discovery booking, not signup. |
+| `GET /api/onboarding/complete` (with `?scan_id=` import) | DEPRECATED | Free-scan → discovery-booking funnel replaces the scan-import flow. Old onboarding route removed. |
+| `POST /api/inbox/:id/approve` | DEPRECATED | Replaced by `/api/approval/:id/approve` with new payload shape. |
+| `POST /api/inbox/:id/edit` | DEPRECATED | Replaced by `/api/approval/:id/edit`. |
+
+### 0.4 DTO shape rules (engineering principle 9 enforcement)
+
+Every customer-facing response that mentions an action MUST use the outcome-shaped DTO:
+
+```ts
+type OutcomeDTO = {
+  resource: {
+    type: 'schema_push' | 'content_publish' | 'citation_submit' | 'listing_update' | 'outreach_email' | 'faq_published'
+    target_platform?: PublishingPlatform
+    target_url?: string
+    summary: string                       // human-readable, agent-name-free
+  }
+  status: 'pending_approval' | 'queued' | 'in_progress' | 'completed' | 'failed' | 'rolled_back'
+  evidence_url?: string                    // link to "how we got this" trail
+  approval_required: boolean
+  acted_at?: string                        // ISO timestamp
+}
+```
+
+**Code review enforcement:** any new API handler returning a response object containing the keys `agent_id`, `agent_name`, `agent_type`, or values matching `/Discovery|Brand|Approval|Digest|Publisher|Strategy|Customer Success|FAQ|Schema|Citation|Visibility|Competitor/i` triggers a Full-tier QA block.
+
+### 0.5 Rate limits + Cloudflare
+
+All customer-facing endpoints use `@upstash/ratelimit` with per-customer + per-IP windows. Webhook endpoints are exempt (idempotency keys + signature verification provide protection). Free-scan + discovery-book endpoints use Cloudflare Turnstile (already in stack per Wave 1 security checklist).
+
+### 0.6 Auth contract
+
+- Customer endpoints: Supabase Auth JWT in `Authorization: Bearer <jwt>` header.
+- Internal endpoints (`/api/internal/*` and `/api/publish/:platform/:resource`): Supabase service-role key in `x-supabase-service-key` header; route-level guard rejects non-service callers.
+- Signed-token endpoints (approval, digest view): HS256 signed token, 7-day TTL, single-use claim verification stored in `approval_tokens_consumed` table.
+- Adam-only admin: allowlist on email in JWT claims.
 
 ---
 

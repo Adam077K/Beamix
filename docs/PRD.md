@@ -1,12 +1,11 @@
 # Beamix PRD — Master Document
 
-> **Version:** 4.0
-> **Date:** 2026-04-15
-> **Status:** April 2026 Product Rethink — supersedes v3.1 (March 2026)
-> **Authoritative source:** `docs/product-rethink-2026-04-09/` (9 files)
+> **Version:** 5.0
+> **Date:** 2026-05-23
+> **Status:** Agency Pivot — supersedes v4.0 (April 2026 rethink)
+> **Authoritative source:** `.claude/memory/DECISIONS.md` 2026-05-23 entry + `docs/08-agents_work/sessions/2026-05-23-ceo-agency-pivot-grill.md`
 
-> Product Requirements Document for Beamix, the GEO Platform for SMBs.
-> This is the master index. Each section has a dedicated document with full detail.
+> *Updated 2026-05-23 — agency pivot.* Beamix is no longer a self-serve GEO tool. It is a **done-for-you GEO agency** delivered as software. Customers pay $499–$2,499/mo for outcomes; agents run in the background, invisible to the customer.
 >
 > **Repository:** https://github.com/Adam077K/Beamix
 
@@ -16,289 +15,306 @@
 
 | Document | Purpose | Location |
 |----------|---------|----------|
-| **Board Decisions (April 2026)** | All approved decisions: pricing, agents, UX, interaction model | `docs/product-rethink-2026-04-09/05-BOARD-DECISIONS-2026-04-15.md` |
-| **Pricing v2** | Tier breakdown, credit model, COGS, margin scenarios | `docs/product-rethink-2026-04-09/06-PRICING-V2.md` |
-| **Agent Roster v2** | 11 agent specs, model routing, GEO lever coverage | `docs/product-rethink-2026-04-09/07-AGENT-ROSTER-V2.md` |
-| **UX Architecture** | Dashboard pages, flows, interaction models, technical foundation | `docs/product-rethink-2026-04-09/08-UX-ARCHITECTURE.md` |
-| **Strategic Foundation** | Vision, customer, market, brand, differentiators | `docs/01-foundation/VISION.md` |
-| **Engineering Principles** | Code conventions, tech stack decisions, git workflow | `docs/ENGINEERING_PRINCIPLES.md` |
-| **Backlog** | Current blockers, Wave 2 queue, Wave 3 growth items | `docs/BACKLOG.md` |
+| **DECISIONS.md (2026-05-23 entry)** | 15 locked agency-pivot decisions | `.claude/memory/DECISIONS.md` |
+| **Agency Pivot Session File** | Full grill session synthesis + tier matrix | `docs/08-agents_work/sessions/2026-05-23-ceo-agency-pivot-grill.md` |
+| **Pricing v2 (RETIRED + new tiers)** | New 4-tier matrix (Starter/Growth/Scale/Professional) | `docs/product-rethink-2026-04-09/06-PRICING-V2.md` |
+| **Product Vision (updated)** | Done-for-you agency category framing | `docs/product-rethink-2026-04-09/03-PRODUCT-VISION.md` |
+| **Customer-Facing Agent Roster (updated)** | 7 new + 4 repurposed + 1 kept agents | `docs/product-rethink-2026-04-09/07-AGENT-ROSTER-V2.md` |
+| **UX Architecture (updated)** | Outcomes dashboard, approval queue, digest archive | `docs/product-rethink-2026-04-09/08-UX-ARCHITECTURE.md` |
+| **Personas (updated)** | 3 launch ICPs: B2B SaaS / Solo Lawyer / Single-Location Dental | `docs/01-foundation/PERSONAS.md` |
+| **Vision narrative (updated)** | Strategic framing of the done-for-you category | `docs/01-foundation/VISION.md` |
+| **Engineering Principles** | Code conventions, tech stack decisions | `docs/ENGINEERING_PRINCIPLES.md` |
+| **Roadmap (Wave 0/0.5/1/2 + new Wave 3)** | Engineering sequencing post-pivot | `docs/04-features/ROADMAP.md` |
 
 ---
 
-## Executive Summary
+## Executive Summary *(Updated 2026-05-23 — agency pivot)*
 
 ### What Is Beamix?
 
-Beamix scans your business, shows you where you're invisible in AI search, then its agents do the work to fix it.
+Beamix is a **done-for-you AI search visibility agency** delivered as software. Customers pay a monthly subscription; Beamix's agent fleet does the GEO work in the background — schema, citations, content, listings, outreach — and pushes results live with tiered approval gates. The customer sees outcomes (visibility score per engine, queries won, weekly wins), not tools.
 
 ### The Problem
 
-People no longer search only on Google. They ask ChatGPT, Gemini, Perplexity, and Claude for recommendations. When someone asks "best insurance company in Tel Aviv" — if you're not mentioned, you don't exist. SMB owners are losing leads and don't know why.
+People search inside ChatGPT, Gemini, Perplexity and Claude before they ever see Google. SMB owners and B2B SaaS founders are losing pipeline because they're invisible in AI search and don't know it. The tools that exist (Profound, Athena HQ, Otterly) show dashboards. Agencies that do the work charge $2,000–$8,000/mo. Nothing exists in the middle.
 
 ### The Solution
 
-A closed-loop proactive system:
-1. **Scan:** Query AI engines with targeted prompts across the business's query landscape
-2. **Suggest:** Rules engine evaluates scan findings and populates a suggestions queue
-3. **Approve:** User reviews and approves suggested actions
-4. **Run:** Agents execute in background — content, schema, off-site presence, strategy
-5. **Review:** Output lands in Inbox — user reviews, edits, approves, then publishes
-6. **Measure:** Performance Tracker compares before/after on each action
+A done-for-you GEO operation, priced like SaaS, run by agents, with humans only in the loop where approval is required:
+
+1. **Free scan** shows the visibility gap (no signup, no email).
+2. **Discovery call** (agent-led) maps the brand, services, market, and approval preferences into a **brand fingerprint**.
+3. **Subscription starts.** Agents start delivering schema, citations, listings, content, outreach.
+4. **Tiered approval gates:** auto-publish for schema, citations, listings, scans; 1-click approve in the weekly digest for content, email-as-them, external outreach.
+5. **Outcomes dashboard:** per-engine visibility score, weekly wins, top winning queries, approval queue, weekly digest archive, "how we got this" drill-down trail.
+6. **60-day no-questions money-back.** If we don't move your AI search visibility in 60 days, you don't pay.
 
 ### The Differentiator
 
-Every competitor builds dashboards. Beamix does the work.
+Every competitor builds dashboards. Every agency charges $2K–$8K. Beamix is the **done-for-you category leader at SMB pricing** — outcomes, not tools, at $499–$2,499/mo.
 
 | What competitors do | What Beamix does |
 |---|---|
-| "You rank #7 in ChatGPT" | "Here's the content that will fix that — approve it to go." |
-| $200–500/month entry price | $79/month Discover tier |
-| 30-day delay before insights | Value on day 1 with free scan |
-| Built for agencies | Built for the business owner |
-| 1 LLM model for content + QA | Cross-model QA pipeline (Haiku checks Sonnet/Opus output) |
+| "You rank #7 in ChatGPT" (Profound, Athena, Otterly) | Schema landed. 3 citations placed. 2 articles published. Visibility +14 points. |
+| $2,000–$8,000/mo agency retainer | $499–$2,499/mo software subscription |
+| 30–60 day setup with PM, designer, copywriter | Discovery call day 1 + first deliverables in week 1 |
+| Builds a dashboard for the customer to operate | Operates on behalf of the customer; customer sees outcomes |
+| Locks customer into 6–12 month contract | Month-to-month + 60-day money-back |
 
 ---
 
-## Customer
+## Customer *(Updated 2026-05-23 — 3 launch ICPs)*
 
-**Primary:** Non-technical marketing managers and business owners at SMBs (5–200 employees) in Israel and globally.
+**Launch ICPs (3 verticals):**
 
-**Key traits:** Time-poor, budget-conscious, forward-thinking about AI, wants results not dashboards.
+1. **B2B SaaS founder / VP marketing at companies < $5M ARR** — 73% of buyers use AI in evaluation; 51% start in AI chatbot vs Google; only 14% have a mature AI-visibility strategy. CAC pressure makes "be in the chatbot answer" the highest-leverage growth lever.
+2. **Solo lawyer or managing partner at small law firm** — highest digital CPL of any industry ($649–$784); $1K–$3K/mo legal-marketing budget is standard; YMYL trust premium means AI-mention drives qualified intake. Ethics-aware approval gate is core requirement.
+3. **Owner-dentist at single-location practice** — established habit of paying $800–$1,500/mo for local SEO; GBP + listing + review workflow already understood; AI-search overlay is incremental, not new behavior.
 
-**Primary market:** Israel (Hebrew + English)
-**Secondary:** Global English-speaking (US expansion by month 2 post-launch)
+**Deferred to MVP+90:** HVAC/plumbing, real estate, DTC e-commerce, non-dental healthcare.
+
+**Primary market:** Israel + US (Hebrew + English from day 1).
 
 ---
 
-## Product Overview
+## Product Overview *(Updated 2026-05-23 — agency pivot)*
 
-### Subscription Tiers
+### Subscription Tiers (4 tiers — RETIRED Discover/Build/Scale)
 
-| | Free Scan | Discover | Build | Scale |
+| | **Starter** | **Growth** | **Scale** | **Professional** |
 |---|---|---|---|---|
-| **Price** | $0 | $79/mo | $189/mo | $499/mo |
-| **Annual** | N/A | $63/mo | $151/mo | $399/mo |
-| **Tracked queries** | 0 | 15 | 50 | 200 |
-| **AI Runs/month** | 0 | 25 | 90 | 250 |
-| **Scan frequency** | One-time | Weekly | Daily | Daily (priority) |
-| **AI engines** | 4 (Phase 1) | 3 | 7 | 9+ |
-| **Competitors tracked** | 0 | 3 | 5 | 20 |
-| **Trial** | N/A | 14-day money-back | 14-day money-back | 14-day money-back |
+| **Price** | $499/mo | $999/mo | $1,499/mo | $2,499/mo |
+| **Locations** | 1 | 3 | Unlimited | Unlimited |
+| **AI engines tracked** | 3 | 5 | 7 | 7 + custom |
+| **Prompts tracked per engine** | 25 | 75 | 200 | 500 |
+| **Schema deployments/mo** | 4 | 12 | 24 | Unlimited |
+| **FAQs published/mo** | 2 | 6 | 10 | 16 |
+| **Citations placed/mo** | 5 | 15 | 30 | Unlimited |
+| **Outreach emails/mo** | — | — | 10 | 30 |
+| **Publishing integrations** | WordPress, Webflow, Shopify | + Ghost, Squarespace, Wix paste-ready | + GBP, Yelp, Apple Maps, schema via GTM | + Custom CMS |
+| **Discovery** | Self-guided | Self-guided | Discovery call | Deep discovery + monthly strategy review |
+| **SLA** | 48h | 24h | 12h | 4h + Slack |
+| **Money-back** | 60-day | 60-day | 60-day | 60-day |
 
-**Notes:**
-- `plan_tier` DB values: `'discover' | 'build' | 'scale'` — no `'free'` tier value (free tier = null)
-- Annual toggle defaults ON on the pricing page. Build is the highlighted/recommended tier.
-- Previous tiers (Starter/Pro/Business at $49/$149/$349) are retired.
-- 7-day trial is retired. Replaced by 14-day money-back guarantee (no credit cap, plain refund).
-- Top-up pack: $19 one-time for 10 extra AI Runs (Paddle one-time product, not a subscription).
-
-### AI Runs (Credit Model)
-
-1 AI Run = 1 agent execution. No variable pricing within a tier.
-
-| Cost | Agents |
-|------|--------|
-| **Free (unlimited, daily-capped)** | Schema Generator, FAQ Builder, Off-Site Presence Builder, Performance Tracker |
-| **1 Run** | Query Mapper, Freshness Agent, Reddit Presence Planner |
-| **2 Runs** | Content Optimizer, Review Presence Planner, Entity Builder |
-| **3 Runs** | Authority Blog Strategist (Build and Scale only) |
-
-Daily caps (Discover / Build / Scale): Schema 20/20/20 · FAQ 3/5/10 · Off-Site 3/5/10 · Performance Tracker: unlimited.
-
-Rollover: 20% of unused runs carry to next month (5 max on Discover, 18 max on Build, 50 max on Scale).
-
-### AI Engines (by Tier)
-
-| Tier | Engines | Frequency |
-|------|---------|-----------|
-| Discover | 3 (ChatGPT, Gemini, Perplexity) | Weekly |
-| Build | 7 (+ Claude, AI Overviews, Grok, You.com) | Daily |
-| Scale | 9+ (all engines) | Daily + priority refresh |
-
-### AI Agents — 11 MVP-1 Agents
-
-Old 7-agent roster is retired. New roster is research-backed and GEO-specialized.
-
-| # | Agent | Purpose | Credits | Tier |
-|---|-------|---------|---------|------|
-| A1 | **Query Mapper** | Maps 50 queries where business should appear | 0 (system) | All |
-| A2 | **Content Optimizer** | Rewrites existing pages with stats, citations, expert quotes | 1 | All |
-| A3 | **Freshness Agent** | Updates stale content with fresh data | 1 | All |
-| A4 | **FAQ Builder** | Creates FAQ pages per query cluster with JSON-LD schema | 1 | All |
-| A5 | **Schema Generator** | Generates LocalBusiness, Product, FAQ, Article JSON-LD | 1 | All |
-| A6 | **Off-Site Presence Builder** | Maps missing directories, guides submissions | 1 | All |
-| A7 | **Review Presence Planner** | Builds review acquisition strategy | 1 | All |
-| A8 | **Entity Builder** | Guides Wikidata, GBP, knowledge graph signals | 1 | All |
-| A9 | **Authority Blog Strategist** | Long-form content targeting specific queries | 3 | Build+ only |
-| A10 | **Performance Tracker** | Weekly before/after comparison | 0 (auto) | All |
-| A11 | **Reddit Presence Planner** | Identifies subreddits for audience queries | 1 | All |
-
-> **Credit cost notes:** FAQ Builder, Schema Generator, Off-Site Presence Builder, and Performance Tracker are free/unlimited with daily caps. Query Mapper costs 1 Run. Content Optimizer costs 2 Runs. Review Presence Planner and Entity Builder cost 2 Runs each. Authority Blog Strategist costs 3 Runs. Full detail in `docs/product-rethink-2026-04-09/07-AGENT-ROSTER-V2.md`.
-
-MVP-2 (month 2): **Video SEO Agent** — YouTube optimization for Google AI Overview citations (Scale tier only, 2 Runs).
-
-**Killed agents (retired):** Social Strategy, old Competitor Intelligence (chat-based), old Content Writer, old Review Analyzer, llms.txt Generator.
-
-### Agent Pipeline Model
-
-Every credit-gated agent runs 5 LLM stages:
+**Discovery → Subscription funnel:**
 ```
-PLAN → RESEARCH → DO → QA → SUMMARIZE
+Free scan (no email)
+  → Discovery booking (book 20-min agent-led call)
+  → Brand fingerprint locked (agent + Adam-reviewed through customer #50)
+  → Trial month-1 starts. 60-day money-back window opens.
+  → Held-revenue accounting through day 60.
+  → Day 61: revenue booked. Customer continues month-to-month.
 ```
-Free agents (Schema, FAQ, Off-Site, Performance Tracker) run 3 stages: PLAN → DO → QA.
 
-Agent output is **never published automatically**. All output lands in the user's Inbox for review, edit, and approval.
+### Tier Strategy Notes
+
+- **Old tiers killed:** $79 / $189 / $499 (Discover/Build/Scale) RETIRED 2026-05-23. No migration path required — pre-revenue.
+- **Annual not yet offered** — month-to-month only at launch. Annual revisited after refund rate stabilizes (post-customer #100).
+- **Professional tier** includes Adam-led monthly strategy review through customer #50, then agent-handled (Strategy agent).
+
+### Customer-Facing Agent Fleet *(Updated 2026-05-23 — 7 new + 4 repurposed + 1 kept)*
+
+**Customers see outcomes, not agent names.** Agent names appear only in internal tooling, ops dashboards, and CPO/CTO planning docs. CMO must police every customer-facing surface for agent-name leakage.
+
+| # | Agent | Wave | Status | Customer-visible? |
+|---|-------|------|--------|-------------------|
+| 1 | **Discovery agent** | 1 | NEW | No — runs the discovery call |
+| 2 | **Brand-brief manager agent** | 1 | NEW | No — generates and maintains brand fingerprint |
+| 3 | **Approval-gate writer agent** | 2 | NEW | No — drafts approval cards in digest |
+| 4 | **Digest writer agent** | 2 | NEW | No — composes weekly digest |
+| 5 | **Customer success agent** | 2 | NEW | No — proactive churn-risk + support flow |
+| 6 | **Publisher agent** | 3 | NEW | No — pushes to WP/Shopify/Webflow/GBP/Yelp/Apple/SendGrid/GTM |
+| 7 | **Strategy agent** | 3 | NEW | No — monthly strategy briefs (Professional tier) |
+| 8 | **Content/FAQ agent** | repurposed | from old Content Optimizer + FAQ Builder + Authority Blog | No |
+| 9 | **Schema agent** | repurposed | from old Schema Generator + Entity Builder | No |
+| 10 | **Citation agent** | repurposed | from old Off-Site Presence + Review Presence + Reddit Planner | No |
+| 11 | **Visibility tracker agent** | repurposed | from old Query Mapper + Performance Tracker | No |
+| 12 | **Competitor intelligence agent** | kept (de-emphasized) | from old Competitor Tracker | No |
+
+**Killed entirely:** Freshness Agent (folded into Content/FAQ), Reddit Presence Planner (folded into Citation), Video SEO (deferred to MVP+90).
+
+**Full PRDs per new agent:** `docs/04-features/specs/agent-*.md` (7 specs).
+
+### Tiered Approval Gates
+
+| Action class | Approval model |
+|---|---|
+| Schema deployment | **Auto** — no human approval |
+| Citation placement (low-effort directories) | **Auto** |
+| GBP / Yelp / Apple Maps updates | **Auto** |
+| Scan + visibility tracking | **Auto** |
+| Content publishing (blog, FAQ, landing page) | **1-click approve** in weekly digest |
+| Email-as-customer (outreach, review requests) | **1-click approve** in weekly digest |
+| External outreach to third parties | **1-click approve** in weekly digest |
+| Anything YMYL (legal / health / financial) | **Mandatory human review** before queue |
+
+### Push Mechanism (Hybrid)
+
+- **Auto-push on stable APIs:** WordPress, Shopify, Webflow, Google Business Profile, Yelp, Apple Maps Connect, SendGrid sub-account, schema via Google Tag Manager.
+- **Paste-ready on Wix/Squarespace/custom CMS:** Beamix generates the artifact + 1-click instructions; customer pastes. We treat paste-ready as "shipped" once customer confirms.
+
+### Brand Fingerprint
+
+Every customer has a **brand fingerprint** built during the discovery call: tone, voice, services, target queries, restricted topics, approval preferences, publishing integrations connected. All agents read from the fingerprint. Adam reviews and approves every brand fingerprint through customer #50, then phases out.
 
 ---
 
-## Product Philosophy
+## Product Philosophy *(Updated 2026-05-23 — agency pivot)*
 
-- **Assisted, not autopilot.** Users approve everything before it publishes.
-- **Proactive loop.** The system drives: scan → suggest → approve → run → review → approve → post.
-- **Agents are invisible infrastructure.** No "Agent Hub" page. Agents surface through Inbox items and Automation schedules.
-- **GEO improvement is continuous.** Agents run on schedule, triggered by scan findings.
-- **Kill switch is sacred.** User can pause all automation instantly from any screen.
+- **Done-for-you, not assisted.** We do the work. The customer reviews approvals when required and watches the score move.
+- **Outcomes, not tools.** Dashboard surfaces visibility score, weekly wins, queries won — never agent names, credit counters, raw scan tooling, or pipeline plumbing.
+- **Traceability is a feature.** Every outcome has a drill-down: "How we got this" — what was published, where, when, citing what.
+- **Auto where safe, approve where consequential.** Tiered approval, never autopilot on customer-as-author actions.
+- **Money-back is the trust contract.** 60-day no-questions refund. Held-revenue accounting. One-click cancel in dashboard.
+- **Adam in the loop through customer #50.** Brand fingerprints + Professional monthly strategy reviews. Phase out cleanly after that.
 
 ---
 
-## Platform Pages
+## Outcomes Dashboard (Customer-Facing) *(Updated 2026-05-23 — agency pivot)*
 
-**Dashboard (7 pages):**
+Old 7-page tool-framed dashboard (Home/Inbox/Scans/Automation/Archive/Competitors/Settings with `/dashboard/agents` plumbing) is **superseded**. New shape:
 
 | Page | Purpose |
-|------|---------|
-| **Home** | Score hero + suggestions queue + Inbox preview + automation status + Signals feed |
-| **Inbox** | 3-pane Superhuman layout — item list / content preview / evidence panel |
-| **Scans** | Timeline + engine drilldown + diff view (before/after comparison) |
-| **Automation** | Schedule cards + credit budget + kill switch |
-| **Archive** | Approved/posted content history + self-reported publish status + URL verification |
-| **Competitors** | Competitor list + movement alerts |
-| **Settings** | 7 tabs: Profile, Business, Billing, Preferences, Notifications, Integrations, Automation Defaults |
+|---|---|
+| **Outcomes (Home)** | Visibility score per engine · weekly wins · top winning queries · score trajectory chart |
+| **Approval Queue** | 1-click approve cards for content / email / outreach. Cards generated by Approval-gate writer. |
+| **Weekly Digest Archive** | Every weekly digest, searchable, dated. The narrative record of the relationship. |
+| **Traceability ("How we got this")** | Per-outcome drill-down: which deliverable produced which score movement, when, with citations. |
+| **Settings** | Profile · Brand fingerprint · Billing · Approval preferences · Publishing integrations · Cancel (one-click) |
 
-**Public pages:** Landing, Free Scan, Scan Results, Login, Signup, Forgot Password, Onboarding, Pricing, Blog, About, Terms, Privacy.
-
-**Removed from nav:** Agent Hub, Agent Chat, Content Library (standalone), Recommendations (standalone page), Rankings (merged into Scans). There is no `/dashboard/agents` route in the approved navigation.
+**No-go (removed from nav):** Agent Hub, Agent Chat, Scans page (folded into Outcomes), Automation page (managed by agents, not customer), Credit counters anywhere.
 
 ---
 
-## Key User Flows
+## Key User Flows *(Updated 2026-05-23 — agency pivot)*
 
-### 1. Free Scan → Preview → Paywall
-```
-Enter URL + industry + location (+ optional 3 competitors)
-→ 60–90s dark animation (engines light up live as results arrive)
-→ Wound-reveal result: giant score + top-3 competitors + 3 visible fixes + 8 blurred
-→ "Fix this now →" (primary CTA) or "Explore the product first" (text link)
-→ Preview mode: auto-create account, scan data pre-loaded, feature-gated paywall
-→ One free FAQ Builder run per preview account (~$0.04 cost, creates aha moment)
-→ "Run Agent" triggers 880px paywall modal (Build highlighted, all 3 tiers shown)
-→ Paddle checkout → Post-payment onboarding (2 steps: verify profile + optional GA4/GSC)
-```
+### 1. Free Scan → Discovery → Subscription
 
-### 2. Proactive Automation
 ```
-Scan runs → 15-rule engine evaluates findings → suggestions queue populated
-→ User accepts suggestion → agent runs in background (Inngest)
-→ Output lands in Inbox → user reviews / edits / approves
-→ Approved content moves to Archive → user copies to their site manually
-→ User marks published → system probes URL after 48h → confirms at next scan cycle
+Public landing (vertical-specific: SaaS / Legal / Dental)
+→ Free scan form (URL + business name + industry — no email)
+→ 60–90s scan animation (engines light up live)
+→ Result: visibility score per engine + 3 named opportunities (no blur, no paywall)
+→ "Book your 20-minute discovery call" CTA (primary)
+→ Discovery agent runs the call (agent-led; Adam reviews fingerprint through customer #50)
+→ Brand fingerprint locked → checkout (Paddle) → first deliverables scheduled in week 1
+→ 60-day money-back clock starts on activation (= discovery + connect + first scan complete)
 ```
 
-### 3. Day-1 Auto-Trigger Pipeline (post-payment)
+### 2. Tiered Approval Cycle
+
 ```
-Paddle payment confirmed → Inngest event chain:
-  1. Query Mapper runs (~30s) — generates 50 targeted queries
-  2. Full paid scan starts (~60–90s) — uses Query Mapper queries + all tier engines
-  3. Rules engine evaluates scan → populates suggestions (~5s)
-  4. First 2–3 highest-impact agents auto-run (~30–60s each)
-→ Home shows "Setting up your workspace..." during this
-→ User sees populated dashboard within 5–10 minutes of payment
+Agents work → Approval-gate writer drafts approval card → card lands in Approval Queue
+→ Customer clicks "Approve" (1 click) → Publisher agent pushes to integrations
+→ Outcome lands in dashboard → Visibility tracker re-scans → Score updated
+→ Digest writer composes weekly digest → email sent + archived in Weekly Digest Archive
 ```
 
-### 4. Progress Tracking
-GEO score trends up over time. 8-week sparkline on Home page. Performance Tracker uses directional language only ("trend observed") — causal attribution to specific agent runs is not claimed.
+### 3. 60-Day Money-Back
+
+```
+Day 1: Activation (discovery + connect + first scan). Held-revenue accounting starts.
+Day 1–60: Cancel from Settings → refund processed → revenue never booked
+Day 61: Revenue booked. Customer continues month-to-month or churns normally.
+First-100 Founding Member cap. If refund rate ≥ 25%, tighten next cohort to 30-day mechanic.
+```
 
 ---
 
-## Tech Stack
+## Tech Stack *(unchanged from v4.0; agency pivot is product-layer)*
 
 | Layer | Technology |
 |---|---|
 | Frontend | Next.js 16 (App Router), React 19, TypeScript strict |
 | UI | Tailwind CSS, Shadcn/UI |
 | Database | Supabase (PostgreSQL + Auth + RLS) |
-| Background Jobs | Inngest (7 registered functions — scans, agents, crons, rules engine) |
-| Payments | Paddle (subscriptions + webhooks, HMAC verified) — NOT Stripe |
-| Email | Resend + React Email (domain: notify.beamixai.com) |
-| LLM — Claude | Direct Anthropic SDK (80% of calls — cheaper + resilient) |
-| LLM — Others | OpenRouter for Gemini, GPT, Perplexity (scan engines + fallback) |
+| Background Jobs | Inngest |
+| Payments | Paddle (subscriptions + webhooks) — NOT Stripe |
+| Email | Resend + SendGrid sub-accounts (for email-as-customer outreach) |
+| Publishing integrations | WordPress, Shopify, Webflow, GBP API, Yelp Fusion, Apple Maps Connect, GTM API |
+| LLM — Claude | Direct Anthropic SDK |
+| LLM — Others | OpenRouter for Gemini, GPT, Perplexity |
 | Deployment | Vercel + Supabase Cloud |
-| Monorepo | Turborepo + pnpm workspaces (`apps/web/` is the product app) |
-| i18n | Hebrew RTL (Heebo font) + English LTR (Inter) |
 
-### Approved LLM Models Only
+### Wave 3 (NEW) — Publishing Integrations Matrix
 
-| Provider | Models |
-|----------|--------|
-| Anthropic | Claude Sonnet 4.6, Haiku 4.5, Opus 4.6 |
-| Google | Gemini 2.0 Flash, Gemini 2.5 Pro |
-| OpenAI | GPT-4o, GPT-4o-mini, GPT-5-mini |
-| Perplexity | Sonar, Sonar Pro, Sonar Online |
-
-**Banned:** DeepSeek, Qwen, and any providers not listed above.
-
-### Architecture Principles
-
-1. **Inngest for all background work** — scans, agents, crons, and the automation dispatcher run in Inngest functions. Never in API route handlers.
-2. **Event-driven** — API routes emit Inngest events and return 202. Frontend subscribes via Supabase Realtime for live updates.
-3. **RLS is the security boundary** — even if API routes have bugs, data cannot leak across users.
-4. **Credits: hold → confirm → release** — hold on job start, confirm on success, release on failure. Users are never charged for failed agent runs.
-5. **Cross-model QA** — Haiku checks Sonnet/Opus output. Never same-model self-QA.
-6. **Direct Anthropic + OpenRouter** — Direct SDK for Claude (cost savings + resilience). OpenRouter for multi-provider scan engines.
+Wave 3 builds out the Publisher agent + the integrations it needs:
+- WordPress (REST API via app password)
+- Shopify (Admin GraphQL)
+- Webflow (CMS API)
+- Google Business Profile (Business Profile API)
+- Yelp (Yelp Fusion)
+- Apple Maps Connect (Maps Connect API)
+- SendGrid sub-account provisioning (for email-as-customer)
+- Schema via Google Tag Manager (Tag Manager API)
+- Paste-ready package generator (Wix / Squarespace / custom CMS — produces artifact + instructions only)
 
 ---
 
-## Brand
+## Trial / Refund / Liability *(Updated 2026-05-23 — agency pivot)*
 
-**Concept:** Beam of light lifting business rankings in AI search.
+- **60-day no-questions money-back guarantee.** Plain refund. No fine print. One-click cancel in dashboard.
+- **Activation requirement:** discovery call + property connect + first scan = activation. Required for refund eligibility.
+- **Domain + business verification at signup.** Hard ban on re-signups under new emails.
+- **Held-revenue accounting through day 60.** Cash stays intact if refund fires.
+- **First 100 customers = "Founding Member" cohort.** If refund rate ≥ 25%, tighten next cohort to 30-day.
+- **One-per-account refund rule.** Refund-then-resubscribe = no second money-back window.
+- **Liability cap:** 12-month fees paid. Customer warrants property ownership. Customer approves all publishes. $1M general liability insurance. Customer indemnifies on 3rd-party claims from their content.
+- **No uptime SLA at launch.** Best-effort. Premium SLA defers to MVP+90 with first enterprise upsell.
 
-**Design:** Modern, clean, professional. Blue `#3370FF` accent, rounded cards, Inter + InterDisplay type system. Spacious and readable — minimal but not cold.
+**Marketing copy:**
+> EN: "If we don't move your AI search visibility in 60 days, you don't pay. No questions, no phone tree, no contract. Cancel in one click."
+> HE: "60 ימים. אם לא הצלחנו לקדם אותך — כסף חזרה, בלי שאלות."
 
-**Primary accent:** `#3370FF` (blue) — CTAs, links, logo mark, charts, active states.
-
-**Typography:** Inter 400 (body) · InterDisplay-Medium / Inter 500 (headings) · Fraunces 300–400 (serif accent, dark sections only) · Geist Mono (code) · Heebo (Hebrew text)
-
-**Languages:** Hebrew (RTL) + English (LTR)
-
----
-
-## Safety & Content Policy
-
-- **YMYL hard-refuse:** Medical diagnosis, legal advice, investment/crypto advice. Agent returns structured refuse — no content generated.
-- **YMYL soft-gate:** General health/finance education → forced human review + mandatory disclaimer appended.
-- **MVP vertical exclusions:** Medical diagnostic, law-advisory, financial advisory, regulated Israeli professions.
-- **No AI labels in content output:** Agent-generated content contains no AI disclosure markers. Disclosure obligation falls on the publisher (user), not Beamix.
-- **Content rate limits (soft warning):** Discover 4 pages/mo, Build 10, Scale 20. User can override with confirmation.
+**Old 14-day money-back trial is RETIRED 2026-05-23.**
 
 ---
 
-## Positioning & Copy
+## Positioning & Copy *(Updated 2026-05-23 — agency pivot)*
 
-**Hero line:** "Your business, cited by ChatGPT. Not by luck. Not by waiting. Beamix does the work — you stay in control."
+**Hero (English):** "We get your business into ChatGPT, Gemini, Perplexity, and Claude. Done for you. From $499/mo. 60-day money-back."
 
-**Agency anchor:** "A GEO agency charges $1,500–$5,000/month. Beamix does the same work for $189."
+**Hero (Hebrew):** "אנחנו דואגים שתופיע ב-ChatGPT, Gemini, Perplexity ו-Claude. אנחנו עושים את העבודה. החל מ-$499 לחודש."
 
-**Human-in-loop as feature:** "Like an agency team — they draft, you approve, you publish. Except this agency costs $189/mo instead of $3,000."
+**Agency anchor:** "A GEO agency charges $2,000–$8,000/month. Beamix delivers the same outcomes for $499–$2,499 — and shows you exactly what we did."
 
-**User-facing language:** Never say "GEO" — say "AI Search Visibility." Agent names are internal only; users see action labels.
+**Three positioning principles (CMO copy review required on every customer-facing surface):**
+1. **Never name an agent.** Customers see "Beamix published 3 articles this week" — not "the Content Agent published 3 articles."
+2. **Never expose credit counters or scan tooling.** Hide the plumbing.
+3. **Lead with outcomes.** "Visibility +14 points" before "we did 3 things."
 
 ---
 
-## Markets
+## Markets *(unchanged)*
 
-**Primary:** Israel (Hebrew + English)
-**Secondary:** Global English-speaking (US expansion possible and may be needed for break-even — 190–226 paying users needed at $35K/mo burn)
+**Primary:** Israel + US (Hebrew + English from day 1)
+**Secondary:** UK, Australia (English-speaking SMBs)
+
+---
+
+## Beachhead Motion (Customers 1–50)
+
+Per decision #13: Warm network + content + referral incentive. **Zero paid acquisition until customer #50 case studies exist.**
+
+| Cohort | Motion |
+|---|---|
+| 1–10 | Adam personal LinkedIn + warm Israeli SMB intros + cold DMs to 50 named businesses per vertical |
+| 11–20 | "State of AI Search" report drops + 3 vertical blog posts/week |
+| 21–30 | Free scan link in Adam's LinkedIn + vertical community engagement |
+| 31–50 | $500 referral credit for case-study customers |
+
+---
+
+## What We Are NOT Building *(Updated 2026-05-23 — agency pivot)*
+
+- General SEO (Beamix is GEO-only)
+- Paid ads management
+- Social media management
+- Email marketing (general — we only do email-as-customer outreach for GEO)
+- Enterprise analytics platform (we serve SMBs)
+- A self-serve dashboard that the customer operates (we operate; they approve)
+- An "Agent Hub" or credit-counter UI (hidden behind outcomes layer)
+- Video / YouTube SEO (deferred to MVP+90)
 
 ---
 
@@ -306,8 +322,11 @@ GEO score trends up over time. 8-week sparkline on Home page. Performance Tracke
 
 For complete detail, read the authoritative source documents:
 
-- **All board decisions:** `docs/product-rethink-2026-04-09/05-BOARD-DECISIONS-2026-04-15.md`
-- **Pricing detail + COGS:** `docs/product-rethink-2026-04-09/06-PRICING-V2.md`
-- **Agent specs + model routing:** `docs/product-rethink-2026-04-09/07-AGENT-ROSTER-V2.md`
-- **Dashboard UX + page specs:** `docs/product-rethink-2026-04-09/08-UX-ARCHITECTURE.md`
-- **Wave 0/1 build summary:** `docs/08-agents_work/sessions/2026-04-19-ceo-wave0-wave1-complete.md`
+- **15 locked agency-pivot decisions:** `.claude/memory/DECISIONS.md` (2026-05-23 entry)
+- **Full grill session synthesis + tier matrix:** `docs/08-agents_work/sessions/2026-05-23-ceo-agency-pivot-grill.md`
+- **Pricing v2 (updated):** `docs/product-rethink-2026-04-09/06-PRICING-V2.md`
+- **Agent roster v2 (updated):** `docs/product-rethink-2026-04-09/07-AGENT-ROSTER-V2.md`
+- **UX architecture (updated):** `docs/product-rethink-2026-04-09/08-UX-ARCHITECTURE.md`
+- **7 new agent PRDs:** `docs/04-features/specs/agent-*.md`
+- **Personas (3 launch ICPs):** `docs/01-foundation/PERSONAS.md`
+- **Vision narrative:** `docs/01-foundation/VISION.md`
