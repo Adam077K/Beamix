@@ -21,6 +21,7 @@ import {
   executeFetchSiteContent,
   executeFetchGBP,
   executeEmitBrandFingerprint,
+  type SessionContext,
 } from './tools';
 import type { DiscoveryChunk, DiscoveryInput, BrandFingerprint } from './types';
 
@@ -294,7 +295,8 @@ export async function* runDiscoveryAgent(
               };
             } else if (toolUse.name === 'emit_brand_fingerprint') {
               const rawInput = toolUse.input as Record<string, unknown>;
-              const validated = executeEmitBrandFingerprint(rawInput);
+              const sessionCtx: SessionContext = { customerId: input.customerId };
+              const validated = executeEmitBrandFingerprint(rawInput, sessionCtx);
               fingerprint = validated;
               toolResultContent = JSON.stringify({ success: true, brief_version_id: validated.brief_version_id });
 

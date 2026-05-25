@@ -57,10 +57,6 @@ export const DISCOVERY_TOOLS: Anthropic.Tool[] = [
     input_schema: {
       type: 'object' as const,
       properties: {
-        customer_id: {
-          type: 'string',
-          description: 'The paying customer UUID (provided in context)',
-        },
         voice: {
           type: 'object',
           description: 'Brand voice parameters',
@@ -196,7 +192,6 @@ export const DISCOVERY_TOOLS: Anthropic.Tool[] = [
         },
       },
       required: [
-        'customer_id',
         'voice',
         'icp',
         'offerings',
@@ -311,16 +306,40 @@ export function executeFetchGBP(_businessName: string): GBPResult {
   return { error: 'not_implemented' };
 }
 
+// ---------------------------------------------------------------------------
+// Session context — server-side values that must NOT come from LLM tool input
+// ---------------------------------------------------------------------------
+
+export interface SessionContext {
+  /** The authenticated customer's Supabase user ID. Set by the API route, never trusted from LLM. */
+  customerId: string;
+}
+
 /**
  * Validates and returns the BrandFingerprint, injecting a fresh brief_version_id.
- * Throws if the schema is invalid.
+ * customer_id is always taken from sessionContext — never from LLM tool input.
+ * Throws if sessionContext.customerId is missing or if the schema is invalid.
  */
 export function executeEmitBrandFingerprint(
   rawInput: Record<string, unknown>,
+  sessionContext: SessionContext,
 ): BrandFingerprint {
+  // SECURITY: customer_id must come from the server-side session, never from LLM tool input.
+  // If the LLM somehow included customer_id in its tool call, it is silently overridden here.
+  if (!sessionContext.customerId) {
+    throw new Error(
+      'executeEmitBrandFingerprint: sessionContext.customerId is missing — cannot persist fingerprint without a verified customer ID',
+    );
+  }
+
+  // Strip any LLM-provided customer_id to prevent injection
+  const { customer_id: _stripped, ...safeInput } = rawInput;
+  void _stripped; // intentionally discarded
+
   // Inject brief_version_id — always a fresh UUID v4 on every emit
   const inputWithVersion = {
-    ...rawInput,
+    ...safeInput,
+    customer_id: sessionContext.customerId, // Server-pinned — authoritative
     brief_version_id: randomUUID(),
     adam_reviewed_at: null, // Always null at creation — Adam reviews manually
   };
