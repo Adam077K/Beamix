@@ -419,12 +419,13 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (err instanceof NotImplementedError) {
       throw err; // Hard fail — contract violation
     }
-    console.error('[discovery/chat] Failed to load discovery agent module', {
+    console.error('discovery_agent_module_unavailable', {
       sessionId,
       error: String(err),
     });
+    // Principle #9: no internal module names in customer-facing error strings.
     return Response.json(
-      { error: 'Discovery agent module not available' },
+      { error: 'Service temporarily unavailable' },
       { status: 503 },
     );
   }
