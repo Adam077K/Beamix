@@ -1,7 +1,6 @@
 'use client'
 
 import type { DashboardOutcomes, Win } from '@/types/outcomes'
-import { cn } from '@/lib/utils'
 import { CheckCircle2 } from 'lucide-react'
 
 interface WeeklyNarrativeProps {
