@@ -9,8 +9,20 @@
  *   - Three tools: fetch_site_content, fetch_gbp, emit_brand_fingerprint
  *   - Prompt caching: stable system prompt marked cache_control:ephemeral
  *   - Cost alert threshold: $2.00/session
- *   - YMYL detection: emits ymyl_flag chunk + sets requires_human_approval
+ *   - YMYL detection: server-side ymylSignalDetected flag maintained across ALL signal
+ *     sources (user message, LLM text_delta, tool call inputs, tool results). When the
+ *     flag is true at emit time, the server FORCES requires_human_approval=true regardless
+ *     of LLM-emitted value — prompt-injection defence (Fix 5 CRITICAL).
+ *   - Hebrew YMYL terms included: רפואי, משפטי, השקעה, מטבע, ביטוח, פסיכולוג
  *   - Never names the agent; customer-facing voice is "Beamix"
+ *
+ * CALLER NOTE (Fix 6 — cost-DoS mitigation):
+ *   `conversationHistory` has been REMOVED from the public function signature.
+ *   Callers (SSE endpoint at be-w1-discovery-chat) must pass history via
+ *   `serverFetchedHistory` (fetched server-side from discovery_sessions.messages JSONB,
+ *   already capped at 50 by the SSE endpoint). Passing raw caller-supplied conversation
+ *   history is no longer accepted — that cost-DoS vector is now closed.
+ *   MAX_TOTAL_TOKENS_PER_SESSION=100_000 is enforced server-side per session.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -32,6 +44,14 @@ const COST_PER_1M_INPUT = 3.0;
 const COST_PER_1M_OUTPUT = 15.0;
 const COST_PER_1M_CACHE_READ = 0.3; // 10% of input rate
 
+/**
+ * Fix 6: Hard token budget per session.
+ * If the accumulated input token count across all loop turns exceeds this ceiling,
+ * the agent hard-closes with a session_token_budget_exceeded error.
+ * This prevents runaway cost even if large server-fetched history somehow leaks through.
+ */
+const MAX_TOTAL_TOKENS_PER_SESSION = 100_000;
+
 /** Compute USD cost for a single Anthropic response. */
 function computeCostUsd(
   inputTokens: number,
@@ -45,7 +65,11 @@ function computeCostUsd(
   );
 }
 
-/** Detect YMYL keywords in text. Returns reason string or null. */
+/**
+ * Fix 5: Detect YMYL keywords in text.
+ * Extended to include Hebrew terms for Adam's bilingual (IL + EN) market.
+ * Returns reason string or null.
+ */
 function detectYmyl(text: string): string | null {
   const lower = text.toLowerCase();
   const patterns: Array<[RegExp, string]> = [
@@ -56,11 +80,40 @@ function detectYmyl(text: string): string | null {
       'Financial advice detected',
     ],
     [/health claim|cure|prevent|treat|diagnose/, 'Health claim detected'],
+    // Hebrew YMYL terms — Adam's primary market is bilingual (IL + EN)
+    [/רפואי|אבחון|טיפול|תרופה|מרשם|תסמינים/, 'Medical advice detected (Hebrew)'],
+    [/משפטי|תביעה|עורך דין|אחריות משפטית|צו בית משפט/, 'Legal advice detected (Hebrew)'],
+    [/השקעה|ניירות ערך|תיק השקעות|מניות|קריפטו|ייעוץ מס/, 'Financial advice detected (Hebrew)'],
+    [/ביטוח|פוליסה|פרמיה/, 'Insurance claim detected (Hebrew)'],
+    [/פסיכולוג|פסיכיאטר|טיפול נפשי|בריאות הנפש/, 'Mental health advice detected (Hebrew)'],
+    [/מטבע|מטבע דיגיטלי/, 'Currency/crypto detected (Hebrew)'],
   ];
 
   for (const [pattern, reason] of patterns) {
     if (pattern.test(lower)) {
       return reason;
+    }
+  }
+  return null;
+}
+
+/**
+ * Fix 5: Deep-walk a JSON value and run detectYmyl on every string leaf.
+ * Used to scan tool_call inputs for prompt-injected YMYL content.
+ */
+function detectYmylInJson(value: unknown): string | null {
+  if (typeof value === 'string') {
+    return detectYmyl(value);
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = detectYmylInJson(item);
+      if (found) return found;
+    }
+  } else if (value !== null && typeof value === 'object') {
+    for (const v of Object.values(value as Record<string, unknown>)) {
+      const found = detectYmylInJson(v);
+      if (found) return found;
     }
   }
   return null;
@@ -73,17 +126,32 @@ function detectYmyl(text: string): string | null {
  * serialises these as Server-Sent Events. The agent drives the conversation:
  * asks questions, processes tool calls, and finally emits a brand fingerprint.
  *
- * @param input - Discovery session inputs (customer context)
- * @param conversationHistory - Prior messages in this session (for multi-turn resume)
+ * Fix 6: `conversationHistory` REMOVED from public signature to prevent cost-DoS.
+ * The SSE endpoint (be-w1-discovery-chat) MUST:
+ *   1. Accept only a `sessionId` from the client request.
+ *   2. Fetch conversation history server-side from discovery_sessions.messages (Supabase).
+ *   3. Pass the fetched history here as `serverFetchedHistory` (capped at 50 entries).
+ *   4. NEVER forward raw client-supplied message arrays to this function.
+ *
+ * @param input               - Discovery session inputs (customer context)
+ * @param serverFetchedHistory - Server-fetched prior messages (max 50, from DB only).
  */
 export async function* runDiscoveryAgent(
   input: DiscoveryInput,
-  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+  // Fix 6: renamed from conversationHistory — name makes server-fetch contract explicit.
+  // The SSE endpoint must NOT pass client-supplied arrays here.
+  serverFetchedHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [],
 ): AsyncGenerator<DiscoveryChunk> {
   const sessionId = randomUUID();
   let totalCostUsd = 0;
+  let totalInputTokensThisSession = 0; // Fix 6: session token budget accumulator
   let costAlertEmitted = false;
   let fingerprint: BrandFingerprint | null = null;
+
+  // Fix 5: YMYL signal flag maintained at loop scope.
+  // Set true on ANY detection across: user message, LLM text_delta, tool call inputs, tool results.
+  // Once true, never reverts — sticky safety flag that cannot be reset by any LLM output.
+  let ymylSignalDetected = false;
 
   const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
@@ -96,11 +164,33 @@ export async function* runDiscoveryAgent(
 
   // Messages accumulate across tool_use loops
   const messages: Anthropic.MessageParam[] = [
-    ...conversationHistory.map((m) => ({
+    ...serverFetchedHistory.map((m) => ({
       role: m.role,
       content: m.content,
     })),
   ];
+
+  // Fix 5: Scan the incoming user message for YMYL signals before any LLM call.
+  // This prevents prompt-injected YMYL from bypassing the flag on the first user turn.
+  if (messages.length > 0) {
+    const lastUserMsg = messages[messages.length - 1];
+    if (lastUserMsg.role === 'user' && typeof lastUserMsg.content === 'string') {
+      const ymylReason = detectYmyl(lastUserMsg.content);
+      if (ymylReason) {
+        ymylSignalDetected = true;
+        console.log(
+          JSON.stringify({
+            event: 'ymyl_signal_detected',
+            source: 'incoming_user_message',
+            reason: ymylReason,
+            session_id: sessionId,
+            customer_id: input.customerId,
+          }),
+        );
+        yield { type: 'ymyl_flag', reason: `User message: ${ymylReason}` };
+      }
+    }
+  }
 
   // If no conversation yet, inject the context block as first user message
   if (messages.length === 0) {
@@ -163,9 +253,19 @@ export async function* runDiscoveryAgent(
         if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
           assistantText += event.delta.text;
 
-          // Check for YMYL in streaming text
+          // Fix 5: Check for YMYL in streaming text — set loop-scope flag.
           const ymylReason = detectYmyl(event.delta.text);
           if (ymylReason) {
+            ymylSignalDetected = true;
+            console.log(
+              JSON.stringify({
+                event: 'ymyl_signal_detected',
+                source: 'llm_text_delta',
+                reason: ymylReason,
+                session_id: sessionId,
+                loop_count: loopCount,
+              }),
+            );
             yield { type: 'ymyl_flag', reason: ymylReason };
           }
 
