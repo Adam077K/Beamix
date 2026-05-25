@@ -437,6 +437,11 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      // Guard: track whether 'done' has already been emitted so we never
+      // send a double done event (once from the 'done' chunk case, once from
+      // the post-loop enqueue at line ~544).
+      let doneEmitted = false;
+
       try {
         const agentGen = runDiscoveryAgent(discoveryInput, conversationHistory);
 
@@ -510,7 +515,8 @@ export async function POST(request: NextRequest): Promise<Response> {
 
             case 'done':
               controller.enqueue(sseEvent({ type: 'done' }));
-              break;
+              doneEmitted = true;
+              return; // Exit start() immediately — prevents post-loop double done
 
             case 'error':
               controller.enqueue(
@@ -538,7 +544,9 @@ export async function POST(request: NextRequest): Promise<Response> {
           }
         }
 
-        controller.enqueue(sseEvent({ type: 'done' }));
+        if (!doneEmitted) {
+          controller.enqueue(sseEvent({ type: 'done' }));
+        }
       } catch (err) {
         const isNotImpl = err instanceof NotImplementedError;
         console.error('[discovery/chat] Agent stream error', {
