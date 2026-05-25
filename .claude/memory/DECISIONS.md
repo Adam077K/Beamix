@@ -701,3 +701,13 @@ CEO=Opus-4.7 · CCO folded into CPO · CBO single · Design under CPO · 13 work
 **Decision:** Bastion = Adam's home Win10 PC (Max plan + subscription OAuth = intended use). Cloud VPS (Hetzner CX53 $27.99/mo evaluated) deferred. Trigger to revisit: hard reliability event OR shift to commercial agent fleet serving customers (then API-key billing). On VPS, OAuth is the Jan-2026 crackdown pattern (3.3% appeal rate); safe path = ANTHROPIC_API_KEY but adds ~$200-500/mo metered API cost.
 **Status:** PROPOSED — pending Adam review.
 **See:** `docs/08-agents_work/2026-05-07-bastion-bootstrap/BAN-RISK-RESEARCH.md`
+
+---
+
+### [2026-05-20] — Wave 0 Foundation shipped; staging DB hard-reset; irreversible tier-floor confirmed
+**Decision:** Wave 0 (db-foundation, app-shell, agent-system) built and merged to `main`. The Supabase staging project `zhjxdwcqxhwletkpuwyl` still carried the legacy March-2026 schema; per the migration plan and explicit Adam authorization, the entire `public` schema was dropped (`DROP SCHEMA public CASCADE`) and rebuilt from 15 fresh migrations — only dev/test data lost, no production data. The `qa-lead-pass` file-path tier-floor auto-classifies any PR touching `apps/web/supabase/migrations/**` as **irreversible**, requiring the `risk:irreversible` label + 2-of-3 multi-judge + Adam sign-off; #80 and #81 went through that gate (3 independent judges each + adversary pass).
+**Rationale:** Hard-reset was cheaper and cleaner than an in-place legacy migration (pre-revenue, no production data). The irreversible classification was honored at Adam's explicit request rather than accepting the lighter Full-tier QA.
+**Decided by:** CEO (Wave 0 orchestration) + Adam (destructive-wipe authorization + irreversible sign-off)
+**Affects:** `apps/web/` (all three slices now on main), staging DB schema, Wave 1 build base
+**Reversible?** DB wipe: no (legacy dev data gone — acceptable, no production data). Code: yes (revert PRs).
+**Tech debt:** 10 judge-surfaced items logged in `docs/BACKLOG.md` §Wave 0.5.

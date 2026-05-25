@@ -202,12 +202,21 @@
 - DEFERRED: Phase 7 (Promptfoo) · war-room 10-file full 07b restructure · hook wiring · skill ref updates for new Phase 3 skills
 - Session: docs/08-agents_work/sessions/2026-05-16-ceo-phase1-rethink-execution.md
 
+## [2026-05-20] wave0-foundation | Wave 0 merged to main — db + app-shell + agent-system + integration
+- PRs #80 (db-foundation, irreversible/3-judge), #79 (app-shell, full), #81 (agent-system, irreversible/adversary+3-judge), #82 (integration, lite) — all QA PASS, merged.
+- 15 migrations applied to staging zhjxdwcqxhwletkpuwyl (legacy schema Adam-authorized wiped). 11-agent system + 5-step pipeline. Next.js 16 shell.
+- QA forced fixes: RCE (next 15.3.9), insecure auth gate, credit-drain RPC exposure, prompt-injection bypass, types.ts corruption ×2, non-idempotent seed.
+- Wave 0.5 tech-debt logged in BACKLOG.md.
+- Session: docs/08-agents_work/sessions/2026-05-20-ceo-wave0-foundation.md
+
 - [2026-05-23] CEO grill session: agency pivot. 15 decisions locked. Pivot from $79/$189/$499 tool to $499/$999/$1,499/$2,499 done-for-you agency. 60-day money-back, 3-vertical launch ICP, 7 new + 4 repurposed customer-facing agents. Research: tasks a98bc6df7d83e15e2 + a4684aa23fdeb01f7.
 - Session: docs/08-agents_work/sessions/2026-05-23-ceo-agency-pivot-grill.md
 - Next dispatch: CPO + CMO + CBO + CTO parallel
 
 - [2026-05-23 evening] All 4 C-suite leads completed agency-pivot dispatch. 38 planning files edited + 18 new files created (7 agent PRDs, 3 vertical landing pages, DM templates, Wave 3 brief, ToS draft v1, insurance plan, unit econ tier model). 5 session files written. North star changed to month-3 retention. CTO sequencing decision A10: Wave 3 after Wave 2 ships to customer #1. Adam-blockers: insurance + lawyer ToS review.
 
-[2026-05-24] QA-Lead PASS — PR #84 agency-pivot doc update, Lite tier. 2 P2 arithmetic errors filed as tech-debt in UNIT_ECONOMICS_TIER_MODEL.md.
+- [2026-05-24] QA-Lead PASS — PR #84 agency-pivot doc update, Lite tier. 2 P2 arithmetic errors filed as tech-debt in UNIT_ECONOMICS_TIER_MODEL.md.
 
 - [2026-05-24] CEO closeout: PR #84 opened, QA-Lead PASS (Lite), 2 P2 arithmetic fixes applied inline. 5 sub-decisions ratified (north star, Wave 3 sequencing, Opus on Strategy, YMYL human-gate, Publishing Irreversible). CTO dispatched for 6-gap infra scoping. Adam-blockers: merge approval + insurance + lawyer + landing-page approval.
+
+- [2026-05-24] CTO infra-gap scoping completed. 6 vendor/sequencing sub-decisions ratified into Wave 1+3 briefs. Surprises: Resend DNS NOT live (false-positive in prior checklist); Paddle greenfield (8 new products needed). 6 Adam-blockers AB-1..6 added to checklist.
