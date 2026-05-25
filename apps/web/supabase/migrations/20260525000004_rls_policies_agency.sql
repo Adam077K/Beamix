@@ -1,7 +1,14 @@
 -- Migration: 20260525000004_rls_policies_agency.sql
 -- Purpose: RLS for the 7 new agency-pivot tables (Wave 1).
---          refund_events + revenue_events are append-only ledgers:
---            SELECT for owner, INSERT for service_role only — NO UPDATE/DELETE for anyone.
+--          refund_events: append-only ledger — SELECT for owner, INSERT for service_role only.
+--            UPDATE/DELETE blocked for all roles (belt-and-suspenders with immutable trigger).
+--          revenue_events: ledger with ONE allowed UPDATE path — booked_at flip by day-61 cron.
+--            Design choice: scoped UPDATE policy (USING booked_at IS NULL / WITH CHECK booked_at IS NOT NULL).
+--            A SECURITY DEFINER function was considered but rejected — the scoped UPDATE policy is
+--            sufficient because (a) service_role is already server-only, (b) the USING/WITH CHECK
+--            guards prevent re-booking or clearing booked_at, and (c) no other columns can be
+--            updated without triggering the check failure. This keeps the table itself append-only
+--            for all columns except booked_at, enforced at the RLS layer.
 --          publishing_credentials: customer sees row metadata only (NO encrypted_token);
 --            raw token returned exclusively via SECURITY DEFINER RPC.
 -- Source: docs/08-agents_work/sessions/2026-05-25-cto-wave1-closeout.md lines 162-167
@@ -13,6 +20,7 @@
 --   A — direct tenant: customer_id = auth.uid()
 --   C — service-only: no user access at all (RLS deny-all, service_role bypasses)
 --   L — ledger: owner SELECT + service_role INSERT only; UPDATE/DELETE blocked for all
+--   L+ — ledger with single UPDATE path: revenue_events.booked_at (service_role only, day-61 cron)
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 1. brand_fingerprints
