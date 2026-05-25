@@ -431,10 +431,16 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   // Build DiscoveryInput from session context
+  // P2: session.user_id must be present — empty string silently breaks attribution
+  if (!session.user_id) {
+    console.error('[discovery/chat] Session missing user_id', { sessionId });
+    return Response.json({ error: 'Session user not resolved' }, { status: 401 });
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ctx = (session.context ?? {}) as Record<string, any>;
   const discoveryInput: DiscoveryInput = {
-    customerId: (session.user_id as string) ?? '',
+    customerId: session.user_id as string,
     businessUrl: (ctx.business_url as string) ?? '',
     vertical:
       (ctx.vertical as 'b2b_saas' | 'solo_lawyer' | 'single_location_dental' | 'other') ??
@@ -459,6 +465,9 @@ export async function POST(request: NextRequest): Promise<Response> {
       // send a double done event (once from the 'done' chunk case, once from
       // the post-loop enqueue at line ~544).
       let doneEmitted = false;
+      // Guard: prevent double controller.close() — once from error chunk path,
+      // once from finally block.
+      let controllerClosed = false;
 
       try {
         const agentGen = runDiscoveryAgent(discoveryInput, conversationHistory);
@@ -540,6 +549,7 @@ export async function POST(request: NextRequest): Promise<Response> {
               controller.enqueue(
                 sseEvent({ type: 'error', content: chunk.message }),
               );
+              controllerClosed = true;
               controller.close();
               return;
 
@@ -576,7 +586,10 @@ export async function POST(request: NextRequest): Promise<Response> {
           sseEvent({ type: 'error', content: 'Internal agent error' }),
         );
       } finally {
-        controller.close();
+        if (!controllerClosed) {
+          controllerClosed = true;
+          controller.close();
+        }
 
         // 7. Persist user + assistant messages to session
         const newMessages: PersistedMessage[] = [
