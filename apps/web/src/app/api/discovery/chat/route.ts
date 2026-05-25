@@ -162,12 +162,29 @@ function verifySessionToken(
     .update(payload)
     .digest('hex');
 
-  if (
-    !crypto.timingSafeEqual(
-      Buffer.from(providedHmac, 'hex'),
-      Buffer.from(expectedHmac, 'hex'),
-    )
-  ) {
+  // Validate that providedHmac is a valid 64-char hex string (SHA-256 output).
+  // Buffer.from(str, 'hex') silently truncates invalid hex, which causes
+  // crypto.timingSafeEqual to throw a RangeError when lengths differ.
+  if (!/^[0-9a-fA-F]{64}$/.test(providedHmac)) {
+    return { valid: false, reason: 'Invalid token signature' };
+  }
+
+  const providedBuf = Buffer.from(providedHmac, 'hex');
+  const expectedBuf = Buffer.from(expectedHmac, 'hex');
+
+  // Defense-in-depth: lengths must match before timingSafeEqual
+  if (providedBuf.length !== expectedBuf.length) {
+    return { valid: false, reason: 'Invalid token signature' };
+  }
+
+  let signaturesMatch: boolean;
+  try {
+    signaturesMatch = crypto.timingSafeEqual(providedBuf, expectedBuf);
+  } catch {
+    return { valid: false, reason: 'Invalid token signature' };
+  }
+
+  if (!signaturesMatch) {
     return { valid: false, reason: 'Invalid token signature' };
   }
 
