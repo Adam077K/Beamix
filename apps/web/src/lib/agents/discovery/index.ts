@@ -242,7 +242,7 @@ export async function* runDiscoveryAgent(
       if (finalMessage.stop_reason === 'tool_use') {
         // Process tool calls
         const toolUseBlocks = finalMessage.content.filter(
-          (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
+          (b: Anthropic.ContentBlock): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
         );
 
         // Add assistant message with full content (text + tool_use blocks)
