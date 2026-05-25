@@ -27,9 +27,15 @@ Source-of-truth read first (cached, single block):
 7. `docs/product-rethink-2026-04-09/build-prep-2026-05-13/06-ADAM-CHECKLIST.md`
 8. `docs/03-system-design/TECH_STACK.md`
 
-External verification performed in this session:
-- `dig` lookups against `notify.beamixai.com`, `beamixai.com`, `_dmarc.beamixai.com`, `resend._domainkey.beamixai.com` → all returned EMPTY (the checklist's "✅ Resend + DNS done" claim is wrong; DNS records are NOT yet live).
+External verification performed in this session (corrected 2026-05-25):
+- `dig` lookups should be against the modern Resend sending-subdomain layout. The 2026-05-24 check ran against `notify.beamixai.com` directly which returns EMPTY because modern Resend (post-2024) puts SPF + MX at `send.<sending_subdomain>`, not the sending subdomain itself. Correct verification commands:
+  - `dig +short TXT send.notify.beamixai.com` → `v=spf1 include:amazonses.com ~all` (SPF ✅)
+  - `dig +short MX send.notify.beamixai.com` → `10 feedback-smtp.us-east-1.amazonses.com` (MX ✅, us-east-1)
+  - `dig +short TXT resend._domainkey.notify.beamixai.com` → public key (DKIM ✅)
+  - `dig +short TXT _dmarc.notify.beamixai.com` → `v=DMARC1; p=none; rua=mailto:adam419067@gmail.com` (DMARC ✅)
 - `apps/web/` directory verified ABSENT (hard reset commit `56f1422` archived it; greenfield for Paddle scoping).
+
+> **2026-05-25 — CEO confirmed all 4 Resend records exist; AB-2 is GREEN.** The original 2026-05-24 `dig` check against `notify.beamixai.com` used the wrong subdomain pattern; the records have been correctly configured at `send.notify.beamixai.com` (SPF + MX) and at `notify.beamixai.com` (DKIM + DMARC subdomains) since before this session.
 
 ## Decisions made (B1–B6 — sub-decisions for the 6 gaps)
 
