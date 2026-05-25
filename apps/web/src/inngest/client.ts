@@ -25,9 +25,19 @@ export interface AgentRunRequestedData {
   scanId?: string;
 }
 
+/** Payload for `discovery/completed` — fired when the initial AI scan finishes. */
+export interface DiscoveryCompletedData {
+  userId: string;
+  userEmail: string;
+  firstName: string;
+  businessId: string;
+  scanId: string;
+}
+
 /** Typed event map for the Beamix Inngest client. */
 export type BeamixEvents = {
   'agent/run.requested': { data: AgentRunRequestedData };
+  'discovery/completed': { data: DiscoveryCompletedData };
 };
 
 /**
