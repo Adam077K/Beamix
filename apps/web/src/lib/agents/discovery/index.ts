@@ -114,6 +114,12 @@ export async function* runDiscoveryAgent(
   let loopCount = 0;
   const MAX_LOOPS = 20; // Safety ceiling
 
+  // Turn gate: prevents the LLM from emitting a fingerprint before it has done real discovery.
+  // discoveryTurnCount tracks completed assistant turns (not tool-use loops).
+  const MIN_DISCOVERY_TURNS = 5;
+  const MIN_EVIDENCE_LINKS = 5;
+  let discoveryTurnCount = 0;
+
   while (loopCount < MAX_LOOPS) {
     loopCount += 1;
 
@@ -230,6 +236,8 @@ export async function* runDiscoveryAgent(
         // No tool calls — agent is done talking
         if (assistantText) {
           messages.push({ role: 'assistant', content: assistantText });
+          // Count completed assistant turns for the minimum-turn gate
+          discoveryTurnCount += 1;
         }
         // If fingerprint not yet emitted, we're done with a conversation turn
         if (!fingerprint) {
@@ -295,6 +303,39 @@ export async function* runDiscoveryAgent(
               };
             } else if (toolUse.name === 'emit_brand_fingerprint') {
               const rawInput = toolUse.input as Record<string, unknown>;
+
+              // TURN GATE — server-side enforcement, not relying on LLM compliance.
+              // Reject if the LLM tries to emit before a realistic discovery conversation.
+              const evidenceLinks = rawInput.evidence_links as Record<string, string> | undefined;
+              const evidenceLinkCount = evidenceLinks ? Object.keys(evidenceLinks).length : 0;
+
+              if (discoveryTurnCount < MIN_DISCOVERY_TURNS) {
+                toolResultContent = JSON.stringify({
+                  error: 'insufficient_discovery',
+                  message: `Need at least ${MIN_DISCOVERY_TURNS} discovery turns before emitting fingerprint. Current turn count: ${discoveryTurnCount}. Continue asking discovery questions.`,
+                });
+                toolSuccess = false;
+
+                yield {
+                  type: 'tool_result',
+                  toolName: 'emit_brand_fingerprint',
+                  success: false,
+                  preview: `Turn gate: only ${discoveryTurnCount}/${MIN_DISCOVERY_TURNS} turns completed — continuing discovery`,
+                };
+              } else if (evidenceLinkCount < MIN_EVIDENCE_LINKS) {
+                toolResultContent = JSON.stringify({
+                  error: 'insufficient_evidence',
+                  message: `evidence_links must have at least ${MIN_EVIDENCE_LINKS} entries before emitting fingerprint. Current count: ${evidenceLinkCount}. Ground more fields with transcript or site_crawl references.`,
+                });
+                toolSuccess = false;
+
+                yield {
+                  type: 'tool_result',
+                  toolName: 'emit_brand_fingerprint',
+                  success: false,
+                  preview: `Evidence gate: only ${evidenceLinkCount}/${MIN_EVIDENCE_LINKS} evidence links — continuing discovery`,
+                };
+              } else {
               const sessionCtx: SessionContext = { customerId: input.customerId };
               const validated = executeEmitBrandFingerprint(rawInput, sessionCtx);
               fingerprint = validated;
@@ -310,6 +351,7 @@ export async function* runDiscoveryAgent(
                 success: true,
                 preview: `Brand fingerprint saved (version ${validated.brief_version_id})`,
               };
+              }
             } else {
               toolResultContent = JSON.stringify({ error: `Unknown tool: ${toolUse.name}` });
               toolSuccess = false;
