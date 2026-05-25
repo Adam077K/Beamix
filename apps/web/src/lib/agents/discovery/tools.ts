@@ -215,36 +215,191 @@ export const DISCOVERY_TOOLS: Anthropic.Tool[] = [
 // Tool executor functions
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// SSRF defense helpers
+// ---------------------------------------------------------------------------
+
+const PRIVATE_HOSTNAME_RE =
+  /^(localhost|.*\.local)$|^(127\.|10\.|192\.168\.|169\.254\.|0\.0\.0\.0)|^(172\.(1[6-9]|2\d|3[01])\.)|^(\[?::1\]?$)|^(\[?fc[0-9a-f]{2}:)|^(\[?fd[0-9a-f]{2}:)/i;
+
+/**
+ * Returns an error string if the URL should be blocked, or null if it is safe to fetch.
+ * Rules:
+ *   1. Must parse as a valid URL.
+ *   2. Scheme must be https: (http: allowed only outside production with a console warning).
+ *   3. Hostname must not resolve to a private/loopback/link-local range.
+ */
+function validateUrlForFetch(rawUrl: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    return `Invalid URL: ${rawUrl}`;
+  }
+
+  if (parsed.protocol === 'http:') {
+    if (process.env.NODE_ENV === 'production') {
+      return `HTTP URLs are not allowed in production (got ${rawUrl}). Use HTTPS.`;
+    }
+    console.warn(`[discovery/fetch_site_content] WARNING: fetching non-HTTPS URL in non-prod: ${rawUrl}`);
+  } else if (parsed.protocol !== 'https:') {
+    return `Unsupported URL scheme "${parsed.protocol}" — only https: is allowed`;
+  }
+
+  const hostname = parsed.hostname.replace(/^\[|\]$/g, ''); // strip IPv6 brackets
+  if (PRIVATE_HOSTNAME_RE.test(hostname)) {
+    return `URL resolves to a private/loopback address and is blocked for security: ${hostname}`;
+  }
+
+  return null; // safe
+}
+
+const BODY_SIZE_LIMIT_BYTES = 1_048_576; // 1 MB
+
+/**
+ * Performs a single fetch hop with redirect: 'manual'. Returns the Response or throws.
+ * Caller is responsible for checking 3xx and following with validateUrlForFetch.
+ */
+async function fetchOneHop(hopUrl: string): Promise<Response> {
+  return fetch(hopUrl, {
+    headers: {
+      'User-Agent': 'Beamix-Discovery-Bot/1.0 (business intelligence crawler)',
+      Accept: 'text/html,application/xhtml+xml',
+    },
+    redirect: 'manual', // never auto-follow — we validate each Location header
+    signal: AbortSignal.timeout(15_000),
+  });
+}
+
 /**
  * Fetch and parse site content using Cheerio.
- * Gracefully returns an empty result if the site blocks crawlers.
+ * Includes SSRF defense: URL allowlist, scheme check, private-IP block, manual redirect
+ * handling (max 3 hops), 1 MB body cap, and 15 s timeout.
  */
 export async function executeFetchSiteContent(url: string): Promise<SiteCrawlResult> {
   const fetchedAt = new Date().toISOString();
 
+  // --- SSRF validation before first hop ---
+  const urlError = validateUrlForFetch(url);
+  if (urlError) {
+    return {
+      url,
+      title: '',
+      description: '',
+      headlines: [],
+      bodyText: `Blocked: ${urlError}`,
+      isEmpty: true,
+      fetchedAt,
+    };
+  }
+
   let html: string;
   try {
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Beamix-Discovery-Bot/1.0 (business intelligence crawler)',
-        Accept: 'text/html,application/xhtml+xml',
-      },
-      signal: AbortSignal.timeout(15_000),
-    });
+    let currentUrl = url;
+    let res: Response | null = null;
+    const MAX_REDIRECT_HOPS = 3;
 
-    if (!res.ok) {
+    for (let hop = 0; hop <= MAX_REDIRECT_HOPS; hop++) {
+      res = await fetchOneHop(currentUrl);
+
+      // Handle redirects manually — validate each Location before following
+      if (res.status >= 300 && res.status < 400) {
+        if (hop === MAX_REDIRECT_HOPS) {
+          return {
+            url,
+            title: '',
+            description: '',
+            headlines: [],
+            bodyText: `Fetch failed: too many redirects (> ${MAX_REDIRECT_HOPS})`,
+            isEmpty: true,
+            fetchedAt,
+          };
+        }
+
+        const location = res.headers.get('location');
+        if (!location) {
+          return {
+            url,
+            title: '',
+            description: '',
+            headlines: [],
+            bodyText: `Fetch failed: redirect with no Location header (HTTP ${res.status})`,
+            isEmpty: true,
+            fetchedAt,
+          };
+        }
+
+        // Resolve relative redirects
+        const redirectUrl = new URL(location, currentUrl).toString();
+        const redirectError = validateUrlForFetch(redirectUrl);
+        if (redirectError) {
+          return {
+            url,
+            title: '',
+            description: '',
+            headlines: [],
+            bodyText: `Blocked redirect: ${redirectError}`,
+            isEmpty: true,
+            fetchedAt,
+          };
+        }
+
+        currentUrl = redirectUrl;
+        continue; // follow the hop
+      }
+
+      break; // non-redirect response — exit loop
+    }
+
+    if (!res || !res.ok) {
       return {
         url,
         title: '',
         description: '',
         headlines: [],
-        bodyText: `Fetch failed: HTTP ${res.status}`,
+        bodyText: `Fetch failed: HTTP ${res?.status ?? 'unknown'}`,
         isEmpty: true,
         fetchedAt,
       };
     }
 
-    html = await res.text();
+    // Cap body at 1 MB even if Content-Length is absent
+    const reader = res.body?.getReader();
+    if (!reader) {
+      return {
+        url,
+        title: '',
+        description: '',
+        headlines: [],
+        bodyText: 'Fetch failed: response body is not readable',
+        isEmpty: true,
+        fetchedAt,
+      };
+    }
+
+    const chunks: Uint8Array[] = [];
+    let totalBytes = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        totalBytes += value.byteLength;
+        if (totalBytes > BODY_SIZE_LIMIT_BYTES) {
+          reader.cancel().catch(() => undefined);
+          break; // truncate — we have enough to parse
+        }
+        chunks.push(value);
+      }
+    }
+
+    html = new TextDecoder().decode(
+      chunks.reduce((acc, chunk) => {
+        const merged = new Uint8Array(acc.length + chunk.length);
+        merged.set(acc, 0);
+        merged.set(chunk, acc.length);
+        return merged;
+      }, new Uint8Array(0)),
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown fetch error';
     return {
