@@ -25,9 +25,18 @@ export interface AgentRunRequestedData {
   scanId?: string;
 }
 
+/** Payload for `discovery.booked` — fired by the Cal.com webhook handler. */
+export interface DiscoveryBookedData {
+  email: string;
+  scan_id: string | null;
+  booked_at: string;
+  cal_booking_id: string;
+}
+
 /** Typed event map for the Beamix Inngest client. */
 export type BeamixEvents = {
   'agent/run.requested': { data: AgentRunRequestedData };
+  'discovery.booked': { data: DiscoveryBookedData };
 };
 
 /**
