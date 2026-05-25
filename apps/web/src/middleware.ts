@@ -36,6 +36,8 @@ export async function middleware(request: NextRequest) {
 
   // Guard (protected) routes — redirect to /login when no authenticated user.
   const isProtected =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/approvals') ||
     pathname.startsWith('/home') ||
     pathname.startsWith('/inbox') ||
     pathname.startsWith('/scans') ||
