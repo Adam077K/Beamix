@@ -9,6 +9,26 @@
 import { z } from 'zod';
 
 // ---------------------------------------------------------------------------
+// Evidence-link prefix allowlists — shared by the Zod schema (validation)
+// and the tool executor (audit logging). Exported so tools.ts can reference
+// them without duplicating the source of truth.
+// ---------------------------------------------------------------------------
+
+/** Prefixes the LLM is permitted to use in evidence_links values. */
+export const EVIDENCE_LLM_ALLOWED_PREFIXES = ['transcript:', 'site_crawl:', 'gbp:'] as const;
+
+/**
+ * Prefixes reserved exclusively for server/human code.
+ * Any LLM attempt to use one of these is a security event.
+ */
+export const EVIDENCE_RESERVED_PREFIXES = [
+  'adam_manual:',
+  'customer_edit:',
+  'system_inferred:',
+  'external:',
+] as const;
+
+// ---------------------------------------------------------------------------
 // DiscoveryInput — everything the agent has before the conversation starts
 // ---------------------------------------------------------------------------
 export interface DiscoveryInput {
@@ -101,7 +121,17 @@ export const BrandFingerprintSchema = z.object({
   /** Confidence score 0.0–1.0 reflecting data grounding. */
   confidence_score: z.number().min(0).max(1),
   /** Per-field evidence links. */
-  evidence_links: z.record(z.string()),
+  evidence_links: z.record(
+    z.string().refine(
+      (val) => {
+        // Reject any value that starts with a reserved prefix — only server/human code may set these
+        if (EVIDENCE_RESERVED_PREFIXES.some((p) => val.startsWith(p))) return false;
+        // Accept only values starting with an LLM-allowed prefix
+        return EVIDENCE_LLM_ALLOWED_PREFIXES.some((p) => val.startsWith(p));
+      },
+      { message: 'evidence_link value must start with one of: transcript:, site_crawl:, gbp: — reserved prefixes (adam_manual:, customer_edit:, system_inferred:, external:) are not allowed' },
+    ),
+  ),
   /** True when YMYL content detected — forces human approval on all downstream. */
   requires_human_approval: z.boolean(),
   /** brief_version_id — uuid v4, generated on every emit. */

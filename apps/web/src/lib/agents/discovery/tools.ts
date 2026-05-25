@@ -11,7 +11,7 @@
 
 import * as cheerio from 'cheerio';
 import { randomUUID } from 'crypto';
-import { BrandFingerprintSchema } from './types';
+import { BrandFingerprintSchema, EVIDENCE_LLM_ALLOWED_PREFIXES, EVIDENCE_RESERVED_PREFIXES } from './types';
 import type { BrandFingerprint, GBPResult, SiteCrawlResult } from './types';
 import type Anthropic from '@anthropic-ai/sdk';
 
@@ -490,6 +490,44 @@ export function executeEmitBrandFingerprint(
   // Strip any LLM-provided customer_id to prevent injection
   const { customer_id: _stripped, ...safeInput } = rawInput;
   void _stripped; // intentionally discarded
+
+  // SECURITY AUDIT: detect and log any LLM attempt to use reserved evidence_link prefixes.
+  // This fires BEFORE BrandFingerprintSchema.safeParse rejects the call — the log captures
+  // the violation even if the parse would have succeeded (e.g. if the Zod schema were later
+  // loosened). Reserved prefixes are only settable by server/human code.
+  const evidenceLinks =
+    safeInput.evidence_links &&
+    typeof safeInput.evidence_links === 'object' &&
+    !Array.isArray(safeInput.evidence_links)
+      ? (safeInput.evidence_links as Record<string, unknown>)
+      : {};
+
+  const reservedPrefixViolations: { field: string; value: string; prefix: string }[] = [];
+  for (const [field, value] of Object.entries(evidenceLinks)) {
+    if (typeof value === 'string') {
+      const matchedReserved = EVIDENCE_RESERVED_PREFIXES.find((p) => value.startsWith(p));
+      if (matchedReserved) {
+        reservedPrefixViolations.push({ field, value, prefix: matchedReserved });
+      }
+      // Also flag values that don't start with any allowed prefix (schema will reject these too)
+      else if (!EVIDENCE_LLM_ALLOWED_PREFIXES.some((p) => value.startsWith(p))) {
+        reservedPrefixViolations.push({ field, value, prefix: '(unrecognised)' });
+      }
+    }
+  }
+
+  if (reservedPrefixViolations.length > 0) {
+    console.error(
+      JSON.stringify({
+        event: 'security_violation',
+        type: 'evidence_link_reserved_prefix_attempt',
+        customer_id: sessionContext.customerId,
+        violations: reservedPrefixViolations,
+        message:
+          'LLM attempted to set evidence_links values with reserved or disallowed prefixes. Schema validation will reject this call.',
+      }),
+    );
+  }
 
   // Inject brief_version_id — always a fresh UUID v4 on every emit
   const inputWithVersion = {
