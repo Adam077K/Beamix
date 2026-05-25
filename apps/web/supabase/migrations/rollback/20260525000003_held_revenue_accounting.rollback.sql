@@ -9,8 +9,10 @@
 --   - If migration 01 rollback was already run, skip the FK step.
 
 -- Step 1: Drop FK from refund_events → revenue_events
+-- Forward migration named this constraint fk_refund_events_revenue_event (explicit name).
+-- The Postgres default (refund_events_revenue_event_id_fkey) was never used.
 ALTER TABLE public.refund_events
-  DROP CONSTRAINT IF EXISTS refund_events_revenue_event_id_fkey;
+  DROP CONSTRAINT IF EXISTS fk_refund_events_revenue_event;
 
 -- Step 2: Drop revenue_events table
 DROP TABLE IF EXISTS public.revenue_events;
