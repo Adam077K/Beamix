@@ -5,8 +5,7 @@
  *
  * Security layers:
  *   1. HMAC-SHA256 verification of session_token against DISCOVERY_SESSION_SECRET
- *      (fallback: CALCOM_WEBHOOK_SECRET — TODO Wave 1.5: remove fallback once
- *      DISCOVERY_SESSION_SECRET is provisioned in all environments)
+ *      (mandatory — no fallbacks, no dev-mode bypass)
  *   2. Resolves session from discovery_sessions table; aborts if not found
  *   3. Idempotency: deduplicates on message_id via JSONB scan of messages array
  *
@@ -136,18 +135,16 @@ export type ChatBody = z.infer<typeof ChatBodySchema>;
 function verifySessionToken(
   token: string,
 ): { valid: false; reason: string } | { valid: true; sessionId: string } {
-  // TODO Wave 1.5: remove CALCOM_WEBHOOK_SECRET fallback once DISCOVERY_SESSION_SECRET
-  // is provisioned in all environments (local, preview, production).
-  const secret =
-    process.env.DISCOVERY_SESSION_SECRET ?? process.env.CALCOM_WEBHOOK_SECRET;
+  // SECURITY: DISCOVERY_SESSION_SECRET is mandatory in all environments.
+  // Dev-mode bypass removed (was a full auth bypass on Vercel preview deployments).
+  // CALCOM_WEBHOOK_SECRET fallback removed (cross-protocol secret reuse risk).
+  // Add DISCOVERY_SESSION_SECRET to Vercel env before deploying.
+  const secret = process.env.DISCOVERY_SESSION_SECRET;
 
   if (!secret) {
-    // In development without any secret, skip verification
-    if (process.env.NODE_ENV !== 'production') {
-      // Extract session_id from token as best-effort
-      const parts = token.split('.');
-      return { valid: true, sessionId: parts[0] ?? token };
-    }
+    console.error('[discovery/chat] DISCOVERY_SESSION_SECRET is not configured', {
+      nodeEnv: process.env.NODE_ENV,
+    });
     return { valid: false, reason: 'Session secret not configured' };
   }
 
