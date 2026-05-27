@@ -393,14 +393,11 @@ export async function POST(request: NextRequest): Promise<Response> {
     return new Response(stream, { headers: SSE_HEADERS });
   }
 
-  // 5. Build conversation history from persisted messages
-  const conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> =
-    existingMessages
-      .filter((m) => m.role === 'user' || m.role === 'assistant')
-      .map((m) => ({ role: m.role, content: m.content }));
-
-  // Append the incoming user message
-  conversationHistory.push({ role: 'user', content: message });
+  // 5. (Fix 6 from QA: ai-engineer removed conversationHistory from runDiscoveryAgent's
+  //     public signature — history is now fetched server-side inside the agent using
+  //     `sessionId` from discoveryInput. The persisted `existingMessages` are still
+  //     maintained here for the message_id idempotency check above; we do NOT pass
+  //     them to the agent.)
 
   // 6. Stream from Discovery Agent
   let runDiscoveryAgent: DiscoveryAgentFn;
@@ -470,7 +467,9 @@ export async function POST(request: NextRequest): Promise<Response> {
       let controllerClosed = false;
 
       try {
-        const agentGen = runDiscoveryAgent(discoveryInput, conversationHistory);
+        // runDiscoveryAgent fetches its own conversation history server-side using
+        // sessionId from discoveryInput. See feat/ai-w1-discovery-agent Fix 6.
+        const agentGen = runDiscoveryAgent(discoveryInput);
 
         for await (const chunk of agentGen) {
           // Filter out internal-only chunk types from the SSE payload.
