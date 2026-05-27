@@ -65,6 +65,44 @@ rules:
     tier: full
     reason: "Background jobs — failures retry silently"
 
+  # ──────────────── IRREVERSIBLE (agency-pivot additions — 2026-05-25) ────────────────
+  # Publishing, Paddle, refund, and agent-discovery flows touch money and external integrations.
+  - pattern: "apps/web/src/lib/publishing/**"
+    tier: irreversible
+    reason: "OAuth token management + CMS push — credential leak = customer-facing data breach"
+    added: "2026-05-25"
+  - pattern: "apps/web/src/lib/paddle/**"
+    tier: irreversible
+    reason: "Billing logic — silent failure = lost revenue or incorrect charges"
+    added: "2026-05-25"
+  - pattern: "apps/web/src/lib/refund/**"
+    tier: irreversible
+    reason: "Refund ledger manipulation — append-only invariant must not be broken"
+    added: "2026-05-25"
+  - pattern: "apps/web/src/lib/agents/discovery/**"
+    tier: irreversible
+    reason: "Discovery agent touches brand_fingerprints + adam_reviewed_at gate — corrupted data cascades to all downstream agents"
+    added: "2026-05-25"
+  - pattern: "apps/web/src/lib/agents/brand-brief-manager/**"
+    tier: irreversible
+    reason: "Brand brief manager produces customer-facing deliverables — wrong output ships to customers"
+    added: "2026-05-25"
+
+  # ──────────────── FULL (agency-pivot additions — 2026-05-25) ────────────────
+  # Approval gate, held-revenue accounting, and discovery non-agent helpers.
+  - pattern: "apps/web/src/lib/approval/**"
+    tier: full
+    reason: "Approval queue state machine — incorrect transitions skip customer consent"
+    added: "2026-05-25"
+  - pattern: "apps/web/src/lib/held-revenue/**"
+    tier: full
+    reason: "Revenue hold/release logic — errors in bookings affect ARR/MRR accuracy"
+    added: "2026-05-25"
+  - pattern: "apps/web/src/lib/discovery/**"
+    tier: full
+    reason: "Discovery helpers (non-agent) — onboarding and fingerprint-generation paths"
+    added: "2026-05-25"
+
   # ──────────────── LITE ────────────────
   # General app code: UI components, pages, utilities.
   - pattern: "apps/web/src/components/**"
