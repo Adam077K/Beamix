@@ -27,6 +27,7 @@ import {
   checkFreeScanRateLimit,
   normaliseDomain,
 } from '@/lib/security/rate-limit'
+import { isDomainTooNew } from '@/lib/security/whois'
 
 export const dynamic = 'force-dynamic'
 
@@ -76,45 +77,6 @@ async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
     return data.success === true
   } catch (err) {
     console.error('[scan/free] Turnstile verification failed', { error: String(err) })
-    return false
-  }
-}
-
-// ---------------------------------------------------------------------------
-// WHOIS age check
-// ---------------------------------------------------------------------------
-
-/**
- * Returns true if the domain appears to be < 30 days old.
- * Uses a WHOIS REST API (whoisjsonapi.com) to fetch creation date.
- * On any error, returns false (fail open — don't block on API failures).
- */
-async function isDomainTooNew(domain: string): Promise<boolean> {
-  try {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 5000)
-    const res = await fetch(`https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=${process.env.WHOIS_API_KEY ?? ''}&domainName=${domain}&outputFormat=JSON`, {
-      signal: controller.signal,
-    })
-    clearTimeout(timeout)
-    if (!res.ok) return false
-    const data = (await res.json()) as {
-      WhoisRecord?: {
-        createdDate?: string
-        registryData?: { createdDate?: string }
-      }
-    }
-    const createdStr =
-      data.WhoisRecord?.createdDate ??
-      data.WhoisRecord?.registryData?.createdDate
-    if (!createdStr) return false
-    const created = new Date(createdStr)
-    if (isNaN(created.getTime())) return false
-    const ageMs = Date.now() - created.getTime()
-    const ageDays = ageMs / (1000 * 60 * 60 * 24)
-    return ageDays < 30
-  } catch {
-    // Fail open — don't block scans on WHOIS API failures
     return false
   }
 }
