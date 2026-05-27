@@ -28,7 +28,16 @@ CREATE TABLE brand_fingerprints (
   discovery_transcript_url TEXT,
   adam_reviewed_at TIMESTAMPTZ,           -- blocks downstream agents until set, customer #1-50
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  -- Added: emit_brand_fingerprint tool output fields (P1 schema drift, 2026-05-20)
+  confidence_score        JSONB NOT NULL DEFAULT '{}',  -- per-field confidence { field: 0.0–1.0 }
+  evidence_links          JSONB NOT NULL DEFAULT '{}',  -- per-field provenance { field: "source:loc" }
+  requires_human_approval BOOLEAN NOT NULL DEFAULT true, -- YMYL gate; agent must explicitly clear
+  brief_version_id        UUID NOT NULL DEFAULT gen_random_uuid(), -- version per emit call; allows multi-version per customer
+  competitor_set          JSONB NOT NULL DEFAULT '[]',  -- [{ domain, relationship }]
+  approval_style          JSONB NOT NULL DEFAULT '{}',  -- { tone, escalation_thresholds, ymyl_override }
+  hard_nos                JSONB NOT NULL DEFAULT '[]'   -- forbidden phrases/topics
 );
 
 -- RLS: customer can read own row only. Service role reads all. No customer write.

@@ -33,10 +33,21 @@ export interface DiscoveryBookedData {
   cal_booking_id: string;
 }
 
+/** Payload for `discovery/completed` — fired when the discovery agent session finishes
+ *  and the brand_fingerprint is emitted. Consumed by the welcome-email handler. */
+export interface DiscoveryCompletedData {
+  userId: string;
+  userEmail: string;
+  firstName: string;
+  businessId: string;
+  scanId: string;
+}
+
 /** Typed event map for the Beamix Inngest client. */
 export type BeamixEvents = {
   'agent/run.requested': { data: AgentRunRequestedData };
   'discovery.booked': { data: DiscoveryBookedData };
+  'discovery/completed': { data: DiscoveryCompletedData };
 };
 
 /**
