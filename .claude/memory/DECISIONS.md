@@ -4,6 +4,55 @@
 
 ---
 
+### [2026-05-27] — WAVE 1 SHIPPED — agency-pivot customer surface live + maxTurns lifted
+
+**Decision:** Beamix Wave 1 (agency-pivot customer-facing surface) merged to `main` across 7 PRs (#86–#92). The product can now flow free scan → discovery booking → 30-min text discovery agent → brand fingerprint capture → outcomes dashboard v1 + approval queue shell.
+
+**PRs merged (squash):**
+- `#86` feat/db-w1-agency-tables (Irreversible) — 4 migrations, RLS, qa-tier-floor.yml, rollback scripts → `1296880`
+- `#87` feat/be-w1-scan-funnel (Full) → `f2ce2f5`
+- `#88` feat/be-w1-discovery-chat (Full) → `4d3de35`
+- `#89` feat/ai-w1-discovery-agent (Irreversible) → `fa8899c`
+- `#90` feat/fe-w1-outcomes-shell (Full) → `c94a355`
+- `#91` feat/be-w1-resend-scaffolding (Full) → `7310d3a`
+- `#92` chore/worker-max-turns-50 (Irreversible) — see below
+
+**Architectural sub-decisions locked during the dispatch:**
+1. **CTO is planning-only, CEO is dispatcher.** Subagent runtime guards prevent nested `Task` dispatch (Claude Code 2.1.146); CTO subagent's `tools` declaration of `Task` is cosmetic until runtime allows it. CTO returns paste-ready dispatch packets to CEO. Reversibility: irreversible at runtime level until Anthropic ships nested-Task flag.
+2. **Workers branch from `origin/main`, never local `main`.** Local main is frequently stale vs origin; workers branched from local main inherit empty `apps/web/` + missing dispatch brief and burn 50-130k tokens before discovering the gap. Pattern lives in `memory/feedback_worker_worktree_from_origin.md`. Reversibility: easy (pattern only).
+3. **Workers run a sanity check in their first 3 tool calls.** Verify expected files exist (dispatch brief + apps/web/src/lib + key spec docs); return BLOCKED if stale. Cuts wasted-budget stalls from ~30 tool calls to 3.
+4. **Workers commit each unit immediately.** Don't batch; commit per logical change. The "commit-as-you-go" failsafe means PARTIAL-but-committed beats empty branch when maxTurns hits.
+5. **QA-Lead can't nest Task either — CEO directly dispatches reviewers.** Per branch + risk tier: code-reviewer + security-engineer (+ adversary-engineer for Irreversible). CEO synthesizes the per-PR verdict. Pattern proven on Wave 1.
+6. **maxTurns 20 → 50 for the 9 worker types** (PR #92). Wave 1 stalled ~12 worker invocations across the 20-turn cap (initial + R2 + micro-continuation + mop-up + fix dispatch + QA fix dispatch). 50 gives a single focused feature room. Reviewers (15) and orchestrators (25-30) left unchanged. Adam textual consent: "I allow everything. Merge. Push. or do all the things you need to do." (CEO ceo-3-1779270080 session 2026-05-27). Reversibility: irreversible (touches `.claude/agents/`).
+7. **Multi-judge for Irreversible.** 3 reviewers per Irreversible branch (Opus adversary + Opus security + Sonnet code-reviewer); 2 per Full branch. Verdicts synthesized by CEO. The Wave 1 adv-ai (Opus) review on `ai-w1-discovery-agent` caught 7 attack scenarios (2 CRITICAL + 4 HIGH + 1 LOW) that line-level review missed — confirming Opus adversary at tight scope is high-leverage for trust-boundary code.
+
+**QA findings + fixes shipped on Wave 1:**
+- ai-discovery: 7 blockers fixed (customer_id server-pin from session, SSRF defense in fetch_site_content, minimum-turn gate before emit_brand_fingerprint, YMYL reconciliation with Hebrew terms + JSON deep-walk, conversationHistory removed from public signature, evidence_links prefix allowlist, schema-drift resolved by db PR adding 7 missing columns)
+- discovery-chat: 5 P1/High fixed (dev-mode HMAC bypass removed, CALCOM secret fallback removed, double SSE done event prevented, timingSafeEqual length guard, Principle #9 generic 503 string)
+- db: 2 P1s fixed (rollback FK constraint name match, revenue_events.booked_at UPDATE policy for day-60 cron)
+
+**Adam-actions remaining:**
+1. Apply 4 Wave 1 migrations to staging Supabase via SQL Editor (consolidated script: `docs/08-agents_work/wave-1-staging-apply/WAVE-1-MIGRATIONS-COMBINED.sql`); then production
+2. Optional: prune Paddle production webhook from 56 → 12 events
+3. Optional: rotate `DISCOVERY_SESSION_SECRET` (one was exposed in chat during Vercel CLI debug; current live Vercel env value is uncompromised)
+
+**Wave 1.5 in flight:** Domain + business verification (Task #12) — `w15-domain-verify` worker dispatched 2026-05-27.
+
+**Wave 2 ready to brief:** Tier-gate middleware + weekly digest cron + held-revenue booked_at cron + founding-100 cohort UI + approval queue real wiring + Customer Success agent + Approval-gate writer agent. Plus the descoped Wave 1 verification item if Wave 1.5 doesn't ship it.
+
+**Wave 3 sequenced after Wave 2 ships customer #1:** publishing integrations matrix.
+
+**Cost reality:** ~1M tokens to ship Wave 1 — roughly 3× theoretical minimum. maxTurns:20 was the dominant amplifier; PR #92 addresses it.
+
+**Reversibility:** Most decisions are operational patterns (reversible). The maxTurns bump + the runtime-level CTO planning-only constraint are HARD-reversible without Anthropic-side changes.
+
+**See:**
+- `docs/08-agents_work/sessions/2026-05-27-ceo-wave1-closeout.md` — full session synthesis
+- `~/.claude/projects/.../memory/feedback_worker_worktree_from_origin.md` — branch-from-origin pattern
+- Wave 1 PRs: #86, #87, #88, #89, #90, #91, #92
+
+---
+
 ### [2026-05-24] — CEO ratifies 5 cross-team sub-decisions from agency pivot
 
 **Decision:** After all four C-suite leads (CPO/CMO/CBO/CTO) completed the agency-pivot dispatch on 2026-05-23, they surfaced 5 sub-decisions outside the original 15 locked in the grill session. CEO ratifies all 5 under user authorization ("run your part"). All 5 are downstream-actionable by Build-Lead, Design-Lead, and ai-engineer workers in the coming wave dispatches.

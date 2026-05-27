@@ -4,3 +4,4 @@
 
 # Next.js auto-generated types (re-generated on every build)
 next-env.d.ts
+.vercel
