@@ -1,13 +1,16 @@
 -- ============================================================================
--- Wave 1 Staging Apply — STAGE 2 of 2
+-- Wave 1 Staging Apply — STAGE 2 of 2  (rebuilt 2026-05-28 from post-PR-#95 main)
 -- ============================================================================
--- Run AFTER STAGE-1 succeeds. STAGE-1 must have committed the enum value
--- additions before this script can reference 'starter', 'growth', etc.
+-- Run AFTER STAGE-1 succeeds. Idempotent — safe to re-run.
 --
--- Idempotent — safe to re-run.
+-- Contents (in order):
+--   - Migration 01: agency tables (7 new tables + brand_fingerprints columns)
+--   - Migration 03: held-revenue accounting (revenue_events ledger + subscriptions.held_until)
+--   - Migration 04: RLS policies for all 7 agency tables
+--   - Migration 05: plans.is_active column + seed agency tier rows + deprecate old tiers
 -- ============================================================================
 
--- ====== Migration 1: agency tables ======
+-- ====== Migration 01: agency_tables ======
 -- Migration: 20260525000001_agency_tables.sql
 -- Purpose: 7 new agency-pivot tables for Wave 1 (brand_fingerprints, approval_queue,
 --          deliverables_per_customer_per_month, publishing_credentials, weekly_digests,
@@ -334,69 +337,7 @@ CREATE TRIGGER refund_events_no_delete
   BEFORE DELETE ON public.refund_events
   FOR EACH ROW EXECUTE FUNCTION public.refund_events_immutable();
 
--- ====== Migration 2 (post-enum-commit): is_active column + seed inserts + deprecate ======
--- Migration: 20260525000002_plan_tier_rename.sql
--- Purpose: Add agency-tier enum values to plan_tier; deprecate discover/build via comments.
---          Adds: 'starter', 'growth', 'professional' (scale already exists — intentional collision kept)
---          Does NOT remove existing values (safe — data integrity + historical webhook refs preserved)
--- Source: docs/03-system-design/DATABASE_SCHEMA.md §0.5
---         docs/08-agents_work/sessions/2026-05-24-cto-infra-gap-scoping.md (B5)
---
--- Current plan_tier values: 'discover', 'build', 'scale'
--- Post-migration plan_tier values: 'discover'*, 'build'*, 'scale', 'starter', 'growth', 'professional'
---   * deprecated — no longer offered to new customers; Paddle products archived.
---     Backend code must filter on active plans via plans.is_active column (not enum value).
---
--- Rollback: Cannot remove enum values in PostgreSQL without DROP + RECREATE.
---   see rollback/20260525000002_plan_tier_rename.rollback.sql for full strategy.
---
--- NOTE: ALTER TYPE ADD VALUE IF NOT EXISTS is not available before PostgreSQL 14.
---   Supabase production runs PG 15+ so IF NOT EXISTS is safe.
-
--- Add new agency tier values to plan_tier enum
--- 'scale' already exists — no ADD VALUE needed (collision intentional per brief)
-
--- Deprecate old values via comment (PostgreSQL has no native enum value deprecation)
-  'Plan tier enum for Beamix. '
-  'Values ''discover'' and ''build'' are DEPRECATED as of 2026-05-25 (agency pivot). '
-  'New values: ''starter'' ($499/mo), ''growth'' ($999/mo), ''scale'' ($1,499/mo), ''professional'' ($2,499/mo). '
-  'Legacy values retained for historical Paddle webhook event compatibility. '
-  'Use plans.is_active = false to gate deprecated tiers from new signups.';
-
--- Seed the new agency tier plan rows (sandbox prices — Adam replaces with real price IDs)
--- Using INSERT ... ON CONFLICT DO NOTHING for idempotency
--- NOTE: paddle_price_id_monthly / paddle_price_id_annual must be set by Adam (AB-3)
---       These rows are created with NULL price IDs — backend checks IS NOT NULL before checkout
-
-INSERT INTO plans (name, tier, monthly_credits, paddle_price_id_monthly, paddle_price_id_annual)
-VALUES
-  ('Starter',       'starter',      0, NULL, NULL),
-  ('Growth',        'growth',       0, NULL, NULL),
-  ('Professional',  'professional', 0, NULL, NULL)
-ON CONFLICT (tier) DO NOTHING;
-
--- Mark deprecated tiers inactive so they don't appear in pricing UI
--- 'scale' is NOT deprecated (it is the new $1,499/mo tier, reused from old enum)
--- We only deprecate 'discover' and 'build'
--- plans table has no is_active column yet — we add it here if not present
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name   = 'plans'
-      AND column_name  = 'is_active'
-  ) THEN
-    ALTER TABLE public.plans ADD COLUMN is_active boolean NOT NULL DEFAULT true;
-  END IF;
-END $$;
-
--- Deactivate old tiers
-UPDATE plans SET is_active = false WHERE tier IN ('discover', 'build');
-
--- Add new agency agent_type values (internal only, per DATABASE_SCHEMA §0.5)
-
--- ====== Migration 3: held-revenue accounting ======
+-- ====== Migration 03: held_revenue_accounting ======
 -- Migration: 20260525000003_held_revenue_accounting.sql
 -- Purpose: subscriptions.held_until + held_revenue_amount_cents + founding_100_cohort columns;
 --          revenue_events ledger table (append-only, booked_at flipped by day-61 cron).
@@ -485,7 +426,7 @@ CREATE INDEX IF NOT EXISTS idx_refund_events_revenue_event
   ON refund_events (revenue_event_id)
   WHERE revenue_event_id IS NOT NULL;
 
--- ====== Migration 4: RLS policies ======
+-- ====== Migration 04: rls_policies_agency ======
 -- Migration: 20260525000004_rls_policies_agency.sql
 -- Purpose: RLS for the 7 new agency-pivot tables (Wave 1).
 --          refund_events: append-only ledger — SELECT for owner, INSERT for service_role only.
@@ -686,3 +627,56 @@ CREATE POLICY "founding_100_cohort: service_role all"
   TO service_role
   USING (true)
   WITH CHECK (true);
+
+-- ====== Migration 05: plan_tier_seed_and_deprecate ======
+-- Migration: 20260525000005_plan_tier_seed_and_deprecate.sql
+-- Purpose: Seed the new agency-tier plan rows + add plans.is_active column +
+--          mark deprecated tiers (discover/build) inactive.
+--
+-- Split from 20260525000002_plan_tier_rename.sql on 2026-05-27 because PostgreSQL
+-- requires ALTER TYPE ADD VALUE to commit BEFORE the value can be referenced.
+-- Migration 02 now holds the enum ADD VALUE statements only; this file does the
+-- DML that uses those new values.
+--
+-- File number is 05 (after 04 rls_policies_agency) so the enum commits land before
+-- this file runs. RLS in 04 does not reference the new enum values so ordering is safe.
+--
+-- Rollback: see rollback/20260525000005_plan_tier_seed_and_deprecate.rollback.sql
+--
+-- NOTE: All idempotent via ON CONFLICT DO NOTHING + IF NOT EXISTS guards.
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 1. Add plans.is_active column (used for deprecation gating below)
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name   = 'plans'
+      AND column_name  = 'is_active'
+  ) THEN
+    ALTER TABLE public.plans ADD COLUMN is_active boolean NOT NULL DEFAULT true;
+  END IF;
+END $$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 2. Seed the new agency tier plan rows (Wave 1 tier rename)
+-- ─────────────────────────────────────────────────────────────────────────────
+-- paddle_price_id_monthly / paddle_price_id_annual are NULL here; the application
+-- layer reads real price IDs from Vercel env (PADDLE_STARTER_MONTHLY_PRICE_ID etc.)
+-- and references plans by tier. ON CONFLICT (tier) DO NOTHING keeps this idempotent.
+
+INSERT INTO plans (name, tier, monthly_credits, paddle_price_id_monthly, paddle_price_id_annual)
+VALUES
+  ('Starter',       'starter',      0, NULL, NULL),
+  ('Growth',        'growth',       0, NULL, NULL),
+  ('Professional',  'professional', 0, NULL, NULL)
+ON CONFLICT (tier) DO NOTHING;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 3. Mark deprecated tiers inactive
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 'scale' is NOT deprecated (it is the new $1,499/mo tier, reused from old enum).
+-- We only deprecate 'discover' and 'build' (the $79 and $189 pre-pivot tiers).
+UPDATE plans SET is_active = false WHERE tier IN ('discover', 'build');
