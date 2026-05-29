@@ -202,8 +202,8 @@ async function _processCustomer(
   }
 
   // 2c. INSERT weekly_digests row
-  // weekly_digests is not yet in database.types.ts (Wave 1 migration applied but types not regenerated).
-  // Cast to `any` until a `pnpm supabase gen types` pass regenerates the file.
+  // TODO(W2.2-typegen): remove cast after `pnpm supabase gen types` regenerates
+  //   database.types.ts to include the weekly_digests table — non-blocking on pilot ship.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dbAny = db as any
   const { data: inserted, error: insertError } = await (dbAny
@@ -279,7 +279,8 @@ async function _assembleDigestInput(
   weekEnd.setUTCDate(weekEnd.getUTCDate() + 7)
 
   // ── Open approval cards ──────────────────────────────────────────────────
-  // approval_queue is not yet in database.types.ts — cast to any.
+  // TODO(W2.2-typegen): remove cast after `pnpm supabase gen types` regenerates
+  //   database.types.ts to include the approval_queue table — non-blocking on pilot ship.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dbAny = db as any
   type ApprovalRow = {
