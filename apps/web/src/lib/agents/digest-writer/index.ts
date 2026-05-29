@@ -114,21 +114,27 @@ async function callAnthropic(
 ): Promise<AnthropicCallResult> {
   let response: Anthropic.Message;
   try {
-    response = await client.messages.create({
-      model: MODEL,
-      max_tokens: MAX_OUTPUT_TOKENS,
-      // 0.4 → enough variation to avoid identical subject lines week-over-week,
-      // tight enough that the structured JSON shape stays stable.
-      temperature: 0.4,
-      system: [
-        {
-          type: 'text',
-          text: SYSTEM_PROMPT_WITH_GUARD,
-          cache_control: { type: 'ephemeral' },
-        },
-      ],
-      messages: [{ role: 'user', content: userPrompt }],
-    });
+    response = await client.messages.create(
+      {
+        model: MODEL,
+        max_tokens: MAX_OUTPUT_TOKENS,
+        // 0.4 → enough variation to avoid identical subject lines week-over-week,
+        // tight enough that the structured JSON shape stays stable.
+        temperature: 0.4,
+        system: [
+          {
+            type: 'text',
+            text: SYSTEM_PROMPT_WITH_GUARD,
+            cache_control: { type: 'ephemeral' },
+          },
+        ],
+        messages: [{ role: 'user', content: userPrompt }],
+      },
+      // Anthropic SDK default has no timeout. 60s is generous for 4096 output
+      // tokens (~30-45s typical at Sonnet 4.6) without letting a stalled
+      // provider hang the weekly digest cron indefinitely.
+      { timeout: 60_000 },
+    );
   } catch (err: unknown) {
     const error = err as { status?: number; message?: string };
     if (error.status === 429) {
