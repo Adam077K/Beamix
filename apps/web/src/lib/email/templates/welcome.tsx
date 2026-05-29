@@ -123,7 +123,7 @@ export function WelcomeEmail({ firstName }: WelcomeEmailProps): React.ReactEleme
 
             <Text style={styles.bodyText}>
               Your team is preparing your brand brief. In the next few minutes,
-              we'll have a full picture of how your business appears across AI
+              we&apos;ll have a full picture of how your business appears across AI
               search — and exactly what needs to change.
             </Text>
 
@@ -148,7 +148,7 @@ export function WelcomeEmail({ firstName }: WelcomeEmailProps): React.ReactEleme
             <Text style={styles.footerText}>
               © {new Date().getFullYear()} Beamix. All rights reserved.
               <br />
-              You're receiving this because you signed up for Beamix.
+              You&apos;re receiving this because you signed up for Beamix.
             </Text>
           </Section>
         </Container>
