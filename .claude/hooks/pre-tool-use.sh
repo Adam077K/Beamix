@@ -86,29 +86,25 @@ except Exception:
     #   chmod +x file       chmod a+x file      chmod u+x file
     #   chmod g+x file      chmod o+x file
     #   chmod 755 file      chmod 775 file      chmod 711 file
+    #   chmod 700 file      chmod 750 file      chmod 710 file
     #   chmod 100 file      chmod 010 file      chmod 001 file
-    #   (any octal where the owner, group, or other triad has an exec bit set:
-    #    digit is 1,3,5,7 in hundreds, tens, or units position)
+    #   chmod 1 file        chmod 7 file        chmod 11 file
+    #   (any octal sequence containing an odd digit — 1,3,5,7 — in ANY position)
     #
     # Write content containing the text "chmod 644" → NOT a Bash command →
     # never reaches this branch (Write/Edit tool goes to the Edit|Write case
     # below and is NOT scanned for chmod at all — file content mentioning
     # chmod text has no security impact).
     #
-    # Symbolic exec-bit patterns: +x / a+x / u+x / g+x / o+x
-    if printf '%s' "$command" | grep -qE 'chmod\b.*[augo]?\+x'; then
-      block "chmod +x / [augo]+x is blocked (exec-bit grant). Use explicit numeric mode-bits without exec (e.g., chmod 644) instead, or ask the CEO to approve."
+    # Symbolic exec-bit: +x / [ugoa]+x
+    if printf '%s' "$command" | grep -qE 'chmod[[:space:]]+[ugoa]*\+[rwsxtX]*x|chmod[[:space:]]+\+x'; then
+      block "chmod +x / [ugoa]+x is blocked (exec-bit grant). Use explicit numeric mode-bits without exec (e.g., chmod 644) instead, or ask the CEO to approve."
     fi
-    # Numeric octal exec-bit: any chmod where hundreds, tens, or units digit
-    # is 1, 3, 5, or 7 (those have the execute bit set in that triad).
-    # Pattern: chmod followed by optional flags then a 3-digit octal where
-    # at least one digit is in {1,3,5,7}.
-    if printf '%s' "$command" | grep -qE 'chmod\b\s+(-[a-zA-Z]+\s+)?[0-7]*[1357][0-7]{0,2}\b'; then
-      # Refine: only block if it looks like an actual numeric mode
-      # (3 or 4 digits, at least one exec-bit digit 1/3/5/7).
-      if printf '%s' "$command" | grep -qE 'chmod\b\s+(-[a-zA-Z]+\s+)?[0-7]?[0-7]{0,1}([1357][0-7]{2}|[0-7][1357][0-7]|[0-7]{2}[1357])\b'; then
-        block "chmod with exec-bit in numeric mode is blocked (e.g., 755, 775, 711). Use non-exec modes like 644, 640, 600 instead, or ask the CEO to approve."
-      fi
+    # Numeric octal exec-bit: any octal sequence where ANY digit is odd (1,3,5,7
+    # all have the execute bit set in that triad — this covers 1-digit, 2-digit,
+    # 3-digit, and 4-digit modes; QA P1 fix 2026-05-29).
+    if printf '%s' "$command" | grep -qE 'chmod[[:space:]]+[0-7]*[1357][0-7]*([[:space:]]|$)'; then
+      block "chmod with exec-bit in numeric mode is blocked (e.g., 755, 700, 711, 1). Use non-exec modes like 644, 640, 600 instead, or ask the CEO to approve."
     fi
 
     # ── BLOCK: npm install -g ────────────────────────────────────────────────
