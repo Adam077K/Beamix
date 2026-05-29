@@ -290,9 +290,9 @@ describe('POST /api/webhooks/paddle', () => {
 
     // audit_log should also be written
     expect(mockAuditInsert).toHaveBeenCalled()
-    const auditCalls = mockAuditInsert.mock.calls as [Record<string, unknown>][][]
+    const auditCalls = mockAuditInsert.mock.calls as unknown as Array<[Record<string, unknown>]>
     const refundAudit = auditCalls.find(
-      (call) => (call[0] as Record<string, unknown>)['event_type'] === 'revenue.transaction_refunded',
+      (call) => call[0]['event_type'] === 'revenue.transaction_refunded',
     )
     expect(refundAudit).toBeDefined()
   })
