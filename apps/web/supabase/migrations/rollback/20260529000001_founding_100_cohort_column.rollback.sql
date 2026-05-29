@@ -1,0 +1,21 @@
+-- Rollback: 20260529000001_founding_100_cohort_column.sql
+--
+-- THIS ROLLBACK IS INTENTIONALLY A NO-OP.
+--
+-- Reason: subscriptions.founding_100_cohort is OWNED by migration
+-- 20260525000003_held_revenue_accounting.sql (line 23). Migration 20260529000001
+-- is a defensive idempotent confirmation — it did not create the column.
+--
+-- To remove this column, roll back 20260525000003_held_revenue_accounting.sql
+-- using rollback/20260525000003_held_revenue_accounting.rollback.sql (step 3).
+-- That rollback drops held_until, held_revenue_amount_cents, AND founding_100_cohort
+-- together, as they were added in the same ALTER TABLE statement.
+--
+-- WARNING: Dropping founding_100_cohort will destroy cohort membership data
+-- for all founding customers. This is DESTRUCTIVE and irreversible in production.
+-- Confirm no production founding_100_cohort = TRUE rows exist before running
+-- the 20260525000003 rollback.
+--
+-- Summary for migration tooling:
+--   Forward migration: no-op (column already existed)
+--   Reverse migration: no-op (column owned by 20260525000003, not this migration)
