@@ -99,18 +99,17 @@ export const revenueBookingSweep = inngest.createFunction(
       const now = new Date().toISOString()
 
       for (const row of eligible) {
-        // Check for a matching refund_events row (any refund for this customer_id
-        // that was created at any time — a refund at any point blocks booking).
+        // Check for a matching refund_events row scoped to THIS specific revenue event.
+        // (P1 Fix 3) — previously guarded on customer_id, which blocked ALL future revenue
+        // for any customer who had ever received a refund. Now scoped to revenue_event_id
+        // so only the refunded event is skipped; subsequent charges book normally.
         //
-        // Note: The brief says "subscription_id" but revenue_events has no
-        // subscription_id column — it uses customer_id. We guard on customer_id
-        // for safety: if the customer issued ANY refund, we skip ALL unbooked events.
-        // This is conservative and can be narrowed in Wave 3 when revenue_event_id FK
-        // on refund_events is reliably populated.
+        // .limit(1) ensures a duplicate refund row never throws and wedges the sweep.
         const { data: refundRow, error: refundCheckError } = await supabase
           .from('refund_events' as never)
           .select('id')
-          .eq('customer_id', row.customer_id)
+          .eq('revenue_event_id', row.id)
+          .limit(1)
           .maybeSingle()
 
         if (refundCheckError) {
@@ -122,9 +121,9 @@ export const revenueBookingSweep = inngest.createFunction(
         }
 
         if (refundRow !== null) {
-          console.info('[revenue-booking-sweep] Skipping — customer has refund record', {
+          console.info('[revenue-booking-sweep] Skipping — revenue event has a matching refund', {
             revenueEventId: row.id,
-            customerId: row.customer_id,
+            refundEventId: (refundRow as { id: string }).id,
           })
           continue
         }
