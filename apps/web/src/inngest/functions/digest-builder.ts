@@ -300,6 +300,7 @@ async function _assembleDigestInput(
     .limit(10)) as { data: ApprovalRow[] | null; error: { message: string } | null }
 
   if (approvalError) {
+    // Log only safe fields — never log rows that contain approval_token.
     console.error('[digest-builder] approval_queue query failed', {
       businessId: customer.businessId,
       error: approvalError.message,
@@ -328,6 +329,7 @@ async function _assembleDigestInput(
         : undefined
     const titleBase = _describeApproval(row.kind ?? 'unknown', row.resource)
     const title = resourceTitle ?? titleBase
+    // Token is embedded in URL — never log approveUrl or the full card object.
     const approveUrl = `https://app.beamixai.com/approvals/${encodeURIComponent(row.id)}?token=${encodeURIComponent(String(row.approval_token ?? ''))}`
     return {
       approvalId: row.id,
@@ -338,6 +340,13 @@ async function _assembleDigestInput(
       expiresAt: row.expires_at,
     }
   })
+
+  // Safe-to-log summary — NEVER log openApprovalCards directly (approveUrl contains raw token).
+  const _approvalCardsSafeLog = openApprovalCards.map((c) => ({
+    approvalId: c.approvalId,
+    type: c.type,
+    expiresAt: c.expiresAt,
+  }))
 
   // ── Visibility deltas (scan_engine_results) ──────────────────────────────
   type EngineRow = {
