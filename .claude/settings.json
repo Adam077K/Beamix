@@ -20,7 +20,8 @@
       "Bash(sed *)",
       "Bash(diff *)",
       "Bash(which *)",
-      "Bash(echo *)"
+      "Bash(echo *)",
+      "Bash(tmux kill-pane:*)"
     ],
     "deny": [
       "Bash(rm -rf *)",
