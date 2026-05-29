@@ -468,6 +468,12 @@ export function executeFetchGBP(_businessName: string): GBPResult {
 export interface SessionContext {
   /** The authenticated customer's Supabase user ID. Set by the API route, never trusted from LLM. */
   customerId: string;
+  /**
+   * Sticky YMYL signal from the agent loop. When true, the server FORCES
+   * requires_human_approval=true on the emitted fingerprint, regardless of any
+   * value supplied by the LLM (prompt-injection defence — Fix 5).
+   */
+  ymylSignalDetected?: boolean;
 }
 
 /**
@@ -529,10 +535,29 @@ export function executeEmitBrandFingerprint(
     );
   }
 
+  // SECURITY (Fix 5): server-side force of requires_human_approval.
+  // If the agent loop detected a YMYL signal at ANY point in the session, we force
+  // requires_human_approval=true here — the LLM cannot bypass approval by emitting
+  // false. The server is the authority on this field whenever ymylSignalDetected is set.
+  const llmSuppliedApproval = safeInput.requires_human_approval === true;
+  const forcedHumanApproval = llmSuppliedApproval || sessionContext.ymylSignalDetected === true;
+
+  if (sessionContext.ymylSignalDetected === true && !llmSuppliedApproval) {
+    console.log(
+      JSON.stringify({
+        event: 'ymyl_force_human_approval',
+        customer_id: sessionContext.customerId,
+        message:
+          'Server forced requires_human_approval=true because a sticky YMYL signal was detected during the session. LLM-supplied value overridden.',
+      }),
+    );
+  }
+
   // Inject brief_version_id — always a fresh UUID v4 on every emit
   const inputWithVersion = {
     ...safeInput,
     customer_id: sessionContext.customerId, // Server-pinned — authoritative
+    requires_human_approval: forcedHumanApproval, // Server-pinned when YMYL was detected
     brief_version_id: randomUUID(),
     adam_reviewed_at: null, // Always null at creation — Adam reviews manually
   };
