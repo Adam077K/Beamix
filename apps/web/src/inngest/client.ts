@@ -43,11 +43,23 @@ export interface DiscoveryCompletedData {
   scanId: string;
 }
 
+/** Payload for `scan/free.requested` — fired by POST /api/scan/free after inserting
+ *  the free_scan row. Consumed by the free-scan Inngest worker. */
+export interface ScanFreeRequestedData {
+  scan_id: string;
+  business_name: string;
+  website_url: string;
+  email: string;
+  domain: string;
+  ip: string;
+}
+
 /** Typed event map for the Beamix Inngest client. */
 export type BeamixEvents = {
   'agent/run.requested': { data: AgentRunRequestedData };
   'discovery.booked': { data: DiscoveryBookedData };
   'discovery/completed': { data: DiscoveryCompletedData };
+  'scan/free.requested': { data: ScanFreeRequestedData };
 };
 
 /**

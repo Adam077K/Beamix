@@ -100,9 +100,10 @@ type DiscoveryChunk =
   | { type: 'done'; sessionId: string; totalCostUsd: number }
   | { type: 'error'; message: string; retryable: boolean };
 
+// History is fetched server-side by the agent using sessionId from DiscoveryInput
+// (ai-engineer branch Fix 6). The function signature now takes only a single argument.
 type DiscoveryAgentFn = (
   input: DiscoveryInput,
-  history: Array<{ role: 'user' | 'assistant'; content: string }>,
 ) => AsyncGenerator<DiscoveryChunk>;
 
 // ---------------------------------------------------------------------------
