@@ -13,7 +13,7 @@
  *   9. Stale timestamp (> 5 min) → 400 replay guard
  */
 
-import { describe, it, expect, vi, beforeEach, type MockedFunction } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createHmac } from 'crypto'
 import { NextRequest } from 'next/server'
 

@@ -96,12 +96,12 @@ export function RefundConfirmationEmail({
             </Heading>
 
             <Text style={styles.bodyText}>
-              We've processed your cancellation and your refund is on its way. Depending
+              We&apos;ve processed your cancellation and your refund is on its way. Depending
               on your bank, it typically takes 5–10 business days to appear on your statement.
             </Text>
 
             <Text style={styles.bodyText}>
-              Your account data and scan history are preserved. If you'd like to pick up
+              Your account data and scan history are preserved. If you&apos;d like to pick up
               where you left off in the future, you can reactivate at any time.
             </Text>
 

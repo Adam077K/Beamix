@@ -297,7 +297,6 @@ async function handleTransactionCompleted(
     amount_cents: amountCents,
     currency: tx.currency_code,
     received_at: new Date().toISOString(),
-    held_until: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
     booked_at: null,
     notes: {
       paddle_transaction_id: tx.id,
@@ -375,7 +374,6 @@ async function handleSubscriptionActivated(
     amount_cents: amountCents,
     currency: sub.currency_code,
     received_at: new Date().toISOString(),
-    held_until: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
     booked_at: null,
     notes: {
       paddle_subscription_id: sub.id,

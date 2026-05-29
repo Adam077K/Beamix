@@ -59,15 +59,6 @@ type MetricsError = {
 }
 
 // ---------------------------------------------------------------------------
-// Internal shape from DB
-// ---------------------------------------------------------------------------
-
-interface RevenueEventSummaryRow {
-  currency: string
-  total_cents: string // Postgres SUM returns string for large numbers
-}
-
-// ---------------------------------------------------------------------------
 // Supabase service-role client
 // ---------------------------------------------------------------------------
 
