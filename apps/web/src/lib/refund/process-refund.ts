@@ -6,17 +6,18 @@
  *
  * Flow:
  *   1. Resolve subscription + user info from Supabase.
- *   2. INSERT refund_events row (append-only).
- *   3. Cancel subscription via Paddle REST API (POST /subscriptions/:id/cancel).
- *   4. Send refund-confirmation email via Resend.
- *   5. Write audit_log row.
+ *   2. Resolve the most-recent unbooked revenue_events row for this sub (for amount + FK).
+ *   3. INSERT refund_events row (idempotency gate — catches duplicate via 23505).
+ *   4. Cancel subscription via Paddle REST API (ONLY if step 3 was a fresh insert).
+ *   5. Send refund-confirmation email via Resend.
+ *   6. Write audit_log row.
  *
- * Idempotency:
- *   - refund_events has UNIQUE(subscription_id, reason) — NOT enforced here
- *     because multiple refund attempts for the same sub (e.g. partial + full)
- *     should each create a row. The caller is responsible for idempotency at
- *     the API layer.
- *   - Paddle cancel is idempotent on their side (cancelling a cancelled sub → 409).
+ * Idempotency (P1 Fix 2):
+ *   - `paddle_event_id` has UNIQUE constraint on refund_events.
+ *   - We synthesize a stable key: `manual-refund-${subscriptionId}`.
+ *     A duplicate call for the same subscription hits 23505 → we return success
+ *     without calling Paddle a second time (insert-first pattern).
+ *   - Paddle cancel API is called ONLY on a fresh (non-duplicate) insert.
  *
  * Returns RefundResult. On partial failure (email send failed, audit failed)
  * the refund is still considered successful — those failures are logged and
@@ -48,11 +49,17 @@ export type RefundResult =
       refundEventId: string
       paddleCancelled: boolean
       emailSent: boolean
+      idempotent?: boolean
     }
   | {
       ok: false
       error: string
-      code: 'VALIDATION_ERROR' | 'SUBSCRIPTION_NOT_FOUND' | 'INSERT_FAILED' | 'PADDLE_ERROR'
+      code:
+        | 'VALIDATION_ERROR'
+        | 'SUBSCRIPTION_NOT_FOUND'
+        | 'INSERT_FAILED'
+        | 'PADDLE_ERROR'
+        | 'REVENUE_NOT_FOUND'
     }
 
 // ---------------------------------------------------------------------------
@@ -170,6 +177,16 @@ async function writeAuditLog(
 }
 
 // ---------------------------------------------------------------------------
+// Revenue events row shape
+// ---------------------------------------------------------------------------
+
+interface RevenueEventRow {
+  id: string
+  amount_cents: number
+  paddle_event_id: string
+}
+
+// ---------------------------------------------------------------------------
 // Main export
 // ---------------------------------------------------------------------------
 
@@ -184,7 +201,7 @@ export async function processRefund(input: ProcessRefundInput): Promise<RefundRe
   const { subscriptionId, reason } = parsed.data
   const supabase = getAdminClient()
 
-  // 2. Resolve subscription — need paddle_subscription_id and user email
+  // 2. Resolve subscription — need paddle_subscription_id and user info
   const { data: sub, error: subError } = await supabase
     .from('subscriptions')
     .select('id, user_id, paddle_subscription_id, status')
@@ -204,26 +221,99 @@ export async function processRefund(input: ProcessRefundInput): Promise<RefundRe
     return { ok: false, error: 'Subscription not found', code: 'SUBSCRIPTION_NOT_FOUND' }
   }
 
-  // Resolve user email for confirmation email
-  const { data: profile } = await supabase
+  // 3. Resolve user profile for confirmation email (P2: log profile errors distinctly)
+  const { data: profile, error: profileError } = await supabase
     .from('user_profiles')
     .select('email, full_name')
     .eq('id', sub.user_id)
     .maybeSingle()
 
-  // 3. INSERT refund_events (append-only — no UPDATE/DELETE, Principle #12)
+  if (profileError) {
+    console.error('[processRefund] user_profiles lookup failed (hard DB error)', {
+      userId: sub.user_id,
+      subscriptionId,
+      error: profileError.message,
+      code: profileError.code,
+    })
+    // Non-fatal — continue without email
+  } else if (!profile) {
+    console.warn('[processRefund] user_profiles row not found (no email available)', {
+      userId: sub.user_id,
+      subscriptionId,
+    })
+  }
+
+  // 4. Resolve the most-recent unbooked revenue_events row for amount_cents + revenue_event_id FK.
+  //    (P1 Fix 1) — amount_cents NOT NULL and revenue_event_id FK require this lookup.
+  const { data: revenueRows, error: revenueError } = await supabase
+    .from('revenue_events' as never)
+    .select('id, amount_cents, paddle_event_id')
+    .eq('customer_id', sub.user_id)
+    .is('booked_at', null)
+    .order('received_at', { ascending: false })
+    .limit(1)
+    .returns<RevenueEventRow[]>()
+
+  if (revenueError) {
+    console.error('[processRefund] revenue_events lookup failed', {
+      subscriptionId,
+      userId: sub.user_id,
+      error: (revenueError as { message: string }).message,
+    })
+    return {
+      ok: false,
+      error: `revenue_events lookup failed: ${(revenueError as { message: string }).message}`,
+      code: 'REVENUE_NOT_FOUND',
+    }
+  }
+
+  const revenueRow = revenueRows?.[0] ?? null
+  if (!revenueRow) {
+    console.warn('[processRefund] No unbooked revenue_events row found for customer', {
+      subscriptionId,
+      userId: sub.user_id,
+    })
+    return {
+      ok: false,
+      error: 'No unbooked revenue event found for this customer — cannot determine refund amount',
+      code: 'REVENUE_NOT_FOUND',
+    }
+  }
+
+  // 5. Synthesize a stable paddle_event_id for idempotency.
+  //    Format: `manual-refund-${subscriptionId}` — stable across retries for the same sub.
+  //    A duplicate call hits UNIQUE(paddle_event_id) → 23505 → return idempotent success.
+  const syntheticPaddleEventId = `manual-refund-${subscriptionId}`
+
+  // 6. INSERT refund_events (append-only — no UPDATE/DELETE, Principle #12).
+  //    Idempotency gate: insert FIRST, then call Paddle only on fresh insert.
   const { data: refundRow, error: insertError } = await supabase
     .from('refund_events' as never)
     .insert({
       customer_id: sub.user_id,
-      subscription_id: subscriptionId,
-      paddle_subscription_id: sub.paddle_subscription_id ?? null,
+      paddle_event_id: syntheticPaddleEventId,
+      revenue_event_id: revenueRow.id,
+      amount_cents: revenueRow.amount_cents,
       reason,
       refunded_at: new Date().toISOString(),
-      status: 'pending',
     } as never)
     .select('id')
     .single() as { data: { id: string } | null; error: { message: string; code: string } | null }
+
+  // Idempotent: duplicate insert hits UNIQUE(paddle_event_id) — return success, skip Paddle
+  if (insertError?.code === '23505') {
+    console.info('[processRefund] Duplicate refund attempt — idempotent no-op', {
+      subscriptionId,
+      paddleEventId: syntheticPaddleEventId,
+    })
+    return {
+      ok: true,
+      refundEventId: syntheticPaddleEventId,
+      paddleCancelled: false,
+      emailSent: false,
+      idempotent: true,
+    }
+  }
 
   if (insertError || !refundRow) {
     console.error('[processRefund] refund_events insert failed', {
@@ -239,7 +329,8 @@ export async function processRefund(input: ProcessRefundInput): Promise<RefundRe
 
   const refundEventId = refundRow.id
 
-  // 4. Cancel on Paddle (non-blocking — a failed Paddle cancel doesn't reverse the refund_events row)
+  // 7. Cancel on Paddle — only called on FRESH insert (not on idempotent replay).
+  //    (non-blocking — a failed Paddle cancel doesn't reverse the refund_events row)
   let paddleCancelled = false
   if (sub.paddle_subscription_id) {
     const paddleResult = await cancelPaddleSubscription(sub.paddle_subscription_id)
@@ -275,7 +366,7 @@ export async function processRefund(input: ProcessRefundInput): Promise<RefundRe
     })
   }
 
-  // 5. Send confirmation email (non-blocking)
+  // 8. Send confirmation email (non-blocking)
   let emailSent = false
   if (profile?.email) {
     const emailResult = await sendEmail({
@@ -298,7 +389,7 @@ export async function processRefund(input: ProcessRefundInput): Promise<RefundRe
     })
   }
 
-  // 6. Write audit_log
+  // 9. Write audit_log
   await writeAuditLog(supabase, {
     userId: sub.user_id,
     refundEventId,
