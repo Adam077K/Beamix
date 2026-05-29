@@ -2,7 +2,7 @@
 date: 2026-05-29
 role: ceo
 session: ceo-vercel-build-lint
-tier: full
+tier: irreversible
 qa_verdict: PASS
 pr: 108
 ---
@@ -41,8 +41,10 @@ about active defenses.
   static pages generated. Locally reproduced the original failure first, then confirmed
   the fix. (CEO made these edits directly — workers were rate-limited until ~15:30;
   changes are mechanical dead-code removal + string escapes, no logic.)
-- tier: **full** (touches `lib/agents/**`). No DB/billing/auth-flow/agent-def/migration,
-  so not Irreversible.
+- tier: **irreversible** — `apps/web/src/lib/agents/discovery/**` carries an Irreversible
+  tier-floor ("corrupted data cascades to all downstream agents"). Even a dead-code-removal
+  diff there requires the `risk:irreversible` label + Adam sign-off. (My initial `full`
+  classification was wrong; corrected here.)
 
 ## QA verdict
 **PASS** — pending the GitHub QA gate + out-of-band reviewer confirmation on the PR.
