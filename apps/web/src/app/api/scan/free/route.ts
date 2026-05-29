@@ -235,7 +235,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     await inngest.send({
       name: 'scan/free.requested',
       data: { scan_id: scanId, business_name, website_url, email, domain, ip },
-    } as Parameters<typeof inngest.send>[0])
+    })
   } catch (err) {
     // Inngest send failure is non-fatal — the scan row is persisted, a fallback
     // cron can pick up queued scans. Log prominently for ops.
