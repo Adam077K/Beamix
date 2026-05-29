@@ -151,6 +151,58 @@ async function callAnthropic(
   };
 }
 
+/**
+ * SECURITY: Pin URLs byte-for-byte against the input. The model must not invent
+ * or modify URLs — they are pre-signed HMAC tokens minted upstream. A mismatch
+ * is a hard fail with NO retry: a tampered URL is a security-critical signal
+ * (prompt injection / hallucination steering customers to attacker-controlled
+ * domains), not a transient validation hiccup.
+ *
+ * Validates:
+ *   - payload.approveAllUrl === input.approveAllUrl
+ *   - payload.unsubscribeUrl === input.unsubscribeUrl
+ *   - Every payload.pendingApprovals[i].approveUrl matches some
+ *     input.openApprovalCards[j].approveUrl byte-for-byte.
+ *
+ * @throws DigestWriterValidationError on any mismatch (no retry).
+ */
+function assertUrlsPinned(payload: DigestPayload, input: DigestInput): void {
+  const mismatches: Array<{ path: string; message: string }> = [];
+
+  if (payload.approveAllUrl !== input.approveAllUrl) {
+    mismatches.push({
+      path: 'approveAllUrl',
+      message: 'URL does not match input — the model invented or modified the approveAllUrl',
+    });
+  }
+
+  if (payload.unsubscribeUrl !== input.unsubscribeUrl) {
+    mismatches.push({
+      path: 'unsubscribeUrl',
+      message: 'URL does not match input — the model invented or modified the unsubscribeUrl',
+    });
+  }
+
+  const allowedApproveUrls = new Set(input.openApprovalCards.map((c) => c.approveUrl));
+  payload.pendingApprovals.forEach((approval, idx) => {
+    if (!allowedApproveUrls.has(approval.approveUrl)) {
+      mismatches.push({
+        path: `pendingApprovals.${idx}.approveUrl`,
+        message:
+          'approveUrl does not match any input.openApprovalCards[].approveUrl — the model invented or modified the URL',
+      });
+    }
+  });
+
+  if (mismatches.length > 0) {
+    throw new DigestWriterValidationError(
+      'digest-writer output contained URLs not present byte-for-byte in the input (security-critical tampering — no retry)',
+      mismatches,
+      '',
+    );
+  }
+}
+
 /** Try to parse + validate model output. Returns the payload OR a Zod error. */
 function tryParseAndValidate(
   raw: string,
@@ -246,6 +298,8 @@ export async function runDigestWriter(input: DigestInput): Promise<DigestPayload
 
   const parsed1 = tryParseAndValidate(attempt1.text);
   if (parsed1.ok) {
+    // SECURITY: pin URLs byte-for-byte before returning. Throws (no retry) on tamper.
+    assertUrlsPinned(parsed1.payload, validatedInput);
     return parsed1.payload;
   }
 
@@ -285,6 +339,8 @@ export async function runDigestWriter(input: DigestInput): Promise<DigestPayload
 
   const parsed2 = tryParseAndValidate(attempt2.text);
   if (parsed2.ok) {
+    // SECURITY: pin URLs byte-for-byte before returning. Throws (no retry) on tamper.
+    assertUrlsPinned(parsed2.payload, validatedInput);
     return parsed2.payload;
   }
 

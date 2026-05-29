@@ -65,8 +65,13 @@ export const DigestApprovalSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1).max(80),
   type: DigestDeliverableTypeSchema,
-  /** Pre-signed HMAC approve URL — passed through verbatim from the input. */
-  approveUrl: z.string().url(),
+  /**
+   * Pre-signed HMAC approve URL — passed through verbatim from the input.
+   * SECURITY: must be https (defence vs hallucinated http:// link injection).
+   * Caller additionally pins this value byte-for-byte against the input in
+   * `runDigestWriter` — the model may not invent or modify URLs.
+   */
+  approveUrl: z.string().url().regex(/^https:\/\//, 'must be https'),
   /** Customer-facing 1–2 sentence preview, ≤120 chars. */
   previewSnippet: z.string().min(1).max(120),
 });
@@ -99,8 +104,11 @@ export const DigestPayloadSchema = z.object({
   /** Inline approval cards, ordered by deadline asc. Tier-capped per PRD. */
   pendingApprovals: z.array(DigestApprovalSchema),
 
-  /** Pre-signed "approve all" URL — passed through from input. */
-  approveAllUrl: z.string().url(),
+  /**
+   * Pre-signed "approve all" URL — passed through from input.
+   * SECURITY: must be https. Also pinned byte-for-byte in `runDigestWriter`.
+   */
+  approveAllUrl: z.string().url().regex(/^https:\/\//, 'must be https'),
 
   /**
    * 2–3 sentence thematic preview of next week's queued work.
@@ -108,8 +116,11 @@ export const DigestPayloadSchema = z.object({
    */
   nextWeekPreview: z.string().min(1).max(240),
 
-  /** One-click unsubscribe URL — passed through from input. */
-  unsubscribeUrl: z.string().url(),
+  /**
+   * One-click unsubscribe URL — passed through from input.
+   * SECURITY: must be https. Also pinned byte-for-byte in `runDigestWriter`.
+   */
+  unsubscribeUrl: z.string().url().regex(/^https:\/\//, 'must be https'),
 
   /**
    * Email subject line. ≤60 chars. Includes customer business name.
