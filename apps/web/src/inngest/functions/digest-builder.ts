@@ -151,12 +151,12 @@ export const digestBuilder = inngest.createFunction(
  * ```
  */
 export async function runDigestBuilderForCustomer(
-  customerId: string,
+  businessId: string,
 ): Promise<ProcessResult> {
   return _processCustomer({
-    businessId: customerId,
+    businessId,
     businessName: 'Manual invocation',
-    userId: customerId,
+    userId: 'unknown', // userId not needed for manual invocation; businessId is the FK
   })
 }
 
@@ -292,7 +292,7 @@ async function _assembleDigestInput(
   const { data: approvalRows, error: approvalError } = (await dbAny
     .from('approval_queue')
     .select('id, kind, resource, expires_at, approval_token')
-    .eq('customer_id', customer.userId)
+    .eq('customer_id', customer.businessId)
     .eq('state', 'pending')
     .gt('expires_at', new Date().toISOString())
     .order('expires_at', { ascending: true })
@@ -300,7 +300,7 @@ async function _assembleDigestInput(
 
   if (approvalError) {
     console.error('[digest-builder] approval_queue query failed', {
-      userId: customer.userId,
+      businessId: customer.businessId,
       error: approvalError.message,
     })
   }
