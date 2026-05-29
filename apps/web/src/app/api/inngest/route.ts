@@ -16,6 +16,7 @@
  *
  * Wave 2 additions:
  *   - digestBuilder          — cron: Sunday 16:00 UTC (W2.2 weekly digest)
+ *   - revenueBookingSweep    — cron: day-61 held→booked revenue flip (W2.3 held-revenue)
  */
 
 import { serve } from 'inngest/next';
@@ -24,6 +25,7 @@ import { agentExecute } from '../../../inngest/functions/agent-execute';
 import { foundingHundredMetrics } from '../../../inngest/functions/founding-100-metrics';
 import { onDiscoveryCompleted } from '../../../lib/email/send-welcome';
 import { digestBuilder } from '../../../inngest/functions/digest-builder';
+import { revenueBookingSweep } from '../../../inngest/functions/revenue-booking-sweep';
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -32,5 +34,6 @@ export const { GET, POST, PUT } = serve({
     foundingHundredMetrics,
     onDiscoveryCompleted,
     digestBuilder,
+    revenueBookingSweep,
   ],
 });
