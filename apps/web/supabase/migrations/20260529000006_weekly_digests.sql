@@ -80,7 +80,7 @@ COMMENT ON TABLE weekly_digests IS
   'Service-role is sole writer; authenticated users read their own business rows.';
 
 COMMENT ON COLUMN weekly_digests.week_of IS
-  'The Sunday that opens the digest week (YYYY-MM-DD). '
+  'The Monday that opens the digest week (ISO week start, YYYY-MM-DD). '
   'UNIQUE with customer_id — guarantees idempotency: duplicate cron runs are ignored.';
 
 COMMENT ON COLUMN weekly_digests.payload_json IS
