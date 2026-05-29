@@ -198,7 +198,6 @@ function assertUrlsPinned(payload: DigestPayload, input: DigestInput): void {
     throw new DigestWriterValidationError(
       'digest-writer output contained URLs not present byte-for-byte in the input (security-critical tampering — no retry)',
       mismatches,
-      '',
     );
   }
 }
@@ -206,7 +205,7 @@ function assertUrlsPinned(payload: DigestPayload, input: DigestInput): void {
 /** Try to parse + validate model output. Returns the payload OR a Zod error. */
 function tryParseAndValidate(
   raw: string,
-): { ok: true; payload: DigestPayload } | { ok: false; issues: z.ZodError; rawStripped: string } {
+): { ok: true; payload: DigestPayload } | { ok: false; issues: z.ZodError } {
   const cleaned = stripFences(raw);
   let parsed: unknown;
   try {
@@ -220,14 +219,14 @@ function tryParseAndValidate(
         message: err instanceof Error ? err.message : 'JSON parse error',
       },
     ]);
-    return { ok: false, issues: synthetic, rawStripped: cleaned };
+    return { ok: false, issues: synthetic };
   }
 
   const result = DigestPayloadSchema.safeParse(parsed);
   if (result.success) {
     return { ok: true, payload: result.data };
   }
-  return { ok: false, issues: result.error, rawStripped: cleaned };
+  return { ok: false, issues: result.error };
 }
 
 // ---------------------------------------------------------------------------
@@ -347,6 +346,5 @@ export async function runDigestWriter(input: DigestInput): Promise<DigestPayload
   throw new DigestWriterValidationError(
     'digest-writer output failed Zod validation after one retry',
     flattenZodIssues(parsed2.issues),
-    parsed2.rawStripped,
   );
 }

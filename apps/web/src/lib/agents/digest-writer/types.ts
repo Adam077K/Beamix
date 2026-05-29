@@ -153,20 +153,28 @@ export type DigestPayload = z.infer<typeof DigestPayloadSchema>;
 // Errors
 // ---------------------------------------------------------------------------
 
+// SECURITY: never carry raw LLM completion text on this error — it contains
+// customer PII that will leak via any standard error logger.
 /**
  * Thrown when the LLM output fails Zod validation twice (initial call + 1 retry
- * with the validation error appended to the user prompt). Caller surfaces as a
- * fallback digest send + emits `digest.fallback_sent` per the PRD.
+ * with the validation error appended to the user prompt), OR when the model
+ * returns a URL that does not byte-for-byte match the input (security-critical
+ * tampering — no retry). Caller surfaces as a fallback digest send + emits
+ * `digest.fallback_sent` per the PRD.
+ *
+ * SECURITY: never carry raw LLM completion text on this error — it contains
+ * customer PII (customerName, brand-brief voice tone, deliverable descriptions,
+ * historical digest subject lines) that will leak via any standard error logger
+ * (Sentry, Datadog, console.error → Vercel logs). The `issues` array contains
+ * only Zod paths + canned messages, which is PII-safe.
  */
 export class DigestWriterValidationError extends Error {
   override readonly name = 'DigestWriterValidationError';
 
   constructor(
     message: string,
-    /** Structured Zod issue paths, for log triage. */
+    /** Structured Zod issue paths, for log triage. PII-safe. */
     public readonly issues: Array<{ path: string; message: string }>,
-    /** The raw text the LLM returned on the final attempt — for offline debug. */
-    public readonly rawOutput: string,
   ) {
     super(message);
   }
