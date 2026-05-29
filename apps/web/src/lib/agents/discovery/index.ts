@@ -49,9 +49,10 @@ const COST_PER_1M_INPUT = 3.0;
 const COST_PER_1M_OUTPUT = 15.0;
 const COST_PER_1M_CACHE_READ = 0.3; // 10% of input rate
 
-// TODO(SEC): per-session input-token budget hard-cap (~100k) not yet enforced.
-// Re-introduce MAX_TOTAL_TOKENS_PER_SESSION + an accumulator + a pre-call check
-// when wiring discovery hardening Fix 6. See file header TODO(SEC) #3.
+// Fix 6: per-session input-token budget hard-cap. If the cumulative input + cache-read
+// token spend on a single discovery session crosses this ceiling, we hard-close before
+// the next paid LLM call to bound cost-DoS impact.
+const MAX_TOTAL_TOKENS_PER_SESSION = 100_000;
 
 /** Compute USD cost for a single Anthropic response. */
 function computeCostUsd(
@@ -129,6 +130,7 @@ export async function* runDiscoveryAgent(
 ): AsyncGenerator<DiscoveryChunk> {
   const sessionId = randomUUID();
   let totalCostUsd = 0;
+  let totalInputTokensThisSession = 0;
   let costAlertEmitted = false;
   let fingerprint: BrandFingerprint | null = null;
   // TODO(SEC): a sticky `ymylSignalDetected` flag belongs here — set on any YMYL
@@ -195,6 +197,23 @@ export async function* runDiscoveryAgent(
 
   while (loopCount < MAX_LOOPS) {
     loopCount += 1;
+
+    // Fix 6: token-budget DoS hard-close — refuse to start the next paid LLM call
+    // once the cumulative input + cache-read token spend on this session crosses
+    // the per-session ceiling. Bounds cost-DoS impact for any single customer.
+    if (totalInputTokensThisSession > MAX_TOTAL_TOKENS_PER_SESSION) {
+      console.log(
+        JSON.stringify({
+          event: 'session_token_budget_exceeded',
+          session_id: sessionId,
+          customer_id: input.customerId,
+          total_input_tokens: totalInputTokensThisSession,
+          budget: MAX_TOTAL_TOKENS_PER_SESSION,
+        }),
+      );
+      yield { type: 'error', message: 'session_token_budget_exceeded', retryable: false };
+      return;
+    }
 
     let stream: ReturnType<Anthropic.Messages['stream']>;
 
@@ -269,6 +288,8 @@ export async function* runDiscoveryAgent(
 
       const callCost = computeCostUsd(inputTokens, outputTokens, cacheReadTokens);
       totalCostUsd += callCost;
+      // Fix 6: accumulate input + cache-read tokens for the per-session DoS budget guard.
+      totalInputTokensThisSession += inputTokens + cacheReadTokens;
 
       // Cost logging — required on every LLM call
       console.log(
