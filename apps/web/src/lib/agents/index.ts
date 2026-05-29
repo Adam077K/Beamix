@@ -66,6 +66,23 @@ export {
   UnsafeInputError,
 } from './errors';
 
+// ---- Digest-Writer agent (W2.2) -------------------------------------------
+export {
+  runDigestWriter,
+  DIGEST_WRITER_SYSTEM_PROMPT,
+  DigestInputSchema,
+  DigestPayloadSchema,
+  DigestWriterValidationError,
+} from './digest-writer';
+export type {
+  DigestInput,
+  DigestPayload,
+  DigestWin,
+  DigestApproval,
+  DigestCustomerTier,
+  DigestDeliverableType,
+} from './digest-writer';
+
 // ---- Types -----------------------------------------------------------------
 export type {
   PlanTier,
