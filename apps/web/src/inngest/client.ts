@@ -54,12 +54,39 @@ export interface ScanFreeRequestedData {
   ip: string;
 }
 
+/** Payload for `approval.created` — fired when a new approval_queue row is inserted. */
+export interface ApprovalCreatedData {
+  approvalId: string;
+  kind: string;
+  customerId: string;
+  createdAt: string;
+}
+
+/** Payload for `approval.approved` — fired by approveApprovalItem Server Action. */
+export interface ApprovalApprovedData {
+  approvalId: string;
+  kind: string;
+  customerId: string;
+  actedAt: string;
+}
+
+/** Payload for `approval.rejected` — fired by rejectApprovalItem Server Action. */
+export interface ApprovalRejectedData {
+  approvalId: string;
+  kind: string;
+  customerId: string;
+  actedAt: string;
+}
+
 /** Typed event map for the Beamix Inngest client. */
 export type BeamixEvents = {
   'agent/run.requested': { data: AgentRunRequestedData };
   'discovery.booked': { data: DiscoveryBookedData };
   'discovery/completed': { data: DiscoveryCompletedData };
   'scan/free.requested': { data: ScanFreeRequestedData };
+  'approval.created': { data: ApprovalCreatedData };
+  'approval.approved': { data: ApprovalApprovedData };
+  'approval.rejected': { data: ApprovalRejectedData };
 };
 
 /**
