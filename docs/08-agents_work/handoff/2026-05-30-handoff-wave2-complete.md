@@ -7,7 +7,7 @@ purpose: Wave 2 merge train COMPLETE — release tasks + follow-ups for next CEO
 # Handoff — Wave 2 merge train COMPLETE
 
 All 6 Wave 2 branches are on main. **Main = `6c50e9f` (#117).** Merged main verified green:
-`tsc` 0 · `next build` 0 · `vitest` 176/176. Worktrees + branches cleaned up.
+`tsc` 0 · `next build` 0 · `vitest` 108/108. Worktrees + branches cleaned up.
 
 Wave 2 PRs: #111 held-revenue · #113 deliverables · #114 approvals-api · #115 approvals-ui ·
 #116 founding-100 panel · #117 new agents.

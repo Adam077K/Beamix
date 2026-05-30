@@ -26,7 +26,7 @@ one clean commit per branch). Each merge gated on: CEO-run build+tests *inside t
 ## Final verification (CEO, clean checkout of merged main `6c50e9f`)
 - `tsc --noEmit`: exit 0
 - `next build`: exit 0 — all routes incl. `/approvals` + `/dashboard`
-- `vitest run` (full): **176/176 passed** (9 files)
+- `vitest run` (full): **108/108 passed** (10 files)
 
 ## DB migration to apply at release (single Supabase env)
 - `20260529000007_atomic_consume_deliverable.sql` — additive function, reversible via paired rollback. **Not yet applied.**
