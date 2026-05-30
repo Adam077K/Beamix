@@ -1,83 +1,111 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { ApprovalActions } from './ApprovalActions'
-import type { ApprovalItem } from '@/types/outcomes'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import { getPendingApprovals } from './_data'
+import { ApprovalsList } from './_components/ApprovalsList'
 
 // ---------------------------------------------------------------------------
-// Stub data — Wave 2 replaces with real Supabase fetch
+// /approvals — Server Component
+// Reads pending approval_queue rows for the authenticated user (via RLS),
+// then renders the list or empty state.
 // ---------------------------------------------------------------------------
 
-const STUB_ITEMS: ApprovalItem[] = []
+export const dynamic = 'force-dynamic'
 
-function resourceLabel(resource: ApprovalItem['resource']): string {
-  switch (resource) {
-    case 'content':  return 'Content update'
-    case 'email':    return 'Email draft'
-    case 'outreach': return 'Outreach message'
-    default:         return resource
-  }
+async function getCurrentUserId(): Promise<string | null> {
+  const cookieStore = await cookies()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(
+          cookiesToSet: Array<{ name: string; value: string; options?: CookieOptions }>,
+        ) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          } catch {
+            // Server Component — cookie writes may be no-ops
+          }
+        },
+      },
+    },
+  )
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  return user?.id ?? null
 }
 
-function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat('en', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso))
-}
-
 // ---------------------------------------------------------------------------
-// Empty state
+// Error state — shown when the data fetch fails
 // ---------------------------------------------------------------------------
 
-function EmptyApprovals() {
+function FetchErrorState() {
   return (
     <div
-      role="status"
+      role="alert"
       className="flex flex-col items-center justify-center py-20 text-center"
     >
       <div
-        className="w-12 h-12 rounded-full bg-[#F7F7F7] flex items-center justify-center mb-4"
+        className="w-12 h-12 rounded-full bg-[#FEF2F2] flex items-center justify-center mb-4"
         aria-hidden="true"
       >
-        {/* Inbox tray icon — no agent name exposed */}
         <svg
           width="24"
           height="24"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#9CA3AF"
+          stroke="#EF4444"
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
         >
-          <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-          <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 8v4M12 16h.01" />
         </svg>
       </div>
-      <p className="text-sm font-medium text-[#0A0A0A] mb-1">Nothing to review</p>
-      <p className="text-sm text-[#6B7280] max-w-[260px] leading-relaxed">
-        Items ready for your review will appear here.
+      <p className="text-sm font-medium text-[#0A0A0A] mb-1">
+        Could not load approvals
+      </p>
+      <p className="text-sm text-[#6B7280] max-w-[280px] leading-relaxed">
+        There was a problem fetching your pending items. Refresh the page to
+        try again.
       </p>
     </div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// Page — Server Component
+// Page
 // ---------------------------------------------------------------------------
 
 export default async function ApprovalsPage() {
-  // Wave 2: replace with `await fetchPendingApprovals(userId)`
-  const items: ApprovalItem[] = STUB_ITEMS
+  const userId = await getCurrentUserId()
+
+  // Middleware guards this route — userId should always be present.
+  // Graceful fallback in case the session is stale.
+  if (!userId) {
+    return (
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <header>
+          <h1 className="text-2xl font-semibold text-[#0A0A0A] leading-tight">
+            Approvals
+          </h1>
+        </header>
+        <div className="rounded-xl border border-[#E5E7EB] bg-white overflow-hidden">
+          <FetchErrorState />
+        </div>
+      </main>
+    )
+  }
+
+  const result = await getPendingApprovals(userId)
 
   return (
     <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -91,51 +119,12 @@ export default async function ApprovalsPage() {
         </p>
       </header>
 
-      {/* Content — table or empty state */}
+      {/* Content — list, empty state, or error */}
       <div className="rounded-xl border border-[#E5E7EB] bg-white overflow-hidden">
-        {items.length === 0 ? (
-          <EmptyApprovals />
+        {result.ok ? (
+          <ApprovalsList approvals={result.items} />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[140px]">Type</TableHead>
-                <TableHead>Preview</TableHead>
-                <TableHead className="w-[160px]">Created</TableHead>
-                <TableHead className="w-[160px]">Expires</TableHead>
-                <TableHead className="w-[176px] text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <span className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ring-[#E5E7EB] text-[#374151] bg-[#F7F7F7]">
-                      {resourceLabel(item.resource)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <p className="text-sm text-[#374151] line-clamp-2 max-w-sm leading-snug">
-                      {item.preview}
-                    </p>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-[#6B7280] tabular-nums">
-                      {formatDate(item.createdAt)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-[#6B7280] tabular-nums">
-                      {formatDate(item.expiresAt)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ApprovalActions itemId={item.id} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <FetchErrorState />
         )}
       </div>
     </main>
