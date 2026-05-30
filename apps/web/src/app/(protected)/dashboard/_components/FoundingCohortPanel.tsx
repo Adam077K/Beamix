@@ -16,7 +16,7 @@ interface Props {
 }
 
 export async function FoundingCohortPanel({ userId }: Props) {
-  const { enrolledCount, capacity, isCustomerFounding } =
+  const { enrolledCount, capacity, isCustomerFounding, cohortNumber } =
     await getFoundingCohortStatus(userId)
 
   const pct = Math.round((enrolledCount / capacity) * 100)
@@ -57,9 +57,9 @@ export async function FoundingCohortPanel({ userId }: Props) {
               </p>
             )}
 
-            {isCustomerFounding && (
+            {isCustomerFounding && cohortNumber !== null && (
               <p className="mt-0.5 text-xs text-[#6B7280]">
-                Customer #{enrolledCount} of {capacity} Founding Members
+                Customer #{cohortNumber} of {capacity} Founding Members
               </p>
             )}
           </div>

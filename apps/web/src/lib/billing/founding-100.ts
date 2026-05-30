@@ -13,6 +13,11 @@ export interface FoundingCohortStatus {
   capacity: 100
   /** Whether the given userId holds a founding membership. False when no userId supplied. */
   isCustomerFounding: boolean
+  /**
+   * This member's slot number (1–100). Only populated when `isCustomerFounding` is true.
+   * Null when the user is not a founding member, or when the row lacks a cohort_number.
+   */
+  cohortNumber: number | null
 }
 
 // ---------------------------------------------------------------------------
@@ -25,7 +30,7 @@ export interface FoundingCohortStatus {
 //       back to getAdminClient().
 // ---------------------------------------------------------------------------
 
-function getUntyedAdminClient() {
+function getUntypedAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url) throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL')
@@ -64,7 +69,7 @@ function getUntyedAdminClient() {
 export async function getFoundingCohortStatus(
   userId?: string,
 ): Promise<FoundingCohortStatus> {
-  const db = getUntyedAdminClient()
+  const db = getUntypedAdminClient()
 
   // Query 1: total enrolled count — count rows in founding_100_cohort table
   // One row = one founding member, cohort_number constrained to 1–100.
@@ -75,25 +80,27 @@ export async function getFoundingCohortStatus(
   if (countError) {
     // Non-fatal: log and return safe defaults rather than crashing the dashboard.
     console.error('[founding-100] Failed to fetch enrolled count:', countError.message)
-    return { enrolledCount: 0, capacity: 100, isCustomerFounding: false }
+    return { enrolledCount: 0, capacity: 100, isCustomerFounding: false, cohortNumber: null }
   }
 
   const enrolledCount = count ?? 0
 
   // Query 2: per-user membership check (only when userId is provided)
   let isCustomerFounding = false
+  let cohortNumber: number | null = null
   if (userId) {
     const { data, error: userError } = await db
       .from('founding_100_cohort')
-      .select('customer_id')
+      .select('customer_id, cohort_number')
       .eq('customer_id', userId)
       .maybeSingle()
 
     if (userError) {
       console.error('[founding-100] Failed to fetch user founding status:', userError.message)
-      // Non-fatal: keep isCustomerFounding as false
-    } else {
-      isCustomerFounding = data !== null
+      // Non-fatal: keep isCustomerFounding as false, cohortNumber as null
+    } else if (data !== null) {
+      isCustomerFounding = true
+      cohortNumber = (data as { customer_id: string; cohort_number: number | null }).cohort_number ?? null
     }
   }
 
@@ -101,5 +108,6 @@ export async function getFoundingCohortStatus(
     enrolledCount,
     capacity: 100,
     isCustomerFounding,
+    cohortNumber,
   }
 }
