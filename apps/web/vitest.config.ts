@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
 
+// Vitest 4 ships with oxc which handles JSX automatically — no esbuild override needed
+// here. The product tsconfig sets `jsx: preserve` for the Next build pipeline, but
+// test files that import TSX (e.g. React Email templates) are still parsed by oxc.
 export default defineConfig({
   test: {
     environment: 'node',
