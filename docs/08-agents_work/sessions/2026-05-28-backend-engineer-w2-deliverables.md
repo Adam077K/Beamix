@@ -4,8 +4,8 @@ agent: backend-engineer
 task: w2-deliverables
 branch: feat/be-w2-deliverables
 worktree: .worktrees/be-w2-deliverables
-qa_verdict: PENDING
-tier: full
+qa_verdict: PASS
+tier: irreversible
 ---
 
 # Wave 2 Deliverables Gate — Session Log
@@ -42,3 +42,13 @@ Confirmed race in `consumeDeliverable`: non-atomic read-modify-write on `deliver
 **Verification:** `pnpm typecheck` PASS · `pnpm build` PASS · 13/13 tests PASS.
 
 RLS finding: `subscriptions` has only `owner read` (SELECT) and `service_role all` — no authenticated UPDATE policy. Cap cannot be bypassed via direct client writes.
+
+## CEO QA gate (ceo-wave2-merge-train, 2026-05-29) — INDEPENDENTLY VERIFIED
+- code-reviewer + security-engineer (parallel, out-of-band) → 1 P1: non-atomic cap check in `consumeDeliverable` (TOCTOU → paid-deliverable cap bypass under concurrent agent runs). P1 remediated by the atomic `consume_deliverable` RPC migration (this branch).
+- RLS confirmed: `subscriptions` has owner-SELECT + service_role-ALL only; no client UPDATE path to self-mutate counters.
+- Checks re-run by CEO from inside the worktree (HEAD eb6890c), raw exit codes:
+  - `tsc --noEmit` → exit 0 (clean)
+  - `vitest run src/lib/billing/deliverables.test.ts` → 13/13 passed (vitest 4.1.7)
+  - `SKIP_ENV_VALIDATION=1 … next build` → exit 0 (compiled; 18 static pages; 24 routes)
+- Tier corrected FULL → IRREVERSIBLE (adds DB migration `20260529000007`). Pending Adam merge sign-off + migration apply.
+- NOTE: an earlier integration branch (`integrate/w2-deliverables`, PR #112) was corrupted by a bad index reset (mass-deletion commit). It is abandoned; this clean branch (`w2/deliverables-clean` @ eb6890c) supersedes it.
