@@ -23,6 +23,7 @@ import {
   QAFailedError,
   UnsafeInputError,
 } from '../../lib/agents/errors';
+import { OverTierCapError } from '../../lib/billing/deliverables';
 import type { AgentJobInput } from '../../lib/agents/types';
 
 /**
@@ -73,7 +74,8 @@ export const agentExecute = inngest.createFunction(
           err instanceof CapExceededError ||
           err instanceof InsufficientCreditsError ||
           err instanceof UnsafeInputError ||
-          err instanceof QAFailedError
+          err instanceof QAFailedError ||
+          err instanceof OverTierCapError
         ) {
           throw new NonRetriableError(err.message, { cause: err });
         }
