@@ -64,6 +64,10 @@ type DeliverableInsert = Omit<DeliverableRow, never>;
 /**
  * Returns the admin Supabase client cast to `any`-generics for tables not yet
  * in `database.types.ts`. Scoped to this module; callers use typed helpers.
+ *
+ * NOTE: `consume_deliverable` RPC is typed in `database.types.ts` and is called
+ * via `getAdminClient()` (fully typed). Only `deliverables_per_customer_per_month`
+ * table reads/upserts use this raw client (Wave 2 table not yet in generated types).
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getRawAdminClient(): SupabaseClient<any> {
@@ -259,8 +263,18 @@ const KIND_TO_ROW_KEY: Record<DeliverableKind, keyof DeliverableRow> = {
  * Consume one or more deliverable units for a customer.
  *
  * - Idempotent row creation: INSERTs a zero-count row for the current month if none exists.
- * - Throws `OverTierCapError` on cap breach BEFORE incrementing.
+ * - For capped tiers: uses the atomic `consume_deliverable` DB RPC to eliminate the
+ *   read-modify-write race. The RPC does a conditional UPDATE...RETURNING in one
+ *   transaction — two concurrent calls both reading used=cap-1 cannot both succeed.
+ * - For unlimited tiers (capValue === null, i.e. Professional): falls back to a simple
+ *   read-increment-write because there is no cap to bypass. Race risk only matters when
+ *   a cap can be breached.
+ * - Throws `OverTierCapError` on cap breach.
  * - Writes `audit_log` row on every consume and every block (Principle #10).
+ *
+ * NOTE: For `count > 1` on capped tiers, the RPC is called `count` times sequentially.
+ * Each call is individually atomic; the combined sequence is not. The current product
+ * only ever passes `count: 1` from agent publish paths, so this is safe for the MVP.
  *
  * @throws {OverTierCapError} when the customer has hit their monthly cap.
  * @throws {Error} on unexpected DB errors.
@@ -270,10 +284,17 @@ export async function consumeDeliverable(rawInput: ConsumeDeliverableInput): Pro
   const input = ConsumeDeliverableInputSchema.parse(rawInput);
   const { customerId, kind, count } = input;
   const monthAnchor = currentMonthAnchor();
-  const dbColumn = KIND_TO_DB_COLUMN[kind];
   const raw = getRawAdminClient();
+  const dbColumn = KIND_TO_DB_COLUMN[kind];
 
-  // 1. Idempotent UPSERT — create the period row with zeroed counters if missing.
+  // 1. Resolve customer tier (cheap read — only the increment must be atomic).
+  const currentTier = await resolveCustomerTier(customerId);
+  const caps = TIER_CAPS[currentTier];
+  const capValue = caps[kind];
+
+  // 2. Idempotent UPSERT — create the period row with zeroed counters if missing.
+  //    Required before both the unlimited read-write path and the capped RPC path
+  //    (RPC returns null when row is missing, so we guarantee the row exists first).
   const insertPayload: DeliverableInsert = {
     customer_id: customerId,
     month_anchor: monthAnchor,
@@ -297,78 +318,125 @@ export async function consumeDeliverable(rawInput: ConsumeDeliverableInput): Pro
     throw new Error(`Failed to initialise deliverables period row: ${upsertError.message}`);
   }
 
-  // 2. Read the current-period row.
-  const { data: rowData, error: readError } = await raw
-    .from('deliverables_per_customer_per_month')
-    .select(
-      'schema_pushed_count, faq_published_count, citation_submitted_count, content_published_count, outreach_email_count',
-    )
-    .eq('customer_id', customerId)
-    .eq('month_anchor', monthAnchor)
-    .single();
+  // 3. Unlimited tier (capValue === null → Professional): no cap to enforce, no RPC needed.
+  if (capValue === null) {
+    // Read current count then write new value. Race is acceptable here: there is no
+    // cap ceiling to bypass, so over-counting is not a money-leak risk.
+    const { data: rowData, error: readError } = await raw
+      .from('deliverables_per_customer_per_month')
+      .select(dbColumn)
+      .eq('customer_id', customerId)
+      .eq('month_anchor', monthAnchor)
+      .single();
 
-  if (readError || !rowData) {
-    console.error('[deliverables] failed to read period row after upsert', {
-      customerId,
-      monthAnchor,
-      error: readError?.message,
-    });
-    throw new Error(
-      `Failed to read deliverables period row: ${readError?.message ?? 'no row returned'}`,
-    );
-  }
+    if (readError || !rowData) {
+      console.error('[deliverables] failed to read period row (unlimited tier)', {
+        customerId,
+        monthAnchor,
+        error: readError?.message,
+      });
+      throw new Error(
+        `Failed to read deliverables period row: ${readError?.message ?? 'no row returned'}`,
+      );
+    }
 
-  const row = rowData as DeliverableRow;
+    const currentCount = ((rowData as unknown as Record<string, number>)[dbColumn] ?? 0);
 
-  // 3. Resolve customer tier.
-  const currentTier = await resolveCustomerTier(customerId);
-  const caps = TIER_CAPS[currentTier];
-  const capValue = caps[kind];
+    const { error: incError } = await raw
+      .from('deliverables_per_customer_per_month')
+      .update({ [dbColumn]: currentCount + count })
+      .eq('customer_id', customerId)
+      .eq('month_anchor', monthAnchor);
 
-  // 4. Read current count.
-  const currentCount = row[KIND_TO_ROW_KEY[kind]] as number;
+    if (incError) {
+      console.error('[deliverables] failed to increment counter (unlimited tier)', {
+        customerId,
+        kind,
+        count,
+        monthAnchor,
+        error: incError.message,
+      });
+      throw new Error(`Failed to increment deliverable counter: ${incError.message}`);
+    }
 
-  // 5. Cap enforcement — check BEFORE incrementing.
-  if (capValue !== null && currentCount + count > capValue) {
     await writeAuditLog({
       customerId,
-      eventType: 'deliverable_blocked',
+      eventType: 'deliverable_consumed',
       kind,
       count,
       monthAnchor,
       currentTier,
-      capValue,
-      usedCount: currentCount,
+      capValue: null,
+      usedCount: currentCount + count,
     });
-
-    throw new OverTierCapError({
-      kind,
-      currentTier,
-      capValue,
-      usedCount: currentCount,
-    });
+    return;
   }
 
-  // 6. Increment counter. Using direct UPDATE with explicit value (no RPC needed
-  //    for Wave 2 single-customer concurrency; each customer's row is independent).
-  const { error: updateError } = await raw
-    .from('deliverables_per_customer_per_month')
-    .update({ [dbColumn]: currentCount + count })
-    .eq('customer_id', customerId)
-    .eq('month_anchor', monthAnchor);
+  // 4. Capped tier: atomic conditional increment via RPC.
+  //    The RPC returns the new count on success, or null when current >= p_cap.
+  //    Because we upserted the row above, null here means over-cap (not missing row).
+  let newCount: number | null = null;
 
-  if (updateError) {
-    console.error('[deliverables] failed to increment counter', {
-      customerId,
-      kind,
-      count,
-      monthAnchor,
-      error: updateError.message,
-    });
-    throw new Error(`Failed to increment deliverable counter: ${updateError.message}`);
+  for (let i = 0; i < count; i++) {
+    const { data: rpcResult, error: rpcError } = await getAdminClient().rpc(
+      'consume_deliverable',
+      {
+        p_customer_id: customerId,
+        p_month_anchor: monthAnchor,
+        p_kind: kind,
+        p_cap: capValue,
+      },
+    );
+
+    if (rpcError) {
+      console.error('[deliverables] consume_deliverable RPC failed', {
+        customerId,
+        kind,
+        monthAnchor,
+        capValue,
+        iteration: i,
+        error: rpcError.message,
+      });
+      throw new Error(`consume_deliverable RPC error: ${rpcError.message}`);
+    }
+
+    if (rpcResult === null || rpcResult === undefined) {
+      // RPC returned null → over-cap. Row exists (upserted above).
+      // Read current count for audit log and error message.
+      const { data: currentRow } = await raw
+        .from('deliverables_per_customer_per_month')
+        .select(dbColumn)
+        .eq('customer_id', customerId)
+        .eq('month_anchor', monthAnchor)
+        .single();
+
+      const usedCount = currentRow
+        ? ((currentRow as unknown as Record<string, number>)[dbColumn] ?? 0)
+        : 0;
+
+      await writeAuditLog({
+        customerId,
+        eventType: 'deliverable_blocked',
+        kind,
+        count,
+        monthAnchor,
+        currentTier,
+        capValue,
+        usedCount,
+      });
+
+      throw new OverTierCapError({
+        kind,
+        currentTier,
+        capValue,
+        usedCount,
+      });
+    }
+
+    newCount = rpcResult as number;
   }
 
-  // 7. Audit log on successful consume.
+  // 5. Audit log on successful consume.
   await writeAuditLog({
     customerId,
     eventType: 'deliverable_consumed',
@@ -377,7 +445,7 @@ export async function consumeDeliverable(rawInput: ConsumeDeliverableInput): Pro
     monthAnchor,
     currentTier,
     capValue,
-    usedCount: currentCount + count,
+    usedCount: newCount ?? capValue,
   });
 }
 

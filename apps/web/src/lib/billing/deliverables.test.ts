@@ -17,7 +17,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 /**
  * Mocked Supabase chain builder. Returns a minimal Supabase client-like object
  * whose chained methods (`from → select/upsert/update → eq → ...`) resolve to
- * the values we prime via `mockQueryResult`.
+ * the values we prime via mock state.
  *
  * We track calls so individual tests can assert on them.
  */
@@ -30,29 +30,53 @@ interface MockCallRecord {
 
 const mockCalls: MockCallRecord[] = [];
 
-// Default row returned by `.single()` / `.maybeSingle()` — overridden per test.
-let mockSingleData: Record<string, unknown> | null = null;
-let mockSingleError: { message: string } | null = null;
+// ---------------------------------------------------------------------------
+// Mock state — overridden per test
+// ---------------------------------------------------------------------------
+
+/** Result returned by the admin client `rpc('consume_deliverable', ...)` call. */
+let mockRpcResult: number | null = null;
+let mockRpcError: { message: string } | null = null;
+
+/** Result for tier lookup (subscriptions join via getAdminClient().from('subscriptions')). */
 let mockMaybeSingleData: Record<string, unknown> | null = null;
 let mockMaybeSingleError: { message: string } | null = null;
+
+/** Result for upsert (raw admin client — deliverables_per_customer_per_month). */
 let mockUpsertError: { message: string } | null = null;
-let mockUpdateError: { message: string } | null = null;
+
+/** Result for insert (audit_log via getAdminClient()). */
 let mockInsertError: { message: string } | null = null;
+
+/**
+ * Result for single-row select on deliverables_per_customer_per_month.
+ * Used in:
+ *   - The "over-cap read" after RPC returns null (capped path, disambiguation).
+ *   - The "read current count" step (unlimited tier path).
+ */
+let mockSingleData: Record<string, unknown> | null = null;
+let mockSingleError: { message: string } | null = null;
+
+/** Result for update on deliverables_per_customer_per_month (unlimited tier path). */
+let mockUpdateError: { message: string } | null = null;
 
 /** Reset all mock state between tests. */
 function resetMocks(): void {
   mockCalls.length = 0;
-  mockSingleData = null;
-  mockSingleError = null;
+  mockRpcResult = null;
+  mockRpcError = null;
   mockMaybeSingleData = null;
   mockMaybeSingleError = null;
   mockUpsertError = null;
-  mockUpdateError = null;
   mockInsertError = null;
+  mockSingleData = null;
+  mockSingleError = null;
+  mockUpdateError = null;
 }
 
-/** Build the chainable query mock. */
-function makeChain(table: string, method: string) {
+/** Build the chainable query mock for .select() chains. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function makeSelectChain(table: string, method: string): any {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chain: any = new Proxy(
     {},
@@ -60,8 +84,10 @@ function makeChain(table: string, method: string) {
       get(_target, prop: string) {
         return (...args: unknown[]) => {
           mockCalls.push({ table, method: `${method}.${prop}`, args });
-          if (prop === 'single') return Promise.resolve({ data: mockSingleData, error: mockSingleError });
-          if (prop === 'maybeSingle') return Promise.resolve({ data: mockMaybeSingleData, error: mockMaybeSingleError });
+          if (prop === 'single')
+            return Promise.resolve({ data: mockSingleData, error: mockSingleError });
+          if (prop === 'maybeSingle')
+            return Promise.resolve({ data: mockMaybeSingleData, error: mockMaybeSingleError });
           return chain;
         };
       },
@@ -79,10 +105,7 @@ vi.mock('@supabase/supabase-js', () => ({
         mockCalls.push({ table, method: 'upsert', args: [_data, _opts] });
         return Promise.resolve({ data: null, error: mockUpsertError });
       }),
-      select: vi.fn((_cols: string) => {
-        const chain = makeChain(table, 'select');
-        return chain;
-      }),
+      select: vi.fn((_cols: string) => makeSelectChain(table, 'select')),
       update: vi.fn((_data: unknown) => {
         mockCalls.push({ table, method: 'update', args: [_data] });
         return {
@@ -100,16 +123,20 @@ vi.mock('@supabase/supabase-js', () => ({
 }));
 
 // Mock `lib/agents/db/admin-client` — used by deliverables.ts for the typed
-// admin client (subscriptions join, audit_log writes).
+// admin client (subscriptions join, audit_log writes, and consume_deliverable RPC).
 vi.mock('../agents/db/admin-client', () => ({
   getAdminClient: vi.fn(() => ({
     from: vi.fn((table: string) => ({
-      select: vi.fn((_cols: string) => makeChain(table, 'select')),
+      select: vi.fn((_cols: string) => makeSelectChain(table, 'select')),
       insert: vi.fn((_data: unknown) => {
         mockCalls.push({ table, method: 'insert', args: [_data] });
         return Promise.resolve({ data: null, error: mockInsertError });
       }),
     })),
+    rpc: vi.fn((_fn: string, _args: unknown) => {
+      mockCalls.push({ table: 'rpc', method: _fn as string, args: [_args] });
+      return Promise.resolve({ data: mockRpcResult, error: mockRpcError });
+    }),
   })),
 }));
 
@@ -131,16 +158,37 @@ const { consumeDeliverable, OverTierCapError } = await import('./deliverables');
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Prime the mock Supabase read chain to return a deliverable row. */
-function primeDeliverableRow(row: Record<string, unknown>): void {
-  mockSingleData = row;
-  mockSingleError = null;
-}
-
 /** Prime the subscription join to return a specific plan tier. */
 function primeTierLookup(tier: string): void {
   mockMaybeSingleData = { plan_id: 'plan-1', plans: { tier } };
   mockMaybeSingleError = null;
+}
+
+/**
+ * Prime the RPC mock for a SUCCESSFUL consume (returns new count).
+ * Used for capped tiers where capValue != null.
+ */
+function primeRpcSuccess(newCount: number): void {
+  mockRpcResult = newCount;
+  mockRpcError = null;
+}
+
+/**
+ * Prime the RPC mock for an OVER-CAP response (returns null).
+ * Used for capped tiers when current count >= cap.
+ */
+function primeRpcOverCap(): void {
+  mockRpcResult = null;
+  mockRpcError = null;
+}
+
+/**
+ * Prime the single-row read mock used after RPC returns null (disambiguation)
+ * or in the unlimited-tier read path.
+ */
+function primeDeliverableRow(row: Record<string, unknown>): void {
+  mockSingleData = row;
+  mockSingleError = null;
 }
 
 /** A zeroed deliverable row for the current period. */
@@ -163,59 +211,105 @@ describe('consumeDeliverable', () => {
     resetMocks();
   });
 
-  describe('happy path', () => {
-    it('increments schema_pushed_count for a starter customer below cap', async () => {
+  describe('happy path — capped tier', () => {
+    it('calls consume_deliverable RPC for a starter customer below cap', async () => {
       primeTierLookup('starter'); // starter cap: schema_pushed = 4
-      primeDeliverableRow({ ...zeroRow(), schema_pushed_count: 1 }); // 1 used
+      primeRpcSuccess(2);         // RPC returns new count = 2
 
       await expect(
-        consumeDeliverable({ customerId: '00000000-0000-0000-0000-000000000001', kind: 'schema_pushed', count: 1 }),
+        consumeDeliverable({
+          customerId: '00000000-0000-0000-0000-000000000001',
+          kind: 'schema_pushed',
+          count: 1,
+        }),
       ).resolves.toBeUndefined();
 
-      // Expect at least one update call on the deliverables table
+      const rpcCall = mockCalls.find((c) => c.table === 'rpc' && c.method === 'consume_deliverable');
+      expect(rpcCall).toBeDefined();
+    });
+
+    it('defaults count to 1 when count is omitted', async () => {
+      primeTierLookup('growth'); // growth cap: faq_published = 6
+      primeRpcSuccess(4);
+
+      await expect(
+        // @ts-expect-error — testing default value: omitting `count`
+        consumeDeliverable({ customerId: '00000000-0000-0000-0000-000000000003', kind: 'faq_published' }),
+      ).resolves.toBeUndefined();
+
+      const rpcCall = mockCalls.find((c) => c.table === 'rpc' && c.method === 'consume_deliverable');
+      expect(rpcCall).toBeDefined();
+    });
+  });
+
+  describe('happy path — unlimited tier', () => {
+    it('succeeds for a professional customer with unlimited cap (null) — uses direct update', async () => {
+      primeTierLookup('professional'); // professional caps: all null = unlimited
+      // Unlimited path reads current count then writes. Prime the select mock.
+      primeDeliverableRow({ ...zeroRow(), content_published_count: 999 });
+
+      await expect(
+        consumeDeliverable({
+          customerId: '00000000-0000-0000-0000-000000000002',
+          kind: 'content_published',
+          count: 1,
+        }),
+      ).resolves.toBeUndefined();
+
+      // Must NOT call the RPC for unlimited tiers
+      const rpcCall = mockCalls.find((c) => c.table === 'rpc' && c.method === 'consume_deliverable');
+      expect(rpcCall).toBeUndefined();
+
+      // Must call update on the deliverables table
       const updateCall = mockCalls.find(
         (c) => c.table === 'deliverables_per_customer_per_month' && c.method === 'update',
       );
       expect(updateCall).toBeDefined();
     });
 
-    it('succeeds for a professional customer with unlimited cap (null)', async () => {
-      primeTierLookup('professional'); // professional caps: all null = unlimited
-      primeDeliverableRow({ ...zeroRow(), content_published_count: 999 });
+    it('does NOT throw for professional when outreach_email cap is null (unlimited)', async () => {
+      primeTierLookup('professional');
+      primeDeliverableRow({ ...zeroRow() }); // 0 used, unlimited cap
 
       await expect(
-        consumeDeliverable({ customerId: '00000000-0000-0000-0000-000000000002', kind: 'content_published', count: 1 }),
-      ).resolves.toBeUndefined();
-    });
-
-    it('defaults count to 1 when count is omitted', async () => {
-      primeTierLookup('growth'); // growth cap: faq_published = 6
-      primeDeliverableRow({ ...zeroRow(), faq_published_count: 3 });
-
-      await expect(
-        // @ts-expect-error — testing default value: omitting `count`
-        consumeDeliverable({ customerId: '00000000-0000-0000-0000-000000000003', kind: 'faq_published' }),
+        consumeDeliverable({
+          customerId: '00000000-0000-0000-0000-000000000007',
+          kind: 'outreach_email',
+          count: 1,
+        }),
       ).resolves.toBeUndefined();
     });
   });
 
   describe('cap enforcement', () => {
-    it('throws OverTierCapError when starter schema cap (4) is already at limit', async () => {
+    it('throws OverTierCapError when RPC returns null (over-cap)', async () => {
       primeTierLookup('starter'); // starter cap: schema_pushed = 4
-      primeDeliverableRow({ ...zeroRow(), schema_pushed_count: 4 }); // already at cap
+      primeRpcOverCap();          // RPC returns null — already at cap
+      // Prime the disambiguation read: row exists with count at cap
+      primeDeliverableRow({ ...zeroRow(), schema_pushed_count: 4 });
 
       await expect(
-        consumeDeliverable({ customerId: '00000000-0000-0000-0000-000000000004', kind: 'schema_pushed', count: 1 }),
+        consumeDeliverable({
+          customerId: '00000000-0000-0000-0000-000000000004',
+          kind: 'schema_pushed',
+          count: 1,
+        }),
       ).rejects.toThrow(OverTierCapError);
     });
 
     it('OverTierCapError carries correct customerMessage without agent names', async () => {
       primeTierLookup('starter');
-      primeDeliverableRow({ ...zeroRow(), faq_published_count: 2 }); // at cap (starter faq cap = 2)
+      primeRpcOverCap();
+      // Starter faq cap = 2; prime row as if at cap
+      primeDeliverableRow({ ...zeroRow(), faq_published_count: 2 });
 
       let caught: unknown;
       try {
-        await consumeDeliverable({ customerId: '00000000-0000-0000-0000-000000000005', kind: 'faq_published', count: 1 });
+        await consumeDeliverable({
+          customerId: '00000000-0000-0000-0000-000000000005',
+          kind: 'faq_published',
+          count: 1,
+        });
       } catch (err) {
         caught = err;
       }
@@ -234,20 +328,16 @@ describe('consumeDeliverable', () => {
 
     it('throws OverTierCapError when outreach_email is 0 for starter (cap = 0)', async () => {
       primeTierLookup('starter'); // starter outreach_email cap = 0
-      primeDeliverableRow({ ...zeroRow() });
+      primeRpcOverCap();          // RPC returns null — cap is 0, anything >= 0 fails
+      primeDeliverableRow({ ...zeroRow() }); // 0 used
 
       await expect(
-        consumeDeliverable({ customerId: '00000000-0000-0000-0000-000000000006', kind: 'outreach_email', count: 1 }),
+        consumeDeliverable({
+          customerId: '00000000-0000-0000-0000-000000000006',
+          kind: 'outreach_email',
+          count: 1,
+        }),
       ).rejects.toThrow(OverTierCapError);
-    });
-
-    it('does NOT throw for professional when outreach_email cap is null (unlimited)', async () => {
-      primeTierLookup('professional');
-      primeDeliverableRow({ ...zeroRow() }); // 0 used, unlimited cap
-
-      await expect(
-        consumeDeliverable({ customerId: '00000000-0000-0000-0000-000000000007', kind: 'outreach_email', count: 1 }),
-      ).resolves.toBeUndefined();
     });
   });
 
@@ -263,6 +353,72 @@ describe('consumeDeliverable', () => {
         // @ts-expect-error — testing runtime validation with invalid kind
         consumeDeliverable({ customerId: '00000000-0000-0000-0000-000000000008', kind: 'unknown_kind', count: 1 }),
       ).rejects.toThrow();
+    });
+  });
+
+  describe('concurrency — atomic cap enforcement', () => {
+    /**
+     * P1 race condition test: two parallel consumeDeliverable calls when used = cap - 1.
+     *
+     * Before the fix, both calls would read used=cap-1, both pass the check, both write:
+     * cap bypassed. After the fix, the atomic RPC ensures only one succeeds.
+     *
+     * We simulate this by having the RPC mock return success for the first call and
+     * null (over-cap) for the second — reflecting the atomic DB behavior where the
+     * first UPDATE succeeds (used goes from cap-1 to cap) and the second fails
+     * (used >= cap now, conditional UPDATE returns no rows).
+     */
+    it('exactly one of two concurrent calls succeeds when used = cap - 1', async () => {
+      primeTierLookup('starter'); // starter cap: schema_pushed = 4
+
+      // Prime disambiguation read for the over-cap call
+      primeDeliverableRow({ ...zeroRow(), schema_pushed_count: 4 });
+
+      let rpcCallCount = 0;
+
+      // Override the rpc mock to return success on first call, over-cap on second.
+      // We achieve this by resetting mockRpcResult between invocations using a counter.
+      const { getAdminClient } = await import('../agents/db/admin-client');
+      const mockedGetAdminClient = vi.mocked(getAdminClient);
+      mockedGetAdminClient.mockImplementation(() => ({
+        from: vi.fn((table: string) => ({
+          select: vi.fn((_cols: string) => makeSelectChain(table, 'select')),
+          insert: vi.fn((_data: unknown) => {
+            mockCalls.push({ table, method: 'insert', args: [_data] });
+            return Promise.resolve({ data: null, error: mockInsertError });
+          }),
+        })),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        rpc: vi.fn((_fn: string, _args: unknown): Promise<{ data: number | null; error: null }> => {
+          rpcCallCount++;
+          mockCalls.push({ table: 'rpc', method: _fn as string, args: [_args] });
+          // First call succeeds (increments used from cap-1 to cap); second call gets null (over-cap)
+          const result = rpcCallCount === 1 ? 4 : null;
+          return Promise.resolve({ data: result, error: null });
+        }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      }) as any);
+
+      const customerId = '00000000-0000-0000-0000-000000000009';
+
+      // Run both calls concurrently (simulating two agent runs at the same time)
+      const [result1, result2] = await Promise.allSettled([
+        consumeDeliverable({ customerId, kind: 'schema_pushed', count: 1 }),
+        consumeDeliverable({ customerId, kind: 'schema_pushed', count: 1 }),
+      ]);
+
+      const successes = [result1, result2].filter((r) => r.status === 'fulfilled');
+      const failures = [result1, result2].filter((r) => r.status === 'rejected');
+
+      // Exactly one succeeds
+      expect(successes).toHaveLength(1);
+      // Exactly one fails with OverTierCapError
+      expect(failures).toHaveLength(1);
+      const failReason = (failures[0] as PromiseRejectedResult).reason;
+      expect(failReason).toBeInstanceOf(OverTierCapError);
+
+      // The RPC was called exactly twice (once per concurrent invocation)
+      expect(rpcCallCount).toBe(2);
     });
   });
 });
