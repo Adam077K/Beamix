@@ -4,8 +4,8 @@ agent: backend-engineer
 task: w2-deliverables
 branch: feat/be-w2-deliverables
 worktree: .worktrees/be-w2-deliverables
-qa_verdict: PENDING
-tier: full
+qa_verdict: PASS
+tier: irreversible
 ---
 
 # Wave 2 Deliverables Gate — Session Log
@@ -42,3 +42,10 @@ Confirmed race in `consumeDeliverable`: non-atomic read-modify-write on `deliver
 **Verification:** `pnpm typecheck` PASS · `pnpm build` PASS · 13/13 tests PASS.
 
 RLS finding: `subscriptions` has only `owner read` (SELECT) and `service_role all` — no authenticated UPDATE policy. Cap cannot be bypassed via direct client writes.
+
+## CEO QA gate (ceo-wave2-merge-train, 2026-05-29) — INDEPENDENTLY VERIFIED
+- code-reviewer + security-engineer (parallel, out-of-band) → 1 P1: non-atomic cap check in `consumeDeliverable` (TOCTOU → paid-deliverable cap bypass under concurrent agent runs).
+- P1 remediated: migration `20260529000007_atomic_consume_deliverable.sql` — `consume_deliverable(p_customer_id, p_month_anchor, p_kind, p_cap)` does an atomic conditional `UPDATE … WHERE current < cap RETURNING`; `LANGUAGE sql`, `SECURITY DEFINER`, `search_path=''`, EXECUTE revoked from anon/authenticated. `consumeDeliverable` rewritten to call the RPC for capped tiers (unlimited/Professional keeps read-write — no cap to bypass). Rollback file added. Concurrency test added.
+- RLS confirmed: `subscriptions` has owner-SELECT + service_role-ALL only; no client UPDATE path to self-mutate counters.
+- CEO ran the checks directly (not worker-reported): `tsc --noEmit` clean · `vitest run` 331/331 across 29 files · `SKIP_ENV_VALIDATION=1 next build` ✓ compiled + ✓ lint/types + 37/37 static pages.
+- Tier corrected FULL → IRREVERSIBLE (adds DB migration). Pending Adam merge sign-off.
