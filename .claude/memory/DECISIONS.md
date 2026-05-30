@@ -12,7 +12,7 @@
 
 **QA value proven:** the gate caught **7 P1s** that built clean — atomic-consume TOCTOU money leak (#113), RLS-blocked approvals UPDATE that silently no-op'd for everyone +3 more (#114), founding panel showing wrong cohort number (#116). None catchable by typecheck/build alone.
 
-**Release-pending (NOT done):** apply migration `20260529000007_atomic_consume_deliverable.sql`; set `APPROVAL_SIGNING_SECRET` in Vercel. Full list in `docs/08-agents_work/handoff/2026-05-30-handoff-wave2-complete.md`.
+**Release blockers RESOLVED 2026-05-30 (Adam, same session):** migration `20260529000007` applied + `APPROVAL_SIGNING_SECRET` set in Vercel. Remaining non-blocker: regenerate `database.types.ts`. Follow-ups in `docs/08-agents_work/handoff/2026-05-30-handoff-wave2-complete.md`.
 
 **Process correction (now memory `feedback-verify-build-in-worktree`):** verify in-worktree, never transcribe worker pass-claims into a verdict, sanity-check PR diff file-count.
 

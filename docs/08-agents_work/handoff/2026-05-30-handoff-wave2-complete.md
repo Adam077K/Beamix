@@ -12,15 +12,12 @@ All 6 Wave 2 branches are on main. **Main = `6c50e9f` (#117).** Merged main veri
 Wave 2 PRs: #111 held-revenue · #113 deliverables · #114 approvals-api · #115 approvals-ui ·
 #116 founding-100 panel · #117 new agents.
 
-## ⚠️ DO BEFORE THIS SHIPS (release blockers)
-1. **Apply the DB migration** `apps/web/supabase/migrations/20260529000007_atomic_consume_deliverable.sql`
-   to Supabase (staging → prod). Additive function, reversible via the paired rollback. Without it,
-   `consumeDeliverable` for capped tiers errors at runtime. Drive via supabase CLI — project ref
-   `zhjxdwcqxhwletkpuwyl` (memory `project_supabase_cli_db_workflow`).
-2. **Set `APPROVAL_SIGNING_SECRET`** in Vercel (≥32 chars, NOT the dev fallback). Email approval links
-   throw at module load in production without it.
-3. Regenerate `database.types.ts` after the migration — kills the documented untyped-client escape
-   hatches in `deliverables.ts` and `founding-100.ts`.
+## Release blockers — RESOLVED 2026-05-30 (Adam, same session)
+1. ✅ **DB migration applied** — `20260529000007_atomic_consume_deliverable.sql` applied to Supabase by Adam.
+2. ✅ **`APPROVAL_SIGNING_SECRET` set** in Vercel by Adam.
+3. ⬜ **STILL OPEN — Regenerate `database.types.ts`** now that the migration is applied — kills the documented
+   untyped-client escape hatches in `deliverables.ts` and `founding-100.ts`. Cheap (~15 min); do as a warm-up
+   in the next phase. (Folded into the Agent Execution Wiring dispatch as the "cheap win.")
 
 ## Follow-ups before GA / first paying customer (non-blocking, tracked)
 **YMYL safety (highest priority — it's a safety control):**
