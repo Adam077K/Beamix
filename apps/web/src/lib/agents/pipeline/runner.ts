@@ -22,6 +22,8 @@ import { checkDailyCap, incrementDailyCap } from '../credits/daily-cap';
 import { lockPage, unlockPage } from '../coordination/page-locks';
 import { registerTopic } from '../coordination/topic-ledger';
 import { AgentError, QAFailedError, PageLockedError } from '../errors';
+import { consumeDeliverable, OverTierCapError } from '../../billing/deliverables';
+import type { DeliverableKind } from '../../billing/tier-caps';
 import type { AgentJobInput, AgentJobOutput, AgentType, CostEntry, PipelineStage, QAResult } from '../types';
 import { buildPipelineContext } from './context';
 import { newStepState, type StepState } from './steps/shared';
@@ -41,6 +43,36 @@ function resolveContentFormat(agentType: AgentType): AgentJobOutput['contentForm
       return 'structured_report';
     default:
       return 'markdown';
+  }
+}
+
+/**
+ * Map an agent type to the `DeliverableKind` it produces, or `null` if the
+ * agent emits a report/internal artefact that is not counted against the
+ * monthly deliverable cap (e.g. query_mapper, performance_tracker).
+ *
+ * Called by the pipeline runner before `persistOutput` to gate publishing.
+ */
+function resolveDeliverableKind(agentType: AgentType): DeliverableKind | null {
+  switch (agentType) {
+    case 'schema_generator':
+      return 'schema_pushed';
+    case 'faq_builder':
+      return 'faq_published';
+    case 'offsite_presence_builder':
+    case 'entity_builder':
+      return 'citation_submitted';
+    case 'content_optimizer':
+    case 'freshness_agent':
+    case 'authority_blog_strategist':
+      return 'content_published';
+    // Agents below produce internal reports — not gated by deliverable caps.
+    case 'query_mapper':
+    case 'performance_tracker':
+    case 'review_presence_planner':
+    case 'reddit_presence_planner':
+    default:
+      return null;
   }
 }
 
@@ -237,6 +269,15 @@ export async function runAgentPipeline(input: AgentJobInput): Promise<AgentJobOu
       durationMs: Date.now() - startedAt,
     };
 
+    // ---- Deliverable cap gate ----------------------------------------
+    // Check BEFORE persisting — a cap breach aborts the publish without
+    // writing to agent_job_outputs or inbox_items.
+    // Agents that produce reports (no external publish) return null and skip.
+    const deliverableKind = resolveDeliverableKind(input.agentType);
+    if (deliverableKind !== null) {
+      await consumeDeliverable({ customerId: input.userId, kind: deliverableKind, count: 1 });
+    }
+
     // ---- Persist + finalize ----------------------------------------------
     await persistCosts(input.jobId, input.userId, state.costEntries);
     await persistOutput(output, summary, business.businessId, input.userId);
@@ -272,6 +313,14 @@ export async function runAgentPipeline(input: AgentJobInput): Promise<AgentJobOu
     await persistCosts(input.jobId, input.userId, state.costEntries).catch(() => undefined);
 
     const message = err instanceof Error ? err.message : 'unknown pipeline error';
+
+    // Deliverable cap breach — mark job failed with the customer-facing message.
+    // The customer message from OverTierCapError is already formatted without agent names.
+    if (err instanceof OverTierCapError) {
+      await markJobFailed(input.jobId, err.customerMessage).catch(() => undefined);
+      throw err;
+    }
+
     if (err instanceof QAFailedError) {
       // The QA-fail status was already written; only set the error message.
       await getAdminClient()

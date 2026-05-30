@@ -1554,6 +1554,15 @@ export type Database = {
         }
         Returns: string
       }
+      consume_deliverable: {
+        Args: {
+          p_customer_id: string
+          p_month_anchor: string
+          p_kind: string
+          p_cap: number
+        }
+        Returns: number | null
+      }
       cleanup_page_locks: { Args: never; Returns: number }
       cleanup_topic_ledger: { Args: never; Returns: number }
       confirm_credits: { Args: { p_job_id: string }; Returns: undefined }
