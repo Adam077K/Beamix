@@ -1,5 +1,9 @@
+import { Suspense } from 'react'
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
 import { VisibilityScorePanel } from '@/components/dashboard/VisibilityScorePanel'
 import { WeeklyNarrative } from '@/components/dashboard/WeeklyNarrative'
+import { FoundingCohortPanel } from './_components/FoundingCohortPanel'
 import type { DashboardOutcomes, VisibilityScore } from '@/types/outcomes'
 
 // ---------------------------------------------------------------------------
@@ -16,6 +20,30 @@ const EMPTY_OUTCOMES: DashboardOutcomes = {
   visibilityScores: EMPTY_SCORES,
   weeklyNarrative: { type: 'empty' },
   approvalCount: 0,
+}
+
+// ---------------------------------------------------------------------------
+// FoundingCohortPanelSkeleton — loading fallback for Suspense boundary
+// ---------------------------------------------------------------------------
+
+function FoundingCohortPanelSkeleton() {
+  return (
+    <section aria-labelledby="founding-cohort-heading-skeleton" aria-busy="true">
+      <div className="text-xs font-semibold uppercase tracking-widest text-[#9CA3AF] mb-3 h-3 w-32 bg-[#F3F4F6] rounded animate-pulse" />
+      <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1.5 flex-1">
+            <div className="h-4 w-48 bg-[#F3F4F6] rounded animate-pulse" />
+          </div>
+          <div className="h-4 w-10 bg-[#F3F4F6] rounded animate-pulse shrink-0" />
+        </div>
+        <div className="space-y-1.5">
+          <div className="h-1.5 w-full bg-[#F3F4F6] rounded-full animate-pulse" />
+          <div className="h-3 w-20 bg-[#F3F4F6] rounded animate-pulse" />
+        </div>
+      </div>
+    </section>
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -61,6 +89,27 @@ function ApprovalCounter({ count }: { count: number }) {
 // ---------------------------------------------------------------------------
 
 export default async function DashboardPage() {
+  // Fetch the authenticated user's ID for founding cohort check.
+  // Middleware already verified auth; this is a lightweight re-read for userId only.
+  const cookieStore = await cookies()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll() {
+          // Read-only context — no cookie writes needed here
+        },
+      },
+    },
+  )
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   // Wave 2: replace with `await fetchDashboardOutcomes(userId)`
   const outcomes: DashboardOutcomes = EMPTY_OUTCOMES
 
@@ -75,6 +124,11 @@ export default async function DashboardPage() {
           Your AI search visibility, results, and items pending review.
         </p>
       </header>
+
+      {/* Founding-100 cohort counter — above main content */}
+      <Suspense fallback={<FoundingCohortPanelSkeleton />}>
+        <FoundingCohortPanel userId={user?.id} />
+      </Suspense>
 
       {/* 2-col grid: Narrative (left, wider) + Approvals (right, narrower) */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
