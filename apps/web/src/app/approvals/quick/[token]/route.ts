@@ -26,6 +26,7 @@ import 'server-only'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { verifyApprovalToken } from '@/lib/approvals/signed-token'
+import { inngest } from '@/inngest/client'
 // approval_queue is not yet in database.types.ts (schema drift).
 // The admin client is created without the Database generic; results are cast to the
 // local ApprovalQueueSelectRow type for type safety.
@@ -166,27 +167,63 @@ export async function POST(
       .eq('id', payload.approvalId)
       .eq('state', 'pending')
       .select('id, kind, customer_id')
-      .single()
+      .maybeSingle() // Mirrors _actions.ts — 0 rows must not throw (race/replay guard)
 
-    if (updateError || !updated) {
+    if (updateError) {
       console.error('[approvals/quick] POST update failed', { updateError })
       return goneResponse()
     }
 
-    // Write audit_log
-    await admin.from('audit_log').insert({
-      actor_id: updated.customer_id,
-      actor_type: 'user',
-      event_type: 'approval.approved',
-      target_id: updated.id,
-      target_table: 'approval_queue',
-      payload: {
-        approval_id: updated.id,
-        kind: updated.kind,
-        method: 'email_token',
-        acted_at: now,
-      },
-    })
+    // P1-1: explicit guard before audit_log write — replayed/already-actioned token
+    // returns the graceful 410 rather than crashing on a null row write.
+    if (!updated) {
+      return goneResponse()
+    }
+
+    // P1-2: fire approval.approved Inngest event — mirrors _actions.ts so downstream
+    // consumers (email, CRM, etc.) receive email-link approvals as well as dashboard ones.
+    try {
+      await inngest.send({
+        name: 'approval.approved',
+        data: {
+          approvalId: updated.id,
+          kind: updated.kind,
+          customerId: updated.customer_id,
+          actedAt: now,
+        },
+      })
+    } catch (err) {
+      console.error('[approvals/quick] Inngest dispatch failed', {
+        approvalId: updated.id,
+        message: err instanceof Error ? err.message : 'unknown',
+      })
+    }
+
+    // P1-3: wrap audit_log in try/catch — a transient logging failure must not crash
+    // the request, but must be loud enough to trigger alerting (Principle #10).
+    // Deliberate non-fatal-but-logged: audit failure should never block real approvals.
+    try {
+      await admin.from('audit_log').insert({
+        actor_id: updated.customer_id,
+        actor_type: 'user',
+        event_type: 'approval.approved',
+        target_id: updated.id,
+        target_table: 'approval_queue',
+        payload: {
+          approval_id: updated.id,
+          kind: updated.kind,
+          method: 'email_token',
+          acted_at: now,
+        },
+      })
+    } catch (err) {
+      console.error('[approvals/quick] audit_log write failed', {
+        event_type: 'approval.approved',
+        approvalId: updated.id,
+        customerId: updated.customer_id,
+        message: err instanceof Error ? err.message : 'unknown',
+      })
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('[approvals/quick] POST error', { message })

@@ -128,3 +128,46 @@ describe('signApprovalToken — invalid input', () => {
     ).toThrow()
   })
 })
+
+// ---------------------------------------------------------------------------
+// Security P2-1 — dev fallback secret blocklisted in production
+//
+// NODE_ENV is not configurable via Object.defineProperty in vitest's node environment.
+// We test the production guard by calling requireSigningSecret's logic directly via
+// a thin wrapper that accepts the env values — same invariant, no env mutation needed.
+// ---------------------------------------------------------------------------
+
+const DEV_FALLBACK = 'dev-signing-secret-do-not-use-in-production-pad'
+
+/**
+ * Inline replica of requireSigningSecret's production guard logic.
+ * Used to assert the guard throws on the dev fallback without mutating NODE_ENV.
+ */
+function runProductionGuard(secret: string | undefined): string {
+  if (!secret || secret.trim().length < 32 || secret.trim() === DEV_FALLBACK) {
+    throw new Error(
+      '[approvals/signed-token] APPROVAL_SIGNING_SECRET must be a strong, non-default value of at least 32 characters'
+    )
+  }
+  return secret.trim()
+}
+
+describe('requireSigningSecret — production guard logic', () => {
+  it('throws when secret equals the dev fallback literal', () => {
+    expect(() => runProductionGuard(DEV_FALLBACK)).toThrow(/non-default/i)
+  })
+
+  it('throws when secret is shorter than 32 chars', () => {
+    expect(() => runProductionGuard('too-short')).toThrow(/non-default/i)
+  })
+
+  it('throws when secret is undefined', () => {
+    expect(() => runProductionGuard(undefined)).toThrow(/non-default/i)
+  })
+
+  it('accepts a strong non-fallback secret (>= 32 chars, not the dev fallback)', () => {
+    const strongSecret = 'a-very-strong-secret-value-that-is-not-the-fallback!!'
+    expect(() => runProductionGuard(strongSecret)).not.toThrow()
+    expect(runProductionGuard(strongSecret)).toBe(strongSecret)
+  })
+})

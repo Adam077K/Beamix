@@ -214,12 +214,14 @@ async function performStateTransition(
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
+    // Deliberate non-fatal-but-logged choice (Principle #10): audit log failure must never
+    // block a real approval, but the structured payload must be alertable in production.
     console.error('[approvals/_actions] audit_log write failed', {
+      event_type: `approval.${newState}`,
       approvalId: updated.id,
-      newState,
+      customerId: updated.customer_id,
       message,
     })
-    // Do NOT fail the action — audit log failure is logged but non-fatal at this layer
   }
 
   return { ok: true }

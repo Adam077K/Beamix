@@ -19,16 +19,24 @@ import { z } from 'zod'
 // Environment
 // ---------------------------------------------------------------------------
 
+// Named const so the production blocklist check and the dev fallback use the exact same string.
+const DEV_FALLBACK = 'dev-signing-secret-do-not-use-in-production-pad'
+
 function requireSigningSecret(): string {
   const secret = process.env.APPROVAL_SIGNING_SECRET
-  if (!secret || secret.trim().length < 32) {
-    if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production') {
+    // Block short secrets AND the literal dev fallback — prevents accidental prod misconfiguration
+    // where APPROVAL_SIGNING_SECRET is set to the publicly-known dev string.
+    if (!secret || secret.trim().length < 32 || secret.trim() === DEV_FALLBACK) {
       throw new Error(
-        '[approvals/signed-token] APPROVAL_SIGNING_SECRET must be at least 32 characters'
+        '[approvals/signed-token] APPROVAL_SIGNING_SECRET must be a strong, non-default value of at least 32 characters'
       )
     }
-    // Dev fallback — never reaches production due to guard above
-    return 'dev-signing-secret-do-not-use-in-production-pad'
+    return secret.trim()
+  }
+  // Non-prod: fall back to dev secret if env var is absent or too short
+  if (!secret || secret.trim().length < 32) {
+    return DEV_FALLBACK
   }
   return secret.trim()
 }
