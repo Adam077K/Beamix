@@ -3,23 +3,25 @@
  *
  * Test matrix:
  *   1. Gated agent + persisted artifact + valid customerId → gatedPublish non-null
- *      → step.sendEvent called ONCE with a payload matching GatedPublishRequestedData.
- *   2. Non-gated agent → gatedPublish null → no step.sendEvent for gated_publish.requested.
- *   3. Gated agent + empty customerId → no emit (skip is logged).
- *   4. EXACTLY-ONCE guarantee: simulating a retry (step.run replays serialised value)
- *      → step.sendEvent is called only once total across the two invocations.
+ *      → step.sendEvent called ONCE with payload matching GatedPublishRequestedData.
+ *      Asserts customerId = userId (schema-grounded: approval_queue.customer_id
+ *      REFERENCES user_profiles(id) = auth.users.id = input.userId).
+ *   2. Non-gated agent → gatedPublish null → no emit.
+ *   3. Business with no linked customer (empty userId) → runner returns gatedPublish=null
+ *      → no emit (skip is audited in runner.ts via console.warn).
+ *   4. EXACTLY-ONCE: simulating Inngest retry (step.run replays cached result without
+ *      re-invoking the pipeline callback) → step.sendEvent uses the SAME stable step ID
+ *      'emit-gated-publish' on both invocations → Inngest platform deduplicates.
+ *      pipeline callback is called exactly ONCE across both handler invocations.
+ *   5. Function return value does not leak gatedPublish to the caller.
  *
- * Architecture note:
- *   `step.sendEvent` is Inngest's memoised event sender — it is called OUTSIDE
- *   `step.run` so retries replay from the Inngest event log rather than re-sending.
- *   Test 4 validates this by running the handler twice with a replayed step.run
- *   result (simulating Inngest's retry behaviour) and asserting step.sendEvent is
- *   called only once per logical run (the second call is blocked because step.run
- *   returns the cached value without re-running, meaning the surrounding handler
- *   logic does re-execute — but the step.sendEvent mock is isolated per run).
- *
- * We validate the step.sendEvent call count and payload shape (not the full DB
- * side-effects — those are tested in pipeline/runner.test.ts).
+ * customerId identity (schema-grounded):
+ *   approval_queue.customer_id REFERENCES user_profiles(id) ON DELETE CASCADE
+ *   user_profiles.id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE
+ *   Therefore: approval_queue.customer_id = user_profiles.id = auth.users.id = input.userId.
+ *   Source: migrations 20260525000001_agency_tables.sql (line 124) +
+ *           20260520100003_core_tables.sql (line 26).
+ *   There is no separate `customers` table. user_profiles IS the customer identity table.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -76,10 +78,14 @@ await import('./agent-execute');
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
+
+/** userId = auth.users.id = user_profiles.id = approval_queue.customer_id */
+const USER_ID = 'user-001';
+
 const GATED_EVENT_DATA = {
   jobId: 'job-001',
   agentType: 'authority_blog_strategist', // requiresApproval: true
-  userId: 'user-001',
+  userId: USER_ID,
   businessId: 'biz-001',
   planTier: 'build',
   targetUrl: 'https://example.com/blog',
@@ -88,12 +94,16 @@ const GATED_EVENT_DATA = {
 const NON_GATED_EVENT_DATA = {
   jobId: 'job-002',
   agentType: 'schema_generator', // requiresApproval: false
-  userId: 'user-001',
+  userId: USER_ID,
   businessId: 'biz-001',
   planTier: 'discover',
 };
 
-/** AgentPipelineResult for a gated agent — gatedPublish is non-null. */
+/**
+ * AgentPipelineResult for a gated agent with a valid customerId.
+ * gatedPublish.customerId = userId — the runner sets this from input.userId,
+ * which equals auth.users.id = user_profiles.id = approval_queue.customer_id FK target.
+ */
 const GATED_PIPELINE_RESULT = {
   output: {
     jobId: 'job-001',
@@ -116,7 +126,9 @@ const GATED_PIPELINE_RESULT = {
     durationMs: 12000,
   },
   gatedPublish: {
-    customerId: 'user-001',
+    // Runner sets customerId = input.userId.
+    // Schema proof: approval_queue.customer_id → user_profiles.id → auth.users.id.
+    customerId: USER_ID,
     artifactType: 'blog_post' as const,
     artifactId: 'job-001',
     artifactPreview: 'Blog post content here…',
@@ -126,7 +138,7 @@ const GATED_PIPELINE_RESULT = {
   },
 };
 
-/** AgentPipelineResult for a non-gated agent — gatedPublish is null. */
+/** AgentPipelineResult for a non-gated agent — gatedPublish is always null. */
 const NON_GATED_PIPELINE_RESULT = {
   output: {
     jobId: 'job-002',
@@ -160,9 +172,9 @@ const NON_GATED_PIPELINE_RESULT = {
  * `sendEvent` is a spy.
  *
  * @param replayResult - When provided, `run` returns this value without executing
- *   the callback. This simulates Inngest's replay behaviour on retry — the step
- *   was already recorded, so the callback is not re-invoked; only the surrounding
- *   handler code re-runs.
+ *   the callback. This simulates Inngest's replay on retry: the step result was
+ *   already recorded in the event log, so the callback is not re-invoked.
+ *   Only the surrounding handler code re-runs.
  */
 function buildStep(replayResult?: unknown) {
   const sendEvent = vi.fn().mockResolvedValue(undefined);
@@ -185,13 +197,14 @@ describe('agent-execute Inngest function — gated_publish.requested producer', 
     vi.clearAllMocks();
   });
 
-  it('1. gated agent + valid customerId → step.sendEvent called once with gated_publish.requested', async () => {
+  it('1. gated agent + valid customerId → step.sendEvent called once; customerId equals userId (schema-grounded)', async () => {
+    // Schema: approval_queue.customer_id REFERENCES user_profiles(id) = auth.users.id = userId.
+    // The runner sets gatedPublish.customerId = input.userId — this IS the correct FK target.
     mockRunAgentPipeline.mockResolvedValue(GATED_PIPELINE_RESULT);
 
     const step = buildStep();
     await capturedHandler!({ event: { data: GATED_EVENT_DATA }, step });
 
-    // step.sendEvent must be called exactly once for gated_publish.requested
     const gatedCalls = (step.sendEvent.mock.calls as StepSendEventArgs[]).filter(
       ([_id, evt]) => evt.name === 'gated_publish.requested',
     );
@@ -201,9 +214,15 @@ describe('agent-execute Inngest function — gated_publish.requested producer', 
     expect(sendId).toBe('emit-gated-publish');
     expect(sentEvent.name).toBe('gated_publish.requested');
 
-    // Payload must match GatedPublishRequestedData shape
     const payload = sentEvent.data as Record<string, unknown>;
-    expect(payload['customerId']).toBe('user-001');
+
+    // CRITICAL assertion: customerId must equal userId.
+    // Schema chain: approval_queue.customer_id → user_profiles.id → auth.users.id.
+    // There is no separate customers table; user_profiles IS the customer identity.
+    expect(payload['customerId']).toBe(USER_ID);
+    expect(payload['customerId']).toBe(GATED_EVENT_DATA.userId);
+
+    // Other payload fields
     expect(payload['artifactType']).toBe('blog_post');
     expect(payload['artifactId']).toBe('job-001');
     expect(typeof payload['artifactPreview']).toBe('string');
@@ -224,8 +243,14 @@ describe('agent-execute Inngest function — gated_publish.requested producer', 
     expect(gatedCalls).toHaveLength(0);
   });
 
-  it('3. gated agent + empty customerId → no emit', async () => {
-    // Simulate the pipeline returning null for gatedPublish (runner detected empty userId)
+  it('3. business with no linked customer (empty userId) → runner returns gatedPublish=null → no emit', async () => {
+    // In this schema there is no separate customers table.
+    // "No linked customer" means the job's userId is empty/missing — the runner's
+    // buildGatedPublishIntent guard catches this and returns gatedPublish=null,
+    // logging the skip via console.warn for ops visibility.
+    //
+    // We simulate the runner's null result here (the runner's own guard is tested
+    // separately; here we validate agent-execute correctly handles null gatedPublish).
     const resultWithNullGatedPublish = {
       ...GATED_PIPELINE_RESULT,
       gatedPublish: null,
@@ -239,33 +264,24 @@ describe('agent-execute Inngest function — gated_publish.requested producer', 
     const gatedCalls = (step.sendEvent.mock.calls as StepSendEventArgs[]).filter(
       ([_id, evt]) => evt.name === 'gated_publish.requested',
     );
+    // No emit — approval_queue requires a non-empty customer_id FK.
     expect(gatedCalls).toHaveLength(0);
   });
 
-  it('4. EXACTLY-ONCE: on retry, step.sendEvent is called once per handler invocation (not twice total)', async () => {
-    // This test proves the exactly-once mechanism:
+  it('4. EXACTLY-ONCE: on retry, pipeline callback runs once; step.sendEvent uses stable step ID', async () => {
+    // This test proves the exactly-once mechanism.
     //
-    // Inngest's `step.sendEvent` is memoised by step ID within a single function
-    // run. When agent-execute retries, Inngest replays already-completed steps
-    // from its event log (step.run returns the cached result without re-invoking
-    // the callback), and step.sendEvent is replayed as a no-op (already sent).
+    // Inngest's step.sendEvent is deduped by step ID within a function run.
+    // When agent-execute retries, Inngest replays completed steps from its event log
+    // (step.run returns the cached result without re-invoking the callback).
+    // The handler's outer code re-runs, and step.sendEvent is called again — but
+    // with the SAME stable step ID, so the Inngest platform deduplicates it.
     //
-    // In our test harness we simulate this by:
-    //   - First invocation: step.run executes the callback → pipeline result cached.
-    //   - Second invocation (retry): step.run replays the cached result without
-    //     calling the pipeline callback again → step.sendEvent is called once more
-    //     by the handler re-executing (because Inngest re-runs the full handler
-    //     on retry), BUT in a real Inngest environment step.sendEvent with the same
-    //     step ID is deduped by the Inngest platform.
-    //
-    // What this test validates (within our mock constraints):
-    //   - step.sendEvent is called with the SAME step ID ('emit-gated-publish')
-    //     on both the original run AND the replay, proving the ID is stable and
-    //     Inngest can deduplicate by it. The step ID MUST NOT change between runs.
-    //   - The pipeline callback (mockRunAgentPipeline) is only called ONCE —
-    //     on the replay run, step.run returns the cached result without invoking
-    //     the callback. This is the key correctness property: the pipeline does
-    //     not double-execute.
+    // What this test validates:
+    //   - The pipeline callback (mockRunAgentPipeline) runs exactly ONCE across
+    //     both handler invocations (the retry replays from cache, not re-executes).
+    //   - step.sendEvent is called with the SAME stable step ID 'emit-gated-publish'
+    //     on both the original run and the retry → Inngest can deduplicate by ID.
 
     mockRunAgentPipeline.mockResolvedValue(GATED_PIPELINE_RESULT);
 
@@ -275,7 +291,7 @@ describe('agent-execute Inngest function — gated_publish.requested producer', 
 
     // Pipeline was called once on the first run
     expect(mockRunAgentPipeline).toHaveBeenCalledTimes(1);
-    // step.sendEvent was called once on the first run
+
     const gatedCallsFirst = (stepFirst.sendEvent.mock.calls as StepSendEventArgs[]).filter(
       ([_id, evt]) => evt.name === 'gated_publish.requested',
     );
@@ -283,9 +299,8 @@ describe('agent-execute Inngest function — gated_publish.requested producer', 
     const firstStepId = gatedCallsFirst[0]![0];
 
     // ── Second invocation (retry — step.run replays cached result) ────────────
-    // Simulate Inngest's replay: step.run returns the cached value from the first
-    // run without invoking the callback. This is the exact behaviour Inngest
-    // provides — the pipeline step result is replayed from the event log.
+    // Simulate Inngest replay: step.run returns the cached value without invoking
+    // the callback. The pipeline step result is replayed from the event log.
     const cachedPipelineReturn = {
       jobId: 'job-001',
       status: 'succeeded' as const,
@@ -296,23 +311,25 @@ describe('agent-execute Inngest function — gated_publish.requested producer', 
     const stepRetry = buildStep(cachedPipelineReturn);
     await capturedHandler!({ event: { data: GATED_EVENT_DATA }, step: stepRetry });
 
-    // Pipeline MUST NOT be called again on the retry (replayed from step cache)
+    // Pipeline MUST NOT be called again (replayed from step cache)
     expect(mockRunAgentPipeline).toHaveBeenCalledTimes(1);
 
-    // step.sendEvent IS called again by the retry (the handler re-runs), BUT
-    // the step ID must be the SAME stable ID so Inngest can deduplicate it.
     const gatedCallsRetry = (stepRetry.sendEvent.mock.calls as StepSendEventArgs[]).filter(
       ([_id, evt]) => evt.name === 'gated_publish.requested',
     );
     expect(gatedCallsRetry).toHaveLength(1);
     const retryStepId = gatedCallsRetry[0]![0];
 
-    // CRITICAL: same step ID across runs → Inngest platform deduplicates.
+    // CRITICAL: same step ID → Inngest platform deduplicates the send.
     expect(retryStepId).toBe(firstStepId);
     expect(retryStepId).toBe('emit-gated-publish');
+
+    // Payload is stable across runs (same gatedPublish from cache)
+    const retryPayload = (gatedCallsRetry[0] as StepSendEventArgs)[1].data as Record<string, unknown>;
+    expect(retryPayload['customerId']).toBe(USER_ID);
   });
 
-  it('5. function result does not include gatedPublish (internal only)', async () => {
+  it('5. function return value does not expose gatedPublish to the caller', async () => {
     mockRunAgentPipeline.mockResolvedValue(GATED_PIPELINE_RESULT);
 
     const step = buildStep();
@@ -321,8 +338,8 @@ describe('agent-execute Inngest function — gated_publish.requested producer', 
       unknown
     >;
 
-    // The returned value must only contain the summary fields, not the internal
-    // gatedPublish payload (which has already been sent via step.sendEvent).
+    // The returned value must only contain summary fields — gatedPublish has already
+    // been sent via step.sendEvent and must not leak to the caller.
     expect(result['jobId']).toBe('job-001');
     expect(result['status']).toBe('succeeded');
     expect(result['totalCostUsd']).toBeDefined();

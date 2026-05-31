@@ -180,9 +180,15 @@ export interface AgentPipelineResult {
   /**
    * Non-null only when ALL of:
    *   1. The agent's `requiresApproval` flag is true (from registry).
-   *   2. An artifact was actually produced and persisted to `agent_job_outputs`.
-   *   3. A non-empty `customerId` was available for the job.
+   *   2. An artifact was actually produced and persisted to `agent_job_outputs`
+   *      (gatedPublish is set AFTER persistOutput in the success path — any persist
+   *      failure throws and the catch block re-throws without setting gatedPublish).
+   *   3. A non-empty `customerId` (= `input.userId` = `auth.users.id`) was available.
    * Otherwise null — no `gated_publish.requested` event should be emitted.
+   *
+   * Stability guarantee: runAgentPipeline is called inside `step.run` in agent-execute.
+   * Inngest memoises the step's serialised return value (including gatedPublish) across
+   * retries — the pipeline does not re-execute, and gatedPublish is stable per run.
    */
   gatedPublish: GatedPublishRequestedEvent | null;
 }
@@ -382,6 +388,13 @@ function qaIssuesSummary(err: QAFailedError): string {
  *
  * Logging: skips are recorded via `console.warn` with a structured payload so
  * ops can investigate unexpected nulls (e.g. misconfigured agent or missing userId).
+ *
+ * customerId identity proof (schema-grounded):
+ *   `approval_queue.customer_id REFERENCES user_profiles(id)` — migration 20260525000001.
+ *   `user_profiles.id uuid PRIMARY KEY REFERENCES auth.users(id)` — migration 20260520100003.
+ *   Therefore approval_queue.customer_id = user_profiles.id = auth.users.id = input.userId.
+ *   There is no separate `customers` table; user_profiles IS the customer identity table.
+ *   brand_fingerprints also keys on `customer_id REFERENCES user_profiles(id)`.
  */
 function buildGatedPublishIntent(
   input: AgentJobInput,
@@ -392,8 +405,9 @@ function buildGatedPublishIntent(
     return null;
   }
 
-  // Guard: non-empty customerId required. The customerId IS the userId in Beamix's
-  // SaaS model — every job is attributed to a user/customer.
+  // customerId = input.userId — both reference auth.users(id) via user_profiles(id).
+  // Schema chain: approval_queue.customer_id → user_profiles.id → auth.users.id.
+  // See migration 20260525000001_agency_tables.sql line 14 + line 124.
   const customerId = input.userId;
   if (!customerId) {
     console.warn(
