@@ -4,25 +4,29 @@
  * Ignition route for the Beamix agent pipeline. Authenticated users can trigger
  * an agent run for a business they own. The route:
  *   1. Verifies the caller is authenticated (Supabase SSR getUser).
- *   2. Zod-validates the request body.
- *   3. IDOR guard — confirms the businessId belongs to the session user.
- *   4. Resolves the user's plan tier from subscriptions → plans join.
+ *   2. Zod-validates the request body (includes SSRF guard on targetUrl).
+ *   3. IDOR guard — confirms the businessId belongs to the session user
+ *      (query via USER-scoped client; admin client only for writes).
+ *   4. Resolves the user's plan tier from subscriptions → plans join (admin client
+ *      because subscriptions RLS may block the user-scoped client on join).
  *   5. Checks agent availability on the resolved tier.
  *   6. Checks the daily cap for free agents (throws 429 if exceeded).
  *   7. INSERTs an `agent_jobs` row via the service-role admin client.
  *   8. Fires `agent/run.requested` via Inngest to ignite the existing pipeline.
+ *      On Inngest failure → marks the job 'failed' and returns 502.
  *   9. Returns 202 { jobId, status: 'queued' }.
  *
  * Risk tier: FULL (new API route + auth + service-role writes + Inngest emit).
  *
  * Returns:
  *   202  { jobId, status: 'queued' }
- *   400  Zod validation error
+ *   400  Zod validation error (includes SSRF-blocked targetUrl)
  *   401  No authenticated session
  *   403  Agent not available on the user's plan tier
  *   404  Business not found or not owned by session user
  *   429  Daily cap exceeded for free agent
- *   500  Internal error (DB insert, Inngest send)
+ *   500  Internal error (DB insert, env vars missing)
+ *   502  Inngest send failed (job inserted but not triggered; row marked 'failed')
  */
 
 import 'server-only';
@@ -58,12 +62,42 @@ const AGENT_TYPES = [
   'reddit_presence_planner',
 ] as const satisfies readonly AgentType[];
 
+/**
+ * SSRF guard for targetUrl.
+ * Requires http(s) scheme and rejects private/internal hosts:
+ *   - file://, gopher://, ftp:// etc.
+ *   - localhost, *.local, *.internal
+ *   - RFC-1918 ranges: 10.x, 192.168.x, 172.16-31.x
+ *   - Link-local: 169.254.x
+ *   - Loopback: 127.x, 0.x, ::1
+ */
+function isPublicHttpUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    if (!['http:', 'https:'].includes(u.protocol)) return false;
+    const h = u.hostname.toLowerCase();
+    if (h === 'localhost' || h.endsWith('.local') || h.endsWith('.internal')) return false;
+    if (/^(10\.|127\.|0\.|169\.254\.|192\.168\.)/.test(h)) return false;
+    if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return false;
+    if (h === '::1' || h === '[::1]') return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const AgentRunBodySchema = z.object({
   agentType: z.enum(AGENT_TYPES),
   businessId: z.string().uuid(),
-  targetUrl: z.string().url().optional(),
+  /** Public http(s) URLs only — internal/private hosts are rejected (SSRF guard). */
+  targetUrl: z
+    .string()
+    .url()
+    .refine(isPublicHttpUrl, { message: 'targetUrl must be a public http(s) URL' })
+    .optional(),
   targetContent: z.string().max(50_000).optional(),
-  queryCluster: z.array(z.string()).optional(),
+  /** DoS/cost guard: max 50 entries, each max 500 chars. */
+  queryCluster: z.array(z.string().min(1).max(500)).max(50).optional(),
   customInstructions: z.string().max(2_000).optional(),
   scanId: z.string().uuid().optional(),
 });
@@ -102,10 +136,14 @@ async function getUserClient() {
 // ---------------------------------------------------------------------------
 // Plan tier resolver
 //
-// Decision: resolve via subscriptions → plans join (not businesses.plan_tier —
-// businesses table has no plan_tier column). This is the canonical billing source.
-// Falls back to 'discover' (most restrictive product tier) when no active
-// subscription is found.
+// Uses the service-role admin client because the subscriptions → plans join
+// may be blocked by RLS on the user-scoped anon client. RLS allows users to
+// SELECT their own subscriptions, but the inner join to plans (a system table)
+// can fail in some policy configurations. Admin client is safe here because
+// the query is scoped with .eq('user_id', userId).
+//
+// Error handling: DB errors surface as 500 (thrown), NOT silently downgraded
+// to 'discover'. Only a genuinely missing row falls back to 'discover'.
 // ---------------------------------------------------------------------------
 
 async function resolveUserPlanTier(userId: string): Promise<PlanTier> {
@@ -119,13 +157,11 @@ async function resolveUserPlanTier(userId: string): Promise<PlanTier> {
     .maybeSingle();
 
   if (error) {
-    console.error('[agents/run] failed to resolve plan tier', {
-      userId,
-      error: error.message,
-    });
-    return 'discover';
+    // Throw so the caller's 500 path fires — do NOT silently downgrade a paying user.
+    throw new Error(`[agents/run] failed to resolve plan tier for user ${userId}: ${error.message}`);
   }
 
+  // No active subscription → most-restrictive tier (free-tier equivalent)
   if (!data) return 'discover';
 
   const plansJoin = data.plans as unknown as { tier: string } | null;
@@ -141,6 +177,16 @@ async function resolveUserPlanTier(userId: string): Promise<PlanTier> {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Guard: getAdminClient() throws synchronously on missing env vars — catch it
+  // so we return a structured 500 instead of an unhandled Next error.
+  let admin: ReturnType<typeof getAdminClient>;
+  try {
+    admin = getAdminClient();
+  } catch (err) {
+    console.error('[agents/run] getAdminClient threw — missing env vars', { error: String(err) });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+
   // 1. Authenticate via cookie-based Supabase SSR client
   const userClient = await getUserClient();
   const {
@@ -180,10 +226,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     scanId,
   }: AgentRunBody = parsed.data;
 
-  // 3. IDOR guard — confirm businessId belongs to the session user
-  const admin = getAdminClient();
-
-  const { data: business, error: businessError } = await admin
+  // 3. IDOR guard — confirm businessId belongs to the session user.
+  //    This is a READ operation on the user's own data; the user-scoped client
+  //    is the correct choice (RLS defense-in-depth: policy ensures user_id = auth.uid()).
+  //    We keep the explicit .eq('user_id', userId) as belt-and-suspenders.
+  const { data: business, error: businessError } = await userClient
     .from('businesses')
     .select('id')
     .eq('id', businessId)
@@ -204,8 +251,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Business not found' }, { status: 404 });
   }
 
-  // 4. Resolve plan tier
-  const planTier = await resolveUserPlanTier(userId);
+  // 4. Resolve plan tier (throws on DB error → 500 via the catch below)
+  let planTier: PlanTier;
+  try {
+    planTier = await resolveUserPlanTier(userId);
+  } catch (err) {
+    console.error('[agents/run] plan tier resolution failed', {
+      userId,
+      error: String(err),
+    });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 
   // 5. Check agent availability on the user's tier
   if (!isAgentAvailable(agentType, planTier)) {
@@ -243,10 +299,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 
-  // 7. INSERT agent_jobs row via service-role admin client
-  //    Columns: id, user_id, business_id, agent_type, plan_tier, credit_cost,
-  //             status (default 'queued'), scan_id?, target_url?, target_content?,
-  //             custom_instructions?
+  // 7. INSERT agent_jobs row via service-role admin client.
+  //    NOTE: queryCluster is event-only; agent_jobs has no query_cluster column.
+  //    DB-recovery (if ever built) must re-drive from the Inngest event payload.
   const agentConfig = getAgentConfig(agentType);
 
   const { error: insertError } = await admin.from('agent_jobs').insert({
@@ -273,7 +328,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Failed to queue agent job' }, { status: 500 });
   }
 
-  // 8. Emit Inngest event — ignites the existing agent-execute pipeline
+  // 8. Emit Inngest event — ignites the existing agent-execute pipeline.
+  //    On failure: update the job row to 'failed' (so the user is never left with
+  //    a permanently-stuck 'queued' row) and return 502. There is no background
+  //    recovery mechanism; the client must retry the full request.
   try {
     await inngest.send({
       name: 'agent/run.requested',
@@ -291,13 +349,33 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       },
     });
   } catch (err) {
-    // Inngest send failure is non-fatal — the agent_jobs row is persisted with
-    // status 'queued'. A recovery mechanism can re-emit queued jobs. Log prominently.
-    console.error('[agents/run] Inngest send failed — job queued but not triggered', {
+    console.error('[agents/run] Inngest send failed — marking job failed', {
       jobId,
       agentType,
       error: String(err),
     });
+
+    // Best-effort update — if this also fails, the row stays 'queued' but we still
+    // return 502 (the Inngest failure is authoritative for the response).
+    const { error: updateError } = await admin
+      .from('agent_jobs')
+      .update({
+        status: 'failed',
+        error_message: `Inngest dispatch failed: ${String(err)}`,
+      })
+      .eq('id', jobId);
+
+    if (updateError) {
+      console.error('[agents/run] agent_jobs status update to failed also failed', {
+        jobId,
+        error: updateError.message,
+      });
+    }
+
+    return NextResponse.json(
+      { error: 'Failed to dispatch agent job. Please try again.' },
+      { status: 502 },
+    );
   }
 
   // 9. Return 202 with the new jobId
