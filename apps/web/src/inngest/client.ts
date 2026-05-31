@@ -112,7 +112,7 @@ export type BeamixEvents = {
   'approval.approved': { data: ApprovalApprovedData };
   'approval.rejected': { data: ApprovalRejectedData };
   'gated_publish.requested': { data: GatedPublishRequestedData };
-  // Reserved; no consumer yet (emitted by approval-gate-writer + customer-success). Future cost-alert handler will consume.
+  // Reserved; emitted by approval-gate-writer + customer-success (Worker C). Worker C must NOT re-register this event.
   'cost.alert': { data: { customerId: string; feature: string; costUsd: number } };
 };
 
