@@ -20,6 +20,11 @@
  *   - resetDeliverablesMonthlyCron — cron: 1st of month, reset deliverable counters (W2.1)
  *   - sendApprovalPendingEmail    — approval.created (W2 approvals API)
  *   - approvalGateWriter          — gated_publish.requested (Phase B wiring)
+ *
+ * Phase C additions (customer-success wiring):
+ *   - customerSuccessWeekly              — cron: Sunday 14:00 UTC (proactive nudge)
+ *   - customerSuccessOnApprovalRejected  — approval.rejected event
+ *   - customerSuccessOnOverCap           — deliverables.over_cap event
  */
 
 import { serve } from 'inngest/next';
@@ -32,6 +37,9 @@ import { revenueBookingSweep } from '../../../inngest/functions/revenue-booking-
 import { resetDeliverablesMonthlyCron } from '../../../inngest/functions/reset-deliverables-monthly';
 import { sendApprovalPendingEmail } from '../../../inngest/functions/send-approval-pending-email';
 import { approvalGateWriter } from '../../../inngest/functions/approval-gate-writer';
+import { customerSuccessWeekly } from '../../../inngest/functions/customer-success-weekly';
+import { customerSuccessOnApprovalRejected } from '../../../inngest/functions/customer-success-on-approval-rejected';
+import { customerSuccessOnOverCap } from '../../../inngest/functions/customer-success-on-over-cap';
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -44,5 +52,9 @@ export const { GET, POST, PUT } = serve({
     resetDeliverablesMonthlyCron,
     sendApprovalPendingEmail,
     approvalGateWriter,
+    // Phase C — customer-success wiring
+    customerSuccessWeekly,
+    customerSuccessOnApprovalRejected,
+    customerSuccessOnOverCap,
   ],
 });

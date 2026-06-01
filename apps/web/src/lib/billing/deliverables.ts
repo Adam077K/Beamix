@@ -28,6 +28,7 @@ import 'server-only';
 import { z } from 'zod';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getAdminClient } from '../agents/db/admin-client';
+import { inngest } from '../../inngest/client';
 import {
   TIER_CAPS,
   TIER_DISPLAY_NAME,
@@ -424,6 +425,27 @@ export async function consumeDeliverable(rawInput: ConsumeDeliverableInput): Pro
         capValue,
         usedCount,
       });
+
+      // Fire-and-forget nudge event. At-least-once is fine (a nudge, not a ledger write).
+      // Cap enforcement NEVER depends on this emit — the throw below is unconditional.
+      inngest
+        .send({
+          name: 'deliverables.over_cap',
+          data: {
+            customerId,
+            kind,
+            currentCount: usedCount,
+            cap: capValue,
+            occurredAt: new Date().toISOString(),
+          },
+        })
+        .catch((e: unknown) => {
+          console.error('[deliverables] over_cap emit failed', {
+            customerId,
+            kind,
+            error: e instanceof Error ? e.message : String(e),
+          });
+        });
 
       throw new OverTierCapError({
         kind,

@@ -102,6 +102,25 @@ export interface GatedPublishRequestedData {
   scheduledFor?: string;
 }
 
+/**
+ * Payload for `deliverables.over_cap` — fired fire-and-forget by consumeDeliverable when
+ * OverTierCapError is thrown. Consumed by customer-success-on-over-cap Inngest function to
+ * send a proactive nudge email. The emit is best-effort (no await); cap enforcement never
+ * depends on this event — it is a nudge signal, not a ledger write.
+ */
+export interface DeliverablesOverCapData {
+  /** user_profiles.id of the affected customer. */
+  customerId: string;
+  /** Which deliverable kind hit the cap (matches DeliverableKind in tier-caps). */
+  kind: string;
+  /** The count that was in use at the time of the breach. */
+  currentCount: number;
+  /** The monthly cap value for this tier + kind. */
+  cap: number;
+  /** ISO timestamp of when the breach was detected. */
+  occurredAt: string;
+}
+
 /** Typed event map for the Beamix Inngest client. */
 export type BeamixEvents = {
   'agent/run.requested': { data: AgentRunRequestedData };
@@ -112,6 +131,7 @@ export type BeamixEvents = {
   'approval.approved': { data: ApprovalApprovedData };
   'approval.rejected': { data: ApprovalRejectedData };
   'gated_publish.requested': { data: GatedPublishRequestedData };
+  'deliverables.over_cap': { data: DeliverablesOverCapData };
   // Reserved; emitted by approval-gate-writer + customer-success (Worker C). Worker C must NOT re-register this event.
   'cost.alert': { data: { customerId: string; feature: string; costUsd: number } };
 };
