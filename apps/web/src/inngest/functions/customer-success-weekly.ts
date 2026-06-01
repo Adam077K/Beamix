@@ -50,7 +50,6 @@ interface PendingCostAlert {
 // Raw (un-typed) client for tables not yet in database.types.ts
 // ---------------------------------------------------------------------------
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getRawAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -120,28 +119,52 @@ export const customerSuccessWeekly = inngest.createFunction(
 
         // Join businesses → user_profiles to get email + name.
         // A customer is "active" if they have a businesses row (they completed onboarding).
-        const { data, error } = await db
+        // Two separate queries — Supabase TypeScript types don't recognize the
+        // businesses → user_profiles join direction (user_profiles has no FK to businesses;
+        // businesses.user_id → user_profiles.id). Splitting into two typed queries avoids
+        // the SelectQueryError while keeping full type safety.
+        const { data: bizData, error: bizError } = await db
           .from('businesses')
-          .select('user_id, name, user_profiles!inner(id, email, full_name)')
+          .select('user_id, name')
           .limit(100); // pilot ceiling — promote to cursor-pagination at scale
 
-        if (error) {
+        if (bizError) {
           console.error('[customer-success-weekly] fetch-active-customers failed', {
-            error: error.message,
+            error: bizError.message,
           });
           return [];
         }
 
-        return ((data ?? []) as Array<{
-          user_id: string;
-          name: string;
-          user_profiles: { id: string; email: string; full_name: string | null };
-        }>).map((row) => ({
-          userId: row.user_id,
-          email: row.user_profiles.email,
-          firstName: row.user_profiles.full_name?.split(' ')[0]?.trim() ?? 'there',
-          businessName: row.name,
-        }));
+        if (!bizData || bizData.length === 0) return [];
+
+        // Collect unique user_ids, then fetch all matching user_profiles in one query.
+        const userIds = bizData.map((b) => b.user_id);
+        const { data: profileData, error: profileError } = await db
+          .from('user_profiles')
+          .select('id, email, full_name')
+          .in('id', userIds);
+
+        if (profileError) {
+          console.error('[customer-success-weekly] user_profiles fetch failed', {
+            error: profileError.message,
+          });
+          return [];
+        }
+
+        const profileMap = new Map(
+          (profileData ?? []).map((p) => [p.id, p]),
+        );
+
+        return bizData.flatMap((biz) => {
+          const profile = profileMap.get(biz.user_id);
+          if (!profile) return []; // skip if no matching profile (data inconsistency)
+          return [{
+            userId: biz.user_id,
+            email: profile.email,
+            firstName: profile.full_name?.split(' ')[0]?.trim() ?? 'there',
+            businessName: biz.name,
+          }];
+        });
       },
     );
 

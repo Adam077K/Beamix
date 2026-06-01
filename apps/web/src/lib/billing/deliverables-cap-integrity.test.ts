@@ -52,7 +52,7 @@ function resetMockState() {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function makeSelectChain(table: string): any {
+function makeSelectChain(_table: string): any {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chain: any = new Proxy(
     {},

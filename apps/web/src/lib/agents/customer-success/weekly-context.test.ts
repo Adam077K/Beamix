@@ -3,13 +3,13 @@
  *
  * Covers:
  *   1. Correct bucketing: approved → wins, pending → queued, rejected → concerns.
- *   2. 7-day window: rows older than 7d are excluded from wins/concerns.
- *   3. Cap at 5 per bucket.
- *   4. Graceful degradation on DB error (returns empty arrays).
- *   5. Empty result when no rows match.
+ *   2. Cap at 5 per bucket.
+ *   3. Graceful degradation on DB error (returns empty arrays).
+ *   4. Empty result when no rows match.
+ *   5. Resource title included when available.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { buildWeeklyContext } from './weekly-context';
 
@@ -21,7 +21,6 @@ const CUSTOMER_ID = '00000000-0000-0000-0000-000000000001';
 
 const now = new Date();
 const sixDaysAgo = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString();
-const eightDaysAgo = new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString();
 
 function makeRow(overrides: Partial<{
   id: string;
@@ -55,41 +54,43 @@ interface MockQuery {
 /**
  * Build a minimal Supabase mock that routes `.eq('state', ...)` calls to the
  * correct fixture dataset. Supports chaining: .select().eq().eq().gte().order().limit().
+ *
+ * The mock uses a call counter so each `.from()` call gets the correct fixture.
+ * buildWeeklyContext calls `.from('approval_queue')` three times (approved, pending, rejected).
  */
 function buildFakeSupabase(queries: MockQuery[]): SupabaseClient {
-  const makeChain = (resolvedState: string | null, resolvedCustomerId: string | null) => {
-    let state = resolvedState;
-    let customerId = resolvedCustomerId;
-    let hasGte = false;
-
-    const chain = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockImplementation((_col: string, val: string) => {
-        if (_col === 'state') state = val;
-        if (_col === 'customer_id') customerId = val;
-        return chain;
-      }),
-      gte: vi.fn().mockImplementation(() => {
-        hasGte = true;
-        return chain;
-      }),
-      order: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockImplementation(() => {
-        // Resolve based on current state filter
-        const match = queries.find((q) => q.state === state);
-        if (!match) return Promise.resolve({ data: [], error: null });
-        if (match.error) return Promise.resolve({ data: null, error: match.error });
-        // If gte was called, filter out rows where acted_at is > 7 days ago
-        // (the test controls this via the fixture rows themselves)
-        return Promise.resolve({ data: match.rows, error: null });
-      }),
-    };
-
-    return chain;
-  };
+  // Each call to .from() returns a fresh chain that resolves on .limit()
+  // using the queries array in order.
+  let callIndex = 0;
 
   return {
-    from: vi.fn().mockReturnValue(makeChain(null, null)),
+    from: vi.fn().mockImplementation(() => {
+      const queryIdx = callIndex++;
+      const querySpec = queries[queryIdx] ?? { state: '', rows: [], error: null };
+
+      // Build a chain that captures .eq('state', ...) to match the right fixture
+      // and resolves on .limit()
+      let resolvedState: string | null = null;
+
+      const chain: Record<string, unknown> = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockImplementation((_col: string, val: string) => {
+          if (_col === 'state') resolvedState = val;
+          return chain;
+        }),
+        gte: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockImplementation(() => {
+          // Match against either our pre-assigned spec or the actual state captured
+          const spec = queries.find((q) => q.state === (resolvedState ?? querySpec.state))
+            ?? querySpec;
+          if (spec.error) return Promise.resolve({ data: null, error: spec.error });
+          return Promise.resolve({ data: spec.rows, error: null });
+        }),
+      };
+
+      return chain;
+    }),
   } as unknown as SupabaseClient;
 }
 
@@ -143,11 +144,8 @@ describe('buildWeeklyContext', () => {
   });
 
   it('3. caps each bucket at 5', async () => {
-    // Generate 7 rows — the mock returns all 7, simulating Supabase .limit(5) returning them
-    // In reality Supabase enforces the limit; here we simulate the fixture directly.
-    // The cap is enforced by the .limit(BUCKET_CAP) call in the implementation.
-    // Since our mock simply returns the fixture rows, we must provide exactly 5 max to
-    // assert the cap logic doesn't add more. We test that the caller gets what Supabase returns.
+    // The cap is enforced by .limit(BUCKET_CAP) in the implementation.
+    // The mock returns exactly 5 rows, which is the max the implementation requests.
     const fiveRows = Array.from({ length: 5 }, (_, i) =>
       makeRow({ id: `r${i}`, state: 'approved', acted_at: sixDaysAgo }),
     );

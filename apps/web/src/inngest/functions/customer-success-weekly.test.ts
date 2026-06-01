@@ -13,27 +13,42 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ---------------------------------------------------------------------------
-// Mock server-only (Inngest functions use it)
+// Env vars must be set before any module that calls getRawAdminClient
+// ---------------------------------------------------------------------------
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
+process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
+
+// ---------------------------------------------------------------------------
+// Mock server-only
 // ---------------------------------------------------------------------------
 vi.mock('server-only', () => ({}));
 
 // ---------------------------------------------------------------------------
-// Mock @supabase/supabase-js
+// Mock @supabase/supabase-js — used by getRawAdminClient() for brand_fingerprints
+// Returns a chain that supports eq/maybeSingle (brand fingerprint path)
 // ---------------------------------------------------------------------------
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn().mockReturnValue({
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-      order: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: {
+          requires_human_approval: false,
+          brief_version_id: 'bv-001',
+          voice: { tone_descriptors: ['direct'] },
+        },
+        error: null,
+      }),
     }),
   }),
 }));
 
 // ---------------------------------------------------------------------------
-// Mock getAdminClient (used for the businesses query)
+// Mock getAdminClient — two sequential queries:
+//   1. businesses: .select('user_id, name').limit(100)
+//   2. user_profiles: .select('id, email, full_name').in('id', [...])
+// We use a call counter to return different data per call.
 // ---------------------------------------------------------------------------
 const mockGetAdminClient = vi.fn();
 vi.mock('../../lib/agents/db/admin-client', () => ({
@@ -104,18 +119,34 @@ function buildStep() {
   return { run, sendEvent };
 }
 
-function makeActiveCustomers() {
-  return [
-    {
-      user_id: 'user-001',
-      name: 'Acme Corp',
-      user_profiles: {
-        id: 'user-001',
-        email: 'owner@acme.com',
-        full_name: 'Alex Smith',
-      },
-    },
+/**
+ * Build a getAdminClient mock that handles the two-query pattern in fetch-active-customers:
+ *   call 1 — businesses: .select('user_id, name').limit(100)
+ *   call 2 — user_profiles: .select('id, email, full_name').in('id', [...])
+ * Both calls go through the same db.from() chain but differ in method calls.
+ */
+function buildAdminClientMock(
+  bizRows: Array<{ user_id: string; name: string }>,
+  profileRows: Array<{ id: string; email: string; full_name: string | null }>,
+) {
+  // We track which table was called last to dispatch the right mock data
+  let callIndex = 0;
+  const datasets = [
+    { data: bizRows, error: null },     // first call: businesses
+    { data: profileRows, error: null }, // second call: user_profiles
   ];
+
+  return {
+    from: vi.fn().mockImplementation(() => {
+      const idx = callIndex++;
+      const result = datasets[idx] ?? { data: [], error: null };
+      return {
+        select: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue(result),
+        in: vi.fn().mockResolvedValue(result),
+      };
+    }),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -125,18 +156,23 @@ function makeActiveCustomers() {
 describe('customer-success-weekly Inngest function', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRunCustomerSuccessNudge.mockResolvedValue({ kind: 'sent', messageId: 'msg-1', costUsd: 0.01, draft: {} });
+    mockRunCustomerSuccessNudge.mockResolvedValue({
+      kind: 'sent',
+      messageId: 'msg-1',
+      costUsd: 0.01,
+      draft: {},
+    });
     mockBuildWeeklyContext.mockResolvedValue({
       wins: ['content piece published'],
       queued: ['schema update pending'],
       concerns: [],
     });
-    mockGetAdminClient.mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue({ data: makeActiveCustomers(), error: null }),
-      }),
-    });
+    mockGetAdminClient.mockReturnValue(
+      buildAdminClientMock(
+        [{ user_id: 'user-001', name: 'Acme Corp' }],
+        [{ id: 'user-001', email: 'owner@acme.com', full_name: 'Alex Smith' }],
+      ),
+    );
   });
 
   it('1. fn id is customer-success-weekly', () => {
@@ -176,7 +212,10 @@ describe('customer-success-weekly Inngest function', () => {
     const result = await capturedHandler!({ step }) as { sent: number };
 
     expect(mockRunCustomerSuccessNudge).toHaveBeenCalledOnce();
-    const callArg = mockRunCustomerSuccessNudge.mock.calls[0][0] as { trigger: string; customerId: string };
+    const callArg = mockRunCustomerSuccessNudge.mock.calls[0][0] as {
+      trigger: string;
+      customerId: string;
+    };
     expect(callArg.trigger).toBe('cron_weekly');
     expect(callArg.customerId).toBe('user-001');
     expect(result.sent).toBe(1);
@@ -187,10 +226,20 @@ describe('customer-success-weekly Inngest function', () => {
     mockRunCustomerSuccessNudge.mockImplementation(
       async (
         _input: unknown,
-        deps: { emitCostAlert?: (p: { customerId: string; feature: string; costUsd: number }) => void },
+        deps: {
+          emitCostAlert?: (p: {
+            customerId: string;
+            feature: string;
+            costUsd: number;
+          }) => void;
+        },
       ) => {
         if (deps.emitCostAlert) {
-          deps.emitCostAlert({ customerId: 'user-001', feature: 'customer_success', costUsd: 0.75 });
+          deps.emitCostAlert({
+            customerId: 'user-001',
+            feature: 'customer_success',
+            costUsd: 0.75,
+          });
         }
         return { kind: 'sent', messageId: 'msg-1', costUsd: 0.75, draft: {} };
       },
@@ -203,7 +252,10 @@ describe('customer-success-weekly Inngest function', () => {
       ([_id, evt]: [string, { name: string }]) => evt.name === 'cost.alert',
     );
     expect(alertCall).toBeDefined();
-    const [, sentEvent] = alertCall as [string, { name: string; data: Record<string, unknown> }];
+    const [, sentEvent] = alertCall as [
+      string,
+      { name: string; data: Record<string, unknown> },
+    ];
     expect(sentEvent.data).toEqual({
       customerId: 'user-001',
       feature: 'customer_success',
