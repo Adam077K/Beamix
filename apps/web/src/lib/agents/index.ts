@@ -10,6 +10,7 @@
 
 // ---- Pipeline orchestrator -------------------------------------------------
 export { runAgentPipeline } from './pipeline/runner';
+export type { AgentPipelineResult } from './pipeline/runner';
 export { buildPipelineContext } from './pipeline/context';
 
 // ---- Config: registry + model router --------------------------------------
@@ -17,6 +18,7 @@ export {
   AGENT_REGISTRY,
   getAgentConfig,
   isAgentAvailable,
+  resolveArtifactType,
 } from './config/registry';
 export {
   MODEL_ROUTER,

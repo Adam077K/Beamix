@@ -60,6 +60,13 @@ export interface AgentConfig {
   /** true for Authority Blog Strategist, FAQ Builder. */
   requiresTopicLedger: boolean;
   ymylRisk: 'low' | 'medium' | 'high';
+  /**
+   * true if the agent's output must go through the approval gate before publishing.
+   * Gated = content publish, outreach, email-as-them.
+   * Auto = schema, citations, listings, internal reports.
+   * Per docs/03-system-design/ARCHITECTURE.md §Gating Rules (A3).
+   */
+  requiresApproval: boolean;
 }
 
 // ---------------------------------------------------------------------------

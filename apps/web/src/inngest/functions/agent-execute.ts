@@ -25,6 +25,7 @@ import {
 } from '../../lib/agents/errors';
 import { OverTierCapError } from '../../lib/billing/deliverables';
 import type { AgentJobInput } from '../../lib/agents/types';
+import type { GatedPublishRequestedData } from '../client';
 
 /**
  * `agent-execute` — runs one agent pipeline per `agent/run.requested` event.
@@ -58,14 +59,20 @@ export const agentExecute = inngest.createFunction(
       scanId: data.scanId,
     };
 
-    const result = await step.run('run-agent-pipeline', async () => {
+    // `step.run` is memoised across retries — the pipeline runs at most once per
+    // attempt, and its serialised return value (including `gatedPublish`) is
+    // replayed from Inngest's event log on subsequent retries.
+    const pipelineResult = await step.run('run-agent-pipeline', async () => {
       try {
-        const output = await runAgentPipeline(input);
+        const { output, gatedPublish } = await runAgentPipeline(input);
         return {
           jobId: output.jobId,
           status: 'succeeded' as const,
           totalCostUsd: output.totalCostUsd,
           durationMs: output.durationMs,
+          // Carry the gated-publish intent through the step boundary so the
+          // outer step.sendEvent is memoised independently (exactly-once).
+          gatedPublish: gatedPublish ?? null,
         };
       } catch (err) {
         // Deterministic failures must not be retried — the pipeline has already
@@ -84,6 +91,29 @@ export const agentExecute = inngest.createFunction(
       }
     });
 
-    return result;
+    // ── Emit `gated_publish.requested` exactly-once ──────────────────────────
+    // `step.sendEvent` is memoised by its step ID across all retries — even if
+    // agent-execute is retried after this point, Inngest replays the step from
+    // its event log rather than re-sending. This guarantees exactly-one delivery.
+    //
+    // DO NOT move this into `step.run` or `runAgentPipeline` — those paths are
+    // retryable, which would break the exactly-once guarantee.
+    //
+    // DO NOT wrap in try/catch that swallows errors — Inngest needs the thrown
+    // error to know the step failed and must retry; swallowing breaks idempotency.
+    if (pipelineResult.gatedPublish !== null) {
+      const gatedPublishData = pipelineResult.gatedPublish as GatedPublishRequestedData;
+      await step.sendEvent('emit-gated-publish', {
+        name: 'gated_publish.requested',
+        data: gatedPublishData,
+      });
+    }
+
+    return {
+      jobId: pipelineResult.jobId,
+      status: pipelineResult.status,
+      totalCostUsd: pipelineResult.totalCostUsd,
+      durationMs: pipelineResult.durationMs,
+    };
   },
 );

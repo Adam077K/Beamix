@@ -19,6 +19,7 @@
  *   - revenueBookingSweep         — cron: day-61 held→booked revenue flip (W2.3 held-revenue)
  *   - resetDeliverablesMonthlyCron — cron: 1st of month, reset deliverable counters (W2.1)
  *   - sendApprovalPendingEmail    — approval.created (W2 approvals API)
+ *   - approvalGateWriter          — gated_publish.requested (Phase B wiring)
  */
 
 import { serve } from 'inngest/next';
@@ -30,6 +31,7 @@ import { digestBuilder } from '../../../inngest/functions/digest-builder';
 import { revenueBookingSweep } from '../../../inngest/functions/revenue-booking-sweep';
 import { resetDeliverablesMonthlyCron } from '../../../inngest/functions/reset-deliverables-monthly';
 import { sendApprovalPendingEmail } from '../../../inngest/functions/send-approval-pending-email';
+import { approvalGateWriter } from '../../../inngest/functions/approval-gate-writer';
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -41,5 +43,6 @@ export const { GET, POST, PUT } = serve({
     revenueBookingSweep,
     resetDeliverablesMonthlyCron,
     sendApprovalPendingEmail,
+    approvalGateWriter,
   ],
 });

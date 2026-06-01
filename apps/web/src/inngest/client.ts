@@ -10,6 +10,7 @@
 
 import { Inngest, EventSchemas } from 'inngest';
 import type { AgentType, PlanTier } from '../lib/agents/types';
+import type { ArtifactType, RiskFlag } from '../lib/agents/approval-gate-writer/types';
 
 /** Payload for `agent/run.requested` — mirrors `AgentJobInput`. */
 export interface AgentRunRequestedData {
@@ -78,6 +79,29 @@ export interface ApprovalRejectedData {
   actedAt: string;
 }
 
+/**
+ * Payload for `gated_publish.requested` — mirrors GatedPublishRequestedEvent from
+ * approval-gate-writer/types. Triggers the approval-gate-writer Inngest function.
+ */
+export interface GatedPublishRequestedData {
+  customerId: string;
+  artifactType: ArtifactType;
+  /** Stable ID of the underlying artifact (agent_job_outputs id, outreach id, etc). */
+  artifactId: string;
+  /** Full body for outreach emails; first 300 chars otherwise. */
+  artifactPreview: string;
+  /** Why this matters for AI search visibility — from the generating agent. */
+  whyThisMatters: string;
+  /** Human-readable publish target ("your blog at /resources, Tuesday 10am ET"). */
+  publishTarget: string;
+  /** Risk flags from the upstream agent. */
+  riskFlags: RiskFlag[];
+  /** Optional recipient context for outreach emails. */
+  recipientContext?: string;
+  /** Scheduled publish/send time (ISO string). */
+  scheduledFor?: string;
+}
+
 /** Typed event map for the Beamix Inngest client. */
 export type BeamixEvents = {
   'agent/run.requested': { data: AgentRunRequestedData };
@@ -87,6 +111,9 @@ export type BeamixEvents = {
   'approval.created': { data: ApprovalCreatedData };
   'approval.approved': { data: ApprovalApprovedData };
   'approval.rejected': { data: ApprovalRejectedData };
+  'gated_publish.requested': { data: GatedPublishRequestedData };
+  // Reserved; emitted by approval-gate-writer + customer-success (Worker C). Worker C must NOT re-register this event.
+  'cost.alert': { data: { customerId: string; feature: string; costUsd: number } };
 };
 
 /**
