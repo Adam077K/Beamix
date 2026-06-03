@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 
 type IllustrationType =
   | 'workspace'
@@ -12,10 +13,26 @@ type IllustrationType =
   | 'error'
 
 interface EmptyStateProps {
-  illustration: IllustrationType
+  /** Built-in on-brand glyph, used when `glyph` is not supplied. */
+  illustration?: IllustrationType
+  /** Custom brand glyph overriding `illustration`. Never raw Lucide-in-void. */
+  glyph?: ReactNode
+  /**
+   * Ghosted preview of the real feature behind a subtle scrim (~40% opacity
+   * skeleton of the actual UI). Converts an apology into a sales surface
+   * (DESIGN-DIRECTION §4.3). Rendered above the glyph/heading.
+   */
+  preview?: ReactNode
   title: string
   description?: string
   action?: ReactNode
+  /**
+   * Vertical placement. 'top' (~38% from top) is the default and the spec'd
+   * value — dead-center reads "lost / failed". 'center' is kept for legacy
+   * full-card states.
+   */
+  align?: 'top' | 'center'
+  className?: string
 }
 
 const illustrations: Record<IllustrationType, ReactNode> = {
@@ -99,15 +116,75 @@ const illustrations: Record<IllustrationType, ReactNode> = {
   ),
 }
 
-export function EmptyState({ illustration, title, description, action }: EmptyStateProps) {
+/**
+ * BrandGlyph — the default on-brand mark used when no `illustration` or `glyph`
+ * is supplied: a soft blue Beamix mark in a tinted chip. Never a bare Lucide
+ * icon floating in a void (DESIGN-DIRECTION §4.3).
+ */
+function BrandGlyph() {
   return (
-    <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-      <div className="mb-5 opacity-80">{illustrations[illustration]}</div>
-      <h3 className="text-base font-medium text-[#0A0A0A] mb-2">{title}</h3>
-      {description && (
-        <p className="text-sm text-[#6B7280] max-w-xs leading-relaxed">{description}</p>
+    <div
+      className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EFF4FF]"
+      aria-hidden="true"
+    >
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M6 6h9a5 5 0 0 1 0 10H6V6Zm0 10h10a5 5 0 0 1 0 10H6V16Z"
+          fill="#3370FF"
+        />
+        <circle cx="22" cy="6" r="2.5" fill="#3370FF" fillOpacity="0.45" />
+      </svg>
+    </div>
+  )
+}
+
+/**
+ * EmptyState — the reusable "selling" empty-state template (§4.3).
+ *
+ * Every empty stub should preview the SHAPE of the real feature behind a subtle
+ * scrim and offer one action — converting a stub from an apology into a sales
+ * surface. Aligned ~38% from top by default (dead-center reads "lost/failed").
+ */
+export function EmptyState({
+  illustration,
+  glyph,
+  preview,
+  title,
+  description,
+  action,
+  align = 'top',
+  className,
+}: EmptyStateProps) {
+  const mark =
+    glyph ?? (illustration ? illustrations[illustration] : <BrandGlyph />)
+
+  return (
+    <div
+      className={cn(
+        'flex w-full flex-col items-center px-6 text-center',
+        align === 'top' ? 'pb-16 pt-[18vh]' : 'justify-center py-16',
+        className,
       )}
-      {action && <div className="mt-5">{action}</div>}
+    >
+      {preview && (
+        <div className="pointer-events-none relative mb-8 w-full max-w-[420px] select-none opacity-40">
+          {preview}
+          {/* Soft scrim so the preview reads as "coming", not interactive */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white" />
+        </div>
+      )}
+
+      <div className={cn('mb-5', illustration ? 'opacity-80' : '')}>{mark}</div>
+
+      <h3 className="mb-2 text-base font-semibold text-[#0A0A0A]">{title}</h3>
+
+      {description && (
+        <p className="max-w-[360px] text-sm leading-relaxed text-[#6B7280]">
+          {description}
+        </p>
+      )}
+
+      {action && <div className="mt-6">{action}</div>}
     </div>
   )
 }
