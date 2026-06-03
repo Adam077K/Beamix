@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { VisibilityScorePanel } from '@/components/dashboard/VisibilityScorePanel'
@@ -123,7 +124,7 @@ export default async function DashboardPage() {
         subtitle="Your AI search visibility, results, and items pending review."
         action={
           <Button asChild>
-            <a href="/scan">Run first scan →</a>
+            <Link href="/scan">Run first scan →</Link>
           </Button>
         }
       />

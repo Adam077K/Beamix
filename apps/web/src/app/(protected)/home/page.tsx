@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { EmptyState } from '@/components/empty-state'
 import { Button } from '@/components/ui/button'
 
@@ -36,7 +37,7 @@ export default function HomePage() {
         description="Your agents are standing by. Run a scan and Beamix starts finding where you're invisible in AI search."
         action={
           <Button asChild>
-            <a href="/scan">Start a scan →</a>
+            <Link href="/scan">Start a scan →</Link>
           </Button>
         }
       />
