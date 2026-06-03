@@ -7,7 +7,7 @@
 -- Execution order: reverse of creation (index → constraint → column).
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 1. Drop the partial UNIQUE index
+-- 1. Drop the plain UNIQUE index
 -- ─────────────────────────────────────────────────────────────────────────────
 
 DROP INDEX IF EXISTS public.uq_approval_queue_agent_job_id;
