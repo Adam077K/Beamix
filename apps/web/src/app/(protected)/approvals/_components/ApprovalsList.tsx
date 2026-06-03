@@ -1,5 +1,8 @@
+import Link from 'next/link'
 import type { ApprovalQueueItem } from '../_data'
 import { ApprovalActions } from './ApprovalActions'
+import { EmptyState } from '@/components/empty-state'
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -88,43 +91,47 @@ function KindBadge({ kind }: { kind: ApprovalKind }) {
 }
 
 // ---------------------------------------------------------------------------
-// Empty state — intentional, direct, one clear CTA
+// Ghosted approval-card preview — shown behind the empty state scrim
+// ---------------------------------------------------------------------------
+
+function GhostedApprovalPreview() {
+  return (
+    <div className="w-full space-y-2" aria-hidden="true">
+      {[
+        { w: 'w-16', label: 'w-64' },
+        { w: 'w-14', label: 'w-56' },
+        { w: 'w-20', label: 'w-48' },
+      ].map((row, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-3 rounded-lg border border-[#E5E7EB] bg-white px-4 py-3"
+        >
+          <div className={`h-5 ${row.w} rounded-md bg-[#F3F4F6]`} />
+          <div className={`h-4 ${row.label} rounded bg-[#F3F4F6]`} />
+          <div className="ml-auto h-7 w-16 rounded-md bg-[#F3F4F6]" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Empty state — intentional, direct, one clear CTA (DESIGN-DIRECTION §5 #5)
 // ---------------------------------------------------------------------------
 
 function EmptyApprovals() {
   return (
-    <div
-      role="status"
-      aria-label="No items waiting for review"
-      className="flex flex-col items-center justify-center py-20 text-center"
-    >
-      <div
-        className="w-12 h-12 rounded-full bg-[#F7F7F7] flex items-center justify-center mb-4"
-        aria-hidden="true"
-      >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#9CA3AF"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-          <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-        </svg>
-      </div>
-      <p className="text-sm font-medium text-[#0A0A0A] mb-1">
-        No items waiting for your review.
-      </p>
-      <p className="text-sm text-[#6B7280] max-w-[280px] leading-relaxed">
-        Items ready for your review will show up here. Check back after your
-        next digest.
-      </p>
-    </div>
+    <EmptyState
+      illustration="inbox"
+      preview={<GhostedApprovalPreview />}
+      title="Nothing to review yet"
+      description="Your first agent drafts arrive after your first scan. Run one to start."
+      action={
+        <Button asChild>
+          <Link href="/scan">Run a scan →</Link>
+        </Button>
+      }
+    />
   )
 }
 

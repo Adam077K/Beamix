@@ -57,8 +57,8 @@ export default async function ApprovalsPage() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <PageHeader title="Approvals" />
         <RefreshErrorState
-          title="Could not load approvals"
-          description="There was a problem fetching your pending items. Give it another go."
+          title="Session expired"
+          description="Your session could not be verified. Try again — it usually clears right up."
         />
       </main>
     )
@@ -71,15 +71,16 @@ export default async function ApprovalsPage() {
       {/* Page header — console heading system (§4.1) */}
       <PageHeader
         title="Approvals"
-        subtitle="Review and approve items before they go live."
+        subtitle="Review and approve agent drafts before they go live."
       />
 
-      {/* Content — list, empty state, or error */}
+      {/* Content — designed empty state, list, or error (NEVER raw error as primary state) */}
       {result.ok ? (
         <div className="rounded-[16px] border border-[#E5E7EB] bg-white shadow-card overflow-hidden">
           <ApprovalsList approvals={result.items} />
         </div>
       ) : (
+        /* Genuine fetch failure — ErrorState with Try-again, not the empty-state template */
         <RefreshErrorState
           title="Could not load approvals"
           description="There was a problem fetching your pending items. Give it another go."
