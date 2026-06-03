@@ -165,8 +165,18 @@ export function useMockScan(
   const [result, setResult] = useState<ScanResult | null>(null)
   const [phase, setPhase] = useState<ScanPhase>('scanning')
   const emitterRef = useRef<EmitterHandle | null>(null)
+  // React Strict Mode double-invoke guard. Strict Mode mounts → unmounts → remounts
+  // in development, causing the emitter to start twice. Without this guard, both
+  // invocations run to completion and the second can fire `done` almost immediately,
+  // collapsing the 10.5s ledger dwell to <2s. The guard ensures only the live mount
+  // (the one that was NOT cleaned up) runs the emitter.
+  const hasStarted = useRef(false)
 
   useEffect(() => {
+    // Prevent double-start under React Strict Mode dev double-invoke.
+    if (hasStarted.current) return
+    hasStarted.current = true
+
     const emitter = createMockScanEmitter(domain, (event) => {
       setEngines(event.engines)
       setProgress(event.progress)
@@ -180,7 +190,13 @@ export function useMockScan(
     })
     emitterRef.current = emitter
     emitter.start()
-    return () => emitter.stop()
+    return () => {
+      // Reset so if ScanRunner genuinely unmounts and remounts (e.g. the user
+      // retries), a fresh scan can start. The `stopped` flag inside the emitter
+      // also clears all timers to prevent stale callbacks.
+      hasStarted.current = false
+      emitter.stop()
+    }
     // domain/businessName are captured once on mount — the scan is a one-shot run.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
