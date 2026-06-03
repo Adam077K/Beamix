@@ -345,13 +345,13 @@ async function insertApprovalQueueRow(
     expires_at: params.expiresAt.toISOString(),
     ...(params.agentJobId !== null ? { agent_job_id: params.agentJobId } : {}),
   };
-  // Idempotency strategy: upsert on the partial unique index column (agent_job_id).
+  // Idempotency strategy: upsert on the plain unique index column (agent_job_id).
   // onConflict:'agent_job_id' + ignoreDuplicates:true → a retry-delivered
-  // gated_publish.requested that would violate the partial unique constraint
-  // (uq_approval_queue_agent_job_id WHERE agent_job_id IS NOT NULL) is silently
+  // gated_publish.requested that would violate the unique constraint
+  // (uq_approval_queue_agent_job_id ON approval_queue(agent_job_id)) is silently
   // ignored, treating the pre-existing row as success.
-  // For rows where agent_job_id IS NULL (non-agent approvals) the partial index
-  // does not fire and Supabase falls through to a plain INSERT.
+  // For rows where agent_job_id IS NULL (non-agent approvals), NULLs are distinct
+  // by default so non-agent rows never conflict with each other; Supabase inserts normally.
   //
   // Note: Supabase's .upsert with ignoreDuplicates:true returns an empty data
   // array on conflict (no row returned). We handle that by falling back to a
