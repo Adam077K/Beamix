@@ -288,9 +288,6 @@ interface InsertApprovalQueueParams {
    * FK to agent_jobs(id) — populated when the approval is triggered by an agent
    * pipeline (artifactId IS the agent_job_id in the current SaaS model).
    * NULL for non-agent-sourced approvals (outreach, digest, etc.).
-   *
-   * TODO(approval-queue-unique): regenerate database.types.ts after merge so
-   * approval_queue.agent_job_id is a typed column instead of `as any`.
    */
   agentJobId: string | null;
   whyThisMatters: string;
@@ -346,10 +343,7 @@ async function insertApprovalQueueRow(
     evidence,
     approval_token: approvalToken,
     expires_at: params.expiresAt.toISOString(),
-    // TODO(approval-queue-unique): regenerate database.types.ts after merge
-    // so agent_job_id is a typed column. Cast through `any` until then.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ...(params.agentJobId !== null ? { agent_job_id: params.agentJobId as any } : {}),
+    ...(params.agentJobId !== null ? { agent_job_id: params.agentJobId } : {}),
   };
   // Idempotency strategy: upsert on the partial unique index column (agent_job_id).
   // onConflict:'agent_job_id' + ignoreDuplicates:true → a retry-delivered
@@ -379,7 +373,7 @@ async function insertApprovalQueueRow(
     const { data: existing, error: fetchError } = await params.client
       .from('approval_queue')
       .select('id, approval_token')
-      .eq('agent_job_id', params.agentJobId as any) // TODO(approval-queue-unique): remove cast after types regen
+      .eq('agent_job_id', params.agentJobId)
       .maybeSingle() as { data: { id?: string; approval_token?: string } | null; error: { message: string } | null };
     if (fetchError || !existing?.id) {
       throw new Error(
