@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -162,13 +163,28 @@ interface MobileDrawerProps {
 export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
   const pathname = usePathname()
 
+  // P2-A — Escape-to-close
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [open, onClose])
+
+  // P2-B — body-scroll-lock while drawer open
+  useEffect(() => {
+    if (open) document.body.classList.add('overflow-hidden')
+    else document.body.classList.remove('overflow-hidden')
+    return () => document.body.classList.remove('overflow-hidden')
+  }, [open])
+
   return (
     <div
       className={`fixed inset-0 z-50 md:hidden ${open ? '' : 'pointer-events-none'}`}
-      aria-hidden={!open}
     >
-      {/* Scrim */}
+      {/* Scrim — presentational backdrop only; aria-hidden so AT skips it */}
       <div
+        aria-hidden="true"
         onClick={onClose}
         className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
           open ? 'opacity-100' : 'opacity-0'
