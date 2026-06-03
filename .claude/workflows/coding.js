@@ -9,8 +9,13 @@ export const meta = {
 
 // args: { slices: [{ id, agentType, brief, files }], tier?: "full"|"irreversible", ref?: string }
 // agentType ∈ backend-engineer | frontend-engineer | database-engineer | ai-engineer | devops-engineer
-const SLICES = (args && args.slices) || []
-const TIER = (args && args.tier) || 'full'
+// args may arrive as an object OR a JSON string — normalize either way.
+let A = args
+if (typeof A === 'string') { try { A = JSON.parse(A) } catch (e) { A = {} } }
+A = A || {}
+const SLICES = A.slices || []
+const TIER = A.tier || 'full'
+const REF = A.ref || 'origin/main...HEAD'
 
 if (!SLICES.length) {
   return { error: 'coding.js requires args.slices = [{id, agentType, brief, files}] — nothing to build.' }
@@ -66,7 +71,7 @@ phase('QA')
 log(`All ${slices.length} slices COMPLETE — running binding qa.js (${TIER}) over the combined diff.`)
 const qa = await workflow('qa', {
   tier: TIER,
-  ref: 'origin/main...HEAD',
+  ref: REF,
   context: `Combined diff from ${slices.length} parallel coding slices: ${SLICES.map(s => s.id).join(', ')}. Review the integration surface between slices as well as each slice.`,
 })
 

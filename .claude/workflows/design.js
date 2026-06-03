@@ -9,10 +9,14 @@ export const meta = {
 }
 
 // args: { brief: string, target?: string (screen/component), variations?: number (default 4), reference?: string }
-const BRIEF = (args && args.brief) || ''
-const TARGET = (args && args.target) || 'the screen described in the brief'
-const N = (args && args.variations) || 4
-const REFERENCE = (args && args.reference) || ''
+// args may arrive as an object OR a JSON string — normalize either way.
+let A = args
+if (typeof A === 'string') { try { A = JSON.parse(A) } catch (e) { A = {} } }
+A = A || {}
+const BRIEF = A.brief || ''
+const TARGET = A.target || 'the screen described in the brief'
+const N = A.variations || 4
+const REFERENCE = A.reference || ''
 
 if (!BRIEF) return { error: 'design.js requires args.brief.' }
 

@@ -10,8 +10,12 @@ export const meta = {
 }
 
 // args: { question: string, depth?: "standard"|"deep" }
-const QUESTION = (args && args.question) || ''
-const DEPTH = (args && args.depth) || 'standard'
+// args may arrive as an object OR a JSON string — normalize either way.
+let A = args
+if (typeof A === 'string') { try { A = JSON.parse(A) } catch (e) { A = {} } }
+A = A || {}
+const QUESTION = A.question || ''
+const DEPTH = A.depth || 'standard'
 if (!QUESTION) return { error: 'research.js requires args.question.' }
 
 const DECOMP_SCHEMA = {
