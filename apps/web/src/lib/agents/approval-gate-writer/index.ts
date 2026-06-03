@@ -284,6 +284,15 @@ interface InsertApprovalQueueParams {
   draft: ApprovalCardDraft;
   artifactType: ArtifactType;
   artifactId: string;
+  /**
+   * FK to agent_jobs(id) — populated when the approval is triggered by an agent
+   * pipeline (artifactId IS the agent_job_id in the current SaaS model).
+   * NULL for non-agent-sourced approvals (outreach, digest, etc.).
+   *
+   * TODO(approval-queue-unique): regenerate database.types.ts after merge so
+   * approval_queue.agent_job_id is a typed column instead of `as any`.
+   */
+  agentJobId: string | null;
   whyThisMatters: string;
   publishTarget: string;
   scheduledFor: string | null;
@@ -337,20 +346,52 @@ async function insertApprovalQueueRow(
     evidence,
     approval_token: approvalToken,
     expires_at: params.expiresAt.toISOString(),
+    // TODO(approval-queue-unique): regenerate database.types.ts after merge
+    // so agent_job_id is a typed column. Cast through `any` until then.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...(params.agentJobId !== null ? { agent_job_id: params.agentJobId as any } : {}),
   };
-  const { data, error } = await params.client
+  // Idempotency strategy: upsert on the partial unique index column (agent_job_id).
+  // onConflict:'agent_job_id' + ignoreDuplicates:true → a retry-delivered
+  // gated_publish.requested that would violate the partial unique constraint
+  // (uq_approval_queue_agent_job_id WHERE agent_job_id IS NOT NULL) is silently
+  // ignored, treating the pre-existing row as success.
+  // For rows where agent_job_id IS NULL (non-agent approvals) the partial index
+  // does not fire and Supabase falls through to a plain INSERT.
+  //
+  // Note: Supabase's .upsert with ignoreDuplicates:true returns an empty data
+  // array on conflict (no row returned). We handle that by falling back to a
+  // SELECT on conflict (23505 code path below).
+  const { data: upsertData, error } = await params.client
     .from('approval_queue')
-    .insert(row)
+    .upsert(row, { onConflict: 'agent_job_id', ignoreDuplicates: true })
     .select('id')
-    .single();
+    .maybeSingle() as { data: { id?: string } | null; error: { code?: string; message: string } | null };
   if (error) {
     throw new Error(
-      `[approval-gate-writer] approval_queue insert failed: ${error.message}`,
+      `[approval-gate-writer] approval_queue upsert failed: ${error.message}`,
     );
   }
-  const id = (data as { id?: string } | null)?.id;
+  // On conflict (ignoreDuplicates:true) Supabase returns null data — the row
+  // already exists. Fetch the existing id by agent_job_id so the caller can
+  // continue with the correct approvalQueueId.
+  if (!upsertData?.id && params.agentJobId !== null) {
+    const { data: existing, error: fetchError } = await params.client
+      .from('approval_queue')
+      .select('id, approval_token')
+      .eq('agent_job_id', params.agentJobId as any) // TODO(approval-queue-unique): remove cast after types regen
+      .maybeSingle() as { data: { id?: string; approval_token?: string } | null; error: { message: string } | null };
+    if (fetchError || !existing?.id) {
+      throw new Error(
+        `[approval-gate-writer] approval_queue upsert conflict but existing row not found: ${fetchError?.message ?? 'no row'}`,
+      );
+    }
+    // Return the pre-existing row's id + token (duplicate delivery — idempotent success).
+    return { id: existing.id, approvalToken: existing.approval_token ?? approvalToken };
+  }
+  const id = upsertData?.id;
   if (!id) {
-    throw new Error('[approval-gate-writer] approval_queue insert returned no id');
+    throw new Error('[approval-gate-writer] approval_queue upsert returned no id');
   }
   return { id, approvalToken };
 }
@@ -621,11 +662,19 @@ export async function runApprovalGateWriter(
 
   let inserted: ApprovalQueueRowInsertResult;
   try {
+    // agentJobId: in the current Beamix SaaS model, `artifactId` IS the
+    // `agent_jobs.id` UUID (set by buildGatedPublishIntent in pipeline/runner.ts
+    // as `artifactId: input.jobId`). Validate it looks like a UUID before using
+    // it as the FK — reject obviously non-UUID values defensively.
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const agentJobId = UUID_RE.test(input.artifactId) ? input.artifactId : null;
+
     inserted = await insertApprovalQueueRow({
       customerId: input.customerId,
       draft,
       artifactType: input.artifactType,
       artifactId: input.artifactId,
+      agentJobId,
       whyThisMatters: input.whyThisMatters,
       publishTarget: input.publishTarget,
       scheduledFor: input.scheduledFor ?? null,
