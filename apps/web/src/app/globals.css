@@ -180,6 +180,32 @@ body {
   background: var(--color-text-muted);
 }
 
+/* ── Free-scan keyframes (DESIGN-DIRECTION §3, §4) ─────────── */
+
+/* Submit 3-dot mono pulse (ACT 1) */
+@keyframes scan-dot {
+  0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); }
+  40%           { opacity: 1;    transform: scale(1); }
+}
+
+/* Active-engine ring rotation (ACT 2) — the single "alive" element.
+   transform-only, isolated, will-change for perf. */
+@keyframes scan-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Live count shimmer on the active engine's number (ACT 2). */
+@keyframes scan-shimmer {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+/* Reduced motion: kill the perpetual ring + shimmer entirely (static fallback). */
+@media (prefers-reduced-motion: reduce) {
+  .scan-ring-spin { animation: none !important; }
+  .scan-count-shimmer { animation: none !important; }
+}
+
 /* ── Reduced motion ───────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
