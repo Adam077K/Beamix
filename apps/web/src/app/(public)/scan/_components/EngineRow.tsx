@@ -132,7 +132,7 @@ const COLORS: Record<EngineId, string> = {
   perplexity: '#0A0A0A',
 }
 
-const MARKS: Record<EngineId, (c: string) => JSX.Element> = {
+const MARKS: Record<EngineId, (c: string) => React.JSX.Element> = {
   // ChatGPT — interlocking knot motif
   chatgpt: (c) => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
