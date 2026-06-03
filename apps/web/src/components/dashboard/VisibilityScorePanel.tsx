@@ -77,28 +77,64 @@ function TrendIcon({ trend }: { trend: VisibilityScore['trend'] }) {
   return <TrendingDown className="w-3.5 h-3.5 text-[#EF4444]" aria-label="Trending down" />
 }
 
+/**
+ * EmptyScoreRing — proper empty score ring for the pre-scan state.
+ *
+ * Spec (DESIGN-DIRECTION §5 #2):
+ *  - Even #E5E7EB track ring (no partial fill — score is unknown)
+ *  - Geist Mono "—" in the center (not a spinner, not a dot)
+ *  - Never reads as a broken/failed fetch
+ */
+function EmptyScoreRing() {
+  return (
+    <svg
+      width="72"
+      height="72"
+      viewBox="0 0 72 72"
+      className="shrink-0"
+      aria-hidden="true"
+    >
+      {/* Even track only — no progress arc */}
+      <circle
+        cx="36"
+        cy="36"
+        r="28"
+        fill="none"
+        stroke="#E5E7EB"
+        strokeWidth="6"
+      />
+      {/* Geist Mono em-dash — conveys "not yet measured", not "error" */}
+      <text
+        x="36"
+        y="41"
+        textAnchor="middle"
+        fontSize="16"
+        fontWeight="500"
+        fill="#9CA3AF"
+        fontFamily="'Geist Mono', 'Fira Code', monospace"
+      >
+        —
+      </text>
+    </svg>
+  )
+}
+
 function SetupInProgressCard({ engine }: { engine: string }) {
   const meta = ENGINE_META[engine] ?? { label: engine, color: '#6B7280' }
   return (
     <div
       role="region"
-      aria-label={`${meta.label} visibility score — setup in progress`}
+      aria-label={`${meta.label} visibility score — runs after your first scan`}
       className="flex items-center gap-4 rounded-xl border border-[#E5E7EB] bg-white p-5 relative overflow-hidden"
     >
-      {/* engine color accent bar */}
+      {/* engine color accent bar — muted until real data */}
       <div
         className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl"
-        style={{ backgroundColor: meta.color, opacity: 0.5 }}
+        style={{ backgroundColor: meta.color, opacity: 0.3 }}
         aria-hidden="true"
       />
 
-      {/* placeholder ring */}
-      <div
-        className="w-[72px] h-[72px] shrink-0 rounded-full border-[6px] border-[#F3F4F6] flex items-center justify-center"
-        aria-hidden="true"
-      >
-        <span className="w-2 h-2 rounded-full bg-[#E5E7EB]" />
-      </div>
+      <EmptyScoreRing />
 
       <div className="flex flex-col gap-1 min-w-0">
         <span
@@ -108,7 +144,7 @@ function SetupInProgressCard({ engine }: { engine: string }) {
           {meta.label}
         </span>
         <p className="text-sm text-[#6B7280] leading-snug">
-          Setup in progress — your first scan runs after discovery.
+          Runs after your first scan.
         </p>
       </div>
     </div>
