@@ -60,6 +60,7 @@ function baseInput(overrides: Partial<ApprovalGateInput> = {}): ApprovalGateInpu
 interface InsertedRow {
   table: string;
   row: Record<string, unknown>;
+  op: 'insert' | 'upsert';
 }
 
 interface FakeSupabaseOptions {
@@ -90,7 +91,7 @@ function fakeSupabase(opts: FakeSupabaseOptions = {}) {
   const client = {
     from(table: string) {
       return {
-        // brand_fingerprints lookup
+        // brand_fingerprints lookup + agent_job_id conflict-fetch
         select(_cols: string) {
           return {
             eq(_col: string, _val: string) {
@@ -99,41 +100,56 @@ function fakeSupabase(opts: FakeSupabaseOptions = {}) {
                   if (table === 'brand_fingerprints') {
                     return { data: brief, error: null };
                   }
+                  // agent_job_id conflict-fetch fallback (should not be hit in
+                  // normal tests — only when upsert returns null data)
+                  if (table === 'approval_queue') {
+                    return { data: { id: 'queue-row-id-1234', approval_token: 'existing-token' }, error: null };
+                  }
                   return { data: null, error: null };
                 },
               };
             },
           };
         },
-        // approval_queue insert
+        // approval_queue insert (audit_log path — no select chain)
         insert(row: Record<string, unknown>) {
-          inserts.push({ table, row });
-          if (opts.failInsert) {
+          inserts.push({ table, row, op: 'insert' });
+          if (opts.failInsert && table === 'approval_queue') {
             return {
-              select() {
-                return {
-                  async single() {
-                    return { data: null, error: { message: 'insert failed' } };
-                  },
-                };
-              },
-              // Also support the audit_log case (no select chain).
+              // audit_log path — supabase call awaited without select()
               async then(resolve: (v: { error: { message: string } | null }) => void) {
                 resolve({ error: { message: 'insert failed' } });
               },
             };
           }
           return {
-            select(_cols: string) {
-              return {
-                async single() {
-                  return { data: { id: 'queue-row-id-1234' }, error: null };
-                },
-              };
-            },
             // audit_log path — supabase call awaited without select()
             async then(resolve: (v: { error: { message: string } | null }) => void) {
               resolve({ error: null });
+            },
+          };
+        },
+        // approval_queue upsert (new path — replaces insert for approval_queue rows)
+        upsert(row: Record<string, unknown>, _opts?: Record<string, unknown>) {
+          inserts.push({ table, row, op: 'upsert' });
+          if (opts.failInsert && table === 'approval_queue') {
+            return {
+              select(_cols: string) {
+                return {
+                  async maybeSingle() {
+                    return { data: null, error: { code: '42501', message: 'upsert failed' } };
+                  },
+                };
+              },
+            };
+          }
+          return {
+            select(_cols: string) {
+              return {
+                async maybeSingle() {
+                  return { data: { id: 'queue-row-id-1234' }, error: null };
+                },
+              };
             },
           };
         },
@@ -317,8 +333,8 @@ test('runApprovalGateWriter queues a card with the right shape', async () => {
   expect(outcome.kind).toBe('queued');
   if (outcome.kind !== 'queued') return;
 
-  // approval_queue row shape
-  const queueInsert = inserts.find((i) => i.table === 'approval_queue');
+  // approval_queue row shape (now upserted, not inserted)
+  const queueInsert = inserts.find((i) => i.table === 'approval_queue' && i.op === 'upsert');
   expect(queueInsert).toBeTruthy();
   const row = queueInsert!.row;
   expect(row.kind).toBe('content_publish');
@@ -332,6 +348,8 @@ test('runApprovalGateWriter queues a card with the right shape', async () => {
   expect(provenance.generated_by).toBe('approval_gate_writer');
   expect(provenance.source_event).toBe('gated_publish.requested');
   expect(provenance.brief_version_id).toBe('00000000-0000-0000-0000-000000000099');
+  // agent_job_id is populated from artifactId (UUID-shaped)
+  expect(row.agent_job_id).toBe('00000000-0000-0000-0000-000000000002');
 
   // approval.created emitted
   expect(emitApprovalCreated).toHaveBeenCalledTimes(1);
@@ -359,7 +377,7 @@ test('runApprovalGateWriter enforces YMYL framing on late catch', async () => {
   if (outcome.kind !== 'queued') return;
   expect(outcome.late_ymyl_catch).toBe(true);
 
-  const queueInsert = inserts.find((i) => i.table === 'approval_queue');
+  const queueInsert = inserts.find((i) => i.table === 'approval_queue' && i.op === 'upsert');
   expect(queueInsert).toBeTruthy();
   const resource = (queueInsert!.row.resource ?? {}) as Record<string, unknown>;
   // Title must have been prefixed
@@ -408,7 +426,7 @@ test('runApprovalGateWriter applies 48h expiry for outreach kinds', async () => 
     supabase: client,
     now: () => fixedNow,
   });
-  const queueInsert = inserts.find((i) => i.table === 'approval_queue');
+  const queueInsert = inserts.find((i) => i.table === 'approval_queue' && i.op === 'upsert');
   expect(queueInsert).toBeTruthy();
   const expiresAt = queueInsert!.row.expires_at as string;
   // 48h after 2026-06-01T12:00:00Z = 2026-06-03T12:00:00Z
@@ -424,7 +442,7 @@ test('runApprovalGateWriter applies 7d expiry for blog_post', async () => {
     supabase: client,
     now: () => fixedNow,
   });
-  const queueInsert = inserts.find((i) => i.table === 'approval_queue');
+  const queueInsert = inserts.find((i) => i.table === 'approval_queue' && i.op === 'upsert');
   expect(queueInsert).toBeTruthy();
   const expiresAt = queueInsert!.row.expires_at as string;
   expect(expiresAt).toBe('2026-06-08T12:00:00.000Z');
