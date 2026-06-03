@@ -14,7 +14,7 @@ See `.claude/agents/ceo.md` → "Topology classification" and the topology memor
 | `research.js` | `Workflow({name:"research", args})` | `question` (+ `depth: "standard"\|"deep"`) | cited, confidence-rated brief |
 
 ## Shapes
-- **qa** — 5 dimension reviewers → 3 adversarial verifiers per finding (majority-real survives) → Opus judge. Irreversible adds loop-until-dry fresh-eyes rounds (budget-guarded, max 4).
+- **qa** — 5 dimension reviewers → 3 adversarial verifiers per finding (strict-majority + quorum) → Opus judge with a deterministic P1-always-BLOCK override. Irreversible adds loop-until-dry fresh-eyes rounds (budget-guarded, max 3).
 - **coding** — parallel build slices in isolated worktrees → always chains the combined diff into `qa.js`. Never merges (Adam-gated after PASS).
 - **design** — N variations from distinct angles → parallel `design-critic` scoring → Opus synthesis grafting best runner-up ideas.
 - **research** — Opus decompose → multi-modal parallel sweep → adversarial per-claim verification → Opus cited synthesis.

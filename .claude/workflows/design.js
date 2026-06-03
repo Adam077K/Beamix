@@ -84,17 +84,20 @@ Honor the Beamix brand bar (load the beamix-brand-quality-bar skill): accent #33
 phase('Explore')
 const judged = await pipeline(
   chosen,
-  angle => agent(explorePrompt(angle), { label: `explore:${angle.split(' ')[0]}`, phase: 'Explore', agentType: 'product-designer', model: 'sonnet', schema: VARIATION_SCHEMA }),
-  (variation) => agent(
-    `Score this Beamix design variation against the brand quality bar and the brief.
+  angle => agent(explorePrompt(angle), { label: `explore:${angle.split(' ')[0]}`, phase: 'Explore', agentType: 'product-designer', model: 'sonnet', schema: VARIATION_SCHEMA }).catch(() => null),
+  (variation) => variation
+    ? agent(
+        `Score this Beamix design variation against the brand quality bar and the brief.
 Brief: ${BRIEF}
 Variation: ${JSON.stringify(variation, null, 2)}
 Score each axis 0-10 (brand_fidelity, craft, usability, brief_fit), give total, name the single best idea worth keeping even if this loses, and a one-line verdict. Be a demanding critic — billion-dollar bar.`,
-    { label: `critique:${variation.angle.split(' ')[0]}`, phase: 'Critique', agentType: 'design-critic', model: 'sonnet', schema: SCORE_SCHEMA }
-  ).then(score => ({ variation, score }))
+        { label: `critique:${variation.angle?.split(' ')[0] ?? 'unknown'}`, phase: 'Critique', agentType: 'design-critic', model: 'sonnet', schema: SCORE_SCHEMA }
+      ).then(score => ({ variation, score })).catch(() => null)
+    : null
 )
 
-const ranked = judged.filter(Boolean).sort((a, b) => (b.score.total || 0) - (a.score.total || 0))
+// Drop any chain where explore OR critique dropped out (null variation/score) before ranking.
+const ranked = judged.filter(r => r && r.variation && r.score).sort((a, b) => (b.score.total || 0) - (a.score.total || 0))
 
 // Never synthesize from nothing — if every explore/critique chain failed, return an error
 // rather than fabricating a spec from an empty ranking.

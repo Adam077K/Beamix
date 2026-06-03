@@ -76,12 +76,20 @@ if (blocked.length) {
 }
 
 // ── Phase 2: chain the combined work into the binding QA gate ──
+// LIMITATION: slices build in ISOLATED worktrees, so their commits live on separate branches
+// (see each slice's `branch`). The default REF (origin/main...HEAD) reflects the CEO worktree,
+// NOT the slice work — so the caller MUST pass `args.ref` spanning the integrated slice diff
+// (merge the slice branches into an integration branch first, then pass that range). If the
+// default REF is in use with >0 slices, warn loudly: qa.js may otherwise review an empty/wrong diff.
 phase('QA')
-log(`All ${slices.length} slices COMPLETE — running binding qa.js (${TIER}) over the combined diff.`)
+if (REF === 'origin/main...HEAD') {
+  log(`WARNING: qa.js is using the default ref but slices built in isolated worktrees (branches: ${branches.join(', ')}). Pass args.ref spanning the integrated slice diff, or qa.js may review the wrong range.`)
+}
+log(`All ${slices.length} slices COMPLETE — running binding qa.js (${TIER}) over ref ${REF}.`)
 const qa = await workflow('qa', {
   tier: TIER,
   ref: REF,
-  context: `Combined diff from ${slices.length} parallel coding slices: ${SLICES.map(s => s.id).join(', ')}. Review the integration surface between slices as well as each slice.`,
+  context: `Combined diff from ${slices.length} parallel coding slices: ${SLICES.map(s => s.id).join(', ')} (branches: ${branches.join(', ')}). Review the integration surface between slices as well as each slice.`,
 })
 
 return {
