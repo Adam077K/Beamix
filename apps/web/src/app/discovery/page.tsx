@@ -1,24 +1,21 @@
 /**
- * /discovery — Cal.com booking page
+ * /discovery — Cal.com booking page (DESIGN-DIRECTION §5 #7)
  *
- * Server Component. Embeds the Cal.com booking widget configured via
- * NEXT_PUBLIC_CALCOM_DISCOVERY_LINK env var (e.g. "beamix/discovery-call").
- *
- * Captures email + scan_id from query params so Cal.com pre-fills the email
- * field and the booking webhook can associate the session with a free scan.
+ * Layout: left column — value framing + 3 bullets. Right column — Cal.com embed.
+ * Fallback (env var absent): in-product lead form. NEVER a mailto link.
  *
  * Query params:
- *   email    — pre-fill attendee email in the Cal.com embed
- *   scan_id  — passed through to the Cal.com "notes" field; forwarded by
- *              the webhook handler to the `discovery_sessions` table
+ *   email    — pre-fill attendee email in the Cal.com embed / lead form
+ *   scan_id  — forwarded via Cal.com notes field; used by webhook handler
  */
 
-import { Metadata } from 'next'
+import type { Metadata } from 'next'
+import { DiscoveryLeadForm } from './_components/DiscoveryLeadForm'
 
 export const metadata: Metadata = {
   title: 'Book Your Discovery Call | Beamix',
   description:
-    'Schedule a free 20-minute discovery call to learn how Beamix can improve your AI search visibility.',
+    'Book a free 20-minute call. We review your scan results and build a plan for your business.',
 }
 
 interface DiscoveryPageProps {
@@ -32,45 +29,98 @@ export default async function DiscoveryPage({ searchParams }: DiscoveryPageProps
   const email = typeof params.email === 'string' ? params.email.trim() : ''
   const scanId = typeof params.scan_id === 'string' ? params.scan_id.trim() : ''
 
-  if (!calcomLink) {
-    // Graceful degradation — show a static CTA if the env var is missing (shouldn't happen in prod)
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center px-4 py-16 text-center">
-        <h1 className="text-2xl font-semibold text-gray-900">Book a Discovery Call</h1>
-        <p className="mt-4 max-w-md text-gray-600">
-          Our calendar link is being set up. Please email{' '}
-          <a href="mailto:hello@beamixai.com" className="text-[#3370FF] underline">
-            hello@beamixai.com
-          </a>{' '}
-          to schedule your discovery call.
-        </p>
-      </main>
-    )
-  }
-
-  // Build the Cal.com embed URL with pre-fill parameters
-  // Cal.com supports pre-filling via query params: name, email, notes
-  const calUrl = buildCalUrl(calcomLink, { email, scanId })
+  const calUrl = calcomLink ? buildCalUrl(calcomLink, { email, scanId }) : null
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-white">
-      {/* Header */}
-      <div className="w-full border-b border-gray-100 px-4 py-6 text-center">
-        <p className="text-sm font-medium uppercase tracking-wider text-[#3370FF]">
+    <main className="min-h-screen bg-white">
+      {/* Top bar */}
+      <div className="border-b border-[#E5E7EB] px-4 py-4 sm:px-6 lg:px-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
           Discovery call
-        </p>
-        <h1 className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">
-          Let&apos;s talk about your AI search visibility
-        </h1>
-        <p className="mx-auto mt-2 max-w-lg text-base text-gray-500">
-          Book a free 20-minute call. We&apos;ll review your scan results and walk through
-          a tailored plan for your business.
         </p>
       </div>
 
-      {/* Cal.com embed */}
-      <div className="w-full flex-1">
-        <CalEmbed calUrl={calUrl} />
+      {/* Two-column layout: value left, calendar right */}
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[400px_1fr]">
+          {/* Left — value framing */}
+          <div className="flex flex-col gap-8">
+            <div>
+              <h1 className="text-[28px] font-medium leading-[1.1] tracking-[-0.02em] text-[#0A0A0A] sm:text-[30px]">
+                See exactly where AI search loses you
+              </h1>
+              <p className="mt-3 text-[15px] leading-[1.6] text-[#6B7280]">
+                Book a free 20-minute call. We look at your scan results together and
+                map out the gaps — no slides, no pitch, just your numbers.
+              </p>
+            </div>
+
+            {/* 3 concrete bullets */}
+            <ul className="space-y-4" role="list">
+              {[
+                {
+                  heading: 'Your scan, line by line',
+                  body: 'We walk through every gap ChatGPT, Gemini, and Perplexity found for your business.',
+                },
+                {
+                  heading: 'A fix order that makes sense',
+                  body: 'Not everything needs fixing at once. We show you which two or three moves change your score the most.',
+                },
+                {
+                  heading: 'A plan you can act on today',
+                  body: "You leave knowing the next step — whether that's running agents or doing it yourself.",
+                },
+              ].map(({ heading, body }) => (
+                <li key={heading} className="flex gap-3">
+                  <span
+                    className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#EFF4FF]"
+                    aria-hidden="true"
+                  >
+                    <svg
+                      width="10"
+                      height="8"
+                      viewBox="0 0 10 8"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M1 4l2.5 2.5L9 1"
+                        stroke="#3370FF"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-[#0A0A0A]">{heading}</p>
+                    <p className="mt-0.5 text-sm leading-[1.5] text-[#6B7280]">{body}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {/* Social proof token */}
+            <div className="rounded-xl border border-[#E5E7EB] bg-[#F7F7F7] p-4">
+              <p className="text-sm leading-[1.5] text-[#374151]">
+                "We had no idea ChatGPT wasn't mentioning us. The call made the gap
+                obvious in 10 minutes."
+              </p>
+              <p className="mt-2 text-xs font-medium text-[#9CA3AF]">
+                SMB owner, Tel Aviv
+              </p>
+            </div>
+          </div>
+
+          {/* Right — Cal.com embed or lead form */}
+          <div className="min-h-[600px] overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white">
+            {calUrl ? (
+              <CalEmbed calUrl={calUrl} />
+            ) : (
+              <DiscoveryLeadForm prefillEmail={email} />
+            )}
+          </div>
+        </div>
       </div>
     </main>
   )
@@ -80,35 +130,24 @@ export default async function DiscoveryPage({ searchParams }: DiscoveryPageProps
 // Helpers
 // ---------------------------------------------------------------------------
 
-function buildCalUrl(
-  link: string,
-  opts: { email: string; scanId: string }
-): string {
-  // link can be either a full URL or a slug like "beamix/discovery-call"
-  const base = link.startsWith('http')
-    ? link
-    : `https://cal.com/${link}`
-
+function buildCalUrl(link: string, opts: { email: string; scanId: string }): string {
+  const base = link.startsWith('http') ? link : `https://cal.com/${link}`
   const url = new URL(base)
   if (opts.email) url.searchParams.set('email', opts.email)
-  // Pass scan_id via Cal.com's `notes` field so it surfaces in the booking summary
   if (opts.scanId) url.searchParams.set('notes', `scan_id:${opts.scanId}`)
-  // Embed mode — removes Cal.com chrome
   url.searchParams.set('embed', '1')
   return url.toString()
 }
 
 // ---------------------------------------------------------------------------
-// Cal embed component (Client Component required for iframe interactions)
+// Cal.com iframe embed — plain iframe, no JS SDK required
 // ---------------------------------------------------------------------------
 
-// Cal.com supports a plain <iframe> embed — no JS SDK required.
-// We use an iframe with a fixed minimum height to avoid a collapsed widget.
 function CalEmbed({ calUrl }: { calUrl: string }) {
   return (
     <iframe
       src={calUrl}
-      className="h-[700px] w-full border-0 sm:h-[800px]"
+      className="h-full min-h-[600px] w-full border-0"
       title="Book a discovery call with Beamix"
       loading="eager"
       allow="payment"
