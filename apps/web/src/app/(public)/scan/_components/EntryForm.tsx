@@ -94,7 +94,7 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
             className={cn(
               'flex h-[52px] items-center rounded-lg border bg-white pl-3.5 pr-3 transition-[border-color,box-shadow] duration-150 ease-out sm:h-[56px]',
               error
-                ? 'border-[#EF4444]'
+                ? 'border-[#EF4444] focus-within:ring-2 focus-within:ring-[#EF4444]/20'
                 : 'border-[#E5E7EB] focus-within:border-[#3370FF] focus-within:ring-2 focus-within:ring-[#3370FF]/15',
             )}
           >
