@@ -53,7 +53,10 @@ export function ScanningLedger({
     return () => window.clearTimeout(t)
   }, [currentQuery])
 
-  // Fire onCleared after the lift-out animation (matches §3 timing ~520ms).
+  // §3 hold-then-settle: when `clearing` fires (last engine resolved), hold the
+  // fully-resolved ledger still for 250ms (let the user register "it's done"),
+  // THEN run the lift-out, THEN hand off to the reveal.
+  const [lifting, setLifting] = useState(false)
   const firedRef = useRef(false)
   useEffect(() => {
     if (!clearing || firedRef.current) return
@@ -61,9 +64,21 @@ export function ScanningLedger({
     const reduced =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const t = window.setTimeout(() => onCleared?.(), reduced ? 80 : 520)
-    return () => window.clearTimeout(t)
+    if (reduced) {
+      setLifting(true)
+      const t = window.setTimeout(() => onCleared?.(), 80)
+      return () => window.clearTimeout(t)
+    }
+    // 250ms hold → begin lift-out → 520ms later hand off.
+    const hold = window.setTimeout(() => setLifting(true), 250)
+    const handoff = window.setTimeout(() => onCleared?.(), 250 + 520)
+    return () => {
+      window.clearTimeout(hold)
+      window.clearTimeout(handoff)
+    }
   }, [clearing, onCleared])
+
+  const isClearing = clearing && lifting
 
   return (
     <div className="flex min-h-[100dvh] w-full flex-col items-center justify-center px-6 sm:px-6">
@@ -77,7 +92,7 @@ export function ScanningLedger({
         <p
           className={cn(
             'font-[var(--font-mono)] text-[13px] uppercase tracking-[0.08em] text-[#6B7280] transition-all duration-300 ease-out motion-safe:[transition-property:transform,opacity,filter]',
-            clearing && 'opacity-0 motion-safe:-translate-y-3 motion-safe:blur-[2px]',
+            isClearing && 'opacity-0 motion-safe:-translate-y-3 motion-safe:blur-[2px]',
           )}
         >
           Scanning {domain}
@@ -87,13 +102,13 @@ export function ScanningLedger({
         <div
           className={cn(
             'mt-2 h-[3px] w-full overflow-hidden rounded-full bg-[#E5E7EB] transition-opacity duration-300',
-            clearing && 'opacity-0',
+            isClearing && 'opacity-0',
           )}
         >
           <div
             className="h-full rounded-full bg-[#3370FF] origin-left transition-transform duration-[400ms] ease-out"
             style={{
-              transform: `scaleX(${clearing ? 1 : Math.min(progress, 1)})`,
+              transform: `scaleX(${Math.min(progress, 1)})`,
               willChange: 'transform',
             }}
           />
@@ -106,10 +121,10 @@ export function ScanningLedger({
               key={engine.id}
               className={cn(
                 'transition-all duration-[400ms] ease-out motion-safe:[transition-property:transform,opacity,filter]',
-                clearing &&
+                isClearing &&
                   'opacity-0 motion-safe:-translate-y-3 motion-safe:blur-[4px]',
               )}
-              style={clearing ? { transitionDelay: `${i * 60}ms` } : undefined}
+              style={isClearing ? { transitionDelay: `${i * 60}ms` } : undefined}
             >
               <EngineRow engine={engine} isLast={i === engines.length - 1} />
             </div>
@@ -117,7 +132,7 @@ export function ScanningLedger({
         </div>
 
         {/* Live query stream — REAL per-vertical prompts, cross-fade swap */}
-        <div className={cn('mt-6 h-5', clearing && 'opacity-0 transition-opacity duration-200')}>
+        <div className={cn('mt-6 h-5', isClearing && 'opacity-0 transition-opacity duration-200')}>
           {displayQuery && (
             <p
               className={cn(
@@ -135,7 +150,7 @@ export function ScanningLedger({
         <p
           className={cn(
             'mt-8 text-[13px] text-[#9CA3AF] transition-opacity duration-200',
-            clearing && 'opacity-0',
+            isClearing && 'opacity-0',
           )}
         >
           Checking how AI answers questions about you. About 15 seconds.
