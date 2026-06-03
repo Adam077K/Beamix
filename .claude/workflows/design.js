@@ -10,6 +10,7 @@ export const meta = {
 
 // args: { brief: string, target?: string (screen/component), variations?: number (default 4), reference?: string }
 // args may arrive as an object OR a JSON string — normalize either way.
+// NOTE: this normalizer is duplicated across all .claude/workflows/*.js — keep the 4 copies in sync (the Workflow runtime has no shared-module import).
 let A = args
 if (typeof A === 'string') { try { A = JSON.parse(A) } catch (e) { A = {} } }
 A = A || {}
@@ -94,6 +95,12 @@ Score each axis 0-10 (brand_fidelity, craft, usability, brief_fit), give total, 
 )
 
 const ranked = judged.filter(Boolean).sort((a, b) => (b.score.total || 0) - (a.score.total || 0))
+
+// Never synthesize from nothing — if every explore/critique chain failed, return an error
+// rather than fabricating a spec from an empty ranking.
+if (!ranked.length) {
+  return { error: 'All design variations failed to explore/critique — no ranked data to synthesize.', variations_explored: 0 }
+}
 
 // ── Phase 3: synthesize winner + graft best ideas ──
 phase('Synthesize')

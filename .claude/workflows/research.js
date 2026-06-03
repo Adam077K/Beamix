@@ -11,6 +11,7 @@ export const meta = {
 
 // args: { question: string, depth?: "standard"|"deep" }
 // args may arrive as an object OR a JSON string — normalize either way.
+// NOTE: this normalizer is duplicated across all .claude/workflows/*.js — keep the 4 copies in sync (the Workflow runtime has no shared-module import).
 let A = args
 if (typeof A === 'string') { try { A = JSON.parse(A) } catch (e) { A = {} } }
 A = A || {}

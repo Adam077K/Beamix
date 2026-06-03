@@ -10,6 +10,7 @@ export const meta = {
 // args: { slices: [{ id, agentType, brief, files }], tier?: "full"|"irreversible", ref?: string }
 // agentType ∈ backend-engineer | frontend-engineer | database-engineer | ai-engineer | devops-engineer
 // args may arrive as an object OR a JSON string — normalize either way.
+// NOTE: this normalizer is duplicated across all .claude/workflows/*.js — keep the 4 copies in sync (the Workflow runtime has no shared-module import).
 let A = args
 if (typeof A === 'string') { try { A = JSON.parse(A) } catch (e) { A = {} } }
 A = A || {}
@@ -56,6 +57,14 @@ const built = await parallel(SLICES.map(s => () =>
     schema: SLICE_SCHEMA,
   })
 ))
+
+// Detect slice-agent dropout BEFORE filtering — `built` is positional with SLICES, so a null
+// at index i means SLICES[i] never returned. Never run QA on a silently-partial diff.
+const missing = SLICES.filter((s, i) => !built[i]).map(s => s.id)
+if (missing.length) {
+  log(`${missing.length}/${SLICES.length} slice agents dropped out (no structured return): ${missing.join(', ')}`)
+  return { status: 'BLOCKED', reason: 'slice agent dropout — refusing to QA a partial diff', missing, slices: built.filter(Boolean) }
+}
 
 const slices = built.filter(Boolean)
 const blocked = slices.filter(s => s.status === 'BLOCKED')

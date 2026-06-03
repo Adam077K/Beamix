@@ -13,6 +13,7 @@ export const meta = {
 //         tier: "full" | "irreversible",
 //         context?: string }
 // args may arrive as an object OR a JSON string — normalize either way.
+// NOTE: this normalizer is duplicated across all .claude/workflows/*.js — keep the 4 copies in sync (the Workflow runtime has no shared-module import).
 let A = args
 if (typeof A === 'string') { try { A = JSON.parse(A) } catch (e) { A = {} } }
 A = A || {}
@@ -127,8 +128,9 @@ function verifyFinding(f, phaseName) {
     agent(verifyPrompt(f, i), { label: `verify:${f.dimension}:${f.id}#${i}`, phase: phaseName, model: 'sonnet', schema: VERDICT_SCHEMA }).catch(() => null)
   )).then(votes => {
     const valid = votes.filter(Boolean)
-    // majority of the votes actually cast; if 0 cast, treat as unconfirmed
-    const real = valid.length > 0 && valid.filter(v => v.is_real).length * 2 >= valid.length
+    // strict majority + quorum: need >=2 votes cast AND a strict majority real.
+    // (a 1-of-1 lone vote or a 1-of-2 tie must NOT confirm — honors the majority-real contract)
+    const real = valid.length >= 2 && valid.filter(v => v.is_real).length * 2 > valid.length
     return { ...f, confirmed: real, votes_cast: valid.length }
   })
 }
@@ -149,7 +151,9 @@ const seen = new Set(allFindings.map(f => f.id))
 if (TIER === 'irreversible') {
   phase('Sweep')
   let dry = 0, round = 0
-  while (dry < 2 && round < 3 && (!budget.total || budget.remaining() > 60000)) {
+  // `budget` is an injected Workflow-runtime global ({total, spent(), remaining()}); guard
+  // defensively so a missing global can never throw — the round<3 cap bounds the loop regardless.
+  while (dry < 2 && round < 3 && (typeof budget === 'undefined' || !budget.total || budget.remaining() > 60000)) {
     round++
     const fresh = await parallel(DIMENSIONS.map(d => () =>
       agent(`${reviewPrompt(d, 0)}\nThis is fresh-eyes sweep round ${round}. These finding ids are already known — find only NEW defects not in this list: ${[...seen].join(', ') || '(none yet)'}.`,
