@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       agent_costs: {
@@ -211,6 +186,76 @@ export type Database = {
           },
         ]
       }
+      approval_queue: {
+        Row: {
+          acted_at: string | null
+          agent_job_id: string | null
+          approval_token: string
+          created_at: string
+          customer_id: string
+          digest_id: string | null
+          evidence: Json | null
+          expires_at: string
+          id: string
+          kind: Database["public"]["Enums"]["approval_kind"]
+          published_at: string | null
+          resource: Json
+          state: Database["public"]["Enums"]["approval_state"]
+        }
+        Insert: {
+          acted_at?: string | null
+          agent_job_id?: string | null
+          approval_token: string
+          created_at?: string
+          customer_id: string
+          digest_id?: string | null
+          evidence?: Json | null
+          expires_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["approval_kind"]
+          published_at?: string | null
+          resource: Json
+          state?: Database["public"]["Enums"]["approval_state"]
+        }
+        Update: {
+          acted_at?: string | null
+          agent_job_id?: string | null
+          approval_token?: string
+          created_at?: string
+          customer_id?: string
+          digest_id?: string | null
+          evidence?: Json | null
+          expires_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["approval_kind"]
+          published_at?: string | null
+          resource?: Json
+          state?: Database["public"]["Enums"]["approval_state"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_queue_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_approval_queue_agent_job"
+            columns: ["agent_job_id"]
+            isOneToOne: false
+            referencedRelation: "agent_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_approval_queue_digest"
+            columns: ["digest_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_digests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       archive_items: {
         Row: {
           agent_type: Database["public"]["Enums"]["agent_type"] | null
@@ -361,6 +406,80 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brand_fingerprints: {
+        Row: {
+          adam_reviewed_at: string | null
+          approval_style: Json
+          authoritative_citations: string[] | null
+          brief_version_id: string
+          competitor_set: Json
+          confidence_score: Json
+          created_at: string
+          customer_id: string
+          discovery_transcript_url: string | null
+          do_list: string[] | null
+          dont_list: string[] | null
+          evidence_links: Json
+          hard_nos: Json
+          icp: Json
+          offerings: Json
+          owner_identity: Json
+          requires_human_approval: boolean
+          updated_at: string
+          voice: Json
+        }
+        Insert: {
+          adam_reviewed_at?: string | null
+          approval_style?: Json
+          authoritative_citations?: string[] | null
+          brief_version_id?: string
+          competitor_set?: Json
+          confidence_score?: Json
+          created_at?: string
+          customer_id: string
+          discovery_transcript_url?: string | null
+          do_list?: string[] | null
+          dont_list?: string[] | null
+          evidence_links?: Json
+          hard_nos?: Json
+          icp: Json
+          offerings: Json
+          owner_identity: Json
+          requires_human_approval?: boolean
+          updated_at?: string
+          voice: Json
+        }
+        Update: {
+          adam_reviewed_at?: string | null
+          approval_style?: Json
+          authoritative_citations?: string[] | null
+          brief_version_id?: string
+          competitor_set?: Json
+          confidence_score?: Json
+          created_at?: string
+          customer_id?: string
+          discovery_transcript_url?: string | null
+          do_list?: string[] | null
+          dont_list?: string[] | null
+          evidence_links?: Json
+          hard_nos?: Json
+          icp?: Json
+          offerings?: Json
+          owner_identity?: Json
+          requires_human_approval?: boolean
+          updated_at?: string
+          voice?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_fingerprints_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -761,6 +880,53 @@ export type Database = {
         }
         Relationships: []
       }
+      deliverables_per_customer_per_month: {
+        Row: {
+          citation_submitted_count: number
+          content_published_count: number
+          customer_id: string
+          engines_tracked_count: number
+          faq_published_count: number
+          locations_active_count: number
+          month_anchor: string
+          outreach_email_count: number
+          prompts_tracked_count: number
+          schema_pushed_count: number
+        }
+        Insert: {
+          citation_submitted_count?: number
+          content_published_count?: number
+          customer_id: string
+          engines_tracked_count?: number
+          faq_published_count?: number
+          locations_active_count?: number
+          month_anchor: string
+          outreach_email_count?: number
+          prompts_tracked_count?: number
+          schema_pushed_count?: number
+        }
+        Update: {
+          citation_submitted_count?: number
+          content_published_count?: number
+          customer_id?: string
+          engines_tracked_count?: number
+          faq_published_count?: number
+          locations_active_count?: number
+          month_anchor?: string
+          outreach_email_count?: number
+          prompts_tracked_count?: number
+          schema_pushed_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deliverables_per_customer_per_month_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feature_flags: {
         Row: {
           description: string | null
@@ -781,6 +947,44 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      founding_100_cohort: {
+        Row: {
+          cohort_number: number
+          created_at: string
+          customer_id: string
+          first_payment_at: string | null
+          joined_at: string
+          notes: string | null
+          refund_risk_flagged: boolean
+        }
+        Insert: {
+          cohort_number: number
+          created_at?: string
+          customer_id: string
+          first_payment_at?: string | null
+          joined_at?: string
+          notes?: string | null
+          refund_risk_flagged?: boolean
+        }
+        Update: {
+          cohort_number?: number
+          created_at?: string
+          customer_id?: string
+          first_payment_at?: string | null
+          joined_at?: string
+          notes?: string | null
+          refund_risk_flagged?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "founding_100_cohort_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inbox_items: {
         Row: {
@@ -969,6 +1173,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_active: boolean
           monthly_credits: number
           name: string
           paddle_price_id_annual: string | null
@@ -978,6 +1183,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_active?: boolean
           monthly_credits?: number
           name: string
           paddle_price_id_annual?: string | null
@@ -987,6 +1193,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_active?: boolean
           monthly_credits?: number
           name?: string
           paddle_price_id_annual?: string | null
@@ -994,6 +1201,62 @@ export type Database = {
           tier?: Database["public"]["Enums"]["plan_tier"]
         }
         Relationships: []
+      }
+      publishing_credentials: {
+        Row: {
+          created_at: string
+          customer_id: string
+          encrypted_token: string
+          expires_at: string | null
+          external_account_id: string | null
+          external_account_meta: Json | null
+          id: string
+          last_health_check_at: string | null
+          last_refreshed_at: string | null
+          platform: Database["public"]["Enums"]["publishing_platform"]
+          refresh_token_encrypted: string | null
+          scopes: string[]
+          status: Database["public"]["Enums"]["publishing_credential_status"]
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          encrypted_token: string
+          expires_at?: string | null
+          external_account_id?: string | null
+          external_account_meta?: Json | null
+          id?: string
+          last_health_check_at?: string | null
+          last_refreshed_at?: string | null
+          platform: Database["public"]["Enums"]["publishing_platform"]
+          refresh_token_encrypted?: string | null
+          scopes: string[]
+          status?: Database["public"]["Enums"]["publishing_credential_status"]
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          encrypted_token?: string
+          expires_at?: string | null
+          external_account_id?: string | null
+          external_account_meta?: Json | null
+          id?: string
+          last_health_check_at?: string | null
+          last_refreshed_at?: string | null
+          platform?: Database["public"]["Enums"]["publishing_platform"]
+          refresh_token_encrypted?: string | null
+          scopes?: string[]
+          status?: Database["public"]["Enums"]["publishing_credential_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publishing_credentials_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       query_clusters: {
         Row: {
@@ -1081,6 +1344,101 @@ export type Database = {
             columns: ["scan_id"]
             isOneToOne: false
             referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      refund_events: {
+        Row: {
+          amount_cents: number
+          customer_id: string
+          founding_100_cohort: boolean
+          id: string
+          paddle_event_id: string
+          reason: string
+          refunded_at: string
+          revenue_event_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          customer_id: string
+          founding_100_cohort?: boolean
+          id?: string
+          paddle_event_id: string
+          reason: string
+          refunded_at?: string
+          revenue_event_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          customer_id?: string
+          founding_100_cohort?: boolean
+          id?: string
+          paddle_event_id?: string
+          reason?: string
+          refunded_at?: string
+          revenue_event_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_refund_events_revenue_event"
+            columns: ["revenue_event_id"]
+            isOneToOne: false
+            referencedRelation: "revenue_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refund_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_events: {
+        Row: {
+          amount_cents: number
+          booked_at: string | null
+          created_at: string
+          currency: string
+          customer_id: string
+          id: string
+          notes: Json | null
+          paddle_event_id: string
+          received_at: string
+          type: Database["public"]["Enums"]["revenue_event_type"]
+        }
+        Insert: {
+          amount_cents: number
+          booked_at?: string | null
+          created_at?: string
+          currency?: string
+          customer_id: string
+          id?: string
+          notes?: Json | null
+          paddle_event_id: string
+          received_at?: string
+          type: Database["public"]["Enums"]["revenue_event_type"]
+        }
+        Update: {
+          amount_cents?: number
+          booked_at?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string
+          id?: string
+          notes?: Json | null
+          paddle_event_id?: string
+          received_at?: string
+          type?: Database["public"]["Enums"]["revenue_event_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1192,6 +1550,9 @@ export type Database = {
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
+          founding_100_cohort: boolean
+          held_revenue_amount_cents: number
+          held_until: string | null
           id: string
           paddle_customer_id: string | null
           paddle_subscription_id: string | null
@@ -1207,6 +1568,9 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          founding_100_cohort?: boolean
+          held_revenue_amount_cents?: number
+          held_until?: string | null
           id?: string
           paddle_customer_id?: string | null
           paddle_subscription_id?: string | null
@@ -1222,6 +1586,9 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          founding_100_cohort?: boolean
+          held_revenue_amount_cents?: number
+          held_until?: string | null
           id?: string
           paddle_customer_id?: string | null
           paddle_subscription_id?: string | null
@@ -1541,6 +1908,56 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_digests: {
+        Row: {
+          approval_token: string
+          body_html: string
+          body_text: string
+          created_at: string
+          customer_id: string
+          id: string
+          metrics: Json
+          opened_at: string | null
+          sent_at: string | null
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          approval_token: string
+          body_html: string
+          body_text: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          metrics?: Json
+          opened_at?: string | null
+          sent_at?: string | null
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          approval_token?: string
+          body_html?: string
+          body_text?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          metrics?: Json
+          opened_at?: string | null
+          sent_at?: string | null
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_digests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1554,18 +1971,18 @@ export type Database = {
         }
         Returns: string
       }
-      consume_deliverable: {
-        Args: {
-          p_customer_id: string
-          p_month_anchor: string
-          p_kind: string
-          p_cap: number
-        }
-        Returns: number | null
-      }
       cleanup_page_locks: { Args: never; Returns: number }
       cleanup_topic_ledger: { Args: never; Returns: number }
       confirm_credits: { Args: { p_job_id: string }; Returns: undefined }
+      consume_deliverable: {
+        Args: {
+          p_cap: number
+          p_customer_id: string
+          p_kind: string
+          p_month_anchor: string
+        }
+        Returns: number
+      }
       hold_credits: {
         Args: {
           p_agent_type: Database["public"]["Enums"]["agent_type"]
@@ -1603,6 +2020,26 @@ export type Database = {
         | "authority_blog_strategist"
         | "performance_tracker"
         | "reddit_presence_planner"
+        | "discovery"
+        | "brand_brief_manager"
+        | "approval_gate_writer"
+        | "digest_writer"
+        | "customer_success"
+        | "publisher"
+        | "strategy"
+      approval_kind:
+        | "content_publish"
+        | "email_as_them"
+        | "outreach"
+        | "schema_push"
+        | "listing_update"
+        | "citation_submit"
+      approval_state:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "expired"
+        | "published"
       inbox_status:
         | "draft"
         | "review"
@@ -1620,7 +2057,30 @@ export type Database = {
         | "day1_ready"
         | "run_failed"
       pipeline_stage: "plan" | "research" | "do" | "qa" | "summarize"
-      plan_tier: "discover" | "build" | "scale"
+      plan_tier:
+        | "discover"
+        | "build"
+        | "scale"
+        | "starter"
+        | "growth"
+        | "professional"
+      publishing_credential_status:
+        | "active"
+        | "expired"
+        | "revoked"
+        | "health_check_failed"
+      publishing_platform:
+        | "wordpress"
+        | "shopify"
+        | "webflow"
+        | "ghost"
+        | "gbp"
+        | "yelp"
+        | "apple"
+        | "sendgrid"
+        | "gtm"
+        | "brightlocal"
+      revenue_event_type: "charge" | "refund" | "release" | "adjustment"
       subscription_status:
         | "trialing"
         | "active"
@@ -1753,9 +2213,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       agent_job_status: [
@@ -1778,6 +2235,28 @@ export const Constants = {
         "authority_blog_strategist",
         "performance_tracker",
         "reddit_presence_planner",
+        "discovery",
+        "brand_brief_manager",
+        "approval_gate_writer",
+        "digest_writer",
+        "customer_success",
+        "publisher",
+        "strategy",
+      ],
+      approval_kind: [
+        "content_publish",
+        "email_as_them",
+        "outreach",
+        "schema_push",
+        "listing_update",
+        "citation_submit",
+      ],
+      approval_state: [
+        "pending",
+        "approved",
+        "rejected",
+        "expired",
+        "published",
       ],
       inbox_status: [
         "draft",
@@ -1798,7 +2277,33 @@ export const Constants = {
         "run_failed",
       ],
       pipeline_stage: ["plan", "research", "do", "qa", "summarize"],
-      plan_tier: ["discover", "build", "scale"],
+      plan_tier: [
+        "discover",
+        "build",
+        "scale",
+        "starter",
+        "growth",
+        "professional",
+      ],
+      publishing_credential_status: [
+        "active",
+        "expired",
+        "revoked",
+        "health_check_failed",
+      ],
+      publishing_platform: [
+        "wordpress",
+        "shopify",
+        "webflow",
+        "ghost",
+        "gbp",
+        "yelp",
+        "apple",
+        "sendgrid",
+        "gtm",
+        "brightlocal",
+      ],
+      revenue_event_type: ["charge", "refund", "release", "adjustment"],
       subscription_status: [
         "trialing",
         "active",
