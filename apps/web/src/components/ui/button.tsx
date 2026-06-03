@@ -53,8 +53,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         {...props}
       >
-        {variant === 'tier-locked' && <Lock className="h-3.5 w-3.5 shrink-0" />}
-        {children}
+        {asChild ? (
+          children
+        ) : (
+          <>
+            {variant === 'tier-locked' && <Lock className="h-3.5 w-3.5 shrink-0" />}
+            {children}
+          </>
+        )}
       </Comp>
     );
   }
