@@ -62,8 +62,8 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
   }
 
   return (
-    <div className="flex min-h-[100dvh] w-full flex-col items-center px-6 pt-[42dvh] sm:px-6">
-      <div className="w-full max-w-[560px] -translate-y-[42%]">
+    <div className="flex min-h-[100dvh] w-full flex-col items-center justify-center px-6 pb-[16dvh] sm:px-6">
+      <div className="w-full max-w-[560px]">
         {/* Eyebrow */}
         <p className="text-center text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
           Free AI-Search Scan
