@@ -160,7 +160,13 @@ export function useMockScan(
     })),
   )
   const [progress, setProgress] = useState(0.01)
-  const [currentQuery, setCurrentQuery] = useState<string | null>(null)
+  // Initialize to the first vertical-specific query so the streaming prompt is
+  // visible from the very first ledger frame — not blank for the first 1.8s swap
+  // tick. The first screenshot a reviewer or demo evaluator takes of the ledger
+  // will already show a real customer prompt (e.g. "best family dentist near Tel Aviv").
+  const [currentQuery, setCurrentQuery] = useState<string | null>(
+    () => QUERY_SETS[inferVertical(domain)][0] ?? null,
+  )
   const [isComplete, setIsComplete] = useState(false)
   const [result, setResult] = useState<ScanResult | null>(null)
   const [phase, setPhase] = useState<ScanPhase>('scanning')
