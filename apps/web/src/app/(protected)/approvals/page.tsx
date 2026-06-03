@@ -2,6 +2,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { getPendingApprovals } from './_data'
 import { ApprovalsList } from './_components/ApprovalsList'
+import { PageHeader } from '@/components/page-header'
+import { RefreshErrorState } from '@/components/refresh-error-state'
 
 // ---------------------------------------------------------------------------
 // /approvals — Server Component
@@ -42,46 +44,6 @@ async function getCurrentUserId(): Promise<string | null> {
 }
 
 // ---------------------------------------------------------------------------
-// Error state — shown when the data fetch fails
-// ---------------------------------------------------------------------------
-
-function FetchErrorState() {
-  return (
-    <div
-      role="alert"
-      className="flex flex-col items-center justify-center py-20 text-center"
-    >
-      <div
-        className="w-12 h-12 rounded-full bg-[#FEF2F2] flex items-center justify-center mb-4"
-        aria-hidden="true"
-      >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#EF4444"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 8v4M12 16h.01" />
-        </svg>
-      </div>
-      <p className="text-sm font-medium text-[#0A0A0A] mb-1">
-        Could not load approvals
-      </p>
-      <p className="text-sm text-[#6B7280] max-w-[280px] leading-relaxed">
-        There was a problem fetching your pending items. Refresh the page to
-        try again.
-      </p>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
@@ -92,15 +54,12 @@ export default async function ApprovalsPage() {
   // Graceful fallback in case the session is stale.
   if (!userId) {
     return (
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        <header>
-          <h1 className="text-2xl font-semibold text-[#0A0A0A] leading-tight">
-            Approvals
-          </h1>
-        </header>
-        <div className="rounded-xl border border-[#E5E7EB] bg-white overflow-hidden">
-          <FetchErrorState />
-        </div>
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <PageHeader title="Approvals" />
+        <RefreshErrorState
+          title="Could not load approvals"
+          description="There was a problem fetching your pending items. Give it another go."
+        />
       </main>
     )
   }
@@ -108,25 +67,24 @@ export default async function ApprovalsPage() {
   const result = await getPendingApprovals(userId)
 
   return (
-    <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      {/* Page header */}
-      <header>
-        <h1 className="text-2xl font-semibold text-[#0A0A0A] leading-tight">
-          Approvals
-        </h1>
-        <p className="mt-1 text-sm text-[#6B7280]">
-          Review and approve items before they go live.
-        </p>
-      </header>
+    <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Page header — console heading system (§4.1) */}
+      <PageHeader
+        title="Approvals"
+        subtitle="Review and approve items before they go live."
+      />
 
       {/* Content — list, empty state, or error */}
-      <div className="rounded-xl border border-[#E5E7EB] bg-white overflow-hidden">
-        {result.ok ? (
+      {result.ok ? (
+        <div className="rounded-[16px] border border-[#E5E7EB] bg-white shadow-card overflow-hidden">
           <ApprovalsList approvals={result.items} />
-        ) : (
-          <FetchErrorState />
-        )}
-      </div>
+        </div>
+      ) : (
+        <RefreshErrorState
+          title="Could not load approvals"
+          description="There was a problem fetching your pending items. Give it another go."
+        />
+      )}
     </main>
   )
 }
