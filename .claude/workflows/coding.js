@@ -86,11 +86,15 @@ if (REF === 'origin/main...HEAD') {
   log(`WARNING: qa.js is using the default ref but slices built in isolated worktrees (branches: ${branches.join(', ')}). Pass args.ref spanning the integrated slice diff, or qa.js may review the wrong range.`)
 }
 log(`All ${slices.length} slices COMPLETE — running binding qa.js (${TIER}) over ref ${REF}.`)
-const qa = await workflow('qa', {
+const qa = (await workflow('qa', {
   tier: TIER,
   ref: REF,
   context: `Combined diff from ${slices.length} parallel coding slices: ${SLICES.map(s => s.id).join(', ')} (branches: ${branches.join(', ')}). Review the integration surface between slices as well as each slice.`,
-})
+}).catch(err => ({ verdict: 'BLOCK', summary: `qa.js sub-workflow threw: ${err && err.message ? err.message : err}`, blockers: [{ id: 'qa-workflow-failure', file: '(gate)', title: 'qa.js sub-workflow failed to return a verdict', fix: 'Re-run coding.js, or run qa.js independently to diagnose.' }] })))
+
+if (!qa || !qa.verdict) {
+  return { status: 'BLOCKED_BY_QA', slices, branches, qa_verdict: 'BLOCK', qa_summary: 'qa.js returned no verdict — failing safe.', note: 'No merge — gate did not produce a verdict.' }
+}
 
 return {
   status: qa.verdict === 'PASS' ? 'READY_TO_MERGE' : 'BLOCKED_BY_QA',

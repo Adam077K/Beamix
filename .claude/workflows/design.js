@@ -114,7 +114,12 @@ Ranked variations (best first):
 ${JSON.stringify(ranked.map(r => ({ angle: r.variation.angle, concept: r.variation.concept, total: r.score.total, best_idea: r.score.best_idea })), null, 2)}
 Pick the winning angle, but graft the strongest ideas from the runners-up where they strengthen it. Produce a build-ready spec.`,
   { label: 'synthesize', phase: 'Synthesize', model: 'opus', schema: SYNTH_SCHEMA }
-)
+).catch(() => null)
+
+if (!synthesis) {
+  // Don't lose the explore/critique work if synthesis drops out — hand back the ranking.
+  return { error: 'Synthesis agent dropped out — returning raw ranking for manual synthesis.', variations_explored: ranked.length, ranking: ranked.map(r => ({ angle: r.variation.angle, total: r.score.total })) }
+}
 
 return {
   variations_explored: ranked.length,
