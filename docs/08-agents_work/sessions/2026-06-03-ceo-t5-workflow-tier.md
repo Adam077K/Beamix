@@ -3,9 +3,10 @@ date: 2026-06-03
 role: ceo
 task: t5-workflow-tier
 tier: irreversible
-qa_verdict: PENDING
-status: PROPOSED
+qa_verdict: PASS
+status: READY_TO_MERGE
 branch: ceo-4-1780491385
+qa_run: wf_de0ee653-f58 (full tier, PASS, 4 P3 non-blocking)
 ---
 
 # CEO — T5 Workflow Orchestration Tier
@@ -18,4 +19,6 @@ branch: ceo-4-1780491385
 
 **Changed:** `.claude/agents/ceo.md`, `.claude/agents/_seeds/ceo.md`, `.claude/memory/DECISIONS.md`, `project_orchestration_topology_locked.md` (out-of-repo auto-memory), new `.claude/workflows/{qa,coding,design,research}.js` + `README.md` (531 LOC, all node --check valid).
 
-**Open / next:** Irreversible tier — needs Adam sign-off + QA before merge. Not yet committed/PR'd. Optional dogfood: run `qa.js` on this very diff as the first live test. CEO `model:` still `claude-opus-4-7` (Opus 4.8 bump is a separate decision).
+**Dogfood:** PR #132 (6 commits). `qa.js` ran on its own diff 5×: BLOCK×4 (found real bugs each round — prompt-injection in verifier prompts, fail-open judge, null-deref/dropout tolerance) → **PASS** on run 5 (`wf_de0ee653-f58`, full tier, 4 P3 non-blocking). ~$85-110 total. Lesson: gate converges but is expensive on self-referential net-new code; real app-code diffs will be cheaper. Two governance follow-ups logged: (1) $15 cost ceiling is unenforceable (budget directive not CEO-settable on named-workflow calls); (2) "no-override" rule needs a false-positive appeal path (gate over-blocked twice on FPs). 3 P3s fixed post-PASS.
+
+**Open / next:** Irreversible per policy (agent-def + workflow files) → still needs Adam merge sign-off. CEO `model:` still `claude-opus-4-7` (Opus 4.8 bump is a separate decision). Follow-ups: cost-enforcement + appeal-path governance; coding.js worktree-ref integration.
