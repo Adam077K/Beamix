@@ -1,6 +1,6 @@
 export const meta = {
   name: 'qa',
-  description: 'Beamix T5 binding QA gate — parallel dimension reviewers over a diff, 3 adversarial verifiers per finding (majority-real survives), Opus judge emits PASS/BLOCK. A BLOCK stops the merge; no CEO/Adam override. A failed correctness/security review is an automatic coverage-gap BLOCK. Irreversible tier adds loop-until-dry finder rounds.',
+  description: 'Beamix T5 binding QA gate — parallel dimension reviewers, 3 adversarial verifiers on block-eligible findings only (P1 always; P2 at irreversible — P3/advisory reported unverified), Opus judge emits PASS/BLOCK with a deterministic P1-override. A BLOCK stops the merge; the CEO cannot override (only Adam, via a logged false-positive appeal). A failed correctness/security review is an automatic coverage-gap BLOCK. Irreversible tier adds loop-until-dry finder rounds.',
   phases: [
     { title: 'Review', detail: 'parallel dimension reviewers read the diff (retry on dropout)' },
     { title: 'Verify', detail: '3 independent adversarial verifiers per finding' },
@@ -102,17 +102,18 @@ ${lenses[lensIndex % lenses.length]}
 Read the actual changed code before deciding. Return is_real + a one-line reason via StructuredOutput.`
 }
 
-function judgePrompt(confirmed, tier, totalSeen, failedDims) {
+function judgePrompt(confirmed, tier, failedDims, advisory) {
   return `You are the binding QA-Lead judge for a Beamix **${tier}** change. Diff range: ${REF}.
-${totalSeen} candidate findings were raised; ${confirmed.length} survived 3-way adversarial verification (majority-real):
+${confirmed.length} block-eligible findings survived 3-way adversarial verification (majority-real):
 ${JSON.stringify(confirmed.map(f => ({ id: f.id, severity: f.severity, file: f.file, title: f.title, detail: f.detail })), null, 2)}
+${advisory.length} additional findings were reported but NOT verified (non-blocking at this tier — P3${tier === 'full' ? '/P2' : ''}): ${JSON.stringify(advisory.map(f => ({ id: f.id, severity: f.severity, file: f.file, title: f.title })))}.
 Coverage gaps (dimensions that failed to complete a review): ${failedDims.length ? failedDims.join(', ') : 'none'}.
 
 Rules:
-- BLOCK if ANY confirmed P1 exists, OR (tier=irreversible) ANY confirmed P1/P2 exists.
-- BLOCK if a critical dimension (correctness or security) is in the coverage gaps — an incomplete binding gate cannot PASS.
-- Otherwise PASS, logging P2/P3 as non-blocking.
-Your verdict is final — CEO and Adam cannot override a BLOCK. Emit verdict, a one-paragraph summary (mention any coverage gaps), and a blockers array (empty on PASS).`
+- BLOCK if ANY confirmed finding exists (all confirmed findings are block-eligible by construction), OR a critical dimension (correctness or security) is in the coverage gaps.
+- Advisory findings NEVER block — list them as fast-follows.
+- Otherwise PASS.
+Your default verdict is binding and the CEO cannot override it. Adam (board) may file a LOGGED, finding-by-finding false-positive appeal — never a blanket override of a confirmed real defect. Emit verdict, a one-paragraph summary (mention advisory count + any coverage gaps), and a blockers array (empty on PASS).`
 }
 
 // Review one dimension with one retry; never throw — a persistent failure becomes a tracked coverage gap.
@@ -144,21 +145,27 @@ const dimResults = await parallel(DIMENSIONS.map(d => () => reviewDim(d)))
 const failedDims = dimResults.filter(r => !r.ok).map(r => r.dimension)
 const rawFindings = dimResults.flatMap(r => r.findings.map(f => ({ ...f, dimension: r.dimension })))
 
-// ── Phase 2: adversarial verify ──
-// Bound fan-out: cap verification at the highest-severity findings (P1>P2>P3) so a flood of
-// low-severity findings can't spawn unbounded verifier agents. Never silently truncate — log it.
-// (Cap/vote/verdict logic mirrors the unit-tested spec in ./lib/gate-logic.mjs — keep in sync.)
-const MAX_VERIFY = 40
+// ── Phase 2: adversarial verify ONLY block-eligible findings ──
+// COST CONTROL: P3 (and P2 at full tier) can never BLOCK, so paying 3 verifier agents each on
+// them is waste. Verify only what could actually block; report the rest advisory/unverified.
+// blockEligible mirrors isBlockEligible() in ./lib/gate-logic.mjs (unit-tested) — keep in sync.
+const blockEligible = (sev) => sev === 'P1' || (TIER === 'irreversible' && sev === 'P2')
 const SEV_ORDER = { P1: 0, P2: 1, P3: 2 }
-let toVerify = rawFindings
-if (rawFindings.length > MAX_VERIFY) {
-  toVerify = [...rawFindings].sort((a, b) => (SEV_ORDER[a.severity] ?? 3) - (SEV_ORDER[b.severity] ?? 3)).slice(0, MAX_VERIFY)
-  log(`Capping verification at ${MAX_VERIFY}/${rawFindings.length} findings (highest-severity first); ${rawFindings.length - MAX_VERIFY} lower-severity findings deferred to a follow-up run.`)
+const advisory = rawFindings.filter(f => !blockEligible(f.severity)).map(f => ({ ...f, confirmed: false, advisory: true }))
+let eligible = rawFindings.filter(f => blockEligible(f.severity))
+
+// Hard backstop on verifier fan-out (rarely hit now that only block-eligible findings verify).
+const MAX_VERIFY = 40
+if (eligible.length > MAX_VERIFY) {
+  eligible = [...eligible].sort((a, b) => (SEV_ORDER[a.severity] ?? 3) - (SEV_ORDER[b.severity] ?? 3)).slice(0, MAX_VERIFY)
+  log(`Capping verification at ${MAX_VERIFY} block-eligible findings (backstop).`)
 }
+log(`${eligible.length} block-eligible findings to 3-vote verify; ${advisory.length} advisory (P3${TIER === 'full' ? '/P2' : ''}) reported unverified.`)
+
 phase('Verify')
-const verified = await parallel(toVerify.map(f => () => verifyFinding(f, 'Verify')))
+const verified = await parallel(eligible.map(f => () => verifyFinding(f, 'Verify')))
 let allFindings = verified.filter(Boolean)
-const seen = new Set(allFindings.map(f => f.id))
+const seen = new Set([...allFindings.map(f => f.id), ...advisory.map(f => f.id)])
 
 // ── Phase 3: loop-until-dry fresh-eyes rounds — Irreversible only, budget-guarded ──
 if (TIER === 'irreversible') {
@@ -176,9 +183,11 @@ if (TIER === 'irreversible') {
     if (!newOnes.length) { dry++; log(`Sweep round ${round}: dry (${dry}/2)`); continue }
     dry = 0
     newOnes.forEach(f => seen.add(f.id))
-    const sv = await parallel(newOnes.map(f => () => verifyFinding(f, 'Sweep')))
+    advisory.push(...newOnes.filter(f => !blockEligible(f.severity)).map(f => ({ ...f, confirmed: false, advisory: true })))
+    const newEligible = newOnes.filter(f => blockEligible(f.severity))
+    const sv = await parallel(newEligible.map(f => () => verifyFinding(f, 'Sweep')))
     allFindings.push(...sv.filter(Boolean))
-    log(`Sweep round ${round}: ${newOnes.length} new, ${sv.filter(f => f && f.confirmed).length} confirmed`)
+    log(`Sweep round ${round}: ${newOnes.length} new (${newEligible.length} block-eligible), ${sv.filter(f => f && f.confirmed).length} confirmed`)
   }
 }
 
@@ -187,7 +196,7 @@ phase('Judge')
 const confirmed = allFindings.filter(f => f.confirmed)
 // The judge is the ONE agent whose output controls PASS/BLOCK. If it drops out, fail SAFE to
 // BLOCK — never throw (that would be fail-open for a binding gate).
-const verdict = (await agent(judgePrompt(confirmed, TIER, allFindings.length, failedDims), { label: 'judge', phase: 'Judge', model: 'opus', schema: GATE_SCHEMA }).catch(() => null))
+const verdict = (await agent(judgePrompt(confirmed, TIER, failedDims, advisory), { label: 'judge', phase: 'Judge', model: 'opus', schema: GATE_SCHEMA }).catch(() => null))
   || { verdict: 'BLOCK', summary: 'Judge agent dropped out — auto-BLOCK to protect the binding gate.', blockers: [{ id: 'judge-dropout', file: '(gate)', title: 'Opus judge returned no structured verdict', fix: 'Re-run qa.js.' }] }
 
 const criticalGap = failedDims.filter(d => DIMENSIONS.find(x => x.key === d && x.critical))
@@ -210,8 +219,10 @@ if (mustBlock.length) {
 return {
   tier: TIER,
   ref: REF,
-  candidates: allFindings.length,
+  verified: allFindings.length,
   confirmed: confirmed.length,
+  advisory_count: advisory.length,
+  advisory: advisory.map(f => ({ id: f.id, severity: f.severity, file: f.file, title: f.title })),
   dimensions_failed: failedDims,
   critical_gap: criticalGap,
   verdict: finalVerdict,

@@ -89,11 +89,13 @@ Everything else stays T1–T4. **Classifying a task T5 IS your standing authoriz
 | `research.js` | research | multi-modal sweep → deep-read → adversarial verify → synthesize | ~15-20 | cited brief |
 | `qa.js` | QA gate | 4-5 dimension reviewers → 3 adversarial verifiers/finding → Opus judge | ~15-20 (loop-until-dry → ~25-40 on Irreversible) | **binding PASS/BLOCK** |
 
-**T5 cost/model envelope:** Sonnet fleet (finders/builders/verifiers) · Opus synthesis/judge · Haiku trivial classification. Per-ticket ceiling is **$15** for T5 (vs $10 default). A ~15-20 agent run lands ≈ $3-6; an Irreversible loop-until-dry run up to ≈ $15. Pass a `budget` directive when you want a hard cap.
+**T5 cost/model envelope:** Sonnet fleet (finders/builders/verifiers) · Opus synthesis/judge · Haiku trivial classification. Per-ticket ceiling is **$15** for T5 (vs $10 default). Cost scales with *block-eligible* findings: `qa.js` 3-vote-verifies only P1 (and P2 at irreversible), so a clean diff is ~6-10 agents (≈ $4-6) and a buggy one scales bounded. **Caveat (2026-06-03 dogfood):** the gate reviewing its *own* net-new code took 5 runs / ~$85-110 to converge — a worst-case self-referential target; real app-code diffs against the established codebase are far cheaper. The $15 ceiling is advisory, not yet hard-enforced (a budget directive isn't CEO-settable on named-workflow calls — open follow-up).
 
 ### T5 ↔ the sacred QA gate
 
-`qa.js` **IS** the QA-Lead verdict — binding. A `BLOCK` stops the merge; CEO and Adam cannot override it. This is the same gate, now powered by the deterministic fleet: the *script* spawns the reviewers, so QA-Lead no longer has to return a packet it structurally cannot execute. **T5-coding output always chains into `qa.js` before any merge.**
+`qa.js` **IS** the QA-Lead verdict — binding. A `BLOCK` stops the merge and **the CEO cannot override it.** This is the same gate, now powered by the deterministic fleet: the *script* spawns the reviewers, so QA-Lead no longer has to return a packet it structurally cannot execute. **T5-coding output always chains into `qa.js` before any merge.**
+
+**False-positive appeal (Adam only).** The gate can occasionally over-block on a false-positive or over-severe finding (observed during the 2026-06-03 dogfood). Only **Adam (board)** may override a `BLOCK`, and only via a **logged, finding-by-finding appeal**: each dismissed finding gets a one-line written justification posted to the PR + appended to `DECISIONS.md`. Rules: (1) the CEO surfaces the appeal option but never exercises it; (2) an appeal may dismiss only findings argued to be false-positive/over-severe — **never** a confirmed real defect; (3) cost-control: `qa.js` only 3-vote-verifies *block-eligible* findings (P1 always; P2 at irreversible) — P3/advisory findings are reported unverified and never block.
 
 ## Validators (out-of-band — never in teams)
 

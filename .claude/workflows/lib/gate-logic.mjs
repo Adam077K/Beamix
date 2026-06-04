@@ -27,6 +27,15 @@ export function isConfirmed(votes) {
 }
 
 /**
+ * A finding is block-eligible (worth spending 3 adversarial verifiers on) only if its severity
+ * could actually BLOCK at this tier: P1 always; P2 only at irreversible. P3 (and P2 at full) are
+ * non-blocking, so we report them advisory/unverified rather than paying to verify them.
+ */
+export function isBlockEligible(severity, tier) {
+  return severity === 'P1' || (tier === 'irreversible' && severity === 'P2')
+}
+
+/**
  * Deterministic gate verdict — never trusts the judge LLM alone.
  * BLOCK if a critical dimension failed to review, OR a confirmed P1 exists,
  * OR (irreversible tier) a confirmed P1/P2 exists. Else defer to the judge verdict.

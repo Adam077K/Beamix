@@ -1,6 +1,19 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { normalizeArgs, isConfirmed, decideVerdict, capBySeverity } from './gate-logic.mjs'
+import { normalizeArgs, isConfirmed, decideVerdict, capBySeverity, isBlockEligible } from './gate-logic.mjs'
+
+test('isBlockEligible: P1 always eligible', () => {
+  assert.equal(isBlockEligible('P1', 'full'), true)
+  assert.equal(isBlockEligible('P1', 'irreversible'), true)
+})
+test('isBlockEligible: P2 eligible only at irreversible', () => {
+  assert.equal(isBlockEligible('P2', 'full'), false)
+  assert.equal(isBlockEligible('P2', 'irreversible'), true)
+})
+test('isBlockEligible: P3 never eligible', () => {
+  assert.equal(isBlockEligible('P3', 'full'), false)
+  assert.equal(isBlockEligible('P3', 'irreversible'), false)
+})
 
 test('normalizeArgs: object passes through', () => {
   assert.deepEqual(normalizeArgs({ tier: 'full' }), { tier: 'full' })
