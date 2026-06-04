@@ -145,8 +145,18 @@ const failedDims = dimResults.filter(r => !r.ok).map(r => r.dimension)
 const rawFindings = dimResults.flatMap(r => r.findings.map(f => ({ ...f, dimension: r.dimension })))
 
 // ── Phase 2: adversarial verify ──
+// Bound fan-out: cap verification at the highest-severity findings (P1>P2>P3) so a flood of
+// low-severity findings can't spawn unbounded verifier agents. Never silently truncate — log it.
+// (Cap/vote/verdict logic mirrors the unit-tested spec in ./lib/gate-logic.mjs — keep in sync.)
+const MAX_VERIFY = 40
+const SEV_ORDER = { P1: 0, P2: 1, P3: 2 }
+let toVerify = rawFindings
+if (rawFindings.length > MAX_VERIFY) {
+  toVerify = [...rawFindings].sort((a, b) => (SEV_ORDER[a.severity] ?? 3) - (SEV_ORDER[b.severity] ?? 3)).slice(0, MAX_VERIFY)
+  log(`Capping verification at ${MAX_VERIFY}/${rawFindings.length} findings (highest-severity first); ${rawFindings.length - MAX_VERIFY} lower-severity findings deferred to a follow-up run.`)
+}
 phase('Verify')
-const verified = await parallel(rawFindings.map(f => () => verifyFinding(f, 'Verify')))
+const verified = await parallel(toVerify.map(f => () => verifyFinding(f, 'Verify')))
 let allFindings = verified.filter(Boolean)
 const seen = new Set(allFindings.map(f => f.id))
 
