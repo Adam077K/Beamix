@@ -4,6 +4,18 @@
 
 ---
 
+### [2026-05-30] — WAVE 2 SHIPPED — merge train complete (all 6 branches on main)
+
+**Decision:** Landed Wave 2 via **squash-integration** (fresh branch from live main + `merge --squash`, one clean commit per branch) over literal rebase — cleaner history, conflicts resolved once. Each merge gated on CEO-run build+tests *inside the target worktree* + out-of-band code/security review + Adam `--admin` sign-off.
+
+**Result:** main = `6c50e9f` (#117). PRs #111/#113/#114/#115/#116/#117. Merged main verified green: tsc 0, `next build` 0, vitest **108/108 (10 files)**.
+
+**QA value proven:** the gate caught **7 P1s** that built clean — atomic-consume TOCTOU money leak (#113), RLS-blocked approvals UPDATE that silently no-op'd for everyone +3 more (#114), founding panel showing wrong cohort number (#116). None catchable by typecheck/build alone.
+
+**Release blockers RESOLVED 2026-05-30 (Adam, same session):** migration `20260529000007` applied + `APPROVAL_SIGNING_SECRET` set in Vercel. Remaining non-blocker: regenerate `database.types.ts`. Follow-ups in `docs/08-agents_work/handoff/2026-05-30-handoff-wave2-complete.md`.
+
+**Process correction (now memory `feedback-verify-build-in-worktree`):** verify in-worktree, never transcribe worker pass-claims into a verdict, sanity-check PR diff file-count.
+
 ### [2026-05-27] — WAVE 1 SHIPPED — agency-pivot customer surface live + maxTurns lifted
 
 **Decision:** Beamix Wave 1 (agency-pivot customer-facing surface) merged to `main` across 7 PRs (#86–#92). The product can now flow free scan → discovery booking → 30-min text discovery agent → brand fingerprint capture → outcomes dashboard v1 + approval queue shell.

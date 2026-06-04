@@ -22,6 +22,8 @@ import { checkDailyCap, incrementDailyCap } from '../credits/daily-cap';
 import { lockPage, unlockPage } from '../coordination/page-locks';
 import { registerTopic } from '../coordination/topic-ledger';
 import { AgentError, QAFailedError, PageLockedError } from '../errors';
+import { consumeDeliverable, OverTierCapError } from '../../billing/deliverables';
+import type { DeliverableKind } from '../../billing/tier-caps';
 import type { AgentJobInput, AgentJobOutput, AgentType, CostEntry, PipelineStage, QAResult } from '../types';
 import { buildPipelineContext } from './context';
 import { newStepState, type StepState } from './steps/shared';
@@ -30,6 +32,8 @@ import { runResearchStep } from './steps/research';
 import { runDoStep } from './steps/do';
 import { runQAStep } from './steps/qa';
 import { runSummarizeStep, type SummaryResult } from './steps/summarize';
+import { resolveArtifactType } from '../config/registry';
+import type { GatedPublishRequestedEvent, RiskFlag } from '../approval-gate-writer/types';
 
 /** Map the agent's deliverable to the `agent_job_outputs.content_format` value. */
 function resolveContentFormat(agentType: AgentType): AgentJobOutput['contentFormat'] {
@@ -41,6 +45,36 @@ function resolveContentFormat(agentType: AgentType): AgentJobOutput['contentForm
       return 'structured_report';
     default:
       return 'markdown';
+  }
+}
+
+/**
+ * Map an agent type to the `DeliverableKind` it produces, or `null` if the
+ * agent emits a report/internal artefact that is not counted against the
+ * monthly deliverable cap (e.g. query_mapper, performance_tracker).
+ *
+ * Called by the pipeline runner before `persistOutput` to gate publishing.
+ */
+function resolveDeliverableKind(agentType: AgentType): DeliverableKind | null {
+  switch (agentType) {
+    case 'schema_generator':
+      return 'schema_pushed';
+    case 'faq_builder':
+      return 'faq_published';
+    case 'offsite_presence_builder':
+    case 'entity_builder':
+      return 'citation_submitted';
+    case 'content_optimizer':
+    case 'freshness_agent':
+    case 'authority_blog_strategist':
+      return 'content_published';
+    // Agents below produce internal reports — not gated by deliverable caps.
+    case 'query_mapper':
+    case 'performance_tracker':
+    case 'review_presence_planner':
+    case 'reddit_presence_planner':
+    default:
+      return null;
   }
 }
 
@@ -140,8 +174,29 @@ async function persistOutput(
   }
 }
 
+/** Pipeline result — the assembled output plus an optional gated-publish intent. */
+export interface AgentPipelineResult {
+  output: AgentJobOutput;
+  /**
+   * Non-null only when ALL of:
+   *   1. The agent's `requiresApproval` flag is true (from registry).
+   *   2. An artifact was actually produced and persisted to `agent_job_outputs`
+   *      (gatedPublish is set AFTER persistOutput in the success path — any persist
+   *      failure throws and the catch block re-throws without setting gatedPublish).
+   *   3. A non-empty `customerId` (= `input.userId` = `auth.users.id`) was available.
+   * Otherwise null — no `gated_publish.requested` event should be emitted.
+   *
+   * Stability guarantee: runAgentPipeline is called inside `step.run` in agent-execute.
+   * Inngest memoises the step's serialised return value (including gatedPublish) across
+   * retries — the pipeline does not re-execute, and gatedPublish is stable per run.
+   */
+  gatedPublish: GatedPublishRequestedEvent | null;
+}
+
 /**
- * Run the full agent pipeline for one job. Returns the assembled `AgentJobOutput`.
+ * Run the full agent pipeline for one job. Returns the assembled `AgentJobOutput`
+ * plus an optional `gatedPublish` intent that the Inngest wrapper must emit via
+ * `step.sendEvent` (exactly-once memoisation applies at the Inngest layer).
  *
  * Failure handling:
  *   - Any thrown error releases held credits and the page lock, marks the job failed,
@@ -151,7 +206,7 @@ async function persistOutput(
  * The page lock is acquired before DO and released in a `finally` block that runs on
  * every exit path — success, QA failure, or any thrown error.
  */
-export async function runAgentPipeline(input: AgentJobInput): Promise<AgentJobOutput> {
+export async function runAgentPipeline(input: AgentJobInput): Promise<AgentPipelineResult> {
   const startedAt = Date.now();
   const state: StepState = newStepState();
 
@@ -237,6 +292,15 @@ export async function runAgentPipeline(input: AgentJobInput): Promise<AgentJobOu
       durationMs: Date.now() - startedAt,
     };
 
+    // ---- Deliverable cap gate ----------------------------------------
+    // Check BEFORE persisting — a cap breach aborts the publish without
+    // writing to agent_job_outputs or inbox_items.
+    // Agents that produce reports (no external publish) return null and skip.
+    const deliverableKind = resolveDeliverableKind(input.agentType);
+    if (deliverableKind !== null) {
+      await consumeDeliverable({ customerId: input.userId, kind: deliverableKind, count: 1 });
+    }
+
     // ---- Persist + finalize ----------------------------------------------
     await persistCosts(input.jobId, input.userId, state.costEntries);
     await persistOutput(output, summary, business.businessId, input.userId);
@@ -262,7 +326,13 @@ export async function runAgentPipeline(input: AgentJobInput): Promise<AgentJobOu
       })
       .eq('id', input.jobId);
 
-    return output;
+    // ---- Build gated-publish intent (if applicable) -----------------------
+    // Conditions: requiresApproval flag + artifact persisted + non-empty customerId.
+    // The customerId is the userId in the Beamix SaaS model (one-to-one mapping).
+    // `artifactId` uses `jobId` — the stable FK to `agent_job_outputs.job_id`.
+    const gatedPublish = buildGatedPublishIntent(input, output, config.requiresApproval);
+
+    return { output, gatedPublish };
   } catch (err) {
     // Release credits for paid agents — the run did not complete.
     if (!config.isFree) {
@@ -272,6 +342,14 @@ export async function runAgentPipeline(input: AgentJobInput): Promise<AgentJobOu
     await persistCosts(input.jobId, input.userId, state.costEntries).catch(() => undefined);
 
     const message = err instanceof Error ? err.message : 'unknown pipeline error';
+
+    // Deliverable cap breach — mark job failed with the customer-facing message.
+    // The customer message from OverTierCapError is already formatted without agent names.
+    if (err instanceof OverTierCapError) {
+      await markJobFailed(input.jobId, err.customerMessage).catch(() => undefined);
+      throw err;
+    }
+
     if (err instanceof QAFailedError) {
       // The QA-fail status was already written; only set the error message.
       await getAdminClient()
@@ -298,6 +376,103 @@ export async function runAgentPipeline(input: AgentJobInput): Promise<AgentJobOu
 /** Compact, log-safe summary of QA issues for the `agent_jobs.error_message` column. */
 function qaIssuesSummary(err: QAFailedError): string {
   return err.qaResult.issues.slice(0, 5).join('; ').slice(0, 1500);
+}
+
+/**
+ * Build the `GatedPublishRequestedEvent` payload from a completed pipeline run.
+ *
+ * Returns `null` when any required condition is not met:
+ *   - `requiresApproval` is false for this agent kind.
+ *   - `customerId` (userId) is empty or missing.
+ *   - The artifact type could not be resolved for the agent.
+ *
+ * Logging: skips are recorded via `console.warn` with a structured payload so
+ * ops can investigate unexpected nulls (e.g. misconfigured agent or missing userId).
+ *
+ * customerId identity proof (schema-grounded):
+ *   `approval_queue.customer_id REFERENCES user_profiles(id)` — migration 20260525000001.
+ *   `user_profiles.id uuid PRIMARY KEY REFERENCES auth.users(id)` — migration 20260520100003.
+ *   Therefore approval_queue.customer_id = user_profiles.id = auth.users.id = input.userId.
+ *   There is no separate `customers` table; user_profiles IS the customer identity table.
+ *   brand_fingerprints also keys on `customer_id REFERENCES user_profiles(id)`.
+ */
+function buildGatedPublishIntent(
+  input: AgentJobInput,
+  output: AgentJobOutput,
+  requiresApproval: boolean,
+): GatedPublishRequestedEvent | null {
+  if (!requiresApproval) {
+    return null;
+  }
+
+  // customerId = input.userId — both reference auth.users(id) via user_profiles(id).
+  // Schema chain: approval_queue.customer_id → user_profiles.id → auth.users.id.
+  // See migration 20260525000001_agency_tables.sql line 14 + line 124.
+  const customerId = input.userId;
+  if (!customerId) {
+    console.warn(
+      JSON.stringify({
+        event: 'gated_publish_skipped',
+        reason: 'missing_customer_id',
+        agentType: input.agentType,
+        jobId: input.jobId,
+        businessId: input.businessId,
+      }),
+    );
+    return null;
+  }
+
+  const artifactType = resolveArtifactType(input.agentType);
+  if (!artifactType) {
+    // Defensive: registry says requiresApproval but no ArtifactType mapping exists.
+    console.warn(
+      JSON.stringify({
+        event: 'gated_publish_skipped',
+        reason: 'unresolvable_artifact_type',
+        agentType: input.agentType,
+        jobId: input.jobId,
+      }),
+    );
+    return null;
+  }
+
+  // Derive risk flags from the QA output. ymylFlagged → 'ymyl' risk flag.
+  const riskFlags: RiskFlag[] = output.ymylFlagged ? ['ymyl'] : [];
+
+  // artifactId: use jobId as the stable reference to `agent_job_outputs.job_id`.
+  // publishTarget: human-readable description derived from agent type + business.
+  // whyThisMatters / artifactPreview: derived from the pipeline summary output.
+  return {
+    customerId,
+    artifactType,
+    artifactId: input.jobId,
+    // First 300 chars of the primary content as the artifact preview.
+    artifactPreview: output.primaryContent.slice(0, 300),
+    // The summarize step's trigger reason explains business value; fall back to summaryText.
+    whyThisMatters: output.summaryText.slice(0, 500),
+    // Human-readable publish target: agent type + page URL if available.
+    publishTarget: input.targetUrl
+      ? `${resolvePublishTargetLabel(input.agentType)} at ${input.targetUrl}`
+      : resolvePublishTargetLabel(input.agentType),
+    riskFlags,
+    scheduledFor: undefined,
+  };
+}
+
+/** Human-readable publish target label per agent type. */
+function resolvePublishTargetLabel(agentType: AgentType): string {
+  switch (agentType) {
+    case 'authority_blog_strategist':
+      return 'your blog';
+    case 'content_optimizer':
+      return 'your website content';
+    case 'freshness_agent':
+      return 'your refreshed content';
+    case 'faq_builder':
+      return 'your FAQ page';
+    default:
+      return 'your website';
+  }
 }
 
 /** Re-thrown as-is so callers can branch on the typed error hierarchy. */

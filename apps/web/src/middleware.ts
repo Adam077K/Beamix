@@ -35,17 +35,22 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Guard (protected) routes — redirect to /login when no authenticated user.
+  // /approvals/quick/[token] is token-authenticated — no session required
+  const isApprovalQuickLink = pathname.startsWith('/approvals/quick/')
+
   const isProtected =
-    pathname.startsWith('/dashboard') ||
-    pathname.startsWith('/approvals') ||
-    pathname.startsWith('/home') ||
-    pathname.startsWith('/inbox') ||
-    pathname.startsWith('/scans') ||
-    pathname.startsWith('/automation') ||
-    pathname.startsWith('/archive') ||
-    pathname.startsWith('/competitors') ||
-    pathname.startsWith('/settings') ||
-    pathname.startsWith('/onboarding')
+    !isApprovalQuickLink && (
+      pathname.startsWith('/dashboard') ||
+      pathname.startsWith('/approvals') ||
+      pathname.startsWith('/home') ||
+      pathname.startsWith('/inbox') ||
+      pathname.startsWith('/scans') ||
+      pathname.startsWith('/automation') ||
+      pathname.startsWith('/archive') ||
+      pathname.startsWith('/competitors') ||
+      pathname.startsWith('/settings') ||
+      pathname.startsWith('/onboarding')
+    )
 
   if (isProtected && !user) {
     const loginUrl = request.nextUrl.clone()

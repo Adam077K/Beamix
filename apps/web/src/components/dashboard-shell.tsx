@@ -2,8 +2,8 @@
 
 import type { ReactNode } from 'react'
 import { useState } from 'react'
-import { Search } from 'lucide-react'
-import { Sidebar } from '@/components/sidebar'
+import { Search, Menu } from 'lucide-react'
+import { Sidebar, MobileDrawer } from '@/components/sidebar'
 import { CommandPalette } from '@/components/command-palette'
 
 interface DashboardShellProps {
@@ -23,29 +23,48 @@ export function DashboardShell({
   children,
 }: DashboardShellProps) {
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F7F7F7]">
-      {/* Sidebar */}
+    <div className="flex h-screen overflow-hidden bg-white">
+      {/* Persistent rail — hidden below md (drawer takes over) */}
       <Sidebar />
 
+      {/* Mobile overlay drawer — only renders below md */}
+      <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+
       {/* Main column */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Top bar */}
-        <header className="flex items-center justify-between h-14 px-4 border-b border-[#E5E7EB] bg-white shrink-0">
-          {/* ⌘K trigger */}
-          <button
-            onClick={() => setPaletteOpen(true)}
-            aria-label="Open command palette (⌘K)"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#E5E7EB] text-sm text-[#9CA3AF] bg-[#F7F7F7] hover:bg-white hover:border-[#D1D5DB] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1"
-          >
-            <Search className="w-3.5 h-3.5" />
-            <span>Search…</span>
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 ml-2 px-1.5 py-0.5 rounded border border-[#E5E7EB] text-[10px] font-medium text-[#9CA3AF] tracking-wide bg-white">
-              <span>⌘</span>
-              <span>K</span>
-            </kbd>
-          </button>
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        {/* Top bar — toolbar with a floor (border-b) */}
+        <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-[#E5E7EB] bg-white px-4">
+          {/* Left — hamburger (mobile only) */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Open navigation menu"
+              className="flex h-10 w-10 items-center justify-center rounded-md text-[#6B7280] transition-colors hover:bg-[#F7F7F7] hover:text-[#0A0A0A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1 md:hidden"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            {/* Search — muted utility, NOT the loudest element.
+                Full field ≥sm; collapses to an icon button below sm. */}
+            <button
+              onClick={() => setPaletteOpen(true)}
+              aria-label="Search"
+              className="hidden h-9 w-full max-w-[280px] items-center gap-2 rounded-md border border-transparent bg-[#F2F2F2] px-3 text-[13px] text-[#9CA3AF] transition-colors hover:bg-[#ECECEC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1 sm:flex"
+            >
+              <Search className="h-3.5 w-3.5" />
+              <span>Search</span>
+            </button>
+            <button
+              onClick={() => setPaletteOpen(true)}
+              aria-label="Search"
+              className="flex h-10 w-10 items-center justify-center rounded-md text-[#9CA3AF] transition-colors hover:bg-[#F7F7F7] hover:text-[#6B7280] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1 sm:hidden"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+          </div>
 
           {/* Right slot — notificationBell injected by Wave 1 FE-1 */}
           <div className="flex items-center gap-2">

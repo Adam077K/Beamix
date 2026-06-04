@@ -41,7 +41,6 @@ export interface LinkedInVerifyResult {
  * STUB — always returns `{ verified: true, confidence: 'low', source: 'stub' }`.
  * The stub is intentionally permissive so it never blocks signups.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function verifyLinkedInDomain(domain: string): Promise<LinkedInVerifyResult> {
   console.warn('[linkedin-stub] LinkedIn verification stub — real impl post-MVP', { domain })
 

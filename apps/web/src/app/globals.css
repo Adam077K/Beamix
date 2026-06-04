@@ -15,7 +15,10 @@
 
   --color-surface:         #FFFFFF;
   --color-surface-raised:  #FFFFFF;
-  --color-background:      #F7F7F7;
+  /* Canvas flips to white (Wave A). #F7F7F7 is now reserved for
+     inset / secondary panels only — see --color-panel below. */
+  --color-background:      #FFFFFF;
+  --color-panel:           #F7F7F7;
   --color-background-subtle: #F3F4F6;
 
   --color-border:          #E5E7EB;
@@ -48,6 +51,14 @@
   --radius-lg:   12px;
   --radius-xl:   16px;
   --radius-full: 9999px;
+  /* Console card radius (Wave A). 20px is the marketing register —
+     16px reads tighter / more premium for dense product surfaces. */
+  --radius-card: 16px;
+
+  /* Card finish (Wave A) — Stripe's tight two-layer tinted shadow.
+     White card + #E5E7EB hairline + this shadow sits on the page
+     instead of dissolving into a grey-on-grey wash. */
+  --shadow-card: 0 1px 2px rgba(10, 10, 10, 0.04), 0 1px 3px rgba(10, 10, 10, 0.06);
 
   /* Sidebar */
   --sidebar-width:          240px;
@@ -100,8 +111,26 @@ body {
     background-color: var(--color-surface);
   }
 
+  /* Inset / secondary panel surface — the only place #F7F7F7 lives now */
+  .bg-panel {
+    background-color: var(--color-panel);
+  }
+
   .border-default {
     border-color: var(--color-border);
+  }
+
+  /* Stripe two-layer tinted card shadow (Wave A) */
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Console card finish — white card + hairline + tinted shadow + 16px radius */
+  .card-console {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
   }
 
   /* Accent color utilities */
@@ -149,6 +178,32 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
+}
+
+/* ── Free-scan keyframes (DESIGN-DIRECTION §3, §4) ─────────── */
+
+/* Submit 3-dot mono pulse (ACT 1) */
+@keyframes scan-dot {
+  0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); }
+  40%           { opacity: 1;    transform: scale(1); }
+}
+
+/* Active-engine ring rotation (ACT 2) — the single "alive" element.
+   transform-only, isolated, will-change for perf. */
+@keyframes scan-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Live count shimmer on the active engine's number (ACT 2). */
+@keyframes scan-shimmer {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+/* Reduced motion: kill the perpetual ring + shimmer entirely (static fallback). */
+@media (prefers-reduced-motion: reduce) {
+  .scan-ring-spin { animation: none !important; }
+  .scan-count-shimmer { animation: none !important; }
 }
 
 /* ── Reduced motion ───────────────────────────────────────── */

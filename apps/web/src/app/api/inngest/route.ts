@@ -15,7 +15,16 @@
  *   - onDiscoveryCompleted   — discovery/completed (sends welcome email)
  *
  * Wave 2 additions:
- *   - digestBuilder          — cron: Sunday 16:00 UTC (W2.2 weekly digest)
+ *   - digestBuilder               — cron: Sunday 16:00 UTC (W2.2 weekly digest)
+ *   - revenueBookingSweep         — cron: day-61 held→booked revenue flip (W2.3 held-revenue)
+ *   - resetDeliverablesMonthlyCron — cron: 1st of month, reset deliverable counters (W2.1)
+ *   - sendApprovalPendingEmail    — approval.created (W2 approvals API)
+ *   - approvalGateWriter          — gated_publish.requested (Phase B wiring)
+ *
+ * Phase C additions (customer-success wiring):
+ *   - customerSuccessWeekly              — cron: Sunday 14:00 UTC (proactive nudge)
+ *   - customerSuccessOnApprovalRejected  — approval.rejected event
+ *   - customerSuccessOnOverCap           — deliverables.over_cap event
  */
 
 import { serve } from 'inngest/next';
@@ -24,6 +33,13 @@ import { agentExecute } from '../../../inngest/functions/agent-execute';
 import { foundingHundredMetrics } from '../../../inngest/functions/founding-100-metrics';
 import { onDiscoveryCompleted } from '../../../lib/email/send-welcome';
 import { digestBuilder } from '../../../inngest/functions/digest-builder';
+import { revenueBookingSweep } from '../../../inngest/functions/revenue-booking-sweep';
+import { resetDeliverablesMonthlyCron } from '../../../inngest/functions/reset-deliverables-monthly';
+import { sendApprovalPendingEmail } from '../../../inngest/functions/send-approval-pending-email';
+import { approvalGateWriter } from '../../../inngest/functions/approval-gate-writer';
+import { customerSuccessWeekly } from '../../../inngest/functions/customer-success-weekly';
+import { customerSuccessOnApprovalRejected } from '../../../inngest/functions/customer-success-on-approval-rejected';
+import { customerSuccessOnOverCap } from '../../../inngest/functions/customer-success-on-over-cap';
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -32,5 +48,13 @@ export const { GET, POST, PUT } = serve({
     foundingHundredMetrics,
     onDiscoveryCompleted,
     digestBuilder,
+    revenueBookingSweep,
+    resetDeliverablesMonthlyCron,
+    sendApprovalPendingEmail,
+    approvalGateWriter,
+    // Phase C — customer-success wiring
+    customerSuccessWeekly,
+    customerSuccessOnApprovalRejected,
+    customerSuccessOnOverCap,
   ],
 });

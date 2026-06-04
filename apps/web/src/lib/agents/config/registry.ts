@@ -7,6 +7,7 @@
  */
 
 import type { AgentConfig, AgentType, PipelineStage } from '../types';
+import type { ArtifactType } from '../approval-gate-writer/types';
 
 /** The 5-step pipeline run by credit-gated agents. */
 const FIVE_STEP: PipelineStage[] = ['plan', 'research', 'do', 'qa', 'summarize'];
@@ -33,6 +34,8 @@ export const AGENT_REGISTRY: AgentConfig[] = [
     requiresPageLock: false,
     requiresTopicLedger: false,
     ymylRisk: 'low',
+    // Produces an internal strategic report — not published externally, not gated.
+    requiresApproval: false,
   },
   {
     agentType: 'content_optimizer',
@@ -45,6 +48,8 @@ export const AGENT_REGISTRY: AgentConfig[] = [
     requiresPageLock: true,
     requiresTopicLedger: false,
     ymylRisk: 'medium',
+    // Content publish — gated per docs/03-system-design/ARCHITECTURE.md §A3.
+    requiresApproval: true,
   },
   {
     agentType: 'freshness_agent',
@@ -57,6 +62,8 @@ export const AGENT_REGISTRY: AgentConfig[] = [
     requiresPageLock: true,
     requiresTopicLedger: false,
     ymylRisk: 'low',
+    // Content publish — gated per docs/03-system-design/ARCHITECTURE.md §A3.
+    requiresApproval: true,
   },
   {
     agentType: 'faq_builder',
@@ -69,6 +76,8 @@ export const AGENT_REGISTRY: AgentConfig[] = [
     requiresPageLock: false,
     requiresTopicLedger: true,
     ymylRisk: 'medium',
+    // FAQ publish — gated per docs/03-system-design/ARCHITECTURE.md §A3.
+    requiresApproval: true,
   },
   {
     agentType: 'schema_generator',
@@ -81,6 +90,8 @@ export const AGENT_REGISTRY: AgentConfig[] = [
     requiresPageLock: false,
     requiresTopicLedger: false,
     ymylRisk: 'low',
+    // Schema auto-publishes — not gated per docs/03-system-design/ARCHITECTURE.md §A3.
+    requiresApproval: false,
   },
   {
     agentType: 'offsite_presence_builder',
@@ -93,6 +104,8 @@ export const AGENT_REGISTRY: AgentConfig[] = [
     requiresPageLock: false,
     requiresTopicLedger: false,
     ymylRisk: 'low',
+    // Citations auto-publish — not gated per docs/03-system-design/ARCHITECTURE.md §A3.
+    requiresApproval: false,
   },
   {
     agentType: 'review_presence_planner',
@@ -105,6 +118,8 @@ export const AGENT_REGISTRY: AgentConfig[] = [
     requiresPageLock: false,
     requiresTopicLedger: false,
     ymylRisk: 'low',
+    // Produces an internal strategic report — not published externally, not gated.
+    requiresApproval: false,
   },
   {
     agentType: 'entity_builder',
@@ -117,6 +132,8 @@ export const AGENT_REGISTRY: AgentConfig[] = [
     requiresPageLock: false,
     requiresTopicLedger: false,
     ymylRisk: 'low',
+    // Citations auto-publish — not gated per docs/03-system-design/ARCHITECTURE.md §A3.
+    requiresApproval: false,
   },
   {
     agentType: 'authority_blog_strategist',
@@ -130,6 +147,8 @@ export const AGENT_REGISTRY: AgentConfig[] = [
     requiresPageLock: true,
     requiresTopicLedger: true,
     ymylRisk: 'high',
+    // Blog post / content publish — gated per docs/03-system-design/ARCHITECTURE.md §A3.
+    requiresApproval: true,
   },
   {
     agentType: 'performance_tracker',
@@ -142,6 +161,8 @@ export const AGENT_REGISTRY: AgentConfig[] = [
     requiresPageLock: false,
     requiresTopicLedger: false,
     ymylRisk: 'low',
+    // Internal analytics report — not gated.
+    requiresApproval: false,
   },
   {
     agentType: 'reddit_presence_planner',
@@ -154,6 +175,8 @@ export const AGENT_REGISTRY: AgentConfig[] = [
     requiresPageLock: false,
     requiresTopicLedger: false,
     ymylRisk: 'low',
+    // Produces an internal strategic report — not published externally, not gated.
+    requiresApproval: false,
   },
 ];
 
@@ -174,4 +197,30 @@ export function getAgentConfig(agentType: AgentType): AgentConfig {
 /** True if the agent is available on the given plan tier. */
 export function isAgentAvailable(agentType: AgentType, planTier: AgentConfig['availableOnTiers'][number]): boolean {
   return getAgentConfig(agentType).availableOnTiers.includes(planTier);
+}
+
+/**
+ * Map an agent type to the `ArtifactType` used in `gated_publish.requested`.
+ * Returns `null` for agents whose output is not subject to the approval gate
+ * (internal reports, auto-publishing agents).
+ *
+ * Gated agents: content_optimizer, freshness_agent, faq_builder, authority_blog_strategist.
+ * Per docs/03-system-design/ARCHITECTURE.md §Gating Rules (A3).
+ */
+export function resolveArtifactType(agentType: AgentType): ArtifactType | null {
+  switch (agentType) {
+    case 'authority_blog_strategist':
+      return 'blog_post';
+    case 'content_optimizer':
+    case 'freshness_agent':
+      // Both agents produce updated/optimised page content — mapped to blog_post
+      // artifact type (closest canonical fit for a published content piece).
+      return 'blog_post';
+    case 'faq_builder':
+      return 'faq';
+    default:
+      // schema_generator, offsite_presence_builder, entity_builder, query_mapper,
+      // review_presence_planner, performance_tracker, reddit_presence_planner — not gated.
+      return null;
+  }
 }

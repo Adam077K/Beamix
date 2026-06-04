@@ -10,6 +10,7 @@
 
 import { Inngest, EventSchemas } from 'inngest';
 import type { AgentType, PlanTier } from '../lib/agents/types';
+import type { ArtifactType, RiskFlag } from '../lib/agents/approval-gate-writer/types';
 
 /** Payload for `agent/run.requested` — mirrors `AgentJobInput`. */
 export interface AgentRunRequestedData {
@@ -54,12 +55,85 @@ export interface ScanFreeRequestedData {
   ip: string;
 }
 
+/** Payload for `approval.created` — fired when a new approval_queue row is inserted. */
+export interface ApprovalCreatedData {
+  approvalId: string;
+  kind: string;
+  customerId: string;
+  createdAt: string;
+}
+
+/** Payload for `approval.approved` — fired by approveApprovalItem Server Action. */
+export interface ApprovalApprovedData {
+  approvalId: string;
+  kind: string;
+  customerId: string;
+  actedAt: string;
+}
+
+/** Payload for `approval.rejected` — fired by rejectApprovalItem Server Action. */
+export interface ApprovalRejectedData {
+  approvalId: string;
+  kind: string;
+  customerId: string;
+  actedAt: string;
+}
+
+/**
+ * Payload for `gated_publish.requested` — mirrors GatedPublishRequestedEvent from
+ * approval-gate-writer/types. Triggers the approval-gate-writer Inngest function.
+ */
+export interface GatedPublishRequestedData {
+  customerId: string;
+  artifactType: ArtifactType;
+  /** Stable ID of the underlying artifact (agent_job_outputs id, outreach id, etc). */
+  artifactId: string;
+  /** Full body for outreach emails; first 300 chars otherwise. */
+  artifactPreview: string;
+  /** Why this matters for AI search visibility — from the generating agent. */
+  whyThisMatters: string;
+  /** Human-readable publish target ("your blog at /resources, Tuesday 10am ET"). */
+  publishTarget: string;
+  /** Risk flags from the upstream agent. */
+  riskFlags: RiskFlag[];
+  /** Optional recipient context for outreach emails. */
+  recipientContext?: string;
+  /** Scheduled publish/send time (ISO string). */
+  scheduledFor?: string;
+}
+
+/**
+ * Payload for `deliverables.over_cap` — fired fire-and-forget by consumeDeliverable when
+ * OverTierCapError is thrown. Consumed by customer-success-on-over-cap Inngest function to
+ * send a proactive nudge email. The emit is best-effort (no await); cap enforcement never
+ * depends on this event — it is a nudge signal, not a ledger write.
+ */
+export interface DeliverablesOverCapData {
+  /** user_profiles.id of the affected customer. */
+  customerId: string;
+  /** Which deliverable kind hit the cap (matches DeliverableKind in tier-caps). */
+  kind: string;
+  /** The count that was in use at the time of the breach. */
+  currentCount: number;
+  /** The monthly cap value for this tier + kind. */
+  cap: number;
+  /** ISO timestamp of when the breach was detected. */
+  occurredAt: string;
+}
+
 /** Typed event map for the Beamix Inngest client. */
 export type BeamixEvents = {
   'agent/run.requested': { data: AgentRunRequestedData };
   'discovery.booked': { data: DiscoveryBookedData };
   'discovery/completed': { data: DiscoveryCompletedData };
   'scan/free.requested': { data: ScanFreeRequestedData };
+  'approval.created': { data: ApprovalCreatedData };
+  'approval.approved': { data: ApprovalApprovedData };
+  'approval.rejected': { data: ApprovalRejectedData };
+  'gated_publish.requested': { data: GatedPublishRequestedData };
+  'deliverables.over_cap': { data: DeliverablesOverCapData };
+  // Reserved; emitted by approval-gate-writer + customer-success (Worker C). Worker C must NOT re-register this event.
+  'cost.alert': { data: { customerId: string; feature: string; costUsd: number } };
 };
 
 /**

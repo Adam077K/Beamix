@@ -9,11 +9,20 @@
  *   - Three tools: fetch_site_content, fetch_gbp, emit_brand_fingerprint
  *   - Prompt caching: stable system prompt marked cache_control:ephemeral
  *   - Cost alert threshold: $2.00/session
- *   - YMYL detection: server-side ymylSignalDetected flag maintained across ALL signal
- *     sources (user message, LLM text_delta, tool call inputs, tool results). When the
- *     flag is true at emit time, the server FORCES requires_human_approval=true regardless
- *     of LLM-emitted value — prompt-injection defence (Fix 5 CRITICAL).
- *   - Hebrew YMYL terms included: רפואי, משפטי, השקעה, מטבע, ביטוח, פסיכולוג
+ *   - YMYL detection (ACTIVE): detectYmyl() + recursive detectYmylInJson() run on:
+ *       • incoming user message
+ *       • streamed LLM text
+ *       • crawled site content (bodyText + headlines)
+ *       • every tool_use input (deep-scan)
+ *       • every tool result (deep-scan of structured objects)
+ *     Any hit (1) emits a `ymyl_flag` chunk to the client AND (2) sets a sticky
+ *     server-side flag that FORCES requires_human_approval=true at emit time,
+ *     overriding any LLM-supplied value (prompt-injection defence — Fix 5).
+ *     Hebrew YMYL terms included: רפואי, משפטי, השקעה, מטבע, ביטוח, פסיכולוג.
+ *   - Per-session input-token budget hard-close (ACTIVE — Fix 6): cumulative
+ *     input + cache-read tokens are capped at MAX_TOTAL_TOKENS_PER_SESSION
+ *     (100k). When exceeded, the agent yields a terminal error chunk and returns
+ *     BEFORE the next paid LLM call. Bounds cost-DoS impact per session.
  *   - Never names the agent; customer-facing voice is "Beamix"
  *
  * CALLER NOTE (Fix 6 — cost-DoS mitigation):
@@ -21,8 +30,7 @@
  *   Callers (SSE endpoint at be-w1-discovery-chat) must pass history via
  *   `serverFetchedHistory` (fetched server-side from discovery_sessions.messages JSONB,
  *   already capped at 50 by the SSE endpoint). Passing raw caller-supplied conversation
- *   history is no longer accepted — that cost-DoS vector is now closed.
- *   MAX_TOTAL_TOKENS_PER_SESSION=100_000 is enforced server-side per session.
+ *   history is no longer accepted — that cost-DoS vector is closed.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -44,12 +52,9 @@ const COST_PER_1M_INPUT = 3.0;
 const COST_PER_1M_OUTPUT = 15.0;
 const COST_PER_1M_CACHE_READ = 0.3; // 10% of input rate
 
-/**
- * Fix 6: Hard token budget per session.
- * If the accumulated input token count across all loop turns exceeds this ceiling,
- * the agent hard-closes with a session_token_budget_exceeded error.
- * This prevents runaway cost even if large server-fetched history somehow leaks through.
- */
+// Fix 6: per-session input-token budget hard-cap. If the cumulative input + cache-read
+// token spend on a single discovery session crosses this ceiling, we hard-close before
+// the next paid LLM call to bound cost-DoS impact.
 const MAX_TOTAL_TOKENS_PER_SESSION = 100_000;
 
 /** Compute USD cost for a single Anthropic response. */
@@ -98,13 +103,13 @@ function detectYmyl(text: string): string | null {
 }
 
 /**
- * Fix 5: Deep-walk a JSON value and run detectYmyl on every string leaf.
- * Used to scan tool_call inputs for prompt-injected YMYL content.
+ * Fix 5: Recursively walk a JSON-like value, applying detectYmyl() to every
+ * string leaf. Used to deep-scan tool inputs and tool results for prompt-injected
+ * YMYL content that would otherwise slip past the streaming-text scan.
+ * Returns the first YMYL reason encountered, or null if clean.
  */
 function detectYmylInJson(value: unknown): string | null {
-  if (typeof value === 'string') {
-    return detectYmyl(value);
-  }
+  if (typeof value === 'string') return detectYmyl(value);
   if (Array.isArray(value)) {
     for (const item of value) {
       const found = detectYmylInJson(item);
@@ -144,13 +149,13 @@ export async function* runDiscoveryAgent(
 ): AsyncGenerator<DiscoveryChunk> {
   const sessionId = randomUUID();
   let totalCostUsd = 0;
-  let totalInputTokensThisSession = 0; // Fix 6: session token budget accumulator
+  let totalInputTokensThisSession = 0;
   let costAlertEmitted = false;
   let fingerprint: BrandFingerprint | null = null;
-
-  // Fix 5: YMYL signal flag maintained at loop scope.
-  // Set true on ANY detection across: user message, LLM text_delta, tool call inputs, tool results.
-  // Once true, never reverts — sticky safety flag that cannot be reset by any LLM output.
+  // Fix 5: sticky YMYL signal. Set true on ANY detection (incoming user message,
+  // streamed LLM text, tool inputs, tool results). NEVER reset. Threaded into
+  // sessionCtx at emit time so the server forces requires_human_approval=true,
+  // regardless of any value the LLM supplies.
   let ymylSignalDetected = false;
 
   const anthropic = new Anthropic({
@@ -213,6 +218,23 @@ export async function* runDiscoveryAgent(
   while (loopCount < MAX_LOOPS) {
     loopCount += 1;
 
+    // Fix 6: token-budget DoS hard-close — refuse to start the next paid LLM call
+    // once the cumulative input + cache-read token spend on this session crosses
+    // the per-session ceiling. Bounds cost-DoS impact for any single customer.
+    if (totalInputTokensThisSession > MAX_TOTAL_TOKENS_PER_SESSION) {
+      console.log(
+        JSON.stringify({
+          event: 'session_token_budget_exceeded',
+          session_id: sessionId,
+          customer_id: input.customerId,
+          total_input_tokens: totalInputTokensThisSession,
+          budget: MAX_TOTAL_TOKENS_PER_SESSION,
+        }),
+      );
+      yield { type: 'error', message: 'session_token_budget_exceeded', retryable: false };
+      return;
+    }
+
     let stream: ReturnType<Anthropic.Messages['stream']>;
 
     try {
@@ -253,7 +275,7 @@ export async function* runDiscoveryAgent(
         if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
           assistantText += event.delta.text;
 
-          // Fix 5: Check for YMYL in streaming text — set loop-scope flag.
+          // Fix 5: Check for YMYL in streaming text — set sticky flag.
           const ymylReason = detectYmyl(event.delta.text);
           if (ymylReason) {
             ymylSignalDetected = true;
@@ -286,6 +308,8 @@ export async function* runDiscoveryAgent(
 
       const callCost = computeCostUsd(inputTokens, outputTokens, cacheReadTokens);
       totalCostUsd += callCost;
+      // Fix 6: accumulate input + cache-read tokens for the per-session DoS budget guard.
+      totalInputTokensThisSession += inputTokens + cacheReadTokens;
 
       // Cost logging — required on every LLM call
       console.log(
@@ -367,6 +391,26 @@ export async function* runDiscoveryAgent(
             toolInput: toolUse.input as Record<string, unknown>,
           };
 
+          // Fix 5: deep-scan tool input BEFORE executing the tool. An attacker who
+          // smuggles YMYL terms into a tool argument (e.g. fetch_site_content URL
+          // path, emit_brand_fingerprint fields) must trip the sticky flag here
+          // so requires_human_approval is forced at emit time.
+          const inputYmyl = detectYmylInJson(toolUse.input);
+          if (inputYmyl) {
+            ymylSignalDetected = true;
+            console.log(
+              JSON.stringify({
+                event: 'ymyl_signal_detected',
+                source: 'tool_use_input',
+                tool_name: toolUse.name,
+                reason: inputYmyl,
+                session_id: sessionId,
+                loop_count: loopCount,
+              }),
+            );
+            yield { type: 'ymyl_flag', reason: `Tool input (${toolUse.name}): ${inputYmyl}` };
+          }
+
           let toolResultContent: string;
           let toolSuccess = true;
 
@@ -376,10 +420,38 @@ export async function* runDiscoveryAgent(
               const result = await executeFetchSiteContent(toolInput.url);
               toolResultContent = JSON.stringify(result);
 
-              // Check crawled content for YMYL
+              // Check crawled content for YMYL (Fix 5 — sticky)
               const ymylReason = detectYmyl(result.bodyText + result.headlines.join(' '));
               if (ymylReason) {
+                ymylSignalDetected = true;
+                console.log(
+                  JSON.stringify({
+                    event: 'ymyl_signal_detected',
+                    source: 'site_crawl_body',
+                    reason: ymylReason,
+                    session_id: sessionId,
+                    loop_count: loopCount,
+                  }),
+                );
                 yield { type: 'ymyl_flag', reason: `Site content: ${ymylReason}` };
+              }
+
+              // Fix 5: deep-scan the structured tool result for prompt-injected YMYL
+              // (e.g. malicious headlines or metadata not caught by the body+headlines scan).
+              const resultYmyl = detectYmylInJson(result);
+              if (resultYmyl) {
+                ymylSignalDetected = true;
+                console.log(
+                  JSON.stringify({
+                    event: 'ymyl_signal_detected',
+                    source: 'tool_result',
+                    tool_name: 'fetch_site_content',
+                    reason: resultYmyl,
+                    session_id: sessionId,
+                    loop_count: loopCount,
+                  }),
+                );
+                yield { type: 'ymyl_flag', reason: `Tool result (fetch_site_content): ${resultYmyl}` };
               }
 
               yield {
@@ -394,6 +466,23 @@ export async function* runDiscoveryAgent(
               const toolInput = toolUse.input as { business_name: string };
               const result = executeFetchGBP(toolInput.business_name);
               toolResultContent = JSON.stringify(result);
+
+              // Fix 5: deep-scan tool result for prompt-injected YMYL.
+              const resultYmyl = detectYmylInJson(result);
+              if (resultYmyl) {
+                ymylSignalDetected = true;
+                console.log(
+                  JSON.stringify({
+                    event: 'ymyl_signal_detected',
+                    source: 'tool_result',
+                    tool_name: 'fetch_gbp',
+                    reason: resultYmyl,
+                    session_id: sessionId,
+                    loop_count: loopCount,
+                  }),
+                );
+                yield { type: 'ymyl_flag', reason: `Tool result (fetch_gbp): ${resultYmyl}` };
+              }
 
               yield {
                 type: 'tool_result',
@@ -436,7 +525,10 @@ export async function* runDiscoveryAgent(
                   preview: `Evidence gate: only ${evidenceLinkCount}/${MIN_EVIDENCE_LINKS} evidence links — continuing discovery`,
                 };
               } else {
-              const sessionCtx: SessionContext = { customerId: input.customerId };
+              const sessionCtx: SessionContext = {
+                customerId: input.customerId,
+                ymylSignalDetected,
+              };
               const validated = executeEmitBrandFingerprint(rawInput, sessionCtx);
               fingerprint = validated;
               toolResultContent = JSON.stringify({ success: true, brief_version_id: validated.brief_version_id });

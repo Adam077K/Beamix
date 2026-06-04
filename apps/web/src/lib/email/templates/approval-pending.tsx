@@ -190,7 +190,7 @@ export function ApprovalPendingEmail({
             <Text style={styles.footerText}>
               © {new Date().getFullYear()} Beamix. All rights reserved.
               <br />
-              You're receiving this because your account has pending approvals.
+              You&apos;re receiving this because your account has pending approvals.
             </Text>
           </Section>
         </Container>
