@@ -2,7 +2,7 @@
  * Beamix Free Scan — Stage 3: Gemini Flash Analysis
  *
  * Reads all three engine results and produces a structured AnalysisResult
- * via Gemini Flash (google/gemini-flash-1.5).
+ * via Gemini Flash (google/gemini-2.0-flash — approved model).
  *
  * Returns FreeScanResults — the exact shape written to free_scans.results JSONB.
  */
@@ -11,7 +11,7 @@ import { callOpenRouter } from './openrouter-client';
 import { buildAnalysisPrompt, parseAnalysisResult } from './prompts';
 import type { BusinessContext, EngineRawResult, FreeScanResults } from './types';
 
-const ANALYSIS_MODEL = 'google/gemini-flash-1.5';
+const ANALYSIS_MODEL = 'google/gemini-2.0-flash';
 
 /**
  * Stage 3: Analyse the three engine results and produce a FreeScanResults blob.
@@ -52,6 +52,7 @@ export async function analyse(
 
   return {
     issues: parsed.issues,
+    // total_issues is always computed from ground truth — never trust LLM value
     total_issues: parsed.total_issues,
     engines_checked: 3,
     visibility_score: parsed.overall_score,

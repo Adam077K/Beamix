@@ -4,9 +4,9 @@
  * Queries three AI engines via OpenRouter to determine GEO visibility.
  * Prompts are IDENTICAL across engines to ensure comparability.
  *
- * Models (per beamix-scan-architecture SKILL.md):
- *   chatgpt   → openai/gpt-4o
- *   gemini    → google/gemini-1.5-pro
+ * Models (approved):
+ *   chatgpt    → openai/gpt-4o
+ *   gemini     → google/gemini-2.0-flash  (updated from gemini-1.5-pro)
  *   perplexity → perplexity/llama-3.1-sonar-large-128k-online
  */
 
@@ -18,7 +18,7 @@ type Engine = EngineRawResult['engine'];
 
 const ENGINE_MODELS: Record<Engine, string> = {
   chatgpt: 'openai/gpt-4o',
-  gemini: 'google/gemini-1.5-pro',
+  gemini: 'google/gemini-2.0-flash',
   perplexity: 'perplexity/llama-3.1-sonar-large-128k-online',
 };
 
