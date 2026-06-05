@@ -986,6 +986,62 @@ export type Database = {
           },
         ]
       }
+      free_scans: {
+        Row: {
+          business_name: string
+          completed_at: string | null
+          converted_user_id: string | null
+          created_at: string
+          domain: string
+          email: string
+          error_message: string | null
+          id: string
+          ip: string
+          results: Json | null
+          started_at: string | null
+          status: string
+          website_url: string
+        }
+        Insert: {
+          business_name: string
+          completed_at?: string | null
+          converted_user_id?: string | null
+          created_at?: string
+          domain: string
+          email: string
+          error_message?: string | null
+          id?: string
+          ip: string
+          results?: Json | null
+          started_at?: string | null
+          status?: string
+          website_url: string
+        }
+        Update: {
+          business_name?: string
+          completed_at?: string | null
+          converted_user_id?: string | null
+          created_at?: string
+          domain?: string
+          email?: string
+          error_message?: string | null
+          id?: string
+          ip?: string
+          results?: Json | null
+          started_at?: string | null
+          status?: string
+          website_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "free_scans_converted_user_id_fkey"
+            columns: ["converted_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inbox_items: {
         Row: {
           agent_type: Database["public"]["Enums"]["agent_type"] | null
