@@ -20,6 +20,7 @@ const mockCallOpenRouter = vi.fn();
 vi.mock('./openrouter-client', () => ({
   callOpenRouter: mockCallOpenRouter,
   requireEnv: vi.fn().mockReturnValue('test-key'),
+  resolveOpenRouterKey: vi.fn().mockReturnValue('test-key'),
 }));
 
 // Import after mocking
@@ -147,5 +148,27 @@ describe('analyse() — Stage 3 Gemini Flash analysis', () => {
 
     const result = await analyse(ALL_NOT_MENTIONED, BUSINESS_CONTEXT, 'scan-test-6');
     expect(result.visibility_score).toBeLessThanOrEqual(100);
+  });
+
+  it('(7) total_issues equals sum of issue counts — LLM-provided total ignored', async () => {
+    // LLM returns total_issues=99 but issues sum to 5 — ground truth must win
+    const badTotal = JSON.stringify({
+      overall_score: 40,
+      issues: [
+        { category: 'Missing from AI answers', count: 3 },
+        { category: 'No citation sources', count: 2 },
+      ],
+      total_issues: 99, // wrong — LLM hallucinated
+    });
+    mockCallOpenRouter.mockResolvedValueOnce(makeORResponse(badTotal));
+
+    const result = await analyse(ALL_NOT_MENTIONED, BUSINESS_CONTEXT, 'scan-test-7');
+
+    // Must compute from issues, not trust LLM value
+    expect(result.total_issues).toBe(5);
+    expect(result.total_issues).not.toBe(99);
+    // Verify it equals the actual sum
+    const groundTruth = result.issues.reduce((s, i) => s + i.count, 0);
+    expect(result.total_issues).toBe(groundTruth);
   });
 });

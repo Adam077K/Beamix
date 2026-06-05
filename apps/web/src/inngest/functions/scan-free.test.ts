@@ -2,13 +2,16 @@
  * Tests for scan-free Inngest function.
  *
  * Test matrix:
- *   (a) Happy path — all stages called in order; persist-results receives
- *       a FreeScanResults object with all 4 required keys.
- *   (b) Stage 1 failure (research throws) → mark-failed writes status='failed'
- *       + error_message; original error is re-thrown.
+ *   (a) Happy path — all stages run in order; persist-results receives a
+ *       FreeScanResults object with all 4 required keys; single 'engine-queries' step.
+ *   (b) Stage-1 failure (research throws) → mark-failed writes status='failed'
+ *       + error_message ≤500 chars; original error is re-thrown.
  *   (c) Engine partial failure (Promise.all short-circuits) → mark-failed.
  *   (d) Idempotency — handler called twice with same scan_id; research mock
  *       call count = 1 (second call replays from step cache).
+ *   (e) Kill-switch active → check-budget marks failed with 'scanning_paused',
+ *       NO engine calls made.
+ *   (f) total_issues always equals sum of issue counts (ground truth, not LLM value).
  *
  * Mocks:
  *   - @supabase/supabase-js — captured update payload via mock
@@ -24,13 +27,28 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mutable refs to capture what gets passed to .update()
 const capturedUpdates: Array<Record<string, unknown>> = [];
+// Mutable: controls whether kill switch reports paused
+let mockKillSwitchPaused = false;
 
 const mockEq = vi.fn().mockImplementation(() => ({ error: null }));
+const mockMaybeSingle = vi.fn().mockImplementation(() => {
+  if (mockKillSwitchPaused) {
+    // paused_until set to far future
+    return { data: { paused_until: new Date(Date.now() + 1_000_000).toISOString() }, error: null };
+  }
+  return { data: null, error: null };
+});
+const mockSelect = vi.fn().mockReturnValue({
+  eq: vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle }),
+});
 const mockUpdate = vi.fn().mockImplementation((payload: Record<string, unknown>) => {
   capturedUpdates.push(payload);
   return { eq: mockEq };
 });
-const mockFrom = vi.fn().mockReturnValue({ update: mockUpdate });
+const mockFrom = vi.fn().mockReturnValue({
+  update: mockUpdate,
+  select: mockSelect,
+});
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn().mockReturnValue({ from: mockFrom }),
@@ -44,6 +62,7 @@ const mockCallOpenRouter = vi.fn();
 vi.mock('../../lib/scan/openrouter-client', () => ({
   callOpenRouter: mockCallOpenRouter,
   requireEnv: vi.fn().mockReturnValue('test-key'),
+  resolveOpenRouterKey: vi.fn().mockReturnValue('test-key'),
 }));
 
 // ---------------------------------------------------------------------------
@@ -99,29 +118,11 @@ const MOCK_BUSINESS_CONTEXT: BusinessContext = {
   location: 'Tel Aviv',
 };
 
-const MOCK_ENGINE_RESULT_MENTIONED: EngineRawResult = {
-  engine: 'chatgpt',
-  is_mentioned: true,
-  rank_position: 2,
-  sentiment: 'positive',
-  raw_response: '{}',
-};
-
-const MOCK_ENGINE_RESULT_NOT_MENTIONED: EngineRawResult = {
-  engine: 'gemini',
-  is_mentioned: false,
-  rank_position: null,
-  sentiment: null,
-  raw_response: '{}',
-};
-
-const MOCK_PERPLEXITY_RESULT: EngineRawResult = {
-  engine: 'perplexity',
-  is_mentioned: false,
-  rank_position: null,
-  sentiment: null,
-  raw_response: '{}',
-};
+const MOCK_ENGINE_RESULTS: [EngineRawResult, EngineRawResult, EngineRawResult] = [
+  { engine: 'chatgpt', is_mentioned: true, rank_position: 2, sentiment: 'positive', raw_response: '{}' },
+  { engine: 'gemini', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '{}' },
+  { engine: 'perplexity', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '{}' },
+];
 
 const MOCK_FREE_SCAN_RESULTS = {
   issues: [{ category: 'Missing from AI answers', count: 2 }],
@@ -165,7 +166,8 @@ const ENGINE_NOT_MENTIONED_JSON = JSON.stringify({
 const ANALYSIS_JSON = JSON.stringify({
   overall_score: 33,
   issues: [{ category: 'Missing from AI answers', count: 2 }],
-  total_issues: 2,
+  // LLM returns a wrong total — ground truth must be computed from issues
+  total_issues: 99,
 });
 
 // ---------------------------------------------------------------------------
@@ -195,16 +197,31 @@ describe('scan-free Inngest function', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     capturedUpdates.length = 0;
+    mockKillSwitchPaused = false;
+
     // Re-wire mock chains after clearAllMocks
     mockEq.mockImplementation(() => ({ error: null }));
+    mockMaybeSingle.mockImplementation(() => {
+      if (mockKillSwitchPaused) {
+        return { data: { paused_until: new Date(Date.now() + 1_000_000).toISOString() }, error: null };
+      }
+      return { data: null, error: null };
+    });
+    mockSelect.mockReturnValue({
+      eq: vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle }),
+    });
     mockUpdate.mockImplementation((payload: Record<string, unknown>) => {
       capturedUpdates.push(payload);
       return { eq: mockEq };
     });
-    mockFrom.mockReturnValue({ update: mockUpdate });
+    mockFrom.mockReturnValue({
+      update: mockUpdate,
+      select: mockSelect,
+    });
   });
 
-  it('(a) happy path — all stages run in order; persist-results writes FreeScanResults with all 4 keys', async () => {
+  it('(a) happy path — all stages run in order; single engine-queries step; FreeScanResults has all 4 keys', async () => {
+    // 1: research, 2-4: chatgpt+gemini+perplexity (all inside engine-queries), 5: analysis
     mockCallOpenRouter
       .mockResolvedValueOnce(makeORResponse(RESEARCH_JSON))
       .mockResolvedValueOnce(makeORResponse(ENGINE_MENTIONED_JSON))
@@ -220,7 +237,7 @@ describe('scan-free Inngest function', () => {
     // Return value
     expect(result.scan_id).toBe('scan-001');
 
-    // Check that persist-results step was called with all 4 FreeScanResults keys
+    // Check persist-results step was called with all 4 FreeScanResults keys
     const persistPayload = capturedUpdates.find((p) => p['status'] === 'complete');
     expect(persistPayload).toBeDefined();
 
@@ -231,32 +248,38 @@ describe('scan-free Inngest function', () => {
     expect(persisted).toHaveProperty('visibility_score');
     expect(Array.isArray(persisted['issues'])).toBe(true);
 
-    // Step IDs — verify named steps were called
+    // Step IDs — single 'engine-queries' step (not 3 separate steps)
     const stepNames = (step.run.mock.calls as Array<[string]>).map(([name]) => name);
+    expect(stepNames).toContain('check-budget');
     expect(stepNames).toContain('mark-running');
     expect(stepNames).toContain('perplexity-research');
-    expect(stepNames).toContain('engine-chatgpt');
-    expect(stepNames).toContain('engine-gemini');
-    expect(stepNames).toContain('engine-perplexity');
+    expect(stepNames).toContain('engine-queries');
+    expect(stepNames).not.toContain('engine-chatgpt');
+    expect(stepNames).not.toContain('engine-gemini');
+    expect(stepNames).not.toContain('engine-perplexity');
     expect(stepNames).toContain('gemini-flash-analysis');
     expect(stepNames).toContain('persist-results');
   });
 
-  it('(b) stage-1 failure → mark-failed is called + rethrows', async () => {
-    // Research (first OpenRouter call) throws
-    mockCallOpenRouter.mockRejectedValueOnce(new Error('Perplexity timeout'));
+  it('(b) engine-stage failure → mark-failed is called + rethrows; error_message ≤500 chars', async () => {
+    // Stage 1 (research) now never throws — it falls back internally on failure.
+    // Use an engine-stage failure to exercise the mark-failed path.
+    // Research succeeds (1 call), then ALL engine queries fail (3 calls).
+    mockCallOpenRouter
+      .mockResolvedValueOnce(makeORResponse(RESEARCH_JSON)) // research
+      .mockRejectedValueOnce(new Error('OpenRouter 5xx error (openai/gpt-4o)')) // chatgpt
+      .mockRejectedValueOnce(new Error('OpenRouter 5xx error (google/gemini-2.0-flash)')) // gemini
+      .mockRejectedValueOnce(new Error('OpenRouter 5xx error (perplexity/llama)')) // perplexity
 
     const step = buildStep();
 
     await expect(
       capturedHandler!({ event: { data: SCAN_EVENT_DATA }, step }),
-    ).rejects.toThrow('Perplexity timeout');
+    ).rejects.toThrow();
 
-    // mark-failed step must have been called
     const stepNames = (step.run.mock.calls as Array<[string]>).map(([name]) => name);
     expect(stepNames).toContain('mark-failed');
 
-    // mark-failed should have written status='failed'
     const failedPayload = capturedUpdates.find((p) => p['status'] === 'failed');
     expect(failedPayload).toBeDefined();
     expect(typeof failedPayload!['error_message']).toBe('string');
@@ -264,15 +287,11 @@ describe('scan-free Inngest function', () => {
     expect((failedPayload!['error_message'] as string).length).toBeLessThanOrEqual(500);
   });
 
-  it('(c) engine partial failure (gemini throws) → mark-failed is called', async () => {
-    // Research succeeds
+  it('(c) engine partial failure → mark-failed is called', async () => {
     mockCallOpenRouter
       .mockResolvedValueOnce(makeORResponse(RESEARCH_JSON))
-      // chatgpt succeeds
       .mockResolvedValueOnce(makeORResponse(ENGINE_MENTIONED_JSON))
-      // gemini fails
       .mockRejectedValueOnce(new Error('gemini timeout'))
-      // perplexity may or may not be called (Promise.all rejects on first failure)
       .mockResolvedValueOnce(makeORResponse(ENGINE_NOT_MENTIONED_JSON));
 
     const step = buildStep();
@@ -287,7 +306,6 @@ describe('scan-free Inngest function', () => {
   });
 
   it('(d) idempotency — second call with step cache replays; research called only once', async () => {
-    // Set up 5 responses for the first full run
     mockCallOpenRouter
       .mockResolvedValueOnce(makeORResponse(RESEARCH_JSON))
       .mockResolvedValueOnce(makeORResponse(ENGINE_MENTIONED_JSON))
@@ -295,27 +313,73 @@ describe('scan-free Inngest function', () => {
       .mockResolvedValueOnce(makeORResponse(ENGINE_NOT_MENTIONED_JSON))
       .mockResolvedValueOnce(makeORResponse(ANALYSIS_JSON));
 
-    // ── First invocation (full run) ──────────────────────────────────────
     const stepFirst = buildStep();
     await capturedHandler!({ event: { data: SCAN_EVENT_DATA }, step: stepFirst });
-
     const callsAfterFirst = mockCallOpenRouter.mock.calls.length;
     expect(callsAfterFirst).toBe(5);
 
-    // ── Second invocation (replay — all steps return cached values) ───────
+    // Second invocation: all steps replay from cache — no LLM calls
     const stepSecond = buildStep({
+      'check-budget': false,
       'mark-running': undefined,
       'perplexity-research': MOCK_BUSINESS_CONTEXT,
-      'engine-chatgpt': MOCK_ENGINE_RESULT_MENTIONED,
-      'engine-gemini': MOCK_ENGINE_RESULT_NOT_MENTIONED,
-      'engine-perplexity': MOCK_PERPLEXITY_RESULT,
+      'engine-queries': MOCK_ENGINE_RESULTS,
       'gemini-flash-analysis': MOCK_FREE_SCAN_RESULTS,
       'persist-results': undefined,
     });
 
     await capturedHandler!({ event: { data: SCAN_EVENT_DATA }, step: stepSecond });
 
-    // Research must NOT have been called again (replayed from cache)
+    // No new LLM calls — all replayed from step cache
     expect(mockCallOpenRouter.mock.calls.length).toBe(5);
+  });
+
+  it('(e) kill-switch active → check-budget marks scan failed with scanning_paused; NO engine calls', async () => {
+    mockKillSwitchPaused = true;
+
+    const step = buildStep();
+
+    // Should throw NonRetriableError('scanning_paused')
+    await expect(
+      capturedHandler!({ event: { data: SCAN_EVENT_DATA }, step }),
+    ).rejects.toThrow('scanning_paused');
+
+    // check-budget step ran
+    const stepNames = (step.run.mock.calls as Array<[string]>).map(([name]) => name);
+    expect(stepNames).toContain('check-budget');
+
+    // No engine calls — pipeline was gated before mark-running
+    expect(mockCallOpenRouter).not.toHaveBeenCalled();
+
+    // The free_scan row must have been marked failed with scanning_paused
+    const failedPayload = capturedUpdates.find(
+      (p) => p['status'] === 'failed' && p['error_message'] === 'scanning_paused',
+    );
+    expect(failedPayload).toBeDefined();
+  });
+
+  it('(f) total_issues always equals sum of issue counts — LLM-provided value ignored', async () => {
+    // ANALYSIS_JSON has total_issues=99 (wrong), but issues=[{count:2}]
+    // The pipeline must compute total_issues=2, not trust 99
+    mockCallOpenRouter
+      .mockResolvedValueOnce(makeORResponse(RESEARCH_JSON))
+      .mockResolvedValueOnce(makeORResponse(ENGINE_MENTIONED_JSON))
+      .mockResolvedValueOnce(makeORResponse(ENGINE_NOT_MENTIONED_JSON))
+      .mockResolvedValueOnce(makeORResponse(ENGINE_NOT_MENTIONED_JSON))
+      .mockResolvedValueOnce(makeORResponse(ANALYSIS_JSON));
+
+    const step = buildStep();
+    await capturedHandler!({ event: { data: SCAN_EVENT_DATA }, step });
+
+    const persistPayload = capturedUpdates.find((p) => p['status'] === 'complete');
+    expect(persistPayload).toBeDefined();
+
+    const persisted = persistPayload!['results'] as { issues: Array<{ count: number }>; total_issues: number };
+    const groundTruth = persisted.issues.reduce((s, i) => s + i.count, 0);
+
+    // Must match ground truth (2), not LLM-provided value (99)
+    expect(persisted.total_issues).toBe(groundTruth);
+    expect(persisted.total_issues).toBe(2);
+    expect(persisted.total_issues).not.toBe(99);
   });
 });
