@@ -4,6 +4,18 @@
 
 ---
 
+### [2026-06-05] — SCAN ENGINE BUILT (Track A) — the missing core, QA-PASSED
+
+**Finding:** The GEO scan engine did not exist on main. `/api/scan/free` fired `scan/free.requested` with no consumer, no scan lib, and the `free_scans` table itself was never created in any migration — so the free-scan front door was silently broken at the insert step. The product's "diagnose" half + top-of-funnel lead magnet was hollow.
+
+**Built (IRREVERSIBLE, QA-PASSED):** `feat/scan-engine-db` (free_scans migration + types, RLS service-role-only) + `feat/scan-engine-worker` (scan lib + `scan-free.ts` Inngest fn). Pipeline: Perplexity research → 3 engine queries (gpt-4o, gemini-2.0-flash, perplexity sonar via OpenRouter) → Gemini Flash analysis → FreeScanResults JSONB. ~$0.05/scan, 13 tests. Output contract locked to the result-page JSONB shape.
+
+**QA value:** security caught a Critical wallet-drain (public endpoint, ~$4.5K–$45K/mo) → fixed with budget guard (system_kill_switch + daily/hourly free_scans count caps + email plus-strip). code-review caught 5 P1 (2 unapproved models, prompt injection, mark-running-outside-try, false never-throws). QA-Lead caught a final P1 (paused_by 'system' written to a uuid column, fail-open broke the latch). All fixed; CEO-verified in-worktree tsc 0 / 13 tests. Codex unavailable (graceful degradation).
+
+**Decision — defer-to-followup (accepted by QA-Lead):** OPENROUTER_SCAN_KEY dedicated key (fallback in place), WHOIS DNS/ownership, drop email/ip from Inngest payload, PII retention cron, XFF hardening, status text→enum.
+
+**Adam-run before merge:** sign-off (IRREVERSIBLE) + `supabase db push` 20260605120000_free_scans.sql (ref zhjxdwcqxhwletkpuwyl). Merge W1→W2. Session: docs/08-agents_work/sessions/2026-06-05-ceo-scan-engine.md
+
 ### [2026-05-30] — WAVE 2 SHIPPED — merge train complete (all 6 branches on main)
 
 **Decision:** Landed Wave 2 via **squash-integration** (fresh branch from live main + `merge --squash`, one clean commit per branch) over literal rebase — cleaner history, conflicts resolved once. Each merge gated on CEO-run build+tests *inside the target worktree* + out-of-band code/security review + Adam `--admin` sign-off.

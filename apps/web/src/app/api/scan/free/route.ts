@@ -9,12 +9,16 @@
  *   3. Rate limits: per-IP 3/24h + per-email 1/24h + per-domain 2/7d
  *   4. CIDR allowlist (RATE_LIMIT_ALLOWLIST env) + adamkey signed-token allowlist
  *   5. WHOIS age check — reject domains registered < 30 days ago (unless allowlisted)
+ *   6. Budget guard: kill-switch + daily/hourly scan volume caps (SCAN_FREE_DAILY_BUDGET,
+ *      SCAN_FREE_HOURLY_BUDGET). Daily cap breach auto-activates the kill switch.
+ *   7. Email plus-stripping: plus addressing (+alias) cannot bypass per-email rate limit.
  *
  * Returns:
  *   202  { scan_id }  — scan accepted and queued via Inngest
  *   400  validation errors
  *   429  rate limited (includes Retry-After header)
  *   500  internal error
+ *   503  scanning temporarily paused (kill switch active or budget exceeded)
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -30,6 +34,19 @@ import {
 import { isDomainTooNew } from '@/lib/security/whois'
 
 export const dynamic = 'force-dynamic'
+
+// ---------------------------------------------------------------------------
+// Budget defaults
+// ---------------------------------------------------------------------------
+
+const SCAN_FREE_DAILY_BUDGET = parseInt(
+  process.env.SCAN_FREE_DAILY_BUDGET ?? '500',
+  10,
+)
+const SCAN_FREE_HOURLY_BUDGET = parseInt(
+  process.env.SCAN_FREE_HOURLY_BUDGET ?? '60',
+  10,
+)
 
 // ---------------------------------------------------------------------------
 // Input schema
@@ -52,6 +69,19 @@ const FreeScanBodySchema = z.object({
 })
 
 export type FreeScanBody = z.infer<typeof FreeScanBodySchema>
+
+// ---------------------------------------------------------------------------
+// Email normalisation — strip plus addressing before rate-limit dedup
+// ---------------------------------------------------------------------------
+
+/**
+ * Normalise an email address for rate-limit dedup and storage.
+ * Plus-addressing (user+alias@domain) maps to user@domain so that
+ * e.g. attacker+1@gmail.com and attacker+2@gmail.com share a rate-limit bucket.
+ */
+function normaliseEmail(email: string): string {
+  return email.toLowerCase().replace(/\+[^@]*@/, '@')
+}
 
 // ---------------------------------------------------------------------------
 // Turnstile verification
@@ -111,6 +141,96 @@ async function logHoneypotTrigger(ip: string, email: string, domain: string): Pr
 }
 
 // ---------------------------------------------------------------------------
+// Budget guard
+// ---------------------------------------------------------------------------
+
+/**
+ * Budget check result.
+ * - allowed: true if within budget
+ * - reason: 'kill_switch' | 'daily_cap' | 'hourly_cap' — only set if !allowed
+ */
+interface BudgetCheckResult {
+  allowed: boolean
+  reason?: 'kill_switch' | 'daily_cap' | 'hourly_cap'
+}
+
+/**
+ * Check the system kill switch and scan volume budgets.
+ * - Reads system_kill_switch (id=1); paused_until in the future → blocked.
+ * - Counts free_scans in the last 24h; >= SCAN_FREE_DAILY_BUDGET → auto-activates
+ *   the kill switch and returns blocked.
+ * - Counts free_scans in the last 1h; >= SCAN_FREE_HOURLY_BUDGET → blocked (no
+ *   kill-switch flip for hourly — it's transient).
+ */
+async function checkBudget(supabase: ReturnType<typeof getAdminClient>): Promise<BudgetCheckResult> {
+  // 1. Kill-switch check
+  try {
+    const { data: ksRow } = await supabase
+      .from('system_kill_switch')
+      .select('paused_until')
+      .eq('id', 1)
+      .maybeSingle()
+
+    if (ksRow?.paused_until && new Date(ksRow.paused_until) > new Date()) {
+      return { allowed: false, reason: 'kill_switch' }
+    }
+  } catch (err) {
+    // Fail open — don't block scans on a read error
+    console.error('[scan/free] Kill-switch read failed', { error: String(err) })
+  }
+
+  // 2. Daily budget — count scans in last 24h
+  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  try {
+    const { count: dailyCount, error: dailyErr } = await supabase
+      .from('free_scans')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', since24h)
+
+    if (!dailyErr && dailyCount !== null && dailyCount >= SCAN_FREE_DAILY_BUDGET) {
+      console.error('[scan/free] Daily budget exceeded — activating kill switch', {
+        count: dailyCount,
+        budget: SCAN_FREE_DAILY_BUDGET,
+      })
+      // Auto-activate kill switch for 24h
+      const pausedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      await supabase
+        .from('system_kill_switch')
+        .upsert({
+          id: 1,
+          paused_until: pausedUntil,
+          reason: 'daily_free_scan_budget_exceeded',
+          updated_at: new Date().toISOString(),
+        })
+      return { allowed: false, reason: 'daily_cap' }
+    }
+  } catch (err) {
+    console.error('[scan/free] Daily budget check failed', { error: String(err) })
+  }
+
+  // 3. Hourly budget — count scans in last 1h
+  const since1h = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  try {
+    const { count: hourlyCount, error: hourlyErr } = await supabase
+      .from('free_scans')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', since1h)
+
+    if (!hourlyErr && hourlyCount !== null && hourlyCount >= SCAN_FREE_HOURLY_BUDGET) {
+      console.error('[scan/free] Hourly budget exceeded', {
+        count: hourlyCount,
+        budget: SCAN_FREE_HOURLY_BUDGET,
+      })
+      return { allowed: false, reason: 'hourly_cap' }
+    }
+  } catch (err) {
+    console.error('[scan/free] Hourly budget check failed', { error: String(err) })
+  }
+
+  return { allowed: true }
+}
+
+// ---------------------------------------------------------------------------
 // Handler
 // ---------------------------------------------------------------------------
 
@@ -143,7 +263,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     )
   }
 
-  const { business_name, website_url, email, turnstile_token, website_confirm } = parsed.data
+  const { business_name, website_url, turnstile_token, website_confirm } = parsed.data
+
+  // Normalise email — strip plus addressing for rate-limit + storage dedup
+  const email = normaliseEmail(parsed.data.email)
 
   // ---------------------------------------------------------------------------
   // Honeypot check — return fake 200 silently
@@ -188,7 +311,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   // ---------------------------------------------------------------------------
-  // Rate limiting
+  // Rate limiting (per-IP + per-email + per-domain)
   // ---------------------------------------------------------------------------
   const rateLimitResult = await checkFreeScanRateLimit({ ip, email, domain })
   if (!rateLimitResult.allowed) {
@@ -206,16 +329,36 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   // ---------------------------------------------------------------------------
-  // Create free_scan record + fire Inngest event
+  // Budget guard (kill switch + daily/hourly volume cap)
+  // Placed AFTER per-IP/email rate limits to skip DB reads for already-blocked
+  // clients. BEFORE the free_scans insert so we never create a row we won't
+  // process.
   // ---------------------------------------------------------------------------
   const supabase = getAdminClient()
+  const budget = await checkBudget(supabase)
+  if (!budget.allowed) {
+    console.error('[scan/free] Budget guard blocked scan', {
+      reason: budget.reason,
+      ip,
+      domain,
+    })
+    return NextResponse.json(
+      { error: 'Scanning is temporarily paused. Please try again later.' },
+      { status: 503 }
+    )
+  }
+
+  // ---------------------------------------------------------------------------
+  // Create free_scan record + fire Inngest event
+  // ---------------------------------------------------------------------------
   const scanId = crypto.randomUUID()
 
   const { error: insertError } = await supabase.from('free_scans').insert({
     id: scanId,
     business_name,
     website_url,
-    email: email.toLowerCase(),
+    // Store normalised email (plus-stripped, lowercased)
+    email,
     domain,
     ip,
     status: 'queued',

@@ -25,6 +25,9 @@
  *   - customerSuccessWeekly              — cron: Sunday 14:00 UTC (proactive nudge)
  *   - customerSuccessOnApprovalRejected  — approval.rejected event
  *   - customerSuccessOnOverCap           — deliverables.over_cap event
+ *
+ * Scan engine (W1.1 — free scan pipeline):
+ *   - scanFree  — scan/free.requested (4-stage GEO pipeline: research → engines → analysis → persist)
  */
 
 import { serve } from 'inngest/next';
@@ -40,6 +43,7 @@ import { approvalGateWriter } from '../../../inngest/functions/approval-gate-wri
 import { customerSuccessWeekly } from '../../../inngest/functions/customer-success-weekly';
 import { customerSuccessOnApprovalRejected } from '../../../inngest/functions/customer-success-on-approval-rejected';
 import { customerSuccessOnOverCap } from '../../../inngest/functions/customer-success-on-over-cap';
+import { scanFree } from '../../../inngest/functions/scan-free';
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -56,5 +60,7 @@ export const { GET, POST, PUT } = serve({
     customerSuccessWeekly,
     customerSuccessOnApprovalRejected,
     customerSuccessOnOverCap,
+    // Scan engine (W1.1) — free GEO scan pipeline
+    scanFree,
   ],
 });

@@ -292,7 +292,7 @@ describe('Agent Pipeline Cross-Function Chain', () => {
       let capturedGatedPublishPayload: GatedPublishRequestedData | null = null;
 
       // Spy on step.sendEvent to capture the emitted event
-      agentStep.sendEvent.mockImplementation(async (id: string, event: any) => {
+      agentStep.sendEvent.mockImplementation(async (id: string, event: { name: string; data: GatedPublishRequestedData }) => {
         if (event.name === 'gated_publish.requested') {
           capturedGatedPublishPayload = event.data;
         }
@@ -326,7 +326,7 @@ describe('Agent Pipeline Cross-Function Chain', () => {
 
       // Mock runApprovalGateWriter to emit approval.created
       mockRunApprovalGateWriter.mockImplementation(
-        async (data: GatedPublishRequestedData, callbacks: any) => {
+        async (data: GatedPublishRequestedData, callbacks: { emitApprovalCreated: (data: { approvalQueueId: string; artifactType: string; customerId: string }) => void }) => {
           callbacks.emitApprovalCreated({
             approvalQueueId: 'approval-queue-001',
             artifactType: data.artifactType,
@@ -337,7 +337,7 @@ describe('Agent Pipeline Cross-Function Chain', () => {
       );
 
       // Spy on step.sendEvent to capture the emitted event
-      approvalStep.sendEvent.mockImplementation(async (id: string, event: any) => {
+      approvalStep.sendEvent.mockImplementation(async (id: string, event: { name: string; data: ApprovalCreatedData }) => {
         if (event.name === 'approval.created') {
           capturedApprovalCreatedPayload = event.data;
         }
@@ -457,7 +457,7 @@ describe('Agent Pipeline Cross-Function Chain', () => {
       const nudgeCalls = mockRunCustomerSuccessNudge.mock.calls;
       expect(nudgeCalls).toHaveLength(1);
 
-      const nudgeConfig = nudgeCalls[0]?.[0] as any;
+      const nudgeConfig = nudgeCalls[0]?.[0] as Record<string, unknown>;
       expect(nudgeConfig).toHaveProperty('trigger', 'approval_rejected');
       expect(nudgeConfig).toHaveProperty('customerId', USER_ID);
     });
@@ -489,7 +489,7 @@ describe('Agent Pipeline Cross-Function Chain', () => {
       const nudgeCalls = mockRunCustomerSuccessNudge.mock.calls;
       expect(nudgeCalls).toHaveLength(1);
 
-      const nudgeConfig = nudgeCalls[0]?.[0] as any;
+      const nudgeConfig = nudgeCalls[0]?.[0] as Record<string, unknown>;
       expect(nudgeConfig).toHaveProperty('trigger', 'deliverables_over_cap');
       expect(nudgeConfig).toHaveProperty('customerId', USER_ID);
       expect(nudgeConfig.weeklyContext).toHaveProperty('concerns');
