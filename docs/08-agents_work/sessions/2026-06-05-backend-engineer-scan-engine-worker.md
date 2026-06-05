@@ -6,7 +6,9 @@ branch: feat/scan-engine-worker
 worktree: .worktrees/scan-engine-worker
 base_commit: 80d0f47
 tier: irreversible
-qa_verdict: PENDING
+qa_verdict: PASS
+qa_lead_verdict_commit: b8b08be
+qa_lead_note: "PASS — code-review 5 P1 fixed, security Critical (budget guard) fixed, QA-Lead paused_by P1 fixed. Codex unavailable (graceful degradation). CEO-verified in-worktree tsc 0 / 13 tests."
 ---
 
 ## Summary
