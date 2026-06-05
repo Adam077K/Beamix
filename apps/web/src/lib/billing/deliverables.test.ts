@@ -388,7 +388,6 @@ describe('consumeDeliverable', () => {
             return Promise.resolve({ data: null, error: mockInsertError });
           }),
         })),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         rpc: vi.fn((_fn: string, _args: unknown): Promise<{ data: number | null; error: null }> => {
           rpcCallCount++;
           mockCalls.push({ table: 'rpc', method: _fn as string, args: [_args] });
