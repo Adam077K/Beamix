@@ -2,6 +2,8 @@
 
 **March 2026 — Context-engineering document. Read before any design or copy task.**
 
+> **v4.1 update — 2026-06-05.** The product **design vision is canonical at `docs/design/DESIGN-VISION.md`** (warm-minimal soul, locked via founder grill). The palette below is the v4.0 base; it was expanded 2026-06-05 — the **authoritative role-scoped token table is DESIGN-VISION §3**. Key locked laws: `#3370FF` is the **only** primary/CTA color; **blue = you, violet `#6E56F0` = the agents** (violet never a button); added colors (violet, pastel washes `#EAF0FB`/`#ECE7FB`/`#FBEAF0`/`#E6F5EE`, warm off-white `#F7F6F2`, status pills, dark panels `#14140F`/`#0E1424`) are strictly role-scoped punctuation, never identity. Fraunces gains editorial *moments* only (never UI chrome). When this file and DESIGN-VISION disagree on the product, DESIGN-VISION wins.
+
 ---
 
 ## 1. Brand Identity

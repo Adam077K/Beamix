@@ -1,5 +1,7 @@
 # Beamix Product — Design Direction
 
+> **SUPERSEDED 2026-06-05 by `docs/design/DESIGN-VISION.md`.** This document's diagnoses (P1 failures) and type/spacing specs remain valid and were folded into DESIGN-VISION; its reference board is replaced by the locked `_product-feel/` set. Read DESIGN-VISION first.
+
 **For:** Adam (founder) · **From:** Design-Lead · **Date:** 2026-06-03
 **Scope:** The product app only (Next.js dashboard + funnel). Marketing (Framer) is out of scope.
 **Source:** Synthesis of three audits — console craft, conversion funnel + responsive, and three customer-persona walkthroughs — against the brand canon and the billion-dollar quality bar.

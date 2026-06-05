@@ -16,6 +16,22 @@
 
 **Adam-run before merge:** sign-off (IRREVERSIBLE) + `supabase db push` 20260605120000_free_scans.sql (ref zhjxdwcqxhwletkpuwyl). Merge W1→W2. Session: docs/08-agents_work/sessions/2026-06-05-ceo-scan-engine.md
 
+### [2026-06-05] — DESIGN VISION LOCKED (founder grill) — 8 decisions, single source of truth
+
+**Decision:** Product design vision locked via founder grill. Canonical doc: `docs/design/DESIGN-VISION.md` (the WHAT); `DESIGN-WORKFLOW.md` is the HOW; `BRAND_GUIDELINES.md` holds tokens. The 8:
+1. **Soul = warm-minimal** — restraint is the frame, warmth is the soul. Not austere, not maximalist.
+2. **Palette = full, strictly role-scoped** — `#3370FF` is the ONLY primary/CTA color; everything added is role-locked punctuation.
+3. **Signature law: blue = you, violet `#6E56F0` = the agents** (violet never a button). Agent runs/automations/AI/scan-diagram/score-gradient read violet.
+4. **Character = moments only** (empty/first-run/loading/404), no persistent companion — honors `project_beamie_deferred`.
+5. **Serif (Fraunces) = disciplined expansion** — editorial moments only, never UI chrome.
+6. **Motion = minimal / transitions-only**; the free-scan score reveal (PR #130) is the ONE sanctioned animation.
+7. **Designer-agent model = tight system, free composition** — primitives enforced exactly (critic BLOCKS), composition free (critic grades craft-parity).
+8. **Docs = consolidate/supersede/archive** — DESIGN-VISION is SOT; 2026-06-03 `design-audit/DESIGN-DIRECTION.md` superseded (mined); ~40 April-era design docs → `docs/_archive/design-april-2026/`.
+
+**Also locked this session:** `references/_product-feel/` = 6 (PostHog, Anthropic, Dia, Attio, Raycast, Linear); 40 references sorted + contracted in `references/CATALOG.md`; reference taxonomy = soul / screen / component with the per-image "color/brand never copied, only the move" law.
+
+**Affects:** product-designer, design-critic, design-polisher (definitions updated to point here + carry the laws); any frontend/design build; BRAND_GUIDELINES v4.1. **Open (engineering):** wire tokens into the Tailwind theme + `beamix-brand-quality-bar` skill. **Provenance:** session `docs/08-agents_work/sessions/2026-06-05-ceo-design-vision-grill.md`. **QA-PASSED** (binding gate, 0 findings) + Adam sign-off; merged via PR #142 (Irreversible tier).
+
 ### [2026-05-30] — WAVE 2 SHIPPED — merge train complete (all 6 branches on main)
 
 **Decision:** Landed Wave 2 via **squash-integration** (fresh branch from live main + `merge --squash`, one clean commit per branch) over literal rebase — cleaner history, conflicts resolved once. Each merge gated on CEO-run build+tests *inside the target worktree* + out-of-band code/security review + Adam `--admin` sign-off.
