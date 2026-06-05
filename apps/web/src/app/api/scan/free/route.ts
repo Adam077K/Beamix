@@ -200,7 +200,6 @@ async function checkBudget(supabase: ReturnType<typeof getAdminClient>): Promise
           id: 1,
           paused_until: pausedUntil,
           reason: 'daily_free_scan_budget_exceeded',
-          paused_by: 'system',
           updated_at: new Date().toISOString(),
         })
       return { allowed: false, reason: 'daily_cap' }
