@@ -1,0 +1,1 @@
+Drop screenshots in THIS folder. Name them: website_what-you-liked.png  (e.g. stripe_card-depth.png). Then tell the agent: sort the inbox.

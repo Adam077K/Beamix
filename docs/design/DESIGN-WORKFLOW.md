@@ -4,6 +4,8 @@ The canonical reference for how Beamix designs product screens. Everything else 
 
 This is the operating system Adam approved. Read it before touching any screen.
 
+> **The WHAT lives in `DESIGN-VISION.md` (canonical, locked 2026-06-05); this file is the HOW.** DESIGN-VISION holds the warm-minimal soul, the color laws (blue = you, violet = the agents), the type scale, the motion rule (minimal + free-scan exception), and the tight-system/free-composition operating model. Read DESIGN-VISION first, then run this pipeline.
+
 ---
 
 ## 1. The problem this fixes
