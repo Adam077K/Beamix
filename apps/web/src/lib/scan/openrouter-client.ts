@@ -7,21 +7,39 @@
  *   - fetchWithTimeout() with AbortController
  *   - Structured error logging
  *
- * Uses OPENROUTER_API_KEY (shared with the agent system).
- * NOTE: Cost-isolation gap — scan calls and agent calls share one key.
- * A separate OPENROUTER_SCAN_KEY split is tracked as a followup ticket.
+ * Key resolution: reads OPENROUTER_SCAN_KEY first; falls back to
+ * OPENROUTER_API_KEY so it works today and auto-isolates once the dedicated
+ * scan key is provisioned. Set DEBUG_OPENROUTER=1 to log full error bodies.
  */
+
+import { NonRetriableError } from 'inngest';
 
 const OPENROUTER_API = 'https://openrouter.ai/api/v1/chat/completions';
 const REQUEST_TIMEOUT_MS = 60_000; // 60s — scan steps are time-bounded
 
-/** Require an env var or throw a clear configuration error. */
+/** Require an env var or throw a NonRetriableError (burns no Inngest retries). */
 export function requireEnv(key: string): string {
   const value = process.env[key];
   if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`);
+    throw new NonRetriableError(`Missing required environment variable: ${key}`);
   }
   return value;
+}
+
+/**
+ * Resolve the OpenRouter API key.
+ * Prefers OPENROUTER_SCAN_KEY (scan-dedicated, for cost isolation).
+ * Falls back to OPENROUTER_API_KEY (shared with agent system).
+ * Throws NonRetriableError if neither is set — config errors must not retry.
+ */
+export function resolveOpenRouterKey(): string {
+  const scanKey = process.env['OPENROUTER_SCAN_KEY'];
+  if (scanKey) return scanKey;
+  const sharedKey = process.env['OPENROUTER_API_KEY'];
+  if (sharedKey) return sharedKey;
+  throw new NonRetriableError(
+    'Missing OpenRouter API key: set OPENROUTER_SCAN_KEY (preferred) or OPENROUTER_API_KEY',
+  );
 }
 
 /** fetch with an abort-based timeout. */
@@ -55,7 +73,7 @@ export interface OpenRouterResponse {
  * Throws on network error or non-2xx status.
  */
 export async function callOpenRouter(req: OpenRouterRequest): Promise<OpenRouterResponse> {
-  const apiKey = requireEnv('OPENROUTER_API_KEY');
+  const apiKey = resolveOpenRouterKey();
 
   const body = {
     model: req.model,
@@ -86,13 +104,24 @@ export async function callOpenRouter(req: OpenRouterRequest): Promise<OpenRouter
   }
 
   if (!res.ok) {
-    const detail = await res.text().catch(() => res.statusText);
+    // Gate full body logging behind DEBUG_OPENROUTER to avoid leaking API error
+    // bodies (which can contain partial key refs) in production logs.
+    const statusClass = Math.floor(res.status / 100);
+    if (process.env['DEBUG_OPENROUTER'] === '1') {
+      const detail = await res.text().catch(() => res.statusText);
+      console.error('[scan/openrouter] Non-2xx response', {
+        model: req.model,
+        status: res.status,
+        detail: detail.slice(0, 300),
+      });
+      throw new Error(`OpenRouter error ${res.status} (${req.model}): ${detail.slice(0, 300)}`);
+    }
     console.error('[scan/openrouter] Non-2xx response', {
       model: req.model,
+      status_class: statusClass,
       status: res.status,
-      detail: detail.slice(0, 300),
     });
-    throw new Error(`OpenRouter error ${res.status} (${req.model}): ${detail.slice(0, 300)}`);
+    throw new Error(`OpenRouter ${statusClass}xx error (${req.model})`);
   }
 
   const json = (await res.json()) as {
