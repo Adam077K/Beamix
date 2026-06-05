@@ -8,6 +8,27 @@
 import type { BusinessContext, EngineRawResult, ScanInput } from './types';
 
 // ---------------------------------------------------------------------------
+// Prompt injection sanitizer
+// ---------------------------------------------------------------------------
+
+/** Tokens that could hijack the model's instruction-following. */
+const INJECTION_PATTERN =
+  /ignore\s+previous|system\s*:|assistant\s*:|<\s*\/?\s*(?:system|assistant|instruction|prompt)\s*>/gi;
+
+/**
+ * Sanitize a user-controlled string before interpolating into a prompt.
+ * - Collapses newlines/carriage-returns to a single space (prevents
+ *   multi-line injection via the prompt text).
+ * - Strips tokens that match common prompt-injection patterns.
+ */
+export function sanitizeForPrompt(value: string): string {
+  return value
+    .replace(/[\r\n]+/g, ' ')
+    .replace(INJECTION_PATTERN, '[redacted]')
+    .trim();
+}
+
+// ---------------------------------------------------------------------------
 // Stage 1 — Perplexity research prompt
 // ---------------------------------------------------------------------------
 
@@ -20,16 +41,20 @@ export function buildResearchPrompt(input: ScanInput): { system: string; user: s
 structured information about a business from publicly available sources.
 Respond ONLY with a valid JSON object — no markdown, no explanation, no extra text.`;
 
+  const safeName = sanitizeForPrompt(input.business_name);
+  const safeUrl = sanitizeForPrompt(input.website_url);
+  const safeDomain = sanitizeForPrompt(input.domain);
+
   const user = `Research this business and return structured JSON.
 
-Business name: ${input.business_name}
-Website: ${input.website_url}
-Domain: ${input.domain}
+<business_name>${safeName}</business_name>
+<website_url>${safeUrl}</website_url>
+<domain>${safeDomain}</domain>
 
 Return EXACTLY this JSON shape (all fields required):
 {
   "business_name": "<confirmed or corrected business name>",
-  "website_url": "${input.website_url}",
+  "website_url": "<website url>",
   "business_summary": "<1-2 sentence summary of what the business does>",
   "key_services": ["<service 1>", "<service 2>", "<service 3>"],
   "target_audience": "<who the business serves>",
@@ -92,19 +117,29 @@ export function buildEnginePrompt(
   ctx: BusinessContext,
   input: ScanInput,
 ): { system: string; user: string } {
-  const system = `You are a potential customer looking for ${ctx.category} services${ctx.location !== 'global' ? ` in ${ctx.location}` : ''}.
+  const safeCategory = sanitizeForPrompt(ctx.category);
+  const safeLocation = sanitizeForPrompt(ctx.location);
+  const safeName = sanitizeForPrompt(input.business_name);
+  const safeUrl = sanitizeForPrompt(input.website_url);
+
+  const locationSuffix = safeLocation !== 'global' ? ` in ${safeLocation}` : '';
+
+  const system = `You are a potential customer looking for ${safeCategory} services${locationSuffix}.
 You are using an AI assistant to find the best providers.
 Answer naturally as if you are the AI assistant responding to the customer.
 Respond ONLY with a valid JSON object — no markdown, no explanation.`;
 
-  const user = `A customer asks: "What are the best ${ctx.category} providers${ctx.location !== 'global' ? ` in ${ctx.location}` : ''}?"
+  const user = `A customer asks: "What are the best ${safeCategory} providers${locationSuffix}?"
 
 Give your top 5 recommendations. For each include:
 - name: business name
 - why: 1-sentence reason
 - rank: 1-5 (1 = most recommended)
 
-Then answer these questions about "${input.business_name}" (website: ${input.website_url}):
+Then answer these questions about:
+<business_name>${safeName}</business_name>
+<website_url>${safeUrl}</website_url>
+
 - is_mentioned: true/false — does it appear in your top 5?
 - rank_position: 1-5 or null (if not mentioned)
 - sentiment: "positive", "neutral", "negative", or null (if not mentioned)
@@ -171,6 +206,11 @@ Your job is to diagnose how visible a business is across AI-powered search engin
 and identify specific issues preventing better visibility.
 Respond ONLY with a valid JSON object — no markdown, no explanation.`;
 
+  const safeName = sanitizeForPrompt(ctx.business_name);
+  const safeUrl = sanitizeForPrompt(ctx.website_url);
+  const safeCategory = sanitizeForPrompt(ctx.category);
+  const safeLocation = sanitizeForPrompt(ctx.location);
+
   const mentionedCount = results.filter((r) => r.is_mentioned).length;
   const totalEngines = results.length;
   const engineSummaries = results
@@ -182,10 +222,10 @@ Respond ONLY with a valid JSON object — no markdown, no explanation.`;
 
   const user = `Analyse GEO visibility for this business:
 
-Business: ${ctx.business_name}
-Website: ${ctx.website_url}
-Category: ${ctx.category}
-Location: ${ctx.location !== 'global' ? ctx.location : 'not location-specific'}
+<business_name>${safeName}</business_name>
+<website_url>${safeUrl}</website_url>
+Category: ${safeCategory}
+Location: ${safeLocation !== 'global' ? safeLocation : 'not location-specific'}
 
 ENGINE RESULTS (${mentionedCount}/${totalEngines} engines mentioned this business):
 ${engineSummaries}
@@ -204,8 +244,7 @@ Return EXACTLY this JSON (issues must be non-empty if any engine did not mention
   "issues": [
     { "category": "<issue category>", "count": <number> },
     ...
-  ],
-  "total_issues": <sum of all issue counts>
+  ]
 }
 
 Scoring guide:
@@ -221,6 +260,7 @@ Scoring guide:
 /**
  * Parse the raw JSON string from the analysis LLM into an AnalysisResult shape.
  * Returns a fallback on parse failure.
+ * total_issues is ALWAYS computed from issues.reduce — LLM-provided value discarded.
  */
 export function parseAnalysisResult(raw: string): {
   overall_score: number;
@@ -241,9 +281,8 @@ export function parseAnalysisResult(raw: string): {
         count: typeof obj['count'] === 'number' ? obj['count'] : 1,
       };
     });
-    const totalIssues = typeof parsed['total_issues'] === 'number'
-      ? parsed['total_issues']
-      : issues.reduce((sum, i) => sum + i.count, 0);
+    // Compute ground truth — never trust LLM-provided total_issues
+    const totalIssues = issues.reduce((sum, i) => sum + i.count, 0);
     return { overall_score: score, issues, total_issues: totalIssues };
   } catch {
     console.error('[scan/prompts] Failed to parse analysis result JSON', {
