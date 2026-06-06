@@ -36,7 +36,7 @@ const nextConfig: NextConfig = {
               scriptSrc,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
-              "connect-src 'self' https://*.supabase.co https://api.openrouter.ai https://api.anthropic.com https://api.perplexity.ai https://api.resend.com",
+              "connect-src 'self' https://*.supabase.co https://api.openrouter.ai https://api.anthropic.com https://api.perplexity.ai https://api.resend.com https://challenges.cloudflare.com",
               "frame-src https://*.paddle.com https://challenges.cloudflare.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
