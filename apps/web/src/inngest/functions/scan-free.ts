@@ -3,16 +3,22 @@
  *
  * Consumes `scan/free.requested` and drives the 4-stage GEO scan pipeline:
  *
- *   Step 0: check-budget   — re-read kill switch; fail-fast if scanning paused
- *   Step 1: mark-running   — queued → running, set started_at
- *   Step 2: research       — Perplexity gathers business context
- *   Step 3: engine-queries — ChatGPT + Gemini + Perplexity in parallel (single step)
- *   Step 4: analysis       — Gemini Flash produces FreeScanResults
- *   Step 5: persist-results — write to free_scans.results, mark complete
+ *   Step 0: check-budget     — re-read kill switch; fail-fast if scanning paused
+ *   Step 1: mark-running     — queued → running, set started_at
+ *   Step 2: research         — Perplexity gathers business context
+ *   Step 3: engine-chatgpt   — ChatGPT engine query (separate step for live progress)
+ *   Step 4: engine-gemini    — Gemini engine query  (separate step for live progress)
+ *   Step 5: engine-perplexity— Perplexity engine query (separate step for live progress)
+ *   Step 6: analysis         — Gemini Flash produces FreeScanResults
+ *   Step 7: persist-results  — write to free_scans.results, mark complete
  *
  * Each stage is a separate Inngest step for memoisation across retries.
  * On any caught error: the scan row is marked failed and the error is re-thrown
  * so Inngest records the failure and applies retry policy.
+ *
+ * Progress is written to `scan_progress` (PII-free) at each engine boundary so
+ * anonymous browsers can subscribe via Supabase Realtime or poll the fallback
+ * endpoint. writeProgress is best-effort — errors there never abort the scan.
  *
  * Concurrency: keyed on scan_id — one in-flight run per scan.
  * Retries: 2 (covers transient LLM/network failures).
@@ -25,6 +31,7 @@ import { inngest } from '../client';
 import { researchBusiness } from '../../lib/scan/perplexity-research';
 import { queryEngine } from '../../lib/scan/engine-query';
 import { analyse } from '../../lib/scan/analysis';
+import { writeProgress } from '../../lib/scan/progress-writer';
 import type { FreeScanResults } from '../../lib/scan/types';
 
 // ---------------------------------------------------------------------------
@@ -93,6 +100,16 @@ async function isScanningPaused(
 }
 
 // ---------------------------------------------------------------------------
+// Progress helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Total number of queries each engine runs (one prompt per engine = 1 query).
+ * Honest for v1 — future multi-query engines can update this constant.
+ */
+const QUERIES_PER_ENGINE = 1;
+
+// ---------------------------------------------------------------------------
 // Inngest function
 // ---------------------------------------------------------------------------
 
@@ -154,6 +171,8 @@ export const scanFree = inngest.createFunction(
           });
           throw new Error(`Failed to mark scan running: ${error.message}`);
         }
+        // Seed progress row — status running, all engines queued.
+        await writeProgress(scan_id, { status: 'running', progress: 0 });
       });
 
       // ── Step 2: Perplexity research ──────────────────────────────────────
@@ -161,27 +180,87 @@ export const scanFree = inngest.createFunction(
         return researchBusiness(scanInput);
       });
 
-      // ── Step 3: Three engine queries — single step for replay safety ─────
-      // All three engines run in parallel inside ONE step.run call.
-      // This is the documented safe pattern: Promise.all inside a single step
-      // gives concurrent execution while keeping the memoisation boundary clean.
-      const [chatgptResult, geminiResult, perplexityResult] = await step.run(
-        'engine-queries',
-        async () => {
-          return Promise.all([
-            queryEngine('chatgpt', businessContext, scanInput),
-            queryEngine('gemini', businessContext, scanInput),
-            queryEngine('perplexity', businessContext, scanInput),
-          ]);
-        },
-      );
+      // ── Step 3: ChatGPT engine query ──────────────────────────────────────
+      // Each engine is its own step for Inngest memoisation AND live progress.
+      // On entry: set engine status='querying'. On completion: 'done'.
+      // On error: set 'error' INSIDE the step (memoised on retry), then re-throw.
+      const chatgptResult = await step.run('engine-chatgpt', async () => {
+        await writeProgress(scan_id, {
+          engines: [{ id: 'chatgpt', status: 'querying', queryCount: 0, totalQueries: QUERIES_PER_ENGINE }],
+          progress: 0.1,
+          currentQuery: `Querying ChatGPT for ${business_name} visibility`,
+        });
 
-      // ── Step 4: Gemini Flash analysis ────────────────────────────────────
+        try {
+          const result = await queryEngine('chatgpt', businessContext, scanInput);
+          await writeProgress(scan_id, {
+            engines: [{ id: 'chatgpt', status: 'done', queryCount: QUERIES_PER_ENGINE, totalQueries: QUERIES_PER_ENGINE }],
+            progress: 0.35,
+            currentQuery: null,
+          });
+          return result;
+        } catch (err) {
+          await writeProgress(scan_id, {
+            engines: [{ id: 'chatgpt', status: 'error', queryCount: 0, totalQueries: QUERIES_PER_ENGINE }],
+          });
+          throw err;
+        }
+      });
+
+      // ── Step 4: Gemini engine query ──────────────────────────────────────
+      const geminiResult = await step.run('engine-gemini', async () => {
+        await writeProgress(scan_id, {
+          engines: [{ id: 'gemini', status: 'querying', queryCount: 0, totalQueries: QUERIES_PER_ENGINE }],
+          progress: 0.4,
+          currentQuery: `Querying Gemini for ${business_name} visibility`,
+        });
+
+        try {
+          const result = await queryEngine('gemini', businessContext, scanInput);
+          await writeProgress(scan_id, {
+            engines: [{ id: 'gemini', status: 'done', queryCount: QUERIES_PER_ENGINE, totalQueries: QUERIES_PER_ENGINE }],
+            progress: 0.6,
+            currentQuery: null,
+          });
+          return result;
+        } catch (err) {
+          await writeProgress(scan_id, {
+            engines: [{ id: 'gemini', status: 'error', queryCount: 0, totalQueries: QUERIES_PER_ENGINE }],
+          });
+          throw err;
+        }
+      });
+
+      // ── Step 5: Perplexity engine query ──────────────────────────────────
+      const perplexityResult = await step.run('engine-perplexity', async () => {
+        await writeProgress(scan_id, {
+          engines: [{ id: 'perplexity', status: 'querying', queryCount: 0, totalQueries: QUERIES_PER_ENGINE }],
+          progress: 0.65,
+          currentQuery: `Querying Perplexity for ${business_name} visibility`,
+        });
+
+        try {
+          const result = await queryEngine('perplexity', businessContext, scanInput);
+          await writeProgress(scan_id, {
+            engines: [{ id: 'perplexity', status: 'done', queryCount: QUERIES_PER_ENGINE, totalQueries: QUERIES_PER_ENGINE }],
+            progress: 0.85,
+            currentQuery: null,
+          });
+          return result;
+        } catch (err) {
+          await writeProgress(scan_id, {
+            engines: [{ id: 'perplexity', status: 'error', queryCount: 0, totalQueries: QUERIES_PER_ENGINE }],
+          });
+          throw err;
+        }
+      });
+
+      // ── Step 6: Gemini Flash analysis ────────────────────────────────────
       const scanResults: FreeScanResults = await step.run('gemini-flash-analysis', async () => {
         return analyse([chatgptResult, geminiResult, perplexityResult], businessContext, scan_id);
       });
 
-      // ── Step 5: Persist results ──────────────────────────────────────────
+      // ── Step 7: Persist results ──────────────────────────────────────────
       await step.run('persist-results', async () => {
         const supabase = createAdminSupabaseClient();
         const { error } = await supabase
@@ -199,6 +278,14 @@ export const scanFree = inngest.createFunction(
           });
           throw new Error(`Failed to persist scan results: ${error.message}`);
         }
+        // Mark progress complete — triggers the frontend reveal.
+        // progress writes to scan_progress only; free_scans.results is above.
+        await writeProgress(scan_id, {
+          done: true,
+          progress: 1,
+          status: 'complete',
+          currentQuery: null,
+        });
       });
 
       return { scan_id };
@@ -225,6 +312,11 @@ export const scanFree = inngest.createFunction(
             original_error: safeErrorMessage,
           });
         }
+        // Also mark progress as failed so the frontend stops polling.
+        await writeProgress(scan_id, {
+          done: true,
+          status: 'failed',
+        });
       });
 
       // Re-throw so Inngest records the failure and applies retry policy.
