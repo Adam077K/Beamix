@@ -5,7 +5,9 @@ branch: feat/live-scan-ui
 base_branch: feat/live-scan-worker
 base_commit: 0fc1f3c
 tier: irreversible
-qa_verdict: PENDING
+qa_verdict: PASS
+qa_lead_verdict_commit: 9bf6b23
+qa_lead_note: "PASS — security High (business_name PII in scan_progress) fixed; Turnstile prod guard + P2/P3 folded. PII firewall verified (scan_progress PII-free, free_scans service-role-only). Codex unavailable (graceful). CEO-verified in-worktree: tsc 0, lint 0, vitest 222/222, build 0."
 date: 2026-06-06
 ---
 
