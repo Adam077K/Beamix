@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { cn } from '@/lib/utils'
+import { Turnstile } from './Turnstile'
 
 /**
  * ACT 1 — ENTRY (DESIGN-DIRECTION §4 ACT 1).
@@ -11,15 +12,23 @@ import { cn } from '@/lib/utils'
  * business-name field. The CTA is a product button (rounded-lg, 8px) — never a
  * marketing pill. Submitting swaps the label to a 3-dot mono pulse, then hands
  * straight into the scanning ledger (no separate loading screen).
+ *
+ * Added: email field (required) + Cloudflare Turnstile widget.
+ * Submit is disabled until domain + email + Turnstile token are all present.
  */
 
 export interface EntrySubmitPayload {
   domain: string
   businessName?: string
+  /** Required when submitted via the real entry form; absent for autoStart (mock) path. */
+  email?: string
+  /** Required when submitted via the real entry form; absent for autoStart (mock) path. */
+  turnstileToken?: string
 }
 
 // Plausible-domain pattern: at least one dot, a 2+ char TLD, no spaces.
 const DOMAIN_RE = /^([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function normalizeDomain(raw: string): string {
   return raw
@@ -37,26 +46,49 @@ interface EntryFormProps {
 export function EntryForm({ onSubmit }: EntryFormProps) {
   const [domain, setDomain] = useState('')
   const [businessName, setBusinessName] = useState('')
+  const [email, setEmail] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const normalized = normalizeDomain(domain)
   const domainValid = DOMAIN_RE.test(normalized)
+  const emailValid = EMAIL_RE.test(email.trim())
+  const canSubmit = domainValid && emailValid && turnstileToken !== null
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (submitting) return
+
+    // Validate domain
     if (!domainValid) {
-      setError('That doesn’t look like a website — try yourbusiness.com')
+      setError("That doesn't look like a website — try yourbusiness.com")
       return
     }
+
+    // Validate email
+    if (!emailValid) {
+      setEmailError('Enter a valid email address')
+      return
+    }
+
+    // Turnstile must be solved
+    if (!turnstileToken) {
+      return
+    }
+
     setError(null)
+    setEmailError(null)
     setSubmitting(true)
+
     // Brief mono-pulse beat, then hand off to the ledger (Superhuman auto-start).
     window.setTimeout(() => {
       onSubmit({
         domain: normalized,
         businessName: businessName.trim() || undefined,
+        email: email.trim(),
+        turnstileToken,
       })
     }, 420)
   }
@@ -71,7 +103,7 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
 
         {/* Headline — Linear/instrument register, NOT a 64px marketing hero */}
         <h1 className="mx-auto mt-4 max-w-[480px] text-center font-[var(--font-display)] text-[28px] font-medium leading-[1.1] tracking-[-0.02em] text-[#0A0A0A] sm:text-[32px]">
-          See where AI search can’t find you.
+          See where AI search can&apos;t find you.
         </h1>
 
         {/* Subline */}
@@ -81,7 +113,7 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8" noValidate>
-          {/* Field label */}
+          {/* Domain field label */}
           <label
             htmlFor="scan-domain"
             className="mb-2 block text-[13px] font-normal text-[#6B7280]"
@@ -166,16 +198,71 @@ export function EntryForm({ onSubmit }: EntryFormProps) {
             </div>
           </div>
 
+          {/* Email field — always visible, required */}
+          <div className="mt-4">
+            <label
+              htmlFor="scan-email"
+              className="mb-2 block text-[13px] font-normal text-[#6B7280]"
+            >
+              Where to send your results
+            </label>
+            <input
+              id="scan-email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              required
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                if (emailError) setEmailError(null)
+              }}
+              placeholder="you@yourbusiness.com"
+              aria-invalid={!!emailError}
+              aria-describedby={emailError ? 'scan-email-error' : undefined}
+              className={cn(
+                'h-[52px] w-full rounded-lg border bg-white px-3.5 text-[15px] text-[#0A0A0A] outline-none transition-[border-color,box-shadow] duration-150 ease-out placeholder:text-[#9CA3AF] sm:h-[56px]',
+                emailError
+                  ? 'border-[#EF4444] focus:ring-2 focus:ring-[#EF4444]/20'
+                  : 'border-[#E5E7EB] focus:border-[#3370FF] focus:ring-2 focus:ring-[#3370FF]/15',
+              )}
+            />
+            <div className="min-h-[20px] pt-1.5">
+              {emailError && (
+                <p
+                  id="scan-email-error"
+                  role="alert"
+                  className="text-[13px] text-[#EF4444]"
+                >
+                  {emailError}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Turnstile widget — bot verification */}
+          <div className="mt-4">
+            <Turnstile
+              onToken={(token) => setTurnstileToken(token)}
+              onReset={() => setTurnstileToken(null)}
+            />
+          </div>
+
           {/* CTA — product button, rounded-lg (8px), NOT a marketing pill */}
           <button
             type="submit"
-            disabled={submitting}
+            disabled={!canSubmit || submitting}
+            aria-disabled={!canSubmit || submitting}
             className={cn(
               'mt-4 flex h-[52px] w-full items-center justify-center rounded-lg bg-[#3370FF] text-[15px] font-semibold text-white',
               'transition-[transform,background-color,box-shadow] duration-100 ease-out',
               'hover:-translate-y-px hover:bg-[#1f5ce8] hover:shadow-[0_4px_12px_rgba(51,112,255,0.25)]',
               'active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2',
-              'disabled:cursor-default disabled:opacity-100 disabled:hover:translate-y-0 disabled:hover:shadow-none',
+              (!canSubmit || submitting) &&
+                'cursor-default opacity-50 hover:translate-y-0 hover:bg-[#3370FF] hover:shadow-none',
             )}
           >
             {submitting ? <SubmittingDots /> : 'Run my free scan →'}
