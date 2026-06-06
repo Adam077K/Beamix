@@ -138,7 +138,7 @@ function rowToScanProgress(row: ProgressRow): ScanProgress {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { scan_id: string } },
+  { params }: { params: Promise<{ scan_id: string }> },
 ): Promise<NextResponse> {
   const ip = extractIp(request);
 
@@ -153,7 +153,7 @@ export async function GET(
     );
   }
 
-  const { scan_id } = params;
+  const { scan_id } = await params;
 
   // Basic UUID format guard — prevents DB lookups on obviously invalid inputs
   const UUID_RE =
