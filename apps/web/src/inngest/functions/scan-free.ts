@@ -152,6 +152,9 @@ export const scanFree = inngest.createFunction(
         })
         .eq('id', scan_id);
 
+      // Write terminal progress so the frontend stops polling/waiting.
+      await writeProgress(scan_id, { done: true, status: 'failed' });
+
       throw new NonRetriableError('scanning_paused');
     }
 
@@ -184,11 +187,14 @@ export const scanFree = inngest.createFunction(
       // Each engine is its own step for Inngest memoisation AND live progress.
       // On entry: set engine status='querying'. On completion: 'done'.
       // On error: set 'error' INSIDE the step (memoised on retry), then re-throw.
+      //
+      // currentQuery uses generic engine-name strings — NO business_name or domain
+      // to keep scan_progress PII-free (field is readable by anon browsers).
       const chatgptResult = await step.run('engine-chatgpt', async () => {
         await writeProgress(scan_id, {
           engines: [{ id: 'chatgpt', status: 'querying', queryCount: 0, totalQueries: QUERIES_PER_ENGINE }],
           progress: 0.1,
-          currentQuery: `Querying ChatGPT for ${business_name} visibility`,
+          currentQuery: 'Querying ChatGPT for AI search visibility',
         });
 
         try {
@@ -212,7 +218,7 @@ export const scanFree = inngest.createFunction(
         await writeProgress(scan_id, {
           engines: [{ id: 'gemini', status: 'querying', queryCount: 0, totalQueries: QUERIES_PER_ENGINE }],
           progress: 0.4,
-          currentQuery: `Querying Gemini for ${business_name} visibility`,
+          currentQuery: 'Querying Gemini for AI search visibility',
         });
 
         try {
@@ -236,7 +242,7 @@ export const scanFree = inngest.createFunction(
         await writeProgress(scan_id, {
           engines: [{ id: 'perplexity', status: 'querying', queryCount: 0, totalQueries: QUERIES_PER_ENGINE }],
           progress: 0.65,
-          currentQuery: `Querying Perplexity for ${business_name} visibility`,
+          currentQuery: 'Querying Perplexity for AI search visibility',
         });
 
         try {

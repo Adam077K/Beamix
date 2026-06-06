@@ -9,8 +9,9 @@
 --     unguessable (122 bits of entropy), never exposed in URLs or logs, only
 --     returned to the browser that submitted the scan form.
 --   - `engines` JSONB stores status + query counts only. No user data.
---   - `current_query` stores the LLM prompt text (e.g. "best dentist in Tel Aviv")
---     which is generic, not personally identifiable.
+--   - `current_query` stores a generic engine-activity string (e.g. "Querying
+--     ChatGPT for AI search visibility") — NO business name, domain, or user data.
+--     The Inngest function explicitly omits business_name from this field.
 -- Anon SELECT is therefore safe — an attacker who enumerates UUIDs finds only
 -- scan-lifecycle metadata, never PII.
 --

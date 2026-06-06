@@ -75,3 +75,30 @@ export const DEFAULT_ENGINE_PROGRESS: EngineProgress[] = [
   { id: 'gemini', status: 'queued', queryCount: 0, totalQueries: 0 },
   { id: 'perplexity', status: 'queued', queryCount: 0, totalQueries: 0 },
 ];
+
+// ── Shared row parser ─────────────────────────────────────────────────────────
+
+/**
+ * Parse a raw DB/Realtime row into a typed ScanProgress.
+ *
+ * Accepts `Record<string, unknown>` so it can be used both by the polling
+ * route (which uses column-snake_case keys) and the Realtime handler (which
+ * receives the same row shape from POSTGRES_CHANGES).
+ *
+ * Falls back to DEFAULT_ENGINE_PROGRESS when engines is absent or malformed.
+ */
+export function parseProgressRow(raw: Record<string, unknown>): ScanProgress {
+  return {
+    engines: Array.isArray(raw['engines'])
+      ? (raw['engines'] as EngineProgress[])
+      : DEFAULT_ENGINE_PROGRESS,
+    progress:
+      typeof raw['progress'] === 'number'
+        ? raw['progress']
+        : parseFloat(raw['progress'] as string),
+    currentQuery: (raw['current_query'] as string | null) ?? null,
+    done: raw['done'] as boolean,
+    status: raw['status'] as ScanProgress['status'],
+    updated_at: raw['updated_at'] as string,
+  };
+}

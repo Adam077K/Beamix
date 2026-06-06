@@ -16,6 +16,7 @@ import { createClient } from '@supabase/supabase-js'
 import {
   DEFAULT_ENGINE_PROGRESS,
   REALTIME_CHANNEL,
+  parseProgressRow,
   type EngineProgress,
   type EngineId,
   type ScanProgress,
@@ -190,7 +191,8 @@ export function createLiveScanEmitter(
           cache: 'no-store',
         })
         if (!res.ok) return
-        const row = (await res.json()) as ScanProgress
+        const raw = (await res.json()) as Record<string, unknown>
+        const row = parseProgressRow(raw)
         handleRow(row)
         if (row.done && pollInterval) {
           clearInterval(pollInterval)
@@ -230,17 +232,7 @@ export function createLiveScanEmitter(
 
       if (stopped || !data) return
 
-      const row: ScanProgress = {
-        engines: Array.isArray(data.engines)
-          ? (data.engines as EngineProgress[])
-          : DEFAULT_ENGINE_PROGRESS,
-        progress: typeof data.progress === 'number' ? data.progress : parseFloat(data.progress as string),
-        currentQuery: (data as { current_query?: string | null }).current_query ?? null,
-        done: data.done as boolean,
-        status: data.status as ScanProgress['status'],
-        updated_at: data.updated_at as string,
-      }
-
+      const row = parseProgressRow(data as Record<string, unknown>)
       handleRow(row)
     } catch {
       // Ignore — the Realtime subscription will catch subsequent updates.
@@ -271,20 +263,7 @@ export function createLiveScanEmitter(
             reconnectFailures = 0
 
             const raw = payload.new as Record<string, unknown>
-            const row: ScanProgress = {
-              engines: Array.isArray(raw.engines)
-                ? (raw.engines as EngineProgress[])
-                : DEFAULT_ENGINE_PROGRESS,
-              progress:
-                typeof raw.progress === 'number'
-                  ? raw.progress
-                  : parseFloat(raw.progress as string),
-              currentQuery: (raw.current_query as string | null) ?? null,
-              done: raw.done as boolean,
-              status: raw.status as ScanProgress['status'],
-              updated_at: raw.updated_at as string,
-            }
-
+            const row = parseProgressRow(raw)
             handleRow(row)
           },
         )

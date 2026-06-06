@@ -12,6 +12,8 @@
  * distributed guard, use the Supabase-backed checkRateLimit in rate-limit.ts.
  * Polling at ~1 req/s per browser tab is well within the burst budget.
  * Returns 429 with Retry-After: 1 when over budget.
+ * The in-memory bucket Map is capped at 1000 unique IPs to guard against
+ * memory exhaustion from IP spoofing.
  *
  * ── PII GUARANTEE ────────────────────────────────────────────────────────────
  * The response is sourced exclusively from `scan_progress`, which is PII-free.
@@ -29,8 +31,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { extractIp } from '@/lib/security/rate-limit';
-import type { ScanProgress, EngineProgress } from '@/lib/scan/progress';
-import { DEFAULT_ENGINE_PROGRESS } from '@/lib/scan/progress';
+import type { ScanProgress } from '@/lib/scan/progress';
+import { DEFAULT_ENGINE_PROGRESS, parseProgressRow } from '@/lib/scan/progress';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +59,10 @@ function createAdminClient() {
 // NOTE: this is per-process, not distributed. On Vercel Edge/Serverless,
 // multiple instances run concurrently. The bucket provides a best-effort
 // guard against runaway polling from a single browser tab.
+//
+// The Map is capped at 1000 entries to guard against memory exhaustion from
+// IP spoofing. When the cap is hit, the entire map is cleared (simple LRU
+// approximation — acceptable because the bucket is best-effort only).
 // ---------------------------------------------------------------------------
 
 interface TokenBucket {
@@ -66,6 +72,7 @@ interface TokenBucket {
 
 const BURST_CAPACITY = 4;
 const REFILL_RATE = 4; // tokens per second
+const MAX_BUCKET_ENTRIES = 1000;
 
 const buckets = new Map<string, TokenBucket>();
 
@@ -74,6 +81,10 @@ function consumeToken(ip: string): boolean {
   let bucket = buckets.get(ip);
 
   if (!bucket) {
+    // Cap the Map before inserting a new entry.
+    if (buckets.size >= MAX_BUCKET_ENTRIES) {
+      buckets.clear();
+    }
     bucket = { tokens: BURST_CAPACITY, lastRefill: now };
     buckets.set(ip, bucket);
   }
@@ -103,32 +114,6 @@ function seededQueuedProgress(): ScanProgress {
     done: false,
     status: 'queued',
     updated_at: new Date().toISOString(),
-  };
-}
-
-// ---------------------------------------------------------------------------
-// DB row → ScanProgress mapping
-// ---------------------------------------------------------------------------
-
-interface ProgressRow {
-  engines: unknown;
-  progress: number | string;
-  current_query: string | null;
-  done: boolean;
-  status: string;
-  updated_at: string;
-}
-
-function rowToScanProgress(row: ProgressRow): ScanProgress {
-  return {
-    engines: Array.isArray(row.engines)
-      ? (row.engines as EngineProgress[])
-      : DEFAULT_ENGINE_PROGRESS,
-    progress: typeof row.progress === 'string' ? parseFloat(row.progress) : row.progress,
-    currentQuery: row.current_query,
-    done: row.done,
-    status: row.status as ScanProgress['status'],
-    updated_at: row.updated_at,
   };
 }
 
@@ -191,7 +176,7 @@ export async function GET(
       });
     }
 
-    const progress = rowToScanProgress(data as ProgressRow);
+    const progress = parseProgressRow(data as Record<string, unknown>);
 
     return NextResponse.json(progress, {
       status: 200,

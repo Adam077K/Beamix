@@ -26,6 +26,10 @@ import { useLiveScan } from './useLiveScan'
  * chooses which component to render based on whether a scanId exists.
  */
 
+// v4 UUID format guard — must match the same regex used in the progress route.
+const UUID_V4_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 type Act = 'entry' | 'scan' | 'failed'
 
 interface ScanPayload extends EntrySubmitPayload {
@@ -79,6 +83,16 @@ export function FreeScanFlow({
 
       if (res.status === 202) {
         const { scan_id } = (await res.json()) as { scan_id: string }
+
+        // Validate scan_id is a real v4 UUID before trusting it for navigation
+        // and Realtime subscriptions. An invalid value here would cause a bad
+        // Realtime subscription filter and a nonsensical redirect URL.
+        if (typeof scan_id !== 'string' || !UUID_V4_RE.test(scan_id)) {
+          setErrorMessage('Received an unexpected response from the server. Please try again.')
+          setAct('failed')
+          return
+        }
+
         setPayload({ ...p, scanId: scan_id })
         setAct('scan')
         return
@@ -117,7 +131,7 @@ export function FreeScanFlow({
     return (
       <main className="min-h-[100dvh] bg-white">
         <ErrorState
-          title="We couldn't start your scan"
+          title="We couldn&apos;t start your scan"
           description={
             errorMessage ??
             "Something went wrong reaching the AI engines. Try again — it usually clears right up."

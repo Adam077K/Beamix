@@ -72,12 +72,20 @@ const mockUpsert = vi.fn().mockImplementation((row: Record<string, unknown>) => 
   return { error: null };
 });
 
+// mockInsert — used by the seed-only fast path in progress-writer.
+// Pushes to the same capturedUpserts array so tests can assert on it uniformly.
+const mockInsert = vi.fn().mockImplementation((row: Record<string, unknown>) => {
+  capturedUpserts.push({ table: lastFromTable, row });
+  return { error: null };
+});
+
 const mockFrom = vi.fn().mockImplementation((table: string) => {
   lastFromTable = table;
   return {
     update: mockUpdate,
     select: mockSelect,
     upsert: mockUpsert,
+    insert: mockInsert,
   };
 });
 
@@ -254,12 +262,17 @@ describe('scan-free Inngest function', () => {
       capturedUpserts.push({ table: lastFromTable, row });
       return { error: null };
     });
+    mockInsert.mockImplementation((row: Record<string, unknown>) => {
+      capturedUpserts.push({ table: lastFromTable, row });
+      return { error: null };
+    });
     mockFrom.mockImplementation((table: string) => {
       lastFromTable = table;
       return {
         update: mockUpdate,
         select: mockSelect,
         upsert: mockUpsert,
+        insert: mockInsert,
       };
     });
   });

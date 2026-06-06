@@ -7,6 +7,7 @@
  *   (b) Regression guard — engine already in 'done' must not revert to
  *       'querying' or 'queued'.
  *   (c) Seed default — when no row exists, all three engines are seeded to queued.
+ *       Uses INSERT (seed-only fast path, no engine updates supplied).
  *   (d) Never throws — even if supabase upsert errors, writeProgress returns void.
  *   (e) Meta-test — source text must not reference 'email', 'ip', or 'domain'
  *       (PII exclusion by construction).
@@ -23,6 +24,8 @@ import { join } from 'node:path';
 let mockProgressRowToReturn: Record<string, unknown> | null = null;
 let upsertError: { message: string } | null = null;
 let capturedUpsertRow: Record<string, unknown> | null = null;
+// Captures the row passed to the seed-only INSERT path.
+let capturedInsertRow: Record<string, unknown> | null = null;
 
 const mockMaybeSingle = vi.fn().mockImplementation(() => ({
   data: mockProgressRowToReturn,
@@ -36,9 +39,21 @@ const mockUpsert = vi.fn().mockImplementation((row: Record<string, unknown>) => 
   return { error: upsertError };
 });
 
+// mockInsert — used by the seed-only fast path (no engine updates).
+const mockInsert = vi.fn().mockImplementation((row: Record<string, unknown>) => {
+  capturedInsertRow = row;
+  return { error: null }; // null = INSERT succeeded (no conflict)
+});
+
+const mockUpdate = vi.fn().mockImplementation(() => ({
+  eq: vi.fn().mockReturnValue({ error: null }),
+}));
+
 const mockFrom = vi.fn().mockReturnValue({
   select: mockSelect,
   upsert: mockUpsert,
+  insert: mockInsert,
+  update: mockUpdate,
 });
 
 vi.mock('@supabase/supabase-js', () => ({
@@ -71,6 +86,7 @@ describe('progress-writer', () => {
     mockProgressRowToReturn = null;
     upsertError = null;
     capturedUpsertRow = null;
+    capturedInsertRow = null;
 
     // Re-wire after clearAllMocks
     mockMaybeSingle.mockImplementation(() => ({
@@ -83,9 +99,18 @@ describe('progress-writer', () => {
       capturedUpsertRow = row;
       return { error: upsertError };
     });
+    mockInsert.mockImplementation((row: Record<string, unknown>) => {
+      capturedInsertRow = row;
+      return { error: null };
+    });
+    mockUpdate.mockImplementation(() => ({
+      eq: vi.fn().mockReturnValue({ error: null }),
+    }));
     mockFrom.mockReturnValue({
       select: mockSelect,
       upsert: mockUpsert,
+      insert: mockInsert,
+      update: mockUpdate,
     });
   });
 
@@ -187,14 +212,17 @@ describe('progress-writer', () => {
   });
 
   // ── (c) Seed default ─────────────────────────────────────────────────────
+  // The seed-only path (no engines provided) uses INSERT, not upsert.
+  // capturedInsertRow is what we assert on here.
 
-  it('(c) seed default — when no row exists, all three engines seeded to queued', async () => {
+  it('(c) seed default — when no row exists, all three engines seeded to queued via INSERT', async () => {
     mockProgressRowToReturn = null; // no existing row
 
     await writeProgress('scan-001', { status: 'running', progress: 0 });
 
-    expect(capturedUpsertRow).toBeDefined();
-    const engines = capturedUpsertRow!['engines'] as Array<Record<string, unknown>>;
+    // Seed-only path uses INSERT — check capturedInsertRow, not capturedUpsertRow
+    expect(capturedInsertRow).toBeDefined();
+    const engines = capturedInsertRow!['engines'] as Array<Record<string, unknown>>;
     expect(engines).toHaveLength(3);
 
     const ids = engines.map((e) => e['id']);
@@ -207,10 +235,10 @@ describe('progress-writer', () => {
     }
 
     // Defaults set for missing fields
-    expect(capturedUpsertRow!['done']).toBe(false);
-    expect(capturedUpsertRow!['current_query']).toBe(null);
-    expect(capturedUpsertRow!['progress']).toBe(0);
-    expect(capturedUpsertRow!['status']).toBe('running');
+    expect(capturedInsertRow!['done']).toBe(false);
+    expect(capturedInsertRow!['current_query']).toBe(null);
+    expect(capturedInsertRow!['progress']).toBe(0);
+    expect(capturedInsertRow!['status']).toBe('running');
   });
 
   // ── (d) Never throws ─────────────────────────────────────────────────────

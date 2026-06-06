@@ -7,9 +7,14 @@
  * the challenge resolves. Handles re-render and reset correctly (by tracking
  * the widget ID returned by `window.turnstile.render`).
  *
- * Dev mode: when NEXT_PUBLIC_TURNSTILE_SITE_KEY is absent, renders a
- * "[dev] Turnstile skipped" placeholder and calls onToken('dev-token') after
- * ~100ms so the form stays unblocked during local development.
+ * Dev mode: when NEXT_PUBLIC_TURNSTILE_SITE_KEY is absent AND NODE_ENV is not
+ * 'production', renders a "[dev] Turnstile skipped" placeholder and calls
+ * onToken('dev-token') after ~100ms so the form stays unblocked locally.
+ *
+ * Production guard: when NEXT_PUBLIC_TURNSTILE_SITE_KEY is absent AND
+ * NODE_ENV === 'production', renders a permanent error placeholder and NEVER
+ * calls onToken — the form is blocked until the key is configured. This
+ * prevents accidental unprotected form submissions in production.
  */
 
 import { useEffect, useRef } from 'react'
@@ -43,14 +48,21 @@ interface TurnstileProps {
 
 const SCRIPT_ID = 'cf-turnstile-script'
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 
 export function Turnstile({ onToken, onReset }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const widgetIdRef = useRef<string | null>(null)
 
   useEffect(() => {
-    // ── Dev mode ──────────────────────────────────────────────────────────────
+    // ── Missing key: production guard ────────────────────────────────────────
+    // In production with no key: do NOT call onToken — block the form.
+    // In development with no key: emit a dev token for local workflow.
     if (!SITE_KEY) {
+      if (IS_PRODUCTION) {
+        // Intentionally never call onToken — this is the prod block.
+        return
+      }
       const t = window.setTimeout(() => onToken('dev-token'), 100)
       return () => window.clearTimeout(t)
     }
@@ -119,6 +131,21 @@ export function Turnstile({ onToken, onReset }: TurnstileProps) {
     // reset the challenge unnecessarily.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // ── Production misconfiguration error ────────────────────────────────────────
+  if (!SITE_KEY && IS_PRODUCTION) {
+    return (
+      <div
+        className="flex h-[65px] items-center justify-center rounded-md border border-red-200 bg-red-50 px-4"
+        aria-label="Bot verification unavailable — configuration error"
+        role="alert"
+      >
+        <span className="font-[var(--font-mono)] text-[12px] text-red-500">
+          Turnstile not configured — form submission disabled
+        </span>
+      </div>
+    )
+  }
 
   // ── Dev mode placeholder ──────────────────────────────────────────────────
   if (!SITE_KEY) {
