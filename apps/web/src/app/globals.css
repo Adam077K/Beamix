@@ -64,6 +64,52 @@
   --sidebar-width:          240px;
   --sidebar-width-collapsed: 64px;
   --topbar-height:          56px;
+
+  /* === Design Vision 2026-06-05 — expanded role-scoped palette (DESIGN-VISION.md §3). Additive. blue=you, violet=agents. === */
+
+  /* Accent depth — primary CTA family */
+  --color-accent-tint:    #EEF2FF; /* blue tint — hover fills, tag bgs */
+  --color-accent-deep:    #2454D6; /* pressed / dark-surface blue */
+
+  /* Agent / AI role (violet). Named "agent" — violet NEVER on a button. */
+  --color-agent:          #6E56F0;
+  --color-agent-tint:     #EEEAFD;
+
+  /* Warm off-white surface (soul: restraint + warmth) */
+  --color-surface-warm:   #F7F6F2;
+
+  /* Wash palette — hero/empty/illustration backgrounds ONLY */
+  --color-wash-sky:       #EAF0FB;
+  --color-wash-lavender:  #ECE7FB;
+  --color-wash-blush:     #FBEAF0;
+  --color-wash-mint:      #E6F5EE;
+
+  /* Data-viz series — never used for UI chrome or CTAs */
+  --color-data-1:         #3370FF;
+  --color-data-2:         #6E56F0;
+  --color-data-3:         #06B6D4;
+  --color-data-4:         #10B981;
+  --color-data-5:         #F59E0B;
+  --color-data-6:         #EF4444;
+  --color-data-grid:      #EAEAEA;
+
+  /* Status pills — tinted ground + saturated text; never loud fills */
+  --color-status-info:           #3370FF;
+  --color-status-info-bg:        #EEF2FF;
+  --color-status-agent:          #6E56F0;
+  --color-status-agent-bg:       #EEEAFD;
+  --color-status-positive:       #0E9E6E;
+  --color-status-positive-bg:    #E6F5EE;
+  --color-status-warning:        #B8770B;
+  --color-status-warning-bg:     #FDF3E0;
+  --color-status-critical:       #DC2626;
+  --color-status-critical-bg:    #FDECEC;
+  --color-status-neutral:        #6B7280;
+  --color-status-neutral-bg:     #F3F4F6;
+
+  /* Dark panels — testimonials, scan-engine diagram, contrast hero sections */
+  --color-panel-dark:     #14140F;
+  --color-panel-navy:     #0E1424;
 }
 
 /* ── Base reset ───────────────────────────────────────────── */
@@ -158,6 +204,44 @@ body {
                 opacity   200ms cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform, opacity;
   }
+
+  /* ── Design Vision 2026-06-05 utilities ───────────────────── */
+
+  /* Accent family */
+  .bg-accent-tint   { background-color: var(--color-accent-tint); }
+  .text-accent-deep { color: var(--color-accent-deep); }
+
+  /* Agent (violet) — use on agent-run indicators, AI surfaces; NEVER buttons */
+  .text-agent   { color: var(--color-agent); }
+  .bg-agent     { background-color: var(--color-agent); } /* agent surfaces only — never on a button or link */
+  .bg-agent-tint { background-color: var(--color-agent-tint); }
+
+  /* Warm surface */
+  .bg-surface-warm { background-color: var(--color-surface-warm); }
+
+  /* Washes — hero/empty/illustration backgrounds only */
+  .bg-wash-sky      { background-color: var(--color-wash-sky); }
+  .bg-wash-lavender { background-color: var(--color-wash-lavender); }
+  .bg-wash-blush    { background-color: var(--color-wash-blush); }
+  .bg-wash-mint     { background-color: var(--color-wash-mint); }
+
+  /* Status pill helpers */
+  .text-status-info     { color: var(--color-status-info); }
+  .bg-status-info       { background-color: var(--color-status-info-bg); }
+  .text-status-agent    { color: var(--color-status-agent); }
+  .bg-status-agent      { background-color: var(--color-status-agent-bg); }
+  .text-status-positive { color: var(--color-status-positive); }
+  .bg-status-positive   { background-color: var(--color-status-positive-bg); }
+  .text-status-warning  { color: var(--color-status-warning); }
+  .bg-status-warning    { background-color: var(--color-status-warning-bg); }
+  .text-status-critical { color: var(--color-status-critical); }
+  .bg-status-critical   { background-color: var(--color-status-critical-bg); }
+  .text-status-neutral  { color: var(--color-status-neutral); }
+  .bg-status-neutral    { background-color: var(--color-status-neutral-bg); }
+
+  /* Dark panel backgrounds */
+  .bg-panel-dark  { background-color: var(--color-panel-dark); }
+  .bg-panel-navy  { background-color: var(--color-panel-navy); }
 }
 
 /* ── Scrollbar styling ────────────────────────────────────── */
