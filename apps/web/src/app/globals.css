@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* ── Tailwind v4 theme overrides ──────────────────────────── */
+@theme {
+  /* Map Tailwind's font-mono utility to the Geist Mono CSS variable.
+     This ensures all `font-mono` usages render actual Geist Mono,
+     not the browser's default monospace stack. */
+  --font-family-mono: var(--font-geist-mono), 'Geist Mono', 'Fira Code', monospace;
+  /* Map font-display to the InterDisplay variable */
+  --font-family-display: var(--font-inter-display), 'Inter Tight', 'Inter', system-ui, sans-serif;
+}
+
 /* ── Beamix Design Tokens ─────────────────────────────────── */
 
 :root {
@@ -55,10 +65,12 @@
      16px reads tighter / more premium for dense product surfaces. */
   --radius-card: 16px;
 
-  /* Card finish (Wave A) — Stripe's tight two-layer tinted shadow.
-     White card + #E5E7EB hairline + this shadow sits on the page
-     instead of dissolving into a grey-on-grey wash. */
-  --shadow-card: 0 1px 2px rgba(10, 10, 10, 0.04), 0 1px 3px rgba(10, 10, 10, 0.06);
+  /* Card finish (Wave A) — three-layer tinted shadow: a hairline ring +
+     tight mid shadow + soft ambient lift. Reads as physically present on white. */
+  --shadow-card: 0 0 0 1px rgba(10,10,10,0.06), 0 1px 3px rgba(10,10,10,0.06), 0 4px 8px rgba(10,10,10,0.04);
+
+  /* Hero card — richer ramp so the ScoreHeroPanel leads the elevation stack */
+  --shadow-card-hero: 0 0 0 1px rgba(10,10,10,0.06), 0 2px 6px rgba(10,10,10,0.06), 0 8px 24px rgba(10,10,10,0.05);
 
   /* Sidebar */
   --sidebar-width:          240px;
@@ -166,9 +178,14 @@ body {
     border-color: var(--color-border);
   }
 
-  /* Stripe two-layer tinted card shadow (Wave A) */
+  /* Stripe three-layer tinted card shadow (Wave A) */
   .shadow-card {
     box-shadow: var(--shadow-card);
+  }
+
+  /* Hero card shadow — richer elevation ramp for the ScoreHeroPanel */
+  .shadow-card-hero {
+    box-shadow: var(--shadow-card-hero);
   }
 
   /* Console card finish — white card + hairline + tinted shadow + 16px radius */
@@ -177,6 +194,14 @@ body {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-card);
+  }
+
+  /* Hero console card — same structure but with the richer elevation ramp */
+  .card-console-hero {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card-hero);
   }
 
   /* Accent color utilities */
