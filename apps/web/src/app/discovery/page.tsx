@@ -56,7 +56,7 @@ export default async function DiscoveryPage({ searchParams }: DiscoveryPageProps
             Discovery call
           </p>
           {/* Headline */}
-          <h1 className="mt-2 font-[var(--font-display)] text-[28px] font-semibold leading-tight tracking-[-0.02em] text-[var(--color-text-primary)] sm:text-[32px]">
+          <h1 className="mt-2 font-[var(--font-display)] text-[28px] font-medium leading-tight tracking-[-0.02em] text-[var(--color-text-primary)] sm:text-[32px]">
             Let&apos;s talk about your AI search visibility
           </h1>
           {/* Subtitle */}
@@ -96,7 +96,7 @@ function EnvMissingFallback() {
         </p>
         <a
           href="mailto:hello@beamixai.com"
-          className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-[var(--color-accent)] px-6 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
+          className="mt-6 inline-flex h-11 items-center gap-2 rounded-lg bg-[var(--color-accent)] px-6 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
         >
           Email hello@beamixai.com
         </a>

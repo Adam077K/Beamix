@@ -153,7 +153,7 @@ function PageHeader({ discoveryUrl }: { discoveryUrl: string }) {
         </span>
         <Link
           href={discoveryUrl}
-          className="inline-flex h-9 items-center gap-2 rounded-full bg-[var(--color-accent)] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
+          className="inline-flex h-9 items-center gap-2 rounded-lg bg-[var(--color-accent)] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
         >
           Book a discovery call
         </Link>
@@ -193,7 +193,7 @@ function FailedSection({ discoveryUrl }: { discoveryUrl: string }) {
       <div className="mt-6 flex flex-col items-center gap-3">
         <Link
           href={discoveryUrl}
-          className="inline-flex h-11 items-center gap-2 rounded-full bg-[var(--color-accent)] px-6 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
+          className="inline-flex h-11 items-center gap-2 rounded-lg bg-[var(--color-accent)] px-6 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
         >
           Book a discovery call instead
         </Link>

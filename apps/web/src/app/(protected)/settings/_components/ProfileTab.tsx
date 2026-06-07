@@ -58,10 +58,12 @@ interface PasswordState {
 }
 
 export function ProfileTab() {
+  // Design-first: empty defaults until Supabase profile read is wired (fast-follow).
+  // Never ship a hardcoded persona email as the default state for all users.
   const [profile, setProfile] = useState<ProfileState>({
-    firstName: 'Sarah',
-    lastName: 'Cohen',
-    email: 'sarah@cohenlaw.co.il',
+    firstName: '',
+    lastName: '',
+    email: '',
     language: 'en',
   })
   const [profileSave, setProfileSave] = useState<SaveState>('idle')

@@ -140,9 +140,10 @@ export function CancelTab() {
 
               <div className="flex items-center gap-3 pt-1">
                 <Button
+                  variant="destructive"
                   onClick={handleConfirm}
                   disabled={!isConfirmValid || state === 'cancelling'}
-                  className="bg-[#DC2626] hover:bg-[#C02020] active:bg-[#A81C1C] min-w-[140px]"
+                  className="min-w-[140px]"
                 >
                   {state === 'cancelling' ? (
                     <>
