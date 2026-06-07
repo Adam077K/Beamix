@@ -45,10 +45,12 @@ function WinRow({ win }: { win: Win }) {
   return (
     <li className="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-[#F4F6FA]">
       <span
-        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-status-positive"
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
+        style={{ backgroundColor: 'var(--color-status-positive)' }}
         aria-hidden="true"
       >
-        <Check className="h-3 w-3 text-status-positive" strokeWidth={2.5} />
+        {/* White on #0E9E6E ≈ 3.2:1 — clears WCAG 3:1 for graphical objects */}
+        <Check className="h-3 w-3 text-white" strokeWidth={2.5} />
       </span>
       <span className="text-[14px] leading-snug text-[#374151]">{win.description}</span>
     </li>
