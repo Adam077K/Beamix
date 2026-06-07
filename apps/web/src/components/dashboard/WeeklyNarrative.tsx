@@ -1,28 +1,41 @@
 'use client'
 
 import type { DashboardOutcomes, Win } from '@/types/outcomes'
-import { CheckCircle2 } from 'lucide-react'
+import { Check, Calendar } from 'lucide-react'
+
+/**
+ * WeeklyNarrative — the calm "this week we got you…" ledger.
+ *
+ * Contract preserved: { weeklyNarrative: { type: 'empty' | 'wins'; items?: Win[] } }.
+ * Reworked into a dense-but-calm list (Linear-log rhythm) with the layered
+ * Stripe card finish. Wins are the crew's results, so the marker reads in the
+ * positive-status green; this is a results surface, not a CTA surface, so no
+ * blue and no violet button appears.
+ *
+ * States: empty (designed, sells the next scan), wins (populated).
+ */
 
 interface WeeklyNarrativeProps {
   weeklyNarrative: DashboardOutcomes['weeklyNarrative']
 }
 
-function SetupInProgress() {
+function EmptyState() {
   return (
     <div
       role="status"
-      aria-label="Weekly narrative — setup in progress"
-      className="flex flex-col items-center justify-center py-10 px-6 text-center"
+      aria-label="No wins yet — setup in progress"
+      className="flex flex-col items-center justify-center bg-surface-warm px-6 py-12 text-center"
     >
-      {/* Subtle animated pulse indicator */}
-      <div className="w-10 h-10 rounded-full bg-[#3370FF]/8 flex items-center justify-center mb-4" aria-hidden="true">
-        <div className="w-3 h-3 rounded-full bg-[#3370FF]/30 relative">
-          <span className="absolute inset-0 rounded-full bg-[#3370FF]/20 animate-ping" />
-        </div>
+      <div
+        className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-card"
+        aria-hidden="true"
+      >
+        <Calendar className="h-5 w-5 text-[#9CA3AF]" strokeWidth={1.5} />
       </div>
-      <p className="text-sm font-medium text-[#0A0A0A] mb-1">Setup in progress</p>
-      <p className="text-sm text-[#6B7280] max-w-[280px] leading-relaxed">
-        Your weekly wins will appear here after your first scan delivers results.
+      <p className="text-sm font-medium text-[#0A0A0A]">No wins to show yet</p>
+      <p className="mt-1 max-w-[300px] text-[13px] leading-relaxed text-[#6B7280]">
+        Once your first scan lands and the crew makes its first fixes, every win shows up
+        here — plain language, no jargon.
       </p>
     </div>
   )
@@ -30,49 +43,50 @@ function SetupInProgress() {
 
 function WinRow({ win }: { win: Win }) {
   return (
-    <li className="flex items-start gap-3 py-3 border-b border-[#F3F4F6] last:border-0">
-      <CheckCircle2
-        className="w-4 h-4 text-[#10B981] mt-0.5 shrink-0"
+    <li className="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-[#F4F6FA]">
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-status-positive"
         aria-hidden="true"
-      />
-      <span className="text-sm text-[#374151] leading-snug">{win.description}</span>
+      >
+        <Check className="h-3 w-3 text-status-positive" strokeWidth={2.5} />
+      </span>
+      <span className="text-[14px] leading-snug text-[#374151]">{win.description}</span>
     </li>
   )
 }
 
 export function WeeklyNarrative({ weeklyNarrative }: WeeklyNarrativeProps) {
-  const hasWins = weeklyNarrative.type === 'wins' && weeklyNarrative.items && weeklyNarrative.items.length > 0
+  const hasWins =
+    weeklyNarrative.type === 'wins' &&
+    weeklyNarrative.items &&
+    weeklyNarrative.items.length > 0
 
   return (
     <section
       aria-labelledby="weekly-narrative-heading"
-      className="rounded-xl border border-[#E5E7EB] bg-white overflow-hidden"
+      className="card-console flex h-full flex-col overflow-hidden"
     >
-      <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6]">
-        <h2
-          id="weekly-narrative-heading"
-          className="text-sm font-semibold text-[#0A0A0A]"
-        >
-          This week we got you…
+      <div className="flex items-center justify-between px-5 py-4">
+        <h2 id="weekly-narrative-heading" className="text-sm font-semibold text-[#0A0A0A]">
+          This week we got you
         </h2>
         {hasWins && (
-          <span className="text-xs font-medium text-[#6B7280]">
-            {weeklyNarrative.items!.length} win{weeklyNarrative.items!.length !== 1 ? 's' : ''}
+          <span className="font-mono text-[12px] text-[#6B7280] tabular-nums">
+            {weeklyNarrative.items!.length} win
+            {weeklyNarrative.items!.length !== 1 ? 's' : ''}
           </span>
         )}
       </div>
+      <div className="border-t border-[#F3F4F6]" />
 
       {hasWins ? (
-        <ul
-          className="px-5 divide-y divide-[#F3F4F6]"
-          aria-label="Weekly wins"
-        >
+        <ul className="divide-y divide-[#F3F4F6]" aria-label="Weekly wins">
           {weeklyNarrative.items!.map((win) => (
             <WinRow key={win.id} win={win} />
           ))}
         </ul>
       ) : (
-        <SetupInProgress />
+        <EmptyState />
       )}
     </section>
   )

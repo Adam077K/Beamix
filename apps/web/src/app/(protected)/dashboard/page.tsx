@@ -2,6 +2,8 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
+import { ScoreHeroPanel } from '@/components/dashboard/ScoreHeroPanel'
+import { AgentActivityPanel } from '@/components/dashboard/AgentActivityPanel'
 import { VisibilityScorePanel } from '@/components/dashboard/VisibilityScorePanel'
 import { WeeklyNarrative } from '@/components/dashboard/WeeklyNarrative'
 import { FoundingCohortPanel } from './_components/FoundingCohortPanel'
@@ -32,56 +34,13 @@ const EMPTY_OUTCOMES: DashboardOutcomes = {
 function FoundingCohortPanelSkeleton() {
   return (
     <section aria-labelledby="founding-cohort-heading-skeleton" aria-busy="true">
-      <div className="text-xs font-semibold uppercase tracking-widest text-[#9CA3AF] mb-3 h-3 w-32 bg-[#F3F4F6] rounded animate-pulse" />
-      <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1.5 flex-1">
-            <div className="h-4 w-48 bg-[#F3F4F6] rounded animate-pulse" />
-          </div>
-          <div className="h-4 w-10 bg-[#F3F4F6] rounded animate-pulse shrink-0" />
+      <div className="card-console flex items-center justify-between gap-4 p-5">
+        <div className="flex-1 space-y-2.5">
+          <div className="h-4 w-48 animate-pulse rounded bg-[#F3F4F6]" />
+          <div className="h-1.5 w-full max-w-[360px] animate-pulse rounded-full bg-[#F3F4F6]" />
+          <div className="h-3 w-20 animate-pulse rounded bg-[#F3F4F6]" />
         </div>
-        <div className="space-y-1.5">
-          <div className="h-1.5 w-full bg-[#F3F4F6] rounded-full animate-pulse" />
-          <div className="h-3 w-20 bg-[#F3F4F6] rounded animate-pulse" />
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Inline ApprovalCounter — count=0 stub, Wave 2 wires the data
-// ---------------------------------------------------------------------------
-
-function ApprovalCounter({ count }: { count: number }) {
-  return (
-    <section aria-labelledby="approvals-heading">
-      <h2
-        id="approvals-heading"
-        className="text-xs font-semibold uppercase tracking-widest text-[#9CA3AF] mb-3"
-        style={{ letterSpacing: '0.08em' }}
-      >
-        Pending approvals
-      </h2>
-      <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex items-center justify-between gap-4">
-        {count === 0 ? (
-          <p className="text-sm text-[#6B7280]">
-            Nothing waiting for your review right now.
-          </p>
-        ) : (
-          <>
-            <p className="text-sm text-[#374151]">
-              <span className="font-semibold text-[#0A0A0A] tabular-nums">{count}</span>{' '}
-              item{count !== 1 ? 's' : ''} ready for your review
-            </p>
-            <a
-              href="/approvals"
-              className="text-sm font-medium text-[#3370FF] hover:text-[#2558D4] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2 rounded"
-            >
-              Review →
-            </a>
-          </>
-        )}
+        <div className="h-10 w-16 shrink-0 animate-pulse rounded-lg bg-[#F3F4F6]" />
       </div>
     </section>
   )
@@ -117,37 +76,37 @@ export default async function DashboardPage() {
   const outcomes: DashboardOutcomes = EMPTY_OUTCOMES
 
   return (
-    <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Page header — console heading system (§4.1) */}
+    <main className="mx-auto min-h-[100dvh] max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Page header — console heading system (§4) */}
       <PageHeader
         title="Overview"
-        subtitle="Your AI search visibility, results, and items pending review."
+        subtitle="Your AI search visibility, what the crew has done this week, and what's waiting on you."
         action={
-          <Button asChild>
-            <Link href="/scan">Run first scan →</Link>
+          <Button asChild variant="outline">
+            <Link href="/scans">View scans</Link>
           </Button>
         }
       />
 
-      <div className="space-y-8">
-      {/* Founding-100 cohort counter — above main content */}
-      <Suspense fallback={<FoundingCohortPanelSkeleton />}>
-        <FoundingCohortPanel userId={user?.id} />
-      </Suspense>
+      <div className="space-y-6">
+        {/* Founding-100 cohort ribbon — quiet, above the fold */}
+        <Suspense fallback={<FoundingCohortPanelSkeleton />}>
+          <FoundingCohortPanel userId={user?.id} />
+        </Suspense>
 
-      {/* 2-col grid: Narrative (left, wider) + Approvals (right, narrower) */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-        {/* Left column — weekly wins card */}
-        <WeeklyNarrative weeklyNarrative={outcomes.weeklyNarrative} />
-
-        {/* Right column — approval counter */}
-        <div className="self-start">
-          <ApprovalCounter count={outcomes.approvalCount} />
+        {/* THE HERO — overall AI-search score is the loudest element.
+            Sits beside the violet crew panel so blue=you / violet=agents
+            reads at a glance. */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
+          <ScoreHeroPanel scores={outcomes.visibilityScores} />
+          <AgentActivityPanel approvalCount={outcomes.approvalCount} />
         </div>
-      </div>
 
-      {/* Visibility score panel — full width below the grid */}
-      <VisibilityScorePanel scores={outcomes.visibilityScores} />
+        {/* Per-engine breakdown — recedes beneath the hero */}
+        <VisibilityScorePanel scores={outcomes.visibilityScores} />
+
+        {/* This week's wins — calm results ledger */}
+        <WeeklyNarrative weeklyNarrative={outcomes.weeklyNarrative} />
       </div>
     </main>
   )

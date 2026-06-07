@@ -4,162 +4,145 @@ import type { VisibilityScore } from '@/types/outcomes'
 import { cn } from '@/lib/utils'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
-const ENGINE_META: Record<string, { label: string; color: string }> = {
-  chatgpt:    { label: 'ChatGPT',    color: '#10A37F' },
-  gemini:     { label: 'Gemini',     color: '#4285F4' },
-  perplexity: { label: 'Perplexity', color: '#6B7AFF' },
+/**
+ * VisibilityScorePanel — per-engine breakdown that recedes beneath the hero.
+ *
+ * Contract preserved: { scores: VisibilityScore[] }. The presentation is
+ * reworked into dense-but-calm cards (the dense-kpi-ribbon move: number over
+ * label, mono figures) with the layered Stripe card finish. The engine score
+ * tints a thin top bar + the figure only — score colors are data-viz, never
+ * UI accents. #3370FF appears nowhere here; this surface is quiet by design.
+ *
+ * States within a card: score === null renders the "setup in progress" card.
+ */
+
+const ENGINE_META: Record<string, { label: string }> = {
+  chatgpt: { label: 'ChatGPT' },
+  gemini: { label: 'Gemini' },
+  perplexity: { label: 'Perplexity' },
 }
 
 interface VisibilityScorePanelProps {
   scores: VisibilityScore[]
 }
 
-function ScoreRing({ score }: { score: number | null }) {
-  if (score === null) return null
-  const radius = 28
-  const circumference = 2 * Math.PI * radius
-  const offset = circumference - (score / 100) * circumference
-  const color =
-    score >= 75 ? '#06B6D4'
-    : score >= 50 ? '#10B981'
-    : score >= 25 ? '#F59E0B'
-    : '#EF4444'
-
-  return (
-    <svg
-      width="72"
-      height="72"
-      viewBox="0 0 72 72"
-      className="shrink-0"
-      aria-hidden="true"
-    >
-      <circle
-        cx="36"
-        cy="36"
-        r={radius}
-        fill="none"
-        stroke="#F3F4F6"
-        strokeWidth="6"
-      />
-      <circle
-        cx="36"
-        cy="36"
-        r={radius}
-        fill="none"
-        stroke={color}
-        strokeWidth="6"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-        transform="rotate(-90 36 36)"
-        style={{ transition: 'stroke-dashoffset 0.6s ease' }}
-      />
-      <text
-        x="36"
-        y="40"
-        textAnchor="middle"
-        fontSize="14"
-        fontWeight="600"
-        fill="#0A0A0A"
-        fontFamily="Inter, sans-serif"
-      >
-        {score}
-      </text>
-    </svg>
-  )
+function scoreColor(score: number): string {
+  if (score >= 75) return 'var(--color-data-3)'
+  if (score >= 50) return 'var(--color-data-4)'
+  if (score >= 25) return 'var(--color-data-5)'
+  return 'var(--color-data-6)'
 }
 
 function TrendIcon({ trend }: { trend: VisibilityScore['trend'] }) {
   if (!trend || trend === 'flat')
-    return <Minus className="w-3.5 h-3.5 text-[#9CA3AF]" aria-label="No change" />
+    return <Minus className="h-3.5 w-3.5 text-[#9CA3AF]" strokeWidth={2} aria-label="No change" />
   if (trend === 'up')
-    return <TrendingUp className="w-3.5 h-3.5 text-[#10B981]" aria-label="Trending up" />
-  return <TrendingDown className="w-3.5 h-3.5 text-[#EF4444]" aria-label="Trending down" />
+    return (
+      <TrendingUp
+        className="h-3.5 w-3.5 text-status-positive"
+        strokeWidth={2}
+        aria-label="Trending up"
+      />
+    )
+  return (
+    <TrendingDown
+      className="h-3.5 w-3.5 text-status-critical"
+      strokeWidth={2}
+      aria-label="Trending down"
+    />
+  )
 }
 
 function SetupInProgressCard({ engine }: { engine: string }) {
-  const meta = ENGINE_META[engine] ?? { label: engine, color: '#6B7280' }
+  const meta = ENGINE_META[engine] ?? { label: engine }
   return (
     <div
       role="region"
-      aria-label={`${meta.label} visibility score — setup in progress`}
-      className="flex items-center gap-4 rounded-xl border border-[#E5E7EB] bg-white p-5 relative overflow-hidden"
+      aria-label={`${meta.label} visibility — setup in progress`}
+      className="card-console relative overflow-hidden p-5"
     >
-      {/* engine color accent bar */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl"
-        style={{ backgroundColor: meta.color, opacity: 0.5 }}
         aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-[3px] rounded-t-[16px] bg-[#E5E7EB]"
       />
-
-      {/* placeholder ring */}
-      <div
-        className="w-[72px] h-[72px] shrink-0 rounded-full border-[6px] border-[#F3F4F6] flex items-center justify-center"
-        aria-hidden="true"
-      >
-        <span className="w-2 h-2 rounded-full bg-[#E5E7EB]" />
-      </div>
-
-      <div className="flex flex-col gap-1 min-w-0">
-        <span
-          className="text-xs font-medium tracking-wide uppercase text-[#9CA3AF]"
-          style={{ letterSpacing: '0.06em' }}
-        >
-          {meta.label}
+      <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]">
+        {meta.label}
+      </span>
+      <div className="mt-3 flex items-baseline gap-1.5">
+        <span className="font-mono text-[36px] font-medium leading-none tracking-[-0.03em] text-[#D1D5DB] tabular-nums">
+          --
         </span>
-        <p className="text-sm text-[#6B7280] leading-snug">
-          Setup in progress — your first scan runs after discovery.
-        </p>
+        <span className="font-mono text-[13px] text-[#D1D5DB]">/100</span>
       </div>
+      <p className="mt-2 text-[13px] leading-snug text-[#9CA3AF]">
+        Waiting on your first scan.
+      </p>
     </div>
   )
 }
 
 function ScoreCard({ score }: { score: VisibilityScore }) {
-  const meta = ENGINE_META[score.engine] ?? { label: score.engine, color: '#6B7280' }
+  const meta = ENGINE_META[score.engine] ?? { label: score.engine }
 
   if (score.score === null) {
     return <SetupInProgressCard engine={score.engine} />
   }
 
+  const color = scoreColor(score.score)
+
   return (
     <div
       role="region"
       aria-label={`${meta.label} visibility score: ${score.score} out of 100`}
-      className="flex items-center gap-4 rounded-xl border border-[#E5E7EB] bg-white p-5 relative overflow-hidden"
+      className="card-console relative overflow-hidden p-5 transition-shadow hover:shadow-[0_2px_8px_rgba(10,10,10,0.06),0_1px_3px_rgba(10,10,10,0.08)]"
     >
+      {/* score-tinted top hairline — data-viz tint only */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl"
-        style={{ backgroundColor: meta.color }}
         aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-[3px] rounded-t-[16px]"
+        style={{ backgroundColor: color }}
       />
-      <ScoreRing score={score.score} />
-      <div className="flex flex-col gap-1 min-w-0">
-        <span
-          className="text-xs font-medium tracking-wide uppercase text-[#9CA3AF]"
-          style={{ letterSpacing: '0.06em' }}
-        >
+      <div className="flex items-center justify-between">
+        <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]">
           {meta.label}
         </span>
-        <div className="flex items-center gap-1.5">
-          <span className="text-2xl font-semibold text-[#0A0A0A] leading-none tabular-nums">
-            {score.score}
-          </span>
-          <span className="text-sm text-[#9CA3AF]">/100</span>
-          <TrendIcon trend={score.trend} />
-        </div>
-        {score.lastUpdatedAt && (
-          <p className="text-xs text-[#9CA3AF] mt-0.5">
-            Updated{' '}
-            {new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
-              Math.round(
-                (new Date(score.lastUpdatedAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-              ),
-              'day',
-            )}
-          </p>
-        )}
+        <TrendIcon trend={score.trend} />
       </div>
+
+      {/* number-over-label hierarchy — the dense-kpi-ribbon move */}
+      <div className="mt-3 flex items-baseline gap-1.5">
+        <span
+          className="font-mono text-[36px] font-medium leading-none tracking-[-0.03em] tabular-nums"
+          style={{ color: '#0A0A0A' }}
+        >
+          {score.score}
+        </span>
+        <span className="font-mono text-[13px] text-[#9CA3AF]">/100</span>
+      </div>
+
+      {/* thin progress rail tinted by the score band */}
+      <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-[#F3F4F6]" aria-hidden="true">
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${score.score}%`,
+            backgroundColor: color,
+            transition: 'width 600ms cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
+        />
+      </div>
+
+      {score.lastUpdatedAt && (
+        <p className="mt-2.5 text-[12px] text-[#9CA3AF]">
+          Updated{' '}
+          {new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
+            Math.round(
+              (new Date(score.lastUpdatedAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+            ),
+            'day',
+          )}
+        </p>
+      )}
     </div>
   )
 }
@@ -167,16 +150,18 @@ function ScoreCard({ score }: { score: VisibilityScore }) {
 export function VisibilityScorePanel({ scores }: VisibilityScorePanelProps) {
   return (
     <section aria-labelledby="visibility-heading">
-      <h2
-        id="visibility-heading"
-        className="text-xs font-semibold uppercase tracking-widest text-[#9CA3AF] mb-3"
-        style={{ letterSpacing: '0.08em' }}
-      >
-        AI Visibility
-      </h2>
+      <div className="mb-3 flex items-baseline justify-between">
+        <h2
+          id="visibility-heading"
+          className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]"
+        >
+          By engine
+        </h2>
+        <span className="text-[12px] text-[#9CA3AF]">Where each AI ranks you</span>
+      </div>
       <div
         className={cn(
-          'grid gap-3',
+          'grid gap-4',
           scores.length === 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2',
         )}
       >

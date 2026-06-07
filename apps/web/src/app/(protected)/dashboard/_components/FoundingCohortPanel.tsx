@@ -30,60 +30,48 @@ export async function FoundingCohortPanel({ userId }: Props) {
 
   return (
     <section aria-labelledby="founding-cohort-heading">
-      <h2
-        id="founding-cohort-heading"
-        className="text-xs font-semibold uppercase tracking-widest text-[#9CA3AF] mb-3"
-        style={{ letterSpacing: '0.08em' }}
-      >
-        Founding members
-      </h2>
-
-      <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 space-y-4">
+      <div className="card-console flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         {/* Status line */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            {isCustomerFounding ? (
-              <p className="text-sm font-semibold text-[#0A0A0A] leading-snug">
-                You are a Founding Member
-              </p>
-            ) : (
-              <p className="text-sm text-[#6B7280] leading-snug">
-                Founding cohort: {enrolledCount}/{capacity}
-                {enrolledCount === capacity ? null : (
-                  <span className="text-[#3370FF] font-medium">
-                    {' '}— {spotsLabel}
-                  </span>
-                )}
-              </p>
-            )}
+        <div className="min-w-0">
+          {isCustomerFounding ? (
+            <p className="text-sm font-semibold leading-snug text-[#0A0A0A]">
+              You hold a Founding Member seat
+            </p>
+          ) : (
+            <p className="text-sm leading-snug text-[#374151]">
+              <span className="font-semibold text-[#0A0A0A]">Founding cohort</span>
+              {enrolledCount === capacity ? (
+                <span className="text-[#6B7280]"> — all seats taken</span>
+              ) : (
+                <span className="font-medium text-accent"> — {spotsLabel}</span>
+              )}
+            </p>
+          )}
 
-            {isCustomerFounding && cohortNumber !== null && (
-              <p className="mt-0.5 text-xs text-[#6B7280]">
-                Customer #{cohortNumber} of {capacity} Founding Members
-              </p>
-            )}
+          {isCustomerFounding && cohortNumber !== null && (
+            <p className="mt-0.5 font-mono text-[12px] text-[#6B7280] tabular-nums">
+              Seat {cohortNumber} of {capacity}
+            </p>
+          )}
+
+          {/* Progress bar */}
+          <div className="mt-3 max-w-[360px]">
+            <Progress value={pct} aria-label={`Founding cohort ${pct}% full`} className="h-1.5" />
+            <p className="mt-1.5 font-mono text-[12px] text-[#9CA3AF] tabular-nums">
+              {pct}% filled{remaining > 0 && ` · ${spotsLabel}`}
+            </p>
           </div>
-
-          {/* Count badge */}
-          <span
-            className="shrink-0 tabular-nums text-sm font-semibold text-[#3370FF]"
-            aria-label={`${enrolledCount} of ${capacity} founding slots filled`}
-          >
-            {enrolledCount}/{capacity}
-          </span>
         </div>
 
-        {/* Progress bar */}
-        <div>
-          <Progress
-            value={pct}
-            aria-label={`Founding cohort ${pct}% full`}
-            className="h-1.5"
-          />
-          <p className="mt-1.5 text-xs text-[#9CA3AF]">
-            {pct}% filled
-            {remaining > 0 && ` · ${spotsLabel}`}
-          </p>
+        {/* Count badge — large mono figure, the seat count reads as data */}
+        <div
+          className="flex shrink-0 items-baseline gap-1 rounded-lg bg-accent-tint px-3.5 py-2"
+          aria-label={`${enrolledCount} of ${capacity} founding seats filled`}
+        >
+          <span className="font-mono text-[22px] font-medium leading-none text-accent tabular-nums">
+            {enrolledCount}
+          </span>
+          <span className="font-mono text-[13px] text-accent tabular-nums">/{capacity}</span>
         </div>
       </div>
     </section>
