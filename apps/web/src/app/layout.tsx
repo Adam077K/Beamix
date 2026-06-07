@@ -1,11 +1,21 @@
 import type { Metadata } from 'next'
-import { Inter, Geist_Mono } from 'next/font/google'
+import { Inter, Inter_Tight, Geist_Mono } from 'next/font/google'
 import './globals.css'
 
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
+})
+
+// Inter Tight — used as --font-display for headings; tight tracking and
+// slightly condensed proportions read as InterDisplay-equivalent on web.
+// Loaded as --font-inter-display so globals.css `font-display` resolves correctly.
+const interDisplay = Inter_Tight({
+  subsets: ['latin'],
+  variable: '--font-inter-display',
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
 })
 
 // Geist Mono — core to the free-scan instrument register: every count, query
@@ -34,7 +44,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${inter.variable} ${interDisplay.variable} ${geistMono.variable} antialiased`}>
         {children}
       </body>
     </html>

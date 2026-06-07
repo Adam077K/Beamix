@@ -1,13 +1,13 @@
 # Reference contract — Dashboard
 
 - **Route:** `/dashboard`
-- **Status:** **awaiting founder north-stars** → Refero-expanded → LOCKED _(build starts only at LOCKED — founder checkpoint #1)_
+- **Status:** **LOCKED 2026-06-05 (founder checkpoint #1).** First build in progress (`feat/dashboard-redesign-v2`).
 - **Owner:** design-lead
 - **Note:** First application of the design operating system, alongside `home`.
 
 ## The feeling in one line
 
-> _Founder: one sentence for the whole dashboard. What should it feel like the moment it loads? E.g. "A calm command center where the user's AI-search score is unmistakably the hero and every fix is one confident click away." — replace with your own._
+> **A calm command center where your AI-search score is unmistakably the hero, the agents' work is visibly underway in violet, and the next fix is one confident blue click away.**
 
 ---
 
@@ -17,11 +17,11 @@ Drop 2-3 north-star screenshots into this folder (`north-star-1.png` … `north-
 
 | File | Source | What we steal — the FEELING / the move | What NOT to copy |
 |------|--------|----------------------------------------|------------------|
-| `north-star-1.png` | _Founder: where it's from_ | _Founder: the specific dashboard move — "the way one big score/metric anchors the page and supporting cards have real layered depth, not flat boxes"_ | _The layout, fonts, colors, brand_ |
-| `north-star-2.png` | _Founder: product / page_ | _Founder: the move — e.g. how the data table stays dense yet calm, or how status reads at a glance_ | _The literal pixels_ |
-| `north-star-3.png` | _Founder: product / page_ | _Founder: the move — e.g. the empty/first-run state that still feels premium_ | _The literal pixels_ |
-| `refero-1.png` | _design-lead: Refero real screen_ | _Adjacent craft move worth absorbing_ | _The literal pixels_ |
-| `refero-2.png` | _design-lead: Refero real screen_ | _The move_ | _The literal pixels_ |
+| `north-star-plausible.png` | Plausible live demo (real dashboard) | KPI tile-strip → one dominant chart → dense-calm tables; the primary KPI is the hero. _Beamix: the AI-search score ring replaces the visitors number as the loudest element._ | Plausible's indigo palette, its flat card edges (Beamix wants layered shadow), its fonts |
+| `posthog-empty-dashboard.png` | PostHog (empty state) | A real dashboard in its EMPTY state still feels premium — titled bordered cards with skeleton glyphs + selling copy, not blank white. | Keep light; tints → blue ramp |
+| `dense-kpi-ribbon.webp` | Plausible/Coda-style analytics | A black KPI ribbon of oversized numbers over tiny captions (extreme number-over-label hierarchy); in-cell horizontal bar shading on tables. | Indigo fills → #3370FF + pale-blue tint |
+
+_Full contracts + swatches in `../CATALOG.md` (dashboard section). Refero rows pending Refero reactivation._
 
 ---
 
@@ -31,7 +31,8 @@ _design-lead fills this after the founder locks north-stars. Candidate moves the
 
 - **Depth:** layered metric/score cards with considered shadow ramps — never flat, never harsh `shadow-md`.
 - **Hierarchy:** the AI-search score (or primary KPI) is the loudest element; recommendations and recent scans recede beneath it.
-- **Motion:** one signature moment — the score counting up / settling on first paint (Tier 1). Table and list transitions stay subtle. `prefers-reduced-motion` fallback.
+- **Motion:** MINIMAL / transitions-only (DESIGN-VISION lock). The score settles via a quiet ease-out transition — **NO count-up, no signature animation** (the free-scan reveal is the only sanctioned animated moment, and it lives on the front door, not here). `prefers-reduced-motion` fallback.
+- **Agents = violet:** the agents' work reads in `--color-agent` (#6E56F0) — "your crew is on N fixes," recent runs, automation status. Blue (#3370FF) is reserved for YOUR actions (the one CTA, links, active nav). Violet is never a button.
 - **Density:** scan results and rankings read dense but calm — Geist Mono for scan data, generous 8pt rhythm so nothing crowds.
 - **States:** first-run empty state ("No scans yet" with a resolving CTA) is designed, not blank white space.
 
