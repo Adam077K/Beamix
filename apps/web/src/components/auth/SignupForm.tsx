@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { sanitizeNext } from '@/lib/auth/next-param'
 import { AuthCard } from './AuthCard'
 
 type FormState = 'idle' | 'submitting' | 'error' | 'success'
@@ -44,7 +45,7 @@ function Dots() {
 
 export function SignupForm() {
   const searchParams = useSearchParams()
-  const next = searchParams.get('next') ?? '/dashboard'
+  const next = sanitizeNext(searchParams.get('next'))
 
   const emailId = useId()
   const passwordId = useId()
