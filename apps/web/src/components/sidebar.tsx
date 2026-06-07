@@ -5,11 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
-  Inbox,
-  ScanLine,
-  Zap,
-  Archive,
-  Users,
+  CheckCircle2,
   Settings,
   PanelLeftClose,
   PanelLeft,
@@ -19,12 +15,8 @@ import type { LucideIcon } from 'lucide-react'
 import { useSidebarStore } from '@/store/sidebar'
 
 const navItems = [
-  { href: '/home', label: 'Home', icon: LayoutDashboard },
-  { href: '/inbox', label: 'Inbox', icon: Inbox },
-  { href: '/scans', label: 'Scans', icon: ScanLine },
-  { href: '/automation', label: 'Automation', icon: Zap },
-  { href: '/archive', label: 'Archive', icon: Archive },
-  { href: '/competitors', label: 'Competitors', icon: Users },
+  { href: '/dashboard', label: 'Outcomes', icon: LayoutDashboard },
+  { href: '/approvals', label: 'Approval Queue', icon: CheckCircle2 },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
