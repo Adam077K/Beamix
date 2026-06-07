@@ -19,24 +19,15 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
+import { usePrefersReducedMotion } from '@/lib/use-prefers-reduced-motion'
+import { RING_SIZE, STROKE, RADIUS, CIRC, ringOffset, ringColor } from './ring-math'
 
 interface ScanScoreHeroProps {
   score: number
   businessName: string
 }
 
-const RING_SIZE = 200
-const STROKE = 14
-const RADIUS = (RING_SIZE - STROKE) / 2
-const CIRC = 2 * Math.PI * RADIUS
 const DRAW_MS = 900
-
-function ringColor(score: number): string {
-  if (score >= 75) return 'var(--color-data-3)'
-  if (score >= 50) return 'var(--color-data-4)'
-  if (score >= 25) return 'var(--color-data-5)'
-  return 'var(--color-data-6)'
-}
 
 function verdictWord(score: number): string {
   if (score >= 75) return 'Excellent'
@@ -69,31 +60,17 @@ function easeOutQuint(t: number): number {
   return 1 - Math.pow(1 - t, 5)
 }
 
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false)
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setReduced(mq.matches)
-    const handler = (e: MediaQueryListEvent) => setReduced(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-  return reduced
-}
-
 export function ScanScoreHero({ score, businessName }: ScanScoreHeroProps) {
   const reduced = usePrefersReducedMotion()
-  const [drawn, setDrawn] = useState(reduced ? score / 100 : 0)
+  const [drawn, setDrawn] = useState(reduced ? 1 : 0)
   const [count, setCount] = useState(reduced ? score : 0)
   const rafRef = useRef<number | null>(null)
-  const hasAnimated = useRef(false)
 
   useEffect(() => {
-    if (hasAnimated.current) return
-    hasAnimated.current = true
-
+    // Reduced motion: snap to final value, never start the RAF loop. Re-running
+    // on a false→true toggle cancels any in-flight frame via cleanup below.
     if (reduced) {
-      setDrawn(score / 100)
+      setDrawn(1)
       setCount(score)
       return
     }
@@ -118,7 +95,7 @@ export function ScanScoreHero({ score, businessName }: ScanScoreHeroProps) {
   }, [reduced, score])
 
   const color = ringColor(score)
-  const offset = CIRC - drawn * (score / 100) * CIRC
+  const offset = ringOffset(score, drawn)
   const word = verdictWord(score)
 
   return (
@@ -190,7 +167,7 @@ export function ScanScoreHero({ score, businessName }: ScanScoreHeroProps) {
           >
             {/* Fraunces beat — the verdict word only */}
             <em
-              className="not-italic font-[var(--font-serif)]"
+              className="font-[var(--font-serif)] italic"
               style={{ color }}
             >
               {word}
