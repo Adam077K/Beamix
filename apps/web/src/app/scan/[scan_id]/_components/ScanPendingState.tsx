@@ -10,6 +10,7 @@
 
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { usePrefersReducedMotion } from '@/lib/use-prefers-reduced-motion'
 
 interface ScanPendingStateProps {
   businessName: string
@@ -22,20 +23,27 @@ const ENGINES = [
 ]
 
 export function ScanPendingState({ businessName }: ScanPendingStateProps) {
+  const reduced = usePrefersReducedMotion()
   const [progress, setProgress] = useState(0.08)
-  const [activeIndex, setActiveIndex] = useState(0)
 
   useEffect(() => {
+    // Reduced motion: hold a calm static state — no interval-driven updates.
+    if (reduced) {
+      setProgress(0.5)
+      return
+    }
     // Slowly advance the progress bar — it never reaches 1 until real completion.
     const interval = window.setInterval(() => {
-      setProgress((p) => {
-        const next = p + (1 - p) * 0.04
-        return Math.min(next, 0.85)
-      })
-      setActiveIndex((i) => (i + 1) % ENGINES.length)
+      setProgress((p) => Math.min(p + (1 - p) * 0.04, 0.85))
     }, 1200)
     return () => window.clearInterval(interval)
-  }, [])
+  }, [reduced])
+
+  // Active engine derived from progress so completed rows never regress to "Queued".
+  const activeIndex = Math.min(
+    Math.floor(progress * ENGINES.length),
+    ENGINES.length - 1,
+  )
 
   return (
     <div className="card-console p-8">
@@ -48,10 +56,7 @@ export function ScanPendingState({ businessName }: ScanPendingStateProps) {
       <div className="mt-3 h-[3px] w-full overflow-hidden rounded-full bg-[var(--color-border)]">
         <div
           className="h-full rounded-full bg-[var(--color-accent)] origin-left transition-transform duration-[400ms] ease-out"
-          style={{
-            transform: `scaleX(${progress})`,
-            willChange: 'transform',
-          }}
+          style={{ transform: `scaleX(${progress})` }}
         />
       </div>
 
