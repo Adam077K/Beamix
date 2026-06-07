@@ -88,7 +88,7 @@ export default async function DashboardPage() {
         }
       />
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Founding-100 cohort ribbon — quiet, above the fold */}
         <Suspense fallback={<FoundingCohortPanelSkeleton />}>
           <FoundingCohortPanel userId={user?.id} />

@@ -63,15 +63,15 @@ export async function FoundingCohortPanel({ userId }: Props) {
           </div>
         </div>
 
-        {/* Count badge — large mono figure, the seat count reads as data */}
+        {/* Count — raw mono figure, no chip wrapper (precision > chip noise) */}
         <div
-          className="flex shrink-0 items-baseline gap-1 rounded-lg bg-accent-tint px-3.5 py-2"
+          className="flex shrink-0 items-baseline gap-0.5"
           aria-label={`${enrolledCount} of ${capacity} founding seats filled`}
         >
-          <span className="font-mono text-[22px] font-medium leading-none text-accent tabular-nums">
+          <span className="font-mono text-[22px] font-semibold leading-none tabular-nums text-accent">
             {enrolledCount}
           </span>
-          <span className="font-mono text-[13px] text-accent tabular-nums">/{capacity}</span>
+          <span className="font-mono text-[13px] leading-none tabular-nums text-[#9CA3AF]">/{capacity}</span>
         </div>
       </div>
     </section>

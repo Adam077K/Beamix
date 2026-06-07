@@ -114,12 +114,12 @@ export function AgentActivityPanel({
             </p>
           </div>
 
-          {/* dense agent-run ledger — Linear-log move, violet for the crew's work */}
-          <ul className="px-2 pb-2" aria-label="Fixes ready for review">
+          {/* dense agent-run ledger — Linear-log density: divide-y rows, no rounded floats */}
+          <ul className="divide-y divide-[#F3F4F6]" aria-label="Fixes ready for review">
             {Array.from({ length: Math.min(approvalCount, 3) }).map((_, i) => (
               <li
                 key={i}
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[#F4F6FA]"
+                className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-[#F4F6FA]"
               >
                 <span
                   className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-agent-tint"
@@ -131,7 +131,7 @@ export function AgentActivityPanel({
                   <p className="truncate text-[13px] font-medium text-[#0A0A0A]">
                     {['New FAQ block drafted', 'Service page rewrite ready', 'Competitor gap closed'][i]}
                   </p>
-                  <p className="font-mono text-[11px] text-[#9CA3AF]">
+                  <p className="text-[12px] text-[#9CA3AF]">
                     awaiting review
                   </p>
                 </div>

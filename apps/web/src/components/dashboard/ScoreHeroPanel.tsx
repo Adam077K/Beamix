@@ -63,14 +63,11 @@ function PanelFrame({ children }: { children: React.ReactNode }) {
   return (
     <section
       aria-labelledby="score-hero-heading"
-      className="card-console relative overflow-hidden"
+      className="card-console-hero relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, #FFFFFF 0%, var(--color-surface-warm) 100%)',
+      }}
     >
-      {/* soft sky wash anchored top-left — the violet→blue identity, used as
-          a quiet background, never on text or chrome */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-wash-sky opacity-60 blur-2xl"
-      />
       <div className="relative">{children}</div>
     </section>
   )
@@ -185,7 +182,7 @@ export function ScoreHeroPanel({ scores, state = 'populated', errorMessage }: Sc
             <p className="mb-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
               AI search visibility
             </p>
-            <h2 id="score-hero-heading" className="text-[20px] font-semibold leading-tight text-[#0A0A0A]">
+            <h2 id="score-hero-heading" className="font-[var(--font-display)] text-[26px] font-semibold leading-tight tracking-[-0.01em] text-[#0A0A0A]">
               We couldn&apos;t load your score
             </h2>
             <p className="mt-2 text-[15px] leading-[1.5] text-[#6B7280]">
@@ -223,7 +220,7 @@ export function ScoreHeroPanel({ scores, state = 'populated', errorMessage }: Sc
             </p>
             <h2
               id="score-hero-heading"
-              className="text-[24px] font-semibold leading-tight tracking-[-0.01em] text-[#0A0A0A]"
+              className="font-[var(--font-display)] text-[26px] font-semibold leading-tight tracking-[-0.01em] text-[#0A0A0A]"
             >
               Your first scan sets the baseline
             </h2>
@@ -251,12 +248,12 @@ export function ScoreHeroPanel({ scores, state = 'populated', errorMessage }: Sc
       <div className="flex flex-col items-center gap-8 p-8 sm:flex-row sm:items-center sm:gap-10 sm:p-10">
         <Ring score={overall} />
         <div className="flex w-full min-w-0 flex-col items-center text-center sm:items-start sm:text-left">
-          <p className="mb-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+          <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
             AI search visibility
           </p>
           <h2
             id="score-hero-heading"
-            className="text-[24px] font-semibold leading-tight tracking-[-0.01em] text-[#0A0A0A]"
+            className="font-[var(--font-display)] text-[26px] font-semibold leading-tight tracking-[-0.01em] text-[#0A0A0A]"
           >
             {band(overall)} — you show up across AI search
           </h2>

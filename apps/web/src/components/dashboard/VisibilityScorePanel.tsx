@@ -68,7 +68,7 @@ function SetupInProgressCard({ engine }: { engine: string }) {
       <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]">
         {meta.label}
       </span>
-      <div className="mt-3 flex items-baseline gap-1.5">
+      <div className="mt-4 flex items-baseline gap-1.5">
         <span className="font-mono text-[36px] font-medium leading-none tracking-[-0.03em] text-[#D1D5DB] tabular-nums">
           --
         </span>
@@ -106,11 +106,10 @@ function ScoreCard({ score }: { score: VisibilityScore }) {
         <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[#9CA3AF]">
           {meta.label}
         </span>
-        <TrendIcon trend={score.trend} />
       </div>
 
-      {/* number-over-label hierarchy — the dense-kpi-ribbon move */}
-      <div className="mt-3 flex items-baseline gap-1.5">
+      {/* number-over-label hierarchy — trend icon inline-right on the baseline */}
+      <div className="mt-4 flex items-baseline gap-1.5">
         <span
           className="font-mono text-[36px] font-medium leading-none tracking-[-0.03em] tabular-nums"
           style={{ color: '#0A0A0A' }}
@@ -118,6 +117,9 @@ function ScoreCard({ score }: { score: VisibilityScore }) {
           {score.score}
         </span>
         <span className="font-mono text-[13px] text-[#9CA3AF]">/100</span>
+        <span className="ml-auto self-end pb-[2px]">
+          <TrendIcon trend={score.trend} />
+        </span>
       </div>
 
       {/* thin progress rail tinted by the score band */}
