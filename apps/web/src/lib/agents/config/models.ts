@@ -57,7 +57,7 @@ export const MODEL_ROUTER: ModelMap = {
   offsite_presence_builder: {
     plan: 'claude-sonnet-4-6',
     research: 'perplexity/sonar',
-    do: 'google/gemini-2.0-flash',
+    do: 'google/gemini-2.5-flash',
     qa: 'claude-haiku-4-5',
     summarize: 'claude-haiku-4-5',
   },
@@ -84,7 +84,7 @@ export const MODEL_ROUTER: ModelMap = {
   },
   performance_tracker: {
     plan: 'claude-haiku-4-5',
-    do: 'google/gemini-2.0-flash',
+    do: 'google/gemini-2.5-flash',
     qa: 'claude-haiku-4-5',
   },
   reddit_presence_planner: {
@@ -154,7 +154,7 @@ export const MODEL_PRICING: Record<
   'perplexity/sonar': { inputPerM: 1, outputPerM: 1, cacheReadPerM: 0, cacheWritePerM: 0 },
   'perplexity/sonar-pro': { inputPerM: 3, outputPerM: 15, cacheReadPerM: 0, cacheWritePerM: 0 },
   sonar: { inputPerM: 1, outputPerM: 1, cacheReadPerM: 0, cacheWritePerM: 0 },
-  'google/gemini-2.0-flash': {
+  'google/gemini-2.5-flash': {
     inputPerM: 0.1,
     outputPerM: 0.4,
     cacheReadPerM: 0,

@@ -47,7 +47,7 @@ How:
 | Payments | Paddle | Merchant of record model — Paddle handles EU VAT, global tax compliance. Better for international B2B SaaS than Stripe. |
 | Email | Resend + React Email | React Email lets templates be typed, testable components. Resend has reliable deliverability and a simple API. |
 | Background Jobs | Inngest | Event-driven, serverless step functions with built-in retry, concurrency control, and observability dashboard. No Redis/BullMQ infra to manage. |
-| LLM Gateway | OpenRouter (2 keys: scan vs agent) | Unified billing across providers. Two keys: OPENROUTER_SCAN_KEY (scans) and OPENROUTER_AGENT_KEY (agents/QA). **Approved models only:** Claude (Sonnet 4.6, Haiku 4.5, Opus 4.6), GPT (4o, 4o-mini, GPT-5-mini), Gemini (2.0 Flash, 2.5 Pro), Perplexity (Sonar, Pro, Online). **Banned:** DeepSeek, Qwen, other providers. |
+| LLM Gateway | OpenRouter (2 keys: scan vs agent) | Unified billing across providers. Two keys: OPENROUTER_SCAN_KEY (scans) and OPENROUTER_AGENT_KEY (agents/QA). **Approved models only:** Claude (Sonnet 4.6, Haiku 4.5, Opus 4.6), GPT (4o, 4o-mini, GPT-5-mini), Gemini (`google/gemini-2.5-flash`, `google/gemini-2.5-pro`), Perplexity (`perplexity/sonar`, `perplexity/sonar-pro`). **Banned:** DeepSeek, Qwen, other providers. **Note:** `google/gemini-2.0-flash` and `perplexity/llama-3.1-sonar-large-128k-online` are RETIRED — do not use. Model slugs verified against OpenRouter live list 2026-06-07. |
 | Hosting | Vercel | Zero-config Next.js deployment, edge functions, preview environments, Vercel Analytics included. |
 
 ---

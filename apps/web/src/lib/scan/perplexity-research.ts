@@ -4,7 +4,7 @@
  * Queries the online Perplexity model via OpenRouter to gather structured
  * business context before running the three-engine GEO queries.
  *
- * Model: perplexity/llama-3.1-sonar-large-128k-online
+ * Model: perplexity/sonar (updated from retired llama-3.1-sonar-large-128k-online — verified 2026-06-07)
  * This is an online model — it searches the web in real-time.
  */
 
@@ -12,7 +12,7 @@ import { callOpenRouter } from './openrouter-client';
 import { buildResearchPrompt, parseBusinessContext } from './prompts';
 import type { BusinessContext, ScanInput } from './types';
 
-const RESEARCH_MODEL = 'perplexity/llama-3.1-sonar-large-128k-online';
+const RESEARCH_MODEL = 'perplexity/sonar';
 
 /**
  * Minimal fallback BusinessContext when research fails.
