@@ -224,3 +224,9 @@
 - 2026-05-30 (close) — Release blockers cleared by Adam: migration 20260529000007 applied + APPROVAL_SIGNING_SECRET set in Vercel. Approvals + deliverables flows now live. Next phase scoped: Agent Execution Wiring (content-agent ignition `/api/agents/run` + wire customer-success & approval-gate-writer to Inngest) — dispatch prompt handed to Adam. Remaining non-blocker: regenerate database.types.ts.
 
 - [2026-06-03] CEO prove-engine: PRs #125 (engine e2e chain test, Lite) + #126 (approval_queue idempotency migration, Irreversible — Adam signed off) merged to main @ 49f335b. Engine proven end-to-end (41/41) + idempotency hardened. QA gate caught a P1: partial unique index is NOT a valid Postgres ON CONFLICT arbiter (42P10 every call) → fixed to plain unique index. Open Adam-run: supabase db push + types regen. Next: staging deploy → Wave 3 gate. Session: docs/08-agents_work/sessions/2026-06-03-ceo-prove-engine.md
+
+## [2026-06-06] ceo-miro-product-viz | Full product visualized in Miro
+- Mapped the finished-product vision (PRD v5.0 agency) into a 15-frame Miro board: IA/sitemap, 5 user-flow flowcharts, agent roster + 3 pipeline diagrams, feature inventory, pricing, verticals, ERD. Nodes tagged by build status (Built/Scaffolded/Spec-only).
+- 4 parallel doc-researchers produced backing maps in docs/08-agents_work/2026-06-06-miro-product-viz/ (MAP-A..D + README index).
+- Built on Miro board https://miro.com/app/board/uXjVG1iySzI=/ ; Playwright-verified all frames; fixed F14 ERD frame-overflow.
+- Session: docs/08-agents_work/sessions/2026-06-06-ceo-miro-product-viz.md
