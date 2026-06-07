@@ -4,7 +4,8 @@ task: fix-model-slugs
 date: 2026-06-07
 branch: fix/scan-model-slugs
 tier: full
-qa_verdict: PENDING
+qa_verdict: PASS
+qa_lead_verdict: "PASS (Lite) — slug-string-only change; zero retired slugs in executable code; MODEL_ROUTER consistent. P3: reconcile gemini-2.5-flash pricing post-invoice."
 tsc_exit: 0
 lint_exit: 0
 vitest_exit: 0
