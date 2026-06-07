@@ -4,10 +4,20 @@ role: backend-engineer
 task: scan-w1-live-retrieval
 branch: feat/scan-w1-live-retrieval
 worktree: .worktrees/scan-w1-live-retrieval
-qa_verdict: pending
+qa_verdict: PASS
 tier: full
 linear_ticket: BMX-W1
 ---
+
+## QA gate (Full tier) — PASS, 2026-06-07
+
+Independent reviewers (out-of-band Task subagents) + CEO re-verification:
+- **code-reviewer: PASS** — 0 P1; 3 P2 (gemini/perplexity constant duplicated across flag maps; non-null assertion style; test-import boundary fragility); 2 P3. P2s deferred to Wave 2 (re-touches these files).
+- **security-engineer: PASS** — 0 Critical/High; 2 Low (cap `sourceUrls` length; pre-existing `business_name` log) deferred to Wave 2.
+- **CEO re-run in-worktree:** typecheck exit 0; tests 50/50 flag-OFF; 50/50 flag-ON. Flag-OFF byte-identity + honest-labeling contract confirmed by diff read.
+
+No blocking findings. Merge approved pending Adam confirmation.
+
 
 # Session: BMX-W1 — Wire OpenRouter web_search plugin + retrieval_mode field, flag-gated
 
