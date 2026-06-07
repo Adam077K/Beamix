@@ -1,11 +1,5 @@
-import { EmptyState } from '@/components/empty-state'
+import { redirect } from 'next/navigation'
 
-export default function ArchivePage() {
-  return (
-    <EmptyState
-      illustration="archive"
-      title="Archive"
-      description="Coming Wave 1 — completed scans and dismissed suggestions are stored here for reference."
-    />
-  )
+export default function Page() {
+  redirect('/approvals')
 }
