@@ -8,6 +8,13 @@
   --font-family-mono: var(--font-geist-mono), 'Geist Mono', 'Fira Code', monospace;
   /* Map font-display to the InterDisplay variable */
   --font-family-display: var(--font-inter-display), 'Inter Tight', 'Inter', system-ui, sans-serif;
+  /*
+   * DUAL-TRACK FONT SYNC NOTE:
+   * Components use `font-[var(--font-display)]` (the :root token declared below),
+   * NOT the `font-display` Tailwind utility generated from @theme --font-family-display above.
+   * Both tracks point at --font-inter-display — if you rename one, rename both or they
+   * silently diverge. The same applies to --font-mono / --font-family-mono.
+   */
 }
 
 /* ── Beamix Design Tokens ─────────────────────────────────── */
