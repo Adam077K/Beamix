@@ -1,14 +1,21 @@
 /**
  * /scan/[scan_id] — Free Scan Results Page
  *
- * Agency framing: shows issues found + books a discovery call.
- * NO agent names anywhere in this file per Engineering Principle #9 + CTO decision A8.
+ * Warm-minimal "evidence then ask" diagnostic console:
+ * ring → engines → issues → CTA.
+ *
+ * Agency framing throughout. NO agent names anywhere per Engineering Principle #9.
+ * Full results shown, NO blur / NO preview-gating / NO paywall.
  */
 
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
+import { ScanScoreHero } from './_components/ScanScoreHero'
+import { EngineBand } from './_components/EngineBand'
+import { IssueLedger } from './_components/IssueLedger'
+import { ScanPendingState } from './_components/ScanPendingState'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,12 +28,19 @@ interface IssueSummary {
   count: number
 }
 
+interface EngineResult {
+  id: 'chatgpt' | 'gemini' | 'perplexity'
+  label: string
+  score?: number | null
+  mentioned?: boolean | null
+  verdict?: string | null
+}
+
 interface ScanResult {
   id: string
   business_name: string
   website_url: string
   status: 'queued' | 'running' | 'complete' | 'failed'
-  /** Structured results blob — varies by scan implementation */
   results: FreeScanResults | null
 }
 
@@ -35,6 +49,10 @@ interface FreeScanResults {
   total_issues?: number
   engines_checked?: number
   visibility_score?: number
+  /** Per-engine results if available */
+  engine_results?: EngineResult[]
+  /** Per-engine scores keyed by engine id */
+  scores?: Partial<Record<string, number>>
 }
 
 // ---------------------------------------------------------------------------
@@ -71,52 +89,167 @@ async function getFreeScan(scanId: string): Promise<ScanResult | null> {
 }
 
 // ---------------------------------------------------------------------------
+// Helpers — derive visibility score from results
+// ---------------------------------------------------------------------------
+
+function deriveScore(results: FreeScanResults | null): number {
+  if (!results) return 0
+  if (results.visibility_score != null) return Math.round(results.visibility_score)
+  // Try to average per-engine scores
+  if (results.scores) {
+    const vals = Object.values(results.scores).filter(
+      (v): v is number => typeof v === 'number'
+    )
+    if (vals.length > 0) {
+      return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
+    }
+  }
+  if (results.engine_results) {
+    const scores = results.engine_results
+      .map((e) => e.score)
+      .filter((s): s is number => s != null)
+    if (scores.length > 0) {
+      return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+    }
+  }
+  return 0
+}
+
+function deriveEngines(results: FreeScanResults | null) {
+  const defaults: EngineResult[] = [
+    { id: 'chatgpt', label: 'ChatGPT' },
+    { id: 'gemini', label: 'Gemini' },
+    { id: 'perplexity', label: 'Perplexity' },
+  ]
+
+  if (!results) return defaults
+
+  if (results.engine_results && results.engine_results.length > 0) {
+    return results.engine_results
+  }
+
+  // Build from scores map if available
+  if (results.scores) {
+    return defaults.map((eng) => ({
+      ...eng,
+      score: results.scores?.[eng.id] ?? null,
+    }))
+  }
+
+  return defaults
+}
+
+// ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function IssueBar({ category, count }: { category: string; count: number }) {
+/** Header bar: wordmark + blue discovery CTA */
+function PageHeader({ discoveryUrl }: { discoveryUrl: string }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-[#E5E7EB] last:border-0">
-      <span className="text-[#0A0A0A] text-sm font-medium">{category}</span>
-      <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#EF4444]/10 text-[#EF4444] text-xs font-semibold">
-        {count}
-      </span>
-    </div>
-  )
-}
-
-function ScanPending({ businessName }: { businessName: string }) {
-  return (
-    <div className="text-center py-16">
-      <div className="inline-flex items-center gap-2 mb-4">
-        <div className="w-2 h-2 rounded-full bg-[#3370FF] animate-bounce [animation-delay:0ms]" />
-        <div className="w-2 h-2 rounded-full bg-[#3370FF] animate-bounce [animation-delay:150ms]" />
-        <div className="w-2 h-2 rounded-full bg-[#3370FF] animate-bounce [animation-delay:300ms]" />
+    <header className="sticky top-0 z-10 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+      <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
+        <span className="font-[var(--font-display)] text-[18px] font-semibold tracking-tight text-[var(--color-text-primary)]">
+          Beamix
+        </span>
+        <Link
+          href={discoveryUrl}
+          className="inline-flex h-9 items-center gap-2 rounded-full bg-[var(--color-accent)] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
+        >
+          Book a discovery call
+        </Link>
       </div>
-      <p className="text-[#0A0A0A] font-medium text-lg mb-2">
-        Scanning {businessName}&hellip;
+    </header>
+  )
+}
+
+/** Identity line: "Results for Business Name · website.com" */
+function IdentityLine({ businessName, websiteUrl }: { businessName: string; websiteUrl: string }) {
+  return (
+    <p className="text-[14px] text-[var(--color-text-muted)]">
+      Results for{' '}
+      <span className="font-medium text-[var(--color-text-primary)]">{businessName}</span>
+      {' '}·{' '}
+      <span className="font-mono text-xs">{websiteUrl}</span>
+    </p>
+  )
+}
+
+/** Pending / scanning state — animated ledger fill */
+function PendingSection({ businessName }: { businessName: string }) {
+  return <ScanPendingState businessName={businessName} />
+}
+
+/** Failed scan — recovery CTA, never "refresh the page" */
+function FailedSection({ discoveryUrl }: { discoveryUrl: string }) {
+  return (
+    <div className="card-console p-8 text-center">
+      <p className="font-[var(--font-display)] text-[22px] font-semibold text-[var(--color-text-primary)]">
+        We hit a snag with this scan
       </p>
-      <p className="text-[#6B7280] text-sm">
-        This takes about 60 seconds. This page will update automatically.
+      <p className="mx-auto mt-2 max-w-[400px] text-[15px] leading-[1.5] text-[var(--color-text-muted)]">
+        This sometimes happens with newer domains or unusual site structures.
+        We can walk through your results manually on a quick call.
       </p>
+      <div className="mt-6 flex flex-col items-center gap-3">
+        <Link
+          href={discoveryUrl}
+          className="inline-flex h-11 items-center gap-2 rounded-full bg-[var(--color-accent)] px-6 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
+        >
+          Book a discovery call instead
+        </Link>
+        <Link
+          href="/scan"
+          className="text-[14px] font-medium text-[var(--color-text-muted)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 rounded-sm"
+        >
+          Try a new scan
+        </Link>
+      </div>
     </div>
   )
 }
 
-function ScanFailed() {
+/** Dark-panel CTA block — hard act-separator before discovery booking */
+function CtaBlock({
+  discoveryUrl,
+  totalIssues,
+}: {
+  discoveryUrl: string
+  totalIssues: number
+}) {
   return (
-    <div className="text-center py-16">
-      <p className="text-[#0A0A0A] font-medium text-lg mb-2">Scan could not complete</p>
-      <p className="text-[#6B7280] text-sm mb-6">
-        We hit an issue while scanning. This sometimes happens with newer domains.
+    <section
+      className="rounded-[var(--radius-card)] px-8 py-10 text-center"
+      style={{ backgroundColor: 'var(--color-panel-dark)' }}
+      aria-label="Book a discovery call"
+    >
+      <h2 className="font-[var(--font-display)] text-[22px] font-semibold leading-snug text-white sm:text-[26px]">
+        {totalIssues > 0
+          ? `We fix all ${totalIssues} issue${totalIssues !== 1 ? 's' : ''} for you — end-to-end.`
+          : 'We make sure your AI search visibility stays strong.'}
+      </h2>
+      <p className="mx-auto mt-3 max-w-[400px] text-[15px] leading-[1.5] text-[#9CA3AF]">
+        No dashboards to babysit. No copywriting to do. Book a free 20-minute
+        call and we&apos;ll show you exactly what we&apos;ll do.
       </p>
       <Link
-        href="/scan"
-        className="inline-flex items-center gap-2 text-[#3370FF] text-sm font-medium hover:underline"
+        href={discoveryUrl}
+        className="mt-6 inline-flex h-12 items-center gap-2 rounded-full bg-[var(--color-accent)] px-7 text-[15px] font-semibold text-white transition-[transform,background-color,box-shadow] duration-100 ease-out hover:-translate-y-px hover:bg-[var(--color-accent-hover)] hover:shadow-[0_4px_16px_rgba(51,112,255,0.3)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-panel-dark)]"
       >
-        Try again
+        Book a 20-min discovery call
       </Link>
-    </div>
+      <p className="mt-4 text-[13px] text-[#6B7280]">
+        No credit card. No commitment.
+      </p>
+    </section>
+  )
+}
+
+/** Footnote */
+function ScanFootnote({ scanId }: { scanId: string }) {
+  return (
+    <p className="text-center font-mono text-[12px] text-[var(--color-text-disabled)]">
+      Scan completed &bull; Results expire in 30 days &bull; ID: {scanId.slice(0, 8)}&hellip;
+    </p>
   )
 }
 
@@ -135,102 +268,61 @@ export default async function ScanResultsPage({ params }: PageProps) {
   if (!scan) notFound()
 
   const results = scan.results
-  const totalIssues = results?.total_issues ?? results?.issues?.reduce((s, i) => s + i.count, 0) ?? 0
+  const totalIssues =
+    results?.total_issues ??
+    results?.issues?.reduce((s, i) => s + i.count, 0) ??
+    0
   const issues = results?.issues ?? []
-  const enginesChecked = results?.engines_checked ?? 3
+  const visibilityScore = deriveScore(results)
+  const engines = deriveEngines(results)
+
   const isComplete = scan.status === 'complete'
   const isFailed = scan.status === 'failed'
   const isPending = !isComplete && !isFailed
 
-  const discoveryUrl = process.env.NEXT_PUBLIC_CALCOM_DISCOVERY_LINK
-    ? `/discovery?scan_id=${scan.id}`
-    : `/discovery?scan_id=${scan.id}`
+  const discoveryUrl = `/discovery?scan_id=${scan.id}`
 
   return (
-    <main className="min-h-screen bg-[#F7F7F7]">
-      {/* Header */}
-      <div className="bg-white border-b border-[#E5E7EB]">
-        <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
-          <span className="text-[#0A0A0A] font-semibold text-lg tracking-tight">Beamix</span>
-          <Link
-            href={discoveryUrl}
-            className="inline-flex items-center gap-2 bg-[#3370FF] text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#2558d4] transition-colors"
-          >
-            Book a discovery call
-          </Link>
-        </div>
-      </div>
+    <main className="min-h-screen bg-[var(--color-surface-warm)]">
+      <PageHeader discoveryUrl={discoveryUrl} />
 
-      <div className="max-w-3xl mx-auto px-6 py-12">
-        {/* Business info */}
-        <p className="text-[#6B7280] text-sm mb-1">
-          Results for{' '}
-          <span className="font-medium text-[#0A0A0A]">{scan.business_name}</span>
-          {' '}·{' '}
-          <span className="font-mono text-xs">{scan.website_url}</span>
-        </p>
+      <div className="mx-auto max-w-3xl space-y-8 px-6 py-12">
+        {/* Identity */}
+        <IdentityLine businessName={scan.business_name} websiteUrl={scan.website_url} />
 
-        {isPending && (
-          <ScanPending businessName={scan.business_name} />
-        )}
+        {/* State: pending */}
+        {isPending && <PendingSection businessName={scan.business_name} />}
 
-        {isFailed && <ScanFailed />}
+        {/* State: failed */}
+        {isFailed && <FailedSection discoveryUrl={discoveryUrl} />}
 
+        {/* State: complete */}
         {isComplete && (
           <>
-            {/* Hero headline — agency framing, no agent names */}
-            <div className="mt-6 mb-10">
-              <h1 className="text-3xl font-semibold text-[#0A0A0A] leading-tight mb-3">
-                We found{' '}
-                <span className="text-[#EF4444]">{totalIssues} issue{totalIssues !== 1 ? 's' : ''}</span>{' '}
-                hurting your AI search visibility.
-              </h1>
-              <p className="text-[#6B7280] text-base leading-relaxed">
-                We checked {enginesChecked} AI search engines — ChatGPT, Gemini, and Perplexity.
-                Every issue below is something we&apos;ll fix for you, end-to-end. No dashboards to
-                maintain. No copywriting to do. Just results.
-              </p>
-            </div>
+            {/* 1. Score hero — ring + verdict */}
+            <ScanScoreHero
+              score={visibilityScore}
+              businessName={scan.business_name}
+            />
 
-            {/* Issue list */}
-            {issues.length > 0 && (
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-6 mb-8">
-                <h2 className="text-xs font-semibold uppercase tracking-widest text-[#6B7280] mb-4">
-                  Issues found ({totalIssues})
-                </h2>
-                {issues.map((issue) => (
-                  <IssueBar key={issue.category} category={issue.category} count={issue.count} />
-                ))}
-              </div>
+            {/* 2. Engine band — per-engine breakdown */}
+            <EngineBand engines={engines} />
+
+            {/* 3. Issue ledger — evidence density */}
+            {(issues.length > 0) && (
+              <IssueLedger issues={issues} totalIssues={totalIssues} />
             )}
 
-            {/* CTA block */}
-            <div className="bg-[#0A0A0A] rounded-2xl p-8 text-center">
-              <p className="text-white text-xl font-semibold mb-2">
-                We&apos;ll fix all {totalIssues} issue{totalIssues !== 1 ? 's' : ''} for you.
-              </p>
-              <p className="text-[#9CA3AF] text-sm mb-6 max-w-sm mx-auto">
-                Book a free 30-minute discovery call. We&apos;ll show you exactly what we&apos;ll do and
-                what results to expect.
-              </p>
-              <Link
-                href={discoveryUrl}
-                className="inline-flex items-center gap-2 bg-[#3370FF] text-white text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[#2558d4] transition-colors"
-              >
-                Book a 30-min discovery call &rarr;
-              </Link>
-              <p className="text-[#6B7280] text-xs mt-4">No credit card. No commitment.</p>
-            </div>
+            {/* 4. CTA block — hard act-separator */}
+            <CtaBlock discoveryUrl={discoveryUrl} totalIssues={totalIssues} />
 
             {/* Footnote */}
-            <p className="text-center text-[#9CA3AF] text-xs mt-8">
-              Scan completed &bull; Results expire in 30 days &bull; Scan ID: {scan.id.slice(0, 8)}&hellip;
-            </p>
+            <ScanFootnote scanId={scan.id} />
           </>
         )}
       </div>
 
-      {/* Pending page auto-refresh via meta tag (no JS framework required) */}
+      {/* Pending: auto-refresh every 10s */}
       {isPending && (
         <Suspense fallback={null}>
           <meta httpEquiv="refresh" content="10" />
