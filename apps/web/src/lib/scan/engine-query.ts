@@ -6,8 +6,8 @@
  *
  * Models (approved):
  *   chatgpt    → openai/gpt-4o
- *   gemini     → google/gemini-2.0-flash  (updated from gemini-1.5-pro)
- *   perplexity → perplexity/llama-3.1-sonar-large-128k-online
+ *   gemini     → google/gemini-2.5-flash  (updated from retired gemini-2.0-flash — verified 2026-06-07)
+ *   perplexity → perplexity/sonar         (updated from retired llama-3.1-sonar-large-128k-online — verified 2026-06-07)
  */
 
 import { callOpenRouter } from './openrouter-client';
@@ -18,8 +18,8 @@ type Engine = EngineRawResult['engine'];
 
 const ENGINE_MODELS: Record<Engine, string> = {
   chatgpt: 'openai/gpt-4o',
-  gemini: 'google/gemini-2.0-flash',
-  perplexity: 'perplexity/llama-3.1-sonar-large-128k-online',
+  gemini: 'google/gemini-2.5-flash',
+  perplexity: 'perplexity/sonar',
 };
 
 /**
