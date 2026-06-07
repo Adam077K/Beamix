@@ -31,7 +31,7 @@ function Heading() {
     <div className="flex items-center gap-2 px-5 py-4">
       {/* violet dot = the crew, breathing quietly */}
       <span className="relative flex h-2.5 w-2.5 shrink-0" aria-hidden="true">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-agent opacity-40" />
+        <span className="absolute inline-flex h-full w-full motion-safe:animate-ping rounded-full bg-agent opacity-40" />
         <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-agent" />
       </span>
       <h2 id="agent-activity-heading" className="text-sm font-semibold text-[#0A0A0A]">

@@ -153,10 +153,23 @@ export function ScoreHeroPanel({ scores, state = 'populated', errorMessage }: Sc
     return (
       <PanelFrame>
         <div className="flex flex-col items-center gap-8 p-8 sm:flex-row sm:items-center sm:gap-10 sm:p-10">
-          <div
-            className="h-[200px] w-[200px] shrink-0 animate-pulse rounded-full bg-[#F3F4F6]"
+          {/* SVG ring skeleton — reads as "score ring loading" not solid blob */}
+          <svg
+            width={200}
+            height={200}
+            viewBox="0 0 200 200"
+            className="shrink-0 animate-pulse"
             aria-hidden="true"
-          />
+          >
+            <circle
+              cx={100}
+              cy={100}
+              r={93}
+              fill="none"
+              stroke="#F3F4F6"
+              strokeWidth={14}
+            />
+          </svg>
           <div className="w-full space-y-4" aria-busy="true" aria-label="Loading your visibility score">
             <div className="h-3 w-28 animate-pulse rounded bg-[#F3F4F6]" />
             <div className="h-7 w-3/4 animate-pulse rounded bg-[#F3F4F6]" />

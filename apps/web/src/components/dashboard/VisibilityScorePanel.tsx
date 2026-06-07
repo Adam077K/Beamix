@@ -94,7 +94,7 @@ function ScoreCard({ score }: { score: VisibilityScore }) {
     <div
       role="region"
       aria-label={`${meta.label} visibility score: ${score.score} out of 100`}
-      className="card-console relative overflow-hidden p-5 transition-shadow hover:shadow-[0_2px_8px_rgba(10,10,10,0.06),0_1px_3px_rgba(10,10,10,0.08)]"
+      className="card-console relative overflow-hidden p-5 transition-shadow duration-200 hover:shadow-[0_0_0_1px_rgba(10,10,10,0.07),0_2px_8px_rgba(10,10,10,0.07),0_6px_16px_rgba(10,10,10,0.05)]"
     >
       {/* score-tinted top hairline — data-viz tint only */}
       <div
