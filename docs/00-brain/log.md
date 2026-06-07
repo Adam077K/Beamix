@@ -230,3 +230,8 @@
 - 4 parallel doc-researchers produced backing maps in docs/08-agents_work/2026-06-06-miro-product-viz/ (MAP-A..D + README index).
 - Built on Miro board https://miro.com/app/board/uXjVG1iySzI=/ ; Playwright-verified all frames; fixed F14 ERD frame-overflow.
 - Session: docs/08-agents_work/sessions/2026-06-06-ceo-miro-product-viz.md
+
+## [2026-06-07] ceo-navigable-product | Whole product made navigable — no more "Coming Wave 1"
+- T5 design pass on `feat/navigable-product`: sidebar → 3-page outcomes nav (Outcomes/Approval Queue/Settings), 6 retired tool-framed routes now redirect; built auth (login/signup/forgot-password), six-tab Settings, and polished /scan/[scan_id] + /discovery to the warm-minimal bar. Design-first (auth/Settings wiring is a fast-follow).
+- 4 `design` workflows → 4 worker builds (conflict-free merge) → design-critic → binding `qa.js`: gate #1 BLOCK (open-redirect on `next`, squared reduced-motion ring offset) → fixed w/ regression tests → gate #2 PASS. tsc 0, vitest 232/232, build 0, zero placeholder hits.
+- Merge human-gated; awaiting Adam. Session: docs/08-agents_work/sessions/2026-06-07-ceo-navigable-product.md

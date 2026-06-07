@@ -4,6 +4,16 @@
 
 ---
 
+### [2026-06-07] — NAVIGABLE PRODUCT (design) — 3-page nav + auth + settings + polish, QA-PASSED
+
+**Decision (Adam, locked this session):** (1) **Reduced 3-page outcomes nav** now — sidebar = Outcomes (→ polished `/dashboard`) · Approval Queue (→ `/approvals`) · Settings. **Weekly Digest Archive + Traceability deferred** (the full 5-page model in `08-UX-ARCHITECTURE.md §0` is NOT fully adopted this pass — only the 3 pages with real/buildable content, to guarantee zero placeholders). (2) **Design-first, wire-later** — auth + Settings ship as pixel-perfect warm-minimal screens with all four states; real Supabase auth wiring + Settings/Billing persistence are an explicit fast-follow (kept this OUT of Irreversible tier — no DB migration, no auth backend). (3) **Retired tool-framed routes redirect** (reversible) rather than delete: `home/scans/automation/competitors → /dashboard`, `inbox/archive → /approvals`.
+
+**Shipped (`feat/navigable-product`, FULL tier, QA-PASSED):** sidebar reshape + 6 redirects; `(auth)` shell + login/signup/forgot-password (AuthCard mirrors ScoreHeroPanel finish, one Fraunces beat, OAuth, `next` preserved); six-tab Settings console (violet-identity Approval-preferences tab, violet never a button); `/scan/[scan_id]` rebuilt to tokens + `.card-console` (ScanScoreHero/EngineBand/IssueLedger/ScanPendingState, sanctioned score reveal, NO agent names per Eng #9); `/discovery` warm-minimal wrapper. Built via T5: 4 `design`-workflow specs → 4 worker builds (worktrees from origin/main, conflict-free merge, none touched globals.css).
+
+**QA value:** binding `qa.js` gate #1 **BLOCKED** on 2 verified P1s — open-redirect via unvalidated `next` param rendered as `<a href>` (Login/Signup), and a squared ScanScoreHero ring offset under prefers-reduced-motion (score 50 → 25% arc). Both fixed with regression tests (`sanitizeNext` same-origin-only; `ring-math.ts` `ringOffset`); gate #2 **PASS** (0 block-eligible survived 3-way adversarial verify). design-critic 4 P1s + 3 advisories also fixed (cal.com CSP `frame-src`, ProfileTab persona-PII default removed, ScanPendingState reduced-motion + monotonic labels). Verified in-worktree: tsc 0, vitest 232/232, build 0, zero "Coming Wave 1" customer-facing.
+
+**Note:** fix pass applied directly by CEO (subagent budget hit mid-run) — exception to the layer contract, driven by infra, not preference. **Fast-follows:** real auth/persistence wiring; Weekly Digest + Traceability pages; 9 QA advisories (auth-util dedupe, deriveScore/deriveEngines tests, setTimeout unmount guard, BillingTab dead branches). **Merge:** human-gated; awaiting Adam. Session: `docs/08-agents_work/sessions/2026-06-07-ceo-navigable-product.md`.
+
 ### [2026-06-05] — SCAN ENGINE BUILT (Track A) — the missing core, QA-PASSED
 
 **Finding:** The GEO scan engine did not exist on main. `/api/scan/free` fired `scan/free.requested` with no consumer, no scan lib, and the `free_scans` table itself was never created in any migration — so the free-scan front door was silently broken at the insert step. The product's "diagnose" half + top-of-funnel lead magnet was hollow.
