@@ -16,6 +16,12 @@ describe('sanitizeNext', () => {
     expect(sanitizeNext('//evil.com')).toBe('/dashboard')
   })
 
+  it('rejects javascript: and other non-path schemes', () => {
+    expect(sanitizeNext('javascript:alert(1)')).toBe('/dashboard')
+    expect(sanitizeNext('data:text/html,<script>')).toBe('/dashboard')
+    expect(sanitizeNext('mailto:x@y.com')).toBe('/dashboard')
+  })
+
   it('falls back when empty or missing', () => {
     expect(sanitizeNext(null)).toBe('/dashboard')
     expect(sanitizeNext(undefined)).toBe('/dashboard')
