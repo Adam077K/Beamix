@@ -60,22 +60,56 @@ export interface OpenRouterRequest {
   userPrompt: string;
   maxTokens?: number;
   temperature?: number;
+  /**
+   * When true, activates the OpenRouter web_search plugin so the model
+   * can retrieve live web results at query time. Uses the `plugins` array
+   * (the deprecated `:online` model-suffix must NOT be used).
+   * For non-natively-grounded models, retrieval is handled via Exa.
+   * Only supported on models that accept the plugins field; callers are
+   * responsible for choosing a compatible model (e.g. openai/gpt-4o-mini).
+   */
+  web?: boolean;
+  /**
+   * Maximum number of web search results to include when `web` is true.
+   * Defaults to 5. Ignored when `web` is false or absent.
+   */
+  webMaxResults?: number;
 }
 
 export interface OpenRouterResponse {
   text: string;
   prompt_tokens: number;
   completion_tokens: number;
+  /**
+   * Source URLs extracted from citation annotations in the response.
+   * Populated when the model returns grounding citations via either:
+   *   (a) OpenRouter annotation objects on the message
+   *       (shape: message.annotations[].url_citation.url)
+   *   (b) A top-level `citations` array on the response
+   *       (Perplexity Sonar native format)
+   * Empty array when no citations are present. Wave 2 consumers use this;
+   * Wave 1 only plumbs the field through.
+   */
+  sourceUrls: string[];
 }
 
 /**
  * Call an OpenRouter model and return the text response.
  * Throws on network error or non-2xx status.
+ *
+ * When req.web is true, the request body includes the web_search plugin:
+ *   plugins: [{ id: 'web', max_results: <webMaxResults ?? 5> }]
+ * The deprecated `:online` model suffix is NOT used — plugin array is the
+ * current OpenRouter API contract.
+ *
+ * Callers that do NOT pass req.web receive byte-identical request bodies to
+ * the previous implementation — no `plugins` key, no annotation parsing path.
  */
 export async function callOpenRouter(req: OpenRouterRequest): Promise<OpenRouterResponse> {
   const apiKey = resolveOpenRouterKey();
 
-  const body = {
+  // Base body — identical to prior implementation when req.web is absent/false.
+  const body: Record<string, unknown> = {
     model: req.model,
     max_tokens: req.maxTokens ?? 1_500,
     temperature: req.temperature ?? 0.2,
@@ -84,6 +118,11 @@ export async function callOpenRouter(req: OpenRouterRequest): Promise<OpenRouter
       { role: 'user', content: req.userPrompt },
     ],
   };
+
+  // Add the web_search plugin only when explicitly requested.
+  if (req.web === true) {
+    body['plugins'] = [{ id: 'web', max_results: req.webMaxResults ?? 5 }];
+  }
 
   let res: Response;
   try {
@@ -124,14 +163,40 @@ export async function callOpenRouter(req: OpenRouterRequest): Promise<OpenRouter
     throw new Error(`OpenRouter ${statusClass}xx error (${req.model})`);
   }
 
+  // Shape of the OpenRouter response including optional citation fields.
+  // Annotation shape (verified): message.annotations[].url_citation.url
+  // Perplexity native top-level citations: response.citations[] (string[])
   const json = (await res.json()) as {
-    choices: Array<{ message: { content: string | null } }>;
+    choices: Array<{
+      message: {
+        content: string | null;
+        annotations?: Array<{
+          type: string;
+          url_citation?: { url: string; title?: string; content?: string; start_index?: number; end_index?: number };
+        }>;
+      };
+    }>;
     usage?: { prompt_tokens?: number; completion_tokens?: number };
+    citations?: string[];
   };
 
   const text = json.choices[0]?.message?.content ?? '';
   const prompt_tokens = json.usage?.prompt_tokens ?? 0;
   const completion_tokens = json.usage?.completion_tokens ?? 0;
 
-  return { text, prompt_tokens, completion_tokens };
+  // Extract source URLs from citation annotations (additive — empty when absent).
+  // Primary: OpenRouter annotation objects attached to the message.
+  // Fallback: Perplexity Sonar top-level citations array on the response root.
+  let sourceUrls: string[] = [];
+  const annotations = json.choices[0]?.message?.annotations;
+  if (Array.isArray(annotations) && annotations.length > 0) {
+    sourceUrls = annotations
+      .filter((a) => a.type === 'url_citation' && typeof a.url_citation?.url === 'string')
+      .map((a) => a.url_citation!.url);
+  } else if (Array.isArray(json.citations) && json.citations.length > 0) {
+    // Perplexity Sonar native citation format — top-level string array.
+    sourceUrls = json.citations.filter((c): c is string => typeof c === 'string');
+  }
+
+  return { text, prompt_tokens, completion_tokens, sourceUrls };
 }
