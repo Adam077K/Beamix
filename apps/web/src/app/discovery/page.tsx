@@ -1,19 +1,23 @@
 /**
  * /discovery — Cal.com booking page
  *
- * Server Component. Embeds the Cal.com booking widget configured via
- * NEXT_PUBLIC_CALCOM_DISCOVERY_LINK env var (e.g. "beamix/discovery-call").
+ * Warm-minimal shell. Server Component.
  *
- * Captures email + scan_id from query params so Cal.com pre-fills the email
- * field and the booking webhook can associate the session with a free scan.
+ * Scope: the WRAPPER + states only. Booking widget internals untouched.
+ * - Branded header: Beamix wordmark + headline/subtitle
+ * - Token-only colors (zero inline hex)
+ * - Branded loading state for the iframe (client component)
+ * - Designed env-missing fallback (recovery copy + link, never a raw error)
+ * - email + scan_id query-param prefill behavior preserved
  *
  * Query params:
  *   email    — pre-fill attendee email in the Cal.com embed
- *   scan_id  — passed through to the Cal.com "notes" field; forwarded by
- *              the webhook handler to the `discovery_sessions` table
+ *   scan_id  — passed through to Cal.com "notes" field; forwarded by
+ *              the webhook handler to the discovery_sessions table
  */
 
 import { Metadata } from 'next'
+import { CalEmbed } from './_components/CalEmbed'
 
 export const metadata: Metadata = {
   title: 'Book Your Discovery Call | Beamix',
@@ -33,43 +37,38 @@ export default async function DiscoveryPage({ searchParams }: DiscoveryPageProps
   const scanId = typeof params.scan_id === 'string' ? params.scan_id.trim() : ''
 
   if (!calcomLink) {
-    // Graceful degradation — show a static CTA if the env var is missing (shouldn't happen in prod)
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center px-4 py-16 text-center">
-        <h1 className="text-2xl font-semibold text-gray-900">Book a Discovery Call</h1>
-        <p className="mt-4 max-w-md text-gray-600">
-          Our calendar link is being set up. Please email{' '}
-          <a href="mailto:hello@beamixai.com" className="text-[#3370FF] underline">
-            hello@beamixai.com
-          </a>{' '}
-          to schedule your discovery call.
-        </p>
-      </main>
-    )
+    return <EnvMissingFallback />
   }
 
-  // Build the Cal.com embed URL with pre-fill parameters
-  // Cal.com supports pre-filling via query params: name, email, notes
   const calUrl = buildCalUrl(calcomLink, { email, scanId })
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-white">
-      {/* Header */}
-      <div className="w-full border-b border-gray-100 px-4 py-6 text-center">
-        <p className="text-sm font-medium uppercase tracking-wider text-[#3370FF]">
-          Discovery call
-        </p>
-        <h1 className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">
-          Let&apos;s talk about your AI search visibility
-        </h1>
-        <p className="mx-auto mt-2 max-w-lg text-base text-gray-500">
-          Book a free 20-minute call. We&apos;ll review your scan results and walk through
-          a tailored plan for your business.
-        </p>
+    <main className="min-h-screen bg-[var(--color-surface-warm)]">
+      {/* Branded header */}
+      <div className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+        <div className="mx-auto max-w-3xl px-6 py-5 text-center">
+          {/* Wordmark */}
+          <p className="font-[var(--font-display)] text-[18px] font-semibold tracking-tight text-[var(--color-text-primary)]">
+            Beamix
+          </p>
+          {/* Eyebrow */}
+          <p className="mt-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-disabled)]">
+            Discovery call
+          </p>
+          {/* Headline */}
+          <h1 className="mt-2 font-[var(--font-display)] text-[28px] font-semibold leading-tight tracking-[-0.02em] text-[var(--color-text-primary)] sm:text-[32px]">
+            Let&apos;s talk about your AI search visibility
+          </h1>
+          {/* Subtitle */}
+          <p className="mx-auto mt-2 max-w-[480px] text-[15px] leading-[1.5] text-[var(--color-text-muted)]">
+            A free 20-minute call. We&apos;ll walk through your scan results and
+            show you exactly what we&apos;ll fix — and what to expect.
+          </p>
+        </div>
       </div>
 
-      {/* Cal.com embed */}
-      <div className="w-full flex-1">
+      {/* Cal.com embed — client component handles loading state */}
+      <div className="w-full">
         <CalEmbed calUrl={calUrl} />
       </div>
     </main>
@@ -77,41 +76,47 @@ export default async function DiscoveryPage({ searchParams }: DiscoveryPageProps
 }
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Env-missing fallback — recovery copy + link, never a raw error
 // ---------------------------------------------------------------------------
 
-function buildCalUrl(
-  link: string,
-  opts: { email: string; scanId: string }
-): string {
-  // link can be either a full URL or a slug like "beamix/discovery-call"
-  const base = link.startsWith('http')
-    ? link
-    : `https://cal.com/${link}`
-
-  const url = new URL(base)
-  if (opts.email) url.searchParams.set('email', opts.email)
-  // Pass scan_id via Cal.com's `notes` field so it surfaces in the booking summary
-  if (opts.scanId) url.searchParams.set('notes', `scan_id:${opts.scanId}`)
-  // Embed mode — removes Cal.com chrome
-  url.searchParams.set('embed', '1')
-  return url.toString()
+function EnvMissingFallback() {
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-surface-warm)] px-6 py-16 text-center">
+      {/* Wordmark */}
+      <p className="font-[var(--font-display)] text-[18px] font-semibold tracking-tight text-[var(--color-text-primary)]">
+        Beamix
+      </p>
+      <div className="mt-8 w-full max-w-[480px] rounded-[var(--radius-card)] bg-[var(--color-surface)] p-8 text-center shadow-[var(--shadow-card)]">
+        <h1 className="font-[var(--font-display)] text-[22px] font-semibold text-[var(--color-text-primary)]">
+          Book a Discovery Call
+        </h1>
+        <p className="mx-auto mt-3 max-w-[380px] text-[15px] leading-[1.5] text-[var(--color-text-muted)]">
+          Our booking calendar isn&apos;t loading right now. Email us and
+          we&apos;ll set up a time within one business day.
+        </p>
+        <a
+          href="mailto:hello@beamixai.com"
+          className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-[var(--color-accent)] px-6 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
+        >
+          Email hello@beamixai.com
+        </a>
+        <p className="mt-4 text-[13px] text-[var(--color-text-disabled)]">
+          No credit card. No commitment.
+        </p>
+      </div>
+    </main>
+  )
 }
 
 // ---------------------------------------------------------------------------
-// Cal embed component (Client Component required for iframe interactions)
+// URL builder
 // ---------------------------------------------------------------------------
 
-// Cal.com supports a plain <iframe> embed — no JS SDK required.
-// We use an iframe with a fixed minimum height to avoid a collapsed widget.
-function CalEmbed({ calUrl }: { calUrl: string }) {
-  return (
-    <iframe
-      src={calUrl}
-      className="h-[700px] w-full border-0 sm:h-[800px]"
-      title="Book a discovery call with Beamix"
-      loading="eager"
-      allow="payment"
-    />
-  )
+function buildCalUrl(link: string, opts: { email: string; scanId: string }): string {
+  const base = link.startsWith('http') ? link : `https://cal.com/${link}`
+  const url = new URL(base)
+  if (opts.email) url.searchParams.set('email', opts.email)
+  if (opts.scanId) url.searchParams.set('notes', `scan_id:${opts.scanId}`)
+  url.searchParams.set('embed', '1')
+  return url.toString()
 }
