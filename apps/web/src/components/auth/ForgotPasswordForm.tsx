@@ -64,14 +64,17 @@ export function ForgotPasswordForm() {
     setCardError(null)
 
     const supabase = createClient()
+    // Recovery link routes through the callback (exchanges the code → session),
+    // then lands on /reset-password where the user sets a new password.
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/settings`,
+      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
     })
 
+    // Anti-enumeration: always show the same success state regardless of whether
+    // the email exists or the call errored — never reveal account existence. Real
+    // errors are logged server-side by Supabase; the user always sees "sent".
     if (error) {
-      setFormState('error')
-      setCardError(error.message || 'We couldn\'t send the reset link. Please try again in a moment.')
-      return
+      console.error('[forgot-password] resetPasswordForEmail error', { status: error.status })
     }
 
     setSentEmail(email)

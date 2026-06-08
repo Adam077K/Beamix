@@ -20,10 +20,9 @@ export async function GET(request: NextRequest) {
   // the provider fails. Surface it on the login screen instead of silently
   // proceeding to a destination the user never authenticated for.
   if (oauthError) {
-    console.error('[auth/callback] OAuth provider error', {
-      error: oauthError,
-      description: searchParams.get('error_description'),
-    })
+    // Log only the bounded error code, not the free-text error_description
+    // (attacker-controlled → avoids log injection).
+    console.error('[auth/callback] OAuth provider error', { error: oauthError })
     return NextResponse.redirect(`${origin}/login?error=auth`)
   }
 

@@ -80,7 +80,10 @@ export function LoginForm() {
 
     if (error) {
       setFormState('error')
-      setCardError(error.message || 'We couldn\'t sign you in. Check your credentials and try again.')
+      // Generic message — do NOT echo the raw error, which distinguishes
+      // "wrong password" from "email not confirmed" / "no such account"
+      // (an account-existence oracle).
+      setCardError('Invalid email or password.')
       return
     }
 
