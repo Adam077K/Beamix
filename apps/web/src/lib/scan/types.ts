@@ -107,3 +107,46 @@ export interface ScanInput {
   website_url: string;
   domain: string;
 }
+
+// ---------------------------------------------------------------------------
+// Site audit — structured observation (additive, log-only, no scoring/UI/DB)
+// ---------------------------------------------------------------------------
+
+/**
+ * Structured result of a site audit run against a target URL.
+ *
+ * FM-5 GUARD: robotsTxt.fetchStatus='unavailable' means the fetch did not return
+ * a clean HTTP 200 — network error, timeout, 4xx, 5xx. In this case the crawlers
+ * map is OMITTED. Never infer "blocked" from the absence of a robots.txt response.
+ */
+export type SiteAudit = {
+  /** The target URL that was audited. */
+  url: string;
+  /** ISO 8601 timestamp of when the audit was performed. */
+  fetchedAt: string;
+  /** HTML page metadata parsed from the target URL. */
+  page: {
+    fetchStatus: 'ok' | 'unavailable';
+    title?: string;
+    metaDescription?: string;
+    h1Count?: number;
+    h2Count?: number;
+    h3Count?: number;
+    wordCount?: number;
+    /** @type values found in JSON-LD scripts, e.g. ["LocalBusiness", "Organization"] */
+    jsonLdTypes?: string[];
+  };
+  /**
+   * robots.txt status and per-crawler permissions.
+   *
+   * When fetchStatus='unavailable', the crawlers map is absent — we have no data.
+   * When fetchStatus='ok', crawlers is present for all checked AI crawlers.
+   */
+  robotsTxt:
+    | { fetchStatus: 'unavailable' }
+    | { fetchStatus: 'ok'; crawlers: Record<string, 'allowed' | 'disallowed'> };
+  /** Whether /sitemap.xml was present (HTTP 200). */
+  sitemapXml: { present: boolean };
+  /** Whether /llms.txt was present (HTTP 200). */
+  llmsTxt: { present: boolean };
+};
