@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { sanitizeNext } from '@/lib/auth/next-param'
+import { createClient } from '@/lib/supabase/client'
 import { AuthCard } from './AuthCard'
 
 type FormState = 'idle' | 'submitting' | 'error' | 'success'
@@ -73,14 +74,23 @@ export function SignupForm() {
     setFormState('submitting')
     setCardError(null)
 
-    try {
-      // TODO(wire): Supabase auth — fast-follow
-      await new Promise<void>((resolve) => setTimeout(resolve, 1200))
-      setFormState('success')
-    } catch {
+    const supabase = createClient()
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+      },
+    })
+
+    if (error) {
       setFormState('error')
-      setCardError('Something went wrong creating your account. Please try again.')
+      setCardError(error.message || 'Something went wrong creating your account. Please try again.')
+      return
     }
+
+    // Keep the existing "check your inbox" success state.
+    setFormState('success')
   }
 
   if (formState === 'success') {
@@ -223,7 +233,14 @@ export function SignupForm() {
           className="w-full"
           disabled={formState === 'submitting'}
           onClick={() => {
-            // TODO(wire): Supabase OAuth — fast-follow
+            const supabase = createClient()
+            const safeNext = sanitizeNext(searchParams.get('next'))
+            void supabase.auth.signInWithOAuth({
+              provider: 'google',
+              options: {
+                redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`,
+              },
+            })
           }}
           aria-label="Continue with Google"
         >

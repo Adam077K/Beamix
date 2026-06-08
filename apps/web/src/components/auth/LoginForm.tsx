@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { sanitizeNext } from '@/lib/auth/next-param'
+import { createClient } from '@/lib/supabase/client'
 import { AuthCard } from './AuthCard'
 
 type FormState = 'idle' | 'submitting' | 'error' | 'success'
@@ -74,16 +75,17 @@ export function LoginForm() {
     setFormState('submitting')
     setCardError(null)
 
-    try {
-      // TODO(wire): Supabase auth — fast-follow
-      // On success, redirect to `next`
-      await new Promise<void>((resolve) => setTimeout(resolve, 1200))
-      setFormState('success')
-      // Stub: show success state; real nav would be: router.push(next)
-    } catch {
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
       setFormState('error')
-      setCardError('We couldn\'t sign you in. Check your credentials and try again.')
+      setCardError(error.message || 'We couldn\'t sign you in. Check your credentials and try again.')
+      return
     }
+
+    // Full navigation so the server re-reads the new session cookie set by Supabase.
+    window.location.assign(next)
   }
 
   if (formState === 'success') {
@@ -234,7 +236,14 @@ export function LoginForm() {
           className="w-full"
           disabled={formState === 'submitting'}
           onClick={() => {
-            // TODO(wire): Supabase OAuth — fast-follow
+            const supabase = createClient()
+            const safeNext = sanitizeNext(searchParams.get('next'))
+            void supabase.auth.signInWithOAuth({
+              provider: 'google',
+              options: {
+                redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`,
+              },
+            })
           }}
           aria-label="Continue with Google"
         >

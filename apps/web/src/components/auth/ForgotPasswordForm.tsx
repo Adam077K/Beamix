@@ -4,6 +4,7 @@ import { useState, useId } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { createClient } from '@/lib/supabase/client'
 import { AuthCard } from './AuthCard'
 
 type FormState = 'idle' | 'submitting' | 'error' | 'success'
@@ -62,15 +63,19 @@ export function ForgotPasswordForm() {
     setFormState('submitting')
     setCardError(null)
 
-    try {
-      // TODO(wire): Supabase auth resetPasswordForEmail — fast-follow
-      await new Promise<void>((resolve) => setTimeout(resolve, 1000))
-      setSentEmail(email)
-      setFormState('success')
-    } catch {
+    const supabase = createClient()
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/settings`,
+    })
+
+    if (error) {
       setFormState('error')
-      setCardError('We couldn\'t send the reset link. Please try again in a moment.')
+      setCardError(error.message || 'We couldn\'t send the reset link. Please try again in a moment.')
+      return
     }
+
+    setSentEmail(email)
+    setFormState('success')
   }
 
   if (formState === 'success') {
