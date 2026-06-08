@@ -9,6 +9,15 @@
 -- 1. Drop new tables (CASCADE removes their indexes + policies automatically)
 -- ─────────────────────────────────────────────────────────────────────────────
 
+-- Explicit index drops before table drop — harmless if already dropped by CASCADE,
+-- but makes the dependency order explicit and safe for partial-state rollbacks.
+DROP INDEX IF EXISTS public.factor_catalog_active_tier_idx;
+DROP INDEX IF EXISTS public.factor_catalog_is_active_idx;
+DROP INDEX IF EXISTS public.telemetry_events_business_type_time_idx;
+DROP INDEX IF EXISTS public.telemetry_events_event_type_idx;
+DROP INDEX IF EXISTS public.telemetry_events_business_occurred_idx;
+DROP INDEX IF EXISTS public.business_contexts_expires_at_idx;
+
 DROP TABLE IF EXISTS public.factor_catalog CASCADE;
 DROP TABLE IF EXISTS public.telemetry_events CASCADE;
 DROP TABLE IF EXISTS public.business_contexts CASCADE;
@@ -16,6 +25,12 @@ DROP TABLE IF EXISTS public.business_contexts CASCADE;
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 2. Remove CHECK constraints and columns added to tracked_queries
 -- ─────────────────────────────────────────────────────────────────────────────
+
+-- Drop the partial index for W5 scoring path before removing its indexed columns.
+DROP INDEX IF EXISTS public.tracked_queries_active_nonbranded_idx;
+
+ALTER TABLE public.tracked_queries
+  DROP CONSTRAINT IF EXISTS tracked_queries_weight_check;
 
 ALTER TABLE public.tracked_queries
   DROP CONSTRAINT IF EXISTS tracked_queries_intent_bucket_check;
@@ -34,6 +49,9 @@ ALTER TABLE public.tracked_queries
 -- ─────────────────────────────────────────────────────────────────────────────
 
 ALTER TABLE public.scan_engine_results
+  DROP CONSTRAINT IF EXISTS scan_engine_results_shape_outcome_coupling_check;
+
+ALTER TABLE public.scan_engine_results
   DROP CONSTRAINT IF EXISTS scan_engine_results_shape_outcome_check;
 
 ALTER TABLE public.scan_engine_results
@@ -46,8 +64,11 @@ ALTER TABLE public.scan_engine_results
   DROP COLUMN IF EXISTS shape;
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- 4. Remove UNIQUE constraint and columns added to query_positions
+-- 4. Remove constraints and columns added to query_positions
 -- ─────────────────────────────────────────────────────────────────────────────
+
+-- Drop the composite index before removing its columns.
+DROP INDEX IF EXISTS public.query_positions_business_run_kind_idx;
 
 ALTER TABLE public.query_positions
   DROP CONSTRAINT IF EXISTS query_positions_run_kind_check;
@@ -59,17 +80,25 @@ ALTER TABLE public.query_positions
   DROP COLUMN IF EXISTS model_id;
 
 ALTER TABLE public.query_positions
+  DROP CONSTRAINT IF EXISTS query_positions_ci_bounds_check;
+
+ALTER TABLE public.query_positions
   DROP COLUMN IF EXISTS ci_high;
 
 ALTER TABLE public.query_positions
   DROP COLUMN IF EXISTS ci_low;
 
 ALTER TABLE public.query_positions
+  DROP CONSTRAINT IF EXISTS query_positions_sample_n_check;
+
+ALTER TABLE public.query_positions
   DROP COLUMN IF EXISTS sample_n;
 
--- Drop the UNIQUE constraint (and its backing index) last, after other deps removed.
+-- evidence_id teardown: constraint → index → column (dependency-safe order).
 ALTER TABLE public.query_positions
   DROP CONSTRAINT IF EXISTS query_positions_evidence_id_unique;
+
+DROP INDEX IF EXISTS public.query_positions_evidence_id_unique;
 
 ALTER TABLE public.query_positions
   DROP COLUMN IF EXISTS evidence_id;

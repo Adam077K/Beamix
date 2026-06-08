@@ -84,7 +84,9 @@ BEGIN
       ('url_probes'),
       ('competitors'),
       ('competitor_results'),
-      ('citation_signals')
+      ('citation_signals'),
+      ('business_contexts'),
+      ('telemetry_events')
     ) AS t(tablename)
   LOOP
     IF NOT EXISTS (
@@ -144,6 +146,102 @@ END;
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- TEST 4: New tenant tables (business_contexts, telemetry_events) have NO
+--         anon/authenticated WRITE policies — all writes are service-role only.
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $$
+DECLARE
+  v_rec    record;
+  v_failed text := '';
+BEGIN
+  FOR v_rec IN
+    SELECT * FROM (VALUES
+      ('business_contexts'),
+      ('telemetry_events')
+    ) AS t(tablename)
+  LOOP
+    IF EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE  schemaname = 'public'
+        AND  tablename  = v_rec.tablename
+        AND  roles && ARRAY['anon','authenticated']::name[]
+        AND  cmd <> 'SELECT'
+    ) THEN
+      v_failed := v_failed || v_rec.tablename || ', ';
+    END IF;
+  END LOOP;
+
+  IF v_failed <> '' THEN
+    RAISE EXCEPTION 'SMOKE TEST FAILED — new tenant tables have user-write policies: %', rtrim(v_failed, ', ');
+  ELSE
+    RAISE NOTICE 'TEST 4 PASS — business_contexts/telemetry_events are read-only to users';
+  END IF;
+END;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TEST 5: factor_catalog seed integrity
+--   a. Exactly 16 rows at version = 1
+--   b. No tier-3 row has promises_lift = true
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $$
+DECLARE
+  v_count int;
+BEGIN
+  SELECT COUNT(*) INTO v_count FROM public.factor_catalog WHERE version = 1;
+  IF v_count <> 16 THEN
+    RAISE EXCEPTION 'SMOKE TEST FAILED — factor_catalog v1 seed count: expected 16, got %', v_count;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.factor_catalog WHERE tier = 3 AND promises_lift = true
+  ) THEN
+    RAISE EXCEPTION 'SMOKE TEST FAILED — tier-3 factor_catalog row has promises_lift = true (violates product invariant)';
+  END IF;
+
+  RAISE NOTICE 'TEST 5 PASS — factor_catalog has 16 v1 rows and no tier-3 row promises lift';
+END;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TEST 6: Key CHECK constraints exist in pg_constraint
+--   Proves the integrity rules shipped and were not silently skipped.
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $$
+DECLARE
+  v_rec    record;
+  v_failed text := '';
+BEGIN
+  FOR v_rec IN
+    SELECT * FROM (VALUES
+      ('query_positions',       'query_positions_ci_bounds_check'),
+      ('scan_engine_results',   'scan_engine_results_shape_outcome_coupling_check'),
+      ('tracked_queries',       'tracked_queries_weight_check'),
+      ('factor_catalog',        'factor_catalog_tier3_no_lift_check')
+    ) AS t(tablename, constraintname)
+  LOOP
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint c
+      JOIN   pg_class cl ON cl.oid = c.conrelid
+      JOIN   pg_namespace n ON n.oid = cl.relnamespace
+      WHERE  n.nspname  = 'public'
+        AND  cl.relname = v_rec.tablename
+        AND  c.conname  = v_rec.constraintname
+        AND  c.contype  = 'c'
+    ) THEN
+      v_failed := v_failed || v_rec.constraintname || ', ';
+    END IF;
+  END LOOP;
+
+  IF v_failed <> '' THEN
+    RAISE EXCEPTION 'SMOKE TEST FAILED — missing CHECK constraints: %', rtrim(v_failed, ', ');
+  ELSE
+    RAISE NOTICE 'TEST 6 PASS — all key CHECK constraints are present';
+  END IF;
+END;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- Summary
 -- ─────────────────────────────────────────────────────────────────────────────
-SELECT 'SMOKE TESTS COMPLETE — all 3 assertions passed' AS result;
+SELECT 'SMOKE TESTS COMPLETE — all 6 assertions passed' AS result;

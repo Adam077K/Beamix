@@ -12,17 +12,32 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 
 -- Stable citation handle — narration references this, not the internal id PK.
-ALTER TABLE public.query_positions
-  ADD COLUMN IF NOT EXISTS evidence_id uuid NOT NULL DEFAULT gen_random_uuid();
-
--- UNIQUE constraint on evidence_id (named so rollback can drop it cleanly).
--- The UNIQUE index it creates doubles as the lookup index; no separate index needed.
-ALTER TABLE public.query_positions
-  ADD CONSTRAINT query_positions_evidence_id_unique UNIQUE (evidence_id);
+-- Lock-safe idempotent pattern:
+--   1. Add column nullable (no default) — no table rewrite, no AccessExclusiveLock on data
+--   2. Backfill NULLs with gen_random_uuid()
+--   3. Set DEFAULT so future inserts get a value without rewriting
+--   4. Set NOT NULL now that all rows are populated
+--   5. Unique index first, then promote to constraint (idempotent via IF NOT EXISTS)
+ALTER TABLE public.query_positions ADD COLUMN IF NOT EXISTS evidence_id uuid;
+UPDATE public.query_positions SET evidence_id = gen_random_uuid() WHERE evidence_id IS NULL;
+ALTER TABLE public.query_positions ALTER COLUMN evidence_id SET DEFAULT gen_random_uuid();
+ALTER TABLE public.query_positions ALTER COLUMN evidence_id SET NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS query_positions_evidence_id_unique
+  ON public.query_positions (evidence_id);
+DO $$ BEGIN
+  ALTER TABLE public.query_positions
+    ADD CONSTRAINT query_positions_evidence_id_unique UNIQUE
+    USING INDEX query_positions_evidence_id_unique;
+EXCEPTION WHEN duplicate_object THEN NULL; WHEN duplicate_table THEN NULL; END $$;
 
 -- Number of independent observations averaged into this row.
 ALTER TABLE public.query_positions
   ADD COLUMN IF NOT EXISTS sample_n int;
+
+DO $$ BEGIN
+  ALTER TABLE public.query_positions
+    ADD CONSTRAINT query_positions_sample_n_check CHECK (sample_n IS NULL OR sample_n > 0);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Wilson confidence interval bounds.
 ALTER TABLE public.query_positions
@@ -30,6 +45,13 @@ ALTER TABLE public.query_positions
 
 ALTER TABLE public.query_positions
   ADD COLUMN IF NOT EXISTS ci_high numeric;
+
+-- ci_low/ci_high are Wilson CI bounds on a PROPORTION (presence rate) in [0,1]; aggregate score/position bands live in the read model, not this column.
+DO $$ BEGIN
+  ALTER TABLE public.query_positions
+    ADD CONSTRAINT query_positions_ci_bounds_check
+      CHECK (ci_low IS NULL OR ci_high IS NULL OR (ci_low >= 0 AND ci_high <= 1 AND ci_low <= ci_high));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Pinned model id used for this observation run (traceability).
 ALTER TABLE public.query_positions
@@ -39,9 +61,11 @@ ALTER TABLE public.query_positions
 ALTER TABLE public.query_positions
   ADD COLUMN IF NOT EXISTS run_kind text;
 
-ALTER TABLE public.query_positions
-  ADD CONSTRAINT query_positions_run_kind_check
-    CHECK (run_kind IN ('daily_light', 'weekly_deep', 'free', 'switchback'));
+DO $$ BEGIN
+  ALTER TABLE public.query_positions
+    ADD CONSTRAINT query_positions_run_kind_check
+      CHECK (run_kind IN ('daily_light', 'weekly_deep', 'free', 'switchback'));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- B. ALTER scan_engine_results — raw store, answer-shape columns
@@ -53,30 +77,41 @@ ALTER TABLE public.query_positions
 ALTER TABLE public.scan_engine_results
   ADD COLUMN IF NOT EXISTS shape text;
 
-ALTER TABLE public.scan_engine_results
-  ADD CONSTRAINT scan_engine_results_shape_check
-    CHECK (shape IN (
-      'ranked_listicle',
-      'single_recommendation',
-      'comparison',
-      'negative_avoid',
-      'cited_as_source',
-      'passing_mention',
-      'category_defining',
-      'do_your_own_research',
-      'tool_vs_service_vs_product',
-      'local_pack',
-      'navigational_branded',
-      'no_answer'
-    ));
+DO $$ BEGIN
+  ALTER TABLE public.scan_engine_results
+    ADD CONSTRAINT scan_engine_results_shape_check
+      CHECK (shape IN (
+        'ranked_listicle',
+        'single_recommendation',
+        'comparison',
+        'negative_avoid',
+        'cited_as_source',
+        'passing_mention',
+        'category_defining',
+        'do_your_own_research',
+        'tool_vs_service_vs_product',
+        'local_pack',
+        'navigational_branded',
+        'no_answer'
+      ));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Whether this shape is a win / partial / loss for the business.
 ALTER TABLE public.scan_engine_results
   ADD COLUMN IF NOT EXISTS shape_outcome text;
 
-ALTER TABLE public.scan_engine_results
-  ADD CONSTRAINT scan_engine_results_shape_outcome_check
-    CHECK (shape_outcome IN ('win', 'partial', 'loss'));
+DO $$ BEGIN
+  ALTER TABLE public.scan_engine_results
+    ADD CONSTRAINT scan_engine_results_shape_outcome_check
+      CHECK (shape_outcome IN ('win', 'partial', 'loss'));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- An outcome cannot exist without its shape (prevents orphaned outcome with no shape context).
+DO $$ BEGIN
+  ALTER TABLE public.scan_engine_results
+    ADD CONSTRAINT scan_engine_results_shape_outcome_coupling_check
+      CHECK (shape_outcome IS NULL OR shape IS NOT NULL);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- C. ALTER tracked_queries — query weight + intent bucket for W5 scoring
@@ -86,20 +121,29 @@ ALTER TABLE public.scan_engine_results
 ALTER TABLE public.tracked_queries
   ADD COLUMN IF NOT EXISTS weight numeric NOT NULL DEFAULT 1;
 
+-- weight must be positive and bounded (feeds W5 scoring; prevents degenerate inputs).
+DO $$ BEGIN
+  ALTER TABLE public.tracked_queries
+    ADD CONSTRAINT tracked_queries_weight_check
+      CHECK (weight > 0 AND weight <= 100);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- Code-ground-truth intent bucket (distinct from the existing free-text `intent`).
 ALTER TABLE public.tracked_queries
   ADD COLUMN IF NOT EXISTS intent_bucket text;
 
-ALTER TABLE public.tracked_queries
-  ADD CONSTRAINT tracked_queries_intent_bucket_check
-    CHECK (intent_bucket IN (
-      'category_geo',
-      'problem',
-      'near_me',
-      'branded',
-      'comparison',
-      'other'
-    ));
+DO $$ BEGIN
+  ALTER TABLE public.tracked_queries
+    ADD CONSTRAINT tracked_queries_intent_bucket_check
+      CHECK (intent_bucket IN (
+        'category_geo',
+        'problem',
+        'near_me',
+        'branded',
+        'comparison',
+        'other'
+      ));
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Branded queries are scored separately from visibility; flagged here.
 ALTER TABLE public.tracked_queries
@@ -126,8 +170,8 @@ CREATE TABLE IF NOT EXISTS public.business_contexts (
   UNIQUE (business_id)  -- one active context per business; app upserts on profile edit
 );
 
-CREATE INDEX IF NOT EXISTS business_contexts_business_id_idx
-  ON public.business_contexts (business_id);
+-- NOTE: the UNIQUE (business_id) constraint above already creates a B-tree index on
+-- business_id; a separate CREATE INDEX on that column is redundant and has been omitted.
 
 CREATE INDEX IF NOT EXISTS business_contexts_expires_at_idx
   ON public.business_contexts (expires_at);
@@ -163,6 +207,10 @@ CREATE INDEX IF NOT EXISTS telemetry_events_business_occurred_idx
 CREATE INDEX IF NOT EXISTS telemetry_events_event_type_idx
   ON public.telemetry_events (event_type);
 
+-- Per-tenant event-type time-range queries (dominant read path for telemetry dashboards).
+CREATE INDEX IF NOT EXISTS telemetry_events_business_type_time_idx
+  ON public.telemetry_events (business_id, event_type, occurred_at DESC);
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- F. NEW TABLE factor_catalog — versioned impact weights (config, not code)
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -178,7 +226,7 @@ CREATE TABLE IF NOT EXISTS public.factor_catalog (
   -- playbook_id maps to agent enum values (nullable where no agent covers the factor):
   --   content_optimizer | schema_generator | review_presence_planner | reddit_presence_planner
   playbook_id     text,
-  -- Tier-3 rows MUST have promises_lift = false (enforced by application seed + audit).
+  -- Tier-3 rows MUST have promises_lift = false (enforced by DB constraint below + application seed).
   promises_lift   boolean NOT NULL DEFAULT true,
   version         int     NOT NULL DEFAULT 1,
   is_active       boolean NOT NULL DEFAULT true,
@@ -186,11 +234,20 @@ CREATE TABLE IF NOT EXISTS public.factor_catalog (
   CONSTRAINT factor_catalog_factor_key_version_unique UNIQUE (factor_key, version),
   CONSTRAINT factor_catalog_tier_check CHECK (tier BETWEEN 1 AND 3),
   CONSTRAINT factor_catalog_weight_source_check
-    CHECK (weight_source IN ('vendor_estimated', 'beamix_measured'))
+    CHECK (weight_source IN ('vendor_estimated', 'beamix_measured')),
+  -- impact_weight is a non-negative numeric weight; negative weights have no defined meaning.
+  CONSTRAINT factor_catalog_impact_weight_check CHECK (impact_weight >= 0),
+  -- Tier-3 factors represent hygiene signals that NEVER promise lift to users.
+  -- This encodes the product invariant "Tier-3 factors are hygiene only" as a DB constraint.
+  CONSTRAINT factor_catalog_tier3_no_lift_check CHECK (tier <> 3 OR promises_lift = false)
 );
 
 CREATE INDEX IF NOT EXISTS factor_catalog_is_active_idx
   ON public.factor_catalog (is_active);
+
+-- Scoring reads active factors by tier (dominant path for W5 scoring engine).
+CREATE INDEX IF NOT EXISTS factor_catalog_active_tier_idx
+  ON public.factor_catalog (is_active, tier);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- F-seed. Seed factor_catalog v1 — 16 factors from SCAN-MEASUREMENT-MODEL.md §3
@@ -302,30 +359,31 @@ VALUES
   )
 ON CONFLICT (factor_key, version) DO NOTHING;
 
+-- Seed integrity guard: fail fast if the expected 16 v1 rows are not present.
+DO $$ BEGIN
+  IF (SELECT COUNT(*) FROM public.factor_catalog WHERE version = 1) <> 16 THEN
+    RAISE EXCEPTION 'factor_catalog v1 seed count drift: expected 16, got %',
+      (SELECT COUNT(*) FROM public.factor_catalog WHERE version = 1);
+  END IF;
+END $$;
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- G. RLS — 3 new tables
 -- Patterns match 20260520100013_rls_policies.sql exactly.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 -- TABLE: business_contexts  (Pattern B — via businesses.user_id)
+-- SECURITY NOTE: The "owner write" policy has been intentionally OMITTED.
+-- business_contexts.context is a JSONB blob consumed by the service-role probe/scoring job.
+-- Allowing authenticated clients to write this column is a prompt-injection + cache-DoS vector:
+-- a malicious user could inject adversarial context that corrupts their own scan scoring, or
+-- trigger expensive cache invalidations at will. All writes go through service_role
+-- (the app already uses the service key for context generation and invalidation).
 ALTER TABLE public.business_contexts ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "business_contexts: owner read"
   ON public.business_contexts FOR SELECT
   USING (
-    business_id IN (
-      SELECT id FROM public.businesses WHERE user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "business_contexts: owner write"
-  ON public.business_contexts FOR ALL
-  USING (
-    business_id IN (
-      SELECT id FROM public.businesses WHERE user_id = auth.uid()
-    )
-  )
-  WITH CHECK (
     business_id IN (
       SELECT id FROM public.businesses WHERE user_id = auth.uid()
     )
@@ -355,17 +413,29 @@ CREATE POLICY "telemetry_events: service_role all"
   WITH CHECK (true);
 
 -- TABLE: factor_catalog  (Pattern P — public read config table, service_role write)
--- Global config: authenticated users read; only service_role can write.
--- Matches the pattern used for `plans` and `feature_flags`.
+-- Global config: readable by any role including anon (e.g., free-scan pre-auth surfaces);
+-- only service_role can write. Matches the pattern used for `plans` and `feature_flags`.
 ALTER TABLE public.factor_catalog ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "factor_catalog: authenticated read"
+CREATE POLICY "factor_catalog: public read"
   ON public.factor_catalog FOR SELECT
-  TO authenticated
   USING (true);
 
-CREATE POLICY "factor_catalog: service_role all"
+CREATE POLICY "factor_catalog: service_role write"
   ON public.factor_catalog FOR ALL
   TO service_role
   USING (true)
   WITH CHECK (true);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- H. Additional performance indexes
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- Dominant W5 scoring path: active non-branded queries per business per intent bucket.
+CREATE INDEX IF NOT EXISTS tracked_queries_active_nonbranded_idx
+  ON public.tracked_queries (business_id, intent_bucket)
+  WHERE is_active = true AND is_branded = false;
+
+-- Probe-kind trend queries: fetch positions by business, run_kind, recency.
+CREATE INDEX IF NOT EXISTS query_positions_business_run_kind_idx
+  ON public.query_positions (business_id, run_kind, created_at DESC);
