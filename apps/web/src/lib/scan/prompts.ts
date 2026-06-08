@@ -181,7 +181,8 @@ export function parseEngineResult(
         ? sentimentRaw
         : null;
     // retrieval_mode defaults to 'parametric_memory'; engine-query.ts overrides per engine/flag.
-    return { engine, is_mentioned: isMentioned, rank_position: rankPosition, sentiment, raw_response: raw, retrieval_mode: 'parametric_memory' };
+    const competitors = parseCompetitors(parsed['recommendations']);
+    return { engine, is_mentioned: isMentioned, rank_position: rankPosition, sentiment, raw_response: raw, retrieval_mode: 'parametric_memory', ...(competitors !== undefined ? { competitors } : {}) };
   } catch {
     console.error('[scan/prompts] Failed to parse engine result JSON', {
       engine,
@@ -189,6 +190,72 @@ export function parseEngineResult(
     });
     return { engine, is_mentioned: false, rank_position: null, sentiment: null, raw_response: raw, retrieval_mode: 'parametric_memory' };
   }
+}
+
+// ---------------------------------------------------------------------------
+// Competitor parser (internal helper)
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse the engine prompt's `recommendations` array into a validated competitors list.
+ *
+ * Rules (from brief):
+ *   - rank must be an integer in [1, 10]; non-integer or out-of-range → drop entry
+ *   - name must be a non-empty trimmed string ≤ 200 chars; empty or too-long → drop entry
+ *   - why is optional; if present must be a string ≤ 500 chars (truncated silently)
+ *   - Array capped at 10 entries (defense vs prompt-injection inflation)
+ *   - Deduplicated by lowercased name; lowest rank wins
+ *
+ * Returns:
+ *   undefined   — raw is not an array (no signal)
+ *   []          — raw is an array but all entries are invalid
+ *   entry[]     — valid entries (possibly 0 if all dropped)
+ */
+function parseCompetitors(
+  raw: unknown,
+): { rank: number; name: string; why?: string }[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+
+  const seen = new Map<string, { rank: number; name: string; why?: string }>();
+
+  for (const item of raw) {
+    if (item === null || typeof item !== 'object') continue;
+    const obj = item as Record<string, unknown>;
+
+    // rank: must be an integer in [1, 10]
+    const rankRaw = obj['rank'];
+    if (typeof rankRaw !== 'number' || !Number.isInteger(rankRaw) || rankRaw < 1 || rankRaw > 10) {
+      continue;
+    }
+    const rank = rankRaw;
+
+    // name: non-empty trimmed string ≤ 200 chars
+    const nameRaw = obj['name'];
+    if (typeof nameRaw !== 'string') continue;
+    const name = nameRaw.trim();
+    if (name.length === 0 || name.length > 200) continue;
+
+    // why: optional string ≤ 500 chars (truncate silently)
+    let why: string | undefined;
+    const whyRaw = obj['why'];
+    if (typeof whyRaw === 'string') {
+      const trimmed = whyRaw.trim();
+      if (trimmed.length > 0) {
+        why = trimmed.length > 500 ? trimmed.slice(0, 500) : trimmed;
+      }
+    }
+
+    // Dedupe by lowercased name — keep lowest rank (= most recommended)
+    const key = name.toLowerCase();
+    const existing = seen.get(key);
+    if (existing === undefined || rank < existing.rank) {
+      seen.set(key, why !== undefined ? { rank, name, why } : { rank, name });
+    }
+  }
+
+  // Sort by rank ascending, then cap at 10
+  const sorted = Array.from(seen.values()).sort((a, b) => a.rank - b.rank).slice(0, 10);
+  return sorted;
 }
 
 // ---------------------------------------------------------------------------
