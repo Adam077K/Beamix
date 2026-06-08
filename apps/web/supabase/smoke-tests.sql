@@ -10,6 +10,7 @@
 --   4. Service-write-only tables (business_contexts, telemetry_events, factor_catalog) have no anon/authenticated/public write policies
 --   5. factor_catalog seed has at least 16 v1 rows; no tier-3 row promises lift
 --   6. All 15 named constraints (CHECK + UNIQUE) added by this migration are present
+--   7. tracked_queries scoring-column immutability trigger + function shipped (authz fix)
 --
 -- If any assertion fails, a RAISE EXCEPTION fires and the query exits non-zero.
 
@@ -283,6 +284,44 @@ END;
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- TEST 7: tracked_queries scoring-column immutability trigger + function exist
+--
+--   Asserts the authz fix for blocker authz-tracked-queries-scoring-columns-user-writable:
+--   the trigger enforces that weight, intent_bucket, is_branded are service-role-only
+--   despite the existing FOR ALL "tracked_queries: owner write" RLS policy.
+--
+--   This is a definition-level assertion only (checks pg_trigger + pg_proc).
+--   A runtime impersonation test cannot be performed in a migration/smoke-test context.
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM   pg_trigger t
+    JOIN   pg_class   c ON c.oid = t.tgrelid
+    JOIN   pg_namespace n ON n.oid = c.relnamespace
+    WHERE  n.nspname = 'public'
+      AND  c.relname = 'tracked_queries'
+      AND  t.tgname  = 'trg_tracked_queries_scoring_immutable'
+  ) THEN
+    RAISE EXCEPTION 'SMOKE TEST FAILED — trigger trg_tracked_queries_scoring_immutable not found on public.tracked_queries';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM   pg_proc p
+    JOIN   pg_namespace n ON n.oid = p.pronamespace
+    WHERE  n.nspname = 'public'
+      AND  p.proname = 'enforce_tracked_queries_scoring_immutable'
+  ) THEN
+    RAISE EXCEPTION 'SMOKE TEST FAILED — function public.enforce_tracked_queries_scoring_immutable() not found';
+  END IF;
+
+  RAISE NOTICE 'TEST 7 PASS — trg_tracked_queries_scoring_immutable trigger and enforce_tracked_queries_scoring_immutable function exist';
+END;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- Summary
 -- ─────────────────────────────────────────────────────────────────────────────
-SELECT 'SMOKE TESTS COMPLETE — all 6 assertions passed' AS result;
+SELECT 'SMOKE TESTS COMPLETE — all 7 assertions passed' AS result;

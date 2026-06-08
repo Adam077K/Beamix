@@ -26,6 +26,11 @@ DROP TABLE IF EXISTS public.business_contexts CASCADE;
 -- 2. Remove CHECK constraints and columns added to tracked_queries
 -- ─────────────────────────────────────────────────────────────────────────────
 
+-- Drop the scoring-column immutability trigger + function before removing the
+-- columns they reference (dependency-safe order).
+DROP TRIGGER IF EXISTS trg_tracked_queries_scoring_immutable ON public.tracked_queries;
+DROP FUNCTION IF EXISTS public.enforce_tracked_queries_scoring_immutable();
+
 -- Drop the partial index for W5 scoring path before removing its indexed columns.
 DROP INDEX IF EXISTS public.tracked_queries_active_nonbranded_idx;
 

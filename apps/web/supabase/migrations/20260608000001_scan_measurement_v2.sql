@@ -161,6 +161,78 @@ ALTER TABLE public.tracked_queries
   ADD COLUMN IF NOT EXISTS is_branded boolean NOT NULL DEFAULT false;
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- C-authz. TRIGGER — enforce scoring column immutability for non-service roles
+--
+-- WHY THIS EXISTS:
+--   The pre-existing "tracked_queries: owner write" policy (20260520100013_rls_policies.sql)
+--   is FOR ALL with no column restriction. This means an authenticated owner can call:
+--     UPDATE tracked_queries SET weight = 100 WHERE business_id = <theirs>
+--   via the PostgREST REST API and inflate W5 visibility scoring 100×.
+--
+--   Supabase RLS does NOT support column-level GRANT exclusions — you cannot write
+--   "FOR ALL EXCEPT (weight, intent_bucket, is_branded)" in a policy. Attempting
+--   column-level GRANT with EXCLUDING is unsupported on Supabase RLS (see
+--   20260525000004_rls_policies_agency.sql header note on column-level GRANT limits).
+--
+--   Solution: a BEFORE INSERT OR UPDATE trigger that, for any session role that is NOT
+--   in the privileged allowlist (service_role, postgres, supabase_admin), enforces:
+--     - On INSERT: silently normalize the 3 scoring columns to their safe defaults
+--       (weight = 1, intent_bucket = NULL, is_branded = false) so the owner-create
+--       path still works without error.
+--     - On UPDATE: RAISE EXCEPTION with ERRCODE insufficient_privilege if the owner
+--       attempts to change any of the 3 scoring columns.
+--
+--   PostgREST sets the active Postgres role via SET LOCAL ROLE:
+--     authenticated  — for requests using the anon/service key with a valid JWT
+--     service_role   — for requests using the service-role key (server-side only)
+--   Migrations run as postgres (the superuser). supabase_admin is included for safety.
+--
+-- DECLARE-free: uses TG_OP branching in plpgsql body to avoid DECLARE variables,
+-- sidestepping the Supabase SQL Editor semicolon-split bug on plpgsql DECLARE blocks.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION public.enforce_tracked_queries_scoring_immutable()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- service_role (probe/app writes) and the migration owner may set scoring columns freely.
+  IF current_user IN ('service_role', 'postgres', 'supabase_admin') THEN
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'INSERT' THEN
+    -- Silently normalize scoring columns to safe defaults for non-privileged sessions.
+    -- Owner-create path still succeeds; any caller-supplied scoring values are dropped.
+    NEW.weight       := 1;
+    NEW.intent_bucket := NULL;
+    NEW.is_branded   := false;
+    RETURN NEW;
+  END IF;
+
+  -- TG_OP = 'UPDATE'
+  -- Authenticated owners may edit query_text, intent, is_active, volume_estimate,
+  -- cluster_id — but NOT the three scoring columns that feed W5 visibility scoring.
+  IF NEW.weight        IS DISTINCT FROM OLD.weight
+     OR NEW.intent_bucket IS DISTINCT FROM OLD.intent_bucket
+     OR NEW.is_branded    IS DISTINCT FROM OLD.is_branded THEN
+    RAISE EXCEPTION
+      'tracked_queries scoring columns (weight, intent_bucket, is_branded) are service-role-only and cannot be modified by %',
+      current_user
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_tracked_queries_scoring_immutable ON public.tracked_queries;
+CREATE TRIGGER trg_tracked_queries_scoring_immutable
+  BEFORE INSERT OR UPDATE ON public.tracked_queries
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_tracked_queries_scoring_immutable();
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- D. NEW TABLE business_contexts — L1 context cache, 30-day TTL
 -- ─────────────────────────────────────────────────────────────────────────────
 
