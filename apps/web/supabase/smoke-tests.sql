@@ -6,6 +6,10 @@
 -- PASS criteria:
 --   1. Every table in public schema has RLS enabled (rowsecurity = true)
 --   2. No user-data table is accessible to a different auth.uid() (cross-user denial)
+--   3. Service-only tables have no anon/authenticated policies (deny-all intent)
+--   4. New tenant tables (business_contexts, telemetry_events) have no user-write policies
+--   5. factor_catalog seed has at least 16 v1 rows; no tier-3 row promises lift
+--   6. All 15 named constraints (CHECK + UNIQUE) added by this migration are present
 --
 -- If any assertion fails, a RAISE EXCEPTION fires and the query exits non-zero.
 
@@ -181,7 +185,7 @@ $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- TEST 5: factor_catalog seed integrity
---   a. Exactly 16 rows at version = 1
+--   a. At least 16 rows at version = 1 (< 16 guard; extra rows from re-seeding are fine)
 --   b. No tier-3 row has promises_lift = true
 -- ─────────────────────────────────────────────────────────────────────────────
 DO $$
@@ -200,16 +204,19 @@ BEGIN
     RAISE EXCEPTION 'SMOKE TEST FAILED — tier-3 factor_catalog row has promises_lift = true (violates product invariant)';
   END IF;
 
-  RAISE NOTICE 'TEST 5 PASS — factor_catalog has 16 v1 rows and no tier-3 row promises lift';
+  RAISE NOTICE 'TEST 5 PASS — factor_catalog has at least 16 v1 rows and no tier-3 row promises lift';
 END;
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- TEST 6: Named constraints (CHECK + UNIQUE) exist in pg_constraint
---   Proves all integrity rules shipped and were not silently skipped.
---   contype filter intentionally omitted so the UNIQUE constraint
---   (query_positions_evidence_id_unique, contype='u') is covered alongside
---   CHECK constraints (contype='c').
+--   Proves all 15 integrity rules shipped and were not silently skipped.
+--   contype filter intentionally omitted so UNIQUE constraints (contype='u')
+--   are covered alongside CHECK constraints (contype='c').
+--   Covers: 4 query_positions constraints (incl. evidence_id UNIQUE),
+--           3 scan_engine_results constraints, 2 tracked_queries constraints,
+--           5 factor_catalog constraints (incl. factor_key_version UNIQUE),
+--           1 telemetry_events constraint.
 -- ─────────────────────────────────────────────────────────────────────────────
 DO $$
 DECLARE
@@ -218,15 +225,25 @@ DECLARE
 BEGIN
   FOR v_rec IN
     SELECT * FROM (VALUES
+      -- query_positions (4)
       ('query_positions',       'query_positions_evidence_id_unique'),
       ('query_positions',       'query_positions_sample_n_check'),
       ('query_positions',       'query_positions_ci_bounds_check'),
       ('query_positions',       'query_positions_run_kind_check'),
+      -- scan_engine_results (3)
       ('scan_engine_results',   'scan_engine_results_shape_check'),
       ('scan_engine_results',   'scan_engine_results_shape_outcome_check'),
       ('scan_engine_results',   'scan_engine_results_shape_outcome_coupling_check'),
+      -- tracked_queries (2)
       ('tracked_queries',       'tracked_queries_weight_check'),
       ('tracked_queries',       'tracked_queries_intent_bucket_check'),
+      -- telemetry_events (1)
+      ('telemetry_events',      'telemetry_events_event_type_check'),
+      -- factor_catalog (5)
+      ('factor_catalog',        'factor_catalog_factor_key_version_unique'),
+      ('factor_catalog',        'factor_catalog_tier_check'),
+      ('factor_catalog',        'factor_catalog_weight_source_check'),
+      ('factor_catalog',        'factor_catalog_impact_weight_check'),
       ('factor_catalog',        'factor_catalog_tier3_no_lift_check')
     ) AS t(tablename, constraintname)
   LOOP
@@ -245,7 +262,7 @@ BEGIN
   IF v_failed <> '' THEN
     RAISE EXCEPTION 'SMOKE TEST FAILED — missing constraints: %', rtrim(v_failed, ', ');
   ELSE
-    RAISE NOTICE 'TEST 6 PASS — all 10 named constraints are present';
+    RAISE NOTICE 'TEST 6 PASS — all 15 named constraints are present';
   END IF;
 END;
 $$;

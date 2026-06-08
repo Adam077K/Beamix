@@ -23,7 +23,6 @@
 --      (NOT VALID CHECK → VALIDATE pattern) before this table grows large.
 --   5. Unique index first, then promote to constraint (idempotent via IF NOT EXISTS)
 ALTER TABLE public.query_positions ADD COLUMN IF NOT EXISTS evidence_id uuid;
--- Full-table UPDATE; unbatched lock window accepted given the current pre-revenue (near-empty) table size. Batch via LIMIT loop if this table is ever large at apply time.
 UPDATE public.query_positions SET evidence_id = gen_random_uuid() WHERE evidence_id IS NULL;
 ALTER TABLE public.query_positions ALTER COLUMN evidence_id SET DEFAULT gen_random_uuid();
 -- SET NOT NULL takes a brief AccessExclusiveLock + full table scan; acceptable here because
@@ -437,7 +436,7 @@ DO $$ BEGIN
     WITH CHECK (true);
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- TABLE: factor_catalog  (Pattern P — public read config table, service_role write)
+-- TABLE: factor_catalog  (Pattern P — public read config table, service_role all)
 -- Global config: readable by any role including anon (e.g., free-scan pre-auth surfaces);
 -- only service_role can write. Matches the pattern used for `plans` and `feature_flags`.
 ALTER TABLE public.factor_catalog ENABLE ROW LEVEL SECURITY;
@@ -449,7 +448,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
-  CREATE POLICY "factor_catalog: service_role write"
+  CREATE POLICY "factor_catalog: service_role all"
     ON public.factor_catalog FOR ALL
     TO service_role
     USING (true)
