@@ -260,14 +260,25 @@ function isBlockedAddress(addrStr: string): string | null {
 // IPv4 helpers — represent as a single uint32
 // ---------------------------------------------------------------------------
 
-/** Parse an IPv4 dotted-decimal string to a uint32. Returns null if invalid. */
+/**
+ * Parse an IPv4 dotted-decimal string to a uint32. Returns null if invalid.
+ *
+ * Strict rules (defense against parseInt leniency):
+ *   - Each octet must match /^\d{1,3}$/ — no trailing non-digits, no empty strings.
+ *   - No leading zeros (reject "0177", "01", etc.) — avoids octal-ambiguity confusion.
+ *   - Value must be in [0, 255].
+ */
 function parseIPv4(s: string): number | null {
   const parts = s.split('.');
   if (parts.length !== 4) return null;
   let n = 0;
   for (const p of parts) {
-    const b = parseInt(p, 10);
-    if (isNaN(b) || b < 0 || b > 255) return null;
+    // Strict: must be 1-3 digits only — no leading zeros for multi-digit values.
+    if (!/^\d{1,3}$/.test(p)) return null;
+    // Reject leading zeros on multi-digit values (e.g. "0177" could be confused as octal).
+    if (p.length > 1 && p[0] === '0') return null;
+    const b = Number(p);
+    if (b > 255) return null;
     n = ((n << 8) | b) >>> 0;
   }
   return n;
@@ -287,9 +298,9 @@ const BLOCKED_V4_RANGES: Array<[number, number]> = [
   [0x0a000000, 8],   // 10.0.0.0/8    RFC 1918
   [0xac100000, 12],  // 172.16.0.0/12 RFC 1918
   [0xc0a80000, 16],  // 192.168.0.0/16 RFC 1918
-  [0xa9fe0000, 16],  // 169.254.0.0/16 link-local / AWS IMDS subnet
+  [0xa9fe0000, 16],  // 169.254.0.0/16 link-local / AWS IMDS subnet (subsumes 169.254.169.254/32)
   [0x00000000, 8],   // 0.0.0.0/8     "this" network
-  [0xa9fea9fe, 32],  // 169.254.169.254/32 AWS/Azure/GCP IMDS
+  // Note: 169.254.169.254/32 (0xa9fea9fe) is fully subsumed by 169.254.0.0/16 above — omitted.
   [0x646464c8, 32],  // 100.100.100.200/32 Alibaba Cloud metadata
 ];
 
@@ -371,7 +382,11 @@ function extractIPv4FromMapped(addrStr: string): number | null {
 const BLOCKED_V6_RANGES: Array<{ prefix: [number, number, number, number]; bits: number; label: string }> = [
   { prefix: [0xfc000000, 0, 0, 0], bits: 7,  label: 'fc00::/7 (Unique Local)' },   // fc00:: and fd00::
   { prefix: [0xfe800000, 0, 0, 0], bits: 10, label: 'fe80::/10 (link-local)' },
-  { prefix: [0x00000000, 0x0000ffff, 0, 0], bits: 96, label: '::ffff:0:0/96 (IPv4-mapped)' },
+  // ::ffff:0:0/96 — IPv4-mapped IPv6. words: [0]=0x00000000, [1]=0x00000000, [2]=0x0000ffff (groups 4-5 = 0000:ffff).
+  // Defense-in-depth behind extractIPv4FromMapped — both paths must block.
+  { prefix: [0, 0, 0x0000ffff, 0], bits: 96, label: '::ffff:0:0/96 (IPv4-mapped)' },
+  // NAT64 — 64:ff9b::/96 can embed internal IPv4 addresses.
+  { prefix: [0x0064ff9b, 0, 0, 0], bits: 96, label: '64:ff9b::/96 (NAT64)' },
 ];
 
 const BLOCKED_V6_EXACT: Array<{ words: [number, number, number, number]; label: string }> = [
