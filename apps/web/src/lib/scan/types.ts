@@ -65,6 +65,28 @@ export interface EngineRawResult {
   /** null if not mentioned */
   sentiment: 'positive' | 'neutral' | 'negative' | null;
   raw_response: string;
+  /**
+   * Whether this result came from a live web retrieval or from the model's
+   * parametric (training-data) memory.
+   * - 'live_web'          — model queried the web at request time (e.g. Perplexity Sonar,
+   *                         or gpt-4o-mini via OpenRouter web_search plugin).
+   * - 'parametric_memory' — model answered from training data only (no web grounding).
+   */
+  retrieval_mode: 'live_web' | 'parametric_memory';
+  /**
+   * Human-readable label for honest labeling on the results surface.
+   * Set when the engine is a proxy or uses a non-production model, e.g.
+   * 'proxy:gpt-4o-mini+web' when the ChatGPT slot is filled via the
+   * web_search plugin rather than the production ChatGPT search product.
+   */
+  provider_note?: string;
+  /**
+   * Source URLs extracted from the model's citation annotations (Wave 2 consumer).
+   * Populated additively when the underlying model returns grounding citations
+   * (e.g. Perplexity native citations or OpenRouter annotation objects).
+   * Wave 1 plumbs the field; downstream consumers are added in Wave 2.
+   */
+  citations?: string[];
 }
 
 /**

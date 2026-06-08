@@ -44,20 +44,20 @@ const BUSINESS_CONTEXT: BusinessContext = {
 
 /** 3 results — all NOT mentioned */
 const ALL_NOT_MENTIONED: EngineRawResult[] = [
-  { engine: 'chatgpt', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '' },
-  { engine: 'gemini', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '' },
-  { engine: 'perplexity', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '' },
+  { engine: 'chatgpt', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '', retrieval_mode: 'parametric_memory' },
+  { engine: 'gemini', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '', retrieval_mode: 'parametric_memory' },
+  { engine: 'perplexity', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '', retrieval_mode: 'live_web' },
 ];
 
 /** 3 results — one mentioned at rank 1 */
 const ONE_MENTIONED: EngineRawResult[] = [
-  { engine: 'chatgpt', is_mentioned: true, rank_position: 1, sentiment: 'positive', raw_response: '' },
-  { engine: 'gemini', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '' },
-  { engine: 'perplexity', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '' },
+  { engine: 'chatgpt', is_mentioned: true, rank_position: 1, sentiment: 'positive', raw_response: '', retrieval_mode: 'parametric_memory' },
+  { engine: 'gemini', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '', retrieval_mode: 'parametric_memory' },
+  { engine: 'perplexity', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '', retrieval_mode: 'live_web' },
 ];
 
 function makeORResponse(text: string) {
-  return { text, prompt_tokens: 10, completion_tokens: 5 };
+  return { text, prompt_tokens: 10, completion_tokens: 5, sourceUrls: [] };
 }
 
 function makeAnalysisJson(score: number, issues: Array<{ category: string; count: number }>) {

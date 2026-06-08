@@ -158,9 +158,9 @@ const MOCK_BUSINESS_CONTEXT: BusinessContext = {
 };
 
 const MOCK_ENGINE_RESULTS: [EngineRawResult, EngineRawResult, EngineRawResult] = [
-  { engine: 'chatgpt', is_mentioned: true, rank_position: 2, sentiment: 'positive', raw_response: '{}' },
-  { engine: 'gemini', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '{}' },
-  { engine: 'perplexity', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '{}' },
+  { engine: 'chatgpt', is_mentioned: true, rank_position: 2, sentiment: 'positive', raw_response: '{}', retrieval_mode: 'parametric_memory' },
+  { engine: 'gemini', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '{}', retrieval_mode: 'parametric_memory' },
+  { engine: 'perplexity', is_mentioned: false, rank_position: null, sentiment: null, raw_response: '{}', retrieval_mode: 'live_web' },
 ];
 
 const MOCK_FREE_SCAN_RESULTS = {
@@ -175,7 +175,7 @@ const MOCK_FREE_SCAN_RESULTS = {
 // ---------------------------------------------------------------------------
 
 function makeORResponse(text: string) {
-  return { text, prompt_tokens: 10, completion_tokens: 10 };
+  return { text, prompt_tokens: 10, completion_tokens: 10, sourceUrls: [] };
 }
 
 const RESEARCH_JSON = JSON.stringify({

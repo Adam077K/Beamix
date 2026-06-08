@@ -180,13 +180,14 @@ export function parseEngineResult(
       isMentioned && (sentimentRaw === 'positive' || sentimentRaw === 'neutral' || sentimentRaw === 'negative')
         ? sentimentRaw
         : null;
-    return { engine, is_mentioned: isMentioned, rank_position: rankPosition, sentiment, raw_response: raw };
+    // retrieval_mode defaults to 'parametric_memory'; engine-query.ts overrides per engine/flag.
+    return { engine, is_mentioned: isMentioned, rank_position: rankPosition, sentiment, raw_response: raw, retrieval_mode: 'parametric_memory' };
   } catch {
     console.error('[scan/prompts] Failed to parse engine result JSON', {
       engine,
       raw: raw.slice(0, 200),
     });
-    return { engine, is_mentioned: false, rank_position: null, sentiment: null, raw_response: raw };
+    return { engine, is_mentioned: false, rank_position: null, sentiment: null, raw_response: raw, retrieval_mode: 'parametric_memory' };
   }
 }
 
