@@ -87,6 +87,15 @@ export interface EngineRawResult {
    * Wave 1 plumbs the field; downstream consumers are added in Wave 2.
    */
   citations?: string[];
+  /**
+   * Top competitors returned by the engine's recommendations[] array (Wave 2).
+   * Parsed from the engine prompt's `recommendations` field — each entry was
+   * already requested by buildEnginePrompt() but previously discarded.
+   *
+   * undefined  = parse was skipped or failed (no signal — do not treat as empty list)
+   * []         = model returned an empty recommendations array explicitly
+   */
+  competitors?: { rank: number; name: string; why?: string }[];
 }
 
 /**
