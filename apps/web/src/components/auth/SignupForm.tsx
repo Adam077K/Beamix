@@ -85,7 +85,12 @@ export function SignupForm() {
 
     if (error) {
       setFormState('error')
-      setCardError(error.message || 'Something went wrong creating your account. Please try again.')
+      // Generic message — do NOT echo the raw error, which can reveal whether an
+      // account already exists (enumeration). Client-side validation already
+      // covers email format + password length before submit.
+      setCardError(
+        "We couldn't create your account. Try a different email, or sign in if you already have one.",
+      )
       return
     }
 
@@ -232,15 +237,21 @@ export function SignupForm() {
           variant="outline"
           className="w-full"
           disabled={formState === 'submitting'}
-          onClick={() => {
+          onClick={async () => {
+            setFormState('submitting')
+            setCardError(null)
             const supabase = createClient()
-            const safeNext = sanitizeNext(searchParams.get('next'))
-            void supabase.auth.signInWithOAuth({
+            const { error } = await supabase.auth.signInWithOAuth({
               provider: 'google',
               options: {
-                redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`,
+                redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
               },
             })
+            // On success the SDK navigates the browser to Google; only handle errors.
+            if (error) {
+              setFormState('error')
+              setCardError(error.message || 'Google sign-in failed. Please try again.')
+            }
           }}
           aria-label="Continue with Google"
         >

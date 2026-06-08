@@ -88,43 +88,8 @@ export function LoginForm() {
     window.location.assign(next)
   }
 
-  if (formState === 'success') {
-    return (
-      <AuthCard
-        eyebrow="Welcome back"
-        heading={
-          <>
-            Signed <em className="font-[var(--font-serif)] italic font-normal">in.</em>
-          </>
-        }
-        footer={null}
-      >
-        <div className="flex flex-col items-center gap-3 py-4 text-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E6F5EE]">
-            <svg
-              className="h-5 w-5 text-[#0E9E6E]"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
-          </div>
-          <p className="text-[15px] leading-[1.5] text-[#374151]">
-            You&apos;re in. Redirecting to your dashboard&hellip;
-          </p>
-          <a
-            href={next}
-            className="text-[14px] text-[#3370FF] underline-offset-4 hover:underline"
-          >
-            Continue to dashboard
-          </a>
-        </div>
-      </AuthCard>
-    )
-  }
+  // No 'success' UI branch: a successful sign-in navigates away via
+  // window.location.assign(next), so the form never renders a success state.
 
   return (
     <AuthCard
@@ -235,15 +200,21 @@ export function LoginForm() {
           variant="outline"
           className="w-full"
           disabled={formState === 'submitting'}
-          onClick={() => {
+          onClick={async () => {
+            setFormState('submitting')
+            setCardError(null)
             const supabase = createClient()
-            const safeNext = sanitizeNext(searchParams.get('next'))
-            void supabase.auth.signInWithOAuth({
+            const { error } = await supabase.auth.signInWithOAuth({
               provider: 'google',
               options: {
-                redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`,
+                redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
               },
             })
+            // On success the SDK navigates the browser to Google; only handle errors.
+            if (error) {
+              setFormState('error')
+              setCardError(error.message || 'Google sign-in failed. Please try again.')
+            }
           }}
           aria-label="Continue with Google"
         >

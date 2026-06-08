@@ -13,7 +13,19 @@ import { sanitizeNext } from '@/lib/auth/next-param'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const oauthError = searchParams.get('error')
   const next = sanitizeNext(searchParams.get('next'), '/dashboard')
+
+  // OAuth providers redirect back with ?error=... when the user denies access or
+  // the provider fails. Surface it on the login screen instead of silently
+  // proceeding to a destination the user never authenticated for.
+  if (oauthError) {
+    console.error('[auth/callback] OAuth provider error', {
+      error: oauthError,
+      description: searchParams.get('error_description'),
+    })
+    return NextResponse.redirect(`${origin}/login?error=auth`)
+  }
 
   if (code) {
     try {
@@ -33,5 +45,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // No code present means there is nothing to exchange (e.g. a stale or
+  // already-consumed link). This is benign — `next` is sanitized to a same-origin
+  // path — so send the user on to their destination.
   return NextResponse.redirect(`${origin}${next}`)
 }
