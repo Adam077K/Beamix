@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 import { AuthCard } from './AuthCard'
 
-type FormState = 'idle' | 'submitting' | 'error' | 'success'
+type FormState = 'idle' | 'submitting' | 'success'
 
 function validateEmail(email: string): string | undefined {
   if (!email) return 'Email is required.'
@@ -42,12 +42,10 @@ function maskEmail(email: string): string {
 
 export function ForgotPasswordForm() {
   const emailId = useId()
-  const cardErrorId = useId()
 
   const [email, setEmail] = useState('')
   const [touched, setTouched] = useState(false)
   const [formState, setFormState] = useState<FormState>('idle')
-  const [cardError, setCardError] = useState<string | null>(null)
   const [sentEmail, setSentEmail] = useState('')
 
   const emailError = touched ? validateEmail(email) : undefined
@@ -61,13 +59,13 @@ export function ForgotPasswordForm() {
     if (err) return
 
     setFormState('submitting')
-    setCardError(null)
 
     const supabase = createClient()
-    // Recovery link routes through the callback (exchanges the code → session),
-    // then lands on /reset-password where the user sets a new password.
+    // Recovery link lands directly on /reset-password; the browser client there
+    // processes the recovery code and fires PASSWORD_RECOVERY, which unlocks the
+    // set-new-password form.
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+      redirectTo: `${window.location.origin}/reset-password`,
     })
 
     // Anti-enumeration: always show the same success state regardless of whether
@@ -145,18 +143,7 @@ export function ForgotPasswordForm() {
         </>
       }
     >
-      <form onSubmit={onSubmit} noValidate aria-describedby={cardError ? cardErrorId : undefined}>
-        {/* Card-level error */}
-        {cardError && (
-          <div
-            id={cardErrorId}
-            role="alert"
-            className="mb-4 rounded-lg border border-[#FDECEC] bg-[#FDECEC] px-4 py-3 text-[14px] leading-[1.5] text-[#DC2626]"
-          >
-            {cardError}
-          </div>
-        )}
-
+      <form onSubmit={onSubmit} noValidate>
         <div className="flex flex-col gap-5">
           {/* Email */}
           <div className="flex flex-col gap-1.5">

@@ -250,7 +250,7 @@ export function SignupForm() {
             // On success the SDK navigates the browser to Google; only handle errors.
             if (error) {
               setFormState('error')
-              setCardError(error.message || 'Google sign-in failed. Please try again.')
+              setCardError('Google sign-in failed. Please try again.')
             }
           }}
           aria-label="Continue with Google"

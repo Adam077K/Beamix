@@ -71,6 +71,18 @@ describe('GET /auth/callback', () => {
     expect(location(res)).toBe('https://app.test/login?error=auth')
   })
 
+  it('defaults to /dashboard on a successful exchange with no next param', async () => {
+    exchangeCodeForSession.mockResolvedValue({ error: null })
+    const res = await GET(callbackReq('?code=abc'))
+    expect(location(res)).toBe('https://app.test/dashboard')
+  })
+
+  it('prioritizes an OAuth ?error over a present ?code (no exchange)', async () => {
+    const res = await GET(callbackReq('?code=abc&error=access_denied&next=/settings'))
+    expect(exchangeCodeForSession).not.toHaveBeenCalled()
+    expect(location(res)).toBe('https://app.test/login?error=auth')
+  })
+
   it('sanitizes an open-redirect next to /dashboard', async () => {
     exchangeCodeForSession.mockResolvedValue({ error: null })
     const abs = await GET(callbackReq(`?code=abc&next=${encodeURIComponent('https://evil.com')}`))

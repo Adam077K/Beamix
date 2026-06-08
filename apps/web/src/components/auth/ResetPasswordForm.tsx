@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useId } from 'react'
+import { useEffect, useState, useId } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,6 +8,11 @@ import { createClient } from '@/lib/supabase/client'
 import { AuthCard } from './AuthCard'
 
 type FormState = 'idle' | 'submitting' | 'error' | 'success'
+/** Recovery gate: we only allow a password change when the page was reached via
+ *  a genuine recovery link (Supabase fires PASSWORD_RECOVERY after processing
+ *  the recovery code in the URL). A direct or already-authenticated visit never
+ *  reaches 'ready', so it cannot change a password outside the email-ownership flow. */
+type Gate = 'checking' | 'ready' | 'invalid'
 
 function validatePassword(password: string): string | undefined {
   if (!password) return 'Password is required.'
@@ -34,11 +39,28 @@ export function ResetPasswordForm() {
   const confirmId = useId()
   const cardErrorId = useId()
 
+  const [gate, setGate] = useState<Gate>('checking')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [touched, setTouched] = useState({ password: false, confirm: false })
   const [formState, setFormState] = useState<FormState>('idle')
   const [cardError, setCardError] = useState<string | null>(null)
+
+  // Only a PASSWORD_RECOVERY event unlocks the form. If none arrives shortly
+  // (direct visit / stale link / normal session), fall back to the invalid state.
+  useEffect(() => {
+    const supabase = createClient()
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setGate('ready')
+    })
+    const timer = setTimeout(() => {
+      setGate((g) => (g === 'checking' ? 'invalid' : g))
+    }, 4000)
+    return () => {
+      data.subscription.unsubscribe()
+      clearTimeout(timer)
+    }
+  }, [])
 
   const passwordError = touched.password ? validatePassword(password) : undefined
   const confirmError =
@@ -46,6 +68,7 @@ export function ResetPasswordForm() {
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (gate !== 'ready') return
     const pwErr = validatePassword(password)
     const cfErr = confirm !== password ? 'Passwords do not match.' : undefined
     setTouched({ password: true, confirm: true })
@@ -59,14 +82,45 @@ export function ResetPasswordForm() {
 
     if (error) {
       setFormState('error')
-      // A missing session means the recovery link was invalid/expired/already used.
-      setCardError(
-        'This reset link is invalid or has expired. Request a new one from the sign-in page.',
-      )
+      if (error.status === 422) {
+        // Password failed the project's strength policy — distinct, actionable.
+        setCardError('That password does not meet the strength requirements. Try a stronger one.')
+      } else {
+        setCardError(
+          'This reset link is invalid or has expired. Request a new one from the sign-in page.',
+        )
+      }
       return
     }
 
+    // Revoke every other active session so a previously stolen session cannot
+    // outlive the reset, then send the user to sign in fresh.
+    await supabase.auth.signOut({ scope: 'global' })
     setFormState('success')
+  }
+
+  if (gate === 'invalid') {
+    return (
+      <AuthCard
+        eyebrow="Reset"
+        heading={
+          <>
+            Link <em className="font-[var(--font-serif)] italic font-normal">expired.</em>
+          </>
+        }
+        subheading="This password reset link is invalid or has already been used."
+        footer={
+          <Button variant="link" asChild>
+            <a href="/forgot-password">Request a new link</a>
+          </Button>
+        }
+      >
+        <p className="py-2 text-[14px] leading-[1.5] text-[#6B7280]">
+          Reset links expire after a short window and can only be used once. Request a fresh one and
+          we&apos;ll email it right over.
+        </p>
+      </AuthCard>
+    )
   }
 
   if (formState === 'success') {
@@ -98,7 +152,7 @@ export function ResetPasswordForm() {
             </svg>
           </div>
           <p className="text-[15px] leading-[1.5] text-[#374151]">
-            Your password has been changed. You can sign in with it now.
+            Your password has been changed. Sign in with it to continue.
           </p>
         </div>
       </AuthCard>
@@ -144,7 +198,7 @@ export function ResetPasswordForm() {
               onBlur={() => setTouched((t) => ({ ...t, password: true }))}
               aria-invalid={!!passwordError || undefined}
               aria-describedby={passwordError ? `${passwordId}-err` : undefined}
-              disabled={formState === 'submitting'}
+              disabled={formState === 'submitting' || gate !== 'ready'}
             />
             {passwordError && (
               <p id={`${passwordId}-err`} className="text-[13px] text-[#DC2626]" role="alert">
@@ -165,7 +219,7 @@ export function ResetPasswordForm() {
               onBlur={() => setTouched((t) => ({ ...t, confirm: true }))}
               aria-invalid={!!confirmError || undefined}
               aria-describedby={confirmError ? `${confirmId}-err` : undefined}
-              disabled={formState === 'submitting'}
+              disabled={formState === 'submitting' || gate !== 'ready'}
             />
             {confirmError && (
               <p id={`${confirmId}-err`} className="text-[13px] text-[#DC2626]" role="alert">
@@ -178,10 +232,10 @@ export function ResetPasswordForm() {
         <Button
           type="submit"
           className="mt-6 w-full"
-          disabled={formState === 'submitting'}
+          disabled={formState === 'submitting' || gate !== 'ready'}
           aria-label={formState === 'submitting' ? 'Updating password…' : 'Update password'}
         >
-          {formState === 'submitting' ? <Dots /> : 'Update password'}
+          {formState === 'submitting' ? <Dots /> : gate === 'checking' ? 'Verifying link…' : 'Update password'}
         </Button>
       </form>
     </AuthCard>
