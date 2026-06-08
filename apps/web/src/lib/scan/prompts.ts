@@ -216,9 +216,13 @@ function parseCompetitors(
 ): { rank: number; name: string; why?: string }[] | undefined {
   if (!Array.isArray(raw)) return undefined;
 
+  // Cap at 10 BEFORE iterating — attacker-controlled arrays could be arbitrarily long.
+  // Slicing first bounds all per-entry validation work to at most 10 items.
+  const capped = raw.slice(0, 10);
+
   const seen = new Map<string, { rank: number; name: string; why?: string }>();
 
-  for (const item of raw) {
+  for (const item of capped) {
     if (item === null || typeof item !== 'object') continue;
     const obj = item as Record<string, unknown>;
 
