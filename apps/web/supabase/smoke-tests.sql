@@ -7,7 +7,7 @@
 --   1. Every table in public schema has RLS enabled (rowsecurity = true)
 --   2. No user-data table is accessible to a different auth.uid() (cross-user denial)
 --   3. Service-only tables have no anon/authenticated policies (deny-all intent)
---   4. New tenant tables (business_contexts, telemetry_events) have no user-write policies
+--   4. Service-write-only tables (business_contexts, telemetry_events, factor_catalog) have no anon/authenticated/public write policies
 --   5. factor_catalog seed has at least 16 v1 rows; no tier-3 row promises lift
 --   6. All 15 named constraints (CHECK + UNIQUE) added by this migration are present
 --
@@ -150,8 +150,22 @@ END;
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TEST 4: New tenant tables (business_contexts, telemetry_events) have NO
---         anon/authenticated WRITE policies — all writes are service-role only.
+-- TEST 4: Service-write-only tables have NO non-SELECT policies for anon,
+--         authenticated, OR public roles.
+--
+--   Covers: business_contexts, telemetry_events, factor_catalog.
+--
+--   Rationale for each table:
+--     business_contexts  — context JSONB is consumed by the service-role probe job;
+--                          user writes are a prompt-injection + cache-DoS vector.
+--     telemetry_events   — passive signals written only by the service-role ingest path.
+--     factor_catalog     — scoring weights; user writes would corrupt visibility scores.
+--
+--   Role array includes 'public' because a policy with no TO clause defaults to
+--   role 'public' in pg_policies.roles. The existing correct policies are:
+--     - Pattern-P "public read" policies: cmd=SELECT  → excluded by AND cmd <> 'SELECT'
+--     - service_role policies: roles={service_role}   → not in the array → PASS
+--   So against the current correct policy set this test still PASSes.
 -- ─────────────────────────────────────────────────────────────────────────────
 DO $$
 DECLARE
@@ -161,14 +175,15 @@ BEGIN
   FOR v_rec IN
     SELECT * FROM (VALUES
       ('business_contexts'),
-      ('telemetry_events')
+      ('telemetry_events'),
+      ('factor_catalog')
     ) AS t(tablename)
   LOOP
     IF EXISTS (
       SELECT 1 FROM pg_policies
       WHERE  schemaname = 'public'
         AND  tablename  = v_rec.tablename
-        AND  roles && ARRAY['anon','authenticated']::name[]
+        AND  roles && ARRAY['anon','authenticated','public']::name[]
         AND  cmd <> 'SELECT'
     ) THEN
       v_failed := v_failed || v_rec.tablename || ', ';
@@ -176,9 +191,9 @@ BEGIN
   END LOOP;
 
   IF v_failed <> '' THEN
-    RAISE EXCEPTION 'SMOKE TEST FAILED — new tenant tables have user-write policies: %', rtrim(v_failed, ', ');
+    RAISE EXCEPTION 'SMOKE TEST FAILED — service-write-only tables have non-SELECT user/public policies: %', rtrim(v_failed, ', ');
   ELSE
-    RAISE NOTICE 'TEST 4 PASS — business_contexts/telemetry_events are read-only to users';
+    RAISE NOTICE 'TEST 4 PASS — business_contexts/telemetry_events/factor_catalog have no anon/authenticated/public write policies';
   END IF;
 END;
 $$;
