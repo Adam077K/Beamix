@@ -132,8 +132,14 @@ function parseTargetPage(
   const h2Count = $('h2').length;
   const h3Count = $('h3').length;
 
-  // Word count: strip tags, split on whitespace
-  const bodyText = $('body').text().replace(/\s+/g, ' ').trim();
+  // Word count: strip tags, split on whitespace.
+  // Cap raw text at 200 KB before tokenizing to avoid allocating a full word array
+  // from a potentially 2 MiB response body (safe-fetch body cap).
+  const WORD_COUNT_TEXT_CAP = 200_000; // ~200 KB of text
+  const rawBodyText = $('body').text().replace(/\s+/g, ' ').trim();
+  const bodyText = rawBodyText.length > WORD_COUNT_TEXT_CAP
+    ? rawBodyText.slice(0, WORD_COUNT_TEXT_CAP)
+    : rawBodyText;
   const wordCount = bodyText ? bodyText.split(' ').filter(Boolean).length : 0;
 
   // JSON-LD: collect all @type values, especially LocalBusiness / Organization
@@ -202,10 +208,23 @@ function parseRobotsTxt(
 
   const robot = robotsParser(robotsUrl, fetchResult.body);
 
+  // Derive site root (origin) from robotsUrl for isAllowed evaluation.
+  // robots-parser.isAllowed(url, ua) evaluates allow/disallow rules against the URL
+  // being requested — passing the robots.txt URL itself would evaluate rules for
+  // "/robots.txt" only. We pass the site root so wildcard rules (e.g. "Disallow: /")
+  // are evaluated correctly. FM-5 guard is unaffected (it fires before this code runs).
+  let siteRoot: string;
+  try {
+    const parsed = new URL(robotsUrl);
+    siteRoot = `${parsed.protocol}//${parsed.host}/`;
+  } catch {
+    siteRoot = robotsUrl;
+  }
+
   const crawlers: Record<string, 'allowed' | 'disallowed'> = {};
   for (const [agentKey, agentString] of Object.entries(AI_CRAWLERS)) {
     // isAllowed returns boolean|undefined; treat undefined as allowed (no rule = not blocked)
-    const allowed = robot.isAllowed(robotsUrl, agentString);
+    const allowed = robot.isAllowed(siteRoot, agentString);
     // isAllowed returns undefined when there's no matching rule — treat as allowed
     crawlers[agentKey] = allowed === false ? 'disallowed' : 'allowed';
   }

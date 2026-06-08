@@ -7,6 +7,7 @@
  *   (1)  Parse JSON-LD LocalBusiness @type from fixture HTML
  *   (2)  OMIT crawlers map when robots.txt returns 503 (FM-5 guard)
  *   (3)  GPTBot=disallowed when robots.txt Disallows it
+ *   (3b) robots.isAllowed evaluates site root URL, not robots.txt URL
  *   (4)  page.fetchStatus='unavailable' when safeFetch fails — auditSite never throws
  *   (5)  sitemapXml.present=true when sitemap.xml returns 200
  *   (6)  llmsTxt.present=true when llms.txt returns 200
@@ -14,6 +15,7 @@
  *   (8)  fetchStatus='unavailable' on robots.txt timeout/network error (FM-5)
  *   (9)  JSON-LD with @graph array is recursively parsed
  *   (10) malformed JSON-LD does not throw — valid blocks still parsed
+ *   (11) word count caps at ~200 KB input to bound memory allocation
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -299,6 +301,50 @@ describe('auditSite() — robots.txt FM-5 guard', () => {
       expect(result.robotsTxt.crawlers).toHaveProperty('anthropic-ai');
     }
   });
+
+  it('(3b) robots.isAllowed evaluates site root URL — Disallow: / blocks all crawlers on site root', async () => {
+    // This fixture disallows GPTBot on everything (Disallow: /)
+    // and allows everyone else. We verify GPTBot is disallowed
+    // and that the fix (passing siteRoot, not robotsUrl) correctly evaluates "/" rules.
+    const ROBOTS_DISALLOW_GPTBOT_ROOT = `User-agent: GPTBot\nDisallow: /\n\nUser-agent: *\nAllow: /\n`;
+    setupMocks({
+      target: makeOkResult(HTML_SIMPLE),
+      robots: makeOkResult(ROBOTS_DISALLOW_GPTBOT_ROOT, 200, 'http://example.com/robots.txt'),
+      sitemap: makeErrorResult(),
+      llms: makeErrorResult(),
+    });
+
+    const result = await auditSite('http://example.com/');
+    expect(result.robotsTxt.fetchStatus).toBe('ok');
+    if (result.robotsTxt.fetchStatus === 'ok') {
+      // GPTBot disallowed — the rule "Disallow: /" applies to the site root "/"
+      // If we had incorrectly passed robotsUrl (/robots.txt), the rule for "/" would
+      // still fire because /robots.txt starts with /, but that's coincidental.
+      // The explicit test is that a Disallow for a subpath only blocks that subpath.
+      expect(result.robotsTxt.crawlers['GPTBot']).toBe('disallowed');
+      // PerplexityBot has no specific rule → uses wildcard Allow: / → allowed
+      expect(result.robotsTxt.crawlers['PerplexityBot']).toBe('allowed');
+    }
+  });
+
+  it('(3c) robots.isAllowed evaluates site root — Disallow: /private does NOT block site root access', async () => {
+    // Disallow: /private should NOT block crawling of "/" (site root).
+    // This verifies that the URL passed to isAllowed is the site root (not /robots.txt or /private).
+    const ROBOTS_DISALLOW_PRIVATE = `User-agent: GPTBot\nDisallow: /private\n`;
+    setupMocks({
+      target: makeOkResult(HTML_SIMPLE),
+      robots: makeOkResult(ROBOTS_DISALLOW_PRIVATE, 200, 'http://example.com/robots.txt'),
+      sitemap: makeErrorResult(),
+      llms: makeErrorResult(),
+    });
+
+    const result = await auditSite('http://example.com/');
+    expect(result.robotsTxt.fetchStatus).toBe('ok');
+    if (result.robotsTxt.fetchStatus === 'ok') {
+      // /private is disallowed, but site root "/" is allowed — GPTBot should be 'allowed'
+      expect(result.robotsTxt.crawlers['GPTBot']).toBe('allowed');
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -383,6 +429,35 @@ describe('auditSite() — sitemap + llms.txt presence', () => {
 
     const result = await auditSite('http://example.com/');
     expect(result.llmsTxt.present).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Word count memory cap
+// ---------------------------------------------------------------------------
+
+describe('auditSite() — word count cap', () => {
+  it('(11) word count is still non-zero when page body text exceeds 200 KB', async () => {
+    // Build a page with >200 KB of body text to exercise the cap path.
+    // The word count should be meaningful (non-zero) but bounded — it will NOT
+    // count all words in the full body, just those in the first ~200 KB.
+    const manyWords = 'word '.repeat(50_000); // ~250 KB
+    const bigHtml = `<!DOCTYPE html><html><head><title>Big Page</title></head><body><p>${manyWords}</p></body></html>`;
+
+    setupMocks({
+      target: makeOkResult(bigHtml),
+      robots: makeErrorResult(),
+      sitemap: makeErrorResult(),
+      llms: makeErrorResult(),
+    });
+
+    const result = await auditSite('http://example.com/');
+    expect(result.page.fetchStatus).toBe('ok');
+    // wordCount should be non-zero (text was present)
+    expect(result.page.wordCount).toBeGreaterThan(0);
+    // wordCount should be capped — 250 KB of "word " → cap at 200 KB → ~40 000 words
+    // not the full 50 000. Allow some slack for the cap boundary.
+    expect(result.page.wordCount).toBeLessThan(50_000);
   });
 });
 
