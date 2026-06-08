@@ -3,20 +3,36 @@
 --
 -- PURPOSE
 -- -------
--- After you apply the rollback on a shadow/throwaway database, run this file.
+-- After you apply the rollback on a THROWAWAY SHADOW DATABASE, run this file.
 -- It asserts that NONE of the objects introduced by the forward migration remain.
 -- A RAISE EXCEPTION on any assertion means the rollback is incomplete.
 --
--- OPERATOR INSTRUCTIONS
--- ---------------------
--- 1. Apply the forward migration to a fresh shadow branch:
---      supabase db reset --linked   (or psql \i migration file)
--- 2. Apply the rollback:
---      \i apps/web/supabase/migrations/rollback/20260608000001_scan_measurement_v2.rollback.sql
--- 3. Run this file:
---      supabase db query --linked --file apps/web/supabase/tests/rollback-symmetry-20260608.sql
--- 4. All DO blocks must emit NOTICE lines starting with "ROLLBACK-SYM PASS".
---    Any RAISE EXCEPTION means the rollback left residue.
+-- ** NEVER run this against the linked/production database. **
+-- ** NEVER run this against the linked/production database. **
+-- ** NEVER run this against the linked/production database. **
+--
+-- OPERATOR INSTRUCTIONS — SHADOW DATABASE ONLY
+-- ---------------------------------------------
+-- Option A: Supabase branch (recommended)
+--   1. Create a throwaway branch:
+--        supabase branches create rollback-test-<date>
+--   2. Connect psql to that branch's connection string (shown in supabase branches list).
+--   3. Apply the forward migration:
+--        \i apps/web/supabase/migrations/20260608000001_scan_measurement_v2.sql
+--   4. Apply the rollback:
+--        \i apps/web/supabase/migrations/rollback/20260608000001_scan_measurement_v2.rollback.sql
+--   5. Run this file:
+--        \i apps/web/supabase/tests/rollback-symmetry-20260608.sql
+--   6. Delete the branch when done:
+--        supabase branches delete rollback-test-<date>
+--
+-- Option B: Local throwaway Postgres (e.g. Docker)
+--   1. Spin up a fresh Postgres container.
+--   2. Apply the forward migration, then the rollback, then this file — all via psql \i.
+--   3. Tear down the container when done.
+--
+-- All DO blocks must emit NOTICE lines starting with "ROLLBACK-SYM PASS".
+-- Any RAISE EXCEPTION means the rollback left residue.
 --
 -- SCOPE
 -- -----

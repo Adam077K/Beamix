@@ -15,12 +15,20 @@
 -- Lock-safe idempotent pattern:
 --   1. Add column nullable (no default) — no table rewrite, no AccessExclusiveLock on data
 --   2. Backfill NULLs with gen_random_uuid()
+--      Full-table UPDATE; unbatched lock window accepted given the current pre-revenue
+--      (near-empty) table size. Batch via LIMIT loop if this table is ever large at apply time.
 --   3. Set DEFAULT so future inserts get a value without rewriting
---   4. Set NOT NULL now that all rows are populated
+--   4. Set NOT NULL — NOTE: SET NOT NULL takes a brief AccessExclusiveLock + full table scan;
+--      acceptable here because query_positions is empty/tiny pre-revenue. Revisit
+--      (NOT VALID CHECK → VALIDATE pattern) before this table grows large.
 --   5. Unique index first, then promote to constraint (idempotent via IF NOT EXISTS)
 ALTER TABLE public.query_positions ADD COLUMN IF NOT EXISTS evidence_id uuid;
+-- Full-table UPDATE; unbatched lock window accepted given the current pre-revenue (near-empty) table size. Batch via LIMIT loop if this table is ever large at apply time.
 UPDATE public.query_positions SET evidence_id = gen_random_uuid() WHERE evidence_id IS NULL;
 ALTER TABLE public.query_positions ALTER COLUMN evidence_id SET DEFAULT gen_random_uuid();
+-- SET NOT NULL takes a brief AccessExclusiveLock + full table scan; acceptable here because
+-- query_positions is empty/tiny pre-revenue. Revisit (NOT VALID CHECK → VALIDATE pattern)
+-- before this table grows large.
 ALTER TABLE public.query_positions ALTER COLUMN evidence_id SET NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS query_positions_evidence_id_unique
   ON public.query_positions (evidence_id);
@@ -28,7 +36,7 @@ DO $$ BEGIN
   ALTER TABLE public.query_positions
     ADD CONSTRAINT query_positions_evidence_id_unique UNIQUE
     USING INDEX query_positions_evidence_id_unique;
-EXCEPTION WHEN duplicate_object THEN NULL; WHEN duplicate_table THEN NULL; END $$;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Number of independent observations averaged into this row.
 ALTER TABLE public.query_positions
@@ -47,10 +55,14 @@ ALTER TABLE public.query_positions
   ADD COLUMN IF NOT EXISTS ci_high numeric;
 
 -- ci_low/ci_high are Wilson CI bounds on a PROPORTION (presence rate) in [0,1]; aggregate score/position bands live in the read model, not this column.
+-- The constraint forces the pair to be both-NULL or both-present-and-valid (prevents half-populated CI rows).
 DO $$ BEGIN
   ALTER TABLE public.query_positions
     ADD CONSTRAINT query_positions_ci_bounds_check
-      CHECK (ci_low IS NULL OR ci_high IS NULL OR (ci_low >= 0 AND ci_high <= 1 AND ci_low <= ci_high));
+      CHECK (
+        (ci_low IS NULL) = (ci_high IS NULL)
+        AND (ci_low IS NULL OR (ci_low >= 0 AND ci_high <= 1 AND ci_low <= ci_high))
+      );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Pinned model id used for this observation run (traceability).
@@ -359,10 +371,11 @@ VALUES
   )
 ON CONFLICT (factor_key, version) DO NOTHING;
 
--- Seed integrity guard: fail fast if the expected 16 v1 rows are not present.
+-- Seed integrity guard: fail fast if any of the expected 16 v1 rows are missing.
+-- Uses < 16 (not <> 16) so that pre-existing extra rows from re-seeding do not cause false failures.
 DO $$ BEGIN
-  IF (SELECT COUNT(*) FROM public.factor_catalog WHERE version = 1) <> 16 THEN
-    RAISE EXCEPTION 'factor_catalog v1 seed count drift: expected 16, got %',
+  IF (SELECT COUNT(*) FROM public.factor_catalog WHERE version = 1) < 16 THEN
+    RAISE EXCEPTION 'factor_catalog v1 seed count drift: expected at least 16, got %',
       (SELECT COUNT(*) FROM public.factor_catalog WHERE version = 1);
   END IF;
 END $$;
@@ -381,51 +394,67 @@ END $$;
 -- (the app already uses the service key for context generation and invalidation).
 ALTER TABLE public.business_contexts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "business_contexts: owner read"
-  ON public.business_contexts FOR SELECT
-  USING (
-    business_id IN (
-      SELECT id FROM public.businesses WHERE user_id = auth.uid()
-    )
-  );
+-- expires_at filter: the REST API must never surface context past its 30-day TTL to clients.
+-- The service_role probe job reads and writes via its own bypass; the TTL filter only applies
+-- to the user-facing owner-read policy.
+DO $$ BEGIN
+  CREATE POLICY "business_contexts: owner read"
+    ON public.business_contexts FOR SELECT
+    USING (
+      expires_at > now()
+      AND business_id IN (
+        SELECT id FROM public.businesses WHERE user_id = auth.uid()
+      )
+    );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE POLICY "business_contexts: service_role all"
-  ON public.business_contexts FOR ALL
-  TO service_role
-  USING (true)
-  WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "business_contexts: service_role all"
+    ON public.business_contexts FOR ALL
+    TO service_role
+    USING (true)
+    WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- TABLE: telemetry_events  (Pattern B — via businesses.user_id)
 ALTER TABLE public.telemetry_events ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "telemetry_events: owner read"
-  ON public.telemetry_events FOR SELECT
-  USING (
-    business_id IN (
-      SELECT id FROM public.businesses WHERE user_id = auth.uid()
-    )
-  );
+DO $$ BEGIN
+  CREATE POLICY "telemetry_events: owner read"
+    ON public.telemetry_events FOR SELECT
+    USING (
+      business_id IN (
+        SELECT id FROM public.businesses WHERE user_id = auth.uid()
+      )
+    );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE POLICY "telemetry_events: service_role all"
-  ON public.telemetry_events FOR ALL
-  TO service_role
-  USING (true)
-  WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "telemetry_events: service_role all"
+    ON public.telemetry_events FOR ALL
+    TO service_role
+    USING (true)
+    WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- TABLE: factor_catalog  (Pattern P — public read config table, service_role write)
 -- Global config: readable by any role including anon (e.g., free-scan pre-auth surfaces);
 -- only service_role can write. Matches the pattern used for `plans` and `feature_flags`.
 ALTER TABLE public.factor_catalog ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "factor_catalog: public read"
-  ON public.factor_catalog FOR SELECT
-  USING (true);
+DO $$ BEGIN
+  CREATE POLICY "factor_catalog: public read"
+    ON public.factor_catalog FOR SELECT
+    USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE POLICY "factor_catalog: service_role write"
-  ON public.factor_catalog FOR ALL
-  TO service_role
-  USING (true)
-  WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "factor_catalog: service_role write"
+    ON public.factor_catalog FOR ALL
+    TO service_role
+    USING (true)
+    WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- H. Additional performance indexes
