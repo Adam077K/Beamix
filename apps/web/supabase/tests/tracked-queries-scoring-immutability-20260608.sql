@@ -1,3 +1,4 @@
+\set ON_ERROR_STOP on
 -- tracked-queries-scoring-immutability-20260608.sql
 -- Behavioral tests for enforce_tracked_queries_scoring_immutable() trigger.
 --
@@ -14,6 +15,9 @@
 -- Running this against production would still be destructive for the duration
 -- of the transaction and risks triggering RLS/FK errors on real data.
 --
+-- FAIL-FAST: \set ON_ERROR_STOP on (line 1) causes psql to abort on any
+-- RAISE EXCEPTION, so the final summary SELECT only prints on genuine success.
+--
 -- PURPOSE
 -- -------
 -- The smoke-tests.sql TEST 7 verifies the trigger definition (existence,
@@ -26,11 +30,15 @@
 --            SQLSTATE '42501' (insufficient_privilege) AND the message contains the
 --            trigger's stable phrase 'scoring columns' — distinguishing trigger
 --            rejection from an RLS denial (which also uses 42501 but has a different
---            message). Each column tested independently.
+--            message). SQLSTATE is also explicitly asserted to be '42501'.
+--            Each column tested independently.
 --   TEST C — Allowed edit: non-privileged role CAN still update non-scoring
 --            columns (query_text); proves the trigger is column-scoped.
---   TEST D — Privileged bypass: the migration owner role (postgres) can SET weight=50
---            and the UPDATE succeeds — proves the service_role/owner bypass works.
+--   TEST D-1 — service_role bypass: SET LOCAL ROLE service_role then UPDATE
+--            weight=50 and assert it SUCCEEDS — this is the real production
+--            write path (Inngest / probe jobs use the service-role key).
+--   TEST D-2 — owner (postgres) bypass: RESET ROLE then UPDATE weight=51 and
+--            assert it SUCCEEDS — proves the migration-owner bypass works too.
 --
 -- OPERATOR INSTRUCTIONS
 -- ----------------------
@@ -49,7 +57,8 @@
 --   3. Tear down the container when done.
 --
 -- All tests emit NOTICE lines starting with "IMMUTABILITY PASS".
--- Any RAISE EXCEPTION means a behavioral invariant was violated.
+-- Any RAISE EXCEPTION means a behavioral invariant was violated (and with
+-- ON_ERROR_STOP on, psql exits non-zero immediately).
 
 BEGIN;
 
@@ -183,12 +192,15 @@ $$;
 -- TEST B: UPDATE reject — 3 sub-cases: weight, intent_bucket, is_branded
 --
 -- Each sub-case wraps the UPDATE in a BEGIN/EXCEPTION block.
--- PASS condition: SQLSTATE '42501' (insufficient_privilege) is raised AND the
+-- PASS condition: SQLSTATE = '42501' (insufficient_privilege) AND the
 --   exception message contains the trigger's stable phrase 'scoring columns'.
---   This discriminates trigger rejection from an RLS denial: both use 42501
---   but only the trigger sets that specific message phrase.
+--   SQLSTATE is explicitly asserted (not just caught by condition name) to give
+--   a precise failure message if the code changes. The message check discriminates
+--   trigger rejection from an RLS denial: both use 42501 but only the trigger
+--   sets the 'scoring columns' phrase.
 -- FAIL conditions:
 --   - No exception raised (trigger not firing or role detection broken).
+--   - 42501 raised but SQLSTATE assertion fails (defensive: should be tautological).
 --   - 42501 raised but message does NOT contain 'scoring columns' (RLS denial,
 --     not trigger — indicates auth.uid() is still NULL or RLS is blocking first).
 --   - Any other exception code.
@@ -212,6 +224,11 @@ BEGIN
       GET STACKED DIAGNOSTICS
         v_sqlerrcode = RETURNED_SQLSTATE,
         v_message    = MESSAGE_TEXT;
+      -- Assert SQLSTATE is exactly '42501'.
+      IF v_sqlerrcode <> '42501' THEN
+        RAISE EXCEPTION
+          'IMMUTABILITY FAIL — TEST B-1: expected SQLSTATE 42501, got %', v_sqlerrcode;
+      END IF;
       -- Confirm this came from the trigger, not RLS.
       IF v_message NOT LIKE '%scoring columns%' THEN
         RAISE EXCEPTION
@@ -228,7 +245,7 @@ BEGIN
       'trigger may not be firing or role detection is broken';
   END IF;
 
-  RAISE NOTICE 'IMMUTABILITY PASS — TEST B-1: UPDATE weight=50 correctly raised 42501 with trigger phrase';
+  RAISE NOTICE 'IMMUTABILITY PASS — TEST B-1: UPDATE weight=50 raised SQLSTATE=42501 with trigger phrase';
 END;
 $$;
 
@@ -249,6 +266,10 @@ BEGIN
       GET STACKED DIAGNOSTICS
         v_sqlerrcode = RETURNED_SQLSTATE,
         v_message    = MESSAGE_TEXT;
+      IF v_sqlerrcode <> '42501' THEN
+        RAISE EXCEPTION
+          'IMMUTABILITY FAIL — TEST B-2: expected SQLSTATE 42501, got %', v_sqlerrcode;
+      END IF;
       IF v_message NOT LIKE '%scoring columns%' THEN
         RAISE EXCEPTION
           'IMMUTABILITY FAIL — TEST B-2: got 42501 but message does NOT contain ''scoring columns'' '
@@ -263,7 +284,7 @@ BEGIN
       'IMMUTABILITY FAIL — TEST B-2: UPDATE intent_bucket=''comparison'' did not raise 42501';
   END IF;
 
-  RAISE NOTICE 'IMMUTABILITY PASS — TEST B-2: UPDATE intent_bucket correctly raised 42501 with trigger phrase';
+  RAISE NOTICE 'IMMUTABILITY PASS — TEST B-2: UPDATE intent_bucket raised SQLSTATE=42501 with trigger phrase';
 END;
 $$;
 
@@ -284,6 +305,10 @@ BEGIN
       GET STACKED DIAGNOSTICS
         v_sqlerrcode = RETURNED_SQLSTATE,
         v_message    = MESSAGE_TEXT;
+      IF v_sqlerrcode <> '42501' THEN
+        RAISE EXCEPTION
+          'IMMUTABILITY FAIL — TEST B-3: expected SQLSTATE 42501, got %', v_sqlerrcode;
+      END IF;
       IF v_message NOT LIKE '%scoring columns%' THEN
         RAISE EXCEPTION
           'IMMUTABILITY FAIL — TEST B-3: got 42501 but message does NOT contain ''scoring columns'' '
@@ -298,7 +323,7 @@ BEGIN
       'IMMUTABILITY FAIL — TEST B-3: UPDATE is_branded=true did not raise 42501';
   END IF;
 
-  RAISE NOTICE 'IMMUTABILITY PASS — TEST B-3: UPDATE is_branded correctly raised 42501 with trigger phrase';
+  RAISE NOTICE 'IMMUTABILITY PASS — TEST B-3: UPDATE is_branded raised SQLSTATE=42501 with trigger phrase';
 END;
 $$;
 
@@ -330,23 +355,36 @@ END;
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Restore to the migration owner role (postgres) for the privileged bypass test.
+-- Restore session role to the DB owner before the privileged bypass tests.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 RESET ROLE;
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TEST D: Privileged bypass
+-- TEST D-1: service_role bypass (real production write path)
 --
--- The migration owner role (postgres) is in the trigger's allowlist.
--- UPDATE weight=50 as postgres must SUCCEED — proving the service_role/owner
--- bypass path works. The final ROLLBACK undoes this change along with all seed
--- data.
+-- Inngest, probe jobs, and scoring pipelines use the Supabase service-role key.
+-- PostgREST sets the Postgres role to service_role for those requests.
+-- The trigger allowlist includes 'service_role' — UPDATE weight=50 must SUCCEED.
+--
+-- If SET LOCAL ROLE service_role fails with insufficient_privilege, the test
+-- raises a clear diagnostic asking the operator to grant the role, rather than
+-- silently skipping.
 -- ─────────────────────────────────────────────────────────────────────────────
 DO $$
 DECLARE
   v_weight numeric;
 BEGIN
+  BEGIN
+    SET LOCAL ROLE service_role;
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      RAISE EXCEPTION
+        'IMMUTABILITY FAIL — TEST D-1 setup: could not SET LOCAL ROLE service_role. '
+        'The runner user does not have GRANT for service_role. '
+        'Fix: GRANT service_role TO <runner_user>; then re-run.';
+  END;
+
   UPDATE public.tracked_queries
   SET    weight = 50
   WHERE  id = '00000000-0000-0000-0002-000000000001'::uuid;
@@ -357,10 +395,40 @@ BEGIN
 
   IF v_weight <> 50 THEN
     RAISE EXCEPTION
-      'IMMUTABILITY FAIL — TEST D: privileged UPDATE weight=50 did not persist; got %', v_weight;
+      'IMMUTABILITY FAIL — TEST D-1: service_role UPDATE weight=50 did not persist; got %', v_weight;
   END IF;
 
-  RAISE NOTICE 'IMMUTABILITY PASS — TEST D: postgres (privileged) UPDATE weight=50 succeeded (bypass confirmed)';
+  RAISE NOTICE 'IMMUTABILITY PASS — TEST D-1: service_role UPDATE weight=50 succeeded (production bypass confirmed)';
+END;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TEST D-2: owner (postgres) bypass
+--
+-- The migration owner (postgres) is also in the trigger allowlist. This path
+-- covers direct DB access during deployments and migration runs.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+RESET ROLE;
+
+DO $$
+DECLARE
+  v_weight numeric;
+BEGIN
+  UPDATE public.tracked_queries
+  SET    weight = 51
+  WHERE  id = '00000000-0000-0000-0002-000000000001'::uuid;
+
+  SELECT weight INTO v_weight
+  FROM   public.tracked_queries
+  WHERE  id = '00000000-0000-0000-0002-000000000001'::uuid;
+
+  IF v_weight <> 51 THEN
+    RAISE EXCEPTION
+      'IMMUTABILITY FAIL — TEST D-2: postgres (owner) UPDATE weight=51 did not persist; got %', v_weight;
+  END IF;
+
+  RAISE NOTICE 'IMMUTABILITY PASS — TEST D-2: postgres (owner) UPDATE weight=51 succeeded (owner bypass confirmed)';
 END;
 $$;
 
@@ -371,4 +439,4 @@ $$;
 
 ROLLBACK;
 
-SELECT 'IMMUTABILITY TESTS COMPLETE — all 6 behavioral assertions passed (A: INSERT clamp, B-1/B-2/B-3: UPDATE reject 42501+phrase, C: allowed non-scoring edit, D: privileged bypass)' AS result;
+SELECT 'IMMUTABILITY TESTS COMPLETE — all 7 behavioral assertions passed (A: INSERT clamp, B-1/B-2/B-3: UPDATE reject SQLSTATE=42501+phrase, C: allowed non-scoring edit, D-1: service_role bypass, D-2: owner bypass)' AS result;
