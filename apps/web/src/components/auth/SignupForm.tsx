@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { sanitizeNext } from '@/lib/auth/next-param'
 import { createClient } from '@/lib/supabase/client'
+import { signupSubmit, oauthSubmit } from './auth-logic'
 import { AuthCard } from './AuthCard'
 
 type FormState = 'idle' | 'submitting' | 'error' | 'success'
@@ -75,26 +76,19 @@ export function SignupForm() {
     setCardError(null)
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
+    const outcome = await signupSubmit(supabase.auth, {
       email,
       password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      },
+      origin: window.location.origin,
+      next,
     })
-
-    if (error) {
+    if (!outcome.ok) {
       setFormState('error')
-      // Generic message — do NOT echo the raw error, which can reveal whether an
-      // account already exists (enumeration). Client-side validation already
-      // covers email format + password length before submit.
-      setCardError(
-        "We couldn't create your account. Try a different email, or sign in if you already have one.",
-      )
+      setCardError(outcome.message)
       return
     }
 
-    // Keep the existing "check your inbox" success state.
+    // "check your inbox" success state.
     setFormState('success')
   }
 
@@ -241,16 +235,14 @@ export function SignupForm() {
             setFormState('submitting')
             setCardError(null)
             const supabase = createClient()
-            const { error } = await supabase.auth.signInWithOAuth({
-              provider: 'google',
-              options: {
-                redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-              },
+            const outcome = await oauthSubmit(supabase.auth, {
+              origin: window.location.origin,
+              next,
             })
             // On success the SDK navigates the browser to Google; only handle errors.
-            if (error) {
+            if (!outcome.ok) {
               setFormState('error')
-              setCardError('Google sign-in failed. Please try again.')
+              setCardError(outcome.message)
             }
           }}
           aria-label="Continue with Google"

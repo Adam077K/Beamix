@@ -83,11 +83,27 @@ describe('GET /auth/callback', () => {
     expect(location(res)).toBe('https://app.test/login?error=auth')
   })
 
-  it('sanitizes an open-redirect next to /dashboard', async () => {
+  it('sanitizes an open-redirect next to /dashboard (with code)', async () => {
     exchangeCodeForSession.mockResolvedValue({ error: null })
     const abs = await GET(callbackReq(`?code=abc&next=${encodeURIComponent('https://evil.com')}`))
     expect(location(abs)).toBe('https://app.test/dashboard')
     const proto = await GET(callbackReq(`?code=abc&next=${encodeURIComponent('//evil.com')}`))
     expect(location(proto)).toBe('https://app.test/dashboard')
+  })
+
+  it('sanitizes an open-redirect next to /dashboard on the no-code path', async () => {
+    const abs = await GET(callbackReq(`?next=${encodeURIComponent('https://evil.com')}`))
+    expect(exchangeCodeForSession).not.toHaveBeenCalled()
+    expect(location(abs)).toBe('https://app.test/dashboard')
+    const proto = await GET(callbackReq(`?next=${encodeURIComponent('//evil.com')}`))
+    expect(location(proto)).toBe('https://app.test/dashboard')
+  })
+
+  it('logs the SANITIZED OAuth error, never the raw attacker-controlled value', async () => {
+    await GET(callbackReq('?error=access_denied%0aX-Injected:evil'))
+    expect(console.error).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ error: 'access_deniedX-Injectedevil' }),
+    )
   })
 })

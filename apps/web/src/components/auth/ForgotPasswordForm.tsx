@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
+import { forgotSubmit } from './auth-logic'
 import { AuthCard } from './AuthCard'
 
 type FormState = 'idle' | 'submitting' | 'success'
@@ -61,19 +62,10 @@ export function ForgotPasswordForm() {
     setFormState('submitting')
 
     const supabase = createClient()
-    // Recovery link lands directly on /reset-password; the browser client there
-    // processes the recovery code and fires PASSWORD_RECOVERY, which unlocks the
-    // set-new-password form.
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-
-    // Anti-enumeration: always show the same success state regardless of whether
-    // the email exists or the call errored — never reveal account existence. Real
-    // errors are logged server-side by Supabase; the user always sees "sent".
-    if (error) {
-      console.error('[forgot-password] resetPasswordForEmail error', { status: error.status })
-    }
+    // forgotSubmit always resolves (anti-enumeration): the recovery link lands
+    // directly on /reset-password, and we show the same "sent" state regardless
+    // of whether the email exists.
+    await forgotSubmit(supabase.auth, email, window.location.origin)
 
     setSentEmail(email)
     setFormState('success')

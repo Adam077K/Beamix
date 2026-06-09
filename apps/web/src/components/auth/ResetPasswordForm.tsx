@@ -5,14 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
+import { resetSubmit, nextRecoveryGate, type Gate } from './auth-logic'
 import { AuthCard } from './AuthCard'
 
 type FormState = 'idle' | 'submitting' | 'error' | 'success'
-/** Recovery gate: we only allow a password change when the page was reached via
- *  a genuine recovery link (Supabase fires PASSWORD_RECOVERY after processing
- *  the recovery code in the URL). A direct or already-authenticated visit never
- *  reaches 'ready', so it cannot change a password outside the email-ownership flow. */
-type Gate = 'checking' | 'ready' | 'invalid'
 
 function validatePassword(password: string): string | undefined {
   if (!password) return 'Password is required.'
@@ -39,6 +35,10 @@ export function ResetPasswordForm() {
   const confirmId = useId()
   const cardErrorId = useId()
 
+  // One client instance for the lifetime of the component (the recovery listener
+  // and the submit must share the same auth state).
+  const [supabase] = useState(() => createClient())
+
   const [gate, setGate] = useState<Gate>('checking')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -48,10 +48,10 @@ export function ResetPasswordForm() {
 
   // Only a PASSWORD_RECOVERY event unlocks the form. If none arrives shortly
   // (direct visit / stale link / normal session), fall back to the invalid state.
+  // nextRecoveryGate ensures a late event can never re-open an invalidated gate.
   useEffect(() => {
-    const supabase = createClient()
     const { data } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setGate('ready')
+      setGate((g) => nextRecoveryGate(event, g))
     })
     const timer = setTimeout(() => {
       setGate((g) => (g === 'checking' ? 'invalid' : g))
@@ -60,7 +60,7 @@ export function ResetPasswordForm() {
       data.subscription.unsubscribe()
       clearTimeout(timer)
     }
-  }, [])
+  }, [supabase])
 
   const passwordError = touched.password ? validatePassword(password) : undefined
   const confirmError =
@@ -77,25 +77,12 @@ export function ResetPasswordForm() {
     setFormState('submitting')
     setCardError(null)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.updateUser({ password })
-
-    if (error) {
+    const outcome = await resetSubmit(supabase.auth, password)
+    if (!outcome.ok) {
       setFormState('error')
-      if (error.status === 422) {
-        // Password failed the project's strength policy — distinct, actionable.
-        setCardError('That password does not meet the strength requirements. Try a stronger one.')
-      } else {
-        setCardError(
-          'This reset link is invalid or has expired. Request a new one from the sign-in page.',
-        )
-      }
+      setCardError(outcome.message)
       return
     }
-
-    // Revoke every other active session so a previously stolen session cannot
-    // outlive the reset, then send the user to sign in fresh.
-    await supabase.auth.signOut({ scope: 'global' })
     setFormState('success')
   }
 

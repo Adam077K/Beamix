@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { sanitizeNext } from '@/lib/auth/next-param'
+import { sanitizeOAuthErrorForLog } from '@/components/auth/auth-logic'
 
 /**
  * Auth callback — handles the PKCE code exchange for:
@@ -20,10 +21,10 @@ export async function GET(request: NextRequest) {
   // the provider fails. Surface it on the login screen instead of silently
   // proceeding to a destination the user never authenticated for.
   if (oauthError) {
-    // Sanitize the attacker-controlled value before logging (strip anything
-    // outside a safe charset + cap length) to avoid log injection.
-    const safeError = oauthError.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64)
-    console.error('[auth/callback] OAuth provider error', { error: safeError })
+    // Sanitize the attacker-controlled value before logging (anti log-injection).
+    console.error('[auth/callback] OAuth provider error', {
+      error: sanitizeOAuthErrorForLog(oauthError),
+    })
     return NextResponse.redirect(`${origin}/login?error=auth`)
   }
 
