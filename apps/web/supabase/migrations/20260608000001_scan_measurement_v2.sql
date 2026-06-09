@@ -259,6 +259,12 @@ CREATE TABLE IF NOT EXISTS public.business_contexts (
 CREATE INDEX IF NOT EXISTS business_contexts_expires_at_idx
   ON public.business_contexts (expires_at);
 
+-- FK index: built_from_scan_id references scans(id). Postgres does not auto-index FK
+-- columns; without this, a DELETE on scans would sequential-scan business_contexts
+-- to find any rows pointing at the deleted scan (SET NULL trigger path).
+CREATE INDEX IF NOT EXISTS business_contexts_built_from_scan_id_idx
+  ON public.business_contexts (built_from_scan_id);
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- E. NEW TABLE telemetry_events — L4 passive telemetry
 -- ─────────────────────────────────────────────────────────────────────────────

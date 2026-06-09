@@ -176,7 +176,8 @@ BEGIN
       ('factor_catalog_is_active_idx'),
       ('telemetry_events_business_occurred_idx'),
       ('telemetry_events_event_type_idx'),
-      ('business_contexts_expires_at_idx')
+      ('business_contexts_expires_at_idx'),
+      ('business_contexts_built_from_scan_id_idx')
     ) AS t(indexname)
   LOOP
     IF EXISTS (
@@ -196,6 +197,43 @@ END;
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- CHECK 5: scoring-column immutability trigger + function must not exist after rollback
+--
+--   The rollback drops trg_tracked_queries_scoring_immutable and
+--   enforce_tracked_queries_scoring_immutable() before removing the tracked_queries
+--   columns they reference. If either remains, the rollback is incomplete.
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $$
+BEGIN
+  -- Assert trigger is gone from pg_trigger.
+  IF EXISTS (
+    SELECT 1
+    FROM   pg_trigger t
+    JOIN   pg_class   c ON c.oid = t.tgrelid
+    JOIN   pg_namespace n ON n.oid = c.relnamespace
+    WHERE  n.nspname = 'public'
+      AND  c.relname = 'tracked_queries'
+      AND  t.tgname  = 'trg_tracked_queries_scoring_immutable'
+  ) THEN
+    RAISE EXCEPTION 'ROLLBACK-SYM FAIL — trigger trg_tracked_queries_scoring_immutable still exists on public.tracked_queries after rollback';
+  END IF;
+
+  -- Assert function is gone from pg_proc.
+  IF EXISTS (
+    SELECT 1
+    FROM   pg_proc p
+    JOIN   pg_namespace n ON n.oid = p.pronamespace
+    WHERE  n.nspname = 'public'
+      AND  p.proname = 'enforce_tracked_queries_scoring_immutable'
+  ) THEN
+    RAISE EXCEPTION 'ROLLBACK-SYM FAIL — function public.enforce_tracked_queries_scoring_immutable() still exists after rollback';
+  END IF;
+
+  RAISE NOTICE 'ROLLBACK-SYM PASS (check 5) — trigger and function are gone after rollback';
+END;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- Summary
 -- ─────────────────────────────────────────────────────────────────────────────
-SELECT 'ROLLBACK-SYMMETRY CHECKS COMPLETE — all 4 checks passed' AS result;
+SELECT 'ROLLBACK-SYMMETRY CHECKS COMPLETE — all 5 checks passed' AS result;

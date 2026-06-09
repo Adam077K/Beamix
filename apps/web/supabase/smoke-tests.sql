@@ -284,29 +284,53 @@ END;
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TEST 7: tracked_queries scoring-column immutability trigger + function exist
+-- TEST 7: tracked_queries scoring-column immutability trigger — exists, enabled,
+--         BEFORE INSERT OR UPDATE timing, and function exists.
 --
---   Asserts the authz fix for blocker authz-tracked-queries-scoring-columns-user-writable:
---   the trigger enforces that weight, intent_bucket, is_branded are service-role-only
---   despite the existing FOR ALL "tracked_queries: owner write" RLS policy.
+--   Asserts the authz fix for blocker authz-tracked-queries-scoring-columns-user-writable.
 --
---   This is a definition-level assertion only (checks pg_trigger + pg_proc).
---   A runtime impersonation test cannot be performed in a migration/smoke-test context.
+--   pg_trigger.tgtype bitmask (pg/src/include/catalog/pg_trigger.h):
+--     bit 0 (value  1) — ROW-level (vs STATEMENT-level)
+--     bit 1 (value  2) — BEFORE (0 = AFTER/INSTEAD-OF)
+--     bit 2 (value  4) — INSERT event
+--     bit 3 (value  8) — DELETE event
+--     bit 4 (value 16) — UPDATE event
+--     bit 5 (value 32) — TRUNCATE event
+--   BEFORE INSERT OR UPDATE FOR EACH ROW → tgtype = 1|2|4|16 = 23.
+--
+--   pg_trigger.tgenabled values:
+--     'O' — enabled (fires normally, respects session_replication_role)
+--     'D' — disabled (never fires)
+--     'R' — fires in replica mode only
+--     'A' — always fires (ignores session_replication_role)
+--   We assert tgenabled <> 'D' (not disabled).
+--
+--   This is a definition-level assertion. Runtime behavioral tests (INSERT clamp,
+--   UPDATE reject, allowed-edit) are in:
+--     apps/web/supabase/tests/tracked-queries-scoring-immutability-20260608.sql
 -- ─────────────────────────────────────────────────────────────────────────────
 DO $$
 BEGIN
+  -- Assert trigger exists, is not disabled, and has BEFORE INSERT OR UPDATE timing.
   IF NOT EXISTS (
     SELECT 1
     FROM   pg_trigger t
     JOIN   pg_class   c ON c.oid = t.tgrelid
     JOIN   pg_namespace n ON n.oid = c.relnamespace
-    WHERE  n.nspname = 'public'
-      AND  c.relname = 'tracked_queries'
-      AND  t.tgname  = 'trg_tracked_queries_scoring_immutable'
+    WHERE  n.nspname      = 'public'
+      AND  c.relname      = 'tracked_queries'
+      AND  t.tgname       = 'trg_tracked_queries_scoring_immutable'
+      AND  t.tgenabled   <> 'D'          -- not disabled
+      AND  (t.tgtype & 2)  = 2           -- BEFORE (bit 1)
+      AND  (t.tgtype & 4)  = 4           -- INSERT event (bit 2)
+      AND  (t.tgtype & 16) = 16          -- UPDATE event (bit 4)
   ) THEN
-    RAISE EXCEPTION 'SMOKE TEST FAILED — trigger trg_tracked_queries_scoring_immutable not found on public.tracked_queries';
+    RAISE EXCEPTION
+      'SMOKE TEST FAILED — trigger trg_tracked_queries_scoring_immutable not found on '
+      'public.tracked_queries, or it is disabled, or it does not fire BEFORE INSERT OR UPDATE';
   END IF;
 
+  -- Assert function exists in the public schema.
   IF NOT EXISTS (
     SELECT 1
     FROM   pg_proc p
@@ -317,7 +341,7 @@ BEGIN
     RAISE EXCEPTION 'SMOKE TEST FAILED — function public.enforce_tracked_queries_scoring_immutable() not found';
   END IF;
 
-  RAISE NOTICE 'TEST 7 PASS — trg_tracked_queries_scoring_immutable trigger and enforce_tracked_queries_scoring_immutable function exist';
+  RAISE NOTICE 'TEST 7 PASS — trg_tracked_queries_scoring_immutable exists, enabled, fires BEFORE INSERT OR UPDATE; function exists';
 END;
 $$;
 

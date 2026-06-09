@@ -16,6 +16,7 @@ DROP INDEX IF EXISTS public.factor_catalog_is_active_idx;
 DROP INDEX IF EXISTS public.telemetry_events_business_type_time_idx;
 DROP INDEX IF EXISTS public.telemetry_events_event_type_idx;
 DROP INDEX IF EXISTS public.telemetry_events_business_occurred_idx;
+DROP INDEX IF EXISTS public.business_contexts_built_from_scan_id_idx;
 DROP INDEX IF EXISTS public.business_contexts_expires_at_idx;
 
 DROP TABLE IF EXISTS public.factor_catalog CASCADE;
