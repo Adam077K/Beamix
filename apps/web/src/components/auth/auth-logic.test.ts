@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
-  sanitizeOAuthErrorForLog,
   mapResetError,
   nextRecoveryGate,
   recoveryRedirectTo,
@@ -32,15 +31,6 @@ beforeEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('sanitizeOAuthErrorForLog', () => {
-  it('strips newlines + injected control chars (log injection)', () => {
-    expect(sanitizeOAuthErrorForLog('access_denied\nX-Injected: evil')).toBe('access_deniedX-Injectedevil')
-  })
-  it('caps length at 64', () => {
-    expect(sanitizeOAuthErrorForLog('a'.repeat(100))).toHaveLength(64)
-  })
-})
-
 describe('mapResetError', () => {
   it('422 → password-strength message', () => {
     expect(mapResetError(422)).toMatch(/strength/i)
@@ -60,6 +50,9 @@ describe('nextRecoveryGate', () => {
   })
   it('unrelated events leave the gate unchanged', () => {
     expect(nextRecoveryGate('SIGNED_IN', 'checking')).toBe('checking')
+  })
+  it('PASSWORD_RECOVERY from ready stays ready (idempotent)', () => {
+    expect(nextRecoveryGate('PASSWORD_RECOVERY', 'ready')).toBe('ready')
   })
 })
 
@@ -113,6 +106,18 @@ describe('signupSubmit', () => {
       }),
     )
   })
+  it('returns ok on success', async () => {
+    const auth = authMock({ signUp: vi.fn().mockResolvedValue({ error: null }) })
+    expect(
+      await signupSubmit(auth, { email: 'a@b.com', password: 'x', origin: 'https://app.test', next: '/dashboard' }),
+    ).toEqual({ ok: true })
+  })
+  it('does not freeze on a thrown SDK error', async () => {
+    const auth = authMock({ signUp: vi.fn().mockRejectedValue(new Error('network')) })
+    expect(
+      await signupSubmit(auth, { email: 'a@b.com', password: 'x', origin: 'https://app.test', next: '/dashboard' }),
+    ).toEqual({ ok: false, message: GENERIC_SIGNUP_ERROR })
+  })
 })
 
 describe('oauthSubmit', () => {
@@ -126,6 +131,23 @@ describe('oauthSubmit', () => {
   it('ok when the SDK begins the redirect', async () => {
     const auth = authMock({ signInWithOAuth: vi.fn().mockResolvedValue({ error: null }) })
     expect(await oauthSubmit(auth, { origin: 'https://app.test', next: '/dashboard' })).toEqual({ ok: true })
+  })
+  it('passes the callback redirectTo with encoded next', async () => {
+    const signInWithOAuth = vi.fn().mockResolvedValue({ error: null })
+    await oauthSubmit(authMock({ signInWithOAuth }), { origin: 'https://app.test', next: '/settings' })
+    expect(signInWithOAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: 'google',
+        options: { redirectTo: 'https://app.test/auth/callback?next=%2Fsettings' },
+      }),
+    )
+  })
+  it('does not throw on a thrown SDK error', async () => {
+    const auth = authMock({ signInWithOAuth: vi.fn().mockRejectedValue(new Error('network')) })
+    expect(await oauthSubmit(auth, { origin: 'https://app.test', next: '/dashboard' })).toEqual({
+      ok: false,
+      message: GENERIC_OAUTH_ERROR,
+    })
   })
 })
 
@@ -169,8 +191,19 @@ describe('resetSubmit', () => {
     expect(await resetSubmit(auth, 'newpass12')).toEqual({ ok: true })
     expect(errSpy).toHaveBeenCalled()
   })
-  it('does not freeze on a thrown updateUser', async () => {
+  it('on a thrown updateUser returns ok:false with the invalid-or-expired message', async () => {
     const auth = authMock({ updateUser: vi.fn().mockRejectedValue(new Error('network')) })
-    expect((await resetSubmit(auth, 'newpass12')).ok).toBe(false)
+    const out = await resetSubmit(auth, 'newpass12')
+    expect(out.ok).toBe(false)
+    if (!out.ok) expect(out.message).toMatch(/invalid or has expired/i)
+  })
+  it('still returns ok:true when signOut THROWS after a successful update', async () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const auth = authMock({
+      updateUser: vi.fn().mockResolvedValue({ error: null }),
+      signOut: vi.fn().mockRejectedValue(new Error('network')),
+    })
+    expect(await resetSubmit(auth, 'newpass12')).toEqual({ ok: true })
+    expect(errSpy).toHaveBeenCalled()
   })
 })

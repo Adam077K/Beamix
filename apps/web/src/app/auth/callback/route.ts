@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { sanitizeNext } from '@/lib/auth/next-param'
-import { sanitizeOAuthErrorForLog } from '@/components/auth/auth-logic'
+import { sanitizeOAuthErrorForLog } from '@/lib/auth/sanitize'
 
 /**
  * Auth callback — handles the PKCE code exchange for:
@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
         })
         return NextResponse.redirect(`${origin}/login?error=auth`)
       }
-    } catch (err) {
-      console.error('[auth/callback] unexpected error during code exchange', { err })
+    } catch {
+      console.error('[auth/callback] unexpected error during code exchange')
       return NextResponse.redirect(`${origin}/login?error=auth`)
     }
   }

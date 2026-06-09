@@ -16,12 +16,7 @@ export type SubmitOutcome = { ok: true } | { ok: false; message: string }
 export const GENERIC_LOGIN_ERROR = 'Invalid email or password.'
 export const GENERIC_OAUTH_ERROR = 'Google sign-in failed. Please try again.'
 export const GENERIC_SIGNUP_ERROR =
-  "We couldn't create your account. Try a different email, or sign in if you already have one."
-
-/** Strip attacker-controlled chars from an OAuth `?error` before logging (anti log-injection). */
-export function sanitizeOAuthErrorForLog(raw: string): string {
-  return raw.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64)
-}
+  "We couldn't create your account. Please try again, or sign in instead."
 
 /** Map a reset `updateUser` error status to a user-facing message. 422 = password policy. */
 export function mapResetError(status: number | undefined): string {
@@ -117,12 +112,16 @@ export async function resetSubmit(auth: Auth, password: string): Promise<SubmitO
     const { error } = await auth.updateUser({ password })
     if (error) return { ok: false, message: mapResetError(error.status) }
 
-    // Revoke every other active session so a previously stolen session cannot
-    // outlive the reset. A failure here is logged but does not block (the password
-    // IS already changed).
-    const { error: signOutError } = await auth.signOut({ scope: 'global' })
-    if (signOutError) {
-      console.error('[reset-password] global signOut failed', { status: signOutError.status })
+    // Best-effort global revocation so a previously stolen session cannot outlive
+    // the reset. Its failure (returned OR thrown) must NEVER flip the already-
+    // successful password change into a failure — hence its own nested try/catch.
+    try {
+      const { error: signOutError } = await auth.signOut({ scope: 'global' })
+      if (signOutError) {
+        console.error('[reset-password] global signOut failed', { status: signOutError.status })
+      }
+    } catch {
+      console.error('[reset-password] global signOut threw')
     }
     return { ok: true }
   } catch {

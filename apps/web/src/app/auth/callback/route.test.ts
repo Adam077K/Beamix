@@ -12,7 +12,7 @@
  *   5. OAuth provider ?error=...    → /login?error=auth, no exchange call
  *   6. open-redirect next           → falls back to /dashboard
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
 const { exchangeCodeForSession } = vi.hoisted(() => ({
@@ -34,9 +34,17 @@ function location(res: Response): string | null {
   return res.headers.get('location')
 }
 
+let errorSpy: ReturnType<typeof vi.spyOn>
+
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.spyOn(console, 'error').mockImplementation(() => {})
+  errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+})
+
+afterEach(() => {
+  // Restore ONLY the console.error spy (not vi.restoreAllMocks, which would also
+  // tear down the vi.mock factory) so spies don't stack across tests.
+  errorSpy.mockRestore()
 })
 
 describe('GET /auth/callback', () => {

@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { sanitizeNext } from '@/lib/auth/next-param'
 import { createClient } from '@/lib/supabase/client'
-import { loginSubmit, oauthSubmit } from './auth-logic'
+import { loginSubmit } from './auth-logic'
+import { handleGoogleOAuth } from './oauth-click'
 import { AuthCard } from './AuthCard'
 
 type FormState = 'idle' | 'submitting' | 'error'
@@ -200,20 +201,18 @@ export function LoginForm() {
           variant="outline"
           className="w-full"
           disabled={formState === 'submitting'}
-          onClick={async () => {
-            setFormState('submitting')
-            setCardError(null)
-            const supabase = createClient()
-            const outcome = await oauthSubmit(supabase.auth, {
-              origin: window.location.origin,
-              next,
+          onClick={() =>
+            handleGoogleOAuth(next, {
+              onStart: () => {
+                setFormState('submitting')
+                setCardError(null)
+              },
+              onError: (m) => {
+                setFormState('error')
+                setCardError(m)
+              },
             })
-            // On success the SDK navigates the browser to Google; only handle errors.
-            if (!outcome.ok) {
-              setFormState('error')
-              setCardError(outcome.message)
-            }
-          }}
+          }
           aria-label="Continue with Google"
         >
           <svg

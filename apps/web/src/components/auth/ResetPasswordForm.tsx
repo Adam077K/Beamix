@@ -220,7 +220,13 @@ export function ResetPasswordForm() {
           type="submit"
           className="mt-6 w-full"
           disabled={formState === 'submitting' || gate !== 'ready'}
-          aria-label={formState === 'submitting' ? 'Updating password…' : 'Update password'}
+          aria-label={
+            formState === 'submitting'
+              ? 'Updating password…'
+              : gate === 'checking'
+                ? 'Verifying link…'
+                : 'Update password'
+          }
         >
           {formState === 'submitting' ? <Dots /> : gate === 'checking' ? 'Verifying link…' : 'Update password'}
         </Button>
