@@ -21,10 +21,16 @@
 --   TEST A — INSERT clamp: non-privileged role cannot pre-set scoring columns;
 --            they are silently normalized to defaults (weight=1, intent_bucket=NULL,
 --            is_branded=false) even when the caller supplies different values.
---   TEST B — UPDATE reject: non-privileged role attempting to change a scoring
---            column receives SQLSTATE '42501' (insufficient_privilege).
+--   TEST B — UPDATE reject (3 sub-cases: weight, intent_bucket, is_branded):
+--            non-privileged role attempting to change any scoring column receives
+--            SQLSTATE '42501' (insufficient_privilege) AND the message contains the
+--            trigger's stable phrase 'scoring columns' — distinguishing trigger
+--            rejection from an RLS denial (which also uses 42501 but has a different
+--            message). Each column tested independently.
 --   TEST C — Allowed edit: non-privileged role CAN still update non-scoring
 --            columns (query_text); proves the trigger is column-scoped.
+--   TEST D — Privileged bypass: the migration owner role (postgres) can SET weight=50
+--            and the UPDATE succeeds — proves the service_role/owner bypass works.
 --
 -- OPERATOR INSTRUCTIONS
 -- ----------------------
@@ -48,17 +54,23 @@
 BEGIN;
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- SEED: minimal businesses row (FK parent for tracked_queries.business_id)
+-- SEED: auth.users row for owner U + businesses row owned by U
 --
--- businesses NOT NULL columns (with no default): user_id, name, website_url
--- Fixed UUIDs keep the seed deterministic and easy to grep/clean.
+-- Fixed owner UUID U = '00000000-0000-0000-0001-000000000002'.
+-- auth.users has only one NOT NULL column without a default: id.
+-- (is_sso_user and is_anonymous both default to false.)
+-- All seeding runs as the table/migration owner BEFORE switching role.
 -- ─────────────────────────────────────────────────────────────────────────────
 
--- A fixed UUID for the fake user (stands in for auth.users.id; no FK to auth
--- in the businesses table so this is safe on a shadow DB without real auth rows).
--- A fixed UUID for the businesses row itself.
 DO $$
 BEGIN
+  -- Seed auth.users so auth.uid() can resolve to U under the authenticated role.
+  -- Only id is required; all other columns are nullable or have defaults.
+  INSERT INTO auth.users (id)
+  VALUES ('00000000-0000-0000-0001-000000000002'::uuid)
+  ON CONFLICT (id) DO NOTHING;
+
+  -- Seed businesses with user_id = U so the RLS owner-write policy passes.
   INSERT INTO public.businesses (
     id,
     user_id,
@@ -67,8 +79,8 @@ BEGIN
     language,
     services
   ) VALUES (
-    '00000000-0000-0000-0001-000000000001'::uuid,  -- business_id
-    '00000000-0000-0000-0001-000000000002'::uuid,  -- fake user_id
+    '00000000-0000-0000-0001-000000000001'::uuid,
+    '00000000-0000-0000-0001-000000000002'::uuid,
     'Test Business (shadow DB seed)',
     'https://shadow-test.example.com',
     'en',
@@ -79,11 +91,21 @@ END;
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Switch to the authenticated role to simulate a product-API user request.
--- PostgREST sets `SET LOCAL ROLE authenticated` for every authenticated request.
+-- Activate the authenticated role and set request.jwt.claims so auth.uid()
+-- resolves to owner U ('00000000-0000-0000-0001-000000000002').
+--
+-- PostgREST sets SET LOCAL ROLE authenticated and populates request.jwt.claims
+-- for every authenticated API request. The auth.uid() function reads the 'sub'
+-- claim from that config key. set_config(..., true) makes it transaction-local.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 SET LOCAL ROLE authenticated;
+
+SELECT set_config(
+  'request.jwt.claims',
+  json_build_object('sub', '00000000-0000-0000-0001-000000000002')::text,
+  true  -- transaction-local: reset on ROLLBACK / end of transaction
+);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- TEST A: INSERT clamp
@@ -91,6 +113,9 @@ SET LOCAL ROLE authenticated;
 -- An authenticated owner INSERT supplying weight=99, intent_bucket='comparison',
 -- is_branded=true must be silently normalized by the trigger to:
 --   weight=1, intent_bucket=NULL, is_branded=false.
+--
+-- After the INSERT we also assert exactly 1 row exists with the test UUID so
+-- that TEST B/C cannot silently pass on a missing row.
 -- ─────────────────────────────────────────────────────────────────────────────
 DO $$
 DECLARE
@@ -98,6 +123,7 @@ DECLARE
   v_weight        numeric;
   v_intent_bucket text;
   v_is_branded    boolean;
+  v_row_count     int;
 BEGIN
   -- Insert with attacker-supplied scoring values.
   INSERT INTO public.tracked_queries (
@@ -111,11 +137,21 @@ BEGIN
     '00000000-0000-0000-0002-000000000001'::uuid,
     '00000000-0000-0000-0001-000000000001'::uuid,
     'best accounting software',
-    99,              -- attacker tries to set weight to 99
-    'comparison',    -- attacker tries to set intent_bucket
-    true             -- attacker tries to set is_branded = true
+    99,           -- attacker tries to set weight to 99
+    'comparison', -- attacker tries to set intent_bucket
+    true          -- attacker tries to set is_branded = true
   )
   RETURNING id INTO v_id;
+
+  -- Assert exactly 1 row was created (closes the "UPDATE matched 0 rows → false pass" hole).
+  SELECT COUNT(*) INTO v_row_count
+  FROM   public.tracked_queries
+  WHERE  id = v_id;
+
+  IF v_row_count <> 1 THEN
+    RAISE EXCEPTION
+      'IMMUTABILITY FAIL — TEST A pre-check: expected 1 row after INSERT, got %', v_row_count;
+  END IF;
 
   -- Read back the persisted values (within same transaction, same role).
   SELECT weight, intent_bucket, is_branded
@@ -139,40 +175,130 @@ BEGIN
       'IMMUTABILITY FAIL — TEST A: is_branded not clamped to false; got %', v_is_branded;
   END IF;
 
-  RAISE NOTICE 'IMMUTABILITY PASS — TEST A: INSERT scoring columns clamped to defaults (weight=1, intent_bucket=NULL, is_branded=false)';
+  RAISE NOTICE 'IMMUTABILITY PASS — TEST A: INSERT scoring columns clamped to defaults (weight=1, intent_bucket=NULL, is_branded=false), row count 1 confirmed';
 END;
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- TEST B: UPDATE reject
+-- TEST B: UPDATE reject — 3 sub-cases: weight, intent_bucket, is_branded
 --
--- An authenticated owner attempting UPDATE tracked_queries SET weight = 50
--- must receive SQLSTATE '42501' (insufficient_privilege).
--- The EXCEPTION handler catches 42501 → PASS; any other outcome → FAIL.
+-- Each sub-case wraps the UPDATE in a BEGIN/EXCEPTION block.
+-- PASS condition: SQLSTATE '42501' (insufficient_privilege) is raised AND the
+--   exception message contains the trigger's stable phrase 'scoring columns'.
+--   This discriminates trigger rejection from an RLS denial: both use 42501
+--   but only the trigger sets that specific message phrase.
+-- FAIL conditions:
+--   - No exception raised (trigger not firing or role detection broken).
+--   - 42501 raised but message does NOT contain 'scoring columns' (RLS denial,
+--     not trigger — indicates auth.uid() is still NULL or RLS is blocking first).
+--   - Any other exception code.
 -- ─────────────────────────────────────────────────────────────────────────────
+
+-- TEST B-1: UPDATE weight
 DO $$
 DECLARE
-  v_raised boolean := false;
+  v_triggered  boolean := false;
+  v_sqlerrcode text;
+  v_message    text;
 BEGIN
   BEGIN
     UPDATE public.tracked_queries
     SET    weight = 50
     WHERE  id = '00000000-0000-0000-0002-000000000001'::uuid;
-    -- If we reach this line, no exception was raised — that is a failure.
-    v_raised := false;
+    -- No exception → FAIL.
+    v_triggered := false;
   EXCEPTION
     WHEN insufficient_privilege THEN
-      -- SQLSTATE '42501' maps to insufficient_privilege in PL/pgSQL EXCEPTION clauses.
-      v_raised := true;
+      GET STACKED DIAGNOSTICS
+        v_sqlerrcode = RETURNED_SQLSTATE,
+        v_message    = MESSAGE_TEXT;
+      -- Confirm this came from the trigger, not RLS.
+      IF v_message NOT LIKE '%scoring columns%' THEN
+        RAISE EXCEPTION
+          'IMMUTABILITY FAIL — TEST B-1: got 42501 but message does NOT contain ''scoring columns'' '
+          '(this is likely an RLS denial, not the trigger — auth.uid() may be NULL). Message: [%]',
+          v_message;
+      END IF;
+      v_triggered := true;
   END;
 
-  IF NOT v_raised THEN
+  IF NOT v_triggered THEN
     RAISE EXCEPTION
-      'IMMUTABILITY FAIL — TEST B: UPDATE weight=50 did not raise 42501 (insufficient_privilege); '
+      'IMMUTABILITY FAIL — TEST B-1: UPDATE weight=50 did not raise 42501; '
       'trigger may not be firing or role detection is broken';
   END IF;
 
-  RAISE NOTICE 'IMMUTABILITY PASS — TEST B: UPDATE on weight correctly raised 42501 (insufficient_privilege)';
+  RAISE NOTICE 'IMMUTABILITY PASS — TEST B-1: UPDATE weight=50 correctly raised 42501 with trigger phrase';
+END;
+$$;
+
+-- TEST B-2: UPDATE intent_bucket
+DO $$
+DECLARE
+  v_triggered  boolean := false;
+  v_sqlerrcode text;
+  v_message    text;
+BEGIN
+  BEGIN
+    UPDATE public.tracked_queries
+    SET    intent_bucket = 'comparison'
+    WHERE  id = '00000000-0000-0000-0002-000000000001'::uuid;
+    v_triggered := false;
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      GET STACKED DIAGNOSTICS
+        v_sqlerrcode = RETURNED_SQLSTATE,
+        v_message    = MESSAGE_TEXT;
+      IF v_message NOT LIKE '%scoring columns%' THEN
+        RAISE EXCEPTION
+          'IMMUTABILITY FAIL — TEST B-2: got 42501 but message does NOT contain ''scoring columns'' '
+          '(likely RLS, not trigger). Message: [%]',
+          v_message;
+      END IF;
+      v_triggered := true;
+  END;
+
+  IF NOT v_triggered THEN
+    RAISE EXCEPTION
+      'IMMUTABILITY FAIL — TEST B-2: UPDATE intent_bucket=''comparison'' did not raise 42501';
+  END IF;
+
+  RAISE NOTICE 'IMMUTABILITY PASS — TEST B-2: UPDATE intent_bucket correctly raised 42501 with trigger phrase';
+END;
+$$;
+
+-- TEST B-3: UPDATE is_branded
+DO $$
+DECLARE
+  v_triggered  boolean := false;
+  v_sqlerrcode text;
+  v_message    text;
+BEGIN
+  BEGIN
+    UPDATE public.tracked_queries
+    SET    is_branded = true
+    WHERE  id = '00000000-0000-0000-0002-000000000001'::uuid;
+    v_triggered := false;
+  EXCEPTION
+    WHEN insufficient_privilege THEN
+      GET STACKED DIAGNOSTICS
+        v_sqlerrcode = RETURNED_SQLSTATE,
+        v_message    = MESSAGE_TEXT;
+      IF v_message NOT LIKE '%scoring columns%' THEN
+        RAISE EXCEPTION
+          'IMMUTABILITY FAIL — TEST B-3: got 42501 but message does NOT contain ''scoring columns'' '
+          '(likely RLS, not trigger). Message: [%]',
+          v_message;
+      END IF;
+      v_triggered := true;
+  END;
+
+  IF NOT v_triggered THEN
+    RAISE EXCEPTION
+      'IMMUTABILITY FAIL — TEST B-3: UPDATE is_branded=true did not raise 42501';
+  END IF;
+
+  RAISE NOTICE 'IMMUTABILITY PASS — TEST B-3: UPDATE is_branded correctly raised 42501 with trigger phrase';
 END;
 $$;
 
@@ -204,12 +330,45 @@ END;
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Restore the session role before rollback.
+-- Restore to the migration owner role (postgres) for the privileged bypass test.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 RESET ROLE;
 
--- Roll back everything — the DB is left in the same state it was in before this file ran.
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TEST D: Privileged bypass
+--
+-- The migration owner role (postgres) is in the trigger's allowlist.
+-- UPDATE weight=50 as postgres must SUCCEED — proving the service_role/owner
+-- bypass path works. The final ROLLBACK undoes this change along with all seed
+-- data.
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $$
+DECLARE
+  v_weight numeric;
+BEGIN
+  UPDATE public.tracked_queries
+  SET    weight = 50
+  WHERE  id = '00000000-0000-0000-0002-000000000001'::uuid;
+
+  SELECT weight INTO v_weight
+  FROM   public.tracked_queries
+  WHERE  id = '00000000-0000-0000-0002-000000000001'::uuid;
+
+  IF v_weight <> 50 THEN
+    RAISE EXCEPTION
+      'IMMUTABILITY FAIL — TEST D: privileged UPDATE weight=50 did not persist; got %', v_weight;
+  END IF;
+
+  RAISE NOTICE 'IMMUTABILITY PASS — TEST D: postgres (privileged) UPDATE weight=50 succeeded (bypass confirmed)';
+END;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Roll back everything — the DB is left in the same state it was before this
+-- file ran. Seed data (auth.users, businesses, tracked_queries rows) is gone.
+-- ─────────────────────────────────────────────────────────────────────────────
+
 ROLLBACK;
 
-SELECT 'IMMUTABILITY TESTS COMPLETE — all 3 behavioral assertions passed (A: INSERT clamp, B: UPDATE reject 42501, C: allowed non-scoring edit)' AS result;
+SELECT 'IMMUTABILITY TESTS COMPLETE — all 6 behavioral assertions passed (A: INSERT clamp, B-1/B-2/B-3: UPDATE reject 42501+phrase, C: allowed non-scoring edit, D: privileged bypass)' AS result;

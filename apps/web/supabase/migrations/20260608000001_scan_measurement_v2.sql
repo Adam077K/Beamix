@@ -217,8 +217,7 @@ BEGIN
      OR NEW.intent_bucket IS DISTINCT FROM OLD.intent_bucket
      OR NEW.is_branded    IS DISTINCT FROM OLD.is_branded THEN
     RAISE EXCEPTION
-      'tracked_queries scoring columns (weight, intent_bucket, is_branded) are service-role-only and cannot be modified by %',
-      current_user
+      'tracked_queries scoring columns (weight, intent_bucket, is_branded) are not user-editable'
       USING ERRCODE = 'insufficient_privilege';
   END IF;
 
@@ -245,8 +244,11 @@ CREATE TABLE IF NOT EXISTS public.business_contexts (
   context             jsonb       NOT NULL,
   built_from_scan_id  uuid        REFERENCES public.scans(id) ON DELETE SET NULL,
   model_id            text,
-  -- App sets expires_at = now() + interval '30 days' on upsert.
-  -- The DEFAULT here is a safety floor in case the app omits it.
+  -- DEFAULT fires on INSERT only. The anticipated ON CONFLICT (business_id) DO UPDATE
+  -- (app upsert on profile edit) MUST explicitly SET expires_at = now() + interval '30 days'.
+  -- A column DEFAULT does NOT re-fire on UPDATE — omitting it on the upsert path would
+  -- silently freeze the TTL, and the owner-read (expires_at > now()) filter would then hide
+  -- a context that service_role is still scoring on.
   expires_at          timestamptz NOT NULL DEFAULT (now() + interval '30 days'),
   created_at          timestamptz NOT NULL DEFAULT now(),
   updated_at          timestamptz NOT NULL DEFAULT now(),
