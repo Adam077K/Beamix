@@ -201,8 +201,8 @@ export function LoginForm() {
           variant="outline"
           className="w-full"
           disabled={formState === 'submitting'}
-          onClick={() =>
-            handleGoogleOAuth(next, {
+          onClick={() => {
+            void handleGoogleOAuth(next, {
               onStart: () => {
                 setFormState('submitting')
                 setCardError(null)
@@ -212,7 +212,7 @@ export function LoginForm() {
                 setCardError(m)
               },
             })
-          }
+          }}
           aria-label="Continue with Google"
         >
           <svg
