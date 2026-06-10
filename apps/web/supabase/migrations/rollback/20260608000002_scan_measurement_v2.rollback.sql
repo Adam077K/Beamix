@@ -1,4 +1,4 @@
--- Rollback: 20260608000001_scan_measurement_v2.sql
+-- Rollback: 20260608000002_scan_measurement_v2.sql
 -- Reverses Wave 3 scan measurement v2 migration in dependency-safe order.
 -- DESTRUCTIVE: permanently drops factor_catalog, telemetry_events, business_contexts
 --              and all data seeded into them. Run only after confirming the forward

@@ -1,10 +1,10 @@
--- Migration: 20260608000001_scan_measurement_v2.sql
+-- Migration: 20260608000002_scan_measurement_v2.sql
 -- Purpose: Wave 3 — scan measurement v2. Extends query_positions, scan_engine_results,
 --          tracked_queries with per-observation evidence fields, answer-shape columns,
 --          and query-weight/intent fields. Adds business_contexts (L1 context cache),
 --          telemetry_events (L4 passive signals), and factor_catalog (versioned impact
 --          weights) with seed data from SCAN-MEASUREMENT-MODEL.md §3.
--- Rollback: see rollback/20260608000001_scan_measurement_v2.rollback.sql
+-- Rollback: see rollback/20260608000002_scan_measurement_v2.rollback.sql
 -- Tier: irreversible (new tables + ALTERs) — requires QA-Lead PASS + Adam sign-off before apply
 
 -- ─────────────────────────────────────────────────────────────────────────────

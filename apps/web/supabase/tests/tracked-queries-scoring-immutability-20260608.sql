@@ -46,7 +46,7 @@
 --   1. supabase branches create immutability-test-<date>
 --   2. Connect psql to that branch's DB.
 --   3. Apply the forward migration:
---        \i apps/web/supabase/migrations/20260608000001_scan_measurement_v2.sql
+--        \i apps/web/supabase/migrations/20260608000002_scan_measurement_v2.sql
 --   4. Run this file:
 --        \i apps/web/supabase/tests/tracked-queries-scoring-immutability-20260608.sql
 --   5. supabase branches delete immutability-test-<date>

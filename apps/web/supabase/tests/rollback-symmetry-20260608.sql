@@ -1,6 +1,6 @@
 \set ON_ERROR_STOP on
 -- rollback-symmetry-20260608.sql
--- Post-rollback residue check for migration 20260608000001_scan_measurement_v2.sql
+-- Post-rollback residue check for migration 20260608000002_scan_measurement_v2.sql
 --
 -- PURPOSE
 -- -------
@@ -19,9 +19,9 @@
 --        supabase branches create rollback-test-<date>
 --   2. Connect psql to that branch's connection string (shown in supabase branches list).
 --   3. Apply the forward migration:
---        \i apps/web/supabase/migrations/20260608000001_scan_measurement_v2.sql
+--        \i apps/web/supabase/migrations/20260608000002_scan_measurement_v2.sql
 --   4. Apply the rollback:
---        \i apps/web/supabase/migrations/rollback/20260608000001_scan_measurement_v2.rollback.sql
+--        \i apps/web/supabase/migrations/rollback/20260608000002_scan_measurement_v2.rollback.sql
 --   5. Run this file:
 --        \i apps/web/supabase/tests/rollback-symmetry-20260608.sql
 --   6. Delete the branch when done:
