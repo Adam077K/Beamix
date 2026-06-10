@@ -7,31 +7,10 @@ import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 import { forgotSubmit } from './auth-logic'
 import { AuthCard } from './AuthCard'
+import { Dots } from './auth-ui'
+import { validateEmail } from './auth-validation'
 
 type FormState = 'idle' | 'submitting' | 'success'
-
-function validateEmail(email: string): string | undefined {
-  if (!email) return 'Email is required.'
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Enter a valid email address.'
-}
-
-/** Three animated dots indicator — reuses the scan-dot keyframe from globals.css */
-function Dots() {
-  return (
-    <span className="inline-flex items-center gap-[3px] font-mono" aria-hidden="true">
-      {[0, 150, 300].map((delay) => (
-        <span
-          key={delay}
-          className="inline-block h-[5px] w-[5px] rounded-full bg-white"
-          style={{
-            animation: 'scan-dot 1.2s ease-in-out infinite',
-            animationDelay: `${delay}ms`,
-          }}
-        />
-      ))}
-    </span>
-  )
-}
 
 /** Mask the email for display: "j•••@domain.com" */
 function maskEmail(email: string): string {
