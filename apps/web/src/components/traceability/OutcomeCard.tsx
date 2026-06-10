@@ -55,8 +55,8 @@ export function OutcomeCard({ outcome, expanded, onToggle }: OutcomeCardProps) {
         id={headingId(outcome.id)}
         onClick={onToggle}
       >
-        {/* Statement — takes all remaining space, 2-line clamp on mobile */}
-        <span className="min-w-0 flex-1 text-[15px] font-medium leading-snug text-[#0A0A0A] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden sm:[display:block] sm:truncate sm:[overflow:hidden] sm:whitespace-nowrap">
+        {/* Statement — 2-line clamp on mobile, single-line truncate on sm+ */}
+        <span className="min-w-0 flex-1 line-clamp-2 text-[15px] font-medium leading-snug text-[#0A0A0A] sm:line-clamp-1">
           {outcome.statement}
         </span>
 
