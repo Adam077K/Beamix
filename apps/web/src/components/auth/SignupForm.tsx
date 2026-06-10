@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { sanitizeNext } from '@/lib/auth/next-param'
+import { createClient } from '@/lib/supabase/client'
+import { signupSubmit } from './auth-logic'
+import { handleGoogleOAuth } from './oauth-click'
 import { AuthCard } from './AuthCard'
 
 type FormState = 'idle' | 'submitting' | 'error' | 'success'
@@ -73,14 +76,21 @@ export function SignupForm() {
     setFormState('submitting')
     setCardError(null)
 
-    try {
-      // TODO(wire): Supabase auth — fast-follow
-      await new Promise<void>((resolve) => setTimeout(resolve, 1200))
-      setFormState('success')
-    } catch {
+    const supabase = createClient()
+    const outcome = await signupSubmit(supabase.auth, {
+      email,
+      password,
+      origin: window.location.origin,
+      next,
+    })
+    if (!outcome.ok) {
       setFormState('error')
-      setCardError('Something went wrong creating your account. Please try again.')
+      setCardError(outcome.message)
+      return
     }
+
+    // "check your inbox" success state.
+    setFormState('success')
   }
 
   if (formState === 'success') {
@@ -223,7 +233,16 @@ export function SignupForm() {
           className="w-full"
           disabled={formState === 'submitting'}
           onClick={() => {
-            // TODO(wire): Supabase OAuth — fast-follow
+            void handleGoogleOAuth(next, {
+              onStart: () => {
+                setFormState('submitting')
+                setCardError(null)
+              },
+              onError: (m) => {
+                setFormState('error')
+                setCardError(m)
+              },
+            })
           }}
           aria-label="Continue with Google"
         >

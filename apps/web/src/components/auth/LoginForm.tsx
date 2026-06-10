@@ -6,9 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { sanitizeNext } from '@/lib/auth/next-param'
+import { createClient } from '@/lib/supabase/client'
+import { loginSubmit } from './auth-logic'
+import { handleGoogleOAuth } from './oauth-click'
 import { AuthCard } from './AuthCard'
 
-type FormState = 'idle' | 'submitting' | 'error' | 'success'
+type FormState = 'idle' | 'submitting' | 'error'
 
 interface FieldErrors {
   email?: string
@@ -74,55 +77,20 @@ export function LoginForm() {
     setFormState('submitting')
     setCardError(null)
 
-    try {
-      // TODO(wire): Supabase auth — fast-follow
-      // On success, redirect to `next`
-      await new Promise<void>((resolve) => setTimeout(resolve, 1200))
-      setFormState('success')
-      // Stub: show success state; real nav would be: router.push(next)
-    } catch {
+    const supabase = createClient()
+    const outcome = await loginSubmit(supabase.auth, { email, password })
+    if (!outcome.ok) {
       setFormState('error')
-      setCardError('We couldn\'t sign you in. Check your credentials and try again.')
+      setCardError(outcome.message)
+      return
     }
+
+    // Full navigation so the server re-reads the new session cookie set by Supabase.
+    window.location.assign(next)
   }
 
-  if (formState === 'success') {
-    return (
-      <AuthCard
-        eyebrow="Welcome back"
-        heading={
-          <>
-            Signed <em className="font-[var(--font-serif)] italic font-normal">in.</em>
-          </>
-        }
-        footer={null}
-      >
-        <div className="flex flex-col items-center gap-3 py-4 text-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E6F5EE]">
-            <svg
-              className="h-5 w-5 text-[#0E9E6E]"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
-          </div>
-          <p className="text-[15px] leading-[1.5] text-[#374151]">
-            You&apos;re in. Redirecting to your dashboard&hellip;
-          </p>
-          <a
-            href={next}
-            className="text-[14px] text-[#3370FF] underline-offset-4 hover:underline"
-          >
-            Continue to dashboard
-          </a>
-        </div>
-      </AuthCard>
-    )
-  }
+  // No 'success' UI branch: a successful sign-in navigates away via
+  // window.location.assign(next), so the form never renders a success state.
 
   return (
     <AuthCard
@@ -234,7 +202,16 @@ export function LoginForm() {
           className="w-full"
           disabled={formState === 'submitting'}
           onClick={() => {
-            // TODO(wire): Supabase OAuth — fast-follow
+            void handleGoogleOAuth(next, {
+              onStart: () => {
+                setFormState('submitting')
+                setCardError(null)
+              },
+              onError: (m) => {
+                setFormState('error')
+                setCardError(m)
+              },
+            })
           }}
           aria-label="Continue with Google"
         >

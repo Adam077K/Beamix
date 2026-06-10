@@ -4,9 +4,11 @@ import { useState, useId } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { createClient } from '@/lib/supabase/client'
+import { forgotSubmit } from './auth-logic'
 import { AuthCard } from './AuthCard'
 
-type FormState = 'idle' | 'submitting' | 'error' | 'success'
+type FormState = 'idle' | 'submitting' | 'success'
 
 function validateEmail(email: string): string | undefined {
   if (!email) return 'Email is required.'
@@ -41,12 +43,10 @@ function maskEmail(email: string): string {
 
 export function ForgotPasswordForm() {
   const emailId = useId()
-  const cardErrorId = useId()
 
   const [email, setEmail] = useState('')
   const [touched, setTouched] = useState(false)
   const [formState, setFormState] = useState<FormState>('idle')
-  const [cardError, setCardError] = useState<string | null>(null)
   const [sentEmail, setSentEmail] = useState('')
 
   const emailError = touched ? validateEmail(email) : undefined
@@ -60,17 +60,15 @@ export function ForgotPasswordForm() {
     if (err) return
 
     setFormState('submitting')
-    setCardError(null)
 
-    try {
-      // TODO(wire): Supabase auth resetPasswordForEmail — fast-follow
-      await new Promise<void>((resolve) => setTimeout(resolve, 1000))
-      setSentEmail(email)
-      setFormState('success')
-    } catch {
-      setFormState('error')
-      setCardError('We couldn\'t send the reset link. Please try again in a moment.')
-    }
+    const supabase = createClient()
+    // forgotSubmit always resolves (anti-enumeration): the recovery link lands
+    // directly on /reset-password, and we show the same "sent" state regardless
+    // of whether the email exists.
+    await forgotSubmit(supabase.auth, email, window.location.origin)
+
+    setSentEmail(email)
+    setFormState('success')
   }
 
   if (formState === 'success') {
@@ -137,18 +135,7 @@ export function ForgotPasswordForm() {
         </>
       }
     >
-      <form onSubmit={onSubmit} noValidate aria-describedby={cardError ? cardErrorId : undefined}>
-        {/* Card-level error */}
-        {cardError && (
-          <div
-            id={cardErrorId}
-            role="alert"
-            className="mb-4 rounded-lg border border-[#FDECEC] bg-[#FDECEC] px-4 py-3 text-[14px] leading-[1.5] text-[#DC2626]"
-          >
-            {cardError}
-          </div>
-        )}
-
+      <form onSubmit={onSubmit} noValidate>
         <div className="flex flex-col gap-5">
           {/* Email */}
           <div className="flex flex-col gap-1.5">
