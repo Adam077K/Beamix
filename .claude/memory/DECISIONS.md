@@ -4,6 +4,18 @@
 
 ---
 
+### [2026-06-10] — Wave 5 L2 probe v2 + code scoring landed (measurement core, pure library)
+
+**Why:** Build the measurement core per SCAN-MEASUREMENT-MODEL.md §11 W5. Pure additive library (`apps/web/src/lib/scan/`), mirrors W4's "built, not yet wired" pattern. PR `feat/w5-probe-scoring` tip `681250b`; 13 files / +3,991 LOC / 322 tests; NO migration; live scan flow untouched.
+
+**Shipped:** `measurement-types.ts` (type SoT; literals mirror migration 20260608000002 CHECKs) · `probe.ts` (`buildNeutralProbe` zero-identity input = firewall as type boundary; `checkProbeLeak`/`assertProbeClean({branded})` fail-closed gate) · `client-detection.ts` (code mention/rank/competitor extraction) · `answer-shape.ts` (12-shape + win/partial/loss, annotation-only) · `sentiment-judge.ts` (the ONE allowed LLM call, quote code-verified vs the sanitized snippet, unverifiable→`unknown`) · `dimensions.ts` (6 dims) · `scoring.ts` (Wilson CI + Band presence/position-only + per-engine subscores never merged + `rerunVariance` SD≤5).
+
+**Invariant enforced + tested:** the sequencing lock — varying shape.outcome/sentiment leaves band.point + CI identical (headline = presence/position only). Branded probes bypass the leak-gate BY DESIGN (identity-bearing, scored separately, never feed the visibility band).
+
+**QA:** Full-tier binding `qa.js` ran TWICE — gate #1 (`f0ea9e7`) PASS + 16 advisories cleared in `681250b`; gate #2 (merge candidate `681250b`) PASS, 0 block-eligible, no coverage gap. 14 finer advisories recorded as fast-follows (polish loop stopped intentionally — shape false-positive edges are W6-calibration, not headline-correctness, since shape is annotation-only). CEO re-ran typecheck/test/`next build` in-worktree at each tip; branch verified vs GitHub truth between workers.
+
+**Deferred (next waves):** wiring — swap `buildEnginePrompt`→`buildNeutralProbe`, call `assertProbeClean` to fail-closed, split probe into its own Inngest job on `OPENROUTER_SCAN_KEY`, persist into `query_positions`/`scan_engine_results`. Irreversible follow-up: DB role-grant REVOKE for the firewall's DB half (scan service-role can't read `businesses` identity) — needs migration + Adam sign-off. Score go-live gates unchanged (variance SD≤5 cache-OFF; external ρ≥0.4) gate the SCORE, not the gap-list.
+
 ### [2026-06-08] — SCAN MEASUREMENT MODEL v2 locked (rethink workflow + 3 founder decisions)
 
 **Why:** Founder pushed that "mention+rank" is too narrow and the real product is the action checklist. Ran a 10-agent workflow (wf_94614e3c-79c: 4 web researchers → 3 designers → adversary+visionary → Opus judge). Authoritative doc: `docs/04-features/SCAN-MEASUREMENT-MODEL.md` (supersedes DIAGNOSIS-REDESIGN + SCAN-ORCHESTRATION as the build reference). Synthesis: `docs/04-features/research/2026-06-08-scan-rethink-synthesis.md`.
