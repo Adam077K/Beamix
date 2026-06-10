@@ -2,8 +2,7 @@
  * Tests for POST /api/agents/run — agent ignition route
  *
  * External deps mocked:
- *   - next/headers (cookies)
- *   - @supabase/ssr (createServerClient — user-scoped: auth.getUser + businesses IDOR check)
+ *   - @/lib/supabase/server (createServerSupabaseClient — user-scoped: auth.getUser + businesses IDOR check)
  *   - @/lib/agents/db/admin-client (getAdminClient — subscriptions read + agent_jobs write)
  *   - @/inngest/client (inngest.send)
  *
@@ -128,18 +127,11 @@ const {
 // vi.mock calls (factories run hoisted — all vars above are available)
 // ---------------------------------------------------------------------------
 
-vi.mock('next/headers', () => ({
-  cookies: vi.fn().mockResolvedValue({
-    getAll: () => [],
-    set: vi.fn(),
-  }),
-}));
-
-vi.mock('@supabase/ssr', () => ({
-  createServerClient: vi.fn().mockReturnValue({
+vi.mock('@/lib/supabase/server', () => ({
+  createServerSupabaseClient: vi.fn(async () => ({
     auth: { getUser: mockGetUser },
     from: mockUserFrom,
-  }),
+  })),
 }));
 
 vi.mock('@/lib/agents/db/admin-client', () => ({
