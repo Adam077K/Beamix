@@ -309,14 +309,15 @@ describe('auditSite() — robots.txt FM-5 guard', () => {
     }
   });
 
-  it('(3b) robots.isAllowed evaluates site root URL — Disallow: / blocks all crawlers on site root', async () => {
-    // This fixture disallows GPTBot on everything (Disallow: /)
-    // and allows everyone else. We verify GPTBot is disallowed
-    // and that the fix (passing siteRoot, not robotsUrl) correctly evaluates "/" rules.
-    const ROBOTS_DISALLOW_GPTBOT_ROOT = `User-agent: GPTBot\nDisallow: /\n\nUser-agent: *\nAllow: /\n`;
+  it('(3b) robots.isAllowed passes siteRoot not robotsUrl — Disallow: /robots.txt allows site root', async () => {
+    // This fixture DISTINGUISHES siteRoot from robotsUrl:
+    //   - Correct impl (passing siteRoot '/'): GPTBot is ALLOWED (only /robots.txt blocked)
+    //   - Incorrect impl (passing '/robots.txt' as URL): GPTBot would be DISALLOWED
+    // Asserting 'allowed' guarantees the siteRoot fix is real, not a coincidental pass.
+    const ROBOTS_DISALLOW_ROBOTS_TXT_ONLY = `User-agent: GPTBot\nDisallow: /robots.txt\nAllow: /\n`;
     setupMocks({
       target: makeOkResult(HTML_SIMPLE),
-      robots: makeOkResult(ROBOTS_DISALLOW_GPTBOT_ROOT, 200, 'http://example.com/robots.txt'),
+      robots: makeOkResult(ROBOTS_DISALLOW_ROBOTS_TXT_ONLY, 200, 'http://example.com/robots.txt'),
       sitemap: makeErrorResult(),
       llms: makeErrorResult(),
     });
@@ -324,11 +325,10 @@ describe('auditSite() — robots.txt FM-5 guard', () => {
     const result = await auditSite('http://example.com/');
     expect(result.robotsTxt.fetchStatus).toBe('ok');
     if (result.robotsTxt.fetchStatus === 'ok') {
-      // GPTBot disallowed — the rule "Disallow: /" applies to the site root "/"
-      // If we had incorrectly passed robotsUrl (/robots.txt), the rule for "/" would
-      // still fire because /robots.txt starts with /, but that's coincidental.
-      // The explicit test is that a Disallow for a subpath only blocks that subpath.
-      expect(result.robotsTxt.crawlers['GPTBot']).toBe('disallowed');
+      // With siteRoot '/' passed to isAllowed: only /robots.txt is disallowed — site root is allowed.
+      // An incorrect impl passing '/robots.txt' would evaluate the rule against '/robots.txt'
+      // and yield 'disallowed', failing this assertion.
+      expect(result.robotsTxt.crawlers['GPTBot']).toBe('allowed');
       // PerplexityBot has no specific rule → uses wildcard Allow: / → allowed
       expect(result.robotsTxt.crawlers['PerplexityBot']).toBe('allowed');
     }
@@ -546,7 +546,7 @@ describe('auditSite() — dateModified extraction', () => {
     expect(new Date(result.page.dateModified!).getTime()).toBe(new Date(isoDate).getTime());
   });
 
-  it('(16) most recent date wins when multiple date signals are present', async () => {
+  it('(16) most recent date wins when multiple dateModified signals are present', async () => {
     const newerDate = '2025-12-01T00:00:00.000Z';
     const olderDate = '2025-06-01T00:00:00.000Z';
     const html = `<!DOCTYPE html><html><head>
@@ -563,8 +563,50 @@ describe('auditSite() — dateModified extraction', () => {
     });
     const result = await auditSite('http://example.com/');
     expect(result.page.dateModified).toBeDefined();
-    // Should pick the most recent (newerDate)
+    // Should pick the most recent dateModified (newerDate)
     expect(new Date(result.page.dateModified!).getTime()).toBe(new Date(newerDate).getTime());
+  });
+
+  it('(16b) dateModified preference: older dateModified beats newer datePublished', async () => {
+    // Preference rule: dateModified always wins over datePublished regardless of recency.
+    // A newer datePublished must NOT override an older explicit dateModified.
+    const olderModified = '2024-01-01T00:00:00.000Z';
+    const newerPublished = '2025-06-01T00:00:00.000Z';
+    const html = `<!DOCTYPE html><html><head>
+      <script type="application/ld+json">
+        { "@context": "https://schema.org", "@type": "Article",
+          "dateModified": "${olderModified}",
+          "datePublished": "${newerPublished}" }
+      </script>
+    </head><body><h1>Test</h1></body></html>`;
+    setupMocks({
+      target: makeOkResult(html),
+      robots: makeErrorResult(),
+      sitemap: makeErrorResult(),
+      llms: makeErrorResult(),
+    });
+    const result = await auditSite('http://example.com/');
+    expect(result.page.dateModified).toBeDefined();
+    // Must resolve to the dateModified (2024), NOT the newer datePublished (2025)
+    expect(new Date(result.page.dateModified!).getTime()).toBe(new Date(olderModified).getTime());
+  });
+
+  it('(16c) falls back to datePublished when no dateModified is present', async () => {
+    const publishedDate = '2025-03-15T00:00:00.000Z';
+    const html = `<!DOCTYPE html><html><head>
+      <script type="application/ld+json">
+        { "@context": "https://schema.org", "@type": "Article", "datePublished": "${publishedDate}" }
+      </script>
+    </head><body><h1>Test</h1></body></html>`;
+    setupMocks({
+      target: makeOkResult(html),
+      robots: makeErrorResult(),
+      sitemap: makeErrorResult(),
+      llms: makeErrorResult(),
+    });
+    const result = await auditSite('http://example.com/');
+    expect(result.page.dateModified).toBeDefined();
+    expect(new Date(result.page.dateModified!).getTime()).toBe(new Date(publishedDate).getTime());
   });
 
   it('(17) dateModified omitted when no date signals on page', async () => {

@@ -26,7 +26,7 @@
  *   (22) wikidata_entity: no businessContext → 'unknown'
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { detectFactors } from '../factor-detection';
 import type { DetectionInput } from '../factor-detection';
 import type { SiteAudit } from '../types';
@@ -122,15 +122,27 @@ describe('detectFactors() — invariants', () => {
     }
   });
 
-  it('(2) all observations have truth_class="FACT"', async () => {
+  it('(2) all observations have truth_class="FACT" — including wikidata network path', async () => {
     const audit = makeSiteAudit();
+    // Provide businessContext so the wikidata detector actually calls fetch (network path covered).
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ search: [] }),
+      json: async () => ({ search: [{ id: 'Q1', label: 'X' }] }),
     }));
     try {
-      const obs = await detectFactors({ siteAudit: audit });
+      const obs = await detectFactors({
+        siteAudit: audit,
+        businessContext: {
+          business_name: 'X Corp',
+          website_url: '',
+          business_summary: '',
+          key_services: [],
+          target_audience: '',
+          category: '',
+          location: '',
+        },
+      });
       for (const o of obs) {
         expect(o.truth_class).toBe('FACT');
       }
@@ -340,6 +352,23 @@ describe('detectFactors() — content_freshness', () => {
     const o = obs.find((x) => x.factor_key === 'content_freshness')!;
     expect(o.status).toBe('unknown');
   });
+
+  it('future dateModified → unknown (CMS scheduling / bad data)', async () => {
+    const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const audit = makeSiteAudit({ pageOverrides: { dateModified: futureDate } });
+    const obs = await detectFactors({ siteAudit: audit });
+    const o = obs.find((x) => x.factor_key === 'content_freshness')!;
+    expect(o.status).toBe('unknown');
+    expect(o.evidence).toContain('future');
+  });
+
+  it('invalid/unparseable dateModified string → unknown', async () => {
+    const audit = makeSiteAudit({ pageOverrides: { dateModified: 'not-a-date' } });
+    const obs = await detectFactors({ siteAudit: audit });
+    const o = obs.find((x) => x.factor_key === 'content_freshness')!;
+    expect(o.status).toBe('unknown');
+    expect(o.evidence).toContain('not a parseable date');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -376,9 +405,6 @@ describe('detectFactors() — llms_txt', () => {
 // ---------------------------------------------------------------------------
 
 describe('detectFactors() — wikidata_entity', () => {
-  beforeEach(() => {
-    vi.stubGlobal('fetch', undefined);
-  });
   afterEach(() => {
     vi.unstubAllGlobals();
   });
@@ -437,12 +463,28 @@ describe('detectFactors() — wikidata_entity', () => {
     expect(o.evidence).toContain("NoSuchCompanyXYZ");
   });
 
-  it('(21) fetch timeout (AbortError) → unknown', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new DOMException('signal aborted', 'AbortError')));
+  it('(21) AbortController.abort() is called within WIKIDATA_TIMEOUT_MS (8000ms) — verifies timeout wiring', async () => {
+    // This test verifies the AbortController/setTimeout wiring is actually present.
+    // It would fail if the setTimeout or controller.abort() call were removed.
+    const abortSpy = vi.spyOn(AbortController.prototype, 'abort');
 
-    const audit = makeSiteAudit();
-    const obs = await detectFactors({
-      siteAudit: audit,
+    // Make fetch hang until the signal aborts, so the abort spy is the observable proof.
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((_url: string, opts: RequestInit) => {
+      return new Promise<Response>((_resolve, reject) => {
+        // Reject when the signal fires
+        const signal = opts?.signal as AbortSignal | undefined;
+        if (signal) {
+          signal.addEventListener('abort', () => {
+            reject(new DOMException('signal aborted', 'AbortError'));
+          });
+        }
+      });
+    }));
+
+    vi.useFakeTimers();
+
+    const detectPromise = detectFactors({
+      siteAudit: makeSiteAudit(),
       businessContext: {
         business_name: 'TimeoutCo',
         website_url: '',
@@ -453,9 +495,21 @@ describe('detectFactors() — wikidata_entity', () => {
         location: '',
       },
     });
+
+    // Advance past the 8000ms WIKIDATA_TIMEOUT_MS threshold
+    await vi.advanceTimersByTimeAsync(8_001);
+    vi.useRealTimers();
+
+    const obs = await detectPromise;
     const o = obs.find((x) => x.factor_key === 'wikidata_entity')!;
+
+    // The abort must have been called (timeout wiring is verified)
+    expect(abortSpy).toHaveBeenCalled();
+    // Result must be 'unknown' (network path caught gracefully)
     expect(o.status).toBe('unknown');
     expect(o.source).toBe('wikidata');
+
+    abortSpy.mockRestore();
   });
 
   it('(22) no businessContext → unknown', async () => {

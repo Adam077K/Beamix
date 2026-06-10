@@ -303,9 +303,37 @@ async function detectContentFreshness(input: DetectionInput, detectedAt: string)
   }
 
   const modifiedDate = new Date(page.dateModified);
+
+  // Guard: unparseable date string (isNaN guard mirrors pickMostRecentDate in site-audit.ts).
+  if (Number.isNaN(modifiedDate.getTime())) {
+    return {
+      factor_key: 'content_freshness',
+      status: 'unknown',
+      truth_class: 'FACT',
+      evidence: `dateModified '${page.dateModified}' is not a parseable date — result unknown`,
+      source: 'site_audit',
+      detected_at: detectedAt,
+    };
+  }
+
   const nowMs = Date.now();
+  const ageMs = nowMs - modifiedDate.getTime();
+
+  // Guard: future-dated dateModified (CMS scheduling artifact or bad data).
+  // A negative age is unreliable — treat as unknown rather than classifying as 'present'.
+  if (ageMs < 0) {
+    return {
+      factor_key: 'content_freshness',
+      status: 'unknown',
+      truth_class: 'FACT',
+      evidence: `dateModified '${page.dateModified}' is in the future (likely CMS scheduling or bad data) — treated as unreliable`,
+      source: 'site_audit',
+      detected_at: detectedAt,
+    };
+  }
+
   const windowMs = FRESHNESS_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-  const isRecent = nowMs - modifiedDate.getTime() <= windowMs;
+  const isRecent = ageMs <= windowMs;
 
   return {
     factor_key: 'content_freshness',
