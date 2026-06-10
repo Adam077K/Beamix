@@ -1,3 +1,4 @@
+\set ON_ERROR_STOP on
 -- NOTE: uses plpgsql DO blocks for test assertions. NOT a migration. Run: supabase db query --linked --file supabase/smoke-tests.sql
 -- smoke-tests.sql
 -- Wave 0 DB Foundation — RLS and cross-user denial assertions
@@ -6,6 +7,11 @@
 -- PASS criteria:
 --   1. Every table in public schema has RLS enabled (rowsecurity = true)
 --   2. No user-data table is accessible to a different auth.uid() (cross-user denial)
+--   3. Service-only tables have no anon/authenticated policies (deny-all intent)
+--   4. Service-write-only tables (business_contexts, telemetry_events, factor_catalog) have no anon/authenticated/public write policies
+--   5. factor_catalog seed has at least 16 v1 rows; no tier-3 row promises lift
+--   6. All 15 named constraints (CHECK + UNIQUE) added by this migration are present
+--   7. tracked_queries scoring-column immutability trigger + function shipped (authz fix)
 --
 -- If any assertion fails, a RAISE EXCEPTION fires and the query exits non-zero.
 
@@ -84,7 +90,9 @@ BEGIN
       ('url_probes'),
       ('competitors'),
       ('competitor_results'),
-      ('citation_signals')
+      ('citation_signals'),
+      ('business_contexts'),
+      ('telemetry_events')
     ) AS t(tablename)
   LOOP
     IF NOT EXISTS (
@@ -144,6 +152,201 @@ END;
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- TEST 4: Service-write-only tables have NO non-SELECT policies for anon,
+--         authenticated, OR public roles.
+--
+--   Covers: business_contexts, telemetry_events, factor_catalog.
+--
+--   Rationale for each table:
+--     business_contexts  — context JSONB is consumed by the service-role probe job;
+--                          user writes are a prompt-injection + cache-DoS vector.
+--     telemetry_events   — passive signals written only by the service-role ingest path.
+--     factor_catalog     — scoring weights; user writes would corrupt visibility scores.
+--
+--   Role array includes 'public' because a policy with no TO clause defaults to
+--   role 'public' in pg_policies.roles. The existing correct policies are:
+--     - Pattern-P "public read" policies: cmd=SELECT  → excluded by AND cmd <> 'SELECT'
+--     - service_role policies: roles={service_role}   → not in the array → PASS
+--   So against the current correct policy set this test still PASSes.
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $$
+DECLARE
+  v_rec    record;
+  v_failed text := '';
+BEGIN
+  FOR v_rec IN
+    SELECT * FROM (VALUES
+      ('business_contexts'),
+      ('telemetry_events'),
+      ('factor_catalog')
+    ) AS t(tablename)
+  LOOP
+    IF EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE  schemaname = 'public'
+        AND  tablename  = v_rec.tablename
+        AND  roles && ARRAY['anon','authenticated','public']::name[]
+        AND  cmd <> 'SELECT'
+    ) THEN
+      v_failed := v_failed || v_rec.tablename || ', ';
+    END IF;
+  END LOOP;
+
+  IF v_failed <> '' THEN
+    RAISE EXCEPTION 'SMOKE TEST FAILED — service-write-only tables have non-SELECT user/public policies: %', rtrim(v_failed, ', ');
+  ELSE
+    RAISE NOTICE 'TEST 4 PASS — business_contexts/telemetry_events/factor_catalog have no anon/authenticated/public write policies';
+  END IF;
+END;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TEST 5: factor_catalog seed integrity
+--   a. At least 16 rows at version = 1 (< 16 guard; extra rows from re-seeding are fine)
+--   b. No tier-3 row has promises_lift = true
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $$
+DECLARE
+  v_count int;
+BEGIN
+  SELECT COUNT(*) INTO v_count FROM public.factor_catalog WHERE version = 1;
+  -- Uses < 16 (not <> 16): extra rows from re-seeding do not cause false failures.
+  IF v_count < 16 THEN
+    RAISE EXCEPTION 'SMOKE TEST FAILED — factor_catalog v1 seed count: expected at least 16, got %', v_count;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.factor_catalog WHERE tier = 3 AND promises_lift = true
+  ) THEN
+    RAISE EXCEPTION 'SMOKE TEST FAILED — tier-3 factor_catalog row has promises_lift = true (violates product invariant)';
+  END IF;
+
+  RAISE NOTICE 'TEST 5 PASS — factor_catalog has at least 16 v1 rows and no tier-3 row promises lift';
+END;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TEST 6: Named constraints (CHECK + UNIQUE) exist in pg_constraint
+--   Proves all 15 integrity rules shipped and were not silently skipped.
+--   contype filter intentionally omitted so UNIQUE constraints (contype='u')
+--   are covered alongside CHECK constraints (contype='c').
+--   Covers: 4 query_positions constraints (incl. evidence_id UNIQUE),
+--           3 scan_engine_results constraints, 2 tracked_queries constraints,
+--           5 factor_catalog constraints (incl. factor_key_version UNIQUE),
+--           1 telemetry_events constraint.
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $$
+DECLARE
+  v_rec    record;
+  v_failed text := '';
+BEGIN
+  FOR v_rec IN
+    SELECT * FROM (VALUES
+      -- query_positions (4)
+      ('query_positions',       'query_positions_evidence_id_unique'),
+      ('query_positions',       'query_positions_sample_n_check'),
+      ('query_positions',       'query_positions_ci_bounds_check'),
+      ('query_positions',       'query_positions_run_kind_check'),
+      -- scan_engine_results (3)
+      ('scan_engine_results',   'scan_engine_results_shape_check'),
+      ('scan_engine_results',   'scan_engine_results_shape_outcome_check'),
+      ('scan_engine_results',   'scan_engine_results_shape_outcome_coupling_check'),
+      -- tracked_queries (2)
+      ('tracked_queries',       'tracked_queries_weight_check'),
+      ('tracked_queries',       'tracked_queries_intent_bucket_check'),
+      -- telemetry_events (1)
+      ('telemetry_events',      'telemetry_events_event_type_check'),
+      -- factor_catalog (5)
+      ('factor_catalog',        'factor_catalog_factor_key_version_unique'),
+      ('factor_catalog',        'factor_catalog_tier_check'),
+      ('factor_catalog',        'factor_catalog_weight_source_check'),
+      ('factor_catalog',        'factor_catalog_impact_weight_check'),
+      ('factor_catalog',        'factor_catalog_tier3_no_lift_check')
+    ) AS t(tablename, constraintname)
+  LOOP
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint c
+      JOIN   pg_class cl ON cl.oid = c.conrelid
+      JOIN   pg_namespace n ON n.oid = cl.relnamespace
+      WHERE  n.nspname  = 'public'
+        AND  cl.relname = v_rec.tablename
+        AND  c.conname  = v_rec.constraintname
+    ) THEN
+      v_failed := v_failed || v_rec.constraintname || ', ';
+    END IF;
+  END LOOP;
+
+  IF v_failed <> '' THEN
+    RAISE EXCEPTION 'SMOKE TEST FAILED — missing constraints: %', rtrim(v_failed, ', ');
+  ELSE
+    RAISE NOTICE 'TEST 6 PASS — all 15 named constraints are present';
+  END IF;
+END;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- TEST 7: tracked_queries scoring-column immutability trigger — exists, enabled,
+--         BEFORE INSERT OR UPDATE timing, and function exists.
+--
+--   Asserts the authz fix for blocker authz-tracked-queries-scoring-columns-user-writable.
+--
+--   pg_trigger.tgtype bitmask (pg/src/include/catalog/pg_trigger.h):
+--     bit 0 (value  1) — ROW-level (vs STATEMENT-level)
+--     bit 1 (value  2) — BEFORE (0 = AFTER/INSTEAD-OF)
+--     bit 2 (value  4) — INSERT event
+--     bit 3 (value  8) — DELETE event
+--     bit 4 (value 16) — UPDATE event
+--     bit 5 (value 32) — TRUNCATE event
+--   BEFORE INSERT OR UPDATE FOR EACH ROW → tgtype = 1|2|4|16 = 23.
+--
+--   pg_trigger.tgenabled values:
+--     'O' — enabled (fires normally, respects session_replication_role)
+--     'D' — disabled (never fires)
+--     'R' — fires in replica mode only
+--     'A' — always fires (ignores session_replication_role)
+--   We assert tgenabled <> 'D' (not disabled).
+--
+--   This is a definition-level assertion. Runtime behavioral tests (INSERT clamp,
+--   UPDATE reject, allowed-edit) are in:
+--     apps/web/supabase/tests/tracked-queries-scoring-immutability-20260608.sql
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $$
+BEGIN
+  -- Assert trigger exists, is not disabled, and has BEFORE INSERT OR UPDATE timing.
+  IF NOT EXISTS (
+    SELECT 1
+    FROM   pg_trigger t
+    JOIN   pg_class   c ON c.oid = t.tgrelid
+    JOIN   pg_namespace n ON n.oid = c.relnamespace
+    WHERE  n.nspname      = 'public'
+      AND  c.relname      = 'tracked_queries'
+      AND  t.tgname       = 'trg_tracked_queries_scoring_immutable'
+      AND  t.tgenabled   <> 'D'          -- not disabled
+      AND  (t.tgtype & 2)  = 2           -- BEFORE (bit 1)
+      AND  (t.tgtype & 4)  = 4           -- INSERT event (bit 2)
+      AND  (t.tgtype & 16) = 16          -- UPDATE event (bit 4)
+  ) THEN
+    RAISE EXCEPTION
+      'SMOKE TEST FAILED — trigger trg_tracked_queries_scoring_immutable not found on '
+      'public.tracked_queries, or it is disabled, or it does not fire BEFORE INSERT OR UPDATE';
+  END IF;
+
+  -- Assert function exists in the public schema.
+  IF NOT EXISTS (
+    SELECT 1
+    FROM   pg_proc p
+    JOIN   pg_namespace n ON n.oid = p.pronamespace
+    WHERE  n.nspname = 'public'
+      AND  p.proname = 'enforce_tracked_queries_scoring_immutable'
+  ) THEN
+    RAISE EXCEPTION 'SMOKE TEST FAILED — function public.enforce_tracked_queries_scoring_immutable() not found';
+  END IF;
+
+  RAISE NOTICE 'TEST 7 PASS — trg_tracked_queries_scoring_immutable exists, enabled, fires BEFORE INSERT OR UPDATE; function exists';
+END;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- Summary
 -- ─────────────────────────────────────────────────────────────────────────────
-SELECT 'SMOKE TESTS COMPLETE — all 3 assertions passed' AS result;
+SELECT 'SMOKE TESTS COMPLETE — all 7 assertions passed' AS result;
