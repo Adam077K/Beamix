@@ -49,4 +49,18 @@ describe('handleGoogleOAuth', () => {
     await handleGoogleOAuth('/dashboard', { onStart, onError })
     expect(onError).toHaveBeenCalledWith(GENERIC_OAUTH_ERROR)
   })
+
+  it('forwards next into signInWithOAuth redirectTo (encoded)', async () => {
+    signInWithOAuth.mockResolvedValue({ error: null })
+    const onStart = vi.fn()
+    const onError = vi.fn()
+    await handleGoogleOAuth('/settings', { onStart, onError })
+    expect(signInWithOAuth).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({
+          redirectTo: expect.stringContaining('?next=%2Fsettings'),
+        }),
+      }),
+    )
+  })
 })
