@@ -9,8 +9,7 @@
  */
 
 import 'server-only'
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 // Note: approval_queue is not yet in database.types.ts (schema drift).
 // The Supabase client is created without the Database generic so TypeScript
@@ -60,30 +59,11 @@ interface ApprovalQueueRawRow {
 // Supabase client (cookie-based — uses the authenticated user's session)
 // ---------------------------------------------------------------------------
 
+// No Database generic — approval_queue is not yet in database.types.ts.
+// createServerSupabaseClient uses the Database generic internally, but the
+// resulting client is still usable for untyped table access via .from().
 async function getSupabaseClient() {
-  const cookieStore = await cookies()
-
-  // No Database generic — approval_queue is not yet in database.types.ts
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet: Array<{ name: string; value: string; options?: CookieOptions }>) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {
-            // Server Component — cookie writes may be ignored; not an error
-          }
-        },
-      },
-    }
-  )
+  return createServerSupabaseClient()
 }
 
 // ---------------------------------------------------------------------------

@@ -32,14 +32,12 @@
 import 'server-only';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { getAdminClient } from '@/lib/agents/db/admin-client';
 import { isAgentAvailable, getAgentConfig, checkDailyCap } from '@/lib/agents';
 import { CapExceededError } from '@/lib/agents/errors';
 import { inngest } from '@/inngest/client';
-import type { Database } from '@/lib/db/database.types';
 import type { AgentType, PlanTier } from '@/lib/agents/types';
 
 export const dynamic = 'force-dynamic';
@@ -109,28 +107,7 @@ type AgentRunBody = z.infer<typeof AgentRunBodySchema>;
 // ---------------------------------------------------------------------------
 
 async function getUserClient() {
-  const cookieStore = await cookies();
-
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet: Array<{ name: string; value: string; options?: CookieOptions }>) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options),
-            );
-          } catch {
-            // Route handler — cookie writes may fail after response headers sent; not an error
-          }
-        },
-      },
-    },
-  );
+  return createServerSupabaseClient();
 }
 
 // ---------------------------------------------------------------------------

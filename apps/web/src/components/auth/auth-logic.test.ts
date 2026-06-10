@@ -12,6 +12,7 @@ import {
   GENERIC_LOGIN_ERROR,
   GENERIC_OAUTH_ERROR,
   GENERIC_SIGNUP_ERROR,
+  PASSWORD_RECOVERY_TIMEOUT_MS,
 } from './auth-logic'
 
 type AnyFn = ReturnType<typeof vi.fn>
@@ -205,5 +206,11 @@ describe('resetSubmit', () => {
     })
     expect(await resetSubmit(auth, 'newpass12')).toEqual({ ok: true })
     expect(errSpy).toHaveBeenCalled()
+  })
+})
+
+describe('PASSWORD_RECOVERY_TIMEOUT_MS', () => {
+  it('equals 4000 (regression guard — gate timeout must not silently drift)', () => {
+    expect(PASSWORD_RECOVERY_TIMEOUT_MS).toBe(4000)
   })
 })

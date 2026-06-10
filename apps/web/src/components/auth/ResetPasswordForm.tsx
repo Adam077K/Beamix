@@ -5,30 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
-import { resetSubmit, nextRecoveryGate, type Gate } from './auth-logic'
+import { resetSubmit, nextRecoveryGate, PASSWORD_RECOVERY_TIMEOUT_MS, type Gate } from './auth-logic'
 import { AuthCard } from './AuthCard'
+import { Dots } from './auth-ui'
+import { validatePassword } from './auth-validation'
 
 type FormState = 'idle' | 'submitting' | 'error' | 'success'
-
-function validatePassword(password: string): string | undefined {
-  if (!password) return 'Password is required.'
-  if (password.length < 8) return 'Password must be at least 8 characters.'
-}
-
-/** Three animated dots indicator — reuses the scan-dot keyframe from globals.css */
-function Dots() {
-  return (
-    <span className="inline-flex items-center gap-[3px] font-mono" aria-hidden="true">
-      {[0, 150, 300].map((delay) => (
-        <span
-          key={delay}
-          className="inline-block h-[5px] w-[5px] rounded-full bg-white"
-          style={{ animation: 'scan-dot 1.2s ease-in-out infinite', animationDelay: `${delay}ms` }}
-        />
-      ))}
-    </span>
-  )
-}
 
 export function ResetPasswordForm() {
   const passwordId = useId()
@@ -55,7 +37,7 @@ export function ResetPasswordForm() {
     })
     const timer = setTimeout(() => {
       setGate((g) => (g === 'checking' ? 'invalid' : g))
-    }, 4000)
+    }, PASSWORD_RECOVERY_TIMEOUT_MS)
     return () => {
       data.subscription.unsubscribe()
       clearTimeout(timer)

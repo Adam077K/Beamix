@@ -24,9 +24,8 @@
 
 'use server'
 
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { inngest } from '@/inngest/client'
 import type { Database } from '@/lib/db/database.types'
@@ -59,28 +58,7 @@ interface ApprovalQueueRow {
 
 /** Cookie-based client — uses the authenticated user's session (for getUser only). */
 async function getUserClient() {
-  const cookieStore = await cookies()
-
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet: Array<{ name: string; value: string; options?: CookieOptions }>) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {
-            // Server Action — cookie writes may fail in some edge cases; not an error
-          }
-        },
-      },
-    }
-  )
+  return createServerSupabaseClient()
 }
 
 /**

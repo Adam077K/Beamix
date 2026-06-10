@@ -1,7 +1,6 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { cookies } from 'next/headers'
-import { createServerClient } from '@supabase/ssr'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { ScoreHeroPanel } from '@/components/dashboard/ScoreHeroPanel'
 import { AgentActivityPanel } from '@/components/dashboard/AgentActivityPanel'
 import { VisibilityScorePanel } from '@/components/dashboard/VisibilityScorePanel'
@@ -53,21 +52,7 @@ function FoundingCohortPanelSkeleton() {
 export default async function DashboardPage() {
   // Fetch the authenticated user's ID for founding cohort check.
   // Middleware already verified auth; this is a lightweight re-read for userId only.
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll() {
-          // Read-only context — no cookie writes needed here
-        },
-      },
-    },
-  )
+  const supabase = await createServerSupabaseClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

@@ -18,6 +18,9 @@ export const GENERIC_OAUTH_ERROR = 'Google sign-in failed. Please try again.'
 export const GENERIC_SIGNUP_ERROR =
   "We couldn't create your account. Please try again, or sign in instead."
 
+/** How long the reset form waits for a PASSWORD_RECOVERY event before falling back to the invalid state. */
+export const PASSWORD_RECOVERY_TIMEOUT_MS = 4000
+
 /** Map a reset `updateUser` error status to a user-facing message. 422 = password policy. */
 export function mapResetError(status: number | undefined): string {
   if (status === 422) {

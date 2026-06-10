@@ -10,40 +10,14 @@ import { createClient } from '@/lib/supabase/client'
 import { loginSubmit } from './auth-logic'
 import { handleGoogleOAuth } from './oauth-click'
 import { AuthCard } from './AuthCard'
+import { Dots } from './auth-ui'
+import { validateEmail, validatePassword } from './auth-validation'
 
 type FormState = 'idle' | 'submitting' | 'error'
 
 interface FieldErrors {
   email?: string
   password?: string
-}
-
-function validateEmail(email: string): string | undefined {
-  if (!email) return 'Email is required.'
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Enter a valid email address.'
-}
-
-function validatePassword(password: string): string | undefined {
-  if (!password) return 'Password is required.'
-  if (password.length < 8) return 'Password must be at least 8 characters.'
-}
-
-/** Three animated dots indicator — reuses the scan-dot keyframe from globals.css */
-function Dots() {
-  return (
-    <span className="inline-flex items-center gap-[3px] font-mono" aria-hidden="true">
-      {[0, 150, 300].map((delay) => (
-        <span
-          key={delay}
-          className="inline-block h-[5px] w-[5px] rounded-full bg-white"
-          style={{
-            animation: 'scan-dot 1.2s ease-in-out infinite',
-            animationDelay: `${delay}ms`,
-          }}
-        />
-      ))}
-    </span>
-  )
 }
 
 export function LoginForm() {
