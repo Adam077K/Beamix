@@ -173,7 +173,7 @@ export const FIXABILITY_MAP: Record<string, FixabilityEntry> = {
 // array keeps the map honest during future catalog changes.
 // ---------------------------------------------------------------------------
 
-const CANONICAL_KEYS = [
+const _CANONICAL_KEYS = [
   // Tier 1
   'on_page_princeton_tactics',
   'extractable_structure',
@@ -197,8 +197,8 @@ const CANONICAL_KEYS = [
 
 // Ensure FIXABILITY_MAP has an entry for every canonical key.
 // TypeScript will surface a type error if any key is missing.
-const _exhaustivenessCheck: Record<(typeof CANONICAL_KEYS)[number], FixabilityEntry> =
-  FIXABILITY_MAP as Record<(typeof CANONICAL_KEYS)[number], FixabilityEntry>;
+const _exhaustivenessCheck: Record<(typeof _CANONICAL_KEYS)[number], FixabilityEntry> =
+  FIXABILITY_MAP as Record<(typeof _CANONICAL_KEYS)[number], FixabilityEntry>;
 
 // Suppress "declared but never read" without changing runtime behavior.
 void _exhaustivenessCheck;
