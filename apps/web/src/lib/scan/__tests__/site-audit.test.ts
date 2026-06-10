@@ -16,6 +16,13 @@
  *   (9)  JSON-LD with @graph array is recursively parsed
  *   (10) malformed JSON-LD does not throw — valid blocks still parsed
  *   (11) word count caps at ~200 KB input to bound memory allocation
+ *   (12) dateModified extracted from JSON-LD dateModified field
+ *   (13) dateModified extracted from JSON-LD datePublished when no dateModified
+ *   (14) dateModified extracted from <meta property="article:modified_time">
+ *   (15) dateModified extracted from <meta itemprop="dateModified">
+ *   (16) most recent date wins when multiple sources present
+ *   (17) dateModified absent when no date signals on page
+ *   (18) dateModified absent when page unavailable
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -458,6 +465,130 @@ describe('auditSite() — word count cap', () => {
     // wordCount should be capped — 250 KB of "word " → cap at 200 KB → ~40 000 words
     // not the full 50 000. Allow some slack for the cap boundary.
     expect(result.page.wordCount).toBeLessThan(50_000);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// dateModified extraction
+// ---------------------------------------------------------------------------
+
+describe('auditSite() — dateModified extraction', () => {
+  it('(12) extracts dateModified from JSON-LD dateModified field', async () => {
+    const isoDate = '2025-11-01T12:00:00.000Z';
+    const html = `<!DOCTYPE html><html><head>
+      <script type="application/ld+json">
+        { "@context": "https://schema.org", "@type": "Article", "dateModified": "${isoDate}" }
+      </script>
+    </head><body><h1>Test</h1></body></html>`;
+    setupMocks({
+      target: makeOkResult(html),
+      robots: makeErrorResult(),
+      sitemap: makeErrorResult(),
+      llms: makeErrorResult(),
+    });
+    const result = await auditSite('http://example.com/');
+    expect(result.page.fetchStatus).toBe('ok');
+    expect(result.page.dateModified).toBeDefined();
+    // Must be an ISO string that parses to the same moment
+    expect(new Date(result.page.dateModified!).getTime()).toBe(new Date(isoDate).getTime());
+  });
+
+  it('(13) extracts dateModified from JSON-LD datePublished when no dateModified', async () => {
+    const isoDate = '2025-09-15T00:00:00.000Z';
+    const html = `<!DOCTYPE html><html><head>
+      <script type="application/ld+json">
+        { "@context": "https://schema.org", "@type": "Article", "datePublished": "${isoDate}" }
+      </script>
+    </head><body><h1>Test</h1></body></html>`;
+    setupMocks({
+      target: makeOkResult(html),
+      robots: makeErrorResult(),
+      sitemap: makeErrorResult(),
+      llms: makeErrorResult(),
+    });
+    const result = await auditSite('http://example.com/');
+    expect(result.page.fetchStatus).toBe('ok');
+    expect(result.page.dateModified).toBeDefined();
+    expect(new Date(result.page.dateModified!).getTime()).toBe(new Date(isoDate).getTime());
+  });
+
+  it('(14) extracts dateModified from <meta property="article:modified_time">', async () => {
+    const isoDate = '2025-10-20T08:30:00.000Z';
+    const html = `<!DOCTYPE html><html><head>
+      <meta property="article:modified_time" content="${isoDate}">
+    </head><body><h1>Test</h1></body></html>`;
+    setupMocks({
+      target: makeOkResult(html),
+      robots: makeErrorResult(),
+      sitemap: makeErrorResult(),
+      llms: makeErrorResult(),
+    });
+    const result = await auditSite('http://example.com/');
+    expect(result.page.fetchStatus).toBe('ok');
+    expect(result.page.dateModified).toBeDefined();
+    expect(new Date(result.page.dateModified!).getTime()).toBe(new Date(isoDate).getTime());
+  });
+
+  it('(15) extracts dateModified from <meta itemprop="dateModified">', async () => {
+    const isoDate = '2025-08-10T00:00:00.000Z';
+    const html = `<!DOCTYPE html><html><head>
+      <meta itemprop="dateModified" content="${isoDate}">
+    </head><body><h1>Test</h1></body></html>`;
+    setupMocks({
+      target: makeOkResult(html),
+      robots: makeErrorResult(),
+      sitemap: makeErrorResult(),
+      llms: makeErrorResult(),
+    });
+    const result = await auditSite('http://example.com/');
+    expect(result.page.fetchStatus).toBe('ok');
+    expect(result.page.dateModified).toBeDefined();
+    expect(new Date(result.page.dateModified!).getTime()).toBe(new Date(isoDate).getTime());
+  });
+
+  it('(16) most recent date wins when multiple date signals are present', async () => {
+    const newerDate = '2025-12-01T00:00:00.000Z';
+    const olderDate = '2025-06-01T00:00:00.000Z';
+    const html = `<!DOCTYPE html><html><head>
+      <meta property="article:modified_time" content="${olderDate}">
+      <script type="application/ld+json">
+        { "@context": "https://schema.org", "@type": "Article", "dateModified": "${newerDate}" }
+      </script>
+    </head><body><h1>Test</h1></body></html>`;
+    setupMocks({
+      target: makeOkResult(html),
+      robots: makeErrorResult(),
+      sitemap: makeErrorResult(),
+      llms: makeErrorResult(),
+    });
+    const result = await auditSite('http://example.com/');
+    expect(result.page.dateModified).toBeDefined();
+    // Should pick the most recent (newerDate)
+    expect(new Date(result.page.dateModified!).getTime()).toBe(new Date(newerDate).getTime());
+  });
+
+  it('(17) dateModified omitted when no date signals on page', async () => {
+    setupMocks({
+      target: makeOkResult(HTML_SIMPLE),
+      robots: makeErrorResult(),
+      sitemap: makeErrorResult(),
+      llms: makeErrorResult(),
+    });
+    const result = await auditSite('http://example.com/');
+    expect(result.page.fetchStatus).toBe('ok');
+    expect(result.page.dateModified).toBeUndefined();
+  });
+
+  it('(18) dateModified absent when page is unavailable', async () => {
+    setupMocks({
+      target: makeErrorResult('network_error'),
+      robots: makeErrorResult(),
+      sitemap: makeErrorResult(),
+      llms: makeErrorResult(),
+    });
+    const result = await auditSite('http://example.com/');
+    expect(result.page.fetchStatus).toBe('unavailable');
+    expect(result.page.dateModified).toBeUndefined();
   });
 });
 

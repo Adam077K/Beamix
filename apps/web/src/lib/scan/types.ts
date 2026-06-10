@@ -144,6 +144,15 @@ export type SiteAudit = {
     wordCount?: number;
     /** @type values found in JSON-LD scripts, e.g. ["LocalBusiness", "Organization"] */
     jsonLdTypes?: string[];
+    /**
+     * Most recent content freshness date found on the page, as an ISO 8601 string.
+     * Sources checked (in preference order):
+     *   1. JSON-LD dateModified (preferred) or datePublished on any node
+     *   2. <meta property="article:modified_time">
+     *   3. <meta itemprop="dateModified">
+     * Omitted when no valid date is found or page is unavailable.
+     */
+    dateModified?: string;
   };
   /**
    * robots.txt status and per-crawler permissions.

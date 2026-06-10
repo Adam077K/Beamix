@@ -143,17 +143,30 @@ function parseTargetPage(
   const wordCount = bodyText ? bodyText.split(' ').filter(Boolean).length : 0;
 
   // JSON-LD: collect all @type values, especially LocalBusiness / Organization
+  // Also collect dateModified / datePublished values for freshness detection.
   const jsonLdTypes: string[] = [];
+  const jsonLdDates: string[] = [];
   $('script[type="application/ld+json"]').each((_i, el) => {
     try {
       const raw = $(el).html();
       if (!raw) return;
       const parsed = JSON.parse(raw) as unknown;
       collectJsonLdTypes(parsed, jsonLdTypes);
+      collectJsonLdDates(parsed, jsonLdDates);
     } catch {
       // Malformed JSON-LD — skip, never throw
     }
   });
+
+  // dateModified: prefer JSON-LD dates, then fall back to meta tags.
+  // Take the most recent valid date found across all sources.
+  const metaDates: string[] = [];
+  const articleModified = $('meta[property="article:modified_time"]').attr('content');
+  if (articleModified) metaDates.push(articleModified);
+  const itempropModified = $('meta[itemprop="dateModified"]').attr('content');
+  if (itempropModified) metaDates.push(itempropModified);
+
+  const dateModified = pickMostRecentDate([...jsonLdDates, ...metaDates]);
 
   return {
     fetchStatus: 'ok',
@@ -164,6 +177,7 @@ function parseTargetPage(
     h3Count,
     wordCount,
     ...(jsonLdTypes.length > 0 && { jsonLdTypes }),
+    ...(dateModified !== undefined && { dateModified }),
   };
 }
 
@@ -189,6 +203,52 @@ function collectJsonLdTypes(node: unknown, out: string[]): void {
   if (Array.isArray(obj['@graph'])) {
     for (const item of obj['@graph']) collectJsonLdTypes(item, out);
   }
+}
+
+/** Recursively collects dateModified (preferred) and datePublished values from JSON-LD nodes. */
+function collectJsonLdDates(node: unknown, out: string[]): void {
+  if (Array.isArray(node)) {
+    for (const item of node) collectJsonLdDates(item, out);
+    return;
+  }
+  if (typeof node !== 'object' || node === null) return;
+
+  const obj = node as Record<string, unknown>;
+
+  // dateModified preferred over datePublished — push both and pickMostRecentDate will sort them.
+  const dm = obj['dateModified'];
+  if (typeof dm === 'string' && dm) out.push(dm);
+  const dp = obj['datePublished'];
+  if (typeof dp === 'string' && dp) out.push(dp);
+
+  // Recurse into @graph array
+  if (Array.isArray(obj['@graph'])) {
+    for (const item of obj['@graph']) collectJsonLdDates(item, out);
+  }
+}
+
+/**
+ * From a list of candidate date strings, return the most recent valid ISO date string,
+ * or undefined if no valid date is found. Never throws.
+ */
+function pickMostRecentDate(candidates: string[]): string | undefined {
+  let best: Date | undefined;
+  let bestIso: string | undefined;
+
+  for (const raw of candidates) {
+    try {
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) continue;
+      if (best === undefined || d > best) {
+        best = d;
+        bestIso = d.toISOString();
+      }
+    } catch {
+      // Unparseable — skip silently
+    }
+  }
+
+  return bestIso;
 }
 
 // ---------------------------------------------------------------------------
