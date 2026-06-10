@@ -1,3 +1,4 @@
+\set ON_ERROR_STOP on
 -- NOTE: uses plpgsql DO blocks for test assertions. NOT a migration. Run: supabase db query --linked --file supabase/smoke-tests.sql
 -- smoke-tests.sql
 -- Wave 0 DB Foundation — RLS and cross-user denial assertions

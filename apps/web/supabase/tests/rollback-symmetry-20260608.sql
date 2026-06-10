@@ -1,3 +1,4 @@
+\set ON_ERROR_STOP on
 -- rollback-symmetry-20260608.sql
 -- Post-rollback residue check for migration 20260608000001_scan_measurement_v2.sql
 --

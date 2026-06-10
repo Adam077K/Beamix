@@ -18,11 +18,19 @@
 --      Full-table UPDATE; unbatched lock window accepted given the current pre-revenue
 --      (near-empty) table size. Batch via LIMIT loop if this table is ever large at apply time.
 --   3. Set DEFAULT so future inserts get a value without rewriting
---   4. Set NOT NULL — NOTE: SET NOT NULL takes a brief AccessExclusiveLock + full table scan;
---      acceptable here because query_positions is empty/tiny pre-revenue. Revisit
---      (NOT VALID CHECK → VALIDATE pattern) before this table grows large.
+--   4. Set NOT NULL (see inline comment below for lock caveat)
 --   5. Unique index first, then promote to constraint (idempotent via IF NOT EXISTS)
 ALTER TABLE public.query_positions ADD COLUMN IF NOT EXISTS evidence_id uuid;
+-- Guard: enforce the documented "near-empty pre-revenue table" assumption before
+-- the unbatched backfill below holds a write lock for an extended period.
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.query_positions) > 10000 THEN
+    RAISE EXCEPTION
+      'query_positions has % rows — the unbatched evidence_id backfill below would hold a long write lock. '
+      'Batch it (LIMIT loop) before applying this migration.',
+      (SELECT count(*) FROM public.query_positions);
+  END IF;
+END $$;
 UPDATE public.query_positions SET evidence_id = gen_random_uuid() WHERE evidence_id IS NULL;
 ALTER TABLE public.query_positions ALTER COLUMN evidence_id SET DEFAULT gen_random_uuid();
 -- SET NOT NULL takes a brief AccessExclusiveLock + full table scan; acceptable here because

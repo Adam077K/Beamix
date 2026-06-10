@@ -367,40 +367,37 @@ RESET ROLE;
 -- PostgREST sets the Postgres role to service_role for those requests.
 -- The trigger allowlist includes 'service_role' — UPDATE weight=50 must SUCCEED.
 --
--- If SET LOCAL ROLE service_role fails with insufficient_privilege, the test
--- raises a clear diagnostic asking the operator to grant the role, rather than
--- silently skipping.
+-- The SET ROLE, UPDATE, read-back, and assertion all run inside the SAME block
+-- so there is no ambiguity about which role is active when the UPDATE executes.
+-- The single EXCEPTION handler catches BOTH a denied SET ROLE (permissions gap)
+-- AND a denied UPDATE (trigger allowlist regression — the real regression test).
 -- ─────────────────────────────────────────────────────────────────────────────
 DO $$
 DECLARE
   v_weight numeric;
 BEGIN
-  BEGIN
-    SET LOCAL ROLE service_role;
-  EXCEPTION
-    WHEN insufficient_privilege THEN
-      RAISE EXCEPTION
-        'IMMUTABILITY FAIL — TEST D-1 setup: could not SET LOCAL ROLE service_role. '
-        'The runner user does not have GRANT for service_role. '
-        'Fix: GRANT service_role TO <runner_user>; then re-run.';
-  END;
-
+  SET LOCAL ROLE service_role;
   UPDATE public.tracked_queries
   SET    weight = 50
   WHERE  id = '00000000-0000-0000-0002-000000000001'::uuid;
-
   SELECT weight INTO v_weight
   FROM   public.tracked_queries
   WHERE  id = '00000000-0000-0000-0002-000000000001'::uuid;
-
   IF v_weight <> 50 THEN
     RAISE EXCEPTION
       'IMMUTABILITY FAIL — TEST D-1: service_role UPDATE weight=50 did not persist; got %', v_weight;
   END IF;
-
   RAISE NOTICE 'IMMUTABILITY PASS — TEST D-1: service_role UPDATE weight=50 succeeded (production bypass confirmed)';
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    RAISE EXCEPTION
+      'IMMUTABILITY FAIL — TEST D-1: acting as service_role was DENIED '
+      '(SET ROLE not granted to runner, OR the trigger allowlist no longer includes service_role — a real regression). '
+      'GRANT service_role TO <runner_user> if this is a permissions issue, else fix the trigger allowlist.';
 END;
 $$;
+
+RESET ROLE;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- TEST D-2: owner (postgres) bypass
