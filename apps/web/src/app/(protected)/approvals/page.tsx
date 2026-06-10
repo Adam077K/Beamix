@@ -1,5 +1,4 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { getPendingApprovals } from './_data'
 import { ApprovalsList } from './_components/ApprovalsList'
 import { PageHeader } from '@/components/page-header'
@@ -14,29 +13,7 @@ import { RefreshErrorState } from '@/components/refresh-error-state'
 export const dynamic = 'force-dynamic'
 
 async function getCurrentUserId(): Promise<string | null> {
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(
-          cookiesToSet: Array<{ name: string; value: string; options?: CookieOptions }>,
-        ) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
-            })
-          } catch {
-            // Server Component — cookie writes may be no-ops
-          }
-        },
-      },
-    },
-  )
+  const supabase = await createServerSupabaseClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
