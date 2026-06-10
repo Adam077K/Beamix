@@ -11,7 +11,7 @@
  *   (7)  buildGapList returns items in catalog tier order
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { buildGapList, loadFactorCatalog } from '../factor-catalog';
 import type { FactorCatalogRow } from '../factor-catalog';
 import type { FactorObservation } from '../factor-detection';
