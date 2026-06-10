@@ -142,18 +142,44 @@ function parseTargetPage(
     : rawBodyText;
   const wordCount = bodyText ? bodyText.split(' ').filter(Boolean).length : 0;
 
-  // JSON-LD: collect all @type values, especially LocalBusiness / Organization
+  // JSON-LD: collect all @type values, especially LocalBusiness / Organization.
+  // Also collect dateModified and datePublished separately for freshness detection.
+  // The two date buckets are kept SEPARATE to honour the preference rule:
+  //   dateModified > datePublished (use the most-recent dateModified if any exists;
+  //   only fall back to datePublished when no dateModified is found at all).
   const jsonLdTypes: string[] = [];
+  const jsonLdDateModified: string[] = [];
+  const jsonLdDatePublished: string[] = [];
   $('script[type="application/ld+json"]').each((_i, el) => {
     try {
       const raw = $(el).html();
       if (!raw) return;
       const parsed = JSON.parse(raw) as unknown;
       collectJsonLdTypes(parsed, jsonLdTypes);
+      collectJsonLdDates(parsed, jsonLdDateModified, jsonLdDatePublished);
     } catch {
       // Malformed JSON-LD — skip, never throw
     }
   });
+
+  // dateModified resolution (preference: dateModified > datePublished):
+  //   1. article:modified_time meta → dateModified bucket
+  //   2. itemprop="dateModified" meta → dateModified bucket
+  //   (no meta equivalent for datePublished — JSON-LD only)
+  //
+  // Rule: if any valid dateModified value exists (JSON-LD or meta), pick the
+  // most-recent of those. Only fall back to datePublished if no dateModified found.
+  // This prevents a newer datePublished from overriding an older explicit dateModified.
+  const metaModified: string[] = [];
+  const articleModified = $('meta[property="article:modified_time"]').attr('content');
+  if (articleModified) metaModified.push(articleModified);
+  const itempropModified = $('meta[itemprop="dateModified"]').attr('content');
+  if (itempropModified) metaModified.push(itempropModified);
+
+  const allModified = [...jsonLdDateModified, ...metaModified];
+  const dateModified =
+    pickMostRecentDate(allModified) ??
+    pickMostRecentDate(jsonLdDatePublished);
 
   return {
     fetchStatus: 'ok',
@@ -164,13 +190,20 @@ function parseTargetPage(
     h3Count,
     wordCount,
     ...(jsonLdTypes.length > 0 && { jsonLdTypes }),
+    ...(dateModified !== undefined && { dateModified }),
   };
 }
 
+// Maximum recursion depth for JSON-LD walkers — guards against pathological deeply-nested
+// @graph chains in attacker-controlled JSON-LD exhausting the call stack.
+const JSON_LD_MAX_DEPTH = 32;
+
 /** Recursively collects @type values from a JSON-LD node (handles arrays and nested graphs). */
-function collectJsonLdTypes(node: unknown, out: string[]): void {
+function collectJsonLdTypes(node: unknown, out: string[], depth = 0): void {
+  if (depth > JSON_LD_MAX_DEPTH) return;
+
   if (Array.isArray(node)) {
-    for (const item of node) collectJsonLdTypes(item, out);
+    for (const item of node) collectJsonLdTypes(item, out, depth + 1);
     return;
   }
   if (typeof node !== 'object' || node === null) return;
@@ -187,8 +220,67 @@ function collectJsonLdTypes(node: unknown, out: string[]): void {
 
   // Recurse into @graph array
   if (Array.isArray(obj['@graph'])) {
-    for (const item of obj['@graph']) collectJsonLdTypes(item, out);
+    for (const item of obj['@graph']) collectJsonLdTypes(item, out, depth + 1);
   }
+}
+
+/**
+ * Recursively collects dateModified and datePublished values from JSON-LD nodes into
+ * SEPARATE output arrays. Callers must keep the two buckets distinct to honour the
+ * "dateModified preferred over datePublished" rule.
+ *
+ * @param outModified - receives all dateModified string values found
+ * @param outPublished - receives all datePublished string values found
+ */
+function collectJsonLdDates(
+  node: unknown,
+  outModified: string[],
+  outPublished: string[],
+  depth = 0,
+): void {
+  if (depth > JSON_LD_MAX_DEPTH) return;
+
+  if (Array.isArray(node)) {
+    for (const item of node) collectJsonLdDates(item, outModified, outPublished, depth + 1);
+    return;
+  }
+  if (typeof node !== 'object' || node === null) return;
+
+  const obj = node as Record<string, unknown>;
+
+  const dm = obj['dateModified'];
+  if (typeof dm === 'string' && dm) outModified.push(dm);
+  const dp = obj['datePublished'];
+  if (typeof dp === 'string' && dp) outPublished.push(dp);
+
+  // Recurse into @graph array
+  if (Array.isArray(obj['@graph'])) {
+    for (const item of obj['@graph']) collectJsonLdDates(item, outModified, outPublished, depth + 1);
+  }
+}
+
+/**
+ * From a list of candidate date strings, return the most recent valid ISO date string,
+ * or undefined if no valid date is found. Never throws.
+ */
+function pickMostRecentDate(candidates: string[]): string | undefined {
+  let best: Date | undefined;
+  let bestIso: string | undefined;
+
+  for (const raw of candidates) {
+    try {
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) continue;
+      if (best === undefined || d > best) {
+        best = d;
+        bestIso = d.toISOString();
+      }
+    } catch {
+      // Unparseable — skip silently
+    }
+  }
+
+  return bestIso;
 }
 
 // ---------------------------------------------------------------------------
