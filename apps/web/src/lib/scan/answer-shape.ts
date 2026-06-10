@@ -64,7 +64,8 @@ function countNumberedListItems(text: string): number {
   return ranks.size;
 }
 
-/** Check if text contains a bulleted list (-, *, •) with multiple items */
+/** Check if text contains a bulleted list (-, *, •) with multiple items. Reserved for future use. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function hasBulletList(text: string): boolean {
   const bullets = text.match(/(?:^|\n)\s*[-*•]\s+\S/g);
   return (bullets?.length ?? 0) >= 2;

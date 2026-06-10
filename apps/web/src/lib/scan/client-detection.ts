@@ -21,9 +21,12 @@ import type { ClientIdentity, ClientDetection, CompetitorMention } from './measu
  * Same logic as in probe.ts — duplicated here to keep modules independently
  * importable without circular deps. Keep in sync if the algorithm changes.
  *
+ * Exported so dimensions.ts can reuse the same domain-root logic without
+ * duplicating the implementation (brief §dimensions.ts "prefer reuse").
+ *
  * Returns the first DNS label (e.g. "acme-dental" from "https://www.acme-dental.co.il").
  */
-function extractDomainRoot(domain: string): string {
+export function extractDomainRoot(domain: string): string {
   let d = domain.replace(/^https?:\/\//i, '');
   d = d.split('/')[0]!;
   d = d.split(':')[0]!;
