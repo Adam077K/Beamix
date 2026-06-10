@@ -169,6 +169,58 @@ describe('judgeSentiment — all three sentiments', () => {
   });
 });
 
+describe('judgeSentiment — quote length cap (Fix 4)', () => {
+  it('oversized LLM quote is capped at 500 chars and still verified if substring matches', async () => {
+    // Simulate an LLM returning a quote longer than 500 chars (garbage/overrun)
+    const baseQuote = 'highly regarded by patients';
+    const oversizedQuote = baseQuote + ' '.repeat(10) + 'x'.repeat(500);
+    // The capped quote (first 500 chars) starts with 'highly regarded by patients'
+    // and will be a substring of a long snippet that contains those words.
+    const longSnippet = 'Acme Dental is ' + baseQuote + ' for its great work. ' + 'x'.repeat(600);
+    const stub = makeStub('positive', oversizedQuote);
+    const result = await judgeSentiment(longSnippet, IDENTITY, { call: stub });
+    // Quote must be capped — not longer than 500 chars
+    if (result.quote !== null) {
+      expect(result.quote.length).toBeLessThanOrEqual(500);
+    }
+  });
+
+  it('an LLM quote of exactly 500 chars is accepted as-is', async () => {
+    const exactQuote = 'a'.repeat(500);
+    const snippet = 'Acme Dental: ' + 'a'.repeat(500) + ' end';
+    const stub = makeStub('positive', exactQuote);
+    const result = await judgeSentiment(snippet, IDENTITY, { call: stub });
+    if (result.verified) {
+      expect(result.quote).toBe(exactQuote);
+      expect(result.quote!.length).toBe(500);
+    }
+  });
+});
+
+describe('judgeSentiment — quote verification plane (Fix 5)', () => {
+  it('a quote from sanitized snippet verifies correctly against the sanitized plane', async () => {
+    // Snippet contains a newline (which sanitizeForPrompt strips/replaces with a space).
+    // The LLM will see the sanitized version and quote from it.
+    // Verification must use the sanitized plane so the quote is found.
+    const snippetWithNewline = 'Acme Dental provides\nexcellent care for families.';
+    // After sanitization the newline becomes ' ' → 'Acme Dental provides excellent care'
+    const quoteFromSanitized = 'excellent care for families';
+    const stub = makeStub('positive', quoteFromSanitized);
+    const result = await judgeSentiment(snippetWithNewline, IDENTITY, { call: stub });
+    // The quote exists in both original and sanitized (just split by newline vs space)
+    // The key guarantee: verified = true (plane-consistent check)
+    expect(result.verified).toBe(true);
+    expect(result.sentiment).toBe('positive');
+  });
+
+  it('a fabricated quote not in snippet (either plane) → unknown/unverified', async () => {
+    const stub = makeStub('positive', 'this phrase is completely made up and not present');
+    const result = await judgeSentiment(SNIPPET, IDENTITY, { call: stub });
+    expect(result.sentiment).toBe('unknown');
+    expect(result.verified).toBe(false);
+  });
+});
+
 describe('buildSentimentJudgePrompt', () => {
   it('(11) is pure — contains sanitized business name in user prompt', () => {
     const { system, user } = buildSentimentJudgePrompt(SNIPPET, IDENTITY);

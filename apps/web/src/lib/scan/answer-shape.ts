@@ -64,13 +64,6 @@ function countNumberedListItems(text: string): number {
   return ranks.size;
 }
 
-/** Check if text contains a bulleted list (-, *, •) with multiple items. Reserved for future use. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function hasBulletList(text: string): boolean {
-  const bullets = text.match(/(?:^|\n)\s*[-*•]\s+\S/g);
-  return (bullets?.length ?? 0) >= 2;
-}
-
 /** Check if text contains URL-like patterns (citation signal) */
 function containsUrlPattern(text: string): boolean {
   // Match http(s):// URLs, bare domain patterns with known TLDs
@@ -87,25 +80,29 @@ function containsUrlPattern(text: string): boolean {
  *   - Contains explicit refusal phrases ("I don't know", "I can't answer",
  *     "I don't have enough information", "I'm unable to"), OR
  *   - Very short response (< 30 chars) with no named entities.
+ *
+ * @param text  Raw response text.
+ * @param norm  Pre-normalized (lowercase + collapsed whitespace) text — pass from classifyShape
+ *              to avoid re-normalizing per predicate.
  */
-function isNoAnswer(text: string): boolean {
-  if (text.trim().length === 0) return true;
-  if (text.trim().length < 30) return true;
+function isNoAnswer(text: string, norm: string): boolean {
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return true;
+  if (trimmed.length < 30) return true;
 
-  const n = normalize(text);
   return (
-    n.includes("i don't know") ||
-    n.includes("i do not know") ||
-    n.includes("i'm unable") ||
-    n.includes("i am unable") ||
-    n.includes("i can't answer") ||
-    n.includes("i cannot answer") ||
-    n.includes("i don't have enough information") ||
-    n.includes("i don't have information") ||
-    n.includes("i have no information") ||
-    n.includes("no information available") ||
-    n.includes("i cannot provide") ||
-    n.includes("i can't provide")
+    norm.includes("i don't know") ||
+    norm.includes("i do not know") ||
+    norm.includes("i'm unable") ||
+    norm.includes("i am unable") ||
+    norm.includes("i can't answer") ||
+    norm.includes("i cannot answer") ||
+    norm.includes("i don't have enough information") ||
+    norm.includes("i don't have information") ||
+    norm.includes("i have no information") ||
+    norm.includes("no information available") ||
+    norm.includes("i cannot provide") ||
+    norm.includes("i can't provide")
   );
 }
 
@@ -115,22 +112,23 @@ function isNoAnswer(text: string): boolean {
  *   - Key signals: "I recommend researching", "check reviews", "consult", "do your own
  *     research", "look for", "search for" — combined with absence of ≥2 named options.
  *   - Conservative: only apply if there is no numbered list and no bullet list with names.
+ *
+ * @param norm  Pre-normalized text from classifyShape.
  */
-function isDoYourOwnResearch(text: string, namedListCount: number): boolean {
+function isDoYourOwnResearch(norm: string, namedListCount: number): boolean {
   if (namedListCount >= 2) return false; // engine gave concrete names → not a deflection
 
-  const n = normalize(text);
   return (
-    n.includes('recommend researching') ||
-    n.includes('recommend checking') ||
-    n.includes('do your own research') ||
-    n.includes('i suggest looking') ||
-    n.includes('you should look') ||
-    n.includes('consult with a') ||
-    n.includes('check reviews') ||
-    n.includes('look for reviews') ||
-    n.includes('i recommend checking') ||
-    n.includes('consider checking')
+    norm.includes('recommend researching') ||
+    norm.includes('recommend checking') ||
+    norm.includes('do your own research') ||
+    norm.includes('i suggest looking') ||
+    norm.includes('you should look') ||
+    norm.includes('consult with a') ||
+    norm.includes('check reviews') ||
+    norm.includes('look for reviews') ||
+    norm.includes('i recommend checking') ||
+    norm.includes('consider checking')
   );
 }
 
@@ -176,26 +174,27 @@ function isNegativeAvoid(
  *   - Conservative heuristic: only apply when there is exactly one named entity and the
  *     response is NOT a list. This shape is the fallback for brand-intent queries.
  *   - Note: branded queries are scored separately (SCAN-ORCHESTRATION.md).
+ *
+ * @param norm  Pre-normalized text from classifyShape.
  */
 function isNavigationalBranded(
-  text: string,
+  norm: string,
   namedListCount: number,
   competitorCount: number,
 ): boolean {
   if (namedListCount >= 2 || competitorCount >= 2) return false;
 
-  const n = normalize(text);
   // Signals of a navigational answer about a specific entity
   return (
-    (n.includes(' is located at') ||
-      n.includes(' is a ') ||
-      n.includes(' offers ') ||
-      n.includes(' provides ') ||
-      n.includes(' specializes in') ||
-      n.includes('opening hours') ||
-      n.includes('business hours') ||
-      n.includes('phone number') ||
-      n.includes('contact information')) &&
+    (norm.includes(' is located at') ||
+      norm.includes(' is a ') ||
+      norm.includes(' offers ') ||
+      norm.includes(' provides ') ||
+      norm.includes(' specializes in') ||
+      norm.includes('opening hours') ||
+      norm.includes('business hours') ||
+      norm.includes('phone number') ||
+      norm.includes('contact information')) &&
     namedListCount < 2
   );
 }
@@ -230,17 +229,19 @@ function isCitedAsSource(text: string, detection: ClientDetection): boolean {
  *   - The answer groups results by location/proximity ("near you", addresses, map-style).
  *   - Signals: multiple address mentions, "near me", "in [city]" repeated pattern,
  *     phone numbers, zip/postal codes, map reference.
+ *
+ * @param rawResponse  Raw response text (needed for regex that operate on raw chars).
+ * @param norm         Pre-normalized text from classifyShape.
  */
-function isLocalPack(text: string): boolean {
-  const n = normalize(text);
+function isLocalPack(rawResponse: string, norm: string): boolean {
   let signals = 0;
 
-  if (n.includes('near you') || n.includes('near me')) signals++;
-  if (/\d{5}(-\d{4})?/.test(text)) signals++; // US zip code
-  if (/\+?[\d\s()\-]{7,15}/.test(text)) signals++; // phone number pattern
-  if (n.match(/\d+\s+[a-z]+\s+(street|st\.|avenue|ave\.|road|rd\.|blvd|drive|dr\.)/i)) signals++;
-  if (n.includes('address:') || n.includes('located at') || n.includes('directions')) signals++;
-  if (n.includes('miles away') || n.includes('km away') || n.includes('minutes away')) signals++;
+  if (norm.includes('near you') || norm.includes('near me')) signals++;
+  if (/\d{5}(-\d{4})?/.test(rawResponse)) signals++; // US zip code
+  if (/\+?[\d\s()\-]{7,15}/.test(rawResponse)) signals++; // phone number pattern
+  if (norm.match(/\d+\s+[a-z]+\s+(street|st\.|avenue|ave\.|road|rd\.|blvd|drive|dr\.)/i)) signals++;
+  if (norm.includes('address:') || norm.includes('located at') || norm.includes('directions')) signals++;
+  if (norm.includes('miles away') || norm.includes('km away') || norm.includes('minutes away')) signals++;
 
   return signals >= 2;
 }
@@ -251,23 +252,24 @@ function isLocalPack(text: string): boolean {
  *   - Signals: "vs", "versus", "compared to", "compared with", pros/cons table,
  *     "on the other hand", "while X", "whereas X" — with exactly 2–3 named entities.
  *   - Conservative: requires ≥2 competitors OR the client + at least 1 competitor.
+ *
+ * @param norm  Pre-normalized text from classifyShape.
  */
 function isComparison(
-  text: string,
+  norm: string,
   namedListCount: number,
   competitorCount: number,
   detection: ClientDetection,
 ): boolean {
   // Comparison signals in text
-  const n = normalize(text);
   const hasComparisonSignal =
-    n.includes(' vs ') ||
-    n.includes(' versus ') ||
-    n.includes('compared to') ||
-    n.includes('compared with') ||
-    n.includes('on the other hand') ||
-    (n.includes('pros') && n.includes('cons')) ||
-    n.includes('difference between');
+    norm.includes(' vs ') ||
+    norm.includes(' versus ') ||
+    norm.includes('compared to') ||
+    norm.includes('compared with') ||
+    norm.includes('on the other hand') ||
+    (norm.includes('pros') && norm.includes('cons')) ||
+    norm.includes('difference between');
 
   if (!hasComparisonSignal) return false;
 
@@ -292,22 +294,23 @@ function isRankedListicle(namedListCount: number): boolean {
  *     "you should choose" — followed by a specific name.
  *   - Also applies when there is exactly 1 list item (degenerate 1-item list = recommendation).
  *   - Conservative: only apply when namedListCount ≤ 1.
+ *
+ * @param norm  Pre-normalized text from classifyShape.
  */
-function isSingleRecommendation(text: string, namedListCount: number): boolean {
+function isSingleRecommendation(norm: string, namedListCount: number): boolean {
   if (namedListCount > 1) return false;
 
-  const n = normalize(text);
   return (
-    n.includes('i recommend') ||
-    n.includes('i would recommend') ||
-    n.includes('best option is') ||
-    n.includes('best choice is') ||
-    n.includes('the top choice') ||
-    n.includes('i suggest') ||
-    n.includes('go with ') ||
-    n.includes('you should choose') ||
-    n.includes('the best provider') ||
-    n.includes('the best service') ||
+    norm.includes('i recommend') ||
+    norm.includes('i would recommend') ||
+    norm.includes('best option is') ||
+    norm.includes('best choice is') ||
+    norm.includes('the top choice') ||
+    norm.includes('i suggest') ||
+    norm.includes('go with ') ||
+    norm.includes('you should choose') ||
+    norm.includes('the best provider') ||
+    norm.includes('the best service') ||
     namedListCount === 1
   );
 }
@@ -330,20 +333,21 @@ function isPassingMention(detection: ClientDetection): boolean {
  *     principle, often in combinations like "there are several tools...", "you can use a
  *     service or a product".
  *   - Conservative: only apply when there is NO clear list of named providers.
+ *
+ * @param norm  Pre-normalized text from classifyShape.
  */
-function isToolVsServiceVsProduct(text: string, namedListCount: number): boolean {
+function isToolVsServiceVsProduct(norm: string, namedListCount: number): boolean {
   if (namedListCount >= 2) return false;
 
-  const n = normalize(text);
   let signals = 0;
 
-  if (n.includes('tool vs') || n.includes('tool versus')) signals += 2;
-  if (n.includes('service vs') || n.includes('service versus')) signals += 2;
-  if (n.includes('product vs') || n.includes('product versus')) signals += 2;
-  if (n.includes('software vs') || n.includes('software versus')) signals += 2;
-  if (n.match(/\b(tools?|services?|platforms?|products?|software)\b.*\b(tools?|services?|platforms?|products?|software)\b/)) signals++;
-  if (n.includes('type of') && (n.includes('tool') || n.includes('service') || n.includes('platform'))) signals++;
-  if (n.includes('depends on whether') || n.includes('depends on what type')) signals++;
+  if (norm.includes('tool vs') || norm.includes('tool versus')) signals += 2;
+  if (norm.includes('service vs') || norm.includes('service versus')) signals += 2;
+  if (norm.includes('product vs') || norm.includes('product versus')) signals += 2;
+  if (norm.includes('software vs') || norm.includes('software versus')) signals += 2;
+  if (norm.match(/\b(tools?|services?|platforms?|products?|software)\b.*\b(tools?|services?|platforms?|products?|software)\b/)) signals++;
+  if (norm.includes('type of') && (norm.includes('tool') || norm.includes('service') || norm.includes('platform'))) signals++;
+  if (norm.includes('depends on whether') || norm.includes('depends on what type')) signals++;
 
   return signals >= 2;
 }
@@ -355,22 +359,23 @@ function isToolVsServiceVsProduct(text: string, namedListCount: number): boolean
  *     or describes what to look for in general ("when choosing a...", "the best clinics
  *     typically have...") WITHOUT specific provider names.
  *   - Conservative: only apply when namedListCount = 0 and no specific entities detected.
+ *
+ * @param norm  Pre-normalized text from classifyShape.
  */
-function isCategoryDefining(text: string, namedListCount: number, competitorCount: number, detection: ClientDetection): boolean {
+function isCategoryDefining(norm: string, namedListCount: number, competitorCount: number, detection: ClientDetection): boolean {
   if (namedListCount >= 2 || competitorCount >= 1 || detection.mentioned) return false;
 
-  const n = normalize(text);
   return (
-    n.includes('when choosing') ||
-    n.includes('what to look for') ||
-    n.includes('typically offer') ||
-    n.includes('generally provide') ||
-    n.includes('a good') && n.includes(' should ') ||
-    n.includes('key factors') ||
-    n.includes('important factors') ||
-    n.includes('things to consider') ||
-    n.includes('is defined as') ||
-    n.includes('refers to')
+    norm.includes('when choosing') ||
+    norm.includes('what to look for') ||
+    norm.includes('typically offer') ||
+    norm.includes('generally provide') ||
+    norm.includes('a good') && norm.includes(' should ') ||
+    norm.includes('key factors') ||
+    norm.includes('important factors') ||
+    norm.includes('things to consider') ||
+    norm.includes('is defined as') ||
+    norm.includes('refers to')
   );
 }
 
@@ -477,22 +482,37 @@ function assignOutcome(shape: AnswerShape, detection: ClientDetection): ShapeOut
  *
  * Priority order: see module-level comment.
  * When ambiguous, prefer the more conservative (lower) outcome.
+ *
+ * PERF: rawResponse is normalized exactly once here and passed to predicates so they
+ * do not each re-allocate a lowercased copy. Raw text is also passed for predicates
+ * that require it (URL matching, regex on original chars).
+ *
+ * 2-ITEM LIST BOUNDARY: a numbered list with exactly 2 items where the client is named
+ * is classified as 'comparison' (partial win) rather than 'category_defining' (loss).
+ * The ranked_listicle rule requires ≥3 items. The 2-item case is NOT a loss — a client
+ * named at the top of a 2-entry enumeration is recognisably prominent. For the purposes
+ * of shape classification we treat 2-item lists as comparison-context (partial).
+ * If no comparison signals are present, 2-item lists route to single_recommendation
+ * (if client is at position 1) or passing_mention (if mentioned but not rank 1).
+ * This boundary is documented here. See isRankedListicle (≥3) and assignOutcome.
  */
 export function classifyShape(
   rawResponse: string,
   detection: ClientDetection,
   competitors: CompetitorMention[],
 ): ShapeClassification {
+  // Normalize once — all predicates receive this pre-computed copy.
+  const norm = normalize(rawResponse);
   const namedListCount = countNumberedListItems(rawResponse);
   const competitorCount = competitors.length;
 
   // 1. no_answer — highest priority (if the engine said nothing, nothing else applies)
-  if (isNoAnswer(rawResponse)) {
+  if (isNoAnswer(rawResponse, norm)) {
     return { shape: 'no_answer', outcome: assignOutcome('no_answer', detection) };
   }
 
   // 2. do_your_own_research — deflection without concrete names
-  if (isDoYourOwnResearch(rawResponse, namedListCount)) {
+  if (isDoYourOwnResearch(norm, namedListCount)) {
     return { shape: 'do_your_own_research', outcome: assignOutcome('do_your_own_research', detection) };
   }
 
@@ -502,7 +522,7 @@ export function classifyShape(
   }
 
   // 4. navigational_branded — answer is about one specific brand (navigational intent)
-  if (isNavigationalBranded(rawResponse, namedListCount, competitorCount)) {
+  if (isNavigationalBranded(norm, namedListCount, competitorCount)) {
     return { shape: 'navigational_branded', outcome: assignOutcome('navigational_branded', detection) };
   }
 
@@ -512,12 +532,12 @@ export function classifyShape(
   }
 
   // 6. local_pack — location-grouped local results
-  if (isLocalPack(rawResponse)) {
+  if (isLocalPack(rawResponse, norm)) {
     return { shape: 'local_pack', outcome: assignOutcome('local_pack', detection) };
   }
 
   // 7. comparison — explicit 2–3 entity comparison
-  if (isComparison(rawResponse, namedListCount, competitorCount, detection)) {
+  if (isComparison(norm, namedListCount, competitorCount, detection)) {
     return { shape: 'comparison', outcome: assignOutcome('comparison', detection) };
   }
 
@@ -526,8 +546,19 @@ export function classifyShape(
     return { shape: 'ranked_listicle', outcome: assignOutcome('ranked_listicle', detection) };
   }
 
+  // 8b. 2-item list boundary: a 2-item numbered list where the client is named is classified
+  //     as 'comparison' (partial outcome) — NOT category_defining/loss.
+  //     ranked_listicle requires ≥3 items. For exactly 2 items, the client appearing in the
+  //     list is recognisably prominent (it is one of two named options). Routing to 'comparison'
+  //     gives a conservative but honest 'partial' outcome when mentioned, 'loss' when absent.
+  //     This guard runs AFTER ranked_listicle (≥3) and BEFORE single_recommendation so it
+  //     only fires for the 2-item edge case.
+  if (namedListCount === 2 && detection.mentioned) {
+    return { shape: 'comparison', outcome: assignOutcome('comparison', detection) };
+  }
+
   // 9. single_recommendation — one clear recommendation
-  if (isSingleRecommendation(rawResponse, namedListCount)) {
+  if (isSingleRecommendation(norm, namedListCount)) {
     return { shape: 'single_recommendation', outcome: assignOutcome('single_recommendation', detection) };
   }
 
@@ -537,12 +568,12 @@ export function classifyShape(
   }
 
   // 11. tool_vs_service_vs_product — type-framed answer
-  if (isToolVsServiceVsProduct(rawResponse, namedListCount)) {
+  if (isToolVsServiceVsProduct(norm, namedListCount)) {
     return { shape: 'tool_vs_service_vs_product', outcome: assignOutcome('tool_vs_service_vs_product', detection) };
   }
 
   // 12. category_defining — generic category description (conservative fallback)
-  if (isCategoryDefining(rawResponse, namedListCount, competitorCount, detection)) {
+  if (isCategoryDefining(norm, namedListCount, competitorCount, detection)) {
     return { shape: 'category_defining', outcome: assignOutcome('category_defining', detection) };
   }
 

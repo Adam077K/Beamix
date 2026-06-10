@@ -321,6 +321,104 @@ describe('rerunVariance', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Fix 3 + Fix 16 — computeBand zero-presence edge cases
+// ---------------------------------------------------------------------------
+
+describe('computeBand zero-presence guard (Fix 3, Fix 16)', () => {
+  it('computeBand(0, 0, null) → point=0, low_confidence=true', () => {
+    // n=0: no observations at all — maximal uncertainty
+    const band = computeBand(0, 0, null);
+    expect(band.point).toBe(0);
+    expect(band.low_confidence).toBe(true);
+  });
+
+  it('computeBand(0, 5, rank1) → point=0, no position bonus (zero presence guard)', () => {
+    // 0/5 presence but position=1 passed in — bonus MUST still be 0
+    // because the client was never actually mentioned (data inconsistency guard)
+    const band = computeBand(0, 5, 1);
+    expect(band.point).toBe(0);
+  });
+
+  it('computeBand(0, 5, rank2) → point=0, no position bonus', () => {
+    const band = computeBand(0, 5, 2);
+    expect(band.point).toBe(0);
+  });
+
+  it('computeBand(0, 5, rank3) → point=0, no position bonus', () => {
+    const band = computeBand(0, 5, 3);
+    expect(band.point).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fix 15 — sequencing-lock: shape.outcome variation must NOT affect band
+// ---------------------------------------------------------------------------
+
+describe('sequencing-lock invariant (Fix 15) — shape.outcome does NOT affect band', () => {
+  /**
+   * CRITICAL INVARIANT: The headline Band is computed from presence + position ONLY.
+   * Shape.outcome and sentiment are annotations — they must NEVER enter Band math.
+   *
+   * This test builds three identical observation sets that differ ONLY in shape.outcome
+   * (win → partial → loss) while keeping presence and position identical.
+   * scoreEngine() must return the SAME band.point and band CI for all three.
+   */
+  it('holding presence + position fixed while varying shape.outcome → identical band.point and CI', () => {
+    const winObs = [
+      makeObs({ mentioned: true, rank: 1, outcome: 'win', engine: 'chatgpt' }),
+      makeObs({ mentioned: true, rank: 2, outcome: 'win', engine: 'chatgpt' }),
+      makeObs({ mentioned: false, outcome: 'loss', engine: 'chatgpt' }),
+      makeObs({ mentioned: true, rank: 1, outcome: 'win', engine: 'chatgpt' }),
+      makeObs({ mentioned: false, outcome: 'loss', engine: 'chatgpt' }),
+    ];
+
+    const partialObs = winObs.map((o) => ({
+      ...o,
+      shape: { ...o.shape, outcome: 'partial' as const },
+    }));
+
+    const lossObs = winObs.map((o) => ({
+      ...o,
+      shape: { ...o.shape, outcome: 'loss' as const },
+    }));
+
+    const winSubscore = scoreEngine('chatgpt', winObs, IDENTITY, 'positive');
+    const partialSubscore = scoreEngine('chatgpt', partialObs, IDENTITY, 'positive');
+    const lossSubscore = scoreEngine('chatgpt', lossObs, IDENTITY, 'positive');
+
+    // band.point must be identical regardless of outcome annotation
+    expect(winSubscore.band.point).toBe(partialSubscore.band.point);
+    expect(partialSubscore.band.point).toBe(lossSubscore.band.point);
+
+    // CI bounds must also be identical (derived from presence proportion only)
+    expect(winSubscore.band.ci_low).toBe(partialSubscore.band.ci_low);
+    expect(partialSubscore.band.ci_low).toBe(lossSubscore.band.ci_low);
+    expect(winSubscore.band.ci_high).toBe(partialSubscore.band.ci_high);
+    expect(partialSubscore.band.ci_high).toBe(lossSubscore.band.ci_high);
+
+    // Dimensions.presence must also be unaffected
+    expect(winSubscore.dimensions.presence).toBe(partialSubscore.dimensions.presence);
+    expect(partialSubscore.dimensions.presence).toBe(lossSubscore.dimensions.presence);
+  });
+
+  it('varying sentiment while holding presence + position fixed → identical band.point', () => {
+    // Secondary check: sentiment is also an annotation that must not move the band
+    const obs = [
+      makeObs({ mentioned: true, rank: 1, outcome: 'win', engine: 'chatgpt' }),
+      makeObs({ mentioned: true, rank: 2, outcome: 'win', engine: 'chatgpt' }),
+      makeObs({ mentioned: false, outcome: 'loss', engine: 'chatgpt' }),
+    ];
+
+    const posScore = scoreEngine('chatgpt', obs, IDENTITY, 'positive');
+    const negScore = scoreEngine('chatgpt', obs, IDENTITY, 'negative');
+    const unkScore = scoreEngine('chatgpt', obs, IDENTITY, 'unknown');
+
+    expect(posScore.band.point).toBe(negScore.band.point);
+    expect(negScore.band.point).toBe(unkScore.band.point);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // medianAcrossEngines tests
 // ---------------------------------------------------------------------------
 

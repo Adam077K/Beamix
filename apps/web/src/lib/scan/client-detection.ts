@@ -136,23 +136,33 @@ interface ListItem {
  *     in poorly formatted responses).
  *
  * Returns items sorted by rank ascending.
+ *
+ * PERF: The global regex is applied exactly once per rawResponse string in a single
+ * while-exec loop. Reset lastIndex to 0 before calling to prevent stale state from
+ * a prior call on a different string. Callers that need both detectClient() and
+ * extractCompetitors() on the same response should pass the parsed list through the
+ * internal helpers rather than calling this twice — see detectClientWithItems /
+ * extractCompetitorsFromItems for the shared-parse pattern.
  */
 function parseNumberedListItems(rawResponse: string): ListItem[] {
+  // Reset global regex state before each use (guard against stale lastIndex).
+  NUMBERED_ITEM_RE.lastIndex = 0;
+
   const items: Map<number, ListItem> = new Map();
   let match: RegExpExecArray | null;
 
-  NUMBERED_ITEM_RE.lastIndex = 0;
   while ((match = NUMBERED_ITEM_RE.exec(rawResponse)) !== null) {
     const rank = parseInt(match[1]!, 10);
     if (rank < 1 || rank > 20) continue; // outside plausible list range
 
-    const text = match[2]!.trim();
+    const rawText = match[2]!;
+    const text = rawText.trim();
     if (text.length === 0) continue;
 
     // textOffset: where the captured text starts. match.index is where the full
     // match starts (possibly including a leading \n); the text group is at
     // match.index + (match[0].length - match[2].length).
-    const textOffset = match.index + match[0].length - match[2].length;
+    const textOffset = match.index + match[0].length - rawText.length;
 
     if (!items.has(rank)) {
       items.set(rank, { rank, text, textOffset });

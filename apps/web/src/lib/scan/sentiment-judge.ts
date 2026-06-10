@@ -136,6 +136,13 @@ export async function judgeSentiment(
 
   const { system, user } = buildSentimentJudgePrompt(snippet, identity);
 
+  // Keep a reference to the sanitized snippet so quote verification uses the SAME text
+  // the model was shown. This avoids plane-mismatch: if sanitization altered the snippet,
+  // a quote from the model may not exist in the original text but WILL exist in the
+  // sanitized copy. Verifying against the sanitized text is the correct plane.
+  // If sanitization changed nothing, this is identical to snippet — no behavioral change.
+  const sanitizedSnippet = sanitizeForPrompt(snippet);
+
   let rawText: string;
   try {
     const response = await call({
@@ -185,12 +192,20 @@ export async function judgeSentiment(
     console.error('[scan/sentiment-judge] Missing or empty quote', { sentiment });
     return UNKNOWN;
   }
-  const quote = rawQuote.trim();
+  // Cap the quote at 500 chars to prevent oversized/garbage LLM output from being stored.
+  // A real verbatim quote should never exceed this; anything longer is suspect fabrication.
+  const MAX_QUOTE_LENGTH = 500;
+  const quote = rawQuote.trim().slice(0, MAX_QUOTE_LENGTH);
 
-  // CODE-CHECK: verify the quote is actually a substring of the snippet.
+  // CODE-CHECK: verify the quote is actually a substring of the sanitized snippet —
+  // the SAME text the model was shown. Using the sanitized plane ensures the check is
+  // plane-consistent: if sanitization changed certain chars (e.g., stripped a newline),
+  // a valid quote extracted from the sanitized text will still verify correctly here.
+  // Verifying against the original snippet risks false 'unknown' when sanitization
+  // changed even one character that the LLM faithfully quoted from the sanitized version.
   // This is the "cheap code check" mandated by SCAN-ORCHESTRATION.md.
-  // If the LLM fabricated a quote not present in the snippet, we cannot trust it.
-  const verified = snippet.toLowerCase().includes(quote.toLowerCase());
+  // If the LLM fabricated a quote not present in the sanitized snippet, we cannot trust it.
+  const verified = sanitizedSnippet.toLowerCase().includes(quote.toLowerCase());
 
   if (!verified) {
     console.error('[scan/sentiment-judge] Quote not found in snippet (LLM fabricated)', {

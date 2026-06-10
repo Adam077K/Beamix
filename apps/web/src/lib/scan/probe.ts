@@ -11,6 +11,7 @@
  */
 
 import { sanitizeForPrompt } from './prompts';
+import { extractDomainRoot } from './client-detection';
 import type { NeutralQuery, ClientIdentity, LeakCheckResult } from './measurement-types';
 
 // ---------------------------------------------------------------------------
@@ -71,37 +72,6 @@ export function buildNeutralProbe(q: NeutralQuery): { system: string; user: stri
 // ---------------------------------------------------------------------------
 
 /**
- * Extract the bare registrable root from a domain string.
- *
- * Examples:
- *   "https://www.acme-dental.co.il" → "acme-dental"
- *   "acme-dental.co.il"            → "acme-dental"
- *   "acme-dental.com"              → "acme-dental"
- *   "https://acme.com"             → "acme"
- *
- * Strategy: strip protocol, strip www., then take the first label (everything before
- * the first dot). This covers the common SLD.TLD and SLD.ccTLD.TLD patterns without
- * a full public-suffix-list lookup (which would be a heavier dependency).
- *
- * Limitation: for domains like "acme.co.uk", "co" is not the registrable root — but
- * "acme" still is. Extracting the first label is always safe (never broader than the
- * real SLD). This is intentionally conservative.
- */
-function extractDomainRoot(domain: string): string {
-  // Remove protocol
-  let d = domain.replace(/^https?:\/\//i, '');
-  // Remove path/query/hash
-  d = d.split('/')[0]!;
-  // Remove port
-  d = d.split(':')[0]!;
-  // Remove www.
-  d = d.replace(/^www\./i, '');
-  // Take the first label (before the first dot)
-  const firstLabel = d.split('.')[0] ?? '';
-  return firstLabel.toLowerCase();
-}
-
-/**
  * Build the set of non-empty identity tokens to search for in a probe.
  *
  * Rules:
@@ -153,6 +123,25 @@ function buildIdentityTokens(
 // ---------------------------------------------------------------------------
 
 /**
+ * Options for checkProbeLeak / assertProbeClean.
+ *
+ * branded (default: false):
+ *   When true, the leak-gate is bypassed entirely and the probe is treated as clean.
+ *   Use ONLY for probes built from branded/navigational queries, where the identity
+ *   appearing in the prompt is BY DESIGN (the query IS about the client).
+ *
+ *   IMPORTANT — branded probes are scored SEPARATELY (SCAN-ORCHESTRATION.md §"Branded
+ *   queries are the one identity-bearing probe — scored SEPARATELY, never folded into
+ *   visibility"). They MUST NOT feed the visibility band. Never set branded=true on a
+ *   non-branded probe; doing so defeats measurement validity.
+ *
+ *   Default: false → strict gate enforced (current behavior, unchanged).
+ */
+export interface ProbeLeakOptions {
+  branded?: boolean;
+}
+
+/**
  * Check whether a probe prompt contains any business-identity tokens.
  *
  * Performs a case-insensitive substring search across the combined
@@ -160,11 +149,22 @@ function buildIdentityTokens(
  *
  * Returns { ok: true, violations: [] } when clean.
  * Returns { ok: false, violations: [...] } naming each token that leaked.
+ *
+ * When options.branded === true, bypasses the gate (returns ok=true immediately)
+ * because identity in a branded query is intentional. See ProbeLeakOptions above.
  */
 export function checkProbeLeak(
   probe: { system: string; user: string },
   identity: ClientIdentity,
+  options?: ProbeLeakOptions,
 ): LeakCheckResult {
+  // Branded probes carry identity by design — gate bypass is intentional.
+  // These probes must be scored in a separate branded-visibility track and
+  // NEVER folded into the headline visibility band.
+  if (options?.branded === true) {
+    return { ok: true, violations: [] };
+  }
+
   const haystack = `${probe.system}\n${probe.user}`.toLowerCase();
   const tokens = buildIdentityTokens(identity);
 
@@ -186,14 +186,18 @@ export function checkProbeLeak(
  * the probe to any engine. A ProbeLeakError aborts the scan; the observation is
  * NOT recorded. Measurement validity is more important than scan completion.
  *
+ * When options.branded === true, the gate is bypassed (branded probes carry identity
+ * by design). See ProbeLeakOptions for the invariant that must be maintained.
+ *
  * Wire-up into the scan Inngest function is deferred (Wave 5 later stage).
  * The gate is built and tested here so it is ready to plug in.
  */
 export function assertProbeClean(
   probe: { system: string; user: string },
   identity: ClientIdentity,
+  options?: ProbeLeakOptions,
 ): void {
-  const result = checkProbeLeak(probe, identity);
+  const result = checkProbeLeak(probe, identity, options);
   if (!result.ok) {
     throw new ProbeLeakError(result.violations);
   }

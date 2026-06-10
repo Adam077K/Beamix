@@ -325,4 +325,69 @@ describe('classifyShape', () => {
     // outcome is not win
     expect(result.outcome).not.toBe('win');
   });
+
+  // -------------------------------------------------------------------------
+  // New tests (Fix 11, 12, 13, Fix 2)
+  // -------------------------------------------------------------------------
+
+  it('(23) single_recommendation WIN — client is the recommended option', () => {
+    // Explicit recommendation of "Acme Dental" → single_recommendation shape, win outcome
+    const winResponse = `
+I recommend Acme Dental for dental care in Tel Aviv. They have excellent reviews,
+experienced dentists, and use state-of-the-art equipment.
+`;
+    const detection: ClientDetection = {
+      mentioned: true,
+      rank_position: null,
+      matched_text: 'Acme Dental',
+      mention_snippet: 'I recommend Acme Dental for dental care',
+    };
+    const result = classifyShape(winResponse, detection, NO_COMPETITORS);
+    expect(result.shape).toBe('single_recommendation');
+    expect(result.outcome).toBe('win');
+  });
+
+  it('(24) navigational_branded + mentioned = partial outcome', () => {
+    // navigational_branded shape: client mentioned → partial (brand recognition, not full win)
+    const result = classifyShape(NAVIGATIONAL_RESPONSE, MENTIONED_NO_RANK, NO_COMPETITORS);
+    expect(result.shape).toBe('navigational_branded');
+    expect(result.outcome).toBe('partial');
+  });
+
+  it('(25) local_pack rank ≥4 = partial outcome (documented invariant)', () => {
+    // local_pack: client mentioned but rank 4 → partial, not win
+    // rank ≤3 → win; not mentioned → loss; mentioned at rank ≥4 → partial
+    const detection: ClientDetection = {
+      mentioned: true,
+      rank_position: 4,
+      matched_text: 'Acme Dental',
+      mention_snippet: '4. Acme Dental — 2.1 miles away',
+    };
+    const result = classifyShape(LOCAL_PACK_RESPONSE, detection, TWO_COMPETITORS);
+    expect(result.shape).toBe('local_pack');
+    expect(result.outcome).toBe('partial');
+  });
+
+  it('(26) 2-item numbered list with client named → non-loss (comparison/partial)', () => {
+    // A 2-item list is below ranked_listicle threshold (≥3) but the client should
+    // NOT be classified as category_defining/loss — that is a false negative.
+    // Expected: shape = comparison, outcome = partial (client mentioned in short list).
+    const twoItemResponse = `
+Here are the top two dental clinics in Tel Aviv:
+
+1. Acme Dental — excellent for cosmetic work and implants
+2. Bright Smile Clinic — great for general family dentistry
+`;
+    const detection: ClientDetection = {
+      mentioned: true,
+      rank_position: 1,
+      matched_text: 'Acme Dental',
+      mention_snippet: '1. Acme Dental — excellent for cosmetic work',
+    };
+    const result = classifyShape(twoItemResponse, detection, [{ name: 'Bright Smile Clinic', rank: 2 }]);
+    // Must NOT be loss (that was the bug)
+    expect(result.outcome).not.toBe('loss');
+    // Partial is the conservative honest outcome for a 2-item list context
+    expect(result.outcome).toBe('partial');
+  });
 });

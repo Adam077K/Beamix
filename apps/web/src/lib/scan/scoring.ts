@@ -110,11 +110,14 @@ export function computeBand(
 ): Band {
   const presenceRate = n > 0 ? presenceSuccesses / n : 0;
 
-  // Position bonus: awarded only when ranked in top 3.
+  // Position bonus: awarded only when ranked in top 3 AND presence > 0.
   // bonus = max(0, (4 - position) / 3 × 10), capped to avoid inflating beyond presence.
-  // When not ranked (null), bonus = 0.
+  // When not ranked (null) OR presence is zero, bonus = 0.
+  // Guard: presenceSuccesses === 0 → point must be 0 regardless of position arg.
+  // (A caller passing a non-null position with zero presence indicates a data inconsistency;
+  //  the conservative path is to treat it as no bonus.)
   let positionBonus = 0;
-  if (position !== null && position >= 1 && position <= 3) {
+  if (presenceSuccesses > 0 && position !== null && position >= 1 && position <= 3) {
     positionBonus = Math.max(0, ((4 - position) / 3) * 10);
   }
 

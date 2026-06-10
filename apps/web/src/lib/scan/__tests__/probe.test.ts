@@ -219,3 +219,91 @@ describe('assertProbeClean', () => {
     expect(() => assertProbeClean(probe, IDENTITY)).not.toThrow();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Fix 1 — branded bypass
+// ---------------------------------------------------------------------------
+
+describe('checkProbeLeak branded bypass', () => {
+  it('branded=true bypasses the gate for a probe containing identity tokens', () => {
+    // This probe explicitly contains the business name (branded query by design).
+    const probe = {
+      system: 'You are a helpful AI assistant.',
+      user: 'Tell me about Acme Dental in Tel Aviv',
+    };
+    // Without branded: gate detects the business_name leak
+    const strictResult = checkProbeLeak(probe, IDENTITY);
+    expect(strictResult.ok).toBe(false);
+    expect(strictResult.violations).toContain('business_name');
+
+    // With branded=true: gate is bypassed — identity in branded probe is intentional
+    const brandedResult = checkProbeLeak(probe, IDENTITY, { branded: true });
+    expect(brandedResult.ok).toBe(true);
+    expect(brandedResult.violations).toHaveLength(0);
+  });
+
+  it('branded=false (explicit) keeps the strict gate active', () => {
+    const probe = {
+      system: 'You are a helpful AI assistant.',
+      user: 'Is Acme Dental reliable?',
+    };
+    const result = checkProbeLeak(probe, IDENTITY, { branded: false });
+    expect(result.ok).toBe(false);
+    expect(result.violations).toContain('business_name');
+  });
+
+  it('branded=true with assertProbeClean does not throw even when identity is present', () => {
+    const probe = {
+      system: 'You are a helpful AI assistant.',
+      user: 'Review of Acme Dental',
+    };
+    expect(() => assertProbeClean(probe, IDENTITY, { branded: true })).not.toThrow();
+  });
+
+  it('non-branded probe (default) still throws ProbeLeakError when identity leaks', () => {
+    const probe = {
+      system: 'You are a helpful AI assistant.',
+      user: 'best option — Acme Dental or others?',
+    };
+    expect(() => assertProbeClean(probe, IDENTITY)).toThrow(ProbeLeakError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fix 14 — short-alias-guard correctness
+// ---------------------------------------------------------------------------
+
+describe('checkProbeLeak short-alias-guard (Fix 14)', () => {
+  const SHORT_ONLY_IDENTITY: ClientIdentity = {
+    business_name: 'Zebra Corp',     // Not in probe
+    domain: 'https://zebracorp.io',  // Not in probe
+    aliases: ['AC', 'IT', 'EU'],     // All 2 chars — all below the 3-char threshold
+  };
+
+  it('a <3-char alias does NOT trigger a leak violation even when those chars appear in probe', () => {
+    // The probe legitimately contains "IT" and "AC" as common English words/abbreviations.
+    // The gate MUST NOT flag them as leaks because they are shorter than 3 chars.
+    const probe = {
+      system: 'You are a helpful AI assistant.',
+      user: 'best IT consulting firm in the EU for AC systems',
+    };
+    const result = checkProbeLeak(probe, SHORT_ONLY_IDENTITY);
+    // None of the 2-char aliases should appear in violations
+    expect(result.violations.some((v) => v === 'alias:AC')).toBe(false);
+    expect(result.violations.some((v) => v === 'alias:IT')).toBe(false);
+    expect(result.violations.some((v) => v === 'alias:EU')).toBe(false);
+    // domain_root 'zebracorp' is ≥3 chars but not in probe → no violation either
+    expect(result.ok).toBe(true);
+  });
+
+  it('a ≥3-char alias still triggers a leak violation when present in probe', () => {
+    // 'Acme Tel Aviv' is a 3+-char alias and IS present in the probe → must be detected
+    const probe = {
+      system: 'You are a helpful AI assistant.',
+      user: 'What is the best option — Acme Tel Aviv is often mentioned',
+    };
+    const result = checkProbeLeak(probe, IDENTITY);
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.startsWith('alias:'))).toBe(true);
+  });
+});
