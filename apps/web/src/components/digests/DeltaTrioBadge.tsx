@@ -32,10 +32,9 @@ export function DeltaTrioBadge({ deltas, compact = false }: DeltaTrioBadgeProps)
         return (
           <div key={d.engine} role="listitem" aria-label={label}>
             <DeltaBadge
-              value={d.thisWeek}
-              prevValue={d.lastWeek}
+              value={d.lastWeek}
+              nextValue={d.thisWeek}
               variant={variant}
-              engine={d.engine}
             />
           </div>
         )
@@ -50,13 +49,13 @@ export function DeltaTrioBadge({ deltas, compact = false }: DeltaTrioBadgeProps)
 
 interface DeltaBadgeProps {
   value: number
-  prevValue?: number
+  /** nextValue, when present, renders as value→nextValue (left=then, right=now) */
+  nextValue?: number
   variant: 'positive' | 'warning' | 'neutral'
-  engine?: string
   showSign?: boolean
 }
 
-function DeltaBadge({ value, prevValue, variant, showSign }: DeltaBadgeProps) {
+function DeltaBadge({ value, nextValue, variant, showSign }: DeltaBadgeProps) {
   const bgClass = {
     positive: 'bg-status-positive',
     warning: 'bg-status-warning',
@@ -81,8 +80,8 @@ function DeltaBadge({ value, prevValue, variant, showSign }: DeltaBadgeProps) {
     >
       {sign}
       {value}
-      {prevValue !== undefined && (
-        <span className="ml-0.5 opacity-70">→{prevValue}</span>
+      {nextValue !== undefined && (
+        <span className="ml-0.5 opacity-70">→{nextValue}</span>
       )}
     </span>
   )
