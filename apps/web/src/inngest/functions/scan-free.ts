@@ -32,7 +32,14 @@ import { researchBusiness } from '../../lib/scan/perplexity-research';
 import { queryEngine } from '../../lib/scan/engine-query';
 import { analyse } from '../../lib/scan/analysis';
 import { writeProgress } from '../../lib/scan/progress-writer';
+import { assembleFreeScanV2 } from '../../lib/scan/assemble-free-scan-v2';
 import type { FreeScanResults } from '../../lib/scan/types';
+import {
+  isScanMeasurementV2Enabled,
+  buildV2Input,
+  buildV2Deps,
+  mapV2ToFreeScanResults,
+} from './scan-free-v2-deps';
 
 // ---------------------------------------------------------------------------
 // Admin Supabase client — pattern mirrors agent-execute.ts
@@ -182,6 +189,81 @@ export const scanFree = inngest.createFunction(
       const businessContext = await step.run('perplexity-research', async () => {
         return researchBusiness(scanInput);
       });
+
+      // ── FLAG BRANCH: v2 measurement path (SCAN_MEASUREMENT_V2=true, OFF in prod) ──
+      //
+      // When the flag is ON:
+      //   - Runs assembleFreeScanV2() in a single Inngest step.
+      //   - Maps the result to a backward-compatible FreeScanResults blob.
+      //   - Falls through to the SAME persist-results step as the v1 path.
+      //
+      // When the flag is OFF (default/prod):
+      //   - The entire v2 branch is skipped. Steps 3–6 (engine-chatgpt, engine-gemini,
+      //     engine-perplexity, gemini-flash-analysis) run byte-identically to the prior
+      //     implementation. No v1 behavior is altered.
+      //
+      // Step design trade-off (one step vs many):
+      //   Using a single 'scan-v2-assemble' step keeps the Inngest memoisation boundary
+      //   at the whole v2 pipeline. A partial retry will re-run all v2 sub-stages.
+      //   Splitting probes into individual steps would mirror the v1 structure and give
+      //   finer retry granularity, but would require a larger refactor of assembleFreeScanV2
+      //   to expose per-engine step boundaries. The single-step approach is correct for
+      //   this wave; per-engine memoisation is a Wave 8 refactor when retry patterns are
+      //   better understood.
+
+      if (isScanMeasurementV2Enabled()) {
+        const v2Blob: FreeScanResults = await step.run('scan-v2-assemble', async () => {
+          await writeProgress(scan_id, {
+            status: 'running',
+            progress: 0.1,
+            currentQuery: 'Running v2 measurement pipeline',
+          });
+
+          const supabase = createAdminSupabaseClient();
+          const v2Input = buildV2Input(businessContext, scanInput);
+          const v2Deps = buildV2Deps(supabase);
+
+          const v2Result = await assembleFreeScanV2(v2Input, v2Deps);
+
+          await writeProgress(scan_id, {
+            status: 'running',
+            progress: 0.85,
+            currentQuery: null,
+          });
+
+          return mapV2ToFreeScanResults(v2Result);
+        });
+
+        // ── Step 7 (v2): Persist results ────────────────────────────────────
+        // Reuses the same persist-results step name so Inngest idempotency still
+        // prevents double-writes on retry.
+        await step.run('persist-results', async () => {
+          const supabase = createAdminSupabaseClient();
+          const { error } = await supabase
+            .from('free_scans')
+            .update({
+              status: 'complete',
+              results: v2Blob,
+              completed_at: new Date().toISOString(),
+            })
+            .eq('id', scan_id);
+          if (error) {
+            console.error('[scan-free] Failed to persist v2 scan results', {
+              scan_id,
+              error: error.message,
+            });
+            throw new Error(`Failed to persist v2 scan results: ${error.message}`);
+          }
+          await writeProgress(scan_id, {
+            done: true,
+            progress: 1,
+            status: 'complete',
+            currentQuery: null,
+          });
+        });
+
+        return { scan_id };
+      }
 
       // ── Step 3: ChatGPT engine query ──────────────────────────────────────
       // Each engine is its own step for Inngest memoisation AND live progress.
