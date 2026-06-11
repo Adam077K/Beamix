@@ -332,21 +332,57 @@ function appearsInCorpus(value: string, rawTexts: string[]): boolean {
 }
 
 /**
+ * Check whether a value appears as an EXACT TOKEN in any raw text string.
+ *
+ * FIX (blocker 2 — number substring false-pass):
+ * Uses a word-boundary regex so "5" does NOT pass when the corpus has "50".
+ * A token is considered present when it is surrounded by non-digit characters
+ * (or appears at the start/end of the string). The match is case-insensitive
+ * but since numbers are digits-only, case does not matter in practice.
+ *
+ * Examples:
+ *   "5"  vs "50%"      → does NOT match (digit follows — no boundary after "5")
+ *   "5"  vs "score 5"  → matches (word boundary on both sides)
+ *   "50" vs "50%"      → matches (% is a non-digit word boundary char)
+ *   "50" vs "150"      → does NOT match (digit precedes — no boundary before "50")
+ */
+function appearsAsExactToken(value: string, rawTexts: string[]): boolean {
+  // Build a regex that requires a non-digit (or start/end) on both sides of the number.
+  // We escape the value to be safe (values come from the number regex which only
+  // produces \d+ with optional dot and %, so no special chars in practice).
+  const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`(?<![\\d.])${escapedValue}(?![\\d])`, 'i');
+  return rawTexts.some((t) => pattern.test(t));
+}
+
+/**
  * Check a single sentence for grounding violations.
  *
  * Violations:
  *   (a) Any quoted span (≥ 4 chars) not found in rawTexts → ungrounded fabricated quote
- *   (b) Any word/phrase from the knownCompetitors set that appears in the sentence →
- *       allowed (trivially grounded). Any multi-word capitalized sequence that looks like
- *       a business name AND is not in rawTexts → ungrounded fabricated competitor.
- *       Only checks sequences that look specifically like a business/org name:
- *       multi-word CamelCase sequences (e.g. "MadeUpClinic", "FakeRival Labs").
- *       Single common words like "ChatGPT", engine names, or location words are
- *       checked against rawTexts; if they appear there they pass.
- *   (c) Any standalone number (≥ 2 digits) not found in rawTexts → fabricated statistic
+ *   (b) Any CamelCase single-token or multi-word capitalized sequence that looks like a
+ *       business/organization name AND is NOT in knownCompetitors AND is NOT in rawTexts
+ *       → ungrounded fabricated competitor.
+ *
+ *       FIX (blocker 1 — empty-competitors bypass): even when knownCompetitors is empty,
+ *       the CamelCase + multi-word patterns are still evaluated. The old guard
+ *       `if (corpus.knownCompetitors.size > 0)` was wrong: it meant a scan with no known
+ *       competitors had ZERO entity grounding — a fabricated "MadeUpClinic" would always
+ *       pass. Now the entity check always runs; the only change when knownCompetitors is
+ *       empty is that the `has()` branch never fires (trivially false for all candidates),
+ *       so any capitalized entity not in rawTexts is still correctly flagged.
+ *
+ *   (c) Any standalone number (≥ 2 digits) NOT present as an EXACT TOKEN in rawTexts →
+ *       fabricated statistic.
+ *
+ *       FIX (blocker 2 — number substring false-pass): the old check used
+ *       `appearsInCorpus(num, rawTexts)` which is a plain substring match. That allowed
+ *       "5" to pass when the corpus contained "50" — the shorter number is a substring of
+ *       the longer one. The fix uses word-boundary matching so "5" only passes when "5"
+ *       appears as a whole token (space/punctuation/start-of-string on both sides).
  *
  * Conservative design: prefers to strip a borderline sentence over shipping an ungrounded
- * claim. Ordinary prose (no quotes, no competitor names, no numbers) always passes.
+ * claim. Ordinary prose (no quotes, no competitor-like entities, no numbers) always passes.
  *
  * Returns: true if the sentence passes grounding; false if it should be stripped.
  */
@@ -365,53 +401,55 @@ function isSentenceGrounded(
     }
   }
 
-  // (b) Competitor name check (targeted — multi-word proper nouns only)
+  // (b) Competitor / entity name check (targeted — multi-word proper nouns + CamelCase only)
+  //
+  // FIX (blocker 1): the guard `if (corpus.knownCompetitors.size > 0)` is REMOVED.
+  // Entity grounding must run regardless of whether we audited any competitors.
+  // A scan with zero known competitors would otherwise have no protection against
+  // hallucinated business names in the narration.
   //
   // Strategy: extract multi-word capitalized sequences (≥ 2 consecutive capitalized words)
-  // that look like business/organization names. Only these are checked against the evidence
-  // corpus. Single capitalized words (sentence starts, engine names, common nouns) are NOT
-  // checked — they are too prone to false positives.
-  //
-  // A hallucinated competitor like "MadeUp Dental" or "FakeClinic Labs" will be caught here
-  // because it is (a) a multi-capitalized sequence, (b) not in rawTexts, (c) not in
-  // knownCompetitors. Single words like "Presence", "ChatGPT", "Tel" pass through unchecked.
-  //
-  // We also check single CamelCase words (no spaces, but internal capitals like "MadeUpClinic")
-  // as these are a common pattern for fabricated business names.
-  if (corpus.knownCompetitors.size > 0) {
-    // Check for CamelCase single tokens (e.g. "MadeUpClinic") — internal capital = business name pattern
-    const camelCasePattern = /\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b/g;
-    let camelMatch: RegExpExecArray | null;
-    while ((camelMatch = camelCasePattern.exec(sentence)) !== null) {
-      const candidate = camelMatch[1]!;
-      const candidateLower = candidate.toLowerCase();
-      if (corpus.knownCompetitors.has(candidateLower)) continue;
-      if (appearsInCorpus(candidate, corpus.rawTexts)) continue;
-      console.error('[scan/narration] Grounding check: possible ungrounded camelcase business name', {
-        candidate,
-      });
-      return false;
-    }
+  // and single CamelCase words (internal capitals like "MadeUpClinic").
+  // Each candidate is accepted if it appears in knownCompetitors OR in rawTexts.
+  // If neither → ungrounded fabricated entity name → sentence stripped.
 
-    // Check for multi-word capitalized sequences (e.g. "Acme Dental", "Beta Rival Labs")
-    const multiWordPattern = /\b([A-Z][a-z]{1,}(?:\s+[A-Z][a-z]{1,})+)\b/g;
-    let multiMatch: RegExpExecArray | null;
-    while ((multiMatch = multiWordPattern.exec(sentence)) !== null) {
-      const candidate = multiMatch[1]!;
-      const candidateLower = candidate.toLowerCase();
-      if (corpus.knownCompetitors.has(candidateLower)) continue;
-      if (appearsInCorpus(candidate, corpus.rawTexts)) continue;
-      console.error('[scan/narration] Grounding check: possible ungrounded multi-word competitor name', {
-        candidate,
-      });
-      return false;
-    }
+  // Check for CamelCase single tokens (e.g. "MadeUpClinic") — internal capital = business name pattern
+  const camelCasePattern = /\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b/g;
+  let camelMatch: RegExpExecArray | null;
+  while ((camelMatch = camelCasePattern.exec(sentence)) !== null) {
+    const candidate = camelMatch[1]!;
+    const candidateLower = candidate.toLowerCase();
+    if (corpus.knownCompetitors.has(candidateLower)) continue;
+    if (appearsInCorpus(candidate, corpus.rawTexts)) continue;
+    console.error('[scan/narration] Grounding check: possible ungrounded camelcase business name', {
+      candidate,
+    });
+    return false;
   }
 
-  // (c) Number check — standalone numbers ≥ 2 digits not in evidence
+  // Check for multi-word capitalized sequences (e.g. "Acme Dental", "Beta Rival Labs")
+  const multiWordPattern = /\b([A-Z][a-z]{1,}(?:\s+[A-Z][a-z]{1,})+)\b/g;
+  let multiMatch: RegExpExecArray | null;
+  while ((multiMatch = multiWordPattern.exec(sentence)) !== null) {
+    const candidate = multiMatch[1]!;
+    const candidateLower = candidate.toLowerCase();
+    if (corpus.knownCompetitors.has(candidateLower)) continue;
+    if (appearsInCorpus(candidate, corpus.rawTexts)) continue;
+    console.error('[scan/narration] Grounding check: possible ungrounded multi-word competitor name', {
+      candidate,
+    });
+    return false;
+  }
+
+  // (c) Number check — standalone numbers ≥ 2 digits not present as exact tokens in evidence.
+  //
+  // FIX (blocker 2 — number substring false-pass): use word-boundary / exact-token matching
+  // instead of substring. The old `appearsInCorpus(num, rawTexts)` allowed "5" to pass
+  // because it is a substring of "50". Now we require "5" to exist as a whole token
+  // (bounded by non-digit characters or string boundaries) in the corpus.
   const numbers = extractNumbers(sentence);
   for (const num of numbers) {
-    if (!appearsInCorpus(num, corpus.rawTexts)) {
+    if (!appearsAsExactToken(num, corpus.rawTexts)) {
       console.error('[scan/narration] Grounding check: ungrounded number', { num });
       return false;
     }
@@ -525,13 +563,14 @@ export async function narrate(
   }
 
   // ── JSON parse ────────────────────────────────────────────────────────────
+  // FIX (blocker 3 — PII log): the old log included `raw: rawText.slice(0, 300)`.
+  // That leaks raw LLM output (which may repeat business/user data from the prompt)
+  // into server logs. Log only a generic parse-failure marker with no raw content.
   let parsed: Record<string, unknown>;
   try {
     parsed = JSON.parse(stripFences(rawText)) as Record<string, unknown>;
   } catch {
-    console.error('[scan/narration] JSON parse failed', {
-      raw: rawText.slice(0, 300),
-    });
+    console.error('[scan/narration] JSON parse failed — raw response omitted');
     return buildFallback(input);
   }
 
