@@ -56,6 +56,9 @@ import type {
   ScanV2Result,
 } from './scan-v2-types';
 import type { EngineProbeObservation } from './measurement-types';
+import type { FactorObservation } from './factor-detection';
+import type { FactorCatalogRow } from './factor-catalog';
+import type { CompetitorFactorAudit } from './gap-types';
 
 // ---------------------------------------------------------------------------
 // Default model IDs
@@ -112,11 +115,29 @@ export async function assembleFreeScanV2(
   //   (c) Call the engine via deps.probe
   //   (d) Code-extract client detection + competitors + shape
   //
-  // Engine failures are caught per-engine. If an engine throws, it is marked
-  // failed and we continue. ProbeLeakError is NOT caught — it propagates.
+  // PARALLELIZATION SEMANTICS:
+  //   Engines run in parallel via Promise.all for ~2/3 wall-clock reduction.
+  //   Two distinct failure modes are handled differently:
   //
-  // observationsByEngine accumulates per-(engine, query) observations.
-  // engineFailures tracks which engines had at least one hard failure.
+  //   1. ProbeLeakError (HARD FAILURE — fail-closed):
+  //      ProbeLeakError is re-thrown OUT of the per-engine async function.
+  //      Promise.all sees a rejection and immediately rejects the whole batch.
+  //      This is the DESIRED behavior: measurement validity > scan completion.
+  //      The error propagates to the caller (assembleFreeScanV2), which propagates
+  //      it to Inngest, which marks the scan failed. No partial result is returned.
+  //
+  //   2. Per-engine probe error (SOFT FAILURE — degrade, don't abort):
+  //      Non-ProbeLeakError errors from deps.probe() are caught INSIDE the per-engine
+  //      async function (inside the try/catch below). The engine is marked as failed
+  //      (added to engineFailures) and an empty observations array is returned for it.
+  //      Promise.all sees a RESOLVED value (the empty array), so a single engine's
+  //      soft failure does NOT reject the whole batch. Other engines proceed normally.
+  //      The ≥2/3 degraded threshold is checked after all engines complete.
+  //
+  //   Results are assembled in stable engine order (the `engines` array order) regardless
+  //   of resolution order — the `.map()` preserves the original engine position.
+  //
+  // engineFailures tracks which engines had at least one hard failure (used by meta.degraded).
 
   const observationsByEngine: Partial<
     Record<'chatgpt' | 'gemini' | 'perplexity', EngineProbeObservation[]>
@@ -124,39 +145,71 @@ export async function assembleFreeScanV2(
 
   const engineFailures = new Set<string>();
 
+  // Pre-build all probes synchronously (assertProbeClean is synchronous and must
+  // run before any async call so a leak causes an immediate ProbeLeakError before
+  // we've dispatched any network requests).
+  const probePlans: Array<{
+    engine: 'chatgpt' | 'gemini' | 'perplexity';
+    query: typeof queries[number];
+    probe: ReturnType<typeof buildNeutralProbe>;
+  }> = [];
+
+  for (const engine of engines) {
+    for (const query of queries) {
+      const probe = buildNeutralProbe(query);
+      // Leak gate — FAIL CLOSED: ProbeLeakError propagates immediately.
+      // Do NOT catch this — it must abort the scan.
+      assertProbeClean(probe, identity);
+      probePlans.push({ engine, query, probe });
+    }
+  }
+
+  // Initialize empty observation arrays for each engine (stable order, regardless of resolution).
   for (const engine of engines) {
     observationsByEngine[engine] = [];
+  }
 
-    for (const query of queries) {
-      // (a) Build neutral probe — identity-free
-      const probe = buildNeutralProbe(query);
+  /**
+   * Run all probes for a single engine in sequence (queries within an engine
+   * are sequential — typically there is only 1 query per free scan).
+   * Returns the observations array for this engine.
+   *
+   * Per-engine soft errors are caught HERE so Promise.all sees a resolved value
+   * (the possibly-empty observations array) for that engine, not a rejection.
+   * ProbeLeakError rethrows out so Promise.all propagates it as a rejection.
+   */
+  async function probeEngine(
+    engine: 'chatgpt' | 'gemini' | 'perplexity',
+  ): Promise<EngineProbeObservation[]> {
+    const engineObservations: EngineProbeObservation[] = [];
+    const enginePlans = probePlans.filter((p) => p.engine === engine);
 
-      // (b) Leak gate — FAIL CLOSED: propagates ProbeLeakError
-      // This is the one exception we DO NOT catch — measurement validity is paramount.
-      assertProbeClean(probe, identity);
-
-      // (c) Call the engine
+    for (const { query, probe } of enginePlans) {
       let rawResult: { text: string; citations?: string[]; retrieval_mode: 'live_web' | 'parametric_memory' };
       try {
         rawResult = await deps.probe(engine, DEFAULT_PROBE_MODEL, probe);
       } catch (err) {
-        // Per-engine/per-query failure: log and mark engine as failed.
-        // We continue — other engines may succeed.
+        // ProbeLeakError: rethrow — fail-closed; Promise.all will propagate it.
+        if (err instanceof Error && err.name === 'ProbeLeakError') {
+          throw err;
+        }
+        // Other errors: soft failure — log and mark engine as failed.
         console.error('[scan/assemble-v2] Engine probe failed', {
           engine,
           query: query.query_text.slice(0, 80),
           error: err instanceof Error ? err.message : String(err),
         });
         engineFailures.add(engine);
-        continue;
+        // Return what we have so far (possibly empty) — Promise.all stays resolved.
+        return engineObservations;
       }
 
-      // (d) Code extraction — ALL deterministic, no LLM
+      // Code extraction — ALL deterministic, no LLM
       const detection = detectClient(rawResult.text, identity);
       const competitors = extractCompetitors(rawResult.text, identity);
       const shape = classifyShape(rawResult.text, detection, competitors);
 
-      const observation: EngineProbeObservation = {
+      engineObservations.push({
         engine,
         retrieval_mode: rawResult.retrieval_mode,
         raw_response: rawResult.text,
@@ -164,24 +217,52 @@ export async function assembleFreeScanV2(
         competitors,
         shape,
         citations: rawResult.citations,
-      };
-
-      observationsByEngine[engine]!.push(observation);
+      });
     }
 
-    // If an engine had failures on ALL queries, no observations were added.
-    // Keep the (possibly empty) array in observationsByEngine so downstream
-    // code handles it gracefully (empty obs → band with n=0, low_confidence).
+    return engineObservations;
+  }
+
+  // Run all engines in parallel. ProbeLeakError rejects the whole batch (fail-closed).
+  // Per-engine soft failures resolve to an empty array (graceful degradation).
+  // Results are captured in stable engine order via Promise.all(engines.map(...)).
+  const parallelResults = await Promise.all(engines.map(probeEngine));
+
+  for (let i = 0; i < engines.length; i++) {
+    const engine = engines[i]!;
+    observationsByEngine[engine] = parallelResults[i]!;
+    // If no observations were accumulated, mark the engine as failed
+    // (covers the case where all queries for an engine soft-failed but
+    // engineFailures.add() was already called inside probeEngine).
   }
 
   // ── Engine success count ───────────────────────────────────────────────────
   //
   // Count engines that produced at least one successful observation.
   // An engine with zero observations (all queries failed) is a failure.
+  // engineFailures (populated by probeEngine on soft per-engine errors) is a
+  // superset indicator: it marks engines that had at least one query failure.
+  // An engine in engineFailures with no observations = fully failed.
+  // An engine in engineFailures with some observations = partially recovered.
+  //
+  // successfulEngines (observation count) is the authoritative threshold source.
+  // engineFailures is read here to log partial-failure warnings and is the natural
+  // source for future diagnostic metadata (it is NOT dead code).
   const successfulEngines = engines.filter(
     (e) => (observationsByEngine[e]?.length ?? 0) > 0,
   );
   const engineDegraded = successfulEngines.length < ENGINE_SUCCESS_THRESHOLD;
+
+  if (engineFailures.size > 0) {
+    // At least one engine had a soft failure. Log for observability.
+    // The scan may still be non-degraded if other engines met the threshold.
+    console.error('[scan/assemble-v2] Engine probe soft failures', {
+      failed_engines: Array.from(engineFailures),
+      successful_count: successfulEngines.length,
+      threshold: ENGINE_SUCCESS_THRESHOLD,
+      degraded: engineDegraded,
+    });
+  }
 
   // Flatten all observations for competitor selection and narration.
   const allObservations: EngineProbeObservation[] = engines.flatMap(
@@ -192,29 +273,48 @@ export async function assembleFreeScanV2(
   //
   // One LLM call per engine (over the mention_snippet evidence).
   // On failure: 'unknown' (honest fallback).
+  //
+  // PARALLELIZATION SEMANTICS (same rules as engine probes):
+  //   - All sentiment calls run concurrently via Promise.all for ~2/3 wall-clock reduction.
+  //   - Per-engine judgment errors are caught inside the mapped async function and resolve to
+  //     'unknown' — so a single engine's LLM failure does NOT reject the whole batch.
+  //   - Results are assembled in stable engine order (engines.map preserves order).
+
+  const sentimentResults = await Promise.all(
+    engines.map(async (engine) => {
+      const obs = observationsByEngine[engine] ?? [];
+      const firstMentioned = obs.find((o) => o.detection.mention_snippet !== null);
+
+      if (!firstMentioned?.detection.mention_snippet) {
+        return { engine, sentiment: 'unknown' as const };
+      }
+
+      try {
+        const judgeResult = await judgeSentiment(
+          firstMentioned.detection.mention_snippet,
+          identity,
+          {
+            call: deps.sentimentCall,
+            model: sentimentModel,
+          },
+        );
+        return { engine, sentiment: judgeResult.sentiment };
+      } catch (err) {
+        console.error('[scan/assemble-v2] Sentiment judgment failed — defaulting to unknown', {
+          engine,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        return { engine, sentiment: 'unknown' as const };
+      }
+    }),
+  );
 
   const sentimentByEngine: Partial<
     Record<'chatgpt' | 'gemini' | 'perplexity', 'positive' | 'neutral' | 'negative' | 'unknown'>
   > = {};
 
-  for (const engine of engines) {
-    const obs = observationsByEngine[engine] ?? [];
-    // Find the first observation with a mention_snippet for sentiment judging.
-    const firstMentioned = obs.find((o) => o.detection.mention_snippet !== null);
-
-    if (!firstMentioned?.detection.mention_snippet) {
-      sentimentByEngine[engine] = 'unknown';
-    } else {
-      const judgeResult = await judgeSentiment(
-        firstMentioned.detection.mention_snippet,
-        identity,
-        {
-          call: deps.sentimentCall,
-          model: sentimentModel,
-        },
-      );
-      sentimentByEngine[engine] = judgeResult.sentiment;
-    }
+  for (const { engine, sentiment } of sentimentResults) {
+    sentimentByEngine[engine] = sentiment;
   }
 
   // ── STAGE 3b: Score each engine ───────────────────────────────────────────
@@ -261,7 +361,7 @@ export async function assembleFreeScanV2(
   // only absent factors become gaps → result is empty gap list (honest: no data).
   // Narration will use impact_fallback mode.
 
-  let clientObservations: import('./factor-detection').FactorObservation[] = [];
+  let clientObservations: FactorObservation[] = [];
   try {
     const clientSiteAudit = await deps.auditSite(input.ctx.website_url);
     clientObservations = await deps.detectFactors({ siteAudit: clientSiteAudit });
@@ -273,7 +373,7 @@ export async function assembleFreeScanV2(
   }
 
   // ── Load factor catalog ────────────────────────────────────────────────────
-  let catalog: import('./factor-catalog').FactorCatalogRow[] = [];
+  let catalog: FactorCatalogRow[] = [];
   try {
     catalog = await deps.loadCatalog();
   } catch (err) {
@@ -292,7 +392,7 @@ export async function assembleFreeScanV2(
 
   const topCompetitors = selectTopCompetitors(allObservations, identity, 3);
 
-  let competitorAudits: import('./gap-types').CompetitorFactorAudit[] = [];
+  let competitorAudits: CompetitorFactorAudit[] = [];
   let competitorDegraded = false;
   try {
     competitorAudits = await auditCompetitors(
