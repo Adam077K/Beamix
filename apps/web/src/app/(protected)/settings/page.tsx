@@ -163,10 +163,10 @@ function RailTab({ tab, active, onClick, destructive }: RailTabProps) {
       aria-controls, no aria-selected wiring). aria-current is the correct
       ARIA attribute for the active item in a navigation list.
 
-      item #15: destructive inactive style was identical to the default inactive
-      style (dead branch). Cancel tab now gets text-muted treatment, which
-      matches the spec ("muted/separated" label). Active destructive keeps
-      accent-tint like the others — visual separation is the divider above it.
+      item #15: destructive inactive previously had the same classes as default inactive
+      (dead branch). Cancel tab now gets opacity-75 + critical-tinted hover to signal
+      danger zone. Active destructive still gets accent-tint — the divider above provides
+      visual separation; the critical hover is the danger signal.
     */
     <button
       type="button"
@@ -181,8 +181,8 @@ function RailTab({ tab, active, onClick, destructive }: RailTabProps) {
         'md:w-full md:rounded-l-md md:rounded-r-none',
         // Inactive state (non-destructive)
         !active && !destructive && 'text-[var(--color-text-muted)] hover:bg-[#F4F6FA] hover:text-[var(--color-text-secondary)]',
-        // item #15: destructive (Cancel) inactive — intentionally muted, visually separated by the divider above
-        !active && destructive && 'text-[var(--color-text-muted)] hover:bg-[#F4F6FA] hover:text-[var(--color-text-secondary)]',
+        // Destructive (Cancel) inactive: more muted + critical-tinted hover to signal danger
+        !active && destructive && 'text-[var(--color-text-muted)] opacity-75 hover:bg-[var(--color-status-critical-bg,#FDECEC)] hover:text-[var(--color-status-critical)] hover:opacity-100',
         // Active state: accent-tint bg + accent-deep text + left blue border (desktop)
         active && 'bg-[var(--color-accent-tint)] text-[var(--color-accent-deep)]',
         // Mobile: shrink wrap with padding

@@ -274,10 +274,10 @@ export function BrandFingerprintTab() {
   const [isDirty, setIsDirty] = useState(false)
 
   // item #10: guard the auto-fade timeout with a ref to clearTimeout on unmount
-  const fadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     return () => {
-      if (fadTimerRef.current) clearTimeout(fadTimerRef.current)
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current)
     }
   }, [])
 
@@ -294,8 +294,8 @@ export function BrandFingerprintTab() {
     setSaveState('saved')
     setIsDirty(false)
     // item #10: store timer id so it can be cleared on unmount
-    if (fadTimerRef.current) clearTimeout(fadTimerRef.current)
-    fadTimerRef.current = setTimeout(() => setSaveState('idle'), 2500)
+    if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current)
+    fadeTimerRef.current = setTimeout(() => setSaveState('idle'), 2500)
   }
 
   function handleDiscard() {
