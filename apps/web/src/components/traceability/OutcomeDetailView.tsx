@@ -189,7 +189,7 @@ function TerminalNode({ deltaPoints, engine, achievedAt }: TerminalNodeProps) {
       {/* Delta summary pill — blue, the outcome */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-status-info px-3 py-1 font-mono text-[13px] font-semibold tabular-nums text-status-info">
-          +{deltaPoints} pt on {ENGINE_LABEL[engine]}
+          {deltaPoints >= 0 ? '+' : ''}{deltaPoints} pt on {ENGINE_LABEL[engine]}
         </span>
         <span className="font-mono text-[12px] tabular-nums text-[#9CA3AF]">
           {fullDate(achievedAt)}
@@ -258,7 +258,6 @@ export function OutcomeDetailView({ outcome }: OutcomeDetailViewProps) {
             {before}
             {engineWord && (
               <em
-                className="not-italic"
                 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic' }}
               >
                 {engineWord}

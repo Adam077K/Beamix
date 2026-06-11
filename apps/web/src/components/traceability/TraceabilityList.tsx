@@ -53,12 +53,14 @@ export function TraceabilityList({ data }: TraceabilityListProps) {
               outcome={outcome}
               expanded={false}
               onToggle={() => {
-                // Navigate to detail on toggle — the accordion expand is
-                // replaced by the full drill-down page.
-                router.push(`/traceability/${outcome.id}`)
+                // No-op: the semantic overlay <Link> below owns navigation.
+                // Keeping the prop to satisfy OutcomeCard's interface without
+                // introducing a duplicate router.push.
               }}
             />
-            {/* Detail link affordance — quiet arrow in trailing position */}
+            {/* Semantic overlay Link — sole navigation owner for this row.
+                tabIndex={-1} keeps it out of the tab order; the row's inner
+                button (OutcomeCard header) handles keyboard focus naturally. */}
             <Link
               href={`/traceability/${outcome.id}`}
               aria-label={`View full work trail for: ${outcome.statement}`}
