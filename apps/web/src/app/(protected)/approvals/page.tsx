@@ -4,6 +4,8 @@ import { ApprovalsList } from './_components/ApprovalsList'
 import { PageHeader } from '@/components/page-header'
 import { RefreshErrorState } from '@/components/refresh-error-state'
 import Link from 'next/link'
+import { isDemoUser } from '@/lib/demo'
+import { DEMO_APPROVALS } from '@/lib/demo/fixtures'
 
 // ---------------------------------------------------------------------------
 // /approvals — Server Component
@@ -13,12 +15,13 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
-async function getCurrentUserId(): Promise<string | null> {
+async function getCurrentUser(): Promise<{ id: string; email: string | undefined } | null> {
   const supabase = await createServerSupabaseClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  return user?.id ?? null
+  if (!user?.id) return null
+  return { id: user.id, email: user.email }
 }
 
 // ---------------------------------------------------------------------------
@@ -38,10 +41,10 @@ function CountMono({ count }: { count: number }) {
 // ---------------------------------------------------------------------------
 
 export default async function ApprovalsPage() {
-  const userId = await getCurrentUserId()
+  const currentUser = await getCurrentUser()
 
-  // Middleware guards this route — userId should always be present.
-  if (!userId) {
+  // Middleware guards this route — user should always be present.
+  if (!currentUser) {
     return (
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <PageHeader title="Approvals" />
@@ -53,7 +56,11 @@ export default async function ApprovalsPage() {
     )
   }
 
-  const result = await getPendingApprovals(userId)
+  // Demo mode: return fixture data for demo@beamixai.com.
+  // Real users are completely unaffected.
+  const result = isDemoUser(currentUser.email)
+    ? ({ ok: true as const, items: DEMO_APPROVALS })
+    : await getPendingApprovals(currentUser.id)
 
   const count = result.ok ? result.items.length : 0
 
