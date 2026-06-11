@@ -25,7 +25,7 @@ const VALID_STATES: TableState[] = ['loading', 'error', 'empty', 'populated']
 
 export function ArchiveClientShell() {
   const searchParams = useSearchParams()
-  const retryTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
+  const retryTimerRef = useRef<number | null>(null)
 
   // Dev-only: read forced state from URL; in production always ignore.
   const forcedState: TableState | null = isDev
@@ -66,7 +66,7 @@ export function ArchiveClientShell() {
     retryTimerRef.current = window.setTimeout(() => {
       setTableState('populated')
       retryTimerRef.current = null
-    }, 800)
+    }, 800) as unknown as number
   }, [])
 
   return (
