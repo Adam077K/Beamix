@@ -36,6 +36,22 @@ function urlHost(url: string): string {
   }
 }
 
+/**
+ * Returns the url only when it uses http or https.
+ * Guards against javascript: / data: XSS vectors.
+ */
+function safeHttpUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+      return url
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
 export function EvidenceRow({ deliverable, displayDate }: EvidenceRowProps) {
   const KindIcon = KIND_ICON[deliverable.kind]
 
@@ -64,17 +80,23 @@ export function EvidenceRow({ deliverable, displayDate }: EvidenceRowProps) {
           <span className="text-[14px] text-[#0A0A0A]">{deliverable.label}</span>
         </div>
 
-        {/* Line 2: live link with host as text */}
-        <a
-          href={deliverable.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`Open ${deliverable.label} at ${urlHost(deliverable.url)} (opens in new tab)`}
-          className="mt-0.5 inline-flex items-center gap-1 font-mono text-[12px] text-accent transition-colors hover:text-[var(--color-accent-hover)] focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
-        >
-          {urlHost(deliverable.url)}
-          <ExternalLink className="h-3 w-3" aria-hidden="true" />
-        </a>
+        {/* Line 2: live link with host as text — only rendered for http/https URLs */}
+        {safeHttpUrl(deliverable.url) ? (
+          <a
+            href={safeHttpUrl(deliverable.url)!}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Open ${deliverable.label} at ${urlHost(deliverable.url)} (opens in new tab)`}
+            className="mt-0.5 inline-flex items-center gap-1 font-mono text-[12px] text-accent transition-colors hover:text-[var(--color-accent-hover)] focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+          >
+            {urlHost(deliverable.url)}
+            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+          </a>
+        ) : (
+          <span className="mt-0.5 inline-flex items-center gap-1 font-mono text-[12px] text-[#9CA3AF]">
+            {urlHost(deliverable.url)}
+          </span>
+        )}
       </div>
     </div>
   )
