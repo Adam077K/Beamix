@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import type { TraceabilityData } from '@/types/traceability'
 import { TraceabilityEmpty } from './TraceabilityEmpty'
 import { TraceabilityLoading } from './TraceabilityLoading'
@@ -20,6 +21,8 @@ interface TraceabilityListProps {
  */
 export function TraceabilityList({ data }: TraceabilityListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const router = useRouter()
+  const handleRetry = useCallback(() => router.refresh(), [router])
 
   function handleToggle(id: string) {
     setExpandedId((prev) => (prev === id ? null : id))
@@ -30,7 +33,7 @@ export function TraceabilityList({ data }: TraceabilityListProps) {
   }
 
   if (data.state === 'error') {
-    return <TraceabilityError errorMessage={data.errorMessage} />
+    return <TraceabilityError errorMessage={data.errorMessage} onRetry={handleRetry} />
   }
 
   if (data.state === 'empty' || data.outcomes.length === 0) {

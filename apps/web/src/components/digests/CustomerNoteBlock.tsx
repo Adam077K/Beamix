@@ -16,7 +16,6 @@ export function CustomerNoteBlock({ note }: { note: string }) {
       >
         <p
           className="font-[var(--font-serif)] text-[17px] italic leading-[1.65] text-[#374151]"
-          style={{ fontFamily: 'var(--font-serif)' }}
         >
           {note}
         </p>
