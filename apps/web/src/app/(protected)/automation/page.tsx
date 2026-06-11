@@ -24,6 +24,7 @@ import { ErrorState } from '@/components/error-state'
 import { AgentModeRow } from './_components/AgentModeRow'
 import { DEMO_AUTOMATION } from '@/lib/demo/surfaces/automation'
 import { AGENT_REGISTRY } from '@/lib/agents/config/registry'
+import { SerifVerdict } from '@/components/console/SerifVerdict'
 import type { RunMode } from '@/components/console/ModeToggle'
 
 // ---------------------------------------------------------------------------
@@ -43,7 +44,8 @@ function ModeExplainer() {
       <p className="mb-4 text-xs font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
         Three ways to work
       </p>
-      <div className="grid gap-4 sm:grid-cols-3">
+      {/* M3: weighted columns — Autonomous (dominant) gets 1.4fr */}
+      <div className="grid gap-4 sm:grid-cols-[1fr_1.4fr_1.2fr]">
         {/* Manual */}
         <div>
           <div className="mb-1.5 flex items-center gap-2">
@@ -217,11 +219,11 @@ export default function AutomationPage() {
         title="Automation"
         subtitle="Choose how each agent works — you, or Beamix on a schedule."
         action={
-          /* TIER-3 inset stat rail — STEP-1 Geist Mono hero figure (M2, M11) */
-          <div className="card-inset flex min-w-[120px] flex-col items-end rounded-[12px] px-4 py-3 text-right">
+          {/* M1 TIER-1 hero focal — the page's single STEP-1 number (M2, M11) */}
+          <div className="card-console-hero flex min-w-[140px] flex-col items-end rounded-[12px] px-5 py-4 text-right">
             <span
               aria-label={`${autonomousCount} agents running autonomously`}
-              className="font-[var(--font-mono)] text-[32px] font-normal leading-none tabular-nums text-[#0A0A0A]"
+              className="font-[var(--font-mono)] text-[64px] font-normal leading-none tabular-nums text-[#0A0A0A]"
             >
               {autonomousCount}
             </span>
@@ -283,12 +285,7 @@ export default function AutomationPage() {
           {/* Placed as an editorial footer-note, not in chrome */}
           <p className="mb-4 mt-10 max-w-[560px] text-[13px] leading-[1.6] text-[#9CA3AF] craft-enter craft-enter-8">
             {'Agents set to Autonomous will run on schedule. Items requiring approval are '}
-            <span
-              className="font-[var(--font-serif)] italic text-[#6B7280]"
-              style={{ fontStyle: 'italic' }}
-            >
-              held
-            </span>
+            <SerifVerdict>handled</SerifVerdict>
             {' in Approvals until you review them. '}
             <Link
               href="/archive"
