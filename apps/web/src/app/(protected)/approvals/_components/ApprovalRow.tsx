@@ -4,12 +4,13 @@ import * as React from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ApprovalQueueItem } from '../_data'
+import { isHighRisk } from '../_logic'
 import { KindBadge } from './KindBadge'
 import { ProposalPreview } from './ProposalPreview'
 import { ApprovalActions, type ActionResolved } from './ApprovalActions'
 
 // ---------------------------------------------------------------------------
-// Helpers — reused from ApprovalsList, co-located here for the client render
+// Helpers — co-located for the client render
 // ---------------------------------------------------------------------------
 
 function extractSummary(resource: Record<string, unknown>, kind: ApprovalQueueItem['kind']): string {
@@ -52,16 +53,6 @@ function absoluteDate(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(iso))
-}
-
-// ---------------------------------------------------------------------------
-// Risk detection — defensive optional reads
-// ---------------------------------------------------------------------------
-
-function isHighRisk(resource: Record<string, unknown>): boolean {
-  const risk = resource['risk']
-  const mandatory = resource['mandatory_human']
-  return risk === 'ymyl' || mandatory === true
 }
 
 // ---------------------------------------------------------------------------
@@ -111,6 +102,7 @@ export function ApprovalRow({ item }: ApprovalRowProps) {
   const triggerId = `approval-trigger-${item.id}`
 
   const summary = extractSummary(item.resource, item.kind)
+  // isHighRisk imported from _logic — single source of truth (item #6)
   const isRisky = isHighRisk(item.resource)
   const isExpiringSoon =
     new Date(item.expiresAt).getTime() - Date.now() < 24 * 60 * 60 * 1000
@@ -154,7 +146,8 @@ export function ApprovalRow({ item }: ApprovalRowProps) {
           !isResolved && 'hover:bg-[#F4F6FA] cursor-pointer',
           isResolved && 'cursor-default',
         )}
-        aria-label={`${summary} — ${item.kind.replace('_', ' ')}`}
+        // item #4: use /g flag so multi-underscore kinds replace all underscores
+        aria-label={`${summary} — ${item.kind.replace(/_/g, ' ')}`}
       >
         {/* KindBadge */}
         <span className="shrink-0">
@@ -204,73 +197,77 @@ export function ApprovalRow({ item }: ApprovalRowProps) {
         )}
       </button>
 
-      {/* Expanded panel — in-place accordion */}
-      <div
-        id={panelId}
-        role="region"
-        aria-labelledby={triggerId}
-        className={cn(
-          'overflow-hidden transition-all duration-200 motion-reduce:transition-none',
-          expanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0',
-        )}
-        aria-hidden={!expanded}
-      >
-        <div className="px-5 pb-5 pt-1 space-y-4">
-          {/* 1. Mandatory-human banner — only when risky */}
-          {isRisky && (
-            <div
-              className="rounded-lg bg-status-critical px-3 py-2"
-              role="alert"
-              aria-live="polite"
-            >
-              <p className="text-[13px] text-status-critical">
-                This is a high-stakes change. Beamix won&apos;t publish it until you approve.
-              </p>
-            </div>
-          )}
-
-          {/* 2. Preview micro-environment */}
-          <ProposalPreview kind={item.kind} resource={item.resource} />
-
-          {/* 3. Rationale */}
-          {(() => {
-            const rationale =
-              (typeof item.resource['rationale'] === 'string' ? item.resource['rationale'] : null) ??
-              (typeof item.resource['reason'] === 'string' ? item.resource['reason'] : null) ??
-              'The crew flagged this as worth doing now.'
-            return (
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] mb-1">
-                  Why
-                </p>
-                <p className="text-[13px] leading-relaxed text-[#374151]">{rationale}</p>
-              </div>
-            )
-          })()}
-
-          {/* 4. Evidence */}
-          {item.evidenceUrl && (
-            <div>
-              <a
-                href={item.evidenceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[13px] text-accent hover:text-[var(--color-accent-hover)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1 rounded"
+      {/*
+        Expanded panel — item #2 + #3:
+        Conditional render means collapsed content is fully unmounted →
+        no tabbable children, no DOM to focus → fixes a11y finding #2.
+        Also eliminates the max-h-[2000px] range transition finding #3 —
+        the panel fades in/out with a short opacity transition instead.
+      */}
+      {expanded && (
+        <div
+          id={panelId}
+          role="region"
+          aria-labelledby={triggerId}
+          className="animate-in fade-in duration-150 motion-reduce:animate-none"
+        >
+          <div className="px-5 pb-5 pt-1 space-y-4">
+            {/* 1. Mandatory-human banner — only when risky */}
+            {isRisky && (
+              <div
+                className="rounded-lg bg-status-critical px-3 py-2"
+                role="alert"
+                aria-live="polite"
               >
-                View evidence →
-              </a>
-            </div>
-          )}
+                <p className="text-[13px] text-status-critical">
+                  This is a high-stakes change. Beamix won&apos;t publish it until you approve.
+                </p>
+              </div>
+            )}
 
-          {/* 5. Expiry line */}
-          <p className="text-[12px] text-[#6B7280]">
-            Expires {absoluteDate(item.expiresAt)}
-          </p>
+            {/* 2. Preview micro-environment */}
+            <ProposalPreview kind={item.kind} resource={item.resource} />
 
-          {/* 6. Actions */}
-          <ApprovalActions itemId={item.id} kind={item.kind} onResolved={handleResolved} />
+            {/* 3. Rationale */}
+            {(() => {
+              const rationale =
+                (typeof item.resource['rationale'] === 'string' ? item.resource['rationale'] : null) ??
+                (typeof item.resource['reason'] === 'string' ? item.resource['reason'] : null) ??
+                'The crew flagged this as worth doing now.'
+              return (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] mb-1">
+                    Why
+                  </p>
+                  <p className="text-[13px] leading-relaxed text-[#374151]">{rationale}</p>
+                </div>
+              )
+            })()}
+
+            {/* 4. Evidence */}
+            {item.evidenceUrl && (
+              <div>
+                <a
+                  href={item.evidenceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[13px] text-accent hover:text-[var(--color-accent-hover)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1 rounded"
+                >
+                  View evidence →
+                </a>
+              </div>
+            )}
+
+            {/* 5. Expiry line */}
+            <p className="text-[12px] text-[#6B7280]">
+              Expires {absoluteDate(item.expiresAt)}
+            </p>
+
+            {/* 6. Actions */}
+            <ApprovalActions itemId={item.id} kind={item.kind} onResolved={handleResolved} />
+          </div>
         </div>
-      </div>
+      )}
     </li>
   )
 }

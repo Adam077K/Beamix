@@ -66,12 +66,25 @@ function extractDiffLines(resource: Record<string, unknown>): DiffLine[] {
 // ---------------------------------------------------------------------------
 
 const CLAMP_LINES = 12
+// item #5: also clamp long single-paragraph bodies (no newlines to count)
+const CLAMP_CHARS = 800
 
 function ProsePreview({ body }: { body: string }) {
   const [expanded, setExpanded] = React.useState(false)
   const lines = body.split('\n')
-  const shouldClamp = lines.length > CLAMP_LINES && !expanded
-  const displayBody = shouldClamp ? lines.slice(0, CLAMP_LINES).join('\n') + '…' : body
+  // Clamp when line count exceeds limit OR body is a long single paragraph
+  const needsClamp = lines.length > CLAMP_LINES || body.length > CLAMP_CHARS
+  const shouldClamp = needsClamp && !expanded
+
+  let displayBody = body
+  if (shouldClamp) {
+    if (lines.length > CLAMP_LINES) {
+      displayBody = lines.slice(0, CLAMP_LINES).join('\n') + '…'
+    } else {
+      // Single paragraph, long — clamp by character count
+      displayBody = body.slice(0, CLAMP_CHARS) + '…'
+    }
+  }
 
   return (
     <div
@@ -87,11 +100,12 @@ function ProsePreview({ body }: { body: string }) {
       >
         {displayBody}
       </p>
-      {lines.length > CLAMP_LINES && (
+      {/* item #1: COLOR LAW — this is a user action (toggle), so blue (accent), not violet (agent) */}
+      {needsClamp && (
         <button
           type="button"
           onClick={() => setExpanded((e) => !e)}
-          className="mt-2 text-[12px] font-medium text-agent hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-agent)] focus-visible:ring-offset-1 rounded"
+          className="mt-2 text-[12px] font-medium text-accent hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-1 rounded"
           aria-expanded={expanded}
         >
           {expanded ? 'Show less' : 'Show full'}

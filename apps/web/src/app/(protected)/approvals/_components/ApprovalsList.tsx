@@ -1,33 +1,7 @@
 import { Sparkles } from 'lucide-react'
 import type { ApprovalQueueItem } from '../_data'
+import { sortApprovals } from '../_logic'
 import { ApprovalRow } from './ApprovalRow'
-
-// ---------------------------------------------------------------------------
-// Sort — YMYL/high-risk first, then expiry soonest, then created_at desc
-// ---------------------------------------------------------------------------
-
-function isHighRisk(resource: Record<string, unknown>): boolean {
-  return resource['risk'] === 'ymyl' || resource['mandatory_human'] === true
-}
-
-function sortApprovals(items: ApprovalQueueItem[]): ApprovalQueueItem[] {
-  return [...items].sort((a, b) => {
-    // 1. High-risk first
-    const aRisk = isHighRisk(a.resource) ? 0 : 1
-    const bRisk = isHighRisk(b.resource) ? 0 : 1
-    if (aRisk !== bRisk) return aRisk - bRisk
-
-    // 2. Earliest expiry first
-    const aExp = new Date(a.expiresAt).getTime()
-    const bExp = new Date(b.expiresAt).getTime()
-    if (aExp !== bExp) return aExp - bExp
-
-    // 3. Newest created first
-    const aCreated = new Date(a.createdAt).getTime()
-    const bCreated = new Date(b.createdAt).getTime()
-    return bCreated - aCreated
-  })
-}
 
 // ---------------------------------------------------------------------------
 // EmptyApprovals — warm crew idiom, mirrors AgentActivityPanel
@@ -65,7 +39,7 @@ function EmptyApprovals() {
 }
 
 // ---------------------------------------------------------------------------
-// LoadingSkeleton
+// LoadingSkeleton — wired as the loading state for this list
 // ---------------------------------------------------------------------------
 
 export function LoadingSkeleton() {
@@ -96,13 +70,20 @@ export function LoadingSkeleton() {
 
 interface ApprovalsListProps {
   approvals: ApprovalQueueItem[]
+  isLoading?: boolean
 }
 
-export function ApprovalsList({ approvals }: ApprovalsListProps) {
+export function ApprovalsList({ approvals, isLoading }: ApprovalsListProps) {
+  // Wire the loading skeleton as the actual loading state
+  if (isLoading) {
+    return <LoadingSkeleton />
+  }
+
   if (approvals.length === 0) {
     return <EmptyApprovals />
   }
 
+  // sortApprovals is imported from _logic — single source of truth (item #6)
   const sorted = sortApprovals(approvals)
 
   return (
