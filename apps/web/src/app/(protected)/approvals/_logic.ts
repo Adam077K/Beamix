@@ -7,6 +7,26 @@
 import type { ApprovalQueueItem } from './_data'
 
 // ---------------------------------------------------------------------------
+// PUBLISH_KINDS — single source of truth for "publish-type" approval kinds
+// Re-exported here so the logic is testable without importing the React component.
+// ---------------------------------------------------------------------------
+
+export const PUBLISH_KINDS: ApprovalQueueItem['kind'][] = [
+  'content_publish',
+  'schema_push',
+  'listing_update',
+  'citation_submit',
+]
+
+/**
+ * Returns the label for the approve button.
+ * Publish-type kinds get "Approve & publish"; others get "Approve".
+ */
+export function getApproveLabel(kind: ApprovalQueueItem['kind']): string {
+  return PUBLISH_KINDS.includes(kind) ? 'Approve & publish' : 'Approve'
+}
+
+// ---------------------------------------------------------------------------
 // isHighRisk — single source of truth
 // ---------------------------------------------------------------------------
 

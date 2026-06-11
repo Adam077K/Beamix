@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { approveApprovalItem, rejectApprovalItem } from '../_actions'
 import type { ApprovalQueueItem } from '../_data'
+import { PUBLISH_KINDS } from '../_logic'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -57,17 +58,6 @@ function Spinner({ className }: { className?: string }) {
     </svg>
   )
 }
-
-// ---------------------------------------------------------------------------
-// Publish-kinds — drives the Approve label
-// ---------------------------------------------------------------------------
-
-const PUBLISH_KINDS: ApprovalQueueItem['kind'][] = [
-  'content_publish',
-  'schema_push',
-  'listing_update',
-  'citation_submit',
-]
 
 // ---------------------------------------------------------------------------
 // ApprovalActions — Client Component

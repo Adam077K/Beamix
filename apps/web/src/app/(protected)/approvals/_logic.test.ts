@@ -11,6 +11,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { isHighRisk, sortApprovals } from './_logic'
+import { extractEvidenceUrl } from './_data'
 import type { ApprovalQueueItem } from './_data'
 
 // ---------------------------------------------------------------------------
@@ -191,24 +192,67 @@ describe('sortApprovals', () => {
 })
 
 // ---------------------------------------------------------------------------
+// extractEvidenceUrl — security: scheme allowlist
+// ---------------------------------------------------------------------------
+
+describe('extractEvidenceUrl', () => {
+  it('returns the URL string for an https URL', () => {
+    const result = extractEvidenceUrl({ url: 'https://example.com/evidence.pdf' })
+    expect(result).toBe('https://example.com/evidence.pdf')
+  })
+
+  it('returns the URL string for an http URL', () => {
+    const result = extractEvidenceUrl({ url: 'http://example.com/doc' })
+    expect(result).toBe('http://example.com/doc')
+  })
+
+  it('returns null for a javascript: URI (XSS vector)', () => {
+    expect(extractEvidenceUrl({ url: 'javascript:alert(1)' })).toBeNull()
+  })
+
+  it('returns null for a data: URI (XSS vector)', () => {
+    expect(extractEvidenceUrl({ url: 'data:text/html,<script>alert(1)</script>' })).toBeNull()
+  })
+
+  it('returns null for an empty string', () => {
+    expect(extractEvidenceUrl({ url: '' })).toBeNull()
+  })
+
+  it('returns null for a malformed URL', () => {
+    expect(extractEvidenceUrl({ url: 'not a url at all' })).toBeNull()
+  })
+
+  it('returns null when evidence is null', () => {
+    expect(extractEvidenceUrl(null)).toBeNull()
+  })
+
+  it('returns null when evidence is not an object', () => {
+    expect(extractEvidenceUrl('https://example.com')).toBeNull()
+    expect(extractEvidenceUrl(42)).toBeNull()
+  })
+
+  it('returns null when evidence object has no url key', () => {
+    expect(extractEvidenceUrl({ href: 'https://example.com' })).toBeNull()
+  })
+
+  it('returns null when url value is not a string', () => {
+    expect(extractEvidenceUrl({ url: 123 })).toBeNull()
+  })
+
+  it('returns null for an ftp: URI (not in allowlist)', () => {
+    expect(extractEvidenceUrl({ url: 'ftp://files.example.com/doc.pdf' })).toBeNull()
+  })
+})
+
+// ---------------------------------------------------------------------------
 // PUBLISH_KINDS approve-label branch (pure logic extracted from ApprovalActions)
 // ---------------------------------------------------------------------------
 
-// The PUBLISH_KINDS constant and approve-label derivation are pure string logic.
-// Extract the testable part here without importing the React component.
+// Import from the real source (ApprovalActions.tsx is a React component; the
+// pure constants are re-exported from _logic.ts so the test guards the real values).
+import { PUBLISH_KINDS, getApproveLabel } from './_logic'
 
-const PUBLISH_KINDS: ApprovalQueueItem['kind'][] = [
-  'content_publish',
-  'schema_push',
-  'listing_update',
-  'citation_submit',
-]
-
-function getApproveLabel(kind: ApprovalQueueItem['kind']): string {
-  return PUBLISH_KINDS.includes(kind) ? 'Approve & publish' : 'Approve'
-}
-
-describe('getApproveLabel (PUBLISH_KINDS logic)', () => {
+describe('getApproveLabel — guards real PUBLISH_KINDS from _logic.ts', () => {
   it('returns "Approve & publish" for content_publish', () => {
     expect(getApproveLabel('content_publish')).toBe('Approve & publish')
   })
