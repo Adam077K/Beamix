@@ -331,6 +331,7 @@ function InsetDeltaCard({ delta }: { delta: EngineVisibilityDelta }) {
             'inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[12px] tabular-nums',
             deltaBg,
           )}
+          aria-label={`Change: ${deltaSign}${change}`}
         >
           {deltaSign}{change}
         </span>
@@ -451,7 +452,7 @@ function WinsShippedSection({ wins }: WinsShippedSectionProps) {
   if (wins.length === 0) return null
 
   return (
-    <section aria-labelledby="wins-heading">
+    <section aria-labelledby="wins-heading" className="craft-enter craft-enter-3">
       {/* M2 STEP-3 eyebrow + M6 violet left accent on heading */}
       <div
         className="mb-4 flex items-center gap-3"
@@ -567,7 +568,6 @@ function CustomerNoteSection({ note }: { note: string }) {
     <section aria-label="A note for you" className="craft-enter craft-enter-5">
       <div
         className="rounded-[var(--radius-card)] bg-surface-warm p-6 sm:p-8"
-        aria-label="A note for you"
       >
         {/* M2 STEP-3 eyebrow */}
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
