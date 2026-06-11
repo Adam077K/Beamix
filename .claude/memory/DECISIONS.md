@@ -902,3 +902,17 @@ CEO=Opus-4.7 · CCO folded into CPO · CBO single · Design under CPO · 13 work
 **Status:** QA PASS (PR #132, run `wf_de0ee653-f58`, full tier, 4 P3 non-blocking) — pending Adam merge sign-off (Irreversible tier: edits an agent definition + a locked topology decision).
 **Dogfood:** `qa.js` reviewed its own diff 5×: BLOCK×4 → PASS. Found real bugs each round (verifier-prompt injection, fail-open judge, dropout/null-deref tolerance), all fixed; ~$85-110 spend. Converges but expensive on self-referential net-new code.
 **Follow-ups:** (1) **Cost — addressed (partial):** `qa.js` now 3-vote-verifies only *block-eligible* findings (P1 always; P2 at irreversible), so cost scales with serious findings (clean diff ≈ $4-6). The $15 ceiling remains *advisory* — a hard budget cap isn't CEO-settable on named-workflow calls (still open). (2) **Appeal path — DONE:** the no-override rule is amended — CEO can never override a BLOCK; only Adam may, via a logged finding-by-finding false-positive appeal (never to bypass a confirmed real defect). Encoded in ceo.md, qa.js, README, topology memory. (3) **Still open:** coding.js worktree-isolated slices need a real integrated-diff ref for qa.js.
+
+### [2026-06-11] — Craft-elevation initiative: CRAFT-SYSTEM rubric is the de-AI standard
+**Decision:** Adopt `docs/design/CRAFT-SYSTEM.md` (8 AI-generated tells + 12 craft moves M1-M12 + design-critic checklist) as the binding rubric for making every product screen read human-crafted, not AI-generated. Cascade per-screen (dashboard shipped first as exemplar): design → frontend build → design-critic Playwright visual check vs references → binding qa → Adam merge. Stays 100% inside the warm-minimal vision + token system + blue=you/violet=agents law; NO new colors/tokens (only additive utilities like `.card-inset` + a fade-up keyframe).
+**Rationale:** Product was on-brand but applied tokens uniformly (uniform depth, N-equal grids, no serif beat, no signature detail) — the "AI-generated" tell. The fix is intentional hierarchy/asymmetry/depth-staging, not a redesign. A written rubric makes design-critic enforcement objective and repeatable across screens.
+**Decided by:** ceo-craft-elevation (foundational workflow wf_57c0d5b6-c6a)
+**Affects:** design-lead, design-critic, product-designer, frontend-engineer; all `apps/web/src/app` product screens; `apps/web/src/app/globals.css` (additive only)
+**Reversible?** Yes (presentation-layer; per-screen PRs revertable)
+
+### [2026-06-11] — QA worktrees must diff against origin/main, not local main
+**Decision:** QA-Lead (and any scope/diff check) must measure the PR diff against `origin/main` (or `gh pr diff --name-only`, authoritative), never the local `main` checkout. On any scope-based BLOCK, re-verify the true file set before accepting it.
+**Rationale:** PR #173 drew a false-positive Irreversible BLOCK (claimed 202 files + bundled migrations) because the QA worktree diffed against a stale local `main` (4 commits behind origin), folding in already-merged migrations. The real PR was 8 presentation files. Stale local main is a recurring trap in this repo.
+**Decided by:** ceo-craft-elevation
+**Affects:** qa-lead, all reviewers, CEO merge-gating
+**Reversible?** Yes (process rule)
