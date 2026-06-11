@@ -5,7 +5,16 @@
  * It must stay in sync with the FreeScanResults interface in
  * apps/web/src/app/scan/[scan_id]/page.tsx.
  *
- * Do NOT add optional fields here without also updating page.tsx.
+ * Wave 7 additive extension: scan_v2 is an optional field added to carry the
+ * structured v2 measurement result. All existing fields are preserved for
+ * backward-compatibility with the existing scan results page (Worker 3 updates
+ * page.tsx to read scan_v2 when present). The visibility_score field continues
+ * to be populated from scan_v2.headline_band.point (the median across engines,
+ * labeled as secondary) for the existing score ring.
+ *
+ * Keep in sync: when adding fields here, also update
+ *   apps/web/src/app/scan/[scan_id]/page.tsx
+ *   (note from the original file — Worker 3 handles the page update).
  */
 
 // ---------------------------------------------------------------------------
@@ -21,15 +30,50 @@ export interface IssueSummary {
 
 /**
  * Shape persisted to free_scans.results JSONB.
- * All fields are required — no partial writes.
+ *
+ * Wave 7 ADDITIVE extension:
+ *   scan_v2 — optional v2 measurement result from assembleFreeScanV2().
+ *             When present, Worker 3 (frontend) reads it for the richer view.
+ *             When absent, the UI falls back to the v1 issues/visibility_score
+ *             fields (backward-compat — legacy scan results stay readable).
+ *
+ *   visibility_score — ALWAYS populated, even for v2 scans:
+ *             v1:  set by the old scoring logic (Gemini Flash analysis).
+ *             v2:  set to scan_v2.headline_band.point (median across engines,
+ *                  labeled secondary) for the existing score ring on the page.
+ *             Worker 3 must NOT replace this field with a per-engine subscore
+ *             without also updating the ring component that reads it.
+ *
+ * All REQUIRED fields (issues, total_issues, engines_checked, visibility_score)
+ * must still be written for every scan — partial writes are not allowed.
  */
 export interface FreeScanResults {
   issues: IssueSummary[];
   total_issues: number;
   /** Always 3 for free scans (ChatGPT + Gemini + Perplexity) */
   engines_checked: number;
-  /** 0–100 composite visibility score */
+  /**
+   * 0–100 composite visibility score.
+   * v2 scans: populated from ScanV2Result.headline_band.point (the median
+   * across engines, a clearly-labeled secondary value). The existing score
+   * ring on the page reads this field — keep it populated for backward-compat.
+   */
   visibility_score: number;
+  /**
+   * ADDITIVE (Wave 7): optional v2 measurement result.
+   * Present for scans run through assembleFreeScanV2(). Absent for legacy scans.
+   * Worker 3 reads this for the richer per-engine subscore + gap-list view.
+   *
+   * Type: ScanV2Result from scan-v2-types.ts. Declared as unknown here to avoid
+   * a circular import chain (types.ts is imported by modules that scan-v2-types.ts
+   * itself imports). Worker 3 imports ScanV2Result directly from scan-v2-types.ts
+   * and casts/validates at the read site.
+   *
+   * IMPORTANT: Do not add optional fields here without also updating page.tsx
+   * (original note preserved — Worker 3 handles that update).
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  scan_v2?: any;
 }
 
 // ---------------------------------------------------------------------------

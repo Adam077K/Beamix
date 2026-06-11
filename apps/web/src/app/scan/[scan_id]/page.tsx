@@ -16,6 +16,8 @@ import { ScanScoreHero } from './_components/ScanScoreHero'
 import { EngineBand } from './_components/EngineBand'
 import { IssueLedger } from './_components/IssueLedger'
 import { ScanPendingState } from './_components/ScanPendingState'
+import { ScanV2View } from './_components/ScanV2View'
+import type { ScanV2Result } from '@/lib/scan/scan-v2-types'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,6 +55,12 @@ interface FreeScanResults {
   engine_results?: EngineResult[]
   /** Per-engine scores keyed by engine id */
   scores?: Partial<Record<string, number>>
+  /**
+   * Wave 7 v2 measurement result. Present when the scan was produced by
+   * assembleFreeScanV2(). Absent for legacy scans (v1 path renders unchanged).
+   * Source of truth: src/lib/scan/types.ts FreeScanResults.scan_v2
+   */
+  scan_v2?: ScanV2Result
 }
 
 // ---------------------------------------------------------------------------
@@ -299,18 +307,26 @@ export default async function ScanResultsPage({ params }: PageProps) {
         {/* State: complete */}
         {isComplete && (
           <>
-            {/* 1. Score hero — ring + verdict */}
+            {/* Score hero — always shown (ring reads visibility_score which v2 also populates) */}
             <ScanScoreHero
               score={visibilityScore}
               businessName={scan.business_name}
             />
 
-            {/* 2. Engine band — per-engine breakdown */}
-            <EngineBand engines={engines} />
+            {results?.scan_v2 ? (
+              /* v2 path: richer per-engine measurement view */
+              <ScanV2View v2={results.scan_v2} />
+            ) : (
+              /* v1 path: unchanged — engine band + issue ledger */
+              <>
+                {/* Engine band — per-engine breakdown */}
+                <EngineBand engines={engines} />
 
-            {/* 3. Issue ledger — evidence density */}
-            {(issues.length > 0) && (
-              <IssueLedger issues={issues} totalIssues={totalIssues} />
+                {/* Issue ledger — evidence density */}
+                {(issues.length > 0) && (
+                  <IssueLedger issues={issues} totalIssues={totalIssues} />
+                )}
+              </>
             )}
 
             {/* 4. CTA block — hard act-separator */}

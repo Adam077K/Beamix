@@ -148,7 +148,9 @@ export function buildNarrationPrompt(input: NarrationInput): { system: string; u
     .slice(0, 6) // cap to avoid prompt bloat; top 6 is sufficient for narration
     .map(
       (g, i) =>
-        `  ${i + 1}. [${g.factor_key}] ${sanitizeForPrompt(g.display_name)}: ${sanitizeForPrompt(g.contrastive_evidence)}` +
+        // sanitizeForPrompt applied to factor_key: it is our own DB-seeded value today
+        // (low risk), but defense-in-depth against future catalog imports or prompt injection.
+        `  ${i + 1}. [${sanitizeForPrompt(g.factor_key)}] ${sanitizeForPrompt(g.display_name)}: ${sanitizeForPrompt(g.contrastive_evidence)}` +
         (g.competitors_with_factor.length > 0
           ? ` (competitors: ${g.competitors_with_factor.map(sanitizeForPrompt).join(', ')})`
           : ''),
@@ -159,7 +161,7 @@ export function buildNarrationPrompt(input: NarrationInput): { system: string; u
     .slice(0, 4)
     .map(
       (g, i) =>
-        `  ${i + 1}. [${g.factor_key}] ${sanitizeForPrompt(g.display_name)}: ${sanitizeForPrompt(g.contrastive_evidence)}`,
+        `  ${i + 1}. [${sanitizeForPrompt(g.factor_key)}] ${sanitizeForPrompt(g.display_name)}: ${sanitizeForPrompt(g.contrastive_evidence)}`,
     )
     .join('\n');
 
@@ -172,8 +174,9 @@ export function buildNarrationPrompt(input: NarrationInput): { system: string; u
     )
     .join('\n');
 
-  // All gap factor keys for the JSON contract
-  const allGapFactorKeys = input.rankedGaps.map((g) => g.factor_key);
+  // All gap factor keys for the JSON contract — sanitized (defense-in-depth against
+  // future catalog imports that might contain special characters or prompt-injection payloads).
+  const allGapFactorKeys = input.rankedGaps.map((g) => sanitizeForPrompt(g.factor_key));
 
   const orderingNote =
     input.rankedGaps.length > 0 && input.rankedGaps[0]!.ordering_mode === 'impact_fallback'
@@ -228,6 +231,7 @@ export function buildNarrationPrompt(input: NarrationInput): { system: string; u
  */
 function buildEvidenceCorpus(input: NarrationInput): {
   rawTexts: string[]; // for substring checks on quoted spans
+  lowerRawTexts: string[]; // pre-lowercased rawTexts — avoids repeated .toLowerCase() in inner loops
   knownCompetitors: Set<string>; // lowercased; for competitor name checks
   knownFactorKeys: Set<string>; // for factor_key checks in gap_explanations
 } {
@@ -283,7 +287,20 @@ function buildEvidenceCorpus(input: NarrationInput): {
   // BusinessName itself is an allowed reference in output
   rawTexts.push(input.businessName);
 
-  return { rawTexts, knownCompetitors, knownFactorKeys };
+  // NOTE (advisory location-not-in-grounding-corpus): BusinessContext.location is
+  // NOT currently in NarrationInput, so we cannot add it here without a type change.
+  // Deferred: when NarrationInput is extended with a `ctx` or `location` field, add
+  //   rawTexts.push(input.location)
+  // to allow legitimate location-bearing narration without false-stripping.
+  // The grounding check is conservative — any location string the model legitimately
+  // uses (e.g. "Tel Aviv") must already appear in a raw_response or contrastive_evidence
+  // string, so the risk of false-stripping is low for the current free-scan use case.
+
+  // Pre-lowercase all rawTexts once here. appearsInCorpus() uses this to avoid
+  // repeated .toLowerCase() calls per-element in the per-sentence inner loops.
+  const lowerRawTexts = rawTexts.map((t) => t.toLowerCase());
+
+  return { rawTexts, lowerRawTexts, knownCompetitors, knownFactorKeys };
 }
 
 // ---------------------------------------------------------------------------
@@ -309,12 +326,24 @@ function extractQuotedSpans(text: string): string[] {
 }
 
 /**
+ * Compiled number-extraction regex — hoisted to avoid re-compilation on every call.
+ * Matches integers and decimals (e.g. "42", "3.5", "20%").
+ * Short numbers (0-9) are excluded to avoid flagging ordinals and list markers.
+ * The /g flag is reset on each call via lastIndex (we create a new regex per call
+ * using source, or we use exec loop which resets for the cloned regex — simpler:
+ * always use the regex literal inline inside the function so JavaScript's
+ * regex literal compilation is memoised by the engine).
+ */
+const NUMBER_EXTRACTION_REGEX_SOURCE = '\\b(\\d{2,}(?:\\.\\d+)?%?)\\b';
+
+/**
  * Extract standalone numbers from a sentence.
  * Matches integers and decimals (e.g. "42", "3.5", "20%").
  * Short numbers (0-9) are excluded to avoid flagging ordinals and list markers.
  */
 function extractNumbers(text: string): string[] {
-  const numRegex = /\b(\d{2,}(?:\.\d+)?%?)\b/g;
+  // Create from source with /g to avoid lastIndex state bleeding across calls.
+  const numRegex = new RegExp(NUMBER_EXTRACTION_REGEX_SOURCE, 'g');
   const numbers: string[] = [];
   let match: RegExpExecArray | null;
   while ((match = numRegex.exec(text)) !== null) {
@@ -324,11 +353,38 @@ function extractNumbers(text: string): string[] {
 }
 
 /**
- * Check whether a value appears in any of the raw text strings (case-insensitive substring).
+ * Check whether a value appears in any of the pre-lowercased corpus strings (case-insensitive substring).
+ * Caller must pass lowerRawTexts (pre-lowercased in buildEvidenceCorpus) to avoid
+ * repeated .toLowerCase() calls in inner loops.
  */
-function appearsInCorpus(value: string, rawTexts: string[]): boolean {
+function appearsInCorpus(value: string, lowerRawTexts: string[]): boolean {
   const lower = value.toLowerCase();
-  return rawTexts.some((t) => t.toLowerCase().includes(lower));
+  return lowerRawTexts.some((t) => t.includes(lower));
+}
+
+/**
+ * Check whether a value appears as an EXACT TOKEN in any raw text string.
+ *
+ * FIX (blocker 2 — number substring false-pass):
+ * Uses a word-boundary regex so "5" does NOT pass when the corpus has "50".
+ * A token is considered present when it is surrounded by non-digit characters
+ * (or appears at the start/end of the string). The match is case-insensitive
+ * but since numbers are digits-only, case does not matter in practice.
+ *
+ * Examples:
+ *   "5"  vs "50%"      → does NOT match (digit follows — no boundary after "5")
+ *   "5"  vs "score 5"  → matches (word boundary on both sides)
+ *   "50" vs "50%"      → matches (% is a non-digit word boundary char)
+ *   "50" vs "150"      → does NOT match (digit precedes — no boundary before "50")
+ */
+function appearsAsExactToken(value: string, lowerRawTexts: string[]): boolean {
+  // Build a regex that requires a non-digit (or start/end) on both sides of the number.
+  // We escape the value to be safe (values come from the number regex which only
+  // produces \d+ with optional dot and %, so no special chars in practice).
+  // lowerRawTexts are pre-lowercased; numbers are case-insensitive so this is fine.
+  const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`(?<![\\d.])${escapedValue}(?![\\d])`, 'i');
+  return lowerRawTexts.some((t) => pattern.test(t));
 }
 
 /**
@@ -336,28 +392,40 @@ function appearsInCorpus(value: string, rawTexts: string[]): boolean {
  *
  * Violations:
  *   (a) Any quoted span (≥ 4 chars) not found in rawTexts → ungrounded fabricated quote
- *   (b) Any word/phrase from the knownCompetitors set that appears in the sentence →
- *       allowed (trivially grounded). Any multi-word capitalized sequence that looks like
- *       a business name AND is not in rawTexts → ungrounded fabricated competitor.
- *       Only checks sequences that look specifically like a business/org name:
- *       multi-word CamelCase sequences (e.g. "MadeUpClinic", "FakeRival Labs").
- *       Single common words like "ChatGPT", engine names, or location words are
- *       checked against rawTexts; if they appear there they pass.
- *   (c) Any standalone number (≥ 2 digits) not found in rawTexts → fabricated statistic
+ *   (b) Any CamelCase single-token or multi-word capitalized sequence that looks like a
+ *       business/organization name AND is NOT in knownCompetitors AND is NOT in rawTexts
+ *       → ungrounded fabricated competitor.
+ *
+ *       FIX (blocker 1 — empty-competitors bypass): even when knownCompetitors is empty,
+ *       the CamelCase + multi-word patterns are still evaluated. The old guard
+ *       `if (corpus.knownCompetitors.size > 0)` was wrong: it meant a scan with no known
+ *       competitors had ZERO entity grounding — a fabricated "MadeUpClinic" would always
+ *       pass. Now the entity check always runs; the only change when knownCompetitors is
+ *       empty is that the `has()` branch never fires (trivially false for all candidates),
+ *       so any capitalized entity not in rawTexts is still correctly flagged.
+ *
+ *   (c) Any standalone number (≥ 2 digits) NOT present as an EXACT TOKEN in rawTexts →
+ *       fabricated statistic.
+ *
+ *       FIX (blocker 2 — number substring false-pass): the old check used
+ *       `appearsInCorpus(num, rawTexts)` which is a plain substring match. That allowed
+ *       "5" to pass when the corpus contained "50" — the shorter number is a substring of
+ *       the longer one. The fix uses word-boundary matching so "5" only passes when "5"
+ *       appears as a whole token (space/punctuation/start-of-string on both sides).
  *
  * Conservative design: prefers to strip a borderline sentence over shipping an ungrounded
- * claim. Ordinary prose (no quotes, no competitor names, no numbers) always passes.
+ * claim. Ordinary prose (no quotes, no competitor-like entities, no numbers) always passes.
  *
  * Returns: true if the sentence passes grounding; false if it should be stripped.
  */
 function isSentenceGrounded(
   sentence: string,
-  corpus: { rawTexts: string[]; knownCompetitors: Set<string> },
+  corpus: { lowerRawTexts: string[]; knownCompetitors: Set<string> },
 ): boolean {
   // (a) Quoted span check
   const quotedSpans = extractQuotedSpans(sentence);
   for (const span of quotedSpans) {
-    if (!appearsInCorpus(span, corpus.rawTexts)) {
+    if (!appearsInCorpus(span, corpus.lowerRawTexts)) {
       console.error('[scan/narration] Grounding check: ungrounded quoted span', {
         span: span.slice(0, 80),
       });
@@ -365,53 +433,57 @@ function isSentenceGrounded(
     }
   }
 
-  // (b) Competitor name check (targeted — multi-word proper nouns only)
+  // (b) Competitor / entity name check (targeted — multi-word proper nouns + CamelCase only)
+  //
+  // FIX (blocker 1): the guard `if (corpus.knownCompetitors.size > 0)` is REMOVED.
+  // Entity grounding must run regardless of whether we audited any competitors.
+  // A scan with zero known competitors would otherwise have no protection against
+  // hallucinated business names in the narration.
   //
   // Strategy: extract multi-word capitalized sequences (≥ 2 consecutive capitalized words)
-  // that look like business/organization names. Only these are checked against the evidence
-  // corpus. Single capitalized words (sentence starts, engine names, common nouns) are NOT
-  // checked — they are too prone to false positives.
-  //
-  // A hallucinated competitor like "MadeUp Dental" or "FakeClinic Labs" will be caught here
-  // because it is (a) a multi-capitalized sequence, (b) not in rawTexts, (c) not in
-  // knownCompetitors. Single words like "Presence", "ChatGPT", "Tel" pass through unchecked.
-  //
-  // We also check single CamelCase words (no spaces, but internal capitals like "MadeUpClinic")
-  // as these are a common pattern for fabricated business names.
-  if (corpus.knownCompetitors.size > 0) {
-    // Check for CamelCase single tokens (e.g. "MadeUpClinic") — internal capital = business name pattern
-    const camelCasePattern = /\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b/g;
-    let camelMatch: RegExpExecArray | null;
-    while ((camelMatch = camelCasePattern.exec(sentence)) !== null) {
-      const candidate = camelMatch[1]!;
-      const candidateLower = candidate.toLowerCase();
-      if (corpus.knownCompetitors.has(candidateLower)) continue;
-      if (appearsInCorpus(candidate, corpus.rawTexts)) continue;
-      console.error('[scan/narration] Grounding check: possible ungrounded camelcase business name', {
-        candidate,
-      });
-      return false;
-    }
+  // and single CamelCase words (internal capitals like "MadeUpClinic").
+  // Each candidate is accepted if it appears in knownCompetitors OR in rawTexts.
+  // If neither → ungrounded fabricated entity name → sentence stripped.
 
-    // Check for multi-word capitalized sequences (e.g. "Acme Dental", "Beta Rival Labs")
-    const multiWordPattern = /\b([A-Z][a-z]{1,}(?:\s+[A-Z][a-z]{1,})+)\b/g;
-    let multiMatch: RegExpExecArray | null;
-    while ((multiMatch = multiWordPattern.exec(sentence)) !== null) {
-      const candidate = multiMatch[1]!;
-      const candidateLower = candidate.toLowerCase();
-      if (corpus.knownCompetitors.has(candidateLower)) continue;
-      if (appearsInCorpus(candidate, corpus.rawTexts)) continue;
-      console.error('[scan/narration] Grounding check: possible ungrounded multi-word competitor name', {
-        candidate,
-      });
-      return false;
-    }
+  // Check for CamelCase single tokens (e.g. "MadeUpClinic") — internal capital = business name pattern
+  const camelCasePattern = /\b([A-Z][a-z]+(?:[A-Z][a-z]+)+)\b/g;
+  let camelMatch: RegExpExecArray | null;
+  while ((camelMatch = camelCasePattern.exec(sentence)) !== null) {
+    const candidate = camelMatch[1]!;
+    const candidateLower = candidate.toLowerCase();
+    if (corpus.knownCompetitors.has(candidateLower)) continue;
+    if (appearsInCorpus(candidate, corpus.lowerRawTexts)) continue;
+    console.error('[scan/narration] Grounding check: possible ungrounded camelcase business name', {
+      // Truncate to 60 chars — LLM-generated entity names may contain arbitrary content.
+      candidate: candidate.slice(0, 60),
+    });
+    return false;
   }
 
-  // (c) Number check — standalone numbers ≥ 2 digits not in evidence
+  // Check for multi-word capitalized sequences (e.g. "Acme Dental", "Beta Rival Labs")
+  const multiWordPattern = /\b([A-Z][a-z]{1,}(?:\s+[A-Z][a-z]{1,})+)\b/g;
+  let multiMatch: RegExpExecArray | null;
+  while ((multiMatch = multiWordPattern.exec(sentence)) !== null) {
+    const candidate = multiMatch[1]!;
+    const candidateLower = candidate.toLowerCase();
+    if (corpus.knownCompetitors.has(candidateLower)) continue;
+    if (appearsInCorpus(candidate, corpus.lowerRawTexts)) continue;
+    console.error('[scan/narration] Grounding check: possible ungrounded multi-word competitor name', {
+      // Truncate to 60 chars — LLM-generated entity names may contain arbitrary content.
+      candidate: candidate.slice(0, 60),
+    });
+    return false;
+  }
+
+  // (c) Number check — standalone numbers ≥ 2 digits not present as exact tokens in evidence.
+  //
+  // FIX (blocker 2 — number substring false-pass): use word-boundary / exact-token matching
+  // instead of substring. The old `appearsInCorpus(num, rawTexts)` allowed "5" to pass
+  // because it is a substring of "50". Now we require "5" to exist as a whole token
+  // (bounded by non-digit characters or string boundaries) in the corpus.
   const numbers = extractNumbers(sentence);
   for (const num of numbers) {
-    if (!appearsInCorpus(num, corpus.rawTexts)) {
+    if (!appearsAsExactToken(num, corpus.lowerRawTexts)) {
       console.error('[scan/narration] Grounding check: ungrounded number', { num });
       return false;
     }
@@ -525,13 +597,14 @@ export async function narrate(
   }
 
   // ── JSON parse ────────────────────────────────────────────────────────────
+  // FIX (blocker 3 — PII log): the old log included `raw: rawText.slice(0, 300)`.
+  // That leaks raw LLM output (which may repeat business/user data from the prompt)
+  // into server logs. Log only a generic parse-failure marker with no raw content.
   let parsed: Record<string, unknown>;
   try {
     parsed = JSON.parse(stripFences(rawText)) as Record<string, unknown>;
   } catch {
-    console.error('[scan/narration] JSON parse failed', {
-      raw: rawText.slice(0, 300),
-    });
+    console.error('[scan/narration] JSON parse failed — raw response omitted');
     return buildFallback(input);
   }
 
@@ -563,10 +636,10 @@ export async function narrate(
   // factor_key is not in the known gap list.
   //
   // Grounding check covers:
-  //   (a) Quoted spans ≥ 4 chars → must appear in rawTexts (case-insensitive)
+  //   (a) Quoted spans ≥ 4 chars → must appear in lowerRawTexts (case-insensitive)
   //   (b) Capitalized names that look like competitors → must be in knownCompetitors
-  //       OR appear in rawTexts
-  //   (c) Standalone numbers ≥ 2 digits → must appear in rawTexts
+  //       OR appear in lowerRawTexts
+  //   (c) Standalone numbers ≥ 2 digits → must appear in lowerRawTexts (exact token)
   //
   // Conservative: strip borderline sentences, keep plain prose.
 

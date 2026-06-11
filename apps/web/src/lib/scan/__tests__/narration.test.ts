@@ -534,4 +534,166 @@ describe('narration.ts', () => {
     const { user } = buildNarrationPrompt(fallbackInput);
     expect(user).toContain('no competitor comparison available');
   });
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // QA-gate blocker fixes (Wave 7)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // ── Blocker 1: empty-competitors bypass fix ────────────────────────────────
+  //
+  // Previously the entity grounding check was guarded by
+  //   `if (corpus.knownCompetitors.size > 0) { ... }`
+  // which meant a scan with NO known competitors had ZERO entity grounding.
+  // A fabricated "MadeUpClinic" would always pass when competitors = [].
+  // The fix removes the guard so CamelCase/multi-word entity checks always run.
+
+  it('blocker-1: fabricated CamelCase entity stripped even when knownCompetitors is empty', async () => {
+    // Empty competitors list — the scan never audited any competitor.
+    const emptyCompetitorsInput: NarrationInput = {
+      ...BASE_INPUT,
+      rankedGaps: [
+        makeGap('review_systems', {
+          competitors: [], // empty — no known competitors
+          contrastive_evidence: 'Ordered by impact (no competitor comparison available this scan)',
+        }),
+      ],
+      observations: [
+        makeObservation('chatgpt', 'A list of dental clinics in Tel Aviv.'),
+      ],
+    };
+
+    // Stub returns a narration that invents "FakeRival Labs" — NOT in any raw_response
+    // or competitors list. With the old bug, this would pass because knownCompetitors.size === 0.
+    // With the fix, it must be stripped.
+    const stub = makeStub(
+      'FakeRival Labs has review systems but Test Dental does not.',
+      [
+        {
+          factor_key: 'review_systems',
+          text: 'review systems gap identified.',
+        },
+      ],
+    );
+
+    const result = await narrate(emptyCompetitorsInput, { call: stub });
+
+    // The sentence containing "FakeRival Labs" must be stripped
+    expect(result.ungrounded_claims_stripped).toBeGreaterThanOrEqual(1);
+    expect(result.degraded).toBe(true);
+    const allText = (result.summary + ' ' + result.gap_explanations.map((e) => e.text).join(' '));
+    expect(allText).not.toContain('FakeRival Labs');
+  });
+
+  // ── Blocker 2: number substring false-pass fix ─────────────────────────────
+  //
+  // Previously number grounding used a plain substring match:
+  //   appearsInCorpus("50", rawTexts)  → matches "500" (false-pass!)
+  // The fix uses exact-token matching so "50" does NOT pass when the corpus only
+  // has "500" (a longer number that contains "50" as a substring).
+  //
+  // In this test:
+  //   - The corpus has "500" (sample_n=500 is forced into the subscores numeric strings)
+  //   - The narration claims "50" as a standalone number
+  //   - Old behavior: "50" is found as a substring of "500" → passes (bug)
+  //   - New behavior: "50" is NOT an exact token in the corpus → stripped (fix)
+
+  it('blocker-2: "50" in narration is stripped when corpus only has "500" (no substring pass)', async () => {
+    // Build an input where the subscores have sample_n=500 and point=75.
+    // The corpus numeric strings will include "500", "75", "60", "90", "75%", "75.0".
+    // The narration claims "50" as a standalone number — this is NOT "500".
+    const subscoreWith500: NarrationInput = {
+      ...BASE_INPUT,
+      subscores: [
+        {
+          engine: 'chatgpt',
+          band: { point: 75, ci_low: 60, ci_high: 90, sample_n: 500, low_confidence: false },
+          dimensions: {
+            presence: 0.75,
+            position: null,
+            cited_as_source: 0,
+            share_of_voice: 0,
+            breadth: 0,
+            sentiment: 'unknown',
+          },
+          sample_n: 500,
+        },
+      ],
+      observations: [
+        makeObservation('chatgpt', 'A test response with score 500 in context.'),
+      ],
+    };
+
+    // "50" appears in the narration but "50" is NOT an exact token in the corpus.
+    // Corpus has "500" (sample_n), "75" (point), "60" (ci_low), "90" (ci_high), "75%" (presence).
+    // Old substring bug: "50" would be found inside "500" → false-pass.
+    // New exact-token fix: "50" is not a standalone token in corpus → stripped.
+    const stub = makeStub(
+      'Presence is 50% according to our data.',
+      [
+        {
+          factor_key: 'review_systems',
+          text: '2 of 2 named competitors have review systems; you don\'t.',
+        },
+      ],
+    );
+
+    const result = await narrate(subscoreWith500, { call: stub });
+
+    // "50" must be stripped — it is not an exact token in the corpus
+    // (corpus has "500" and "75", but not "50" as a standalone number)
+    expect(result.degraded).toBe(true);
+    expect(result.ungrounded_claims_stripped).toBeGreaterThanOrEqual(1);
+    expect(result.summary).not.toContain('50%');
+  });
+
+  // ── Blocker 3: PII log fix — verify raw content is not logged ─────────────
+  //
+  // The old code logged `raw: rawText.slice(0, 300)` on JSON parse failure.
+  // The fix drops the raw content from the log entirely.
+  // We verify indirectly: the test passes and no error is thrown (the fix
+  // is about the server log content, not observable test behavior).
+
+  it('blocker-3: JSON parse failure uses fallback and does not re-throw', async () => {
+    const result = await narrate(BASE_INPUT, { call: makeMalformedStub() });
+    // If the fix is wrong and the old log was replaced with something that throws,
+    // this test would fail. The primary assertion is "no throw + fallback returned".
+    expect(result.verified).toBe(false);
+    expect(result.degraded).toBe(true);
+    expect(result.model_id).toBeNull();
+    expect(result.summary).toBeTruthy();
+  });
+
+  // ── Blocker 4: summary entirely stripped → fallback with accumulated count ─
+  //
+  // When ALL sentences in the LLM summary are ungrounded and get stripped,
+  // the code falls back to buildFallback() but must pass through the
+  // accumulated `ungrounded_claims_stripped` count, not reset it to 0.
+
+  it('blocker-4: summary entirely stripped → fallback with accumulated ungrounded_claims_stripped', async () => {
+    // All sentences in the summary are ungrounded (contain fabricated numbers and entities)
+    const stub = makeStub(
+      // Two sentences, both ungrounded:
+      //   - "99%" is not in evidence
+      //   - "FabricatedCorp Labs" is not in evidence
+      'Improvement of 99% is possible. FabricatedCorp Labs is a top competitor.',
+      [
+        {
+          factor_key: 'review_systems',
+          text: '2 of 2 named competitors have review systems; you don\'t.',
+        },
+      ],
+    );
+
+    const result = await narrate(BASE_INPUT, { call: stub });
+
+    // The summary was entirely stripped — fallback was used
+    expect(result.degraded).toBe(true);
+    expect(result.verified).toBe(false);
+    expect(result.model_id).toBeNull(); // fallback sets model_id=null
+    // The accumulated stripped count (from sentences stripped before fallback)
+    // must be ≥ 1 (both sentences were stripped before triggering the fallback path)
+    expect(result.ungrounded_claims_stripped).toBeGreaterThanOrEqual(1);
+    // The summary from fallback must be deterministic and reference the business name
+    expect(result.summary).toContain('Test Dental');
+  });
 });

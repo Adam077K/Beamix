@@ -39,16 +39,17 @@ import { getFixability } from './fixability';
  *                           May contain any status; only 'absent' rows become RankedGaps.
  * @param competitorAudits - One CompetitorFactorAudit per audited competitor.
  *                           Empty array = honest fallback mode (no contrastive signal).
- * @param opts.now         - ISO 8601 timestamp override for deterministic tests.
- *                           Defaults to new Date().toISOString().
+ *
+ * NOTE (blocker 4 — dead `opts.now` param): the `opts` parameter with a `now` field was
+ * declared but never used (voided immediately). Carrying a dead optional parameter in a
+ * stable public API creates confusion for callers and future maintainers. It has been
+ * removed entirely. If a staleness TTL check is ever needed, add it with a concrete
+ * implementation at that time.
  */
 export function buildContrastiveGapList(
   clientGaps: GapListItem[],
   competitorAudits: CompetitorFactorAudit[],
-  opts?: { now?: string },
 ): RankedGap[] {
-  // Unused in v1 but reserved for future TTL / staleness checks on audits.
-  void opts?.now;
 
   // ── Step 1: Filter to real gaps only (status === 'absent') ─────────────────
   //
