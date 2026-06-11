@@ -219,7 +219,7 @@ export default function AutomationPage() {
         title="Automation"
         subtitle="Choose how each agent works — you, or Beamix on a schedule."
         action={
-          {/* M1 TIER-1 hero focal — the page's single STEP-1 number (M2, M11) */}
+          /* M1 TIER-1 hero focal — the page's single STEP-1 number (M2, M11) */
           <div className="card-console-hero flex min-w-[140px] flex-col items-end rounded-[12px] px-5 py-4 text-right">
             <span
               aria-label={`${autonomousCount} agents running autonomously`}
