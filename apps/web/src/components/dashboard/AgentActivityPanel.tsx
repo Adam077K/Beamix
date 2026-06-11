@@ -93,7 +93,7 @@ export function AgentActivityPanel({
               Reload dashboard
             </Link>
             <Link
-              href="/agents"
+              href="/approvals"
               className="text-[12px] font-medium text-[#6B7280] transition-colors hover:text-[#0A0A0A] focus-visible:outline-none"
             >
               Check agent status
@@ -126,7 +126,7 @@ export function AgentActivityPanel({
               Run a scan now
             </Link>
             <Link
-              href="/agents"
+              href="/approvals"
               className="text-[12px] font-medium text-[#6B7280] transition-colors hover:text-[#0A0A0A] focus-visible:outline-none"
             >
               View agent activity

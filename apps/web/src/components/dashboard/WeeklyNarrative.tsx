@@ -46,7 +46,7 @@ function EmptyState() {
           Run your first scan
         </Link>
         <Link
-          href="/agents"
+          href="/approvals"
           className="text-[12px] font-medium text-[#6B7280] transition-colors hover:text-[#0A0A0A] focus-visible:outline-none"
         >
           See what the crew can do
