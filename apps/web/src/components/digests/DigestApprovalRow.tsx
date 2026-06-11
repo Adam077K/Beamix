@@ -20,7 +20,7 @@ const TYPE_LABELS: Record<string, string> = {
  *
  * Read-only (no approve/reject actions — this is the archive surface).
  * Status pills: approved → status-positive, rejected → status-neutral, expired → status-warning.
- * Agent proposer renders in violet text-agent.
+ * Engineering Principle #9: agentProposer is never rendered customer-facing.
  */
 export function DigestApprovalRow({ approval }: DigestApprovalRowProps) {
   const statusConfig = {
@@ -55,11 +55,7 @@ export function DigestApprovalRow({ approval }: DigestApprovalRowProps) {
         <p className="mt-0.5 truncate text-[12px] text-[#9CA3AF]">
           {approval.previewSnippet}
         </p>
-
-        {/* Agent proposer — violet */}
-        {approval.agentProposer && (
-          <p className="mt-0.5 text-[12px] text-agent">{approval.agentProposer}</p>
-        )}
+        {/* agentProposer is intentionally NOT rendered (Principle #9) */}
       </div>
 
       {/* Status pill — text label, not color alone */}
