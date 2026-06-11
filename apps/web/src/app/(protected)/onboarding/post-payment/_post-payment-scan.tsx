@@ -420,7 +420,7 @@ function CompleteBlock({ onContinue }: { onContinue: () => void }) {
 // Error state — two-tier recovery (M8)
 // ---------------------------------------------------------------------------
 
-function ErrorBlock() {
+function ErrorBlock({ onContinue }: { onContinue: () => void }) {
   return (
     <div className="craft-enter craft-enter-1 flex flex-col items-start gap-6">
       <div className="flex flex-col gap-2">
@@ -440,14 +440,15 @@ function ErrorBlock() {
         </p>
       </div>
 
-      {/* Two-tier recovery: primary blue CTA + quiet secondary link */}
+      {/* Two-tier recovery: primary blue CTA (client-side nav) + quiet secondary link */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <a
-          href="/home"
+        <button
+          type="button"
+          onClick={onContinue}
           className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-accent)] px-5 py-2.5 text-[14px] font-medium text-white transition-colors duration-150 hover:bg-[var(--color-accent-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)]"
         >
           Continue to dashboard
-        </a>
+        </button>
         <a
           href="mailto:support@beamixai.com"
           className="text-[13px] text-[var(--color-text-muted)] underline underline-offset-2 hover:text-[var(--color-text-primary)]"
@@ -540,8 +541,10 @@ export function PostPaymentScan() {
   // This keeps the error state fully accessible in QA without affecting prod.
   const [forceError, setForceError] = useState(false)
 
-  // Hidden keyboard shortcut for QA: Shift+E triggers the error state
+  // Hidden keyboard shortcut for QA: Shift+E triggers the error state.
+  // Guarded to dev/test only — never attaches in production builds.
   useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return
     function onKey(e: KeyboardEvent) {
       if (e.shiftKey && e.key === 'E') setForceError(true)
     }
@@ -601,7 +604,7 @@ export function PostPaymentScan() {
             <CompleteBlock onContinue={handleContinue} />
           )}
 
-          {phase === 'error' && <ErrorBlock />}
+          {phase === 'error' && <ErrorBlock onContinue={handleContinue} />}
         </div>
 
         {/* ── M12 gap: 40px between the main card and the drafts rail ── */}
