@@ -1,30 +1,92 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { CheckCircle2, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react'
+import { Progress } from '@/components/ui/progress'
+import {
+  CheckCircle2,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Upload,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-type SaveState = 'idle' | 'saving' | 'success' | 'error'
+// ── Types ────────────────────────────────────────────────────────────────────
 
+export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
+
+// ── Shared section primitives ─────────────────────────────────────────────────
+
+/**
+ * SectionCard — wraps a group of form rows in the .card-console shell.
+ * Optional header: eyebrow + heading + helper text.
+ */
+interface SectionCardProps {
+  eyebrow?: string
+  heading: string
+  helper?: string
+  children: React.ReactNode
+  /** Footer slot — where the save-bar lives */
+  footer?: React.ReactNode
+  className?: string
+}
+
+export function SectionCard({ eyebrow, heading, helper, children, footer, className }: SectionCardProps) {
+  return (
+    <div className={cn('card-console overflow-hidden', className)}>
+      {/* Header */}
+      <div className="px-5 py-4">
+        {eyebrow && (
+          <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+            {eyebrow}
+          </p>
+        )}
+        <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">{heading}</h3>
+        {helper && (
+          <p className="mt-0.5 text-[13px] leading-relaxed text-[var(--color-text-muted)]">{helper}</p>
+        )}
+      </div>
+      {/* Divider */}
+      <div className="border-t border-[#F3F4F6]" />
+      {/* Form rows */}
+      <div className="divide-y divide-[#F3F4F6]">{children}</div>
+      {/* Save-bar footer */}
+      {footer && (
+        <>
+          <div className="border-t border-[#F3F4F6]" />
+          {footer}
+        </>
+      )}
+    </div>
+  )
+}
+
+/**
+ * FieldRow — label column (max ~200px) + control column, consistent 8pt rhythm.
+ */
 interface FieldRowProps {
   label: string
   helper?: string
-  children: React.ReactNode
   htmlFor?: string
+  children: React.ReactNode
 }
 
-function FieldRow({ label, helper, children, htmlFor }: FieldRowProps) {
+export function FieldRow({ label, helper, htmlFor, children }: FieldRowProps) {
   return (
-    <div className="grid grid-cols-1 gap-3 py-5 sm:grid-cols-[1fr_1.4fr] sm:gap-6 sm:items-start">
+    <div className="grid grid-cols-1 gap-2 px-5 py-4 sm:grid-cols-[200px_1fr] sm:items-start sm:gap-6">
       <div className="pt-0.5">
-        <Label htmlFor={htmlFor} className="text-sm font-semibold text-[#0A0A0A]">
+        <Label
+          htmlFor={htmlFor}
+          className="text-[13px] font-medium text-[var(--color-text-secondary)]"
+        >
           {label}
         </Label>
         {helper && (
-          <p className="mt-1 text-[13px] leading-relaxed text-[#6B7280]">{helper}</p>
+          <p className="mt-0.5 text-[12px] leading-relaxed text-[var(--color-text-muted)]">{helper}</p>
         )}
       </div>
       <div>{children}</div>
@@ -32,278 +94,607 @@ function FieldRow({ label, helper, children, htmlFor }: FieldRowProps) {
   )
 }
 
-function SectionHeader({ title }: { title: string }) {
+/**
+ * SaveBar — per-section footer that is dormant when idle, wakes when dirty.
+ *
+ * States:
+ *   idle/clean  → quiet timestamp + disabled button
+ *   saving      → blue "Saving…" + 3-dot mono pulse, button disabled
+ *   saved       → green Check + "Saved", auto-fades back after 2.5s
+ *   error       → red AlertCircle + message + button re-enabled
+ */
+interface SaveBarProps {
+  state: SaveState
+  isDirty: boolean
+  onSave: () => void
+  onDiscard?: () => void
+  saveLabel?: string
+  errorMessage?: string
+  lastSavedLabel?: string
+}
+
+export function SaveBar({
+  state,
+  isDirty,
+  onSave,
+  onDiscard,
+  saveLabel = 'Save changes',
+  errorMessage = "Couldn't save. Try again.",
+  lastSavedLabel = 'Saved',
+}: SaveBarProps) {
   return (
-    <div className="px-6 pt-6 pb-4">
-      <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
-        {title}
-      </h3>
+    <div className="flex items-center justify-between px-5 py-3">
+      {/* Left: status feedback */}
+      <div aria-live="polite" aria-atomic="true">
+        {state === 'saved' && (
+          <span className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--color-status-positive)]">
+            <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {lastSavedLabel}
+          </span>
+        )}
+        {state === 'error' && (
+          <span className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--color-status-critical)]">
+            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {errorMessage}
+          </span>
+        )}
+        {state === 'idle' && !isDirty && (
+          <span className="text-[12px] text-[var(--color-text-muted)]">Saved</span>
+        )}
+      </div>
+
+      {/* Right: controls */}
+      <div className="flex items-center gap-2">
+        {isDirty && state !== 'saving' && onDiscard && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onDiscard}
+            className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+          >
+            Discard
+          </Button>
+        )}
+        <Button
+          type="button"
+          size="sm"
+          onClick={onSave}
+          disabled={state === 'saving' || (!isDirty && state !== 'error')}
+          className="min-w-[120px]"
+          aria-label={state === 'saving' ? 'Saving…' : saveLabel}
+        >
+          {state === 'saving' ? (
+            <span className="flex items-center gap-1.5">
+              Saving
+              <SavingDots />
+            </span>
+          ) : (
+            saveLabel
+          )}
+        </Button>
+      </div>
     </div>
   )
 }
 
-interface ProfileState {
-  firstName: string
-  lastName: string
-  email: string
-  language: string
+/** 3-dot mono pulse — reuses scan-dot keyframe from globals.css */
+function SavingDots() {
+  return (
+    <span className="flex items-center gap-px" aria-hidden="true">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="inline-block h-1 w-1 rounded-full bg-current motion-safe:[animation:scan-dot_1.4s_ease-in-out_infinite]"
+          style={{ animationDelay: `${i * 0.16}s` }}
+        />
+      ))}
+    </span>
+  )
 }
 
-interface PasswordState {
-  currentPassword: string
-  newPassword: string
-  confirmPassword: string
-  showCurrent: boolean
-  showNew: boolean
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+
+function ProfileSkeleton() {
+  return (
+    <div className="space-y-6" aria-busy="true" aria-label="Loading profile">
+      {[0, 1].map((i) => (
+        <div key={i} className="card-console overflow-hidden">
+          <div className="px-5 py-4">
+            <div className="h-4 w-32 animate-pulse rounded bg-[#F3F4F6]" />
+          </div>
+          <div className="border-t border-[#F3F4F6] space-y-0 divide-y divide-[#F3F4F6]">
+            {[0, 1, 2].map((j) => (
+              <div key={j} className="px-5 py-4 grid grid-cols-[200px_1fr] gap-6">
+                <div className="h-4 w-24 animate-pulse rounded bg-[#F3F4F6]" />
+                <div className="h-9 animate-pulse rounded-lg bg-[#F3F4F6]" />
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-[#F3F4F6] px-5 py-3 flex justify-end">
+            <div className="h-9 w-28 animate-pulse rounded-lg bg-[#F3F4F6]" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 }
+
+// ── Password strength ─────────────────────────────────────────────────────────
+
+function passwordStrength(password: string): { score: number; label: string; color: string } {
+  if (!password) return { score: 0, label: '', color: '#E5E7EB' }
+  let score = 0
+  if (password.length >= 8) score++
+  if (password.length >= 12) score++
+  if (/[A-Z]/.test(password)) score++
+  if (/[0-9]/.test(password)) score++
+  if (/[^A-Za-z0-9]/.test(password)) score++
+
+  if (score <= 1) return { score: 20, label: 'Weak', color: 'var(--color-status-critical)' }
+  if (score <= 2) return { score: 40, label: 'Fair', color: 'var(--color-status-warning)' }
+  if (score <= 3) return { score: 65, label: 'Good', color: 'var(--color-status-positive)' }
+  return { score: 100, label: 'Strong', color: 'var(--color-status-positive)' }
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+interface ProfileState {
+  fullName: string
+  email: string
+  emailVerified: boolean
+  timezone: string
+}
+
+// item #9: visibility (showCurrent/showNext) is view-state, not form data.
+// It lives in its own state so toggling it does NOT set passwordDirty.
+interface PasswordState {
+  current: string
+  next: string
+  confirm: string
+}
+
+const INITIAL_PROFILE: ProfileState = {
+  fullName: '',
+  email: '',
+  emailVerified: false,
+  timezone: 'Asia/Jerusalem',
+}
+
+const INITIAL_PASSWORD: PasswordState = {
+  current: '',
+  next: '',
+  confirm: '',
+}
+
+const TIMEZONES = [
+  { value: 'America/New_York', label: 'Eastern Time (ET)' },
+  { value: 'America/Chicago', label: 'Central Time (CT)' },
+  { value: 'America/Denver', label: 'Mountain Time (MT)' },
+  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+  { value: 'Europe/London', label: 'London (GMT/BST)' },
+  { value: 'Europe/Berlin', label: 'Berlin (CET/CEST)' },
+  { value: 'Asia/Jerusalem', label: 'Israel (IST)' },
+  { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
+  { value: 'Australia/Sydney', label: 'Sydney (AEDT)' },
+]
 
 export function ProfileTab() {
-  // Design-first: empty defaults until Supabase profile read is wired (fast-follow).
-  // Never ship a hardcoded persona email as the default state for all users.
-  const [profile, setProfile] = useState<ProfileState>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    language: 'en',
-  })
-  const [profileSave, setProfileSave] = useState<SaveState>('idle')
+  // Wave 2: wire to Supabase profile read
+  const [isLoading] = useState(false)
 
-  const [password, setPassword] = useState<PasswordState>({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-    showCurrent: false,
-    showNew: false,
-  })
+  const [profile, setProfile] = useState<ProfileState>(INITIAL_PROFILE)
+  const [profileSave, setProfileSave] = useState<SaveState>('idle')
+  const [profileDirty, setProfileDirty] = useState(false)
+  const [profileError, setProfileError] = useState('')
+
+  const [password, setPassword] = useState<PasswordState>(INITIAL_PASSWORD)
+  // item #9: visibility is VIEW-STATE — separate from dirty-tracked form values
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNextPassword, setShowNextPassword] = useState(false)
   const [passwordSave, setPasswordSave] = useState<SaveState>('idle')
+  const [passwordDirty, setPasswordDirty] = useState(false)
   const [passwordError, setPasswordError] = useState('')
+
+  // Avatar preview: local object URL — Wave 2: persist to Supabase Storage
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  // item #10: guard auto-fade timeouts with refs to clearTimeout on unmount
+  const profileFadeRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const passwordFadeRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (profileFadeRef.current) clearTimeout(profileFadeRef.current)
+      if (passwordFadeRef.current) clearTimeout(passwordFadeRef.current)
+    }
+  }, [])
+
+  // Revoke avatar object URL on unmount to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+    }
+  }, [avatarPreview])
+
+  const handleUploadClick = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+    const objectUrl = URL.createObjectURL(file)
+    setAvatarPreview(objectUrl)
+    // Wave 2: persist to Supabase Storage and update user metadata
+    // Reset input so the same file can be re-selected if removed
+    e.target.value = ''
+  }, [avatarPreview])
+
+  const handleRemoveAvatar = useCallback(() => {
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+    setAvatarPreview(null)
+    // Wave 2: remove from Supabase Storage and clear user metadata
+  }, [avatarPreview])
+
+  function updateProfile<K extends keyof ProfileState>(key: K, value: ProfileState[K]) {
+    setProfile((p) => ({ ...p, [key]: value }))
+    setProfileDirty(true)
+    if (profileSave === 'saved' || profileSave === 'error') setProfileSave('idle')
+  }
+
+  function updatePassword<K extends keyof PasswordState>(key: K, value: PasswordState[K]) {
+    setPassword((p) => ({ ...p, [key]: value }))
+    setPasswordDirty(true)
+    setPasswordError('')
+    if (passwordSave === 'saved' || passwordSave === 'error') setPasswordSave('idle')
+  }
 
   async function handleSaveProfile() {
     setProfileSave('saving')
-    // Stub: simulate network latency
+    // Wave 2: wire to Supabase user update
     await new Promise((r) => setTimeout(r, 900))
-    setProfileSave('success')
-    setTimeout(() => setProfileSave('idle'), 3000)
+    setProfileSave('saved')
+    setProfileDirty(false)
+    // item #10: store timer id so it can be cleared on unmount
+    if (profileFadeRef.current) clearTimeout(profileFadeRef.current)
+    profileFadeRef.current = setTimeout(() => setProfileSave('idle'), 2500)
+  }
+
+  function handleDiscardProfile() {
+    setProfile(INITIAL_PROFILE)
+    setProfileDirty(false)
+    setProfileSave('idle')
+    setProfileError('')
   }
 
   async function handleSavePassword() {
     setPasswordError('')
-    if (password.newPassword !== password.confirmPassword) {
+    if (password.next !== password.confirm) {
       setPasswordError('New passwords do not match.')
+      setPasswordSave('error')
       return
     }
-    if (password.newPassword.length < 8) {
+    if (password.next.length < 8) {
       setPasswordError('Password must be at least 8 characters.')
+      setPasswordSave('error')
+      return
+    }
+    if (!password.current) {
+      setPasswordError('Current password is required.')
+      setPasswordSave('error')
       return
     }
     setPasswordSave('saving')
+    // Wave 2: wire to Supabase auth.updateUser
     await new Promise((r) => setTimeout(r, 1000))
-    // Stub: 10% error simulation removed — always succeed for demo
-    setPasswordSave('success')
-    setPassword((p) => ({ ...p, currentPassword: '', newPassword: '', confirmPassword: '' }))
-    setTimeout(() => setPasswordSave('idle'), 3000)
+    setPasswordSave('saved')
+    setPasswordDirty(false)
+    setPassword({ current: '', next: '', confirm: '' })
+    // item #10: store timer id so it can be cleared on unmount
+    if (passwordFadeRef.current) clearTimeout(passwordFadeRef.current)
+    passwordFadeRef.current = setTimeout(() => setPasswordSave('idle'), 2500)
   }
+
+  function handleDiscardPassword() {
+    setPassword(INITIAL_PASSWORD)
+    setPasswordDirty(false)
+    setPasswordSave('idle')
+    setPasswordError('')
+  }
+
+  const strength = passwordStrength(password.next)
+  const passwordCanSave = password.current && password.next && password.confirm
+
+  if (isLoading) return <ProfileSkeleton />
 
   return (
     <div className="space-y-6">
-      {/* Personal information panel */}
-      <div className="card-console overflow-hidden">
-        <SectionHeader title="Personal information" />
+      {/* ── Personal information ── */}
+      <SectionCard
+        eyebrow="Profile"
+        heading="Personal information"
+        footer={
+          <SaveBar
+            state={profileSave}
+            isDirty={profileDirty}
+            onSave={handleSaveProfile}
+            onDiscard={handleDiscardProfile}
+            errorMessage={profileError || "Couldn't save. Try again."}
+          />
+        }
+      >
+        {/* Avatar row */}
+        <FieldRow label="Avatar">
+          {/* Hidden file input — opened programmatically by Upload button */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            aria-hidden="true"
+            tabIndex={-1}
+            onChange={handleFileChange}
+          />
+          <div className="flex items-center gap-4">
+            {/* Avatar display: uploaded preview or initials fallback */}
+            {avatarPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarPreview}
+                alt="Profile avatar preview"
+                className="h-14 w-14 shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <div
+                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent-tint)] text-lg font-semibold text-[var(--color-accent-deep)] select-none"
+                aria-label="Profile avatar initials"
+              >
+                {profile.fullName
+                  ? profile.fullName
+                      .split(' ')
+                      .slice(0, 2)
+                      .map((n) => n[0]?.toUpperCase())
+                      .join('')
+                  : '?'}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                aria-label="Upload profile photo"
+                onClick={handleUploadClick}
+              >
+                <Upload className="h-3.5 w-3.5" aria-hidden="true" />
+                Upload
+              </Button>
+              {avatarPreview && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Remove profile photo"
+                  onClick={handleRemoveAvatar}
+                >
+                  Remove
+                </Button>
+              )}
+            </div>
+          </div>
+        </FieldRow>
 
-        <div className="divide-y divide-[#F3F4F6] px-6">
-          <FieldRow label="First name" htmlFor="first-name">
-            <Input
-              id="first-name"
-              value={profile.firstName}
-              onChange={(e) => setProfile((p) => ({ ...p, firstName: e.target.value }))}
-              autoComplete="given-name"
-            />
-          </FieldRow>
+        {/* Full name */}
+        <FieldRow label="Full name" htmlFor="full-name">
+          <Input
+            id="full-name"
+            value={profile.fullName}
+            onChange={(e) => updateProfile('fullName', e.target.value)}
+            placeholder="Jane Smith"
+            autoComplete="name"
+          />
+        </FieldRow>
 
-          <FieldRow label="Last name" htmlFor="last-name">
-            <Input
-              id="last-name"
-              value={profile.lastName}
-              onChange={(e) => setProfile((p) => ({ ...p, lastName: e.target.value }))}
-              autoComplete="family-name"
-            />
-          </FieldRow>
-
-          <FieldRow
-            label="Email address"
-            helper="Used for login and notifications. Changing this requires re-verification."
-            htmlFor="email"
-          >
+        {/* Email */}
+        <FieldRow
+          label="Email address"
+          helper="Used for login and notifications."
+          htmlFor="email"
+        >
+          <div className="space-y-2">
             <Input
               id="email"
               type="email"
               value={profile.email}
-              onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
+              onChange={(e) => updateProfile('email', e.target.value)}
+              placeholder="jane@example.com"
               autoComplete="email"
             />
-          </FieldRow>
+            {/* Verification badge row */}
+            {profile.email ? (
+              profile.emailVerified ? (
+                <p className="flex items-center gap-1.5 text-[12px]">
+                  <span className="inline-flex items-center gap-1 rounded-md bg-[var(--color-status-info-bg,#EEF2FF)] px-2 py-0.5 text-[12px] font-medium text-[var(--color-status-info)]">
+                    Verified
+                  </span>
+                </p>
+              ) : (
+                <div className="flex items-center gap-2 rounded-lg bg-[var(--color-status-warning-bg,#FDF3E0)] px-3 py-2 text-[12px]">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0 text-[var(--color-status-warning)]" aria-hidden="true" />
+                  <span className="text-[var(--color-status-warning)]">
+                    Email not verified.
+                  </span>
+                  <button
+                    type="button"
+                    className="ml-1 font-medium text-[var(--color-accent)] underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-1 rounded"
+                  >
+                    Resend
+                  </button>
+                </div>
+              )
+            ) : null}
+          </div>
+        </FieldRow>
 
-          <FieldRow
-            label="Language"
-            helper="Interface language for the Beamix console."
+        {/* Timezone */}
+        <FieldRow
+          label="Time zone"
+          helper="When the crew surfaces time-sensitive results."
+          htmlFor="timezone"
+        >
+          <Select
+            value={profile.timezone}
+            onValueChange={(v) => updateProfile('timezone', v)}
           >
-            <Select
-              value={profile.language}
-              onValueChange={(v) => setProfile((p) => ({ ...p, language: v }))}
-            >
-              <SelectTrigger aria-label="Select interface language">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="he">עברית</SelectItem>
-              </SelectContent>
-            </Select>
-          </FieldRow>
-        </div>
+            <SelectTrigger id="timezone" aria-label="Select time zone">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TIMEZONES.map((tz) => (
+                <SelectItem key={tz.value} value={tz.value}>
+                  {tz.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FieldRow>
+      </SectionCard>
 
-        <div className="flex items-center justify-between border-t border-[#F3F4F6] px-6 py-4">
-          <SaveFeedback state={profileSave} />
-          <Button
-            onClick={handleSaveProfile}
-            disabled={profileSave === 'saving'}
-            className="min-w-[120px]"
-          >
-            {profileSave === 'saving' ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving…
-              </>
-            ) : (
-              'Save changes'
-            )}
-          </Button>
-        </div>
-      </div>
+      {/* ── Password ── */}
+      <SectionCard
+        eyebrow="Security"
+        heading="Password"
+        helper="Choose a strong password you don't use elsewhere."
+        footer={
+          <SaveBar
+            state={passwordSave}
+            isDirty={passwordDirty && !!passwordCanSave}
+            onSave={handleSavePassword}
+            onDiscard={handleDiscardPassword}
+            saveLabel="Update password"
+            errorMessage={passwordError || "Couldn't update. Try again."}
+          />
+        }
+      >
+        {/* Current password */}
+        <FieldRow label="Current password" htmlFor="current-password">
+          <PasswordInput
+            id="current-password"
+            value={password.current}
+            onChange={(v) => updatePassword('current', v)}
+            showToggled={showCurrentPassword}
+            // item #9: toggle uses its own setter — does NOT touch dirty-tracked state
+            onToggle={() => setShowCurrentPassword((prev) => !prev)}
+            autoComplete="current-password"
+          />
+        </FieldRow>
 
-      {/* Password panel */}
-      <div className="card-console overflow-hidden">
-        <SectionHeader title="Password" />
-
-        <div className="divide-y divide-[#F3F4F6] px-6">
-          <FieldRow
-            label="Current password"
-            htmlFor="current-password"
-          >
-            <div className="relative">
-              <Input
-                id="current-password"
-                type={password.showCurrent ? 'text' : 'password'}
-                value={password.currentPassword}
-                onChange={(e) => setPassword((p) => ({ ...p, currentPassword: e.target.value }))}
-                autoComplete="current-password"
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setPassword((p) => ({ ...p, showCurrent: !p.showCurrent }))}
-                aria-label={password.showCurrent ? 'Hide password' : 'Show password'}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B7280] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1 rounded"
-              >
-                {password.showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </FieldRow>
-
-          <FieldRow
-            label="New password"
-            helper="Minimum 8 characters."
-            htmlFor="new-password"
-          >
-            <div className="relative">
-              <Input
-                id="new-password"
-                type={password.showNew ? 'text' : 'password'}
-                value={password.newPassword}
-                onChange={(e) => setPassword((p) => ({ ...p, newPassword: e.target.value }))}
-                autoComplete="new-password"
-                className="pr-10"
-                aria-invalid={passwordError !== '' ? true : undefined}
-              />
-              <button
-                type="button"
-                onClick={() => setPassword((p) => ({ ...p, showNew: !p.showNew }))}
-                aria-label={password.showNew ? 'Hide new password' : 'Show new password'}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B7280] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1 rounded"
-              >
-                {password.showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </FieldRow>
-
-          <FieldRow
-            label="Confirm new password"
-            htmlFor="confirm-password"
-          >
-            <Input
-              id="confirm-password"
-              type="password"
-              value={password.confirmPassword}
-              onChange={(e) => setPassword((p) => ({ ...p, confirmPassword: e.target.value }))}
+        {/* New password + strength meter */}
+        <FieldRow label="New password" htmlFor="new-password">
+          <div className="space-y-2">
+            <PasswordInput
+              id="new-password"
+              value={password.next}
+              onChange={(v) => updatePassword('next', v)}
+              showToggled={showNextPassword}
+              // item #9: same — visibility toggle never sets dirty
+              onToggle={() => setShowNextPassword((prev) => !prev)}
               autoComplete="new-password"
-              aria-invalid={passwordError !== '' ? true : undefined}
+              aria-invalid={passwordSave === 'error' || undefined}
             />
-          </FieldRow>
-        </div>
+            {password.next && (
+              <div className="flex items-center gap-2">
+                <Progress
+                  value={strength.score}
+                  className="h-1 flex-1"
+                  // Tint the indicator with the strength color
+                  style={{ '--progress-color': strength.color } as React.CSSProperties}
+                />
+                <span
+                  className="text-[11px] font-medium"
+                  style={{ color: strength.color }}
+                >
+                  {strength.label}
+                </span>
+              </div>
+            )}
+          </div>
+        </FieldRow>
 
+        {/* Confirm */}
+        <FieldRow label="Confirm password" htmlFor="confirm-password">
+          <Input
+            id="confirm-password"
+            type="password"
+            value={password.confirm}
+            onChange={(e) => updatePassword('confirm', e.target.value)}
+            autoComplete="new-password"
+            aria-invalid={passwordSave === 'error' || undefined}
+          />
+        </FieldRow>
+
+        {/* Field-level error */}
         {passwordError && (
-          <div className="mx-6 mb-4 flex items-center gap-2 rounded-lg bg-[#FDECEC] px-4 py-3 text-[13px] text-[#DC2626]">
-            <AlertCircle className="h-4 w-4 shrink-0" />
+          <div className="mx-5 mb-4 flex items-center gap-2 rounded-lg bg-[var(--color-status-critical-bg)] px-4 py-3 text-[13px] text-[var(--color-status-critical)]">
+            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
             {passwordError}
           </div>
         )}
-
-        <div className="flex items-center justify-between border-t border-[#F3F4F6] px-6 py-4">
-          <SaveFeedback state={passwordSave} />
-          <Button
-            onClick={handleSavePassword}
-            disabled={
-              passwordSave === 'saving' ||
-              !password.currentPassword ||
-              !password.newPassword ||
-              !password.confirmPassword
-            }
-            className="min-w-[128px]"
-          >
-            {passwordSave === 'saving' ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving…
-              </>
-            ) : (
-              'Update password'
-            )}
-          </Button>
-        </div>
-      </div>
+      </SectionCard>
     </div>
   )
 }
 
-function SaveFeedback({ state }: { state: SaveState }) {
-  if (state === 'success') {
-    return (
-      <span className="flex items-center gap-1.5 text-[13px] font-medium text-[#0E9E6E]">
-        <CheckCircle2 className="h-4 w-4" />
-        Saved
-      </span>
-    )
-  }
-  if (state === 'error') {
-    return (
-      <span className="flex items-center gap-1.5 text-[13px] font-medium text-[#DC2626]">
-        <AlertCircle className="h-4 w-4" />
-        Failed to save
-      </span>
-    )
-  }
-  return <span />
+// ── PasswordInput ─────────────────────────────────────────────────────────────
+
+interface PasswordInputProps {
+  id: string
+  value: string
+  onChange: (v: string) => void
+  showToggled: boolean
+  onToggle: () => void
+  autoComplete?: string
+  'aria-invalid'?: boolean
 }
 
-export { FieldRow, SectionHeader, SaveFeedback }
-export type { SaveState }
+function PasswordInput({
+  id,
+  value,
+  onChange,
+  showToggled,
+  onToggle,
+  autoComplete,
+  'aria-invalid': ariaInvalid,
+}: PasswordInputProps) {
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        type={showToggled ? 'text' : 'password'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        autoComplete={autoComplete}
+        aria-invalid={ariaInvalid}
+        className="pr-10"
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={showToggled ? 'Hide password' : 'Show password'}
+        className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-[#9CA3AF] transition-colors hover:text-[#6B7280] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-1"
+      >
+        {showToggled ? (
+          <EyeOff className="h-4 w-4" aria-hidden="true" />
+        ) : (
+          <Eye className="h-4 w-4" aria-hidden="true" />
+        )}
+      </button>
+    </div>
+  )
+}
+
+export { PasswordInput }

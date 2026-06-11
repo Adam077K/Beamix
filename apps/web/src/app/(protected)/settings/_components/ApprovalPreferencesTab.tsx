@@ -1,11 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Switch } from '@/components/ui/switch'
-import { Button } from '@/components/ui/button'
-import { Loader2, Lock } from 'lucide-react'
+import { Lock, ShieldCheck, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { SaveFeedback, type SaveState } from './ProfileTab'
+import { SectionCard, SaveBar, type SaveState } from './ProfileTab'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,20 +14,22 @@ interface AgentClass {
   id: string
   label: string
   description: string
+  consequence: string
   mode: ApprovalMode
+  canAutomate: boolean
   locked?: boolean
   lockedReason?: string
 }
 
-// ── Breathing violet dot (copied from AgentActivityPanel motif) ──────────────
+// ── Breathing violet dot ─────────────────────────────────────────────────────
 
 function VioletDot({ pulse = true }: { pulse?: boolean }) {
   return (
     <span className="relative flex h-2.5 w-2.5 shrink-0" aria-hidden="true">
       {pulse && (
-        <span className="absolute inline-flex h-full w-full motion-safe:animate-ping rounded-full bg-[#6E56F0] opacity-40" />
+        <span className="absolute inline-flex h-full w-full rounded-full bg-[var(--color-agent)] opacity-40 motion-safe:animate-ping" />
       )}
-      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#6E56F0]" />
+      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[var(--color-agent)]" />
     </span>
   )
 }
@@ -43,45 +44,100 @@ interface AgentRowProps {
 function AgentApprovalRow({ agentClass, onChange }: AgentRowProps) {
   const isAuto = agentClass.mode === 'auto'
   const isLocked = agentClass.locked
+  const canAutomate = agentClass.canAutomate
 
   return (
     <div
       className={cn(
-        'flex items-center gap-4 px-5 py-4',
-        isLocked && 'bg-[#EEEAFD]/40',
-        !isLocked && 'bg-[#EEEAFD]/20 hover:bg-[#EEEAFD]/40 transition-colors'
+        'flex items-start gap-4 px-5 py-4 transition-colors',
+        isLocked
+          ? 'bg-[var(--color-agent-tint)] opacity-80'
+          : 'hover:bg-[#FAFAF9]',
       )}
     >
-      <VioletDot pulse={!isLocked} />
-
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-semibold text-[#0A0A0A]">{agentClass.label}</span>
-          {isLocked && (
-            <span
-              className="inline-flex items-center gap-1 rounded-md bg-[#EEEAFD] px-2 py-0.5 text-[12px] font-medium text-[#6E56F0]"
-              aria-label="Beamix reviews this with you"
-            >
-              <Lock className="h-3 w-3" />
-              Beamix reviews this with you
-            </span>
-          )}
-        </div>
-        <p className="mt-0.5 text-[13px] leading-relaxed text-[#6B7280]">
-          {agentClass.description}
-        </p>
-        {isLocked && agentClass.lockedReason && (
-          <p className="mt-1 text-[12px] italic text-[#9CA3AF]">{agentClass.lockedReason}</p>
+      {/* Violet dot / Sparkles glyph */}
+      <div className="mt-1">
+        {isLocked ? (
+          <Sparkles
+            className="h-4 w-4 text-[var(--color-agent)]"
+            aria-hidden="true"
+            strokeWidth={1.5}
+          />
+        ) : (
+          <VioletDot pulse={!isLocked} />
         )}
       </div>
 
-      <div className="flex shrink-0 items-center gap-3">
-        {!isLocked ? (
+      {/* Label + description + consequence */}
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[14px] font-semibold text-[var(--color-text-primary)]">
+            {agentClass.label}
+          </span>
+          {isLocked && (
+            <span
+              className="inline-flex items-center gap-1 rounded-md bg-[var(--color-agent-tint)] px-2 py-0.5 text-[11px] font-medium text-[var(--color-agent)]"
+              aria-label="Always requires your approval"
+            >
+              <Lock className="h-3 w-3" aria-hidden="true" />
+              Always reviewed
+            </span>
+          )}
+        </div>
+        <p className="mt-0.5 text-[13px] leading-relaxed text-[var(--color-text-muted)]">
+          {agentClass.description}
+        </p>
+        {/* Consequence caption */}
+        <p className="mt-1 text-[12px] italic text-[#9CA3AF]">
+          {isLocked ? agentClass.lockedReason : agentClass.consequence}
+        </p>
+      </div>
+
+      {/* Toggle control */}
+      <div className="mt-0.5 flex shrink-0 items-center gap-2.5">
+        {isLocked ? (
+          <>
+            {/* Static locked switch */}
+            <span className="text-[13px] text-[#9CA3AF]">Auto</span>
+            <Switch
+              checked={false}
+              disabled
+              aria-label={`${agentClass.label}: auto-publish disabled — always reviewed`}
+              className="opacity-40"
+            />
+            <span className="text-[13px] font-medium text-[var(--color-agent)]">1-click</span>
+          </>
+        ) : !canAutomate ? (
+          /* Can't fully automate — Auto disabled with tooltip */
+          <>
+            <span
+              title="This class can't be auto-published — requires at least 1-click approval"
+              className="cursor-not-allowed text-[13px] text-[#9CA3AF]"
+            >
+              Auto
+            </span>
+            <Switch
+              checked={!isAuto}
+              disabled
+              aria-label={`${agentClass.label}: auto-publish not available for this class`}
+              className="opacity-40"
+            />
+            <span
+              className={cn(
+                'text-[13px]',
+                !isAuto ? 'font-medium text-[var(--color-text-primary)]' : 'text-[#9CA3AF]',
+              )}
+            >
+              1-click
+            </span>
+          </>
+        ) : (
+          /* Full toggle */
           <>
             <span
               className={cn(
                 'text-[13px] transition-colors',
-                isAuto ? 'font-medium text-[#0A0A0A]' : 'text-[#9CA3AF]'
+                isAuto ? 'font-medium text-[var(--color-text-primary)]' : 'text-[#9CA3AF]',
               )}
             >
               Auto
@@ -91,122 +147,184 @@ function AgentApprovalRow({ agentClass, onChange }: AgentRowProps) {
               onCheckedChange={(checked) =>
                 onChange(agentClass.id, checked ? '1-click' : 'auto')
               }
-              aria-label={`${agentClass.label} approval mode: ${agentClass.mode}`}
-              // Violet checked state — agent surface
-              className="data-[state=checked]:bg-[#6E56F0]"
+              aria-label={`${agentClass.label}: ${agentClass.mode === 'auto' ? 'currently auto-publish' : 'currently requires 1-click approval'}`}
+              // Violet on-state — agent surface, NOT a button
+              className="data-[state=checked]:bg-[var(--color-agent)]"
             />
             <span
               className={cn(
                 'text-[13px] transition-colors',
-                !isAuto ? 'font-medium text-[#0A0A0A]' : 'text-[#9CA3AF]'
+                !isAuto ? 'font-medium text-[var(--color-text-primary)]' : 'text-[#9CA3AF]',
               )}
             >
               1-click
             </span>
           </>
-        ) : (
-          <span className="text-[13px] font-medium text-[#6E56F0]">Always reviewed</span>
         )}
       </div>
     </div>
   )
 }
 
-// ── Main component ───────────────────────────────────────────────────────────
+// ── Stub data ────────────────────────────────────────────────────────────────
+// Wave 2: wire to Supabase approval_preferences read
 
 const INITIAL_CLASSES: AgentClass[] = [
   {
-    id: 'content',
-    label: 'Content',
-    description: 'Blog posts, FAQ entries, and service descriptions generated or updated by your agents.',
+    id: 'faq',
+    label: 'FAQ blocks',
+    description: 'Frequently asked question entries generated or updated by the FAQ agent.',
+    consequence: 'Auto: publishes within minutes of agent run. 1-click: lands in your approval inbox.',
     mode: '1-click',
+    canAutomate: true,
   },
   {
-    id: 'email',
-    label: 'Email & outreach',
-    description: 'Follow-up sequences, review requests, and client nurture emails drafted by the outreach agent.',
+    id: 'service-pages',
+    label: 'Service-page copy',
+    description: 'New or edited copy for your services, features, and about-us sections.',
+    consequence: 'Auto: replaces existing copy without interrupting you. 1-click: you preview first.',
     mode: '1-click',
+    canAutomate: true,
+  },
+  {
+    id: 'gbp',
+    label: 'GBP posts',
+    description: 'Google Business Profile updates: posts, hours, attributes, and Q&A.',
+    consequence: 'Auto: keeps your listing fresh daily. 1-click: review before publishing.',
+    mode: 'auto',
+    canAutomate: true,
+  },
+  {
+    id: 'meta',
+    label: 'Meta descriptions',
+    description: 'Title tags and meta descriptions for your web pages.',
+    consequence: 'Auto: SEO changes apply immediately. 1-click: confirm before deployment.',
+    mode: 'auto',
+    canAutomate: true,
   },
   {
     id: 'schema',
-    label: 'Schema & structured data',
-    description: 'JSON-LD markup, business hours, and FAQ schema updates that affect your Knowledge Panel.',
-    mode: 'auto',
-  },
-  {
-    id: 'social',
-    label: 'Social & listings',
-    description: 'Posts drafted for Google Business Profile, Yelp, and Apple Maps by the local presence agent.',
-    mode: 'auto',
+    label: 'Schema / structured data',
+    description: 'JSON-LD markup updates that affect your Knowledge Panel.',
+    consequence: 'Applied via your CMS. 1-click approval required — schema errors are hard to undo.',
+    mode: '1-click',
+    canAutomate: false,
   },
   {
     id: 'ymyl',
     label: 'Health, legal & financial claims',
-    description: 'Any content that makes direct health, legal, or financial claims on your behalf.',
+    description: 'Any content making direct health, legal, or financial claims on your behalf.',
+    consequence: '',
     mode: '1-click',
+    canAutomate: false,
     locked: true,
-    lockedReason: 'Health, legal, and financial claims always get a human approval — yours.',
+    lockedReason: 'Legal, health, and financial content always needs your sign-off — for your protection and your customers\'.',
   },
 ]
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export function ApprovalPreferencesTab() {
   const [classes, setClasses] = useState<AgentClass[]>(INITIAL_CLASSES)
   const [saveState, setSaveState] = useState<SaveState>('idle')
+  const [isDirty, setIsDirty] = useState(false)
+
+  // item #10: guard the auto-fade timeout with a ref
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    return () => {
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current)
+    }
+  }, [])
 
   function handleChange(id: string, mode: ApprovalMode) {
     setClasses((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, mode } : c))
+      prev.map((c) => (c.id === id ? { ...c, mode } : c)),
     )
+    setIsDirty(true)
+    if (saveState === 'saved' || saveState === 'error') setSaveState('idle')
   }
 
   async function handleSave() {
     setSaveState('saving')
+    // Wave 2: wire to Supabase approval_preferences upsert
     await new Promise((r) => setTimeout(r, 900))
-    setSaveState('success')
-    setTimeout(() => setSaveState('idle'), 3000)
+    setSaveState('saved')
+    setIsDirty(false)
+    // item #10: store timer id so it can be cleared on unmount
+    if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current)
+    fadeTimerRef.current = setTimeout(() => setSaveState('idle'), 2500)
   }
 
+  function handleDiscard() {
+    setClasses(INITIAL_CLASSES)
+    setIsDirty(false)
+    setSaveState('idle')
+  }
+
+  const adjustableClasses = classes.filter((c) => !c.locked)
+  const lockedClasses = classes.filter((c) => c.locked)
+
   return (
-    <div className="card-console overflow-hidden">
-      <div className="px-5 pt-6 pb-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
-          Approval preferences
-        </p>
-        <p className="mt-1 text-[13px] leading-relaxed text-[#6B7280]">
-          Control which agent actions go live automatically and which wait for your one-click sign-off.
-          <span className="ml-1 font-medium text-[#6E56F0]">Auto</span> means your crew publishes without interrupting you.
-          <span className="ml-1 font-medium text-[#0A0A0A]">1-click</span> sends it to your inbox first.
-        </p>
-      </div>
-
-      {/* Violet identity zone */}
-      <div className="mt-4 divide-y divide-[#EEEAFD]/60 border-t border-[#EEEAFD]">
-        {classes.map((agentClass) => (
-          <AgentApprovalRow
-            key={agentClass.id}
-            agentClass={agentClass}
-            onChange={handleChange}
+    <div className="space-y-6">
+      {/* ── Adjustable classes ── */}
+      <SectionCard
+        eyebrow="Approval preferences"
+        heading="Automation controls"
+        helper="Decide how much the crew does on its own. Move work between automatic and your one-click approval — within safe bounds."
+        footer={
+          <SaveBar
+            state={saveState}
+            isDirty={isDirty}
+            onSave={handleSave}
+            onDiscard={handleDiscard}
+            saveLabel="Save preferences"
           />
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between border-t border-[#F3F4F6] px-5 py-4">
-        <div className="flex items-center gap-2 text-[13px] text-[#6E56F0]">
-          <VioletDot pulse={false} />
-          <span>Your crew keeps working while you review</span>
+        }
+      >
+        <div className="divide-y divide-[#EEEAFD]/60">
+          {adjustableClasses.map((agentClass) => (
+            <AgentApprovalRow
+              key={agentClass.id}
+              agentClass={agentClass}
+              onChange={handleChange}
+            />
+          ))}
         </div>
-        <div className="flex items-center gap-4">
-          <SaveFeedback state={saveState} />
-          <Button onClick={handleSave} disabled={saveState === 'saving'} className="min-w-[144px]">
-            {saveState === 'saving' ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving…
-              </>
-            ) : (
-              'Save preferences'
-            )}
-          </Button>
+      </SectionCard>
+
+      {/* ── YMYL Guardrail lockbox ── */}
+      <div className="card-console overflow-hidden bg-[var(--color-surface-warm)]">
+        <div className="flex items-start gap-3 px-5 py-4 border-b border-[#EEEAFD]">
+          <ShieldCheck
+            className="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-agent)]"
+            aria-hidden="true"
+            strokeWidth={1.5}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-[14px] font-semibold text-[var(--color-text-primary)]">
+              Always requires your approval
+            </p>
+            <p className="mt-0.5 text-[13px] leading-relaxed text-[var(--color-text-muted)]">
+              Legal, health, and financial content (YMYL) is never auto-published — for your protection and your customers&apos; trust.
+            </p>
+          </div>
+        </div>
+        <div className="divide-y divide-[#EEEAFD]/60">
+          {lockedClasses.map((agentClass) => (
+            <AgentApprovalRow
+              key={agentClass.id}
+              agentClass={agentClass}
+              onChange={() => {}}
+            />
+          ))}
+        </div>
+        {/* Footer — crew context, no save bar */}
+        <div className="flex items-center gap-2 border-t border-[#EEEAFD] px-5 py-3">
+          <VioletDot pulse={false} />
+          <p className="text-[13px] text-[var(--color-agent)]">
+            Your crew keeps working while you review
+          </p>
         </div>
       </div>
     </div>

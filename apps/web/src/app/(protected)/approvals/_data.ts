@@ -36,8 +36,22 @@ export const ApprovalQueueItemSchema = z.object({
   /**
    * URL to the artifact/evidence for this approval item.
    * Extracted from the `evidence` jsonb column; may be null if not set.
+   * Enforces http(s) scheme — javascript: and data: URIs are rejected.
    */
-  evidenceUrl: z.string().url().nullable(),
+  evidenceUrl: z
+    .string()
+    .url()
+    .refine(
+      (v) => {
+        try {
+          return ['https:', 'http:'].includes(new URL(v).protocol)
+        } catch {
+          return false
+        }
+      },
+      'must be http(s)',
+    )
+    .nullable(),
   expiresAt: z.string().datetime(),
   createdAt: z.string().datetime(),
 })
@@ -123,6 +137,65 @@ export async function getPendingApprovals(
 }
 
 // ---------------------------------------------------------------------------
+// getResolvedApprovals — additive read; mirrors getPendingApprovals
+// ---------------------------------------------------------------------------
+
+export type GetResolvedApprovalsResult =
+  | { ok: true; items: ApprovalQueueItem[] }
+  | { ok: false; error: string }
+
+/**
+ * Returns resolved (approved / rejected / expired / published) approval_queue
+ * items for the current user, ordered most-recently-actioned first.
+ * Read-only — no state mutations here.
+ *
+ * Used by the Resolved history view (Wave 2).
+ */
+export async function getResolvedApprovals(
+  userId: string
+): Promise<GetResolvedApprovalsResult> {
+  try {
+    const supabase = await getSupabaseClient()
+
+    const { data, error } = await supabase
+      .from('approval_queue')
+      .select('id, kind, state, resource, evidence, expires_at, created_at')
+      .eq('customer_id', userId)
+      .in('state', ['approved', 'rejected', 'expired', 'published'])
+      .order('acted_at', { ascending: false })
+      .limit(50)
+
+    if (error) {
+      console.error('[approvals/_data] getResolvedApprovals query failed', {
+        userId,
+        code: error.code,
+        message: error.message,
+      })
+      // Do not leak raw DB error messages to the client
+      return { ok: false, error: 'Failed to load resolved approvals.' }
+    }
+
+    const rawRows = (data ?? []) as ApprovalQueueRawRow[]
+    const items: ApprovalQueueItem[] = rawRows.map((row) => ({
+      id: row.id,
+      kind: row.kind as ApprovalQueueItem['kind'],
+      state: row.state as ApprovalQueueItem['state'],
+      resource: row.resource ?? {},
+      evidenceUrl: extractEvidenceUrl(row.evidence),
+      expiresAt: row.expires_at,
+      createdAt: row.created_at,
+    }))
+
+    return { ok: true, items }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    console.error('[approvals/_data] getResolvedApprovals unexpected error', { userId, message })
+    // Do not leak internal error details to the client
+    return { ok: false, error: 'Failed to load resolved approvals.' }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -130,16 +203,21 @@ export async function getPendingApprovals(
  * Safely extracts an evidence URL from the `evidence` jsonb column.
  * The evidence column stores agent-generated provenance — we only surface the URL,
  * never any agent-identity fields.
+ *
+ * Security: enforces http(s) scheme allowlist after parsing. javascript: and
+ * data: URIs are rejected and return null. This is the defence-in-depth layer
+ * (the Zod schema above is the DTO-level guard).
  */
-function extractEvidenceUrl(evidence: unknown): string | null {
+export function extractEvidenceUrl(evidence: unknown): string | null {
   if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence)) {
     return null
   }
   const ev = evidence as Record<string, unknown>
   if (typeof ev['url'] === 'string') {
     try {
-      new URL(ev['url'])
-      return ev['url']
+      const parsed = new URL(ev['url'])
+      if (!['https:', 'http:'].includes(parsed.protocol)) return null
+      return parsed.toString()
     } catch {
       return null
     }

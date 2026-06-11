@@ -6,8 +6,11 @@ interface PageHeaderProps {
   eyebrow?: string
   /** Page title. Rendered as the console-register H1. */
   title: string
-  /** Optional calm caption beneath the title. */
-  subtitle?: string
+  /**
+   * Optional calm caption beneath the title.
+   * Accepts a string or a ReactNode (e.g. a span with a count badge).
+   */
+  subtitle?: ReactNode
   /** Optional right-aligned slot — typically the primary CTA for the surface. */
   action?: ReactNode
   className?: string

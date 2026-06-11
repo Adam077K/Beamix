@@ -5,16 +5,23 @@ import * as Toast from '@radix-ui/react-toast'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { approveApprovalItem, rejectApprovalItem } from '../_actions'
+import type { ApprovalQueueItem } from '../_data'
+import { PUBLISH_KINDS } from '../_logic'
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
+export type ActionResolved = { state: 'approved' | 'rejected' }
+
 interface ApprovalActionsProps {
   itemId: string
+  kind: ApprovalQueueItem['kind']
+  /** Called when approve/reject completes successfully (in-session resolved state) */
+  onResolved?: (resolved: ActionResolved) => void
 }
 
-type ActionState = 'idle' | 'approving' | 'rejecting' | 'done'
+type ActionState = 'idle' | 'approving' | 'rejecting'
 
 interface ToastPayload {
   open: boolean
@@ -29,10 +36,7 @@ interface ToastPayload {
 function Spinner({ className }: { className?: string }) {
   return (
     <svg
-      className={cn(
-        'h-4 w-4 animate-spin motion-reduce:animate-none',
-        className,
-      )}
+      className={cn('h-4 w-4 animate-spin motion-reduce:animate-none', className)}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -57,11 +61,11 @@ function Spinner({ className }: { className?: string }) {
 
 // ---------------------------------------------------------------------------
 // ApprovalActions — Client Component
-// Calls Server Actions; disables both buttons during any in-flight action;
-// shows toast feedback on completion or error.
+// Calls Server Actions; disables both buttons during in-flight actions;
+// shows toast feedback; calls onResolved for in-session muted state.
 // ---------------------------------------------------------------------------
 
-export function ApprovalActions({ itemId }: ApprovalActionsProps) {
+export function ApprovalActions({ itemId, kind, onResolved }: ApprovalActionsProps) {
   const [actionState, setActionState] = React.useState<ActionState>('idle')
   const [toast, setToast] = React.useState<ToastPayload>({
     open: false,
@@ -70,7 +74,6 @@ export function ApprovalActions({ itemId }: ApprovalActionsProps) {
   })
   const toastTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Show a toast and auto-dismiss after 4s
   const showToast = React.useCallback(
     (message: string, variant: 'success' | 'error') => {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
@@ -94,8 +97,8 @@ export function ApprovalActions({ itemId }: ApprovalActionsProps) {
     try {
       const result = await approveApprovalItem(itemId)
       if (result.ok) {
-        setActionState('done')
         showToast('Item approved.', 'success')
+        onResolved?.({ state: 'approved' })
       } else {
         setActionState('idle')
         showToast(result.error, 'error')
@@ -104,15 +107,15 @@ export function ApprovalActions({ itemId }: ApprovalActionsProps) {
       setActionState('idle')
       showToast('Something went wrong. Please try again.', 'error')
     }
-  }, [itemId, showToast])
+  }, [itemId, showToast, onResolved])
 
   const handleReject = React.useCallback(async () => {
     setActionState('rejecting')
     try {
       const result = await rejectApprovalItem(itemId)
       if (result.ok) {
-        setActionState('done')
         showToast('Item rejected.', 'success')
+        onResolved?.({ state: 'rejected' })
       } else {
         setActionState('idle')
         showToast(result.error, 'error')
@@ -121,58 +124,54 @@ export function ApprovalActions({ itemId }: ApprovalActionsProps) {
       setActionState('idle')
       showToast('Something went wrong. Please try again.', 'error')
     }
-  }, [itemId, showToast])
+  }, [itemId, showToast, onResolved])
 
   const isBusy = actionState === 'approving' || actionState === 'rejecting'
-  const isDone = actionState === 'done'
+  const approveLabel = PUBLISH_KINDS.includes(kind) ? 'Approve & publish' : 'Approve'
 
   return (
     <>
-      {/* Action buttons */}
-      <div className="flex items-center justify-end gap-2" role="group" aria-label="Approval actions">
-        {isDone ? (
-          <span className="text-xs text-[#6B7280] font-medium px-1">Done</span>
-        ) : (
-          <>
-            <Button
-              type="button"
-              variant="default"
-              size="sm"
-              onClick={handleApprove}
-              disabled={isBusy}
-              aria-label="Approve this item"
-              aria-busy={actionState === 'approving'}
-            >
-              {actionState === 'approving' ? (
-                <>
-                  <Spinner />
-                  <span>Approving…</span>
-                </>
-              ) : (
-                'Approve'
-              )}
-            </Button>
+      {/* Action buttons — right-aligned flex gap-2 */}
+      <div className="flex items-center justify-end gap-2 pt-1" role="group" aria-label="Approval actions">
+        {/* Approve — hero blue/filled, the ONLY filled button on this surface */}
+        <Button
+          type="button"
+          variant="default"
+          size="default"
+          onClick={handleApprove}
+          disabled={isBusy}
+          aria-label={`${approveLabel} this item`}
+          aria-busy={actionState === 'approving'}
+        >
+          {actionState === 'approving' ? (
+            <>
+              <Spinner />
+              <span>Approving…</span>
+            </>
+          ) : (
+            approveLabel
+          )}
+        </Button>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleReject}
-              disabled={isBusy}
-              aria-label="Reject this item"
-              aria-busy={actionState === 'rejecting'}
-            >
-              {actionState === 'rejecting' ? (
-                <>
-                  <Spinner />
-                  <span>Rejecting…</span>
-                </>
-              ) : (
-                'Reject'
-              )}
-            </Button>
-          </>
-        )}
+        {/* Reject — neutral outline */}
+        <Button
+          type="button"
+          variant="outline"
+          size="default"
+          onClick={handleReject}
+          disabled={isBusy}
+          aria-label="Reject this item"
+          aria-busy={actionState === 'rejecting'}
+        >
+          {actionState === 'rejecting' ? (
+            <>
+              <Spinner />
+              <span>Rejecting…</span>
+            </>
+          ) : (
+            'Reject'
+          )}
+        </Button>
       </div>
 
       {/* Per-row toast — local to this component */}
@@ -193,7 +192,7 @@ export function ApprovalActions({ itemId }: ApprovalActionsProps) {
           <Toast.Title
             className={cn(
               'text-sm font-semibold',
-              toast.variant === 'error' ? 'text-[#EF4444]' : 'text-[#0A0A0A]',
+              toast.variant === 'error' ? 'text-[#DC2626]' : 'text-[#0A0A0A]',
             )}
           >
             {toast.variant === 'error' ? 'Action failed' : 'Done'}
