@@ -61,11 +61,8 @@ export default async function DashboardPage() {
 
   // Demo mode: return rich fixture data for demo@beamixai.com.
   // Real users are completely unaffected — the guard is a simple email check.
-  const outcomes: DashboardOutcomes = isDemoUser(user?.email)
-    ? DEMO_DASHBOARD
-    : EMPTY_OUTCOMES
-
   const isDemo = isDemoUser(user?.email)
+  const outcomes: DashboardOutcomes = isDemo ? DEMO_DASHBOARD : EMPTY_OUTCOMES
 
   return (
     <main className="mx-auto min-h-[100dvh] max-w-6xl px-4 py-8 sm:px-6 lg:px-8">

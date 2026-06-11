@@ -17,6 +17,6 @@ import { DEMO_SCAN } from './fixtures'
  *
  * Type is `unknown` so callers cast to their local ScanResult type.
  */
-export function isDemoScan(scanId: string): unknown | null {
-  return scanId === DEMO_SCAN_ID ? DEMO_SCAN : null
+export function isDemoScan(scanId: string): Record<string, unknown> | null {
+  return scanId === DEMO_SCAN_ID ? (DEMO_SCAN as Record<string, unknown>) : null
 }

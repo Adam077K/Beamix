@@ -16,6 +16,7 @@ import type { DashboardOutcomes } from '@/types/outcomes'
 import type { ApprovalQueueItem } from '@/app/(protected)/approvals/_data'
 import type { WeeklyDigest } from '@/types/digest'
 import type { TraceabilityData } from '@/types/traceability'
+import { DEMO_SCAN_ID } from './index'
 
 // ---------------------------------------------------------------------------
 // Shared business details
@@ -28,64 +29,8 @@ const BUSINESS = {
 }
 
 // ---------------------------------------------------------------------------
-// DEMO_DASHBOARD — DashboardOutcomes
-// ---------------------------------------------------------------------------
-
-export const DEMO_DASHBOARD: DashboardOutcomes = {
-  visibilityScores: [
-    {
-      engine: 'chatgpt',
-      score: 71,
-      trend: 'up',
-      lastUpdatedAt: '2026-06-10T08:00:00.000Z',
-    },
-    {
-      engine: 'gemini',
-      score: 64,
-      trend: 'up',
-      lastUpdatedAt: '2026-06-10T08:00:00.000Z',
-    },
-    {
-      engine: 'perplexity',
-      score: 78,
-      trend: 'up',
-      lastUpdatedAt: '2026-06-10T08:00:00.000Z',
-    },
-  ],
-  weeklyNarrative: {
-    type: 'wins',
-    items: [
-      {
-        id: 'demo-win-1',
-        description:
-          'FAQ block published for "emergency dentist Ramat Gan" — Perplexity citing it within 48 hours.',
-        achievedAt: '2026-06-09T10:00:00.000Z',
-      },
-      {
-        id: 'demo-win-2',
-        description:
-          'Dentist + LocalBusiness schema deployed to production — ChatGPT picked up the structured address and hours.',
-        achievedAt: '2026-06-08T14:00:00.000Z',
-      },
-      {
-        id: 'demo-win-3',
-        description:
-          '3 new citations placed in local dental directories — NAP consistency improved across all three engines.',
-        achievedAt: '2026-06-07T11:00:00.000Z',
-      },
-      {
-        id: 'demo-win-4',
-        description:
-          'Service-page comparison article published: "Dental implants vs. bridges in Ramat Gan" — ranking for 6 new queries.',
-        achievedAt: '2026-06-06T09:00:00.000Z',
-      },
-    ],
-  },
-  approvalCount: 2,
-}
-
-// ---------------------------------------------------------------------------
 // DEMO_APPROVALS — ApprovalQueueItem[] (pending)
+// Declared before DEMO_DASHBOARD so approvalCount can derive from .length.
 // ---------------------------------------------------------------------------
 
 export const DEMO_APPROVALS: ApprovalQueueItem[] = [
@@ -163,6 +108,7 @@ export const DEMO_APPROVALS: ApprovalQueueItem[] = [
 
 // ---------------------------------------------------------------------------
 // DEMO_RESOLVED_APPROVALS — ApprovalQueueItem[] (resolved)
+// Used by the Resolved history view (/approvals/resolved).
 // ---------------------------------------------------------------------------
 
 export const DEMO_RESOLVED_APPROVALS: ApprovalQueueItem[] = [
@@ -209,6 +155,64 @@ export const DEMO_RESOLVED_APPROVALS: ApprovalQueueItem[] = [
     createdAt: '2026-06-02T09:00:00.000Z',
   },
 ]
+
+// ---------------------------------------------------------------------------
+// DEMO_DASHBOARD — DashboardOutcomes
+// approvalCount derives from DEMO_APPROVALS.length so they can't drift.
+// ---------------------------------------------------------------------------
+
+export const DEMO_DASHBOARD: DashboardOutcomes = {
+  visibilityScores: [
+    {
+      engine: 'chatgpt',
+      score: 71,
+      trend: 'up',
+      lastUpdatedAt: '2026-06-10T08:00:00.000Z',
+    },
+    {
+      engine: 'gemini',
+      score: 64,
+      trend: 'up',
+      lastUpdatedAt: '2026-06-10T08:00:00.000Z',
+    },
+    {
+      engine: 'perplexity',
+      score: 78,
+      trend: 'up',
+      lastUpdatedAt: '2026-06-10T08:00:00.000Z',
+    },
+  ],
+  weeklyNarrative: {
+    type: 'wins',
+    items: [
+      {
+        id: 'demo-win-1',
+        description:
+          'FAQ block published for "emergency dentist Ramat Gan" — Perplexity citing it within 48 hours.',
+        achievedAt: '2026-06-09T10:00:00.000Z',
+      },
+      {
+        id: 'demo-win-2',
+        description:
+          'Dentist + LocalBusiness schema deployed to production — ChatGPT picked up the structured address and hours.',
+        achievedAt: '2026-06-08T14:00:00.000Z',
+      },
+      {
+        id: 'demo-win-3',
+        description:
+          '3 new citations placed in local dental directories — NAP consistency improved across all three engines.',
+        achievedAt: '2026-06-07T11:00:00.000Z',
+      },
+      {
+        id: 'demo-win-4',
+        description:
+          'Service-page comparison article published: "Dental implants vs. bridges in Ramat Gan" — ranking for 6 new queries.',
+        achievedAt: '2026-06-06T09:00:00.000Z',
+      },
+    ],
+  },
+  approvalCount: DEMO_APPROVALS.length,
+}
 
 // ---------------------------------------------------------------------------
 // DEMO_DIGESTS — WeeklyDigest[]
@@ -484,7 +488,7 @@ export const DEMO_TRACEABILITY: TraceabilityData = {
  * without importing them (they are defined inline there, not exported).
  */
 export const DEMO_SCAN = {
-  id: '00000000-0000-4000-8000-00000000d3a0',
+  id: DEMO_SCAN_ID,
   business_name: BUSINESS.name,
   website_url: BUSINESS.website,
   status: 'complete' as const,

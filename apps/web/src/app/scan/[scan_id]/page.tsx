@@ -72,7 +72,7 @@ async function getFreeScan(scanId: string): Promise<ScanResult | null> {
   // Demo mode: return fixture for the well-known demo scan ID without a DB query.
   // This is a public route gated by ID only (no auth check needed here).
   const demoResult = isDemoScan(scanId)
-  if (demoResult) return demoResult as ScanResult
+  if (demoResult) return demoResult as unknown as ScanResult
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
