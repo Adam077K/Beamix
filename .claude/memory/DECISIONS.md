@@ -4,6 +4,18 @@
 
 ---
 
+### [2026-06-11] — Wave 6 contrastive gap-list + playbook mapping + narration v2 landed (pure library)
+
+**Why:** Build the shippable gap-checklist (ships ahead of the calibrated score) per SCAN-MEASUREMENT-MODEL.md §3/§5 W6. Pure additive library (`apps/web/src/lib/scan/`), same build-then-wire pattern as W4/W5. PR `feat/w6-gap-narration` tip `0d62b38`; 9 files / +2,927 LOC / 406 tests; NO migration; live scan flow untouched.
+
+**Shipped:** `gap-list-ordering.ts` (`buildContrastiveGapList` — ranks `absent` factors by CONTRASTIVE observed fact [how many audited competitors have it] as primary, impact_weight only a tiebreak; Tier-3 hygiene tail; honest `impact_fallback` mode when no competitor audits; `splitLiftVsHygiene`) · `playbook-mapping.ts` (gaps→4 agent enums, null=manual) · `fixability.ts` (per-factor effort config) · `gap-types.ts` · `narration.ts` (the ONE evidence-bound LLM call + deterministic grounding code-check that strips ungrounded quotes/competitors/numbers→degraded; templated fallback on error, never throws; no second LLM verifier; "why they beat you" = our verified evidence only).
+
+**QA:** Full-tier binding `qa.js` — run #1 BLOCKed ONLY on an Opus-judge dropout (Anthropic spend limit, raised by Adam), not a quality finding; re-gated SAME tip `0d62b38` → PASS, 0 confirmed block-eligible, no coverage gap. CEO verified typecheck/test/`next build` in-worktree + branch vs GitHub truth between workers.
+
+**GATING fast-follows (block the narration-wiring wave, NOT this library merge — judge scoped them "before narration ships to paying customers"; narration is unwired here):** (1) competitor grounding bypass when `knownCompetitors` empty; (2) number-grounding substring false-pass → word-boundary match; (3) PII log of raw LLM response on parse failure → redact; (4) dead `opts.now` param + untested bypass paths. Documented in the W6 session file as wiring-wave blockers.
+
+**Deferred wiring (next wave):** audit top-K named competitors (reuse W2 SSRF `auditSite` + W4 `detectFactors`) → feed `CompetitorFactorAudit[]`; thread gap-list + narration into `scan-free.ts`; persist. Score go-live gates unchanged (variance SD≤5 cache-OFF; external ρ≥0.4) gate the SCORE, not the gap-list.
+
 ### [2026-06-10] — Wave 5 L2 probe v2 + code scoring landed (measurement core, pure library)
 
 **Why:** Build the measurement core per SCAN-MEASUREMENT-MODEL.md §11 W5. Pure additive library (`apps/web/src/lib/scan/`), mirrors W4's "built, not yet wired" pattern. PR `feat/w5-probe-scoring` tip `681250b`; 13 files / +3,991 LOC / 322 tests; NO migration; live scan flow untouched.
