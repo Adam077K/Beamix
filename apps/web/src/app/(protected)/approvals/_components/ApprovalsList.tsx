@@ -1,94 +1,36 @@
+import { Sparkles } from 'lucide-react'
 import type { ApprovalQueueItem } from '../_data'
-import { ApprovalActions } from './ApprovalActions'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { ApprovalRow } from './ApprovalRow'
 
 // ---------------------------------------------------------------------------
-// Kind labels — customer-readable, no agent names per Principle #9
+// Sort — YMYL/high-risk first, then expiry soonest, then created_at desc
 // ---------------------------------------------------------------------------
 
-type ApprovalKind = ApprovalQueueItem['kind']
+function isHighRisk(resource: Record<string, unknown>): boolean {
+  return resource['risk'] === 'ymyl' || resource['mandatory_human'] === true
+}
 
-const KIND_LABELS: Record<ApprovalKind, string> = {
-  content_publish: 'Content',
-  email_as_them: 'Email',
-  outreach: 'Outreach',
-  schema_push: 'Schema',
-  listing_update: 'Listing',
-  citation_submit: 'Citation',
+function sortApprovals(items: ApprovalQueueItem[]): ApprovalQueueItem[] {
+  return [...items].sort((a, b) => {
+    // 1. High-risk first
+    const aRisk = isHighRisk(a.resource) ? 0 : 1
+    const bRisk = isHighRisk(b.resource) ? 0 : 1
+    if (aRisk !== bRisk) return aRisk - bRisk
+
+    // 2. Earliest expiry first
+    const aExp = new Date(a.expiresAt).getTime()
+    const bExp = new Date(b.expiresAt).getTime()
+    if (aExp !== bExp) return aExp - bExp
+
+    // 3. Newest created first
+    const aCreated = new Date(a.createdAt).getTime()
+    const bCreated = new Date(b.createdAt).getTime()
+    return bCreated - aCreated
+  })
 }
 
 // ---------------------------------------------------------------------------
-// Summary extraction — reads resource JSONB safely (no agent identity exposed)
-// ---------------------------------------------------------------------------
-
-function extractSummary(resource: Record<string, unknown>, kind: ApprovalKind): string {
-  if (typeof resource.summary === 'string' && resource.summary.trim()) {
-    return resource.summary.trim()
-  }
-  if (typeof resource.title === 'string' && resource.title.trim()) {
-    return resource.title.trim()
-  }
-  if (typeof resource.description === 'string' && resource.description.trim()) {
-    return resource.description.trim()
-  }
-  // Fallback label by kind
-  const fallbacks: Record<ApprovalKind, string> = {
-    content_publish: 'Content ready to publish',
-    email_as_them: 'Email ready to send',
-    outreach: 'Outreach message ready',
-    schema_push: 'Schema update ready',
-    listing_update: 'Listing update ready',
-    citation_submit: 'Citation submission ready',
-  }
-  return fallbacks[kind]
-}
-
-// ---------------------------------------------------------------------------
-// Relative time — "3d", "2h", "45m"
-// ---------------------------------------------------------------------------
-
-function relativeTime(iso: string): string {
-  const diff = new Date(iso).getTime() - Date.now()
-  if (diff < 0) return 'Expired'
-  const days = Math.floor(diff / 86_400_000)
-  const hours = Math.floor(diff / 3_600_000)
-  const minutes = Math.floor(diff / 60_000)
-  if (days >= 1) return `${days}d`
-  if (hours >= 1) return `${hours}h`
-  if (minutes >= 1) return `${minutes}m`
-  return 'Now'
-}
-
-function absoluteDate(iso: string): string {
-  return new Intl.DateTimeFormat('en', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso))
-}
-
-// ---------------------------------------------------------------------------
-// KindBadge — pill label for the type column
-// ---------------------------------------------------------------------------
-
-function KindBadge({ kind }: { kind: ApprovalKind }) {
-  return (
-    <span className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ring-[#E5E7EB] text-[#374151] bg-[#F7F7F7] whitespace-nowrap">
-      {KIND_LABELS[kind] ?? kind}
-    </span>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Empty state — intentional, direct, one clear CTA
+// EmptyApprovals — warm crew idiom, mirrors AgentActivityPanel
 // ---------------------------------------------------------------------------
 
 function EmptyApprovals() {
@@ -99,32 +41,52 @@ function EmptyApprovals() {
       className="flex flex-col items-center justify-center py-20 text-center"
     >
       <div
-        className="w-12 h-12 rounded-full bg-[#F7F7F7] flex items-center justify-center mb-4"
+        className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-agent-tint"
         aria-hidden="true"
       >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#9CA3AF"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-          <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-        </svg>
+        {/* Breathing violet dot + sparkles, matching AgentActivityPanel empty idiom */}
+        <span className="relative flex items-center justify-center">
+          <span
+            className="absolute h-10 w-10 rounded-full bg-agent opacity-10 motion-safe:animate-ping"
+            aria-hidden="true"
+          />
+          <Sparkles className="relative h-5 w-5 text-agent" strokeWidth={1.5} aria-hidden="true" />
+        </span>
       </div>
-      <p className="text-sm font-medium text-[#0A0A0A] mb-1">
-        No items waiting for your review.
+      <p className="text-sm font-medium text-[#0A0A0A]">
+        All clear — the crew is watching.
       </p>
-      <p className="text-sm text-[#6B7280] max-w-[280px] leading-relaxed">
-        Items ready for your review will show up here. Check back after your
-        next digest.
+      <p className="mt-2 max-w-[280px] text-[13px] leading-relaxed text-[#6B7280]">
+        Nothing needs your sign-off right now. When the agents prepare a fix worth
+        making, it lands here for your review.
       </p>
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// LoadingSkeleton
+// ---------------------------------------------------------------------------
+
+export function LoadingSkeleton() {
+  return (
+    <ul aria-busy="true" aria-label="Loading approvals" className="divide-y divide-[#F3F4F6]">
+      {[0, 1, 2, 3].map((i) => (
+        <li key={i} className="flex items-center gap-4 px-5 py-4">
+          {/* Badge skeleton */}
+          <div className="h-5 w-16 shrink-0 animate-pulse rounded-md bg-[#F3F4F6]" />
+          {/* Text skeleton */}
+          <div className="flex-1 space-y-1.5">
+            <div className="h-3.5 w-3/4 animate-pulse rounded bg-[#F3F4F6]" />
+            <div className="h-3 w-1/3 animate-pulse rounded bg-[#F3F4F6]" />
+          </div>
+          {/* Expiry skeleton */}
+          <div className="h-3 w-10 shrink-0 animate-pulse rounded bg-[#F3F4F6]" />
+          {/* Chevron skeleton */}
+          <div className="h-4 w-4 shrink-0 animate-pulse rounded bg-[#F3F4F6]" />
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -141,82 +103,13 @@ export function ApprovalsList({ approvals }: ApprovalsListProps) {
     return <EmptyApprovals />
   }
 
+  const sorted = sortApprovals(approvals)
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-[100px]">Type</TableHead>
-          <TableHead>Summary</TableHead>
-          <TableHead className="w-[120px] hidden sm:table-cell">Evidence</TableHead>
-          <TableHead className="w-[100px] hidden md:table-cell">Expires</TableHead>
-          <TableHead className="w-[184px] text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {approvals.map((item) => {
-          const summary = extractSummary(item.resource, item.kind)
-          return (
-            <TableRow key={item.id}>
-              {/* Kind */}
-              <TableCell>
-                <KindBadge kind={item.kind} />
-              </TableCell>
-
-              {/* Summary */}
-              <TableCell>
-                <p className="text-sm text-[#374151] line-clamp-2 max-w-sm leading-snug">
-                  {summary}
-                </p>
-                {/* Evidence link shown inline on mobile (hidden on sm+) */}
-                {item.evidenceUrl && (
-                  <a
-                    href={item.evidenceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 text-xs text-[#3370FF] hover:text-[#2558D4] underline-offset-2 hover:underline transition-colors sm:hidden block truncate max-w-[200px]"
-                    aria-label="View supporting evidence (opens in new tab)"
-                  >
-                    View evidence
-                  </a>
-                )}
-              </TableCell>
-
-              {/* Evidence — desktop only */}
-              <TableCell className="hidden sm:table-cell">
-                {item.evidenceUrl ? (
-                  <a
-                    href={item.evidenceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-[#3370FF] hover:text-[#2558D4] underline-offset-2 hover:underline transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1 rounded"
-                    aria-label="View supporting evidence (opens in new tab)"
-                  >
-                    View →
-                  </a>
-                ) : (
-                  <span className="text-xs text-[#9CA3AF]">—</span>
-                )}
-              </TableCell>
-
-              {/* Expires — desktop only */}
-              <TableCell className="hidden md:table-cell">
-                <time
-                  dateTime={item.expiresAt}
-                  title={absoluteDate(item.expiresAt)}
-                  className="text-xs text-[#6B7280] tabular-nums"
-                >
-                  {relativeTime(item.expiresAt)}
-                </time>
-              </TableCell>
-
-              {/* Approve / Reject */}
-              <TableCell className="text-right">
-                <ApprovalActions itemId={item.id} />
-              </TableCell>
-            </TableRow>
-          )
-        })}
-      </TableBody>
-    </Table>
+    <ul className="divide-y divide-[#F3F4F6]" aria-label="Items waiting for your review">
+      {sorted.map((item) => (
+        <ApprovalRow key={item.id} item={item} />
+      ))}
+    </ul>
   )
 }
