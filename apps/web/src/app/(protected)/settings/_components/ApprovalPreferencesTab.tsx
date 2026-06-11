@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Switch } from '@/components/ui/switch'
 import { Lock, ShieldCheck, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -229,6 +229,14 @@ export function ApprovalPreferencesTab() {
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [isDirty, setIsDirty] = useState(false)
 
+  // item #10: guard the auto-fade timeout with a ref
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    return () => {
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current)
+    }
+  }, [])
+
   function handleChange(id: string, mode: ApprovalMode) {
     setClasses((prev) =>
       prev.map((c) => (c.id === id ? { ...c, mode } : c)),
@@ -243,7 +251,9 @@ export function ApprovalPreferencesTab() {
     await new Promise((r) => setTimeout(r, 900))
     setSaveState('saved')
     setIsDirty(false)
-    setTimeout(() => setSaveState('idle'), 2500)
+    // item #10: store timer id so it can be cleared on unmount
+    if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current)
+    fadeTimerRef.current = setTimeout(() => setSaveState('idle'), 2500)
   }
 
   function handleDiscard() {

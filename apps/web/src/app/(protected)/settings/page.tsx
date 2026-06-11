@@ -84,7 +84,14 @@ function SettingsContent() {
       {/* Two-column console layout */}
       <div className="flex flex-col gap-0 md:flex-row md:gap-0">
 
-        {/* ── Left tab rail (desktop: 200px fixed vertical; mobile: horizontal strip) ── */}
+        {/*
+          item #8: tab ARIA fix.
+          These tabs are URL-addressable navigation — simplest correct approach
+          is plain nav links/buttons (no role="tab") rather than a broken ARIA
+          tablist widget that lacks aria-controls/aria-selected wiring.
+          Role and aria-selected are dropped; nav landmark + aria-current="page"
+          is the correct ARIA pattern for URL-driven navigation tabs.
+        */}
         <nav
           aria-label="Settings sections"
           className={cn(
@@ -150,10 +157,20 @@ interface RailTabProps {
 function RailTab({ tab, active, onClick, destructive }: RailTabProps) {
   const { Icon, label } = tab
   return (
+    /*
+      item #8: plain button with aria-current="page" (URL-addressable nav pattern).
+      No role="tab" — avoids broken tablist widget (no tablist parent, no
+      aria-controls, no aria-selected wiring). aria-current is the correct
+      ARIA attribute for the active item in a navigation list.
+
+      item #15: destructive inactive style was identical to the default inactive
+      style (dead branch). Cancel tab now gets text-muted treatment, which
+      matches the spec ("muted/separated" label). Active destructive keeps
+      accent-tint like the others — visual separation is the divider above it.
+    */
     <button
       type="button"
-      role="tab"
-      aria-selected={active}
+      aria-current={active ? 'page' : undefined}
       aria-label={label}
       onClick={onClick}
       className={cn(
@@ -162,8 +179,9 @@ function RailTab({ tab, active, onClick, destructive }: RailTabProps) {
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-1',
         // Desktop: stretch full width, add left-border active indicator
         'md:w-full md:rounded-l-md md:rounded-r-none',
-        // Inactive state
+        // Inactive state (non-destructive)
         !active && !destructive && 'text-[var(--color-text-muted)] hover:bg-[#F4F6FA] hover:text-[var(--color-text-secondary)]',
+        // item #15: destructive (Cancel) inactive — intentionally muted, visually separated by the divider above
         !active && destructive && 'text-[var(--color-text-muted)] hover:bg-[#F4F6FA] hover:text-[var(--color-text-secondary)]',
         // Active state: accent-tint bg + accent-deep text + left blue border (desktop)
         active && 'bg-[var(--color-accent-tint)] text-[var(--color-accent-deep)]',

@@ -327,8 +327,11 @@ export function BillingTab() {
                   {inv.amount}
                 </span>
                 <InvoiceStatusPill status={inv.status} />
+                {/* item #13: invoice download links need target+rel for security */}
                 <a
                   href={inv.downloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label={`Download invoice ${inv.id}`}
                   className="flex h-8 w-8 items-center justify-center rounded-md text-[#9CA3AF] transition-colors hover:bg-[#F3F4F6] hover:text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-1"
                 >

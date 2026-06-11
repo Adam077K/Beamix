@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -246,12 +246,12 @@ interface ProfileState {
   timezone: string
 }
 
+// item #9: visibility (showCurrent/showNext) is view-state, not form data.
+// It lives in its own state so toggling it does NOT set passwordDirty.
 interface PasswordState {
   current: string
   next: string
   confirm: string
-  showCurrent: boolean
-  showNext: boolean
 }
 
 const INITIAL_PROFILE: ProfileState = {
@@ -265,8 +265,6 @@ const INITIAL_PASSWORD: PasswordState = {
   current: '',
   next: '',
   confirm: '',
-  showCurrent: false,
-  showNext: false,
 }
 
 const TIMEZONES = [
@@ -291,9 +289,23 @@ export function ProfileTab() {
   const [profileError, setProfileError] = useState('')
 
   const [password, setPassword] = useState<PasswordState>(INITIAL_PASSWORD)
+  // item #9: visibility is VIEW-STATE — separate from dirty-tracked form values
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNextPassword, setShowNextPassword] = useState(false)
   const [passwordSave, setPasswordSave] = useState<SaveState>('idle')
   const [passwordDirty, setPasswordDirty] = useState(false)
   const [passwordError, setPasswordError] = useState('')
+
+  // item #10: guard auto-fade timeouts with refs to clearTimeout on unmount
+  const profileFadeRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const passwordFadeRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (profileFadeRef.current) clearTimeout(profileFadeRef.current)
+      if (passwordFadeRef.current) clearTimeout(passwordFadeRef.current)
+    }
+  }, [])
 
   function updateProfile<K extends keyof ProfileState>(key: K, value: ProfileState[K]) {
     setProfile((p) => ({ ...p, [key]: value }))
@@ -314,7 +326,9 @@ export function ProfileTab() {
     await new Promise((r) => setTimeout(r, 900))
     setProfileSave('saved')
     setProfileDirty(false)
-    setTimeout(() => setProfileSave('idle'), 2500)
+    // item #10: store timer id so it can be cleared on unmount
+    if (profileFadeRef.current) clearTimeout(profileFadeRef.current)
+    profileFadeRef.current = setTimeout(() => setProfileSave('idle'), 2500)
   }
 
   function handleDiscardProfile() {
@@ -346,8 +360,10 @@ export function ProfileTab() {
     await new Promise((r) => setTimeout(r, 1000))
     setPasswordSave('saved')
     setPasswordDirty(false)
-    setPassword((p) => ({ ...p, current: '', next: '', confirm: '' }))
-    setTimeout(() => setPasswordSave('idle'), 2500)
+    setPassword({ current: '', next: '', confirm: '' })
+    // item #10: store timer id so it can be cleared on unmount
+    if (passwordFadeRef.current) clearTimeout(passwordFadeRef.current)
+    passwordFadeRef.current = setTimeout(() => setPasswordSave('idle'), 2500)
   }
 
   function handleDiscardPassword() {
@@ -517,8 +533,9 @@ export function ProfileTab() {
             id="current-password"
             value={password.current}
             onChange={(v) => updatePassword('current', v)}
-            showToggled={password.showCurrent}
-            onToggle={() => updatePassword('showCurrent', !password.showCurrent)}
+            showToggled={showCurrentPassword}
+            // item #9: toggle uses its own setter — does NOT touch dirty-tracked state
+            onToggle={() => setShowCurrentPassword((prev) => !prev)}
             autoComplete="current-password"
           />
         </FieldRow>
@@ -530,8 +547,9 @@ export function ProfileTab() {
               id="new-password"
               value={password.next}
               onChange={(v) => updatePassword('next', v)}
-              showToggled={password.showNext}
-              onToggle={() => updatePassword('showNext', !password.showNext)}
+              showToggled={showNextPassword}
+              // item #9: same — visibility toggle never sets dirty
+              onToggle={() => setShowNextPassword((prev) => !prev)}
               autoComplete="new-password"
               aria-invalid={passwordSave === 'error' || undefined}
             />

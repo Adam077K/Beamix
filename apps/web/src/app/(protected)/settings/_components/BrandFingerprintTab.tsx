@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useRef, KeyboardEvent } from 'react'
+import { useState, useRef, useEffect, KeyboardEvent } from 'react'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { X, Fingerprint } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -272,6 +273,14 @@ export function BrandFingerprintTab() {
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [isDirty, setIsDirty] = useState(false)
 
+  // item #10: guard the auto-fade timeout with a ref to clearTimeout on unmount
+  const fadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    return () => {
+      if (fadTimerRef.current) clearTimeout(fadTimerRef.current)
+    }
+  }, [])
+
   function update<K extends keyof BrandState>(key: K, value: BrandState[K]) {
     setBrand((b) => ({ ...b, [key]: value }))
     setIsDirty(true)
@@ -284,7 +293,9 @@ export function BrandFingerprintTab() {
     await new Promise((r) => setTimeout(r, 900))
     setSaveState('saved')
     setIsDirty(false)
-    setTimeout(() => setSaveState('idle'), 2500)
+    // item #10: store timer id so it can be cleared on unmount
+    if (fadTimerRef.current) clearTimeout(fadTimerRef.current)
+    fadTimerRef.current = setTimeout(() => setSaveState('idle'), 2500)
   }
 
   function handleDiscard() {
@@ -315,17 +326,14 @@ export function BrandFingerprintTab() {
           />
         }
       >
+        {/* item #14: raw <input> replaced with project ui/Input component */}
         <FieldRow label="Brand name" htmlFor="brand-name">
-          <input
+          <Input
             id="brand-name"
             type="text"
             value={brand.brandName}
             onChange={(e) => update('brandName', e.target.value)}
             placeholder="Your business name"
-            className={cn(
-              'h-9 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 text-[14px] text-[var(--color-text-primary)] placeholder:text-[#9CA3AF]',
-              'transition-colors focus-visible:border-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-0',
-            )}
             autoComplete="organization"
           />
         </FieldRow>
@@ -335,16 +343,12 @@ export function BrandFingerprintTab() {
           helper="Used as the opening sentence in AI-generated about sections."
           htmlFor="brand-description"
         >
-          <input
+          <Input
             id="brand-description"
             type="text"
             value={brand.description}
             onChange={(e) => update('description', e.target.value)}
             placeholder="What you do and who you serve."
-            className={cn(
-              'h-9 w-full rounded-lg border border-[var(--color-border)] bg-white px-3 text-[14px] text-[var(--color-text-primary)] placeholder:text-[#9CA3AF]',
-              'transition-colors focus-visible:border-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-0',
-            )}
           />
         </FieldRow>
 

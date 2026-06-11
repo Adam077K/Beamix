@@ -217,9 +217,14 @@ export function CancelTab() {
 
   async function handleConfirm() {
     setState('cancelling')
-    // Wave 2: wire to Paddle cancel subscription API
-    await new Promise((r) => setTimeout(r, 1500))
-    setState('cancelled')
+    try {
+      // Wave 2: wire to Paddle cancel subscription API
+      await new Promise((r) => setTimeout(r, 1500))
+      setState('cancelled')
+    } catch {
+      // item #12: wire the error state — set it on cancel failure
+      setState('error')
+    }
   }
 
   if (state === 'cancelled') {
@@ -238,7 +243,14 @@ export function CancelTab() {
       {/* 2. Refund context — conditional */}
       <RefundStrip />
 
-      {/* 3. Destructive action — LAST, disclosed behind a quiet link */}
+      {/*
+        item #11: two-step cancellation.
+        Step 1 — calm quiet link ("I still want to cancel") discloses the confirm panel.
+        Step 2 — confirm panel: explicit second click required. Default focus is on
+                 the SAFE choice ("Keep my subscription") via autoFocus. The destructive
+                 "Yes, cancel" is secondary (outline, not fill).
+        No dark patterns: copy is calm, framing is what-you-keep, no countdown timers.
+      */}
       {state === 'idle' && (
         <div className="pt-2">
           <button
@@ -263,16 +275,26 @@ export function CancelTab() {
         />
       )}
 
+      {/* item #12: error state is now reachable — set in the catch of handleConfirm */}
       {state === 'error' && (
-        <div className="flex items-center gap-2 rounded-lg bg-[var(--color-status-critical-bg,#FDECEC)] px-4 py-3 text-[13px] text-[var(--color-status-critical)]">
-          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
-          Something went wrong cancelling your subscription. Please try again or{' '}
-          <a
-            href="mailto:support@beamixai.com"
-            className="font-medium underline underline-offset-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-status-critical)] rounded"
+        <div className="flex items-start gap-2 rounded-lg bg-[var(--color-status-critical-bg,#FDECEC)] px-4 py-3 text-[13px] text-[var(--color-status-critical)]">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>
+            Something went wrong cancelling your subscription. Please try again or{' '}
+            <a
+              href="mailto:support@beamixai.com"
+              className="font-medium underline underline-offset-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-status-critical)] rounded"
+            >
+              contact support
+            </a>.
+          </span>
+          <button
+            type="button"
+            onClick={() => setState('disclosed')}
+            className="ml-auto shrink-0 text-[13px] font-medium underline underline-offset-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-status-critical)] rounded"
           >
-            contact support
-          </a>.
+            Try again
+          </button>
         </div>
       )}
     </div>
