@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -296,6 +296,10 @@ export function ProfileTab() {
   const [passwordDirty, setPasswordDirty] = useState(false)
   const [passwordError, setPasswordError] = useState('')
 
+  // Avatar preview: local object URL — Wave 2: persist to Supabase Storage
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
   // item #10: guard auto-fade timeouts with refs to clearTimeout on unmount
   const profileFadeRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const passwordFadeRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -306,6 +310,34 @@ export function ProfileTab() {
       if (passwordFadeRef.current) clearTimeout(passwordFadeRef.current)
     }
   }, [])
+
+  // Revoke avatar object URL on unmount to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+    }
+  }, [avatarPreview])
+
+  const handleUploadClick = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+    const objectUrl = URL.createObjectURL(file)
+    setAvatarPreview(objectUrl)
+    // Wave 2: persist to Supabase Storage and update user metadata
+    // Reset input so the same file can be re-selected if removed
+    e.target.value = ''
+  }, [avatarPreview])
+
+  const handleRemoveAvatar = useCallback(() => {
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+    setAvatarPreview(null)
+    // Wave 2: remove from Supabase Storage and clear user metadata
+  }, [avatarPreview])
 
   function updateProfile<K extends keyof ProfileState>(key: K, value: ProfileState[K]) {
     setProfile((p) => ({ ...p, [key]: value }))
@@ -396,20 +428,39 @@ export function ProfileTab() {
       >
         {/* Avatar row */}
         <FieldRow label="Avatar">
+          {/* Hidden file input — opened programmatically by Upload button */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            aria-hidden="true"
+            tabIndex={-1}
+            onChange={handleFileChange}
+          />
           <div className="flex items-center gap-4">
-            {/* Initials circle */}
-            <div
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent-tint)] text-lg font-semibold text-[var(--color-accent-deep)] select-none"
-              aria-label="Profile avatar initials"
-            >
-              {profile.fullName
-                ? profile.fullName
-                    .split(' ')
-                    .slice(0, 2)
-                    .map((n) => n[0]?.toUpperCase())
-                    .join('')
-                : '?'}
-            </div>
+            {/* Avatar display: uploaded preview or initials fallback */}
+            {avatarPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarPreview}
+                alt="Profile avatar preview"
+                className="h-14 w-14 shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <div
+                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent-tint)] text-lg font-semibold text-[var(--color-accent-deep)] select-none"
+                aria-label="Profile avatar initials"
+              >
+                {profile.fullName
+                  ? profile.fullName
+                      .split(' ')
+                      .slice(0, 2)
+                      .map((n) => n[0]?.toUpperCase())
+                      .join('')
+                  : '?'}
+              </div>
+            )}
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -417,16 +468,18 @@ export function ProfileTab() {
                 size="sm"
                 className="gap-1.5"
                 aria-label="Upload profile photo"
+                onClick={handleUploadClick}
               >
                 <Upload className="h-3.5 w-3.5" aria-hidden="true" />
                 Upload
               </Button>
-              {profile.fullName && (
+              {avatarPreview && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   aria-label="Remove profile photo"
+                  onClick={handleRemoveAvatar}
                 >
                   Remove
                 </Button>

@@ -191,6 +191,11 @@ function CancelSuccess({ onReactivate }: { onReactivate: () => void }) {
           type="button"
           className="gap-2"
           aria-label="Export your work product"
+          onClick={() => {
+            // Wave 2: generate + download export (zip of published content, scans, reports)
+            // For now, navigate to dashboard where existing content is accessible
+            window.location.href = '/dashboard'
+          }}
         >
           <FileDown className="h-4 w-4" aria-hidden="true" />
           Export your work product
