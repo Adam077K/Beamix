@@ -10,7 +10,7 @@ interface DigestRowProps {
   isSelected: boolean
   isExpanded: boolean
   isMobile: boolean
-  onSelect: (id: string) => void
+  onSelect: (id: string, triggerEl?: HTMLElement) => void
 }
 
 /**
@@ -39,8 +39,8 @@ export function DigestRow({
   const approvalCount = digest.digest.resolvedApprovals.length
   const winCount = digest.digest.wins.length
 
-  const handleClick = () => {
-    onSelect(digest.id)
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    onSelect(digest.id, e.currentTarget)
   }
 
   return (

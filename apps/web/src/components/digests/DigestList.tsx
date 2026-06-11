@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DigestRow } from './DigestRow'
@@ -30,6 +30,8 @@ export function DigestList({ digests }: DigestListProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  // Stores a ref to the row button that opened the panel, for focus restoration on close
+  const panelTriggerRef = useRef<HTMLElement | null>(null)
 
   // 1024px media hook
   useEffect(() => {
@@ -66,10 +68,11 @@ export function DigestList({ digests }: DigestListProps) {
   })
 
   const handleSelect = useCallback(
-    (id: string) => {
+    (id: string, triggerEl?: HTMLElement) => {
       if (isMobile) {
         setExpandedId((prev) => (prev === id ? null : id))
       } else {
+        if (triggerEl) panelTriggerRef.current = triggerEl
         setSelectedId((prev) => (prev === id ? null : id))
       }
     },
@@ -78,6 +81,11 @@ export function DigestList({ digests }: DigestListProps) {
 
   const handlePanelClose = useCallback(() => {
     setSelectedId(null)
+    // Return focus to the row that opened the panel
+    if (panelTriggerRef.current) {
+      panelTriggerRef.current.focus()
+      panelTriggerRef.current = null
+    }
   }, [])
 
   const selectedDigest = digests.find((d) => d.id === selectedId) ?? null
@@ -123,16 +131,13 @@ export function DigestList({ digests }: DigestListProps) {
         {/* List */}
         <div
           className="card-console overflow-hidden"
-          role="listbox"
-          aria-label="Weekly digests"
-          aria-multiselectable="false"
         >
           {filtered.length === 0 ? (
             <div className="px-5 py-10 text-center">
               <p className="text-sm text-[#6B7280]">No digests match &ldquo;{searchQuery}&rdquo;</p>
             </div>
           ) : (
-            <ul className="divide-y divide-[#F3F4F6]">
+            <ul className="divide-y divide-[#F3F4F6]" aria-label="Weekly digests">
               {filtered.map((digest) => (
                 <li key={digest.id} className="relative">
                   <DigestRow
