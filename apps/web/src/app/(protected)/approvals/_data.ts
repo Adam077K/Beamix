@@ -123,6 +123,61 @@ export async function getPendingApprovals(
 }
 
 // ---------------------------------------------------------------------------
+// getResolvedApprovals — additive read; mirrors getPendingApprovals
+// ---------------------------------------------------------------------------
+
+export type GetResolvedApprovalsResult =
+  | { ok: true; items: ApprovalQueueItem[] }
+  | { ok: false; error: string }
+
+/**
+ * Returns resolved (approved / rejected / expired / published) approval_queue
+ * items for the current user, ordered most-recently-actioned first.
+ * Read-only — no state mutations here.
+ */
+export async function getResolvedApprovals(
+  userId: string
+): Promise<GetResolvedApprovalsResult> {
+  try {
+    const supabase = await getSupabaseClient()
+
+    const { data, error } = await supabase
+      .from('approval_queue')
+      .select('id, kind, state, resource, evidence, expires_at, created_at')
+      .eq('customer_id', userId)
+      .in('state', ['approved', 'rejected', 'expired', 'published'])
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (error) {
+      console.error('[approvals/_data] getResolvedApprovals query failed', {
+        userId,
+        code: error.code,
+        message: error.message,
+      })
+      return { ok: false, error: error.message }
+    }
+
+    const rawRows = (data ?? []) as ApprovalQueueRawRow[]
+    const items: ApprovalQueueItem[] = rawRows.map((row) => ({
+      id: row.id,
+      kind: row.kind as ApprovalQueueItem['kind'],
+      state: row.state as ApprovalQueueItem['state'],
+      resource: row.resource ?? {},
+      evidenceUrl: extractEvidenceUrl(row.evidence),
+      expiresAt: row.expires_at,
+      createdAt: row.created_at,
+    }))
+
+    return { ok: true, items }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    console.error('[approvals/_data] getResolvedApprovals unexpected error', { userId, message })
+    return { ok: false, error: message }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
