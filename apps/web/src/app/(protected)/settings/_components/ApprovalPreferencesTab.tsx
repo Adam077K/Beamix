@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Switch } from '@/components/ui/switch'
-import { Button } from '@/components/ui/button'
 import { Lock, ShieldCheck, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SectionCard, SaveBar, type SaveState } from './ProfileTab'
