@@ -1,7 +1,18 @@
 'use client'
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { Suspense } from 'react'
 import { PageHeader } from '@/components/page-header'
+import {
+  User,
+  Fingerprint,
+  CreditCard,
+  ShieldCheck,
+  Plug,
+  LogOut,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+
 import { ProfileTab } from './_components/ProfileTab'
 import { BrandFingerprintTab } from './_components/BrandFingerprintTab'
 import { BillingTab } from './_components/BillingTab'
@@ -10,74 +21,202 @@ import { PublishingIntegrationsTab } from './_components/PublishingIntegrationsT
 import { CancelTab } from './_components/CancelTab'
 
 /**
- * Settings — six-tab console surface.
+ * Settings — two-column console.
  *
- * Structure: horizontal underline tabs (TabsList variant="underline") flush under
- * the page header. Tab bodies are one or more .card-console panels.
+ * Shell: 200px fixed left tab-rail (border-right) + scrolling content column
+ * (max-w-[760px], left-aligned under rail). <768px: rail collapses to a
+ * horizontal scrollable tab strip pinned under PageHeader.
  *
- * Color law: blue = you (#3370FF) — CTAs, links, active tab.
- *            violet = agents (#6E56F0) — Approval preferences tab identity only.
+ * Color law: blue (#3370FF) = you — CTAs, active tab, save controls.
+ *            violet (#6E56F0) = agents — Tab 4 identity + Tab 2 glyph ONLY.
  *            Violet NEVER on a button.
+ *
+ * Tabs are URL-addressable via ?tab=<value>.
  */
-export default function SettingsPage() {
+
+type TabId = 'profile' | 'brand' | 'billing' | 'approvals' | 'integrations' | 'cancel'
+
+interface Tab {
+  id: TabId
+  label: string
+  Icon: React.ComponentType<{ className?: string }>
+  isDestructive?: boolean
+}
+
+const TABS: Tab[] = [
+  { id: 'profile', label: 'Profile', Icon: User },
+  { id: 'brand', label: 'Brand fingerprint', Icon: Fingerprint },
+  { id: 'billing', label: 'Billing', Icon: CreditCard },
+  { id: 'approvals', label: 'Approval preferences', Icon: ShieldCheck },
+  { id: 'integrations', label: 'Publishing integrations', Icon: Plug },
+  { id: 'cancel', label: 'Cancel', Icon: LogOut, isDestructive: true },
+]
+
+function SettingsContent() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const activeTab = (searchParams.get('tab') as TabId) ?? 'profile'
+
+  function navigate(tab: TabId) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', tab)
+    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+  }
+
+  // Tab content map
+  const content: Record<TabId, React.ReactNode> = {
+    profile: <ProfileTab />,
+    brand: <BrandFingerprintTab />,
+    billing: <BillingTab />,
+    approvals: <ApprovalPreferencesTab />,
+    integrations: <PublishingIntegrationsTab />,
+    cancel: <CancelTab />,
+  }
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+    <div className="min-h-screen pb-16">
       <PageHeader
         title="Settings"
-        subtitle="Manage your account, brand, billing, and agent preferences."
+        subtitle="Your profile, your brand voice, billing, and how much the crew does on its own."
       />
 
-      <Tabs defaultValue="profile" className="w-full">
-        {/* Top-mounted horizontal tab rail */}
-        <TabsList
-          variant="underline"
-          className="mb-6 flex-nowrap overflow-x-auto scrollbar-hide"
+      {/* Two-column console layout */}
+      <div className="flex flex-col gap-0 md:flex-row md:gap-0">
+
+        {/* ── Left tab rail (desktop: 200px fixed vertical; mobile: horizontal strip) ── */}
+        <nav
           aria-label="Settings sections"
+          className={cn(
+            // Mobile: horizontal scrollable strip
+            'flex flex-row overflow-x-auto gap-0.5 pb-2 mb-4 border-b border-[var(--color-border)] scrollbar-hide',
+            // Desktop: vertical 200px rail with right border
+            'md:flex-col md:overflow-x-visible md:pb-0 md:mb-0 md:border-b-0 md:border-r md:border-[var(--color-border)]',
+            'md:w-[200px] md:shrink-0 md:pr-0 md:mr-8',
+          )}
         >
-          <TabsTrigger variant="underline" value="profile">
-            Profile
-          </TabsTrigger>
-          <TabsTrigger variant="underline" value="brand">
-            Brand fingerprint
-          </TabsTrigger>
-          <TabsTrigger variant="underline" value="billing">
-            Billing
-          </TabsTrigger>
-          <TabsTrigger variant="underline" value="approvals">
-            Approval preferences
-          </TabsTrigger>
-          <TabsTrigger variant="underline" value="integrations">
-            Publishing integrations
-          </TabsTrigger>
-          <TabsTrigger variant="underline" value="cancel">
-            Cancel
-          </TabsTrigger>
-        </TabsList>
+          {/* Main tabs */}
+          <div className="flex flex-row gap-0.5 md:flex-col md:gap-0 md:flex-1">
+            {TABS.filter((t) => !t.isDestructive).map((tab) => (
+              <RailTab
+                key={tab.id}
+                tab={tab}
+                active={activeTab === tab.id}
+                onClick={() => navigate(tab.id)}
+              />
+            ))}
+          </div>
 
-        <TabsContent value="profile">
-          <ProfileTab />
-        </TabsContent>
+          {/* Cancel row — separated by a hairline divider on desktop */}
+          <div className="flex items-center md:flex-col md:mt-auto">
+            <div className="hidden md:block w-full border-t border-[var(--color-border)] my-2" />
+            {TABS.filter((t) => t.isDestructive).map((tab) => (
+              <RailTab
+                key={tab.id}
+                tab={tab}
+                active={activeTab === tab.id}
+                onClick={() => navigate(tab.id)}
+                destructive
+              />
+            ))}
+          </div>
+        </nav>
 
-        <TabsContent value="brand">
-          <BrandFingerprintTab />
-        </TabsContent>
+        {/* ── Content column ── */}
+        <div
+          className="min-w-0 flex-1"
+          // Tab content transitions: opacity + slight translate
+        >
+          <div
+            key={activeTab}
+            className="transition-smooth max-w-[760px]"
+            style={{ animationFillMode: 'both' }}
+          >
+            {content[activeTab] ?? content.profile}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
-        <TabsContent value="billing">
-          <BillingTab />
-        </TabsContent>
+interface RailTabProps {
+  tab: Tab
+  active: boolean
+  onClick: () => void
+  destructive?: boolean
+}
 
-        <TabsContent value="approvals">
-          <ApprovalPreferencesTab />
-        </TabsContent>
+function RailTab({ tab, active, onClick, destructive }: RailTabProps) {
+  const { Icon, label } = tab
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      aria-label={label}
+      onClick={onClick}
+      className={cn(
+        // Base
+        'relative flex items-center gap-2 h-9 px-3 rounded-md text-[13px] font-medium transition-colors text-left',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-1',
+        // Desktop: stretch full width, add left-border active indicator
+        'md:w-full md:rounded-l-md md:rounded-r-none',
+        // Inactive state
+        !active && !destructive && 'text-[var(--color-text-muted)] hover:bg-[#F4F6FA] hover:text-[var(--color-text-secondary)]',
+        !active && destructive && 'text-[var(--color-text-muted)] hover:bg-[#F4F6FA] hover:text-[var(--color-text-secondary)]',
+        // Active state: accent-tint bg + accent-deep text + left blue border (desktop)
+        active && 'bg-[var(--color-accent-tint)] text-[var(--color-accent-deep)]',
+        // Mobile: shrink wrap with padding
+        'whitespace-nowrap md:whitespace-normal',
+      )}
+    >
+      {/* Active left border — desktop only */}
+      {active && (
+        <span
+          className="absolute left-0 top-0 hidden h-full w-0.5 rounded-r-sm bg-[var(--color-accent)] md:block"
+          aria-hidden="true"
+        />
+      )}
+      <Icon
+        className={cn(
+          'h-[18px] w-[18px] shrink-0 transition-colors',
+          active ? 'text-[var(--color-accent)]' : 'text-current opacity-70',
+        )}
+      />
+      {/* On mobile, only show icon for compact tabs except first 3 */}
+      <span className="hidden sm:inline md:inline">{label}</span>
+    </button>
+  )
+}
 
-        <TabsContent value="integrations">
-          <PublishingIntegrationsTab />
-        </TabsContent>
+export default function SettingsPage() {
+  return (
+    // Suspense boundary for useSearchParams (Next.js 15 requirement)
+    <Suspense fallback={<SettingsShellSkeleton />}>
+      <SettingsContent />
+    </Suspense>
+  )
+}
 
-        <TabsContent value="cancel">
-          <CancelTab />
-        </TabsContent>
-      </Tabs>
+function SettingsShellSkeleton() {
+  return (
+    <div className="min-h-screen pb-16">
+      <div className="mb-8">
+        <div className="h-8 w-32 animate-pulse rounded-lg bg-[#F3F4F6]" />
+        <div className="mt-2 h-4 w-72 animate-pulse rounded bg-[#F3F4F6]" />
+      </div>
+      <div className="flex gap-8">
+        <div className="w-[200px] shrink-0 space-y-1">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-9 animate-pulse rounded-md bg-[#F3F4F6]" />
+          ))}
+        </div>
+        <div className="flex-1 max-w-[760px] space-y-4">
+          <div className="h-48 animate-pulse rounded-2xl bg-[#F3F4F6]" />
+          <div className="h-32 animate-pulse rounded-2xl bg-[#F3F4F6]" />
+        </div>
+      </div>
     </div>
   )
 }
