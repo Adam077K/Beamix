@@ -460,7 +460,7 @@ function CoCitationView({
         {coCitations.map((cc) => (
           <div
             key={cc.domain}
-            className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-[#F7F7F7]"
+            className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-[#F4F6FA]"
           >
             {/* Domain + name — dominant */}
             <div className="min-w-0 flex-1">
@@ -535,15 +535,14 @@ function CompetitorPanelSuccess() {
 
       {/* 32px gap — SoV is a new register, TIER-1 hero */}
       <div className="mb-8">
-        {/* SoV is TIER-1 — rendered with card-console-hero */}
+        {/* SoV is TIER-1 — outer hero wrapper is the only depth container */}
         <div className="craft-enter craft-enter-2">
-          <div className="card-console-hero overflow-hidden rounded-[16px]">
-            <ShareOfVoice
-              history={data.shareOfVoiceHistory}
-              engineBreakdown={data.engineBreakdown}
-              topCompetitorName={topCompetitor.name}
-            />
-          </div>
+          <ShareOfVoice
+            history={data.shareOfVoiceHistory}
+            engineBreakdown={data.engineBreakdown}
+            topCompetitorName={topCompetitor.name}
+            className="card-console-hero overflow-hidden rounded-[16px]"
+          />
         </div>
       </div>
 

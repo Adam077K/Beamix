@@ -255,7 +255,7 @@ export function ShareOfVoice({
 
   return (
     <section
-      className={cn('card-console overflow-hidden rounded-[16px]', className)}
+      className={cn('overflow-hidden rounded-[16px]', className)}
       aria-labelledby="sov-heading"
     >
       {/* Section header */}
@@ -266,7 +266,7 @@ export function ShareOfVoice({
         <div className="flex items-baseline gap-3">
           <h2
             id="sov-heading"
-            className="font-mono text-[36px] font-semibold tabular-nums leading-none tracking-[-0.03em] text-[#0A0A0A]"
+            className="font-mono text-[64px] font-semibold tabular-nums leading-none tracking-[-0.03em] text-[#0A0A0A]"
           >
             {latest.us}%
           </h2>
