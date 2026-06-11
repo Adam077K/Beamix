@@ -35,6 +35,5 @@ export type {
   AutomationRow,
   OffsiteRow,
   BlogDraft,
-  DEMO_BUSINESS,
 } from './types'
 export { DEMO_BUSINESS } from './types'
