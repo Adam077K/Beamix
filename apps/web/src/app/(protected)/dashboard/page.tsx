@@ -9,6 +9,8 @@ import { FoundingCohortPanel } from './_components/FoundingCohortPanel'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import type { DashboardOutcomes, VisibilityScore } from '@/types/outcomes'
+import { isDemoUser, DEMO_SCAN_ID } from '@/lib/demo'
+import { DEMO_DASHBOARD } from '@/lib/demo/fixtures'
 
 // ---------------------------------------------------------------------------
 // Stub data — Wave 2 will replace with real Supabase fetch
@@ -57,8 +59,10 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Wave 2: replace with `await fetchDashboardOutcomes(userId)`
-  const outcomes: DashboardOutcomes = EMPTY_OUTCOMES
+  // Demo mode: return rich fixture data for demo@beamixai.com.
+  // Real users are completely unaffected — the guard is a simple email check.
+  const isDemo = isDemoUser(user?.email)
+  const outcomes: DashboardOutcomes = isDemo ? DEMO_DASHBOARD : EMPTY_OUTCOMES
 
   return (
     <main className="mx-auto min-h-[100dvh] max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
@@ -68,7 +72,9 @@ export default async function DashboardPage() {
         subtitle="Your AI search visibility, what the crew has done this week, and what's waiting on you."
         action={
           <Button asChild variant="outline">
-            <Link href="/scans">View scans</Link>
+            <Link href={isDemo ? `/scan/${DEMO_SCAN_ID}` : '/scans'}>
+              View scans
+            </Link>
           </Button>
         }
       />

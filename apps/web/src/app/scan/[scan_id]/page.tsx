@@ -18,6 +18,7 @@ import { IssueLedger } from './_components/IssueLedger'
 import { ScanPendingState } from './_components/ScanPendingState'
 import { ScanV2View } from './_components/ScanV2View'
 import type { ScanV2Result } from '@/lib/scan/scan-v2-types'
+import { isDemoScan } from '@/lib/demo/scan-gate'
 
 export const dynamic = 'force-dynamic'
 
@@ -68,6 +69,11 @@ interface FreeScanResults {
 // ---------------------------------------------------------------------------
 
 async function getFreeScan(scanId: string): Promise<ScanResult | null> {
+  // Demo mode: return fixture for the well-known demo scan ID without a DB query.
+  // This is a public route gated by ID only (no auth check needed here).
+  const demoResult = isDemoScan(scanId)
+  if (demoResult) return demoResult as unknown as ScanResult
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
