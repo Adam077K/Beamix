@@ -20,8 +20,8 @@ export interface ToolPageProps {
   inputCollapsed?: boolean
   onToggleInput?: () => void
 
-  // Zone 3 — Run Control
-  runControl: ReactNode
+  // Zone 3 — Run Control (pass null to suppress Zone 3 entirely)
+  runControl: ReactNode | null
 
   // Zone 4 — Pipeline Ledger (shown while running)
   ledger?: ReactNode
@@ -120,11 +120,13 @@ export function ToolPage({
         )}
       </div>
 
-      {/* Zone 3 — Run Control */}
+      {/* Zone 3 — Run Control (only rendered when runControl is provided) */}
       {/* M12: 24px gap from Zone 2 */}
-      <div className="craft-enter craft-enter-3 mt-6">
-        {runControl}
-      </div>
+      {runControl && (
+        <div className="craft-enter craft-enter-3 mt-6">
+          {runControl}
+        </div>
+      )}
 
       {/* Zone 4 — Live Pipeline Ledger (running state only) */}
       {/* M12: 32px gap from Zone 3 */}
@@ -138,10 +140,7 @@ export function ToolPage({
       {/* M12: 40px gap from Zone 4 (or 3 if no ledger) */}
       {showOutput && (
         <div
-          className={cn(
-            'craft-enter craft-enter-5',
-            showLedger ? 'mt-10' : 'mt-10',
-          )}
+          className="craft-enter craft-enter-5 mt-10"
         >
           {(state === 'success') ? (
             <div className="card-console-hero overflow-hidden">

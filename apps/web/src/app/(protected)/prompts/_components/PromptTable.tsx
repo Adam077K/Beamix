@@ -87,7 +87,7 @@ function PromptTableSkeleton() {
       role="status"
       aria-busy="true"
       aria-label="Loading prompts…"
-      className="card-console-hero overflow-hidden"
+      className="overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-[#E5E7EB] px-5 py-3">
@@ -229,7 +229,7 @@ export function PromptTable({
 
   return (
     <>
-      <div className="card-console-hero overflow-hidden">
+      <div className="overflow-hidden">
         {/* Table toolbar */}
         <div className="flex flex-wrap items-center gap-3 border-b border-[#E5E7EB] px-5 py-3">
           {/* Search */}

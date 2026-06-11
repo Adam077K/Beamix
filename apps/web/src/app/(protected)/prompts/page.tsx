@@ -140,13 +140,11 @@ export default function PromptsPage() {
   const inputSummary = `${runInputSeed} · ChatGPT, Gemini, Perplexity`
 
   // Context stat values — from fixture sparkline
-  const sparklinePoints = DEMO_PROMPTS.sparklinePoints as unknown as number[]
+  const sparklinePoints: number[] = [...DEMO_PROMPTS.sparklinePoints]
   const trackedCount = DEMO_PROMPTS.rows.length
 
   // PromptTable verdict — used in the serif beat
-  const coveredCount = (DEMO_PROMPTS.rows as unknown as Array<{ covered: boolean }>).filter(
-    (r) => r.covered,
-  ).length
+  const coveredCount = DEMO_PROMPTS.rows.filter((r) => r.covered).length
   const gapCount = trackedCount - coveredCount
   const trendWord: string = gapCount < 3 ? 'strong' : 'growing'
 
