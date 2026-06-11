@@ -5,19 +5,17 @@ import { ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react'
 import type { VisibilityScore } from '@/types/outcomes'
 
 /**
- * ScoreHeroPanel — the focal point of the dashboard.
+ * ScoreHeroPanel — M1 TIER-1 focal card (card-console-hero, one per screen).
  *
- * The overall AI-search visibility score is the loudest element on the page:
- * an oversized Geist Mono number inside a score ring, with a single confident
- * blue CTA ("Run scan"). The number is derived from the existing
- * visibilityScores contract (mean of engines that have reported) — pure
- * presentation, no new data.
- *
- * Score colors (--color-data-3..6) tint the RING only — never the CTA.
- * The CTA is the one blue (#3370FF) action on the surface.
- *
- * States: loading (skeleton), empty (no scan yet — sells the next moment),
- * error (recovery CTA), populated.
+ * Craft moves applied:
+ * M1 — TIER-1 hero elevation (card-console-hero + shadow-card-hero)
+ * M2 — 4-step type contract: 64px mono score (STEP-1) · 30px verdict (STEP-2)
+ *       · 12px eyebrow (STEP-3) · 15px body (STEP-4)
+ * M5 — Fraunces italic on the band word only, inline in a sans sentence
+ * M8 — two-tier recovery CTAs on empty + error states
+ * M9 — craft-enter fade-up; no looping motion
+ * M10 — primary focal above the fold, nothing competes for TIER-1
+ * M11 — all numbers (score, engines reporting) in Geist Mono tabular-nums
  */
 
 type State = 'loading' | 'empty' | 'error' | 'populated'
@@ -63,7 +61,8 @@ function PanelFrame({ children }: { children: React.ReactNode }) {
   return (
     <section
       aria-labelledby="score-hero-heading"
-      className="card-console-hero relative overflow-hidden"
+      /* M1 TIER-1: card-console-hero | M9: craft-enter entrance */
+      className="card-console-hero relative overflow-hidden craft-enter craft-enter-1"
       style={{
         background: 'linear-gradient(135deg, #FFFFFF 0%, var(--color-surface-warm) 100%)',
       }}
@@ -93,6 +92,33 @@ function TrendBadge({ trend }: { trend: VisibilityScore['trend'] }) {
       <Minus className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2} />
       Holding steady
     </span>
+  )
+}
+
+/**
+ * M5 — Verdict sentence with band word in Fraunces italic, inline in a sans sentence.
+ * "You're showing up — <em Fraunces>Excellent</em> — across AI search"
+ */
+function VerdictLine({ score }: { score: number }) {
+  const bandWord = band(score)
+  return (
+    /* M2 STEP-2 — 30px InterDisplay-Medium -0.02em (raised from 26px) */
+    <h2
+      id="score-hero-heading"
+      className="font-[var(--font-display)] text-[30px] font-semibold leading-tight tracking-[-0.02em] text-[#0A0A0A]"
+    >
+      You&apos;re showing up —{' '}
+      <span
+        style={{
+          fontFamily: 'var(--font-serif)',
+          fontStyle: 'italic',
+          fontWeight: 400,
+        }}
+      >
+        {bandWord}
+      </span>{' '}
+      — across AI search
+    </h2>
   )
 }
 
@@ -192,21 +218,37 @@ export function ScoreHeroPanel({ scores, state = 'populated', errorMessage }: Sc
             <Minus className="h-12 w-12 text-[#D1D5DB]" strokeWidth={1.5} />
           </div>
           <div className="max-w-[420px]">
+            {/* M2 STEP-3 eyebrow */}
             <p className="mb-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
               AI search visibility
             </p>
-            <h2 id="score-hero-heading" className="font-[var(--font-display)] text-[26px] font-semibold leading-tight tracking-[-0.01em] text-[#0A0A0A]">
-              We couldn&apos;t load your score
-            </h2>
-            <p className="mt-2 text-[15px] leading-[1.5] text-[#6B7280]">
-              {errorMessage ?? 'The connection dropped while reading your latest scan. Your data is safe.'}
-            </p>
-            <Link
-              href="/dashboard"
-              className="mt-5 inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+            {/* M2 STEP-2 */}
+            <h2
+              id="score-hero-heading"
+              className="font-[var(--font-display)] text-[30px] font-semibold leading-tight tracking-[-0.02em] text-[#0A0A0A]"
             >
-              Try again
-            </Link>
+              Couldn&apos;t load your score
+            </h2>
+            {/* M2 STEP-4 */}
+            <p className="mt-3 text-[15px] leading-[1.6] text-[#6B7280]">
+              {errorMessage ??
+                'The connection dropped while reading your latest scan. Your data is safe — reload to retry.'}
+            </p>
+            {/* M8 two-tier recovery: primary blue pill + quiet secondary link */}
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Link
+                href="/dashboard"
+                className="inline-flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+              >
+                Reload dashboard
+              </Link>
+              <Link
+                href="/scan"
+                className="inline-flex h-9 items-center gap-2 rounded-lg px-4 text-sm font-medium text-[#6B7280] transition-colors hover:text-[#0A0A0A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+              >
+                Run a new scan
+              </Link>
+            </div>
           </div>
         </div>
       </PanelFrame>
@@ -217,7 +259,7 @@ export function ScoreHeroPanel({ scores, state = 'populated', errorMessage }: Sc
     return (
       <PanelFrame>
         <div className="flex flex-col items-center gap-8 p-8 text-center sm:flex-row sm:items-center sm:gap-10 sm:p-10 sm:text-left">
-          {/* dashed placeholder ring — reads as "score is coming" not broken */}
+          {/* dashed ring — reads "score is coming" */}
           <div
             className="flex h-[200px] w-[200px] shrink-0 items-center justify-center rounded-full"
             style={{ border: `14px dashed var(--color-data-grid)` }}
@@ -228,26 +270,38 @@ export function ScoreHeroPanel({ scores, state = 'populated', errorMessage }: Sc
             </span>
           </div>
           <div className="max-w-[440px]">
+            {/* M2 STEP-3 */}
             <p className="mb-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
               AI search visibility
             </p>
+            {/* M2 STEP-2 */}
             <h2
               id="score-hero-heading"
-              className="font-[var(--font-display)] text-[26px] font-semibold leading-tight tracking-[-0.01em] text-[#0A0A0A]"
+              className="font-[var(--font-display)] text-[30px] font-semibold leading-tight tracking-[-0.02em] text-[#0A0A0A]"
             >
               Your first scan sets the baseline
             </h2>
-            <p className="mt-2 text-[15px] leading-[1.5] text-[#6B7280]">
+            {/* M2 STEP-4 */}
+            <p className="mt-3 text-[15px] leading-[1.6] text-[#6B7280]">
               See exactly where ChatGPT, Gemini, and Perplexity rank you today. One scan,
               one number, and the crew starts closing the gaps.
             </p>
-            <Link
-              href="/scan"
-              className="mt-5 inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-5 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
-            >
-              Run your first scan
-              <ArrowUpRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-            </Link>
+            {/* M8 two-tier CTA: primary blue pill + quiet secondary link */}
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Link
+                href="/scan"
+                className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-5 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+              >
+                Run your first scan
+                <ArrowUpRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+              </Link>
+              <Link
+                href="/scans"
+                className="inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-medium text-[#6B7280] transition-colors hover:text-[#0A0A0A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+              >
+                View past scans
+              </Link>
+            </div>
           </div>
         </div>
       </PanelFrame>
@@ -261,22 +315,21 @@ export function ScoreHeroPanel({ scores, state = 'populated', errorMessage }: Sc
       <div className="flex flex-col items-center gap-8 p-8 sm:flex-row sm:items-center sm:gap-10 sm:p-10">
         <Ring score={overall} />
         <div className="flex w-full min-w-0 flex-col items-center text-center sm:items-start sm:text-left">
+          {/* M2 STEP-3 eyebrow */}
           <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
             AI search visibility
           </p>
-          <h2
-            id="score-hero-heading"
-            className="font-[var(--font-display)] text-[26px] font-semibold leading-tight tracking-[-0.01em] text-[#0A0A0A]"
-          >
-            {band(overall)} — you show up across AI search
-          </h2>
+          {/* M2 STEP-2 + M5 Fraunces serif beat on the band word */}
+          <VerdictLine score={overall} />
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
             <TrendBadge trend={trend} />
-            <span className="font-mono text-[12px] text-[#6B7280]">
+            {/* M11 mono for truth */}
+            <span className="font-mono text-[12px] text-[#6B7280] tabular-nums">
               {reporting}/{total} engines reporting
             </span>
           </div>
-          <p className="mt-3 max-w-[420px] text-[15px] leading-[1.5] text-[#6B7280]">
+          {/* M2 STEP-4 body */}
+          <p className="mt-3 max-w-[420px] text-[15px] leading-[1.6] text-[#6B7280]">
             This is the average of every engine below. Run a fresh scan to see what moved
             since last week.
           </p>
