@@ -148,7 +148,9 @@ export function buildNarrationPrompt(input: NarrationInput): { system: string; u
     .slice(0, 6) // cap to avoid prompt bloat; top 6 is sufficient for narration
     .map(
       (g, i) =>
-        `  ${i + 1}. [${g.factor_key}] ${sanitizeForPrompt(g.display_name)}: ${sanitizeForPrompt(g.contrastive_evidence)}` +
+        // sanitizeForPrompt applied to factor_key: it is our own DB-seeded value today
+        // (low risk), but defense-in-depth against future catalog imports or prompt injection.
+        `  ${i + 1}. [${sanitizeForPrompt(g.factor_key)}] ${sanitizeForPrompt(g.display_name)}: ${sanitizeForPrompt(g.contrastive_evidence)}` +
         (g.competitors_with_factor.length > 0
           ? ` (competitors: ${g.competitors_with_factor.map(sanitizeForPrompt).join(', ')})`
           : ''),
@@ -159,7 +161,7 @@ export function buildNarrationPrompt(input: NarrationInput): { system: string; u
     .slice(0, 4)
     .map(
       (g, i) =>
-        `  ${i + 1}. [${g.factor_key}] ${sanitizeForPrompt(g.display_name)}: ${sanitizeForPrompt(g.contrastive_evidence)}`,
+        `  ${i + 1}. [${sanitizeForPrompt(g.factor_key)}] ${sanitizeForPrompt(g.display_name)}: ${sanitizeForPrompt(g.contrastive_evidence)}`,
     )
     .join('\n');
 
@@ -172,8 +174,9 @@ export function buildNarrationPrompt(input: NarrationInput): { system: string; u
     )
     .join('\n');
 
-  // All gap factor keys for the JSON contract
-  const allGapFactorKeys = input.rankedGaps.map((g) => g.factor_key);
+  // All gap factor keys for the JSON contract — sanitized (defense-in-depth against
+  // future catalog imports that might contain special characters or prompt-injection payloads).
+  const allGapFactorKeys = input.rankedGaps.map((g) => sanitizeForPrompt(g.factor_key));
 
   const orderingNote =
     input.rankedGaps.length > 0 && input.rankedGaps[0]!.ordering_mode === 'impact_fallback'
@@ -228,6 +231,7 @@ export function buildNarrationPrompt(input: NarrationInput): { system: string; u
  */
 function buildEvidenceCorpus(input: NarrationInput): {
   rawTexts: string[]; // for substring checks on quoted spans
+  lowerRawTexts: string[]; // pre-lowercased rawTexts — avoids repeated .toLowerCase() in inner loops
   knownCompetitors: Set<string>; // lowercased; for competitor name checks
   knownFactorKeys: Set<string>; // for factor_key checks in gap_explanations
 } {
@@ -283,7 +287,20 @@ function buildEvidenceCorpus(input: NarrationInput): {
   // BusinessName itself is an allowed reference in output
   rawTexts.push(input.businessName);
 
-  return { rawTexts, knownCompetitors, knownFactorKeys };
+  // NOTE (advisory location-not-in-grounding-corpus): BusinessContext.location is
+  // NOT currently in NarrationInput, so we cannot add it here without a type change.
+  // Deferred: when NarrationInput is extended with a `ctx` or `location` field, add
+  //   rawTexts.push(input.location)
+  // to allow legitimate location-bearing narration without false-stripping.
+  // The grounding check is conservative — any location string the model legitimately
+  // uses (e.g. "Tel Aviv") must already appear in a raw_response or contrastive_evidence
+  // string, so the risk of false-stripping is low for the current free-scan use case.
+
+  // Pre-lowercase all rawTexts once here. appearsInCorpus() uses this to avoid
+  // repeated .toLowerCase() calls per-element in the per-sentence inner loops.
+  const lowerRawTexts = rawTexts.map((t) => t.toLowerCase());
+
+  return { rawTexts, lowerRawTexts, knownCompetitors, knownFactorKeys };
 }
 
 // ---------------------------------------------------------------------------
@@ -309,12 +326,24 @@ function extractQuotedSpans(text: string): string[] {
 }
 
 /**
+ * Compiled number-extraction regex — hoisted to avoid re-compilation on every call.
+ * Matches integers and decimals (e.g. "42", "3.5", "20%").
+ * Short numbers (0-9) are excluded to avoid flagging ordinals and list markers.
+ * The /g flag is reset on each call via lastIndex (we create a new regex per call
+ * using source, or we use exec loop which resets for the cloned regex — simpler:
+ * always use the regex literal inline inside the function so JavaScript's
+ * regex literal compilation is memoised by the engine).
+ */
+const NUMBER_EXTRACTION_REGEX_SOURCE = '\\b(\\d{2,}(?:\\.\\d+)?%?)\\b';
+
+/**
  * Extract standalone numbers from a sentence.
  * Matches integers and decimals (e.g. "42", "3.5", "20%").
  * Short numbers (0-9) are excluded to avoid flagging ordinals and list markers.
  */
 function extractNumbers(text: string): string[] {
-  const numRegex = /\b(\d{2,}(?:\.\d+)?%?)\b/g;
+  // Create from source with /g to avoid lastIndex state bleeding across calls.
+  const numRegex = new RegExp(NUMBER_EXTRACTION_REGEX_SOURCE, 'g');
   const numbers: string[] = [];
   let match: RegExpExecArray | null;
   while ((match = numRegex.exec(text)) !== null) {
@@ -324,11 +353,13 @@ function extractNumbers(text: string): string[] {
 }
 
 /**
- * Check whether a value appears in any of the raw text strings (case-insensitive substring).
+ * Check whether a value appears in any of the pre-lowercased corpus strings (case-insensitive substring).
+ * Caller must pass lowerRawTexts (pre-lowercased in buildEvidenceCorpus) to avoid
+ * repeated .toLowerCase() calls in inner loops.
  */
-function appearsInCorpus(value: string, rawTexts: string[]): boolean {
+function appearsInCorpus(value: string, lowerRawTexts: string[]): boolean {
   const lower = value.toLowerCase();
-  return rawTexts.some((t) => t.toLowerCase().includes(lower));
+  return lowerRawTexts.some((t) => t.includes(lower));
 }
 
 /**
@@ -346,13 +377,14 @@ function appearsInCorpus(value: string, rawTexts: string[]): boolean {
  *   "50" vs "50%"      → matches (% is a non-digit word boundary char)
  *   "50" vs "150"      → does NOT match (digit precedes — no boundary before "50")
  */
-function appearsAsExactToken(value: string, rawTexts: string[]): boolean {
+function appearsAsExactToken(value: string, lowerRawTexts: string[]): boolean {
   // Build a regex that requires a non-digit (or start/end) on both sides of the number.
   // We escape the value to be safe (values come from the number regex which only
   // produces \d+ with optional dot and %, so no special chars in practice).
+  // lowerRawTexts are pre-lowercased; numbers are case-insensitive so this is fine.
   const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const pattern = new RegExp(`(?<![\\d.])${escapedValue}(?![\\d])`, 'i');
-  return rawTexts.some((t) => pattern.test(t));
+  return lowerRawTexts.some((t) => pattern.test(t));
 }
 
 /**
@@ -388,12 +420,12 @@ function appearsAsExactToken(value: string, rawTexts: string[]): boolean {
  */
 function isSentenceGrounded(
   sentence: string,
-  corpus: { rawTexts: string[]; knownCompetitors: Set<string> },
+  corpus: { lowerRawTexts: string[]; knownCompetitors: Set<string> },
 ): boolean {
   // (a) Quoted span check
   const quotedSpans = extractQuotedSpans(sentence);
   for (const span of quotedSpans) {
-    if (!appearsInCorpus(span, corpus.rawTexts)) {
+    if (!appearsInCorpus(span, corpus.lowerRawTexts)) {
       console.error('[scan/narration] Grounding check: ungrounded quoted span', {
         span: span.slice(0, 80),
       });
@@ -420,9 +452,10 @@ function isSentenceGrounded(
     const candidate = camelMatch[1]!;
     const candidateLower = candidate.toLowerCase();
     if (corpus.knownCompetitors.has(candidateLower)) continue;
-    if (appearsInCorpus(candidate, corpus.rawTexts)) continue;
+    if (appearsInCorpus(candidate, corpus.lowerRawTexts)) continue;
     console.error('[scan/narration] Grounding check: possible ungrounded camelcase business name', {
-      candidate,
+      // Truncate to 60 chars — LLM-generated entity names may contain arbitrary content.
+      candidate: candidate.slice(0, 60),
     });
     return false;
   }
@@ -434,9 +467,10 @@ function isSentenceGrounded(
     const candidate = multiMatch[1]!;
     const candidateLower = candidate.toLowerCase();
     if (corpus.knownCompetitors.has(candidateLower)) continue;
-    if (appearsInCorpus(candidate, corpus.rawTexts)) continue;
+    if (appearsInCorpus(candidate, corpus.lowerRawTexts)) continue;
     console.error('[scan/narration] Grounding check: possible ungrounded multi-word competitor name', {
-      candidate,
+      // Truncate to 60 chars — LLM-generated entity names may contain arbitrary content.
+      candidate: candidate.slice(0, 60),
     });
     return false;
   }
@@ -449,7 +483,7 @@ function isSentenceGrounded(
   // (bounded by non-digit characters or string boundaries) in the corpus.
   const numbers = extractNumbers(sentence);
   for (const num of numbers) {
-    if (!appearsAsExactToken(num, corpus.rawTexts)) {
+    if (!appearsAsExactToken(num, corpus.lowerRawTexts)) {
       console.error('[scan/narration] Grounding check: ungrounded number', { num });
       return false;
     }
@@ -602,10 +636,10 @@ export async function narrate(
   // factor_key is not in the known gap list.
   //
   // Grounding check covers:
-  //   (a) Quoted spans ≥ 4 chars → must appear in rawTexts (case-insensitive)
+  //   (a) Quoted spans ≥ 4 chars → must appear in lowerRawTexts (case-insensitive)
   //   (b) Capitalized names that look like competitors → must be in knownCompetitors
-  //       OR appear in rawTexts
-  //   (c) Standalone numbers ≥ 2 digits → must appear in rawTexts
+  //       OR appear in lowerRawTexts
+  //   (c) Standalone numbers ≥ 2 digits → must appear in lowerRawTexts (exact token)
   //
   // Conservative: strip borderline sentences, keep plain prose.
 

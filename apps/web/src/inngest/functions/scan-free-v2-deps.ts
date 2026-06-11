@@ -284,8 +284,13 @@ export function mapV2ToFreeScanResults(result: ScanV2Result): FreeScanResults {
   // --- visibility_score: headline_band.point (median across engines, labeled secondary) ---
   const visibilityScore = Math.round(result.headline_band.point);
 
-  // --- engines_checked: number of successful engine subscores ---
-  // Always 3 for free scans (the full set). Using engines that produced a subscore.
+  // --- engines_checked: number of engine subscores ---
+  // assembleFreeScanV2 always produces exactly one subscore per engine (engines.map),
+  // so engine_subscores.length is always 3 for free scans. The `?: 3` fallback is a
+  // defensive guard for callers that construct a ScanV2Result directly (e.g. tests
+  // that override engine_subscores: []). It is not reachable in production but is
+  // intentionally retained to guard the legacy free-scan results page from a
+  // zero-engines-checked display.
   const enginesChecked = result.engine_subscores.length > 0 ? result.engine_subscores.length : 3;
 
   // --- issues mapping from gap_list ---

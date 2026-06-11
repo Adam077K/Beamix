@@ -195,8 +195,10 @@ export async function auditCompetitors(
         : null;
 
     if (!domain) {
-      // No resolvable domain — skip with a structured log (not an error; expected).
-      console.error('[scan/competitor-audit] No resolvable domain for competitor — skipping', {
+      // No resolvable domain — expected path (conservative null-resolver returns null
+      // for all competitors in free-scan v2). Use debug/warn, not error, because
+      // this is not an error: the caller explicitly chose not to resolve this competitor.
+      console.debug('[scan/competitor-audit] No resolvable domain for competitor — skipping', {
         competitor_name: competitor.name,
       });
       continue;
