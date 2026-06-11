@@ -38,7 +38,7 @@ export default function OffsitePage() {
       }
       inputPanel={<OffsiteTabs />}
       state="idle"
-      runControl={<></>}
+      runControl={null}
       historyHref="/archive"
     />
   )
