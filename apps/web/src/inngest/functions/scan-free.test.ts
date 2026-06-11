@@ -23,7 +23,7 @@
  *   - inngest client — captures the handler via createFunction mock
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Mock @supabase/supabase-js
@@ -127,6 +127,33 @@ vi.mock('../client', () => ({
       },
     ),
   },
+}));
+
+// ---------------------------------------------------------------------------
+// Mock assembleFreeScanV2 for v2 flag-ON tests
+// ---------------------------------------------------------------------------
+
+const mockAssembleFreeScanV2 = vi.fn();
+
+vi.mock('../../lib/scan/assemble-free-scan-v2', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../lib/scan/assemble-free-scan-v2')>();
+  return {
+    ...actual,
+    assembleFreeScanV2: mockAssembleFreeScanV2,
+  };
+});
+
+// Mock scan-free-v2-deps so we can control isScanMeasurementV2Enabled and buildV2Deps
+const mockBuildV2Deps = vi.fn().mockReturnValue({});
+const mockBuildV2Input = vi.fn().mockReturnValue({});
+const mockMapV2ToFreeScanResults = vi.fn();
+let mockIsScanMeasurementV2Enabled = false;
+
+vi.mock('./scan-free-v2-deps', () => ({
+  isScanMeasurementV2Enabled: vi.fn().mockImplementation(() => mockIsScanMeasurementV2Enabled),
+  buildV2Input: mockBuildV2Input,
+  buildV2Deps: mockBuildV2Deps,
+  mapV2ToFreeScanResults: mockMapV2ToFreeScanResults,
 }));
 
 // Import AFTER mocks so the module initialises with mocked dependencies
@@ -240,6 +267,14 @@ describe('scan-free Inngest function', () => {
     mockKillSwitchPaused = false;
     mockProgressRow = null;
     lastFromTable = '';
+    // Reset v2 flag to OFF so existing tests are unaffected
+    mockIsScanMeasurementV2Enabled = false;
+
+    // Re-wire v2 mocks after clearAllMocks (vi.clearAllMocks resets call counts only,
+    // mockImplementation survives for vi.fn() — but isScanMeasurementV2Enabled is
+    // a vi.fn().mockImplementation that reads the variable, so re-wire is not needed there).
+    mockBuildV2Deps.mockReturnValue({});
+    mockBuildV2Input.mockReturnValue({});
 
     // Re-wire mock chains after clearAllMocks
     mockEq.mockImplementation(() => ({ error: null }));
@@ -539,5 +574,155 @@ describe('scan-free Inngest function', () => {
 
     const failedPayload = capturedUpdates.find((p) => p['status'] === 'failed');
     expect(failedPayload).toBeDefined();
+  });
+
+  // ── v2 flag=ON tests ──────────────────────────────────────────────────────
+  //
+  // These tests set SCAN_MEASUREMENT_V2=true via the mockIsScanMeasurementV2Enabled
+  // variable (the vi.mock reads it on every call). The flag is reset to false in
+  // beforeEach so all prior tests are unaffected.
+  //
+  // assembleFreeScanV2 and buildV2Deps are mocked so NO live LLM or Supabase calls
+  // are made — only the Inngest step boundary is exercised.
+
+  describe('v2 flag=ON path', () => {
+    const MOCK_V2_BLOB = {
+      visibility_score: 42,
+      engines_checked: 3,
+      issues: [{ category: 'Missing from AI answers', count: 1 }],
+      total_issues: 1,
+      scan_v2: { meta: { run_kind: 'free' } },
+    };
+
+    beforeEach(() => {
+      mockIsScanMeasurementV2Enabled = true;
+      mockAssembleFreeScanV2.mockResolvedValue({ meta: { run_kind: 'free' }, gap_list: [], engine_subscores: [] });
+      mockMapV2ToFreeScanResults.mockReturnValue(MOCK_V2_BLOB);
+
+      // Research still uses OpenRouter through the v1 path (perplexity-research step)
+      mockCallOpenRouter.mockResolvedValue(makeORResponse(RESEARCH_JSON));
+    });
+
+    afterEach(() => {
+      mockIsScanMeasurementV2Enabled = false;
+    });
+
+    // (v2-a) scan-v2-assemble step is invoked exactly once
+    it('(v2-a) scan-v2-assemble step is invoked exactly once when flag is ON', async () => {
+      const step = buildStep();
+      await capturedHandler!({ event: { data: SCAN_EVENT_DATA }, step });
+
+      const v2AssembleCalls = (step.run.mock.calls as Array<[string]>).filter(
+        ([name]) => name === 'scan-v2-assemble',
+      );
+      expect(v2AssembleCalls).toHaveLength(1);
+    });
+
+    // (v2-b) v1 engine steps are NOT invoked when the flag is ON
+    it('(v2-b) v1 engine/analysis steps are NOT invoked when flag is ON', async () => {
+      const step = buildStep();
+      await capturedHandler!({ event: { data: SCAN_EVENT_DATA }, step });
+
+      const stepNames = (step.run.mock.calls as Array<[string]>).map(([name]) => name);
+      expect(stepNames).not.toContain('engine-chatgpt');
+      expect(stepNames).not.toContain('engine-gemini');
+      expect(stepNames).not.toContain('engine-perplexity');
+      expect(stepNames).not.toContain('gemini-flash-analysis');
+    });
+
+    // (v2-c) function early-returns { scan_id } after persist-results
+    it('(v2-c) function returns { scan_id } and persist-results runs exactly once', async () => {
+      const step = buildStep();
+      const result = (await capturedHandler!({ event: { data: SCAN_EVENT_DATA }, step })) as {
+        scan_id: string;
+      };
+
+      expect(result.scan_id).toBe('scan-001');
+
+      const stepNames = (step.run.mock.calls as Array<[string]>).map(([name]) => name);
+      const persistCount = stepNames.filter((n) => n === 'persist-results').length;
+      expect(persistCount).toBe(1);
+
+      // The persist-results step must have written the v2 blob to free_scans
+      const persistPayload = capturedUpdates.find((p) => p['status'] === 'complete');
+      expect(persistPayload).toBeDefined();
+      expect(persistPayload!['results']).toEqual(MOCK_V2_BLOB);
+    });
+
+    // (v2-d) ProbeLeakError from assembleFreeScanV2 propagates → mark-failed path
+    it('(v2-d) ProbeLeakError from assembleFreeScanV2 propagates to mark-failed', async () => {
+      // Construct a ProbeLeakError — needs to be the actual class from probe.ts
+      // but for the step mock it just needs to be a real Error subclass.
+      class ProbeLeakError extends Error {
+        constructor(msg: string) {
+          super(msg);
+          this.name = 'ProbeLeakError';
+        }
+      }
+      mockAssembleFreeScanV2.mockRejectedValueOnce(
+        new ProbeLeakError('identity leaked into probe'),
+      );
+
+      const step = buildStep();
+
+      await expect(
+        capturedHandler!({ event: { data: SCAN_EVENT_DATA }, step }),
+      ).rejects.toThrow('identity leaked into probe');
+
+      const stepNames = (step.run.mock.calls as Array<[string]>).map(([name]) => name);
+      expect(stepNames).toContain('mark-failed');
+
+      const failedPayload = capturedUpdates.find((p) => p['status'] === 'failed');
+      expect(failedPayload).toBeDefined();
+    });
+
+    // (v2-e) v2 path writes free_scans update, NO query_positions or scan_engine_results rows
+    it('(v2-e) v2 path updates free_scans; writes NO query_positions or scan_engine_results rows', async () => {
+      const step = buildStep();
+      await capturedHandler!({ event: { data: SCAN_EVENT_DATA }, step });
+
+      // free_scans must have been updated (status=complete with results)
+      const resultUpdates = capturedUpdates.filter((p) => p['results'] !== undefined);
+      expect(resultUpdates).toHaveLength(1);
+      expect(resultUpdates[0]!['status']).toBe('complete');
+
+      // No upserts to query_positions or scan_engine_results
+      const forbiddenTables = capturedUpserts.filter(
+        (u) => u.table === 'query_positions' || u.table === 'scan_engine_results',
+      );
+      expect(forbiddenTables).toHaveLength(0);
+
+      // No updates to query_positions or scan_engine_results either
+      // (capturedUpdates tracks all .update() calls — verify none go to those tables)
+      // Note: capturedUpdates doesn't track the table — but since free_scans is the only
+      // table updated in the v2 path (all other writes are upserts to scan_progress),
+      // this is already verified by the upsert check above.
+    });
+
+    // Guard: with flag OFF the v1 engine steps DO run (regression guard)
+    it('(v2-flag-off-guard) with flag=OFF the v1 engine steps run and v2 step does NOT', async () => {
+      mockIsScanMeasurementV2Enabled = false;
+
+      mockCallOpenRouter
+        .mockResolvedValueOnce(makeORResponse(RESEARCH_JSON))
+        .mockResolvedValueOnce(makeORResponse(ENGINE_MENTIONED_JSON))
+        .mockResolvedValueOnce(makeORResponse(ENGINE_NOT_MENTIONED_JSON))
+        .mockResolvedValueOnce(makeORResponse(ENGINE_NOT_MENTIONED_JSON))
+        .mockResolvedValueOnce(makeORResponse(ANALYSIS_JSON));
+
+      const step = buildStep();
+      await capturedHandler!({ event: { data: SCAN_EVENT_DATA }, step });
+
+      const stepNames = (step.run.mock.calls as Array<[string]>).map(([name]) => name);
+
+      // v1 steps must run
+      expect(stepNames).toContain('engine-chatgpt');
+      expect(stepNames).toContain('engine-gemini');
+      expect(stepNames).toContain('engine-perplexity');
+      expect(stepNames).toContain('gemini-flash-analysis');
+
+      // v2 step must NOT run
+      expect(stepNames).not.toContain('scan-v2-assemble');
+    });
   });
 });

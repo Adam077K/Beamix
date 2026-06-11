@@ -138,6 +138,15 @@ export const scanFree = inngest.createFunction(
     const { scan_id, business_name, website_url, domain } = event.data;
     const scanInput = { scan_id, business_name, website_url, domain };
 
+    // ── Feature flag: evaluate ONCE at function entry ─────────────────────────
+    // isScanMeasurementV2Enabled() reads process.env at call time. Capturing it here
+    // (before any await) ensures a consistent branch is taken for the entire execution
+    // — including Inngest retries that re-enter this function body. If the env var
+    // were read again deeper in the pipeline (e.g. inside a step callback), a flag
+    // flip between the original run and a retry could mix v1 memo keys with v2 step
+    // logic and cause Inngest to replay the wrong memoised step result.
+    const useV2 = isScanMeasurementV2Enabled();
+
     // ── Step 0: Belt-and-suspenders budget / kill-switch check ────────────
     // Re-reads the kill switch inside Inngest to guard against replayed or
     // manually triggered events that arrive after the route-level check.
@@ -211,7 +220,7 @@ export const scanFree = inngest.createFunction(
       //   this wave; per-engine memoisation is a Wave 8 refactor when retry patterns are
       //   better understood.
 
-      if (isScanMeasurementV2Enabled()) {
+      if (useV2) {
         const v2Blob: FreeScanResults = await step.run('scan-v2-assemble', async () => {
           await writeProgress(scan_id, {
             status: 'running',
