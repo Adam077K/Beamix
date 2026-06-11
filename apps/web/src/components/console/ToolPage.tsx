@@ -3,8 +3,6 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { EmptyState } from '@/components/empty-state'
-import { ErrorState } from '@/components/error-state'
 
 export type ToolPageState = 'idle' | 'running' | 'success' | 'empty' | 'error'
 
@@ -67,7 +65,6 @@ export function ToolPage({
   inputPanel,
   collapsedSummary,
   inputCollapsed = false,
-  onToggleInput,
   runControl,
   ledger,
   output,

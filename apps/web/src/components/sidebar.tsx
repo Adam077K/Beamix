@@ -21,7 +21,6 @@ import {
   Radio,
   BookOpen,
   Clock,
-  Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -51,12 +50,6 @@ const TOOLS_HREF = '/automation'
 
 // Settings — always last
 const settingsItem = { href: '/settings', label: 'Settings', icon: Settings }
-
-// Legacy flat list for backward compat (used by types below)
-const navItems = [
-  ...topNavItems,
-  settingsItem,
-]
 
 // ---------------------------------------------------------------------------
 // NavLink — a single nav item with active state
