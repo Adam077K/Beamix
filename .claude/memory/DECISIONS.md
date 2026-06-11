@@ -4,6 +4,16 @@
 
 ---
 
+### [2026-06-11] — Wave 7 free-scan v2 wiring landed (FIRST behavioral wave, flag-gated OFF in prod)
+
+**Why:** Assemble the W4/W5/W6 measurement libraries into the live free-scan flow per the wiring wave. Behavioral but flag-gated: `SCAN_MEASUREMENT_V2` env flag, **default OFF in prod** → v1 byte-identical; flag ON → v2 path. Same risk posture as W1's `SCAN_LIVE_RETRIEVAL`. PR `feat/w7-scan-wiring` tip `96432d0`; 17 files / +4,175/−82 / 650 tests; Full tier (`apps/web/src/inngest/**`); free scan stays an anonymous JSONB blob (NO normalized-table writes — spec rule).
+
+**Shipped:** narration hardening (4 W6 blockers cleared) · `competitor-audit.ts` (top-K + bounded L1 audit) · `assemble-free-scan-v2.ts` (pure injectable orchestrator: leak-gated neutral probe → code detect/shape → per-engine sentiment+scoring → client+competitor factor audit → contrastive gap-list → playbooks → narration; `headline_band`=median LABELED-secondary; ≥2/3 degraded; probes+sentiment parallelized with leak-fail-closed + degraded preserved) · `scan-free.ts`/`scan-free-v2-deps.ts` (flag-gated path, flag read once at entry; blob keeps legacy fields + adds `scan_v2`) · results page renders `scan_v2` progressively with honesty labels, v1 fallback.
+
+**QA:** Full-tier binding `qa.js` — gate #1 (`b119032`) BLOCK on one confirmed P1 (flag=ON Inngest branch had zero function-level coverage); fixed in `96432d0` (scan-free.test.ts flag=ON block: scan-v2-assemble invoked once, v1 steps skipped, early-return+persist, ProbeLeakError→mark-failed, writes only free_scans, + flag-OFF regression guard). Gate #2 (`96432d0`) PASS, 0 block-eligible, no coverage gap. 2 worker stalls recovered (atomic-commit + narrow SendMessage resume).
+
+**FLAG-FLIP READINESS CHECKLIST (clear BEFORE SCAN_MEASUREMENT_V2 goes ON in prod — NOT blockers for this dormant merge):** ProbeLeakError→NonRetriableError; `scan_v2: any`→validated type; SCAN_LIVE_RETRIEVAL-branch test in buildV2Deps; parallelize site-audit+catalog awaits; competitor-domain resolver (still null → gap-list in honest impact_fallback; citation-based resolver lights up real contrastive auditing); minor test/dead-code nits. Then: flag ON in staging→prod alongside W2b budget/abuse guard. Authenticated recurring-scan normalized persistence is a separate later wave.
+
 ### [2026-06-11] — Wave 6 contrastive gap-list + playbook mapping + narration v2 landed (pure library)
 
 **Why:** Build the shippable gap-checklist (ships ahead of the calibrated score) per SCAN-MEASUREMENT-MODEL.md §3/§5 W6. Pure additive library (`apps/web/src/lib/scan/`), same build-then-wire pattern as W4/W5. PR `feat/w6-gap-narration` tip `0d62b38`; 9 files / +2,927 LOC / 406 tests; NO migration; live scan flow untouched.
