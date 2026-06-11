@@ -32,8 +32,8 @@ export default function ArchivePage() {
         }
       />
 
-      {/* TIER-2 card: the run table lives at standard depth */}
-      <div className="card-console rounded-[var(--radius-card)] p-6 craft-enter craft-enter-2">
+      {/* TIER-1 focal: the run table is the primary surface on this page */}
+      <div className="card-console-hero rounded-[var(--radius-card)] p-6 craft-enter craft-enter-2">
         <Suspense fallback={<ArchiveTableSkeleton />}>
           <ArchiveClientShell />
         </Suspense>

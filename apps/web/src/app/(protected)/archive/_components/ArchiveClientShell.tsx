@@ -4,8 +4,9 @@
  * ArchiveClientShell — manages the 4-state cycle for the archive page.
  *
  * Phase 1 only: demo data, no Supabase query.
- * All 4 states cycle-able via URL param ?state=loading|error|empty|populated
- * (dev convenience only; production will always land on 'populated').
+ * In development only: all 4 states cycle-able via URL param
+ * ?state=loading|error|empty|populated (gated behind NODE_ENV !== 'production').
+ * In production the shell always loads the real flow (loading → populated).
  *
  * States:
  *   loading   → skeleton rows
@@ -14,39 +15,58 @@
  *   populated → filter bar + RunTable with 12 rows
  */
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { DEMO_RUNS } from '@/lib/demo/surfaces/archive'
 import { RunTable, type TableState } from './RunTable'
 
+const isDev = process.env.NODE_ENV !== 'production'
+const VALID_STATES: TableState[] = ['loading', 'error', 'empty', 'populated']
+
 export function ArchiveClientShell() {
   const searchParams = useSearchParams()
+  const retryTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
 
-  // Dev convenience: ?state=loading|error|empty forces a specific state
-  const forcedState = searchParams.get('state') as TableState | null
+  // Dev-only: read forced state from URL; in production always ignore.
+  const forcedState: TableState | null = isDev
+    ? (searchParams.get('state') as TableState | null)
+    : null
+  const isValidForced = forcedState !== null && VALID_STATES.includes(forcedState)
 
   const [tableState, setTableState] = useState<TableState>(() => {
-    if (forcedState && ['loading', 'error', 'empty', 'populated'].includes(forcedState)) {
-      return forcedState
-    }
+    if (isValidForced) return forcedState as TableState
     // Simulate a brief loading flash, then settle on populated
     return 'loading'
   })
 
   useEffect(() => {
-    if (forcedState && ['loading', 'error', 'empty', 'populated'].includes(forcedState)) {
+    if (isValidForced) {
       setTableState(forcedState as TableState)
       return
     }
     // Simulate load: 600ms skeleton → populated
     const t = window.setTimeout(() => setTableState('populated'), 600)
     return () => window.clearTimeout(t)
-  }, [forcedState])
+  }, [forcedState, isValidForced])
+
+  // Clean up retry timer on unmount
+  useEffect(() => {
+    return () => {
+      if (retryTimerRef.current !== null) {
+        window.clearTimeout(retryTimerRef.current)
+      }
+    }
+  }, [])
 
   const handleRetry = useCallback(() => {
+    if (retryTimerRef.current !== null) {
+      window.clearTimeout(retryTimerRef.current)
+    }
     setTableState('loading')
-    const t = window.setTimeout(() => setTableState('populated'), 800)
-    return () => window.clearTimeout(t)
+    retryTimerRef.current = window.setTimeout(() => {
+      setTableState('populated')
+      retryTimerRef.current = null
+    }, 800)
   }, [])
 
   return (

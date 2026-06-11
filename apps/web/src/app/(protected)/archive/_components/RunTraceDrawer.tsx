@@ -177,7 +177,7 @@ export function RunTraceDrawer({ open, row, trace, onClose }: RunTraceDrawerProp
             )}
           </div>
 
-          <SheetTitle className="font-[var(--font-display)] text-[22px] font-medium leading-[1.2] tracking-[-0.02em] text-[#0A0A0A]">
+          <SheetTitle className="font-[var(--font-display)] text-[30px] font-medium leading-[1.2] tracking-[-0.02em] text-[#0A0A0A]">
             {row.agentLabel}
           </SheetTitle>
 
