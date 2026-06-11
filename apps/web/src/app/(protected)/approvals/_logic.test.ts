@@ -253,6 +253,12 @@ describe('extractEvidenceUrl', () => {
 import { PUBLISH_KINDS, getApproveLabel } from './_logic'
 
 describe('getApproveLabel — guards real PUBLISH_KINDS from _logic.ts', () => {
+  it('PUBLISH_KINDS contains the expected publish-type kinds', () => {
+    expect(PUBLISH_KINDS).toEqual(
+      expect.arrayContaining(['content_publish', 'schema_push', 'listing_update', 'citation_submit']),
+    )
+    expect(PUBLISH_KINDS).toHaveLength(4)
+  })
   it('returns "Approve & publish" for content_publish', () => {
     expect(getApproveLabel('content_publish')).toBe('Approve & publish')
   })
