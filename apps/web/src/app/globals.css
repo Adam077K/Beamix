@@ -376,3 +376,25 @@ body {
   .craft-enter-4 { animation-delay: 120ms; }
   .craft-enter-5 { animation-delay: 160ms; }
 }
+
+/* ── Traceability timeline helpers (2026-06-11) ─────────────
+   Vertical work-trail rail for the traceability detail screen.
+   The rail is a border-l hairline on the container; the node dot
+   is the only new utility here. card-inset + craft-enter cover
+   the rest. Additive only — no existing rules modified.
+─────────────────────────────────────────────────────────── */
+
+@layer utilities {
+  /* 8px circle dot anchored on a timeline rail.
+     Use on the ::before of a deliverable row container that has
+     position: relative. The parent column must carry border-l
+     border-[#E5E7EB] for the rail itself. */
+  .timeline-node {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background-color: var(--color-agent); /* violet — agent work */
+    flex-shrink: 0;
+  }
+}
