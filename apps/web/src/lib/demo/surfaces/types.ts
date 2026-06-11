@@ -91,6 +91,8 @@ export interface SchemaResult {
   /** true = auto-published, false = pending inject */
   published: boolean
   publishedAt: string | null
+  /** Target URL or integration name where the schema was auto-published */
+  publishTarget?: string
 }
 
 // ---------------------------------------------------------------------------

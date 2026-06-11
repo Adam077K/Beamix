@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Check, Copy, Download, Upload } from 'lucide-react'
+import { Check, X, Copy, Download, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SerifVerdict } from '@/components/console/SerifVerdict'
 
@@ -149,14 +149,14 @@ function ValidityRow({ label, pass, value }: ValidityRowProps) {
       {/* Status glyph */}
       <span
         className={cn(
-          'flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px]',
+          'flex h-4 w-4 shrink-0 items-center justify-center rounded-full',
           pass
             ? 'bg-[#E6F5EE] text-[#0E9E6E]'
             : 'bg-[#FDECEC] text-[#DC2626]',
         )}
         aria-label={pass ? 'Pass' : 'Fail'}
       >
-        {pass ? '✓' : '✗'}
+        {pass ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
       </span>
       {/* Field label */}
       <span className="font-[var(--font-mono)] text-[12px] tabular-nums text-[#0A0A0A]">
@@ -352,8 +352,8 @@ export function JsonLdPreview({
       {/* Auto-publish confirmation line */}
       {published && publishedFormatted && publishTarget && (
         <div className="mx-6 mt-4 flex items-center gap-2 rounded-lg bg-[#E6F5EE] px-4 py-2.5">
-          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#0E9E6E] text-[10px] text-white">
-            ✓
+          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#0E9E6E] text-white">
+            <Check className="h-3 w-3" />
           </span>
           <p className="text-[13px] text-[#0E6E3E]">
             <span className="font-medium">Auto-published</span>

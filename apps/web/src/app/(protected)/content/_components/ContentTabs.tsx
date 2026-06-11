@@ -10,7 +10,6 @@ import { InputSummaryBar } from '@/components/console/InputSummaryBar'
 import { PipelineLedger } from '@/components/console/PipelineLedger'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
-import { Skeleton } from '@/components/ui/skeleton'
 import { DiffEditor } from './DiffEditor'
 import { DEMO_CONTENT } from '@/lib/demo/surfaces/content'
 import { DEMO_BUSINESS } from '@/lib/demo/surfaces/types'
@@ -18,6 +17,7 @@ import type { RunMode } from '@/components/console/ModeToggle'
 import type { RunState } from '@/components/console/RunControl'
 import type { StageState } from '@/components/console/pipeline-contract'
 import type { ContentDoc } from '@/lib/demo/surfaces/types'
+import { SerifVerdict } from '@/components/console/SerifVerdict'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -846,18 +846,6 @@ function OutputZone({
     )
   }
 
-  if (pageState === 'running') {
-    return (
-      <div className="space-y-4 px-6 py-8">
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-        <Skeleton className="mt-4 h-4 w-2/3" />
-        <Skeleton className="h-4 w-full" />
-      </div>
-    )
-  }
-
   if (pageState === 'error') {
     const errorTitle =
       errorKind === 'page-lock-conflict'
@@ -928,7 +916,7 @@ function FAQOutput({ config }: { config: TabConfig }) {
             </p>
             <p className="mt-0.5 text-[15px] text-[#6B7280]">
               Your FAQs are{' '}
-              <FAQSerifVerdict>Ready</FAQSerifVerdict>{' '}
+              <SerifVerdict>Ready</SerifVerdict>{' '}
               to review.
             </p>
           </div>
@@ -983,15 +971,6 @@ function FAQOutput({ config }: { config: TabConfig }) {
         </div>
       </div>
     </div>
-  )
-}
-
-// Inline use of SerifVerdict to avoid import issues in nested component
-function FAQSerifVerdict({ children }: { children: React.ReactNode }) {
-  return (
-    <em className="not-italic font-[var(--font-serif)] italic text-inherit" style={{ fontStyle: 'italic' }}>
-      {children}
-    </em>
   )
 }
 

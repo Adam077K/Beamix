@@ -252,13 +252,6 @@ export default function SchemaPage() {
     setInputCollapsed(true)
   }, [dailyCap])
 
-  // Re-run from success state (wired to a "Run again" button in future iterations)
-  const _handleRerun = useCallback(() => {
-    setPageState('idle')
-    setInputCollapsed(false)
-    setHasResult(false)
-  }, [])
-
   // Error retry
   const handleRetry = useCallback(() => {
     setPageState('idle')
@@ -431,7 +424,7 @@ export default function SchemaPage() {
         missingFields={result.missingFields}
         published={result.published}
         publishedAt={result.publishedAt ?? null}
-        publishTarget={(result as { publishTarget?: string }).publishTarget}
+        publishTarget={result.publishTarget}
         url={result.url}
         onInject={() => {
           // In a real implementation this opens the publishing integration flow
