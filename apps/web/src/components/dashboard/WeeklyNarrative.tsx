@@ -1,18 +1,17 @@
 'use client'
 
+import Link from 'next/link'
 import type { DashboardOutcomes, Win } from '@/types/outcomes'
 import { Check, Calendar } from 'lucide-react'
 
 /**
  * WeeklyNarrative — the calm "this week we got you…" ledger.
  *
- * Contract preserved: { weeklyNarrative: { type: 'empty' | 'wins'; items?: Win[] } }.
- * Reworked into a dense-but-calm list (Linear-log rhythm) with the layered
- * Stripe card finish. Wins are the crew's results, so the marker reads in the
- * positive-status green; this is a results surface, not a CTA surface, so no
- * blue and no violet button appears.
- *
- * States: empty (designed, sells the next scan), wins (populated).
+ * Craft moves applied:
+ * M8 — designed empty with two-tier CTA (primary blue pill + quiet secondary)
+ * M9 — craft-enter-4 entrance stagger
+ * M11 — win count in Geist Mono tabular-nums
+ * M12 — 48px gap from engine section (handled by page-level spacing)
  */
 
 interface WeeklyNarrativeProps {
@@ -21,6 +20,7 @@ interface WeeklyNarrativeProps {
 
 function EmptyState() {
   return (
+    /* M8 two-tier empty: character glyph + context + one specific next step + two-tier CTA */
     <div
       role="status"
       aria-label="No wins yet — setup in progress"
@@ -32,11 +32,26 @@ function EmptyState() {
       >
         <Calendar className="h-5 w-5 text-[#9CA3AF]" strokeWidth={1.5} />
       </div>
-      <p className="text-sm font-medium text-[#0A0A0A]">No wins to show yet</p>
-      <p className="mt-1 max-w-[300px] text-[13px] leading-relaxed text-[#6B7280]">
-        Once your first scan lands and the crew makes its first fixes, every win shows up
-        here — plain language, no jargon.
+      <p className="text-sm font-semibold text-[#0A0A0A]">No wins to show yet</p>
+      <p className="mt-1.5 max-w-[280px] text-[13px] leading-relaxed text-[#6B7280]">
+        Once your first scan lands and the crew starts making fixes, every result shows up here
+        — plain language, no jargon.
       </p>
+      {/* M8 two-tier CTA */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+        <Link
+          href="/scan"
+          className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-accent px-3 text-[13px] font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+        >
+          Run your first scan
+        </Link>
+        <Link
+          href="/approvals"
+          className="text-[12px] font-medium text-[#6B7280] transition-colors hover:text-[#0A0A0A] focus-visible:outline-none"
+        >
+          See what the crew can do
+        </Link>
+      </div>
     </div>
   )
 }
@@ -66,7 +81,8 @@ export function WeeklyNarrative({ weeklyNarrative }: WeeklyNarrativeProps) {
   return (
     <section
       aria-labelledby="weekly-narrative-heading"
-      className="card-console flex h-full flex-col overflow-hidden"
+      /* M9 craft-enter-4 stagger (4th in page priority order) */
+      className="card-console flex h-full flex-col overflow-hidden craft-enter craft-enter-4"
     >
       <div className="flex items-center justify-between px-5 py-4">
         <h2 id="weekly-narrative-heading" className="text-sm font-semibold text-[#0A0A0A]">

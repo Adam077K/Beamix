@@ -6,16 +6,15 @@ import { Sparkles, ArrowRight } from 'lucide-react'
 /**
  * AgentActivityPanel — "your crew is on it", in violet.
  *
- * Violet (--color-agent / status-agent) marks the AGENTS' work. This panel is
- * the visible proof that work is underway. The signature law: blue = you,
- * violet = the agents. Violet NEVER appears on a button here — the only CTA
- * ("Review →") stays blue (#3370FF).
- *
- * Data contract: approvalCount (number) from DashboardOutcomes. When > 0 the
- * crew has fixes ready for review; when 0 the crew is monitoring. No new data
- * is introduced — the panel is a pure presentation of that one number.
- *
- * States: loading, empty (count = 0, monitoring), error, populated (count > 0).
+ * Craft moves applied:
+ * M1 — TIER-2 card-console (recedes slightly behind the TIER-1 score hero)
+ * M6 — Violet Structure: agent-tint (#EEEAFD) background + violet top-accent
+ *       hairline. Reads different at arm's length from white/neutral surfaces.
+ *       Violet NEVER on a button — the only CTA stays blue (#3370FF).
+ * M8 — designed empty: titled context + specific next step + two-tier CTA
+ *       + violet warm character glyph. Errors name a real recovery action.
+ * M9 — craft-enter-2 entrance (staggered after hero)
+ * M11 — approvalCount in Geist Mono tabular-nums
  */
 
 type State = 'loading' | 'empty' | 'error' | 'populated'
@@ -52,10 +51,18 @@ export function AgentActivityPanel({
   return (
     <section
       aria-labelledby="agent-activity-heading"
-      className="card-console flex h-full flex-col overflow-hidden"
+      /* M1 TIER-2 card | M6 agent-tint ground | M9 craft-enter-2 */
+      className="card-console flex h-full flex-col overflow-hidden craft-enter craft-enter-2"
+      style={{ backgroundColor: 'var(--color-agent-tint)' }}
     >
+      {/* M6 violet top-accent hairline */}
+      <div
+        aria-hidden="true"
+        className="h-[3px] w-full rounded-t-[16px]"
+        style={{ backgroundColor: 'var(--color-agent)' }}
+      />
       <Heading />
-      <div className="border-t border-[#F3F4F6]" />
+      <div className="border-t border-[rgba(110,86,240,0.12)]" />
 
       {resolved === 'loading' && (
         <div className="flex-1 space-y-3 p-5" aria-busy="true" aria-label="Loading crew activity">
@@ -72,33 +79,59 @@ export function AgentActivityPanel({
       )}
 
       {resolved === 'error' && (
+        /* M8 error state: titled + recovery action + two-tier CTA */
         <div className="flex flex-1 flex-col items-center justify-center px-5 py-8 text-center">
-          <p className="text-sm font-medium text-[#0A0A0A]">Couldn&apos;t reach the crew</p>
-          <p className="mt-1 max-w-[240px] text-[13px] leading-relaxed text-[#6B7280]">
-            {errorMessage ?? 'We lost the connection to your agents for a moment.'}
+          <p className="text-sm font-semibold text-[#0A0A0A]">Couldn&apos;t reach the crew</p>
+          <p className="mt-1.5 max-w-[220px] text-[13px] leading-relaxed text-[#6B7280]">
+            {errorMessage ?? 'Connection dropped. Your agents are still running — reload to see their status.'}
           </p>
-          <Link
-            href="/dashboard"
-            className="mt-4 inline-flex h-8 items-center rounded-lg bg-accent px-3 text-[13px] font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
-          >
-            Try again
-          </Link>
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <Link
+              href="/dashboard"
+              className="inline-flex h-8 items-center rounded-lg bg-accent px-3 text-[13px] font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+            >
+              Reload dashboard
+            </Link>
+            <Link
+              href="/approvals"
+              className="text-[12px] font-medium text-[#6B7280] transition-colors hover:text-[#0A0A0A] focus-visible:outline-none"
+            >
+              Check agent status
+            </Link>
+          </div>
         </div>
       )}
 
       {resolved === 'empty' && (
+        /* M8 designed empty: character glyph + context + specific next step + two-tier CTA */
         <div className="flex flex-1 flex-col items-center justify-center px-5 py-8 text-center">
+          {/* violet character glyph — moments only, never persistent */}
           <div
-            className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-agent-tint"
+            className="mb-3 flex h-11 w-11 items-center justify-center rounded-full"
+            style={{ backgroundColor: 'rgba(110,86,240,0.15)' }}
             aria-hidden="true"
           >
             <Sparkles className="h-5 w-5 text-agent" strokeWidth={1.5} />
           </div>
-          <p className="text-sm font-medium text-[#0A0A0A]">The crew is watching</p>
-          <p className="mt-1 max-w-[240px] text-[13px] leading-relaxed text-[#6B7280]">
-            Nothing needs your sign-off right now. When the agents find a fix worth making,
-            it lands here for review.
+          <p className="text-sm font-semibold text-[#0A0A0A]">The crew is watching</p>
+          <p className="mt-1.5 max-w-[220px] text-[13px] leading-relaxed text-[#6B7280]">
+            Nothing needs your sign-off right now. When a fix is ready, it lands here.
           </p>
+          {/* M8 two-tier: primary blue pill + quiet secondary link */}
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <Link
+              href="/scan"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-accent px-3 text-[13px] font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+            >
+              Run a scan now
+            </Link>
+            <Link
+              href="/approvals"
+              className="text-[12px] font-medium text-[#6B7280] transition-colors hover:text-[#0A0A0A] focus-visible:outline-none"
+            >
+              View agent activity
+            </Link>
+          </div>
         </div>
       )}
 
@@ -114,12 +147,12 @@ export function AgentActivityPanel({
             </p>
           </div>
 
-          {/* dense agent-run ledger — Linear-log density: divide-y rows, no rounded floats */}
-          <ul className="divide-y divide-[#F3F4F6]" aria-label="Fixes ready for review">
+          {/* dense agent-run ledger — Linear-log density: divide-y rows */}
+          <ul className="divide-y divide-[rgba(110,86,240,0.10)]" aria-label="Fixes ready for review">
             {Array.from({ length: Math.min(approvalCount, 3) }).map((_, i) => (
               <li
                 key={i}
-                className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-[#F4F6FA]"
+                className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-[rgba(110,86,240,0.06)]"
               >
                 <span
                   className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-agent-tint"

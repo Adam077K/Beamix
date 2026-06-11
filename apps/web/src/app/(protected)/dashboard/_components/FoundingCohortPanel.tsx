@@ -30,7 +30,8 @@ export async function FoundingCohortPanel({ userId }: Props) {
 
   return (
     <section aria-labelledby="founding-cohort-heading">
-      <div className="card-console flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+      {/* M1 TIER-3: .card-inset — demoted strip recedes behind the hero | M9 craft-enter */}
+      <div className="card-inset flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between craft-enter craft-enter-1">
         {/* Status line */}
         <div className="min-w-0">
           {isCustomerFounding ? (
