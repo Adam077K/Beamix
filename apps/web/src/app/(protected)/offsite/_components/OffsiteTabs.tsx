@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useCallback, useTransition } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ExternalLink, Plus, Check, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -416,6 +418,7 @@ function TabPanel({
   offsiteRunsCap,
 }: TabPanelProps) {
   const [, startTransition] = useTransition()
+  const router = useRouter()
 
   // Citations tab is read-only — just shows the table
   if (config.agentKey === null) {
@@ -439,7 +442,7 @@ function TabPanel({
             isEmpty
             emptyTitle="No citations found yet"
             emptyDescription="Run your first scan to discover which sites are citing you in AI search results."
-            onRetry={() => onSurfaceStateChange('idle')}
+            onRetry={() => router.push('/scans')}
           />
         ) : (
           <CitationTable
@@ -629,14 +632,23 @@ function TabPanel({
               description={`Run ${config.agentLabel} to start building your ${config.label.toLowerCase()} presence.`}
               align="top"
               action={
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={handleRun}
-                  aria-label={`Run ${config.agentLabel}`}
-                >
-                  {config.outputKind === 'internal-report' ? 'Generate first report' : 'Run now'}
-                </Button>
+                <div className="flex flex-col items-center gap-3">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleRun}
+                    aria-label={`Run ${config.agentLabel}`}
+                  >
+                    {config.outputKind === 'internal-report' ? 'Generate first report' : 'Run now'}
+                  </Button>
+                  {/* M8 two-tier recovery — quiet secondary link */}
+                  <Link
+                    href="/scans"
+                    className="text-[13px] text-[#6B7280] hover:text-[#0A0A0A] focus-visible:outline-none focus-visible:underline"
+                  >
+                    Run a scan first →
+                  </Link>
+                </div>
               }
             />
           ) : (
