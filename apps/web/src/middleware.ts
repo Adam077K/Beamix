@@ -49,7 +49,9 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith('/archive') ||
       pathname.startsWith('/competitors') ||
       pathname.startsWith('/settings') ||
-      pathname.startsWith('/onboarding')
+      pathname.startsWith('/onboarding') ||
+      pathname.startsWith('/traceability') ||
+      pathname.startsWith('/digests')
     )
 
   if (isProtected && !user) {

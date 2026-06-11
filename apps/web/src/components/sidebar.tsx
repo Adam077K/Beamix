@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   CheckCircle2,
+  ScrollText,
+  GitBranch,
   Settings,
   PanelLeftClose,
   PanelLeft,
@@ -17,6 +19,8 @@ import { useSidebarStore } from '@/store/sidebar'
 const navItems = [
   { href: '/dashboard', label: 'Outcomes', icon: LayoutDashboard },
   { href: '/approvals', label: 'Approval Queue', icon: CheckCircle2 },
+  { href: '/digests', label: 'Weekly Digest', icon: ScrollText },
+  { href: '/traceability', label: 'Traceability', icon: GitBranch },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
