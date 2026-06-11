@@ -16,6 +16,7 @@ import type { DashboardOutcomes } from '@/types/outcomes'
 import type { ApprovalQueueItem } from '@/app/(protected)/approvals/_data'
 import type { WeeklyDigest } from '@/types/digest'
 import type { TraceabilityData } from '@/types/traceability'
+import type { Day1Fixture } from '@/types/day1'
 import { DEMO_SCAN_ID } from './index'
 
 // ---------------------------------------------------------------------------
@@ -474,6 +475,117 @@ export const DEMO_TRACEABILITY: TraceabilityData = {
           occurredAt: '2026-06-05T11:00:00.000Z',
         },
       ],
+    },
+  ],
+}
+
+// ---------------------------------------------------------------------------
+// Fixture helpers — look up by id
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the outcome with the given id from DEMO_TRACEABILITY.outcomes,
+ * or undefined if not found.
+ */
+export function getOutcomeById(
+  id: string,
+): TraceabilityData['outcomes'][number] | undefined {
+  return DEMO_TRACEABILITY.outcomes.find((o) => o.id === id)
+}
+
+/**
+ * Returns the weekly digest with the given id from DEMO_DIGESTS,
+ * or undefined if not found.
+ */
+export function getDigestById(id: string): WeeklyDigest | undefined {
+  return DEMO_DIGESTS.find((d) => d.id === id)
+}
+
+// ---------------------------------------------------------------------------
+// DEMO_DAY1 — post-payment live-work fixture
+//
+// Steps mirror the day1_state enum from 03-DAY-1-FLOW.md.
+// Copy follows Principle #9: no agent names, warm and direct.
+// ---------------------------------------------------------------------------
+
+export const DEMO_DAY1: Day1Fixture = {
+  businessName: BUSINESS.name,
+  steps: [
+    {
+      id: 'step-confirming-payment',
+      state: 'confirming_payment',
+      label: 'Confirming payment…',
+      detail: 'Verifying your subscription with our payment provider.',
+      pct: 5,
+      durationMs: 1800,
+    },
+    {
+      id: 'step-ensure-business',
+      state: 'ensure_business',
+      label: 'Setting up your workspace…',
+      detail: `Linking your business profile and scan history for ${BUSINESS.name}.`,
+      pct: 15,
+      durationMs: 1600,
+    },
+    {
+      id: 'step-query-mapper',
+      state: 'query_mapper',
+      label: `Mapping how AI engines see ${BUSINESS.name}…`,
+      detail:
+        'Identifying the queries your potential patients are asking across ChatGPT, Gemini, and Perplexity.',
+      pct: 35,
+      durationMs: 2400,
+    },
+    {
+      id: 'step-scan-running',
+      state: 'scan_running',
+      label: 'Scanning 3 engines for your queries…',
+      detail: 'Running your first paid scan against your confirmed query list.',
+      pct: 60,
+      durationMs: 2200,
+    },
+    {
+      id: 'step-analyzing',
+      state: 'analyzing',
+      label: 'Analyzing and prioritizing your next moves…',
+      detail:
+        'Scoring gaps, ranking fixes by impact, and preparing your first three suggested actions.',
+      pct: 85,
+      durationMs: 1900,
+    },
+    {
+      id: 'step-complete',
+      state: 'complete',
+      label: 'All set — taking you to your workspace.',
+      detail: `${BUSINESS.name} is ready. Your score, suggestions, and first drafts are waiting.`,
+      pct: 100,
+      durationMs: 1500,
+    },
+  ],
+  drafts: [
+    {
+      id: 'demo-day1-draft-1',
+      kind: 'faq',
+      title: 'FAQ: "How much does teeth whitening cost in Ramat Gan?"',
+      summary:
+        'A structured FAQ answer targeting the top whitening-cost query in your area. Perplexity already surfaces this for two competitors — this draft closes the gap.',
+      surfacedAfterStepId: 'step-analyzing',
+    },
+    {
+      id: 'demo-day1-draft-2',
+      kind: 'schema',
+      title: 'Dentist schema update — add acceptsInsurance and priceRange',
+      summary:
+        'Adds two missing fields that all three AI engines now use to surface local dental results. Your current schema omits them, costing you placement on insurance-related queries.',
+      surfacedAfterStepId: 'step-analyzing',
+    },
+    {
+      id: 'demo-day1-draft-3',
+      kind: 'citation',
+      title: 'Citation submission — Denta.co.il directory',
+      summary:
+        "Submits your listing to a dental-specific Israeli directory that feeds directly into Perplexity's local index for the Gush Dan area. Four competitors are already indexed there.",
+      surfacedAfterStepId: 'step-complete',
     },
   ],
 }
