@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DeltaTrioBadge } from './DeltaTrioBadge'
@@ -14,12 +15,17 @@ interface DigestRowProps {
 }
 
 /**
- * DigestRow — the list row button.
+ * DigestRow — the list row.
  *
- * Desktop (≥1024px): click opens slide-over panel. Selected row gets left
- * blue 2px rail + bg-accent-tint.
+ * Links to /digests/[digest.id] for the full detail view. Preserves the
+ * panel/accordion interaction for the in-page preview (desktop slide-over,
+ * mobile accordion).
  *
- * Mobile (<1024px): click expands in-place accordion. Chevron rotates.
+ * Desktop (≥1024px): Link row; click opens slide-over panel + navigates on
+ * direct visit to the detail URL.
+ *
+ * Mobile (<1024px): Link row navigates to detail page. The accordion is still
+ * available via the onSelect handler for the preview panel.
  *
  * Layout (left→right, vertically centered, never wraps):
  *  1. Date stamp: "Week of Jun 8" Inter 14px medium + year/relative 12px muted
@@ -27,7 +33,7 @@ interface DigestRowProps {
  *  3. Delta trio: DeltaTrioBadge (3 chips desktop / 1 net mobile)
  *  4. Win count: Geist Mono 12px #6B7280
  *  5. Reviewed pill: bg-status-agent/text-status-agent when approvals > 0
- *  6. Chevron icon (mobile only)
+ *  6. Chevron icon
  */
 export function DigestRow({
   digest,
@@ -39,22 +45,24 @@ export function DigestRow({
   const approvalCount = digest.digest.resolvedApprovals.length
   const winCount = digest.digest.wins.length
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    onSelect(digest.id, e.currentTarget)
-  }
-
   return (
-    <button
-      type="button"
+    <Link
+      href={`/digests/${digest.id}`}
       className={cn(
-        'flex w-full items-center gap-3 px-5 py-4 text-left transition-colors',
+        'relative flex w-full items-center gap-3 px-5 py-4 text-left transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#3370FF]',
         'hover:bg-[#F4F6FA]',
         isSelected && !isMobile && 'bg-accent-tint',
       )}
-      aria-expanded={isMobile ? isExpanded : undefined}
-      aria-selected={!isMobile ? isSelected : undefined}
-      onClick={handleClick}
+      aria-current={isSelected ? 'page' : undefined}
+      onClick={(e) => {
+        // On mobile, toggle the inline preview without navigating — use button fallback behavior.
+        // On desktop, let the link navigate to the detail page.
+        if (isMobile) {
+          e.preventDefault()
+          onSelect(digest.id, e.currentTarget as HTMLElement)
+        }
+      }}
     >
       {/* Left blue rail — selected state (desktop only) */}
       {isSelected && !isMobile && (
@@ -103,16 +111,14 @@ export function DigestRow({
         </span>
       )}
 
-      {/* Chevron — mobile accordion indicator */}
-      {isMobile && (
-        <ChevronRight
-          className={cn(
-            'h-4 w-4 shrink-0 text-[#9CA3AF] transition-transform duration-200',
-            isExpanded && 'rotate-90',
-          )}
-          aria-hidden="true"
-        />
-      )}
-    </button>
+      {/* Chevron */}
+      <ChevronRight
+        className={cn(
+          'h-4 w-4 shrink-0 text-[#9CA3AF] transition-transform duration-200',
+          isExpanded && isMobile && 'rotate-90',
+        )}
+        aria-hidden="true"
+      />
+    </Link>
   )
 }

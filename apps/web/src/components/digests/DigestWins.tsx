@@ -13,9 +13,9 @@ interface DigestWinsProps {
  * Reuses WinRow check-disc grammar from WeeklyNarrative:
  *  - bg var(--color-status-positive) with white Check — WCAG-cleared
  *  - query renders in Geist Mono when present
- *  - agent attribution renders in violet text-agent (crew work only)
  *
  * Divide-y rows, px-5 py-3.5, consistent with WeeklyNarrative.
+ * Engineering Principle #9: agentName is never rendered customer-facing.
  */
 export function DigestWins({ wins }: DigestWinsProps) {
   if (wins.length === 0) {
@@ -58,13 +58,7 @@ function WinRow({ win }: { win: DigestWin }) {
             &ldquo;{win.query}&rdquo;
           </p>
         )}
-
-        {/* Agent attribution — violet ONLY, never on buttons/links */}
-        {win.agentName && (
-          <p className="mt-1 text-[12px] text-agent">
-            {win.agentName}
-          </p>
-        )}
+        {/* agentName is intentionally NOT rendered (Principle #9) */}
       </div>
     </li>
   )

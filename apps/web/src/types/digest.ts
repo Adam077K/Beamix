@@ -16,7 +16,7 @@ export interface DigestWin {
   id: string
   type: WinType
   description: string
-  /** Optional: which agent drove this win (renders in violet) */
+  /** Optional: which agent drove this win (not rendered in customer-facing UI — Principle #9) */
   agentName?: string
   /** For citation/faq wins — the query that surfaced in an engine */
   query?: string
@@ -39,7 +39,7 @@ export interface DigestApproval {
   type: ApprovalType
   previewSnippet: string
   status: ApprovalStatus
-  /** Optional: the agent that proposed this (renders in violet) */
+  /** Optional: the agent that proposed this (not rendered in customer-facing UI — Principle #9) */
   agentProposer?: string
 }
 
