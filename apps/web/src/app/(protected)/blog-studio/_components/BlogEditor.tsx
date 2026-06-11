@@ -79,7 +79,7 @@ function BlogGlyph() {
 
 function TierLockBanner() {
   return (
-    <div className="rounded-[var(--radius-card)] border border-[#E5E7EB] bg-[#F7F6F2] px-6 py-8">
+    <div className="card-console-hero rounded-[var(--radius-card)] px-6 py-8">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-8">
         {/* Icon chip */}
         <div
@@ -103,7 +103,9 @@ function TierLockBanner() {
             Authority Blog Strategist is a Build feature
           </h2>
           <p className="max-w-[480px] text-[15px] leading-relaxed text-[#6B7280]">
-            Long-form YMYL content — the kind AI search engines cite — requires the full research pipeline. That pipeline costs more per run, so it lives on Build and Scale plans.
+            Long-form YMYL content — the kind AI search engines{' '}
+            <SerifVerdict>cite</SerifVerdict>
+            {' '}— requires the full research pipeline. That pipeline costs more per run, so it lives on Build and Scale plans.
           </p>
 
           {/* What you get at Build */}
@@ -631,13 +633,14 @@ export function BlogEditor({ planTier }: BlogEditorProps) {
             >
               Use suggested topic
             </Button>
-            <Button
+            {/* M8 quiet secondary — text link, not bordered button */}
+            <button
               type="button"
-              variant="outline"
               onClick={() => setPageState('idle')}
+              className="text-[13px] text-[#6B7280] hover:text-[#0A0A0A] focus-visible:outline-none focus-visible:underline"
             >
               Enter my own topic
-            </Button>
+            </button>
           </div>
         }
         align="top"
