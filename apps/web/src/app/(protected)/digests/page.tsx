@@ -3,6 +3,8 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { PageHeader } from '@/components/page-header'
 import { DigestArchivePage } from '@/components/digests/DigestArchivePage'
 import type { WeeklyDigest } from '@/types/digest'
+import { isDemoUser } from '@/lib/demo'
+import { DEMO_DIGESTS } from '@/lib/demo/fixtures'
 
 // ---------------------------------------------------------------------------
 // Stub data — Wave 2: replace with `await fetchWeeklyDigests(customerId)`
@@ -192,8 +194,13 @@ export default async function DigestsPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Wave 2: replace with `await fetchWeeklyDigests(user?.id)`
-  const digests: WeeklyDigest[] = user ? STUB_DIGESTS : []
+  // Demo mode: return fixture data for demo@beamixai.com.
+  // Real users fall through to the stub (Wave 2: real Supabase fetch).
+  const digests: WeeklyDigest[] = isDemoUser(user?.email)
+    ? DEMO_DIGESTS
+    : user
+      ? STUB_DIGESTS
+      : []
 
   return (
     <main className="mx-auto min-h-[100dvh] max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
