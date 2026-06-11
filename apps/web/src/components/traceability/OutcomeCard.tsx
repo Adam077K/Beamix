@@ -105,7 +105,7 @@ export function OutcomeCard({ outcome, expanded, onToggle }: OutcomeCardProps) {
               {outcome.deliverables.length > 0 && (
                 <span
                   aria-hidden="true"
-                  className="absolute bottom-2 left-[calc(1.25rem+11px)] top-2 w-px bg-agent/30"
+                  className="absolute bottom-2 left-[calc(1.25rem+11px)] top-2 w-px bg-agent opacity-30"
                 />
               )}
 
