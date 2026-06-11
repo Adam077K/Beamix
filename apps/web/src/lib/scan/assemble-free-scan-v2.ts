@@ -40,17 +40,15 @@
  *   ProbeLeakError is the ONE exception that propagates (fail-closed).
  */
 
-import { buildNeutralProbe, assertProbeClean, ProbeLeakError } from './probe';
+import { buildNeutralProbe, assertProbeClean } from './probe';
 import { detectClient, extractCompetitors } from './client-detection';
 import { classifyShape } from './answer-shape';
 import { judgeSentiment } from './sentiment-judge';
-import { computeDimensions } from './dimensions';
 import { scoreEngine, medianAcrossEngines } from './scoring';
 import { buildGapList } from './factor-catalog';
 import { buildContrastiveGapList } from './gap-list-ordering';
 import { mapGapsToPlaybooks } from './playbook-mapping';
 import { narrate } from './narration';
-import { detectFactors as detectFactorsImpl } from './factor-detection';
 import { selectTopCompetitors, auditCompetitors } from './competitor-audit';
 import type {
   AssembleFreeScanV2Input,
