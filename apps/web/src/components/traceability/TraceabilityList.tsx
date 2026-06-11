@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { ChevronRight } from 'lucide-react'
 import type { TraceabilityData } from '@/types/traceability'
 import { TraceabilityEmpty } from './TraceabilityEmpty'
 import { TraceabilityLoading } from './TraceabilityLoading'
@@ -17,16 +19,12 @@ interface TraceabilityListProps {
  *
  * State machine: loading -> empty | error | ready (list).
  * Single-expand: at most one OutcomeCard is open at a time.
- * expandedId resets on data change (though data is static in Wave 1).
+ * Each outcome row also links to /traceability/[outcome.id] for the
+ * full drill-down detail view.
  */
 export function TraceabilityList({ data }: TraceabilityListProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null)
   const router = useRouter()
   const handleRetry = useCallback(() => router.refresh(), [router])
-
-  function handleToggle(id: string) {
-    setExpandedId((prev) => (prev === id ? null : id))
-  }
 
   if (data.state === 'loading') {
     return <TraceabilityLoading />
@@ -50,14 +48,40 @@ export function TraceabilityList({ data }: TraceabilityListProps) {
 
       <div className="space-y-3">
         {data.outcomes.map((outcome) => (
-          <OutcomeCard
-            key={outcome.id}
-            outcome={outcome}
-            expanded={expandedId === outcome.id}
-            onToggle={() => handleToggle(outcome.id)}
-          />
+          <div key={outcome.id} className="group relative">
+            <OutcomeCard
+              outcome={outcome}
+              expanded={false}
+              onToggle={() => {
+                // Navigate to detail on toggle — the accordion expand is
+                // replaced by the full drill-down page.
+                router.push(`/traceability/${outcome.id}`)
+              }}
+            />
+            {/* Detail link affordance — quiet arrow in trailing position */}
+            <Link
+              href={`/traceability/${outcome.id}`}
+              aria-label={`View full work trail for: ${outcome.statement}`}
+              className="absolute inset-0 rounded-[var(--radius-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-inset"
+              tabIndex={-1}
+            >
+              <span className="sr-only">View detail</span>
+            </Link>
+          </div>
         ))}
       </div>
+
+      {/* Quiet hint linking to detail pages */}
+      <p className="mt-4 text-[12px] text-[#9CA3AF]">
+        Select a result to see the full work trail.{' '}
+        <Link
+          href={`/traceability/${data.outcomes[0].id}`}
+          className="text-accent hover:text-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2 focus-visible:rounded"
+        >
+          View latest
+          <ChevronRight className="inline h-3 w-3 -mt-0.5" aria-hidden="true" />
+        </Link>
+      </p>
     </div>
   )
 }
