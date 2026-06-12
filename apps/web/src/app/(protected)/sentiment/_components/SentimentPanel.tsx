@@ -32,6 +32,7 @@ import { ErrorState } from '@/components/error-state'
 import { Skeleton } from '@/components/loading-state'
 import { PageHeader } from '@/components/page-header'
 import { SerifVerdict } from '@/components/console/SerifVerdict'
+import { EngineMicroSparkline } from '@/components/dashboard/EngineMicroSparkline'
 import { AnalyticsLayout } from '@/components/console/AnalyticsLayout'
 import { AnalyticsScopeRail } from '@/components/console/AnalyticsScopeRail'
 import {
@@ -68,7 +69,22 @@ const HEADER = {
     'The exact words the engines use — and any claims we need to correct.',
 }
 
-/** Map the integrity band → score color token + the verdict word + sentence frame. */
+/**
+ * Score-band color — the SAME four-band logic the dashboard uses
+ * (ScoreHeroPanel.ringColor / EngineMicroSparkline.scoreColor):
+ *   ≥75 excellent → data-3 (cyan) · ≥50 good → data-4 (green)
+ *   ≥25 fair → data-5 (amber)     · else critical → data-6 (red)
+ * Driving the color off the score (not the fixture's band string) guarantees the
+ * hero number is painted in its true band — an Excellent score can never read green.
+ */
+function scoreBandColor(score: number): string {
+  if (score >= 75) return 'var(--color-data-3)' // cyan — excellent
+  if (score >= 50) return 'var(--color-data-4)' // green — good
+  if (score >= 25) return 'var(--color-data-5)' // amber — fair
+  return 'var(--color-data-6)' //                 red — critical
+}
+
+/** Map the integrity band → the verdict word + sentence frame (color comes from the score). */
 function bandPresentation(band: DemoSentiment['integrityBand'], claimCount: number) {
   const claimClause =
     claimCount === 0
@@ -77,14 +93,13 @@ function bandPresentation(band: DemoSentiment['integrityBand'], claimCount: numb
 
   switch (band) {
     case 'excellent':
-      return { color: 'var(--color-status-positive)', word: 'Trusted', claimClause }
     case 'good':
-      return { color: 'var(--color-status-positive)', word: 'Trusted', claimClause }
+      return { word: 'Trusted', claimClause }
     case 'fair':
-      return { color: 'var(--color-status-warning)', word: 'Mixed', claimClause }
+      return { word: 'Mixed', claimClause }
     case 'critical':
     default:
-      return { color: 'var(--color-status-critical)', word: 'Fragile', claimClause }
+      return { word: 'Fragile', claimClause }
   }
 }
 
@@ -164,6 +179,7 @@ function SuccessBody({ data }: { data: DemoSentiment }) {
   const visibleThemes = data.themes.filter((t) => topics[t.name] !== false)
 
   const present = bandPresentation(data.integrityBand, data.claimAccuracy.length)
+  const scoreColor = scoreBandColor(data.integrityScore)
 
   return (
     <>
@@ -188,13 +204,29 @@ function SuccessBody({ data }: { data: DemoSentiment }) {
           <div className="mt-4 flex items-baseline gap-3">
             <span
               className="font-[var(--font-mono)] text-[64px] font-medium leading-none tabular-nums tracking-[-0.04em]"
-              style={{ color: present.color }}
+              style={{ color: scoreColor }}
             >
               {data.integrityScore}
             </span>
             <span className="font-[var(--font-mono)] text-[18px] leading-none tabular-nums text-[#9CA3AF]">
               /100
             </span>
+          </div>
+
+          {/* Signature micro-sparkline — the last 5 integrity readings in the
+              score-band color, with a labelled +delta. It earns its place by
+              answering "is my brand integrity recovering or slipping?" right at
+              the hero number. Foundation EngineMicroSparkline (baseline +
+              endpoint dot, never fabricated). */}
+          <div className="mt-4 flex items-center gap-2.5">
+            <EngineMicroSparkline
+              points={data.integrityTrend}
+              currentScore={data.integrityScore}
+              showDelta
+              width={88}
+              height={26}
+            />
+            <span className="text-[12px] text-[#9CA3AF]">over last 5 scans</span>
           </div>
 
           {/* STEP-2 verdict sentence — the single Fraunces word lives here.
