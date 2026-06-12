@@ -100,7 +100,7 @@ export function DryRunLedger({
 
   return (
     <aside
-      className="card-console flex w-full flex-col overflow-hidden lg:max-w-[420px]"
+      className="card-console-hero flex w-full flex-col overflow-hidden"
       aria-label="Dry-run preview"
     >
       {/* Header */}

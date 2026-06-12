@@ -2,12 +2,11 @@
 
 import { useState } from 'react'
 import {
-  Play,
-  FlaskConical,
   CalendarClock,
   LayoutGrid,
   Table2,
   Check,
+  Plus,
 } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
@@ -26,6 +25,7 @@ import { TemplateGallery } from './TemplateGallery'
 import { WorkflowCanvas } from './WorkflowCanvas'
 import { NodeConfigPanel } from './NodeConfigPanel'
 import { DryRunLedger } from './DryRunLedger'
+import { BuilderRail } from './BuilderRail'
 import { SheetsView } from './SheetsView'
 import { TEMPLATE_WORKFLOWS } from './template-seeds'
 
@@ -102,7 +102,7 @@ export function BuilderSurface({ state }: BuilderSurfaceProps) {
   return (
     <div className="mx-auto flex h-full w-full max-w-[1280px] flex-col px-6 py-8 sm:px-8">
       {/* Header — ONE Fraunces beat: the workflow name (verdict word) */}
-      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <p className="mb-2 text-xs font-semibold uppercase leading-none tracking-[0.08em] text-[#9CA3AF]">
             WORKFLOW BUILDER
@@ -118,29 +118,21 @@ export function BuilderSurface({ state }: BuilderSurfaceProps) {
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 sm:pt-1">
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => setDryRunOpen(true)}
-            disabled={isBlank}
-          >
-            <FlaskConical className="h-4 w-4" aria-hidden="true" />
-            Dry run
-          </Button>
-          <Button
-            className="gap-2"
-            onClick={() => setConfirmOpen(true)}
-            disabled={isBlank}
-          >
-            <Play className="h-4 w-4" aria-hidden="true" />
-            Run
-          </Button>
-        </div>
+        {/* Schedule strip — honest manual-first (no "coming soon" tease) */}
+        <button
+          type="button"
+          className="card-inset inline-flex shrink-0 items-center gap-2 px-3.5 py-2 text-left transition-colors hover:border-[#3370FF]/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF]"
+        >
+          <CalendarClock className="h-4 w-4 text-[#3370FF]" aria-hidden="true" />
+          <span className="text-[13px] font-medium text-[#0A0A0A]">
+            Set a schedule
+          </span>
+          <span className="text-[12px] text-[#9CA3AF]">— runs manually for now</span>
+        </button>
       </header>
 
-      {/* View toggle + schedule affordance */}
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      {/* View toggle */}
+      <div className="mb-5 flex flex-wrap items-center gap-3">
         <Tabs value={view} onValueChange={(v) => setView(v as View)}>
           <TabsList>
             <TabsTrigger value="canvas" className="gap-1.5">
@@ -153,24 +145,16 @@ export function BuilderSurface({ state }: BuilderSurfaceProps) {
             </TabsTrigger>
           </TabsList>
         </Tabs>
-
-        {/* Schedule strip — honest manual-first (no "coming soon" tease) */}
-        <button
-          type="button"
-          className="card-inset inline-flex items-center gap-2 px-3.5 py-2 text-left transition-colors hover:border-[#3370FF]/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF]"
-        >
-          <CalendarClock className="h-4 w-4 text-[#3370FF]" aria-hidden="true" />
-          <span className="text-[13px] font-medium text-[#0A0A0A]">
-            Set a schedule
-          </span>
-          <span className="text-[12px] text-[#9CA3AF]">— runs manually for now</span>
-        </button>
       </div>
 
       {/* Body */}
       {view === 'canvas' ? (
-        <div className="flex min-h-[480px] flex-1 gap-5">
-          <div className="relative min-h-[480px] flex-1">
+        // M3 asymmetry: dominant left flow + persistent right rail (~360px).
+        // The rail earns the freed width — at rest it shows the resting cost
+        // figure; on dry-run it becomes the streaming ledger in place.
+        <div className="grid min-h-[520px] flex-1 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          {/* Dominant flow column */}
+          <div className="craft-enter craft-enter-2 relative min-h-[520px] min-w-0">
             <WorkflowCanvas
               workflow={workflow}
               selectedNodeId={selectedNodeId}
@@ -181,13 +165,17 @@ export function BuilderSurface({ state }: BuilderSurfaceProps) {
 
             {/* Empty blank canvas hint */}
             {isBlank && (
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-[15px] font-medium text-[#6B7280]">
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6">
+                <div className="max-w-[320px] text-center">
+                  <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EEEAFD] text-[#6E56F0]">
+                    <Plus className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <p className="text-[15px] font-medium text-[#0A0A0A]">
                     A blank canvas
                   </p>
-                  <p className="mt-1 text-[13px] text-[#9CA3AF]">
-                    Add your first agent to begin composing.
+                  <p className="mt-1 text-[13px] leading-[1.5] text-[#6B7280]">
+                    Add your first agent — plan, research, do, QA, summarise — to
+                    begin composing your pipeline.
                   </p>
                 </div>
               </div>
@@ -203,9 +191,9 @@ export function BuilderSurface({ state }: BuilderSurfaceProps) {
             )}
           </div>
 
-          {/* Dry-run ledger overlay column (signature) */}
-          {dryRunOpen && (
-            <div className="craft-enter craft-enter-1 w-full max-w-[420px] shrink-0">
+          {/* Persistent right rail — resting cost OR streaming ledger (signature) */}
+          <aside className="craft-enter craft-enter-3 min-w-0 lg:sticky lg:top-6 lg:self-start">
+            {dryRunOpen ? (
               <DryRunLedger
                 workflow={workflow}
                 steps={data.dryRun.steps}
@@ -213,8 +201,16 @@ export function BuilderSurface({ state }: BuilderSurfaceProps) {
                 errorAtStep={dryRunErrorStep}
                 onClose={() => setDryRunOpen(false)}
               />
-            </div>
-          )}
+            ) : (
+              <BuilderRail
+                workflow={workflow}
+                estCost={data.dryRun.estCost}
+                onDryRun={() => setDryRunOpen(true)}
+                onRun={() => setConfirmOpen(true)}
+                disabled={isBlank}
+              />
+            )}
+          </aside>
         </div>
       ) : (
         <SheetsView savedWorkflows={data.savedWorkflows} />
