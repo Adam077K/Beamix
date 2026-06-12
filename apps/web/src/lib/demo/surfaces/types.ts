@@ -201,3 +201,163 @@ export interface BlogDraft {
   content: string
   status: 'draft' | 'pending_approval' | 'approved'
 }
+
+// ---------------------------------------------------------------------------
+// Analytics surface
+// ---------------------------------------------------------------------------
+
+/**
+ * A single weekly snapshot of engine visibility values + an optional
+ * violet agent-event annotation (rendered as a Recharts ReferenceLine).
+ */
+export interface EngineVisibilityPoint {
+  /** ISO date string (weekly cadence) */
+  date: string
+  /** Per-engine visibility 0–100 (keyed by engine name) */
+  values: Record<string, number>
+  /** Violet annotation when an agent ran this week */
+  agentEvent?: { label: string } | null
+}
+
+/**
+ * A single weekly Share-of-Voice snapshot for the stacked competitor chart.
+ */
+export interface SovTrendPoint {
+  /** ISO date string */
+  date: string
+  /** Our SoV 0–100 */
+  us: number
+  /** Per-competitor SoV stacked values (keyed by competitor name) */
+  competitors: Record<string, number>
+  /** Violet annotation when an agent ran this week */
+  agentEvent?: { label: string } | null
+}
+
+/** Per-engine average position + sparkline for the position table */
+export interface AvgPositionStat {
+  engine: string
+  /** Average rank position (lower = better), e.g. 1.4 */
+  avgPosition: number
+  /** Optional 5-point sparkline of recent avg positions (lower = better) */
+  sparkline: number[] | null
+}
+
+/** A single cell in the topic × engine ranking matrix */
+export interface TopicRankCell {
+  topic: string
+  engine: string
+  /** Average rank position for this topic on this engine */
+  avgRank: number
+  /** Visual score band */
+  scoreBand: 'excellent' | 'good' | 'fair' | 'critical'
+}
+
+/** Drill data surfaced in the AnalyticsDrillDrawer for a given topic/engine cell */
+export interface AnalyticsDrillData {
+  topic: string
+  engine: string
+  /** Representative prompts tested for this topic/engine pair */
+  promptsTested: string[]
+  /** Snippet Beamix currently surfaces in this engine for this topic */
+  ourSnippet: string
+  /** Snippet from the leading competitor for this topic/engine pair */
+  competitorSnippet: string
+  competitorName: string
+  /** Optional agent recommendation shown at the bottom of the drawer */
+  agentNote?: string | null
+}
+
+/** Top-level shape for the Analytics surface fixture */
+export interface DemoAnalytics {
+  /** Hero SoV percentage (current period) */
+  heroSov: number
+  /** Delta vs. previous 30-day period (+/−) */
+  sovDelta: number
+  /** 8 weekly trend points — per-engine visibility */
+  visibilityTrend: EngineVisibilityPoint[]
+  /** 8 weekly trend points — SoV stacked view */
+  sovTrend: SovTrendPoint[]
+  /** Per-engine average positions (current period) */
+  avgPositions: AvgPositionStat[]
+  /** Flat list of all topic × engine rank cells (6 topics × 5 engines) */
+  topicMatrix: TopicRankCell[]
+  /** Pre-built drill datasets keyed by "${topic}__${engine}" */
+  drillData: Record<string, AnalyticsDrillData>
+}
+
+// ---------------------------------------------------------------------------
+// Sentiment surface
+// ---------------------------------------------------------------------------
+
+/** A verbatim AI response snippet about the business */
+export interface VerbatimQuote {
+  engine: string
+  /** ISO date string of when the response was captured */
+  date: string
+  /** The user prompt that generated this response */
+  prompt: string
+  /** The full AI response text (2–3 sentences, real-feeling) */
+  fullResponse: string
+  sentiment: 'positive' | 'neutral' | 'negative'
+  /** The specific clause flagged as inaccurate or problematic */
+  flaggedClause?: string | null
+  /** Linked claim ID for cross-referencing ClaimAccuracyRow */
+  claimId?: string | null
+}
+
+/** Positive/neutral/negative split percentages */
+export interface SentimentSplit {
+  positive: number
+  neutral: number
+  negative: number
+}
+
+/** A recurring theme in how AI engines describe the business */
+export interface SentimentTheme {
+  name: string
+  sentiment: 'positive' | 'neutral' | 'negative'
+  /** Number of AI responses that reference this theme */
+  mentionCount: number
+  /** A representative verbatim quote for this theme */
+  representativeQuote: VerbatimQuote
+}
+
+/** A claim accuracy issue found in AI engine responses */
+export interface ClaimAccuracyRow {
+  id: string
+  /** The false or misleading claim text */
+  claim: string
+  severity: 'critical' | 'warning' | 'info'
+  /** Which engines are making this claim */
+  engines: string[]
+  /** ISO date first detected */
+  date: string
+  /** Href to the agent action that corrects this claim */
+  correctHref: string
+}
+
+/** A before/after recovery event showing a previously-wrong claim now corrected */
+export interface RecoveryEvent {
+  wrongQuote: string
+  wrongDate: string
+  correctedQuote: string
+  correctedDate: string
+  /** Engine where the correction was observed */
+  engine: string
+}
+
+/** Top-level shape for the Sentiment surface fixture */
+export interface DemoSentiment {
+  /** Integrity score 0–100 */
+  integrityScore: number
+  /** Score band */
+  integrityBand: 'excellent' | 'good' | 'fair' | 'critical'
+  /** Positive/neutral/negative split */
+  split: SentimentSplit
+  /** Recurring themes with verbatim quotes */
+  themes: SentimentTheme[]
+  /** Claim accuracy issues */
+  claimAccuracy: ClaimAccuracyRow[]
+  /** Before/after recovery event */
+  recoveryEvent: RecoveryEvent
+}

@@ -20,6 +20,8 @@ export { DEMO_COMPETITORS } from './competitors'
 export { DEMO_AUTOMATION } from './automation'
 export { DEMO_OFFSITE } from './offsite'
 export { DEMO_BLOG } from './blog-studio'
+export { DEMO_ANALYTICS } from './analytics'
+export { DEMO_SENTIMENT } from './sentiment'
 
 // Shared types — re-exported for surface worker convenience
 export type {
@@ -35,5 +37,19 @@ export type {
   AutomationRow,
   OffsiteRow,
   BlogDraft,
+  // Analytics surface
+  EngineVisibilityPoint,
+  SovTrendPoint,
+  AvgPositionStat,
+  TopicRankCell,
+  AnalyticsDrillData,
+  DemoAnalytics,
+  // Sentiment surface
+  VerbatimQuote,
+  SentimentSplit,
+  SentimentTheme,
+  ClaimAccuracyRow,
+  RecoveryEvent,
+  DemoSentiment,
 } from './types'
 export { DEMO_BUSINESS } from './types'
