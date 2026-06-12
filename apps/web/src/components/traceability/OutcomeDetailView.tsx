@@ -1,6 +1,7 @@
 'use client'
 
-import { FileText, Code2, Quote, ExternalLink } from 'lucide-react'
+import { FileText, Code2, Quote, ExternalLink, ArrowRight } from 'lucide-react'
+import { Stat } from '@/components/ui/stat'
 import type { Outcome, Deliverable, DeliverableKind } from '@/types/traceability'
 
 // ---------------------------------------------------------------------------
@@ -228,22 +229,22 @@ export function OutcomeDetailView({ outcome }: OutcomeDetailViewProps) {
           </p>
 
           {/*
-           * STEP-1 hero figure — deltaPoints in Geist Mono 64px, the loudest number.
-           * Green for positive delta (score-good), red for regression.
+           * STEP-1 hero figure — deltaPoints via the shared <Stat> primitive
+           * ("mono for truth", M11). 64px Geist Mono, the loudest number on the
+           * page. Green for positive delta (score-good), red for regression.
            */}
-          <div
-            className="mb-4 font-mono text-[64px] font-semibold leading-none tabular-nums"
-            style={{
-              color:
+          <div className="mb-4">
+            <Stat
+              size="hero"
+              align="start"
+              value={`${outcome.deltaPoints >= 0 ? '+' : ''}${outcome.deltaPoints}`}
+              unit="pt"
+              valueColor={
                 outcome.deltaPoints >= 0
                   ? 'var(--color-score-good)'
-                  : 'var(--color-score-critical)',
-              letterSpacing: '-0.03em',
-            }}
-            aria-label={`Score delta: ${outcome.deltaPoints >= 0 ? '+' : ''}${outcome.deltaPoints} points`}
-          >
-            {outcome.deltaPoints >= 0 ? '+' : ''}
-            {outcome.deltaPoints}
+                  : 'var(--color-score-critical)'
+              }
+            />
           </div>
 
           {/*
@@ -281,7 +282,62 @@ export function OutcomeDetailView({ outcome }: OutcomeDetailViewProps) {
         </div>
       </section>
 
-      {/* M12 rhythm: 40px gap — hero to work trail */}
+      {/* M12 rhythm: 28px gap — hero to causal band */}
+      <div className="mt-7" />
+
+      {/*
+       * Causal chain band — TIER-3 inset (the forensic receipt's "what moved").
+       * Reads left→right as cause→effect: the work shipped → the engine it
+       * targeted → the proven delta. Mono <Stat>s keep the numbers true; the
+       * arrows make the causality legible at a glance.
+       */}
+      <section
+        aria-label="What moved this result"
+        className="card-inset craft-enter craft-enter-2 px-5 py-5 sm:px-6"
+      >
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-3">
+          <Stat
+            size="sm"
+            value={outcome.deliverables.length}
+            label="Deliverables shipped"
+          />
+
+          <ArrowRight
+            className="hidden h-4 w-4 shrink-0 text-[#C4C9D2] sm:block"
+            aria-hidden="true"
+          />
+
+          {/* Engine targeted — violet agent-tint ground */}
+          <div className="flex flex-col gap-1">
+            <span className="inline-flex w-fit items-center rounded-full bg-agent-tint px-2.5 py-0.5 text-[13px] font-medium text-agent">
+              {ENGINE_LABEL[outcome.engine]}
+            </span>
+            <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+              Engine moved
+            </span>
+          </div>
+
+          <ArrowRight
+            className="hidden h-4 w-4 shrink-0 text-[#C4C9D2] sm:block"
+            aria-hidden="true"
+          />
+
+          <Stat
+            size="sm"
+            value={`${outcome.deltaPoints >= 0 ? '+' : ''}${outcome.deltaPoints}`}
+            unit="pt"
+            label="Visibility proven"
+            valueColor={
+              outcome.deltaPoints >= 0
+                ? 'var(--color-score-good)'
+                : 'var(--color-score-critical)'
+            }
+            className="sm:ml-auto"
+          />
+        </div>
+      </section>
+
+      {/* M12 rhythm: 40px gap — causal band to work trail */}
       <div className="mt-10" />
 
       {/*

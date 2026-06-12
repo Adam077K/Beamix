@@ -476,6 +476,47 @@ export const DEMO_TRACEABILITY: TraceabilityData = {
         },
       ],
     },
+    {
+      id: 'demo-outcome-4',
+      statement:
+        'Perplexity now cites the clinic as a source for "Invisalign cost in Ramat Gan"',
+      engine: 'perplexity',
+      deltaPoints: 6,
+      achievedAt: '2026-06-04T09:00:00.000Z',
+      deliverables: [
+        {
+          id: 'demo-d8',
+          kind: 'article',
+          label: 'Guide: Invisalign pricing and payment plans in Ramat Gan',
+          url: 'https://brightsmile-dental.co.il/articles/invisalign-cost-ramat-gan',
+          occurredAt: '2026-06-04T07:30:00.000Z',
+        },
+      ],
+    },
+    {
+      id: 'demo-outcome-5',
+      statement:
+        'ChatGPT corrected the practice name and hours after a citation cleanup',
+      engine: 'chatgpt',
+      deltaPoints: 4,
+      achievedAt: '2026-06-02T13:00:00.000Z',
+      deliverables: [
+        {
+          id: 'demo-d9',
+          kind: 'citation',
+          label: 'Google Business Profile — name, hours, and category corrected',
+          url: 'https://www.google.com/maps/place/bright-smile-dental-ramat-gan',
+          occurredAt: '2026-06-02T10:00:00.000Z',
+        },
+        {
+          id: 'demo-d10',
+          kind: 'schema',
+          label: 'OpeningHoursSpecification added to LocalBusiness schema',
+          url: 'https://brightsmile-dental.co.il/schema.json',
+          occurredAt: '2026-06-01T15:00:00.000Z',
+        },
+      ],
+    },
   ],
 }
 
