@@ -35,19 +35,46 @@ export interface ToolPageProps {
   // Zone 6 — History link
   historyHref?: string
 
+  /**
+   * Working-column width. The spine is left-anchored inside the shell frame
+   * (DashboardShell main = mx-auto max-w-[1200px] px-6); ToolPage no longer
+   * re-centers, so the dead right-gutter is gone.
+   *   'document' (default) → reading column, capped for forms/text (max-w-[760px])
+   *   'wide'               → table-dense tabs (prompts/content) fill the working area
+   */
+  widthMode?: 'document' | 'wide'
+
+  /**
+   * "Earn the width" right rail (M3/M10). When provided, the spine becomes a
+   * dominant-column + narrower-rail split instead of a column floating in a void.
+   * Use for live context: last runs, engine coverage, what AI engines cite now.
+   * Sticks below the fold on scroll. Hidden under lg (stacks under the spine).
+   */
+  rail?: ReactNode
+
   className?: string
 }
 
 /**
  * ToolPage — the 5-zone Console Spine wrapper (CONSOLE-SPINE-DIRECTION.md §A).
  *
- * Single-column max-w-[880px] document, centered in DashboardShell main area.
- * M12 explicit rhythm: header→input 32px · input→run 24px · run→ledger 32px
- * · ledger→output 40px. NOT a global space-y.
+ * LAYOUT (uix-f4): the spine is LEFT-ANCHORED inside the DashboardShell frame
+ * (`<main>` = mx-auto max-w-[1200px] px-6, added by F1). ToolPage no longer
+ * re-centers a fixed 880px doc in the wide main area — that produced the dead
+ * right-gutter / "broken layout" read on every tool page (prompts P1-1,
+ * blog-studio P1-2). The column is content-capped and flush-left under the page
+ * chrome. `widthMode='wide'` lets table-dense tabs fill the working area; `rail`
+ * earns the freed space with a persistent context rail instead of dead white.
  *
- * Depth staging (M1):
- *   Zone 1 = TIER-3 .card-inset
- *   Zone 2 = TIER-2 .card-console (or .card-inset when collapsed)
+ * M12 explicit rhythm: header→input 32px · input→run 24px · run→ledger 32px
+ * · ledger→output 32px. NOT a global space-y.
+ *
+ * Depth staging (M1) — fixed inversion (blog-studio P1-1): the receding TIER-3
+ * header must not out-weigh the TIER-2 work card. Zone 1 recedes (hairline frame,
+ * no shadow); Zone 2 commands with real `--shadow-card` elevation; Zone 5 is the
+ * TIER-1 hero.
+ *   Zone 1 = TIER-3 .card-inset (recede — the lightest surface)
+ *   Zone 2 = TIER-2 .card-console (white + shadow — the brightest working surface)
  *   Zone 5 = TIER-1 .card-console-hero (when populated)
  *
  * State routing:
@@ -70,14 +97,16 @@ export function ToolPage({
   output,
   state,
   historyHref,
+  widthMode = 'document',
+  rail,
   className,
 }: ToolPageProps) {
   const showLedger = state === 'running' && !!ledger
   const showOutput = (state === 'success' || state === 'empty' || state === 'error') && !!output
 
-  return (
-    <div className={cn('mx-auto w-full max-w-[880px] px-4 pb-16 pt-8 sm:px-6', className)}>
-      {/* Zone 1 — Context Header (TIER-3 .card-inset) */}
+  const spine = (
+    <div className={cn(widthMode === 'document' && !rail && 'max-w-[760px]')}>
+      {/* Zone 1 — Context Header (TIER-3 .card-inset — recedes) */}
       {/* M9 entrance stagger: zone 1 is enter-1 */}
       <div className="card-inset craft-enter craft-enter-1 px-6 py-5">
         <div className="flex items-start justify-between gap-6">
@@ -106,14 +135,14 @@ export function ToolPage({
         </div>
       </div>
 
-      {/* Zone 2 — Input Panel (TIER-2) */}
+      {/* Zone 2 — Input Panel (TIER-2 — the brightest working surface, commands over Zone 1) */}
       {/* M12: 32px gap from Zone 1 */}
       <div className="craft-enter craft-enter-2 mt-8">
         {inputCollapsed && collapsedSummary ? (
-          // Collapsed: show summary bar (still TIER-3)
+          // Collapsed: show summary bar (recedes — work is done, output leads)
           <div>{collapsedSummary}</div>
         ) : (
-          // Expanded: full input panel (TIER-2)
+          // Expanded: full input panel (TIER-2, real elevation)
           <div className="card-console overflow-hidden">
             {inputPanel}
           </div>
@@ -137,10 +166,10 @@ export function ToolPage({
       )}
 
       {/* Zone 5 — Output Zone (TIER-1 when populated) */}
-      {/* M12: 40px gap from Zone 4 (or 3 if no ledger) */}
+      {/* M12: 32px gap from Zone 4 — keeps the output's top edge above the fold */}
       {showOutput && (
         <div
-          className="craft-enter craft-enter-5 mt-10"
+          className="craft-enter craft-enter-5 mt-8"
         >
           {(state === 'success') ? (
             <div className="card-console-hero overflow-hidden">
@@ -163,6 +192,25 @@ export function ToolPage({
             View in Run History →
           </Link>
         </div>
+      )}
+    </div>
+  )
+
+  return (
+    // Flush-left under the shell frame. The shell supplies the mx-auto max-w-[1200px]
+    // px-6 container; ToolPage adds only the vertical rhythm + (optional) rail split.
+    <div className={cn('w-full pb-16 pt-8', className)}>
+      {rail ? (
+        // "Earn the width" (M3/M10): dominant spine + narrower context rail.
+        // Stacks under lg; the rail sticks below the fold on wide viewports.
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0">{spine}</div>
+          <aside className="craft-enter craft-enter-2 lg:sticky lg:top-8 lg:self-start">
+            {rail}
+          </aside>
+        </div>
+      ) : (
+        spine
       )}
     </div>
   )

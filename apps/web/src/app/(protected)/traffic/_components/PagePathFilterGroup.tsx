@@ -1,7 +1,7 @@
 'use client'
 
 import { useAnalyticsFilter } from '@/components/console/AnalyticsFilterContext'
-import { cn } from '@/lib/utils'
+import { FilterChip } from '@/components/console/FilterChip'
 
 /**
  * PagePathFilterGroup — the page-path filter group injected into TrafficScopeRail.
@@ -31,24 +31,15 @@ export function PagePathFilterGroup({ paths }: PagePathFilterGroupProps) {
         {paths.map((path) => {
           const active = topics[path] !== false
           return (
-            <button
+            <FilterChip
               key={path}
-              type="button"
-              role="checkbox"
-              aria-checked={active}
-              aria-label={`Toggle ${path}`}
-              onClick={() => toggleTopic(path)}
-              className={cn(
-                'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1',
-                active
-                  ? 'bg-[#EEF2FF] text-[#3370FF]'
-                  : 'bg-transparent text-[#6B7280] hover:bg-[#F7F7F7] hover:text-[#0A0A0A]',
-              )}
+              active={active}
+              onToggle={() => toggleTopic(path)}
+              ariaLabel={`Toggle ${path}`}
+              marker="none"
             >
-              <span className="flex-1 truncate text-left font-mono text-[13px] tabular-nums">
-                {path}
-              </span>
-            </button>
+              <span className="font-mono text-[13px] tabular-nums">{path}</span>
+            </FilterChip>
           )
         })}
       </div>

@@ -51,6 +51,19 @@
 
 Gradient sections are narrative moments — not decorative filler. Max one per consecutive page area. Never stack. Text on dark sections: white `#FFFFFF`.
 
+### Product gradient rule — the blue→violet beat (locked 2026-06-12)
+
+The product app has exactly **one** sanctioned gradient: the **hero blue→violet**
+`#3370FF → #6E56F0` (`--color-accent → --color-agent`). It is allowed **ONLY** on:
+
+- a **hero** surface (the one focal moment on the screen),
+- an **AI / agent surface** (where the agents are at work), or
+- a **score-reveal** (the free-scan dopamine moment).
+
+It is **forbidden** everywhere else — never on a button, never as a card background filler,
+never on dense product chrome, never on a data point. This carries the blue=you / violet=agents
+promise into the one gradient and keeps it from becoming decoration. (DESIGN-VISION §3.)
+
 ### Score Colors (data visualization only — never buttons or links)
 
 | Level | Hex | Range | Also used as |
@@ -59,6 +72,36 @@ Gradient sections are narrative moments — not decorative filler. Max one per c
 | Good | `#10B981` | 50–74 | Success state, pricing checkmarks |
 | Fair | `#F59E0B` | 25–49 | Warning state |
 | Critical | `#EF4444` | 0–24 | Error / destructive state |
+
+### Data-viz series tokens — DISTINCT from the action accent (locked 2026-06-12)
+
+Charts must never paint data in the **action** accent's role. Reference the data-viz series
+tokens (`--color-data-1 … --color-data-6`; utilities `.text-data-N` / `.bg-data-N`), never
+`.text-accent` / `.bg-accent`, for any chart stroke, fill, or legend swatch.
+
+| Series | Token | Hex |
+|---|---|---|
+| data-1 | `--color-data-1` | `#3370FF` |
+| data-2 | `--color-data-2` | `#6E56F0` |
+| data-3 | `--color-data-3` | `#06B6D4` |
+| data-4 | `--color-data-4` | `#10B981` |
+| data-5 | `--color-data-5` | `#F59E0B` |
+| data-6 | `--color-data-6` | `#EF4444` |
+| grid | `--color-data-grid` | `#EAEAEA` |
+
+`data-1` deliberately shares the blue **hue** with the accent (it is the canonical first
+series), but it is a **separate token with a separate role**. The rule is about *intent*:
+chart code references the `data-*` role so a data point is never mistaken for — or styled
+as — a clickable action. Default to the blue/violet pair plus desaturated tints; pastel
+multi-band, never loud. (Authoritative table: DESIGN-VISION §3.)
+
+### Status-pill TEXT vs swatch — WCAG AA (locked 2026-06-12)
+
+Status pills use a tinted ground + saturated hue. The small 12–13px pill **label** must use
+the AA-passing (≥4.5:1 on its own ground) `--color-status-*-text` token (utility
+`.text-status-*`). The saturated base `--color-status-*` token (utility `.swatch-status-*`)
+is for **dots, icons, ticks, and large figures only** — on the tinted grounds it clears only
+AA-large (3:1), so it must not carry small text. Both tracks share the same hue family.
 
 ### Retired Colors — Do Not Use
 
