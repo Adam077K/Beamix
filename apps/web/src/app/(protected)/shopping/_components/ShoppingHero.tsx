@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { EngineMicroSparkline } from '@/components/dashboard/EngineMicroSparkline'
 import { SerifVerdict } from '@/components/console/SerifVerdict'
 import { bandWord } from './score-band'
 
@@ -30,6 +29,9 @@ interface ShoppingHeroProps {
   revenueDelta: number
   /** Last-5-weeks visibility points for the sparkline */
   trend: number[]
+  /** Best/worst-moving SKU this period — feeds the rail mini-ledger */
+  topMover?: { name: string; delta: number }
+  bottomMover?: { name: string; delta: number }
 }
 
 function ils(n: number): string {
@@ -60,12 +62,69 @@ function DeltaChip({ value, unit }: { value: number; unit: 'pp' | '%' }) {
   )
 }
 
+/**
+ * HeroTrendLine — a dedicated BLUE trend line for the hero rail.
+ *
+ * This is YOUR visibility metric (blue=you), so the line is rendered in the
+ * #3370FF accent — NOT the score-band green. That keeps green reserved for true
+ * positive-state semantics (the delta chip, sentiment) and stops three unrelated
+ * greens from reading as one (P2-3). A separate component from the score-band
+ * EngineMicroSparkline by design.
+ */
+function HeroTrendLine({ points }: { points: number[] }) {
+  const w = 188
+  const h = 52
+  const padX = 3
+  const padY = 6
+  const min = Math.min(...points)
+  const max = Math.max(...points)
+  const range = max - min || 1
+  const innerW = w - padX * 2
+  const innerH = h - padY * 2
+  const step = innerW / (points.length - 1)
+  const toY = (v: number) => h - padY - ((v - min) / range) * innerH
+  const coords = points.map((v, i) => ({ x: padX + i * step, y: toY(v) }))
+  const line = coords.map((c) => `${c.x},${c.y}`).join(' ')
+  const area = `${padX},${h - padY} ${line} ${padX + innerW},${h - padY}`
+  const last = coords[coords.length - 1]
+
+  return (
+    <svg
+      width={w}
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      aria-hidden="true"
+      style={{ overflow: 'visible' }}
+    >
+      <defs>
+        <linearGradient id="hero-trend-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#3370FF" stopOpacity="0.14" />
+          <stop offset="100%" stopColor="#3370FF" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={area} fill="url(#hero-trend-fill)" />
+      <polyline
+        points={line}
+        fill="none"
+        stroke="#3370FF"
+        strokeWidth={1.75}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx={last.x} cy={last.y} r={3} fill="#3370FF" />
+      <circle cx={last.x} cy={last.y} r={5} fill="#3370FF" fillOpacity={0.18} />
+    </svg>
+  )
+}
+
 export function ShoppingHero({
   visibility,
   revenue,
   visibilityDelta,
   revenueDelta,
   trend,
+  topMover,
+  bottomMover,
 }: ShoppingHeroProps) {
   const [mode, setMode] = useState<HeroMode>('visibility')
   const isVis = mode === 'visibility'
@@ -75,10 +134,17 @@ export function ShoppingHero({
       aria-labelledby="shopping-hero-heading"
       className="card-console-hero relative overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, #FFFFFF 0%, var(--color-surface-warm) 100%)',
+        background:
+          'linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 46%, var(--color-surface-warm) 100%)',
       }}
     >
-      <div className="grid gap-8 p-8 lg:grid-cols-[1fr_220px] lg:items-center lg:p-10">
+      {/* Top blue accent hairline — anchors the hero as TIER-1 and as YOURS
+          (blue=you), giving the eye an unambiguous first landing (P2-1/M1). */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-[3px] bg-[linear-gradient(90deg,#3370FF_0%,#3370FF_55%,rgba(51,112,255,0)_100%)]"
+      />
+      <div className="grid gap-8 p-8 lg:grid-cols-[1fr_236px] lg:items-center lg:p-10">
         {/* LEFT — figure + verdict (dominant) */}
         <div className="min-w-0">
           <div className="flex items-center justify-between gap-4">
@@ -91,7 +157,7 @@ export function ShoppingHero({
             <div
               role="group"
               aria-label="Switch hero metric"
-              className="flex shrink-0 rounded-lg bg-[#F3F4F6] p-1"
+              className="flex shrink-0 rounded-lg bg-[#F3F4F6] p-1 ring-1 ring-inset ring-[#E5E7EB]"
             >
               {(['visibility', 'revenue'] as HeroMode[]).map((m) => (
                 <button
@@ -119,13 +185,15 @@ export function ShoppingHero({
             </span>
           </div>
 
-          {/* STEP-2 verdict + the ONE Fraunces beat */}
+          {/* STEP-2 verdict + the ONE Fraunces beat.
+              max-w tuned + a non-breaking space binds "ask AI" so the two-letter
+              "AI" never orphans onto its own line (M2/M12). */}
           <h2
             id="shopping-hero-heading"
-            className="mt-4 max-w-[520px] font-[var(--font-display)] text-[30px] font-medium leading-[1.15] tracking-[-0.02em] text-[#0A0A0A]"
+            className="mt-4 max-w-[18ch] font-[var(--font-display)] text-[30px] font-medium leading-[1.15] tracking-[-0.02em] text-balance text-[#0A0A0A]"
           >
-            Your shop shows up <SerifVerdict>{bandWord(visibility)}</SerifVerdict> when shoppers ask
-            AI
+            Your shop shows up <SerifVerdict>{bandWord(visibility)}</SerifVerdict> when shoppers
+            ask&nbsp;AI
           </h2>
 
           {/* Delta chip */}
@@ -144,19 +212,59 @@ export function ShoppingHero({
           </p>
         </div>
 
-        {/* RIGHT — sparkline rail */}
-        <div className="flex flex-col items-start gap-3 lg:items-end">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
-            Last 5 weeks
-          </p>
-          <EngineMicroSparkline
-            points={trend}
-            currentScore={visibility}
-            className="h-[48px] w-[160px]"
-          />
-          <p className="font-mono text-[12px] tabular-nums text-[#6B7280]">
-            {trend[0]}% &rarr; {trend[trend.length - 1]}%
-          </p>
+        {/* RIGHT — data-texture rail: blue trend + a 2-row mover ledger so the
+            column has a second thing to say instead of a lonely line (P2-2). */}
+        <div className="lg:border-l lg:border-[#EDEDEA] lg:pl-7">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+              Last 5 weeks
+            </p>
+            <p className="font-mono text-[12px] tabular-nums text-[#6B7280]">
+              {trend[0]}%&nbsp;&rarr;&nbsp;{trend[trend.length - 1]}%
+            </p>
+          </div>
+
+          <div className="mt-2.5">
+            <HeroTrendLine points={trend} />
+          </div>
+
+          {/* Mini-ledger — top mover this period + the SKU furthest behind */}
+          {(topMover || bottomMover) && (
+            <dl className="mt-5 space-y-3 border-t border-[#EDEDEA] pt-4">
+              {topMover && (
+                <div>
+                  <dt className="text-[10px] font-semibold uppercase tracking-[0.07em] text-[#9CA3AF]">
+                    Top mover
+                  </dt>
+                  <dd className="mt-1 flex items-center justify-between gap-3">
+                    <span className="min-w-0 truncate text-[12.5px] text-[#374151]">
+                      {topMover.name}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-0.5 font-mono text-[12px] tabular-nums text-status-positive">
+                      <ArrowUpRight className="h-3 w-3" aria-hidden="true" strokeWidth={2.25} />+
+                      {topMover.delta}pp
+                    </span>
+                  </dd>
+                </div>
+              )}
+              {bottomMover && (
+                <div>
+                  <dt className="text-[10px] font-semibold uppercase tracking-[0.07em] text-[#9CA3AF]">
+                    Furthest behind
+                  </dt>
+                  <dd className="mt-1 flex items-center justify-between gap-3">
+                    <span className="min-w-0 truncate text-[12.5px] text-[#374151]">
+                      {bottomMover.name}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-0.5 font-mono text-[12px] tabular-nums text-status-critical">
+                      <ArrowDownRight className="h-3 w-3" aria-hidden="true" strokeWidth={2.25} />
+                      {bottomMover.delta}pp
+                    </span>
+                  </dd>
+                </div>
+              )}
+            </dl>
+          )}
         </div>
       </div>
     </section>
