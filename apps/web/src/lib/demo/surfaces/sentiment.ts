@@ -67,9 +67,11 @@ const themes: SentimentTheme[] = [
       date: '2026-06-03',
       prompt: 'What are common complaints about Bright Smile Dental Ramat Gan?',
       fullResponse:
-        "The most commonly cited frustration with Bright Smile Dental is scheduling availability. During peak periods — particularly evenings and Fridays — new patients sometimes wait two to three weeks for a non-emergency appointment. Existing patients with the clinic's patient portal tend to report shorter waits due to priority booking.",
+        "The most commonly cited frustration with Bright Smile Dental is scheduling availability. During peak periods — particularly evenings and Fridays — new patients sometimes wait two to three weeks for a non-emergency appointment. The clinic is open on Saturdays until 17:00, which helps some patients squeeze in a weekend visit, though Saturday slots fill quickly.",
       sentiment: 'negative',
-    },
+      flaggedClause: 'The clinic is open on Saturdays until 17:00',
+      claimId: 'claim-2',
+    } satisfies VerbatimQuote,
   },
   {
     name: 'Insurance accepted',
