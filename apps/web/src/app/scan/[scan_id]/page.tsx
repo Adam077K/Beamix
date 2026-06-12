@@ -160,9 +160,15 @@ function deriveEngines(results: FreeScanResults | null) {
 /** Header bar: wordmark + blue discovery CTA */
 function PageHeader({ discoveryUrl }: { discoveryUrl: string }) {
   return (
-    <header className="sticky top-0 z-10 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-      <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-        <span className="font-[var(--font-display)] text-[18px] font-semibold tracking-tight text-[var(--color-text-primary)]">
+    <header className="sticky top-0 z-10 border-b border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_88%,transparent)] backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 lg:px-10">
+        <span className="flex items-center gap-2 font-[var(--font-display)] text-[18px] font-semibold tracking-tight text-[var(--color-text-primary)]">
+          <span
+            aria-hidden="true"
+            className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-[var(--color-accent)] font-mono text-[13px] font-semibold text-white"
+          >
+            B
+          </span>
           Beamix
         </span>
         <Link
@@ -176,15 +182,88 @@ function PageHeader({ discoveryUrl }: { discoveryUrl: string }) {
   )
 }
 
-/** Identity line: "Results for Business Name · website.com" */
+/** Identity eyebrow: favicon + business name + domain — reads as a header. */
 function IdentityLine({ businessName, websiteUrl }: { businessName: string; websiteUrl: string }) {
+  const domain = websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
+  const initial = businessName.trim().charAt(0).toUpperCase() || 'B'
   return (
-    <p className="text-[14px] text-[var(--color-text-muted)]">
-      Results for{' '}
-      <span className="font-medium text-[var(--color-text-primary)]">{businessName}</span>
-      {' '}·{' '}
-      <span className="font-mono text-xs">{websiteUrl}</span>
-    </p>
+    <div className="flex items-center gap-3">
+      <span
+        aria-hidden="true"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[var(--color-border)] bg-[var(--color-surface)] font-[var(--font-display)] text-[15px] font-semibold text-[var(--color-text-primary)]"
+      >
+        {initial}
+      </span>
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-disabled)]">
+          AI search scan
+        </p>
+        <p className="truncate text-[15px] font-semibold leading-tight text-[var(--color-text-primary)]">
+          {businessName}
+          <span className="ml-2 font-mono text-[12px] font-normal text-[var(--color-text-muted)]">
+            {domain}
+          </span>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+/** Rail trust card: "what happens next" + trust signals — pins the offer. */
+function NextStepsRail({ discoveryUrl, totalIssues }: { discoveryUrl: string; totalIssues: number }) {
+  const steps = [
+    {
+      title: 'We map the gaps',
+      body: 'Every place AI search misses or misranks you — across ChatGPT, Gemini, and Perplexity.',
+    },
+    {
+      title: 'We do the fixes',
+      body: 'Schema, citations, FAQ coverage. We write and ship it — you approve, we run it.',
+    },
+    {
+      title: 'You climb the rankings',
+      body: 'We re-measure every week and keep your visibility moving, not just monitored.',
+    },
+  ]
+  return (
+    <aside className="card-console overflow-hidden" aria-label="What happens next">
+      <p className="border-b border-[var(--color-border)] px-6 py-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-disabled)]">
+        What happens next
+      </p>
+      <ol className="relative space-y-5 px-6 py-6">
+        {steps.map((step, i) => (
+          <li key={step.title} className="relative flex gap-3">
+            <span
+              aria-hidden="true"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] font-mono text-[12px] font-semibold text-white"
+            >
+              {i + 1}
+            </span>
+            <div className="min-w-0 pt-0.5">
+              <p className="text-[14px] font-semibold leading-tight text-[var(--color-text-primary)]">
+                {step.title}
+              </p>
+              <p className="mt-1 text-[13px] leading-[1.5] text-[var(--color-text-muted)]">
+                {step.body}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <div className="border-t border-[var(--color-border)] px-6 py-5">
+        <Link
+          href={discoveryUrl}
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[var(--color-accent)] px-5 text-[14px] font-semibold text-white transition-[transform,background-color] duration-100 ease-out hover:-translate-y-px hover:bg-[var(--color-accent-hover)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
+        >
+          {totalIssues > 0
+            ? `Get all ${totalIssues} fixed for you`
+            : 'Book a discovery call'}
+        </Link>
+        <p className="mt-2.5 text-center text-[12px] text-[var(--color-text-muted)]">
+          Free 20-min call · No credit card
+        </p>
+      </div>
+    </aside>
   )
 }
 
@@ -236,10 +315,18 @@ function CtaBlock({
       style={{ backgroundColor: 'var(--color-panel-dark)' }}
       aria-label="Book a discovery call"
     >
-      <h2 className="font-[var(--font-display)] text-[22px] font-semibold leading-snug text-white sm:text-[26px]">
-        {totalIssues > 0
-          ? `We fix all ${totalIssues} issue${totalIssues !== 1 ? 's' : ''} for you — end-to-end.`
-          : 'We make sure your AI search visibility stays strong.'}
+      <h2 className="font-[var(--font-display)] text-[24px] font-semibold leading-snug text-white sm:text-[28px]">
+        {totalIssues > 0 ? (
+          <>
+            We{' '}
+            <em className="font-[var(--font-serif)] font-normal italic">fix</em>{' '}
+            all{' '}
+            <span className="font-mono tabular-nums">{totalIssues}</span> issue
+            {totalIssues !== 1 ? 's' : ''} for you — end-to-end.
+          </>
+        ) : (
+          'We make sure your AI search visibility stays strong.'
+        )}
       </h2>
       <p className="mx-auto mt-3 max-w-[400px] text-[15px] leading-[1.5] text-[#9CA3AF]">
         No dashboards to babysit. No copywriting to do. Book a free 20-minute
@@ -261,7 +348,7 @@ function CtaBlock({
 /** Footnote */
 function ScanFootnote({ scanId }: { scanId: string }) {
   return (
-    <p className="text-center font-mono text-[12px] text-[var(--color-text-disabled)]">
+    <p className="border-t border-[var(--color-border-subtle)] pt-5 text-center font-mono text-[12px] text-[var(--color-text-disabled)]">
       Scan completed &bull; Results expire in 30 days &bull; ID: {scanId.slice(0, 8)}&hellip;
     </p>
   )
@@ -296,51 +383,83 @@ export default async function ScanResultsPage({ params }: PageProps) {
 
   const discoveryUrl = `/discovery?scan_id=${scan.id}`
 
+  // v2 measurement view owns its own internal layout; render it full-width
+  // rather than forcing it into the v1 two-column grid.
+  const isV2 = isComplete && Boolean(results?.scan_v2)
+
   return (
     <main className="min-h-screen bg-[var(--color-surface-warm)]">
       <PageHeader discoveryUrl={discoveryUrl} />
 
-      <div className="mx-auto max-w-3xl space-y-8 px-6 py-12">
-        {/* Identity */}
-        <IdentityLine businessName={scan.business_name} websiteUrl={scan.website_url} />
+      <div className="mx-auto max-w-6xl px-6 py-10 lg:px-10 lg:py-14">
+        {/* Identity eyebrow */}
+        <div className="craft-enter craft-enter-1">
+          <IdentityLine businessName={scan.business_name} websiteUrl={scan.website_url} />
+        </div>
 
         {/* State: pending */}
-        {isPending && <PendingSection businessName={scan.business_name} />}
+        {isPending && (
+          <div className="mt-8 mx-auto max-w-3xl">
+            <PendingSection businessName={scan.business_name} />
+          </div>
+        )}
 
         {/* State: failed */}
-        {isFailed && <FailedSection discoveryUrl={discoveryUrl} />}
+        {isFailed && (
+          <div className="mt-8 mx-auto max-w-2xl">
+            <FailedSection discoveryUrl={discoveryUrl} />
+          </div>
+        )}
 
-        {/* State: complete */}
-        {isComplete && (
-          <>
-            {/* Score hero — always shown (ring reads visibility_score which v2 also populates) */}
-            <ScanScoreHero
-              score={visibilityScore}
-              businessName={scan.business_name}
-            />
-
-            {results?.scan_v2 ? (
-              /* v2 path: richer per-engine measurement view */
-              <ScanV2View v2={results.scan_v2} />
-            ) : (
-              /* v1 path: unchanged — engine band + issue ledger */
-              <>
-                {/* Engine band — per-engine breakdown */}
-                <EngineBand engines={engines} />
-
-                {/* Issue ledger — evidence density */}
-                {(issues.length > 0) && (
-                  <IssueLedger issues={issues} totalIssues={totalIssues} />
-                )}
-              </>
-            )}
-
-            {/* 4. CTA block — hard act-separator */}
-            <CtaBlock discoveryUrl={discoveryUrl} totalIssues={totalIssues} />
-
-            {/* Footnote */}
+        {/* State: complete — v2 (own internal layout) */}
+        {isV2 && (
+          <div className="mt-8 space-y-10">
+            <div className="craft-enter craft-enter-2">
+              <ScanScoreHero score={visibilityScore} businessName={scan.business_name} />
+            </div>
+            <div className="craft-enter craft-enter-3">
+              <ScanV2View v2={results!.scan_v2!} />
+            </div>
+            <div className="craft-enter craft-enter-4">
+              <CtaBlock discoveryUrl={discoveryUrl} totalIssues={totalIssues} />
+            </div>
             <ScanFootnote scanId={scan.id} />
-          </>
+          </div>
+        )}
+
+        {/* State: complete — v1 asymmetric frame-filling layout (M3) */}
+        {isComplete && !isV2 && (
+          <div className="mt-8 grid grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-y-0">
+            {/* Dominant column — hero + issues (the evidence that drives the CTA) */}
+            <div className="flex flex-col gap-10">
+              <div className="craft-enter craft-enter-2">
+                <ScanScoreHero score={visibilityScore} businessName={scan.business_name} />
+              </div>
+
+              {issues.length > 0 && (
+                <div className="craft-enter craft-enter-4">
+                  <IssueLedger issues={issues} totalIssues={totalIssues} />
+                </div>
+              )}
+
+              {/* CTA — act separator (large air gap above via mt) */}
+              <div className="craft-enter craft-enter-5 mt-4">
+                <CtaBlock discoveryUrl={discoveryUrl} totalIssues={totalIssues} />
+              </div>
+
+              <ScanFootnote scanId={scan.id} />
+            </div>
+
+            {/* Narrow rail — engine breakdown + what-happens-next + pinned CTA */}
+            <div className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
+              <div className="craft-enter craft-enter-3">
+                <EngineBand engines={engines} />
+              </div>
+              <div className="craft-enter craft-enter-4">
+                <NextStepsRail discoveryUrl={discoveryUrl} totalIssues={totalIssues} />
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
