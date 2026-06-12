@@ -163,7 +163,7 @@ export function ScanScoreHero({ score, businessName }: ScanScoreHeroProps) {
           </p>
           <h1
             id="scan-score-heading"
-            className="font-[var(--font-display)] text-[26px] font-semibold leading-tight tracking-[-0.01em] text-[var(--color-text-primary)]"
+            className="font-[var(--font-display)] text-[30px] font-semibold leading-[1.12] tracking-[-0.02em] text-[var(--color-text-primary)]"
           >
             {/* Fraunces beat — the verdict word only */}
             <em
