@@ -2,6 +2,7 @@
 
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { SerifVerdict } from '@/components/console/SerifVerdict'
+import { Stat } from '@/components/ui/stat'
 import { INTENT_ORDER, INTENT_LABELS, formatVolume, type IntentKey } from './market-colors'
 import type { MarketPromptRow } from '@/lib/demo/surfaces/types'
 
@@ -10,15 +11,19 @@ import type { MarketPromptRow } from '@/lib/demo/surfaces/types'
  *
  * Asymmetry (M3): LEFT figure column dominant, RIGHT 360px intent-donut rail.
  *
- * STEP-1 = 64px Geist Mono addressable monthly volume in #3370FF — the ONE blue
- * structural figure on the page.
+ * STEP-1 = 64px Geist Mono addressable monthly volume in INK #0A0A0A (<Stat
+ *          size="hero">) — the ONE dominant figure on the page. Data is not an
+ *          action: blue is reserved for the trend chip / active nav ONLY (M11,
+ *          tell #8). The figure reads TRUE, not clickable.
  * STEP-2 = 30px InterDisplay verdict carrying the ONE Fraunces beat ("wide-open")
  *          — the single editorial moment, never in chrome.
  * STEP-4 = body. Delta chip = mono status pill.
  *
- * The donut splits addressable volume by INTENT in pastel data-band fills; its
- * inner label is neutral mono (#374151) so the blue 64px figure stays the only
- * TIER-1 focal.
+ * The donut splits addressable volume by INTENT in the desaturated data-viz
+ * SERIES band (data-1 blue / data-4 green / data-3 cyan — DESIGN-VISION §3), so
+ * the ring reads as a finished data object, never a half-empty skeleton. Its
+ * inner label is demoted to an 18px mono caption (#374151) so the 64px figure
+ * stays the unmistakable single TIER-1 focal (M1/M10).
  */
 
 interface MarketHeroPanelProps {
@@ -27,17 +32,22 @@ interface MarketHeroPanelProps {
   prompts: MarketPromptRow[]
 }
 
-// Pastel intent fills for the donut (low-opacity data band — never loud).
+// Intent fills for the donut — the desaturated data-viz SERIES band (NOT the
+// hero gradient, which is reserved for hero/AI/score-reveal). Saturated enough
+// that the ring reads finished, never a grey loading placeholder.
 const INTENT_DONUT: Record<IntentKey, string> = {
-  informational: '#9DB8FF', // pastel blue
-  transactional: '#7FD7B4', // pastel green
-  navigational: '#CBCFD6', // pastel neutral
+  informational: '#3370FF', // data-1
+  transactional: '#10B981', // data-4 — revenue-intent green
+  navigational: '#06B6D4', // data-3 — cyan
 }
 
 const DONUT_SIZE = 168
-const STROKE = 22
+const STROKE = 24
 const RADIUS = (DONUT_SIZE - STROKE) / 2
 const CIRC = 2 * Math.PI * RADIUS
+// Tiny round-cap gap between segments so the band reads as discrete slices, not
+// one continuous ring. Subtracted from each dash, added back to the gap.
+const SEG_GAP = 2
 
 interface Segment {
   intent: IntentKey
@@ -90,7 +100,9 @@ function IntentDonut({
         />
         {segments.map((seg) => {
           const fraction = seg.value / total
-          const dash = fraction * CIRC
+          // Full-coverage segment minus a hairline gap so the ring reads as
+          // discrete slices that together fill 100% — never a grey majority.
+          const dash = Math.max(fraction * CIRC - SEG_GAP, 0)
           const gap = CIRC - dash
           const offset = -(cumulative / total) * CIRC
           cumulative += seg.value
@@ -103,6 +115,7 @@ function IntentDonut({
               fill="none"
               stroke={seg.color}
               strokeWidth={STROKE}
+              strokeLinecap="round"
               strokeDasharray={`${dash} ${gap}`}
               strokeDashoffset={offset}
               transform={`rotate(-90 ${DONUT_SIZE / 2} ${DONUT_SIZE / 2})`}
@@ -112,11 +125,12 @@ function IntentDonut({
         })}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        {/* Neutral mono — the blue 64px hero figure is the only TIER-1 focal. */}
-        <span className="font-mono text-[26px] font-medium leading-none tabular-nums tracking-[-0.02em] text-[#374151]">
+        {/* Demoted: 18px mono caption (M1/M10) — the 64px ink figure is the only
+            TIER-1 focal. The "unclaimed" narrative lives in the verdict sentence. */}
+        <span className="font-mono text-[18px] font-medium leading-none tabular-nums tracking-[-0.01em] text-[#374151]">
           {formatVolume(uncitedVolume)}
         </span>
-        <span className="mt-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#9CA3AF]">
+        <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#9CA3AF]">
           unclaimed
         </span>
       </div>
@@ -160,22 +174,24 @@ export function MarketHeroPanel({
       aria-labelledby="market-hero-heading"
       className="card-console-hero relative overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, #FFFFFF 0%, var(--color-surface-warm) 100%)',
+        // Stronger warm wash than the chart cards so the TIER-1 hero is felt as
+        // elevated (M1). Warm corner under the donut, white under the figure.
+        background:
+          'radial-gradient(120% 140% at 100% 0%, var(--color-surface-warm) 0%, #FCFBF8 42%, #FFFFFF 100%)',
       }}
     >
       <div className="grid gap-8 p-8 lg:grid-cols-[1fr_360px] lg:items-center lg:p-10">
         {/* LEFT — figure + verdict (dominant) */}
         <div className="min-w-0">
-          {/* STEP-3 eyebrow */}
-          <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
-            Addressable monthly volume
-          </p>
-          {/* STEP-1 — the one blue 64px mono figure */}
-          <div className="flex items-end gap-3">
-            <span className="font-mono text-[64px] font-medium leading-[0.9] tracking-[-0.03em] tabular-nums text-[#3370FF]">
-              {formatVolume(addressableVolume)}
-            </span>
-          </div>
+          {/* STEP-1 — the ONE 64px mono figure, in INK (data is not an action;
+              blue is reserved for the trend chip / nav). Eyebrow on top. */}
+          <Stat
+            value={formatVolume(addressableVolume)}
+            label="Addressable monthly volume"
+            labelPosition="top"
+            size="hero"
+            align="start"
+          />
           {/* STEP-2 verdict — the ONE Fraunces beat on "wide-open" */}
           <h2
             id="market-hero-heading"
