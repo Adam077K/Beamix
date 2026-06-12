@@ -1,9 +1,10 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { getPendingApprovals } from './_data'
 import { ApprovalsList } from './_components/ApprovalsList'
+import { ApprovalFocus } from './_components/ApprovalFocus'
+import { sortApprovals } from './_logic'
 import { PageHeader } from '@/components/page-header'
 import { RefreshErrorState } from '@/components/refresh-error-state'
-import Link from 'next/link'
 import { isDemoUser } from '@/lib/demo'
 import { DEMO_APPROVALS } from '@/lib/demo/fixtures'
 
@@ -37,6 +38,21 @@ function CountMono({ count }: { count: number }) {
 }
 
 // ---------------------------------------------------------------------------
+// LedgerHeading — eyebrow for the recede ledger under the focal (M2 STEP-3 / M12)
+// ---------------------------------------------------------------------------
+
+function LedgerHeading({ count }: { count: number }) {
+  return (
+    <div className="mb-3 flex items-baseline gap-2">
+      <h2 className="text-[12px] font-semibold uppercase leading-none tracking-[0.08em] text-[#9CA3AF]">
+        Also waiting
+      </h2>
+      <span className="font-mono text-[12px] tabular-nums text-[#9CA3AF]">{count}</span>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
@@ -64,45 +80,50 @@ export default async function ApprovalsPage() {
 
   const count = result.ok ? result.items.length : 0
 
-  // Build the subtitle JSX — only when count > 0
+  // Risk-first, expiry-soonest order — the head is the TIER-1 focal (M10).
+  const sorted = result.ok ? sortApprovals(result.items) : []
+  const focusItem = sorted[0] ?? null
+  const ledgerItems = sorted.slice(1)
+
+  // Subtitle — M5 Fraunces beat on the verdict word ("review"); M11 mono count.
   const subtitleNode =
     result.ok && count > 0 ? (
       <span>
-        The crew has <CountMono count={count} /> {count === 1 ? 'item' : 'items'} waiting for your
-        review.
+        The crew has <CountMono count={count} /> {count === 1 ? 'fix' : 'fixes'} ready for your{' '}
+        <span className="font-[var(--font-serif)] italic text-[#374151]">review</span>.
       </span>
     ) : undefined
-
-  // Build the action slot — "Resolved" link (currently hidden until resolved page ships)
-  const actionNode = (
-    <Link
-      href="/approvals/resolved"
-      className="hidden text-[13px] font-medium text-[#6B7280] hover:text-[#0A0A0A] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2 rounded"
-      aria-label="View resolved approvals"
-    >
-      Resolved →
-    </Link>
-  )
 
   return (
     <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Page header — count-bearing subtitle when items exist */}
-      <PageHeader
-        title="Approvals"
-        subtitle={subtitleNode}
-        action={actionNode}
-      />
+      <PageHeader title="Approvals" subtitle={subtitleNode} />
 
-      {/* Content — one wrapping card-console */}
-      {result.ok ? (
-        <div className="card-console overflow-hidden">
-          <ApprovalsList approvals={result.items} />
-        </div>
-      ) : (
+      {!result.ok ? (
         <RefreshErrorState
           title="Could not load approvals"
           description="There was a problem fetching your pending items. Give it another go."
         />
+      ) : count === 0 ? (
+        // Designed empty (M8) — framed surface, never a bare centered icon.
+        <div className="card-console overflow-hidden craft-enter craft-enter-1">
+          <ApprovalsList approvals={[]} />
+        </div>
+      ) : (
+        <div className="space-y-10">
+          {/* TIER-1 focal — the one thing to do now (M1 / M3 / M10). */}
+          {focusItem && <ApprovalFocus item={focusItem} />}
+
+          {/* Recede ledger — everything else, dense and lower-weight (M3 asymmetry). */}
+          {ledgerItems.length > 0 && (
+            <section aria-label="Other items waiting for review" className="craft-enter craft-enter-2">
+              <LedgerHeading count={ledgerItems.length} />
+              <div className="card-inset overflow-hidden">
+                <ApprovalsList approvals={ledgerItems} />
+              </div>
+            </section>
+          )}
+        </div>
       )}
     </main>
   )
