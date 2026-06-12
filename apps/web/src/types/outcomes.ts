@@ -22,10 +22,24 @@ export interface Win {
   achievedAt: string
 }
 
+/** A single week-over-week point of the overall (averaged) visibility score. */
+export interface OverallTrendPoint {
+  /** ISO-8601 week-start date. */
+  weekOf: string
+  /** Overall visibility score for that week (0–100). */
+  score: number
+}
+
 export interface DashboardOutcomes {
   visibilityScores: VisibilityScore[]
   weeklyNarrative: { type: 'empty' | 'wins'; items?: Win[] }
   approvalCount: number
+  /**
+   * Week-over-week overall score trend (oldest → newest) for the dominant
+   * trend chart. Optional and null-safe: < 2 points renders a designed
+   * baseline. Omitted entirely for users with no scan history yet.
+   */
+  overallTrend?: OverallTrendPoint[]
 }
 
 export type ApprovalItemResource = 'content' | 'email' | 'outreach'
