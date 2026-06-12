@@ -2,11 +2,13 @@
 
 import { cn } from '@/lib/utils'
 import { useAnalyticsFilter, type Timeframe } from '@/components/console/AnalyticsFilterContext'
+import { FilterChip } from '@/components/console/FilterChip'
 import {
   REGION_ORDER,
   REGION_COLORS,
   INTENT_ORDER,
   INTENT_LABELS,
+  INTENT_PILL,
 } from './market-colors'
 
 /**
@@ -51,36 +53,27 @@ export function MarketScopeRail() {
 
   return (
     <aside className="card-inset space-y-6 p-5" aria-label="Market intelligence filters">
-      {/* Group 1 — Regions (primary scope dimension) */}
+      {/* Group 1 — Regions (primary scope dimension). FilterChip: neutral ink +
+          colored swatch; blue only on hover/focus — kills the wall-of-blue and
+          differentiates the rail from the global-nav active state (tell #8). */}
       <div>
         <GroupLabel>Region</GroupLabel>
-        <div className="space-y-1.5">
+        <div className="space-y-0.5">
           {REGION_ORDER.map((region) => {
             const key = `${REGION_PREFIX}${region}`
             const active = isActive(topics, key)
             const color = REGION_COLORS[region] ?? '#9CA3AF'
             return (
-              <button
+              <FilterChip
                 key={region}
-                type="button"
-                role="checkbox"
-                aria-checked={active}
-                aria-label={`Toggle ${region}`}
-                onClick={() => toggleTopic(key)}
-                className={cn(
-                  'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1',
-                  active
-                    ? 'bg-[#EEF2FF] text-[#3370FF]'
-                    : 'bg-transparent text-[#6B7280] hover:bg-[#F7F7F7] hover:text-[#0A0A0A]',
-                )}
+                active={active}
+                onToggle={() => toggleTopic(key)}
+                ariaLabel={`Toggle ${region}`}
+                color={color}
+                marker="swatch"
               >
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: active ? color : '#D1D5DB' }}
-                  aria-hidden="true"
-                />
-                <span className="flex-1 truncate text-left">{region}</span>
-              </button>
+                {region}
+              </FilterChip>
             )
           })}
         </div>
@@ -103,10 +96,10 @@ export function MarketScopeRail() {
                 onClick={() => setTimeframe(value)}
                 aria-pressed={active}
                 className={cn(
-                  'rounded-md px-1.5 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1',
+                  'rounded-md px-1.5 py-1 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1',
                   active
-                    ? 'bg-white text-[#0A0A0A] shadow-sm ring-1 ring-inset ring-[#E5E7EB]'
-                    : 'text-[#6B7280] hover:text-[#0A0A0A]',
+                    ? 'bg-white text-[#0A0A0A] shadow-[0_1px_2px_rgba(10,10,10,0.10),0_0_0_1px_rgba(10,10,10,0.06)]'
+                    : 'font-medium text-[#6B7280] hover:text-[#0A0A0A]',
                 )}
               >
                 {label}
@@ -116,51 +109,42 @@ export function MarketScopeRail() {
         </div>
       </div>
 
-      {/* Group 3 — Intent (injected topic group) */}
+      {/* Group 3 — Intent (injected topic group). Swatch carries the intent
+          status color so it reads as the same data band as the donut/chart. */}
       <div>
         <GroupLabel>Intent</GroupLabel>
-        <div className="space-y-1.5">
+        <div className="space-y-0.5">
           {INTENT_ORDER.map((intent) => {
             const key = `${INTENT_PREFIX}${intent}`
             const active = isActive(topics, key)
             return (
-              <button
+              <FilterChip
                 key={intent}
-                type="button"
-                role="checkbox"
-                aria-checked={active}
-                aria-label={`Toggle ${INTENT_LABELS[intent]}`}
-                onClick={() => toggleTopic(key)}
-                className={cn(
-                  'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1',
-                  active
-                    ? 'bg-[#EEF2FF] text-[#3370FF]'
-                    : 'bg-transparent text-[#6B7280] hover:bg-[#F7F7F7] hover:text-[#0A0A0A]',
-                )}
+                active={active}
+                onToggle={() => toggleTopic(key)}
+                ariaLabel={`Toggle ${INTENT_LABELS[intent]}`}
+                color={INTENT_PILL[intent].text}
+                marker="swatch"
               >
-                <span
-                  className={cn(
-                    'h-2 w-2 shrink-0 rounded-full',
-                    active ? 'bg-[#3370FF]' : 'bg-[#D1D5DB]',
-                  )}
-                  aria-hidden="true"
-                />
-                <span className="flex-1 truncate text-left">{INTENT_LABELS[intent]}</span>
-              </button>
+                {INTENT_LABELS[intent]}
+              </FilterChip>
             )
           })}
         </div>
       </div>
 
-      {/* Quiet reset anchor */}
-      <button
-        type="button"
-        onClick={resetFilters}
-        className="text-[12px] text-[#9CA3AF] transition-colors hover:text-[#6B7280] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1"
-        aria-label="Reset all filters to default"
-      >
-        Reset filters
-      </button>
+      {/* Quiet reset anchor — tied to the rail with a top hairline so it reads
+          as a deliberate footer action, not orphaned text (M12). */}
+      <div className="border-t border-[#F0F1F3] pt-4">
+        <button
+          type="button"
+          onClick={resetFilters}
+          className="text-[12px] text-[#9CA3AF] transition-colors hover:text-[#6B7280] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1"
+          aria-label="Reset all filters to default"
+        >
+          Reset filters
+        </button>
+      </div>
     </aside>
   )
 }
