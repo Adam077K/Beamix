@@ -1,6 +1,7 @@
 'use client'
 
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { Stat } from '@/components/ui/stat'
 import { COMPETITOR_GREYS } from './engine-colors'
 import type { SovTrendPoint } from '@/lib/demo/surfaces/types'
 
@@ -89,11 +90,13 @@ function Donut({ segments, heroSov }: { segments: Segment[]; heroSov: number }) 
         })}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        {/* Neutral mono — reserves the blue 64px hero figure as the single TIER-1 focal. */}
-        <span className="font-mono text-[28px] font-medium leading-none tracking-[-0.02em] tabular-nums text-[#374151]">
+        {/* Blue to own its arc + label (P1.4): the donut's "you" segment, its
+            number, and its caption now all read #3370FF, so the donut no longer
+            looks grey-dominant. The 64px left figure stays STEP-1 by size. */}
+        <span className="font-mono text-[28px] font-medium leading-none tracking-[-0.02em] tabular-nums text-[#3370FF]">
           {heroSov}%
         </span>
-        <span className="mt-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#9CA3AF]">
+        <span className="mt-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#3370FF]/70">
           your share
         </span>
       </div>
@@ -107,16 +110,20 @@ function DeltaChip({ delta }: { delta: number }) {
     ? 'bg-status-positive text-status-positive'
     : 'bg-status-critical text-status-critical'
   const Icon = positive ? ArrowUpRight : ArrowDownRight
+  // Pill holds ONLY the mono delta (P3.10); the comparison window recedes to a
+  // quiet caption alongside it, so the pill reads as one clean status token.
   return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-medium ${cls}`}
-    >
-      <Icon className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2} />
-      <span className="font-mono tabular-nums">
-        {positive ? '+' : ''}
-        {delta}pp
+    <span className="inline-flex items-center gap-2">
+      <span
+        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-medium ${cls}`}
+      >
+        <Icon className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2} />
+        <span className="font-mono tabular-nums">
+          {positive ? '+' : ''}
+          {delta}pp
+        </span>
       </span>
-      <span className="font-sans text-[#6B7280]">vs. previous 30d</span>
+      <span className="text-[12px] text-[#9CA3AF]">vs. previous 30 days</span>
     </span>
   )
 }
@@ -135,22 +142,26 @@ export function SovHeroPanel({ heroSov, sovDelta, latest }: SovHeroPanelProps) {
       <div className="grid gap-8 p-8 lg:grid-cols-[1fr_360px] lg:items-center lg:p-10">
         {/* LEFT — figure + verdict (dominant) */}
         <div className="min-w-0">
-          {/* STEP-3 eyebrow */}
-          <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
-            Share of voice
-          </p>
-          {/* STEP-1 — the one blue 64px mono figure */}
-          <div className="flex items-end gap-3">
-            <span className="font-mono text-[64px] font-medium leading-[0.9] tracking-[-0.03em] tabular-nums text-[#3370FF]">
-              {heroSov}%
-            </span>
-          </div>
-          {/* STEP-2 verdict */}
+          {/* STEP-1 — the one blue 64px mono figure (consumes shared <Stat>, M11). */}
+          <Stat
+            value={heroSov}
+            unit="%"
+            label="Share of voice"
+            labelPosition="top"
+            size="hero"
+            align="start"
+            valueColor="#3370FF"
+            className="gap-2"
+          />
+          {/* STEP-2 verdict — ONE Fraunces italic beat on the noun (M5). The serif
+              touches the verdict only, never chrome. */}
           <h2
             id="sov-hero-heading"
             className="mt-4 max-w-[520px] font-[var(--font-display)] text-[30px] font-medium leading-[1.15] tracking-[-0.02em] text-[#0A0A0A]"
           >
-            You hold {heroSov}% of AI answers in your category
+            You hold {heroSov}% of AI{' '}
+            <em className="font-[var(--font-serif)] font-normal italic">answers</em> in your
+            category
           </h2>
           {/* Delta chip */}
           <div className="mt-4">
