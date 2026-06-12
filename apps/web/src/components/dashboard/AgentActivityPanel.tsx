@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Sparkles, ArrowRight } from 'lucide-react'
+import { Sparkles, ArrowRight, MessageSquareText, FileText, Crosshair } from 'lucide-react'
 
 /**
  * AgentActivityPanel — "your crew is on it", in violet.
@@ -16,6 +16,16 @@ import { Sparkles, ArrowRight } from 'lucide-react'
  * M9 — craft-enter-2 entrance (staggered after hero)
  * M11 — approvalCount in Geist Mono tabular-nums
  */
+
+/**
+ * Crew-row presentation rows. Each fix type carries a distinct leading glyph so
+ * the ledger reads varied (P2-10) rather than three identical Sparkles avatars.
+ */
+const CREW_ROWS = [
+  { title: 'New FAQ block drafted', glyph: MessageSquareText },
+  { title: 'Service page rewrite ready', glyph: FileText },
+  { title: 'Competitor gap closed', glyph: Crosshair },
+] as const
 
 type State = 'loading' | 'empty' | 'error' | 'populated'
 
@@ -51,8 +61,10 @@ export function AgentActivityPanel({
   return (
     <section
       aria-labelledby="agent-activity-heading"
-      /* M1 TIER-2 card | M6 agent-tint ground | M9 craft-enter-2 */
-      className="card-console flex h-full flex-col overflow-hidden craft-enter craft-enter-2"
+      /* M1 TIER-2 card | M6 agent-tint ground | M9 craft-enter-2.
+         P1-5: self-start (not h-full) so the empty/error panel sizes to its
+         content instead of stretching to the hero height and leaving a void. */
+      className="card-console flex flex-col self-start overflow-hidden craft-enter craft-enter-2"
       style={{ backgroundColor: 'var(--color-agent-tint)' }}
     >
       {/* M6 violet top-accent hairline */}
@@ -147,32 +159,36 @@ export function AgentActivityPanel({
             </p>
           </div>
 
-          {/* dense agent-run ledger — Linear-log density: divide-y rows */}
+          {/* dense agent-run ledger — Linear-log density: divide-y rows.
+              P2-10 (M4/M7): the leading glyph varies by fix type (FAQ / rewrite /
+              competitor) so rows don't pattern-match into within-panel uniformity;
+              the "ready" pill is the only intentionally repeated element. */}
           <ul className="divide-y divide-[rgba(110,86,240,0.10)]" aria-label="Fixes ready for review">
-            {Array.from({ length: Math.min(approvalCount, 3) }).map((_, i) => (
-              <li
-                key={i}
-                className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-[rgba(110,86,240,0.06)]"
-              >
-                <span
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-agent-tint"
-                  aria-hidden="true"
+            {CREW_ROWS.slice(0, Math.min(approvalCount, 3)).map((row, i) => {
+              const Glyph = row.glyph
+              return (
+                <li
+                  key={i}
+                  className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-[rgba(110,86,240,0.06)]"
                 >
-                  <Sparkles className="h-3.5 w-3.5 text-agent" strokeWidth={1.75} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-medium text-[#0A0A0A]">
-                    {['New FAQ block drafted', 'Service page rewrite ready', 'Competitor gap closed'][i]}
-                  </p>
-                  <p className="text-[12px] text-[#9CA3AF]">
-                    awaiting review
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-full bg-status-agent px-2 py-0.5 text-[11px] font-medium text-status-agent">
-                  ready
-                </span>
-              </li>
-            ))}
+                  <span
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-agent-tint"
+                    aria-hidden="true"
+                  >
+                    <Glyph className="h-3.5 w-3.5 text-agent" strokeWidth={1.75} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-medium text-[#0A0A0A]">
+                      {row.title}
+                    </p>
+                    <p className="text-[12px] text-[#9CA3AF]">awaiting review</p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-status-agent px-2 py-0.5 text-[11px] font-medium text-status-agent">
+                    ready
+                  </span>
+                </li>
+              )
+            })}
           </ul>
 
           <div className="mt-auto border-t border-[#F3F4F6] px-5 py-3">
