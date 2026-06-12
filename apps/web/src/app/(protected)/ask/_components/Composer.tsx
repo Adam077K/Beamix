@@ -85,10 +85,12 @@ export function Composer({
           aria-label="Ask Beamix a question"
           className="max-h-[180px] w-full resize-none bg-transparent py-2.5 text-[16px] leading-[1.5] text-[#0A0A0A] placeholder:text-[#9CA3AF] focus:outline-none disabled:opacity-60"
         />
-        <span className="select-none pb-1 text-[11px] text-[#C4C4CC]">
-          Press{' '}
-          <kbd className="font-[var(--font-mono)] text-[#9CA3AF]">/</kbd> for
-          suggested questions · Enter to send
+        <span className="select-none pb-1 text-[11px] text-[#9CA3AF]">
+          <kbd className="font-[var(--font-mono)] text-[#6B7280]">Enter</kbd> to
+          send ·{' '}
+          <kbd className="font-[var(--font-mono)] text-[#6B7280]">Shift</kbd>+
+          <kbd className="font-[var(--font-mono)] text-[#6B7280]">Enter</kbd> for
+          a new line
         </span>
       </div>
 
