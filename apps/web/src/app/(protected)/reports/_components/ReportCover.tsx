@@ -31,7 +31,7 @@ export function ReportCover({ figure, unit, verdict }: ReportCoverProps) {
       {/* Quiet sky wash on the right — illustration fill, never on text */}
       <div
         aria-hidden="true"
-        className="bg-wash-sky pointer-events-none absolute right-0 top-0 hidden h-full w-2/5 opacity-60 [mask-image:linear-gradient(to_left,black,transparent)] sm:block"
+        className="bg-wash-sky pointer-events-none absolute right-0 top-0 hidden h-full w-1/3 opacity-60 [mask-image:linear-gradient(to_left,black,transparent)] sm:block"
       />
 
       <div className="relative">

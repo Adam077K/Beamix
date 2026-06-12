@@ -65,10 +65,16 @@ function WrongCell({
     <div className="flex h-full flex-col gap-2 bg-[#FDECEC] px-4 py-3.5">
       <div className="space-y-0.5">
         {/* Claimed value — struck through (the wrong AI claim) */}
+        <p className="text-[9px] font-semibold uppercase tracking-[0.06em] text-[#DC2626]/60">
+          AI claims
+        </p>
         <p className="font-mono text-[12.5px] leading-snug tabular-nums text-[#DC2626] line-through decoration-[rgba(220,38,38,0.5)]">
           {check.claimedValue}
         </p>
         {/* True value — the correct figure, neutral mono */}
+        <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.06em] text-[#6B7280]/70">
+          Actual
+        </p>
         <p className="font-mono text-[12.5px] leading-snug tabular-nums text-[#0A0A0A]">
           {check.actualValue}
         </p>
@@ -126,12 +132,13 @@ export function AttributeAccuracyMatrix({ skus }: AttributeAccuracyMatrixProps) 
         </div>
       ) : (
         <div className="overflow-x-auto">
-          {/* Grid: SKU label column + 3 attribute columns. Not an N-equal grid —
-              the label column is wider and content-weighted. */}
+          {/* Grid: sticky SKU label column + 3 attribute columns.
+              The ~200px label column is position:sticky left:0 with a white bg
+              and right hairline so each SKU stays anchored on narrow viewports. */}
           <div className="min-w-[640px]">
             {/* Column header row */}
             <div className="grid grid-cols-[200px_repeat(3,1fr)] border-b border-[#E5E7EB]">
-              <div className="px-6 py-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+              <div className="sticky left-0 z-10 border-r border-[#E5E7EB] bg-white px-6 py-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
                 Product
               </div>
               {ATTRIBUTES.map((attr) => (
@@ -153,8 +160,8 @@ export function AttributeAccuracyMatrix({ skus }: AttributeAccuracyMatrixProps) 
                   i < skus.length - 1 && 'border-b border-[#F0F0F0]',
                 )}
               >
-                {/* SKU label */}
-                <div className="flex items-center px-6 py-3.5">
+                {/* SKU label — sticky so product name stays visible on scroll */}
+                <div className="sticky left-0 z-10 flex items-center border-r border-[#F0F0F0] bg-white px-6 py-3.5">
                   <span className="text-[13.5px] font-medium text-[#0A0A0A]">{sku.name}</span>
                 </div>
 

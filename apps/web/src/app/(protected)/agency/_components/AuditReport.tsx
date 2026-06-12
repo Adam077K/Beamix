@@ -19,12 +19,12 @@ function band(score: number): { word: string; color: string } {
 }
 
 // Per-engine demo breakdown — weighted asymmetry (lowest engine gets focus).
-// Derived deterministically around the overall score so the story stays coherent.
+// Offsets are intentionally non-symmetric (-19/+13) to avoid generated-data feel.
 function engineBreakdown(overall: number) {
   return [
-    { engine: 'ChatGPT', score: Math.max(0, overall - 22), points: [12, 10, 9, 11, 9] },
+    { engine: 'ChatGPT', score: Math.max(0, overall - 19), points: [11, 9, 10, 8, 9] },
     { engine: 'Gemini', score: overall, points: [28, 31, 30, 33, 31] },
-    { engine: 'Perplexity', score: Math.min(100, overall + 16), points: [40, 44, 46, 45, 47] },
+    { engine: 'Perplexity', score: Math.min(100, overall + 13), points: [40, 44, 46, 45, 47] },
   ].sort((a, b) => a.score - b.score)
 }
 
@@ -227,7 +227,7 @@ export function AuditReport({ audit, whiteLabel, onShare, onRerun }: AuditReport
           <button
             type="button"
             onClick={handleCopy}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#3370FF] px-4 py-2 text-[13px] font-medium text-white transition-colors hover:bg-[#2454D6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+            className="inline-flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-4 py-2 text-[13px] font-medium text-[#374151] transition-colors hover:border-[#3370FF]/40 hover:text-[#3370FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
           >
             {copied ? (
               <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
