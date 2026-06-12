@@ -85,11 +85,19 @@ export function SovOverTimeChart({ data }: SovOverTimeChartProps) {
   return (
     <div className="card-console p-6">
       <div className="mb-5">
-        <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
-          Share of voice over time
-        </p>
+        <div className="mb-1 flex items-center gap-2">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+            Share of voice over time
+          </p>
+          {/* Scope marker — this view is competitor share, not per-engine, so the
+              Scope Rail's engine toggles intentionally don't touch it. */}
+          <span className="rounded-full bg-[#F3F4F6] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.06em] text-[#6B7280]">
+            All engines
+          </span>
+        </div>
         <p className="text-[14px] leading-[1.5] text-[#6B7280]">
-          Your slice (blue) against the field.
+          Your slice (blue) against the field — total share across every engine, so it
+          stays steady when you filter the views below by engine.
         </p>
       </div>
 

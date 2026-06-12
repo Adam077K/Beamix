@@ -30,7 +30,14 @@ export function SplitBar({ split }: { split: SentimentSplit }) {
           <div
             key={seg.key}
             className="h-full first:rounded-l-full last:rounded-r-full"
-            style={{ width: `${seg.value}%`, backgroundColor: seg.fill, opacity: 0.55 }}
+            // min-width floor keeps the smallest sliver (e.g. a ~9% negative
+            // segment at 0.55 opacity) legible on the #F3F4F6 track.
+            style={{
+              width: `${seg.value}%`,
+              minWidth: seg.value > 0 ? '3px' : undefined,
+              backgroundColor: seg.fill,
+              opacity: 0.55,
+            }}
           />
         ))}
       </div>
