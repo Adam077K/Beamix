@@ -26,6 +26,7 @@ import { PipelineLedger } from '@/components/console/PipelineLedger'
 import type { StageState } from '@/components/console/pipeline-contract'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
+import { SchemaContextRail } from './_components/SchemaContextRail'
 import {
   Select,
   SelectContent,
@@ -274,19 +275,24 @@ export default function SchemaPage() {
   )
 
   // ---------------------------------------------------------------------------
-  // Zone 1 — ContextStat
-  // Result: 9/9 valid (hero figure) + sparkline
+  // Zone 1 — ContextStat (tell #1 / M10: the hero is a VALUE signal, never the cap)
+  //
+  // The one STEP-1 figure on the screen is the standing schema-coverage signal
+  // ("9/9 VALID") carried over from the last run — not the rate-limit quota.
+  // In idle it shows the most recent result's validity; in success it shows the
+  // fresh run's validity. The quota is stated exactly once, quietly, in the rail.
   // ---------------------------------------------------------------------------
   const result = DEMO_SCHEMA.results[0]
   const historyPoints: number[] = [...DEMO_SCHEMA.validityHistory]
-  const currentValidityScore = hasResult ? result.validityScore : null
 
-  // Derive the STEP-1 figure: "9/9 valid" if we have a result, else runs today
-  const heroValue = hasResult
-    ? `${9}/${9}`
-    : `${dailyCap - runsToday}`
+  // The last completed run's validity is real prior data — show it standing in
+  // idle so the sparkline draws in band color (tell #4) instead of a bare number.
+  const lastValidityScore = historyPoints[historyPoints.length - 1] // 100
+  const currentValidityScore = lastValidityScore
 
-  const heroLabel = hasResult ? 'VALID FIELDS' : 'RUNS LEFT TODAY'
+  // STEP-1 figure: valid-field ratio (value), never "RUNS LEFT" (the cap).
+  const heroValue = '9/9'
+  const heroLabel = hasResult ? 'VALID FIELDS' : 'VALID · LAST RUN'
 
   const contextStat = (
     <ContextStat
@@ -369,12 +375,9 @@ export default function SchemaPage() {
           aria-label="Custom instructions for the schema generator"
         />
       </div>
-
-      {/* Cap line — allotment indicator under input */}
-      <p className="mt-4 font-[var(--font-mono)] text-[12px] tabular-nums text-[#9CA3AF]">
-        <span className="text-[#0A0A0A]">{runsToday}</span>
-        {' '}of {dailyCap} schema runs used today · resets at midnight
-      </p>
+      {/* NOTE (tell #7 / M12): the quota is stated exactly ONCE, quietly, in the
+          context rail (SchemaContextRail). It is deliberately NOT repeated here —
+          the input panel is about WHAT to run, not how much budget is left. */}
     </div>
   )
 
@@ -432,7 +435,14 @@ export default function SchemaPage() {
         }}
       />
     )
-  } else if (pageState === 'empty' || (!hasResult && pageState === 'idle')) {
+  }
+  // NOTE (tell #3 / M1/M10): in IDLE there is NO standalone below-fold EmptyState.
+  // The expanded, pre-primed input panel + the run control + the context rail ARE
+  // the empty state — one coherent focal that composes top-to-fold. A second
+  // "start here" card under the run button (the old EmptyState) created two
+  // competing CTAs and a dead 40% band. The EmptyState template is reserved for
+  // the genuinely-empty `pageState === 'empty'` route below.
+  else if (pageState === 'empty') {
     output = (
       <EmptyState
         glyph={
@@ -514,9 +524,29 @@ export default function SchemaPage() {
     )
   }
 
-  // Zone 5 is shown in all non-running states
+  // State routing. In IDLE the page composes top-to-fold with NO Zone 5 output
+  // (the input+run+rail is the focal). 'idle' maps to 'empty' only so the
+  // ToolPage chrome stays in the pre-run shape; output is null, so Zone 5 is
+  // simply absent — no dead band, no second CTA (tell #3).
   const effectiveState: ToolPageState =
     pageState === 'idle' ? 'empty' : pageState
+
+  // "Earn the width" rail (tell #3 / M3/M10): the freed right column carries live
+  // standing context — last validity verdict (with the one Fraunces beat, tell
+  // #6), where it published, and the single quiet quota line (tell #7). Only in
+  // the pre-run states; once a fresh result fills Zone 5 the rail steps aside so
+  // the TIER-1 output owns the screen.
+  const showRail = pageState === 'idle' || pageState === 'empty'
+  const rail = showRail ? (
+    <SchemaContextRail
+      lastValidityScore={lastValidityScore}
+      lastSchemaType={result.schemaType}
+      publishTarget={result.publishTarget ?? null}
+      publishedAt={result.publishedAt ?? null}
+      runsToday={runsToday}
+      dailyCap={dailyCap}
+    />
+  ) : undefined
 
   return (
     <ToolPage
@@ -532,6 +562,7 @@ export default function SchemaPage() {
       ledger={ledger}
       output={output}
       state={effectiveState}
+      rail={rail}
       historyHref="/archive"
     />
   )
