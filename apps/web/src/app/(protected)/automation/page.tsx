@@ -263,7 +263,16 @@ export default function AutomationPage() {
       <PageHeader
         eyebrow="Bright Smile Dental"
         title="Automation"
-        subtitle="Choose how each agent works — you, or Beamix on a schedule."
+        subtitle={
+          /* M5 serif beat — the one Fraunces italic verdict word on this screen,
+             landed in the most-read spot: the subhead. The mixed sans + italic-serif
+             headline device (DESIGN-VISION §4 / CRAFT-SYSTEM M5). Never in chrome. */
+          <>
+            {'Choose how each agent works — you, or Beamix runs it '}
+            <SerifVerdict size="inline">automatically</SerifVerdict>
+            {'.'}
+          </>
+        }
         action={
           /* M1 TIER-1 hero focal — the page's single STEP-1 number, via the shared
              <Stat> primitive (M2, M11). sm:self-center aligns the card vertically
@@ -365,13 +374,10 @@ export default function AutomationPage() {
             ))}
           </div>
 
-          {/* ---- Serif beat (M5) — one Fraunces italic word in the whole page ----
-              Lifted out of the grey footnote into a real verdict line: stronger ink
-              (#374151, not #9CA3AF) and the serif lands on the verdict word. */}
+          {/* Reassurance footnote — plain sans. The single M5 serif beat lives in the
+              subhead (one beat per screen, CRAFT-SYSTEM tell #6), so this stays quiet. */}
           <p className="mb-4 mt-10 max-w-[560px] text-[14px] leading-[1.65] text-[#374151] craft-enter craft-enter-8">
-            {'Whatever you hand off, nothing publishes behind your back — anything that needs a human lands in Approvals and waits, '}
-            <SerifVerdict>safely</SerifVerdict>
-            {', until you say go. '}
+            {'Whatever you hand off, nothing publishes behind your back — anything that needs a human lands in Approvals and waits, safely, until you say go. '}
             <Link
               href="/archive"
               className="text-[#6B7280] underline decoration-[#E5E7EB] hover:text-[#0A0A0A] hover:decoration-[#9CA3AF] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#3370FF]"
