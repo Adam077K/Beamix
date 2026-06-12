@@ -66,13 +66,12 @@ export function SentimentThemes({ themes, onDrill }: SentimentThemesProps) {
 // ---------------------------------------------------------------------------
 
 function FocusThemeCard({ theme, onDrill }: { theme: SentimentTheme; onDrill: () => void }) {
+  // Non-button container: the card holds the live VerbatimQuote (which emits the
+  // violet "Correct this →" anchor). Nesting an anchor inside a button is invalid
+  // HTML + a WCAG 4.1.1 violation, so the open-drawer affordance is a dedicated
+  // sibling control in the header — never an ancestor of the quote's anchor.
   return (
-    <button
-      type="button"
-      onClick={onDrill}
-      className="card-console group flex flex-col gap-4 p-5 text-left transition-colors hover:bg-[#F4F6FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
-      aria-label={`Open all quotes for theme: ${theme.name}`}
-    >
+    <div className="card-console group flex flex-col gap-4 p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
@@ -85,14 +84,24 @@ function FocusThemeCard({ theme, onDrill }: { theme: SentimentTheme; onDrill: ()
         <SentimentBadge sentiment={theme.sentiment as Sentiment} />
       </div>
 
-      <div className="flex items-baseline gap-2">
-        <span className="font-[var(--font-mono)] text-[15px] tabular-nums text-[#0A0A0A]">
-          {theme.mentionCount}
-        </span>
-        <span className="text-[13px] text-[#6B7280]">mentions across AI answers</span>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-baseline gap-2">
+          <span className="font-[var(--font-mono)] text-[15px] tabular-nums text-[#0A0A0A]">
+            {theme.mentionCount}
+          </span>
+          <span className="text-[13px] text-[#6B7280]">mentions across AI answers</span>
+        </div>
+        <button
+          type="button"
+          onClick={onDrill}
+          className="shrink-0 rounded-lg px-2.5 py-1 text-[13px] font-medium text-[#3370FF] transition-colors hover:bg-[#EEF2FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+          aria-label={`Open all quotes for theme: ${theme.name}`}
+        >
+          View all quotes
+        </button>
       </div>
 
-      {/* The representative quote, inline (read-only inside the button) */}
+      {/* The representative quote — live, with its violet correction anchor intact */}
       <VerbatimQuote
         quote={theme.representativeQuote}
         correctHref={
@@ -100,9 +109,8 @@ function FocusThemeCard({ theme, onDrill }: { theme: SentimentTheme; onDrill: ()
             ? `/agents/new?intent=correct_claim&claim_id=${theme.representativeQuote.claimId}`
             : null
         }
-        className="pointer-events-none"
       />
-    </button>
+    </div>
   )
 }
 

@@ -89,10 +89,11 @@ function Donut({ segments, heroSov }: { segments: Segment[]; heroSov: number }) 
         })}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-mono text-[28px] font-medium leading-none tracking-[-0.02em] tabular-nums text-[#3370FF]">
+        {/* Neutral mono — reserves the blue 64px hero figure as the single TIER-1 focal. */}
+        <span className="font-mono text-[28px] font-medium leading-none tracking-[-0.02em] tabular-nums text-[#374151]">
           {heroSov}%
         </span>
-        <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9CA3AF]">
+        <span className="mt-1 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#9CA3AF]">
           your share
         </span>
       </div>
