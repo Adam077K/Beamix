@@ -72,25 +72,29 @@ function PanelFrame({ children }: { children: React.ReactNode }) {
   )
 }
 
-function TrendBadge({ trend }: { trend: VisibilityScore['trend'] }) {
-  if (trend === 'up')
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-status-positive px-2 py-0.5 text-[12px] font-medium text-status-positive">
-        <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2} />
-        Trending up
-      </span>
-    )
-  if (trend === 'down')
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-status-critical px-2 py-0.5 text-[12px] font-medium text-status-critical">
-        <ArrowDownRight className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2} />
-        Trending down
-      </span>
-    )
+/**
+ * MonoTrend — P2-7: an at-a-glance colored mono delta token next to the score
+ * (Profound's "65% +5%" convention), replacing the prose "Trending up" pill
+ * that competed weakly with "3/3 engines reporting". The full trajectory lives
+ * in the dominant trend strip below; here it's a single glanceable signal.
+ */
+function MonoTrend({ trend }: { trend: VisibilityScore['trend'] }) {
+  const up = trend === 'up'
+  const down = trend === 'down'
+  const color = up
+    ? 'var(--color-status-positive)'
+    : down
+      ? 'var(--color-status-critical)'
+      : '#9CA3AF'
+  const Icon = up ? ArrowUpRight : down ? ArrowDownRight : Minus
+  const label = up ? 'Trending up' : down ? 'Trending down' : 'Holding steady'
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-status-neutral px-2 py-0.5 text-[12px] font-medium text-status-neutral">
-      <Minus className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2} />
-      Holding steady
+    <span
+      className="inline-flex items-center gap-1 font-mono text-[12px] font-medium tabular-nums"
+      style={{ color }}
+    >
+      <Icon className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2.25} />
+      {label}
     </span>
   )
 }
@@ -102,22 +106,30 @@ function TrendBadge({ trend }: { trend: VisibilityScore['trend'] }) {
 function VerdictLine({ score }: { score: number }) {
   const bandWord = band(score)
   return (
-    /* M2 STEP-2 — 30px InterDisplay-Medium -0.02em (raised from 26px) */
+    /* M2 STEP-2 — 22px mobile / 30px desktop InterDisplay-Medium -0.02em.
+       P1-1: at 22px the sentence flows in two clean lines on mobile and the
+       Fraunces beat never strands on its own line. text-balance evens the
+       wrap; the em-dash + band word are wrapped in a nowrap span so the
+       editorial beat stays inline (M5 only works inline). */
     <h2
       id="score-hero-heading"
-      className="font-[var(--font-display)] text-[30px] font-semibold leading-tight tracking-[-0.02em] text-[#0A0A0A]"
+      className="text-balance font-[var(--font-display)] text-[22px] font-semibold leading-[1.2] tracking-[-0.02em] text-[#0A0A0A] sm:text-[30px] sm:leading-tight"
     >
-      You&apos;re showing up —{' '}
-      <span
-        style={{
-          fontFamily: 'var(--font-serif)',
-          fontStyle: 'italic',
-          fontWeight: 400,
-        }}
-      >
-        {bandWord}
+      You&apos;re showing up{' '}
+      <span className="whitespace-nowrap">
+        —{' '}
+        <span
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontStyle: 'italic',
+            fontWeight: 400,
+          }}
+        >
+          {bandWord}
+        </span>{' '}
+        —
       </span>{' '}
-      — across AI search
+      across AI search
     </h2>
   )
 }
@@ -126,13 +138,19 @@ function Ring({ score }: { score: number }) {
   const offset = CIRC - (score / 100) * CIRC
   const color = ringColor(score)
   return (
+    /* P1-2: ring shrinks on mobile (140 → 200 via CSS) so it never floats
+       dead-center with air around it. The SVG viewBox scales; the number is
+       sized responsively to track the ring. */
     <div
-      className="relative shrink-0"
-      style={{ width: RING_SIZE, height: RING_SIZE }}
+      className="relative h-[140px] w-[140px] shrink-0 sm:h-[200px] sm:w-[200px]"
       role="img"
       aria-label={`Overall AI search visibility score: ${score} out of 100`}
     >
-      <svg width={RING_SIZE} height={RING_SIZE} viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}>
+      <svg
+        viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
+        className="h-full w-full"
+        preserveAspectRatio="xMidYMid meet"
+      >
         <circle
           cx={RING_SIZE / 2}
           cy={RING_SIZE / 2}
@@ -157,12 +175,12 @@ function Ring({ score }: { score: number }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span
-          className="font-mono text-[64px] font-medium leading-none tracking-[-0.03em] text-[#0A0A0A] tabular-nums"
+          className="font-mono text-[44px] font-medium leading-none tracking-[-0.03em] text-[#0A0A0A] tabular-nums sm:text-[64px]"
           style={{ fontVariantNumeric: 'tabular-nums' }}
         >
           {score}
         </span>
-        <span className="mt-1 font-mono text-[12px] uppercase tracking-[0.12em] text-[#9CA3AF]">
+        <span className="mt-1 font-mono text-[11px] uppercase tracking-[0.12em] text-[#9CA3AF] sm:text-[12px]">
           / 100
         </span>
       </div>
@@ -312,30 +330,33 @@ export function ScoreHeroPanel({ scores, state = 'populated', errorMessage }: Sc
   const { overall, trend, reporting, total } = agg!
   return (
     <PanelFrame>
-      <div className="flex flex-col items-center gap-8 p-8 sm:flex-row sm:items-center sm:gap-10 sm:p-10">
+      {/* P1-2: mobile is left-aligned with compressed padding (gap-5 p-5), not a
+          centered ring floating in air. Desktop keeps the generous gap-10 p-10. */}
+      <div className="flex flex-row items-center gap-5 p-5 sm:gap-10 sm:p-10">
         <Ring score={overall} />
-        <div className="flex w-full min-w-0 flex-col items-center text-center sm:items-start sm:text-left">
+        <div className="flex w-full min-w-0 flex-col items-start text-left">
           {/* M2 STEP-3 eyebrow */}
-          <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+          <p className="mb-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] sm:mb-3">
             AI search visibility
           </p>
           {/* M2 STEP-2 + M5 Fraunces serif beat on the band word */}
           <VerdictLine score={overall} />
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-            <TrendBadge trend={trend} />
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+            {/* P2-7 at-a-glance mono delta */}
+            <MonoTrend trend={trend} />
             {/* M11 mono for truth */}
-            <span className="font-mono text-[12px] text-[#6B7280] tabular-nums">
+            <span className="font-mono text-[12px] text-[#9CA3AF] tabular-nums">
               {reporting}/{total} engines reporting
             </span>
           </div>
-          {/* M2 STEP-4 body */}
-          <p className="mt-3 max-w-[420px] text-[15px] leading-[1.6] text-[#6B7280]">
+          {/* M2 STEP-4 body — hidden on the narrowest screens to reclaim space */}
+          <p className="mt-3 hidden max-w-[420px] text-[15px] leading-[1.6] text-[#6B7280] sm:block">
             This is the average of every engine below. Run a fresh scan to see what moved
             since last week.
           </p>
           <Link
             href="/scan"
-            className="mt-5 inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-5 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+            className="mt-4 inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-5 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2 sm:mt-5"
           >
             Run scan
             <ArrowUpRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
