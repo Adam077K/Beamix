@@ -6,12 +6,15 @@ import { Skeleton } from '@/components/loading-state'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
+import { EngineMicroSparkline } from '@/components/dashboard/EngineMicroSparkline'
 import type { PromptRow } from '@/lib/demo/surfaces/types'
 import { PromptDrawer } from './PromptDrawer'
 import { DEMO_PROMPTS } from '@/lib/demo/surfaces/prompts'
 
 // ---------------------------------------------------------------------------
-// Engine chip helpers
+// Engine chip helpers — M11: engine NAMES are prose (Inter), not mono. Mono is
+// reserved for real numbers (#position, freq, deltas). A brand name in monospace
+// reads like log output (audit P1-3).
 // ---------------------------------------------------------------------------
 
 const ENGINE_COLORS: Record<string, { bg: string; text: string }> = {
@@ -24,12 +27,58 @@ function EngineChip({ engine }: { engine: string }) {
   const color = ENGINE_COLORS[engine] ?? { bg: '#F3F4F6', text: '#6B7280' }
   return (
     <span
-      className="inline-flex items-center rounded px-1.5 py-0.5 font-[var(--font-mono)] text-[11px] tabular-nums"
+      className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium"
       style={{ backgroundColor: color.bg, color: color.text }}
     >
       {engine}
     </span>
   )
+}
+
+// ---------------------------------------------------------------------------
+// Per-row analytics — deterministic MOCK derived from the row id (NOT from
+// frequency). Position and the freq-trend window are independent signals so the
+// table doesn't show two columns that are secretly the same number (audit P2-3,
+// data-integrity smell). When a real backend lands these fields move to the
+// fixture; nothing here fabricates a correlation.
+// ---------------------------------------------------------------------------
+
+interface RowAnalytics {
+  /** Real average position 1–8 (decoupled from frequency). null when not cited. */
+  position: number | null
+  /** Last-5-runs frequency window (drives the in-row sparkline + delta). */
+  freqTrend: number[]
+  /** Frequency 0–100 normalised for the sparkline color band. */
+  freqScore: number
+}
+
+// Stable per-id mock. Positions are hand-set (not a function of freq); trends are
+// a plausible 5-point walk ending at the current frequency.
+const ROW_POSITION: Record<string, number | null> = {
+  p1: 4, p2: 6, p3: 1, p4: 5, p5: 7,
+  p6: 1, p7: 6, p8: 3, p9: 2, p10: 4,
+}
+
+function rowAnalytics(row: PromptRow): RowAnalytics {
+  const cited = row.competitorEngines.length > 0 || row.covered
+  const position = cited ? (ROW_POSITION[row.id] ?? null) : null
+
+  // Build a 5-point trend that lands on the current frequency. Deterministic per
+  // id via a small seeded walk — never random, never re-derived from position.
+  const f = row.frequency
+  const seed = row.id.charCodeAt(row.id.length - 1)
+  const drift = (seed % 3) - 1 // -1, 0, or +1 shape per row
+  const trend = [
+    Math.max(0, f - 12 + drift * 2),
+    Math.max(0, f - 9),
+    Math.max(0, f - 5 + drift),
+    Math.max(0, f - 2),
+    f,
+  ]
+  // Normalise frequency to a 0–100 score so the sparkline picks a sensible band.
+  const freqScore = Math.min(100, Math.round((f / 60) * 100))
+
+  return { position, freqTrend: trend, freqScore }
 }
 
 // ---------------------------------------------------------------------------
@@ -77,6 +126,27 @@ function CoverageDot({ covered }: { covered: boolean }) {
   )
 }
 
+/**
+ * CoverageCell — coverage is the single most important fact per row (are you
+ * cited or not), so it gets a dot + a mono Yes/No, not a bare 6px dot lost in a
+ * column (audit P2-4). Magnitude is glanceable down the column.
+ */
+function CoverageCell({ covered }: { covered: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <CoverageDot covered={covered} />
+      {/* Yes/No is prose — Inter, not mono (M11). The dot + saturated text carry
+          the magnitude so coverage is glanceable down the column (audit P2-4). */}
+      <span
+        className="text-[12px] font-semibold"
+        style={{ color: covered ? '#067A55' : '#C21C1C' }}
+      >
+        {covered ? 'Yes' : 'No'}
+      </span>
+    </span>
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Loading skeleton — reads as a real table
 // ---------------------------------------------------------------------------
@@ -97,8 +167,8 @@ function PromptTableSkeleton() {
       </div>
 
       {/* Column headers */}
-      <div className="grid grid-cols-[1fr_80px_140px_72px_64px_64px_72px] items-center gap-3 border-b border-[#F3F4F6] px-5 py-2.5">
-        {['Query', 'Intent', 'Citing engines', 'Cited', 'Pos.', 'Freq.', 'Tag'].map(
+      <div className="grid grid-cols-[1fr_64px_160px_88px_56px_136px] items-center gap-3 border-b border-[#F3F4F6] px-5 py-2.5">
+        {['Query', 'Intent', 'Citing engines', 'Covered', 'Pos.', 'Frequency'].map(
           (label) => (
             <Skeleton key={label} className="h-3 w-full max-w-[80px]" />
           ),
@@ -109,7 +179,7 @@ function PromptTableSkeleton() {
       {Array.from({ length: 7 }).map((_, i) => (
         <div
           key={i}
-          className="grid grid-cols-[1fr_80px_140px_72px_64px_64px_72px] items-center gap-3 border-b border-[#F3F4F6] px-5 py-3.5"
+          className="grid grid-cols-[1fr_64px_160px_88px_56px_136px] items-center gap-3 border-b border-[#F3F4F6] px-5 py-3.5"
         >
           <Skeleton className="h-3.5 w-3/4" />
           <Skeleton className="h-5 w-10" />
@@ -117,10 +187,12 @@ function PromptTableSkeleton() {
             <Skeleton className="h-5 w-16" />
             <Skeleton className="h-5 w-16" />
           </div>
+          <Skeleton className="h-4 w-14" />
           <Skeleton className="h-3 w-6" />
-          <Skeleton className="h-3 w-8" />
-          <Skeleton className="h-3 w-8" />
-          <Skeleton className="h-5 w-14" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-5 w-7" />
+            <Skeleton className="h-4 w-16" />
+          </div>
         </div>
       ))}
       <span className="sr-only">Loading prompts…</span>
@@ -129,20 +201,18 @@ function PromptTableSkeleton() {
 }
 
 // ---------------------------------------------------------------------------
-// Tag label helper
-// ---------------------------------------------------------------------------
-
-function tagLabel(row: PromptRow): string {
-  if (row.intent === 'navigational') return 'Branded'
-  if (row.intent === 'transactional') return 'Bottom-funnel'
-  return 'Top-funnel'
-}
-
-// ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
 
 export type PromptTableViewState = 'loading' | 'empty' | 'error' | 'populated'
+
+/**
+ * Shared desktop grid for header + rows — one source of truth so columns never
+ * drift. Six columns; the Tag column was dropped (it duplicated Intent, audit
+ * P2-5) and its width given to the in-row Frequency sparkline + trend (M4).
+ *   Query (flex) · Intent · Citing engines · Covered · Pos. · Freq + trend
+ */
+const GRID_TEMPLATE = '1fr 64px 160px 88px 56px 136px'
 
 interface PromptTableProps {
   viewState: PromptTableViewState
@@ -284,17 +354,16 @@ export function PromptTable({
         <div
           className="hidden md:grid"
           style={{
-            gridTemplateColumns: '1fr 72px 168px 60px 60px 60px 100px',
+            gridTemplateColumns: GRID_TEMPLATE,
           }}
         >
           {[
             { label: 'Query', className: 'px-5' },
             { label: 'Intent', className: 'px-2' },
             { label: 'Citing engines', className: 'px-2' },
-            { label: 'Covered', className: 'px-2 text-center' },
+            { label: 'Covered', className: 'px-2' },
             { label: 'Pos.', className: 'px-2 text-center' },
-            { label: 'Freq.', className: 'px-2 text-center' },
-            { label: 'Tag', className: 'px-2 pr-5' },
+            { label: 'Frequency', className: 'px-2 pr-5' },
           ].map(({ label, className }) => (
             <div
               key={label}
@@ -383,9 +452,8 @@ function PromptTableRow({
   onClick: () => void
 }) {
   const hasCompetitors = row.competitorEngines.length > 0
-  const avgPosition = hasCompetitors
-    ? Math.floor(1 + (1 - row.frequency / 60) * 4)
-    : null
+  const { position, freqTrend, freqScore } = rowAnalytics(row)
+  const freqDelta = freqTrend[freqTrend.length - 1] - freqTrend[0]
 
   return (
     <button
@@ -394,7 +462,7 @@ function PromptTableRow({
       aria-expanded={isOpen}
       aria-label={`View details for: ${row.query}`}
       className={cn(
-        'w-full border-b border-[#F3F4F6] text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#3370FF]',
+        'group w-full border-b border-[#F3F4F6] text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#3370FF]',
         isOpen ? 'bg-[#F7F8FF]' : 'bg-white hover:bg-[#F4F6FA]',
         // left hairline accent when row is open — blue = you
         isOpen && 'shadow-[inset_3px_0_0_0_#3370FF]',
@@ -402,8 +470,8 @@ function PromptTableRow({
     >
       {/* Desktop grid */}
       <div
-        className="hidden items-center gap-3 py-3.5 md:grid"
-        style={{ gridTemplateColumns: '1fr 72px 168px 60px 60px 60px 100px' }}
+        className="hidden items-center gap-3 py-3 md:grid"
+        style={{ gridTemplateColumns: GRID_TEMPLATE }}
       >
         {/* Query text */}
         <div className="min-w-0 px-5">
@@ -435,36 +503,39 @@ function PromptTableRow({
           )}
         </div>
 
-        {/* Covered dot */}
-        <div className="flex items-center justify-center px-2">
-          <CoverageDot covered={row.covered} />
+        {/* Covered — dot + mono Yes/No (audit P2-4) */}
+        <div className="px-2">
+          <CoverageCell covered={row.covered} />
         </div>
 
-        {/* Position */}
+        {/* Position — a real rank, decoupled from frequency (audit P2-3) */}
         <div className="px-2 text-center">
           <span className="font-[var(--font-mono)] text-[13px] tabular-nums text-[#0A0A0A]">
-            {avgPosition ? `#${avgPosition}` : '—'}
+            {position !== null ? `#${position}` : '—'}
           </span>
         </div>
 
-        {/* Frequency */}
-        <div className="px-2 text-center">
-          <span className="font-[var(--font-mono)] text-[13px] tabular-nums text-[#0A0A0A]">
+        {/* Frequency — the promoted figure (M2 STEP-4 mono) + in-row sparkline +
+            trend delta so rows self-rank like Profound (audit P1-2 / M4 / M7). */}
+        <div className="flex items-center justify-end gap-2.5 pr-5">
+          <span className="font-[var(--font-mono)] text-[16px] leading-none tabular-nums text-[#0A0A0A]">
             {row.frequency}
           </span>
-        </div>
-
-        {/* Tag */}
-        <div className="pr-5">
-          <span className="text-[11px] font-medium text-[#9CA3AF]">
-            {tagLabel(row)}
-          </span>
+          <EngineMicroSparkline
+            points={freqTrend}
+            currentScore={freqScore}
+            showDelta
+            width={56}
+            height={22}
+          />
         </div>
       </div>
 
-      {/* Mobile layout */}
+      {/* Mobile layout — coverage label + freq trend carried through */}
       <div className="flex items-start gap-3 px-4 py-3.5 md:hidden">
-        <CoverageDot covered={row.covered} />
+        <div className="pt-0.5">
+          <CoverageDot covered={row.covered} />
+        </div>
         <div className="min-w-0 flex-1">
           <p className="text-[13px] font-medium text-[#0A0A0A]">{row.query}</p>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -472,11 +543,31 @@ function PromptTableRow({
             {row.competitorEngines.map((e) => (
               <EngineChip key={e} engine={e} />
             ))}
+            {position !== null && (
+              <span className="font-[var(--font-mono)] text-[11px] tabular-nums text-[#6B7280]">
+                #{position}
+              </span>
+            )}
           </div>
         </div>
-        <span className="shrink-0 font-[var(--font-mono)] text-[12px] tabular-nums text-[#9CA3AF]">
-          {row.frequency}
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span className="font-[var(--font-mono)] text-[14px] tabular-nums text-[#0A0A0A]">
+            {row.frequency}
+          </span>
+          <span
+            className="font-[var(--font-mono)] text-[11px] tabular-nums"
+            style={{
+              color:
+                freqDelta > 0
+                  ? 'var(--color-status-positive)'
+                  : freqDelta < 0
+                    ? 'var(--color-status-critical)'
+                    : '#9CA3AF',
+            }}
+          >
+            {freqDelta === 0 ? '±0' : `${freqDelta > 0 ? '+' : ''}${freqDelta}`}
+          </span>
+        </div>
       </div>
     </button>
   )

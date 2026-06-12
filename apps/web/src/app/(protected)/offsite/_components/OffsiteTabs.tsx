@@ -26,6 +26,9 @@ import { DEMO_OFFSITE } from '@/lib/demo/surfaces/offsite'
 type TabKey = 'citation' | 'directory' | 'entity' | 'reputation' | 'community'
 type TabSurfaceState = 'idle' | 'running' | 'success' | 'empty' | 'error' | 'loading'
 
+/** Public alias so the page can type the `?state=` param it forwards. */
+export type OffsiteSurfaceState = TabSurfaceState
+
 interface TabConfig {
   id: TabKey
   label: string
@@ -112,24 +115,32 @@ function StatusBadge({ status }: { status: OffsiteRow['status'] }) {
 // ImportanceBar — M7 in-cell data shading
 // ---------------------------------------------------------------------------
 
-function ImportanceBar({ value }: { value: number }) {
-  const color =
-    value >= 75 ? '#3370FF'
-    : value >= 50 ? '#6B7280'
-    : '#D1D5DB'
+/**
+ * Score-band color — DATA-VIZ ONLY. The action accent #3370FF is reserved for
+ * the Track action + active nav (brand law / CRAFT tell #8). Importance is data,
+ * not an action, so it reads in the score-band ramp.
+ */
+function importanceColor(value: number): string {
+  if (value >= 75) return 'var(--color-data-3)' // cyan — excellent
+  if (value >= 50) return 'var(--color-data-4)' // green — good
+  if (value >= 25) return 'var(--color-data-5)' // amber — fair
+  return 'var(--color-data-6)' //                 red — critical
+}
 
+function ImportanceBar({ value }: { value: number }) {
   return (
     <div className="flex items-center gap-2">
+      {/* M11: mono figure dominates, label/bar recede (number-over-label) */}
       <span
         className="font-[var(--font-mono)] text-[13px] tabular-nums text-[#0A0A0A]"
-        aria-label={`Importance ${value}`}
+        aria-label={`Importance ${value} out of 100`}
       >
         {value}
       </span>
       <div className="h-1.5 w-16 overflow-hidden rounded-full bg-[#F3F4F6]" aria-hidden="true">
         <div
           className="h-full rounded-full transition-all duration-300"
-          style={{ width: `${value}%`, backgroundColor: color }}
+          style={{ width: `${value}%`, backgroundColor: importanceColor(value) }}
         />
       </div>
     </div>
@@ -207,12 +218,16 @@ function CitationTable({
     )
   }
 
+  const trackedCount = rows.filter(
+    (r) => trackedIds.has(r.id) || r.status === 'tracked' || r.status === 'submitted',
+  ).length
+
   return (
     <div role="table" aria-label="Citation entries">
-      {/* Header */}
+      {/* Header — hidden on mobile where rows stack into cards (P1.5) */}
       <div
         role="row"
-        className="grid grid-cols-[1fr_140px_80px_100px] gap-4 border-b border-[#E5E7EB] px-4 pb-2"
+        className="hidden grid-cols-[1fr_140px_120px_132px] gap-4 border-b border-[#E5E7EB] px-4 pb-2 sm:grid"
       >
         <span role="columnheader" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
           Source
@@ -221,7 +236,7 @@ function CitationTable({
           Domain
         </span>
         <span role="columnheader" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
-          Score
+          Importance
         </span>
         <span role="columnheader" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
           Status
@@ -232,19 +247,27 @@ function CitationTable({
       <div className="divide-y divide-[#F3F4F6]">
         {rows.map((row, i) => {
           const isTracked = trackedIds.has(row.id) || row.status === 'tracked' || row.status === 'submitted'
+          const effectiveStatus: OffsiteRow['status'] = trackedIds.has(row.id) ? 'tracked' : row.status
+          // M7 hover hairline color follows the row's status band
+          const hairline =
+            effectiveStatus === 'tracked' ? 'var(--color-status-positive)'
+            : effectiveStatus === 'submitted' ? 'var(--color-status-warning)'
+            : 'var(--color-status-neutral)'
           return (
             <div
               key={row.id}
               role="row"
               className={cn(
-                'grid grid-cols-[1fr_140px_80px_100px] items-center gap-4 px-4 py-3 transition-colors',
+                // mobile: 2-row stacked card; sm+: aligned 4-column grid (P1.5)
+                'group relative flex flex-col gap-2 px-4 py-3 transition-colors',
+                'sm:grid sm:grid-cols-[1fr_140px_120px_132px] sm:items-center sm:gap-4',
                 'craft-enter',
                 `craft-enter-${Math.min(i + 1, 8) as 1|2|3|4|5|6|7|8}`,
                 'hover:bg-[#F4F6FA]',
-                'group cursor-pointer',
+                !isTracked && 'cursor-pointer',
               )}
               tabIndex={0}
-              aria-label={`${row.title}, importance ${row.importance}, ${row.status}`}
+              aria-label={`${row.title}, importance ${row.importance} of 100, ${effectiveStatus}`}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault()
@@ -252,6 +275,13 @@ function CitationTable({
                 }
               }}
             >
+              {/* M7 left status-color hairline — felt only on hover/focus */}
+              <span
+                className="pointer-events-none absolute inset-y-0 left-0 w-0.5 rounded-r opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                style={{ backgroundColor: hairline }}
+                aria-hidden="true"
+              />
+
               {/* Source title */}
               <div className="min-w-0">
                 <p className="truncate text-[13px] font-medium text-[#0A0A0A]">
@@ -260,12 +290,12 @@ function CitationTable({
               </div>
 
               {/* Domain */}
-              <div className="flex items-center gap-1 min-w-0">
-                <span className="truncate font-[var(--font-mono)] text-[12px] tabular-nums text-[#6B7280]">
+              <div className="flex min-w-0 items-center gap-1">
+                <span className="truncate font-[var(--font-mono)] text-[12px] text-[#6B7280]">
                   {row.domain}
                 </span>
                 <ExternalLink
-                  className="h-3 w-3 shrink-0 text-[#D1D5DB] opacity-0 transition-opacity group-hover:opacity-100"
+                  className="h-3 w-3 shrink-0 text-[#9CA3AF] opacity-0 transition-opacity group-hover:opacity-100"
                   aria-hidden="true"
                 />
               </div>
@@ -275,15 +305,16 @@ function CitationTable({
                 <ImportanceBar value={row.importance} />
               </div>
 
-              {/* Status + track action */}
-              <div className="flex items-center gap-2">
-                {isTracked ? (
-                  <StatusBadge status={trackedIds.has(row.id) ? 'tracked' : row.status} />
-                ) : (
+              {/* Status — ONE language: every row carries a status pill (P1.6).
+                  Untracked rows reveal a quiet "Track" affordance on hover/focus
+                  in a fixed slot, so the column never mixes chip + hollow button. */}
+              <div className="flex items-center gap-2 sm:justify-start">
+                <StatusBadge status={effectiveStatus} />
+                {!isTracked && (
                   <button
                     type="button"
                     onClick={() => onTrack(row.id)}
-                    className="inline-flex items-center gap-1 rounded-full border border-[#E5E7EB] bg-white px-2 py-0.5 text-[11px] font-medium text-[#6B7280] transition-colors hover:border-[#3370FF] hover:text-[#3370FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1"
+                    className="inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] font-medium text-[#3370FF] opacity-100 transition-opacity hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                     aria-label={`Track ${row.title}`}
                   >
                     <Plus className="h-2.5 w-2.5" aria-hidden="true" />
@@ -294,6 +325,17 @@ function CitationTable({
             </div>
           )
         })}
+      </div>
+
+      {/* Intentional table rest (P1.3 / P1.6) — the count footer replaces the
+          dead-canvas / debug-strip terminus the audit flagged. */}
+      <div className="mt-1 flex items-center justify-between border-t border-[#F3F4F6] px-4 pt-3">
+        <span className="font-mono text-[12px] tabular-nums text-[#9CA3AF]">
+          {rows.length} {rows.length === 1 ? 'source' : 'sources'}
+        </span>
+        <span className="font-mono text-[12px] tabular-nums text-[#9CA3AF]">
+          {trackedCount} tracked
+        </span>
       </div>
     </div>
   )
@@ -527,12 +569,14 @@ function TabPanel({
         ) : (
           <div className="card-console overflow-hidden">
             <div className="px-6 py-4">
+              {/* P2.7: identity is a page-level fact (Zone-1 eyebrow). Here the
+                  panel states only the technical target the agent acts on. */}
               <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
-                Target business
+                Acting on
               </p>
               <div className="flex items-center gap-3">
                 <div className="flex h-9 flex-1 items-center rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3">
-                  <span className="font-[var(--font-mono)] text-[13px] tabular-nums text-[#6B7280]">
+                  <span className="font-[var(--font-mono)] text-[13px] text-[#6B7280]">
                     brightsmile-dental.co.il
                   </span>
                 </div>
@@ -721,13 +765,36 @@ export function OffsiteTabs({ initialState = 'idle' }: OffsiteTabsProps) {
     })
   }, [])
 
+  const trackedTotal = DEMO_OFFSITE.rows.filter((r) => r.status === 'tracked').length
+  const cycleDelta =
+    DEMO_OFFSITE.sparklinePoints.length >= 2
+      ? DEMO_OFFSITE.sparklinePoints[DEMO_OFFSITE.sparklinePoints.length - 1] -
+        DEMO_OFFSITE.sparklinePoints[DEMO_OFFSITE.sparklinePoints.length - 2]
+      : 0
+
   return (
     <div>
-      {/* SerifVerdict beat — M5, one per screen, never in chrome */}
-      <p className="mb-5 text-[15px] text-[#6B7280]">
-        Your off-site presence is{' '}
-        <SerifVerdict>growing</SerifVerdict> — {DEMO_OFFSITE.rows.filter((r) => r.status === 'tracked').length} sources tracked across {TABS.length} channels.
-      </p>
+      {/* SerifVerdict beat — M5, one per screen, never in chrome. P2.8: lifted
+          onto its own hairline-separated editorial band with air above the tabs,
+          instead of a caption buried over tab chrome. P2.9: carries the trend. */}
+      <div className="mb-6 border-b border-[#F3F4F6] pb-5">
+        <p className="text-[17px] leading-snug text-[#0A0A0A]">
+          Your off-site presence is <SerifVerdict>growing</SerifVerdict>.
+        </p>
+        <p className="mt-1.5 text-[14px] text-[#6B7280]">
+          <span className="font-mono tabular-nums text-[#0A0A0A]">{trackedTotal}</span> sources
+          tracked across {TABS.length} channels
+          {cycleDelta > 0 && (
+            <>
+              {' · '}
+              <span className="font-mono tabular-nums text-[var(--color-status-positive-text)]">
+                +{cycleDelta}
+              </span>{' '}
+              coverage this cycle
+            </>
+          )}
+        </p>
+      </div>
 
       <Tabs
         value={activeTab}
@@ -787,34 +854,13 @@ export function OffsiteTabs({ initialState = 'idle' }: OffsiteTabsProps) {
           </TabsContent>
         ))}
       </Tabs>
-
-      {/* Demo state controls — visible only in demo mode to allow testing all states */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mt-8 flex flex-wrap items-center gap-2 border-t border-dashed border-[#E5E7EB] pt-4">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-[#9CA3AF]">
-            Demo states
-          </span>
-          {(['idle', 'loading', 'empty', 'error', 'success'] as const).map((state) => (
-            <button
-              key={state}
-              type="button"
-              onClick={() => {
-                setTabStates((prev) => ({ ...prev, [activeTab]: state }))
-                if (state !== 'idle') setInputCollapsed((prev) => ({ ...prev, [activeTab]: true }))
-                if (state === 'idle') setInputCollapsed((prev) => ({ ...prev, [activeTab]: false }))
-              }}
-              className={cn(
-                'rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
-                tabStates[activeTab] === state
-                  ? 'bg-[#3370FF] text-white'
-                  : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]',
-              )}
-            >
-              {state}
-            </button>
-          ))}
-        </div>
-      )}
+      {/*
+        State testing (P1.3): the on-page DEMO STATES debug strip was removed —
+        it terminated the table on a dashed debug artifact and read as unfinished
+        chrome. States are now driven by the `initialState` prop, which the page
+        sets from an optional `?state=` URL param (dev/preview only). No control
+        UI ships in the rendered page.
+      */}
     </div>
   )
 }
