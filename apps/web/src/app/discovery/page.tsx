@@ -181,7 +181,8 @@ export default async function DiscoveryPage({ searchParams }: DiscoveryPageProps
 function EnvMissingFallback() {
   return (
     <main className="min-h-screen bg-[var(--color-surface-warm)]">
-      <header className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+      {/* Same thin branded marquee as the happy path — shared chrome */}
+      <header className="craft-enter craft-enter-1 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
         <div className="mx-auto flex max-w-6xl items-center gap-2.5 px-6 py-4">
           <BeamixMark />
           <span className="font-[var(--font-display)] text-[16px] font-semibold tracking-tight text-[var(--color-text-primary)]">
@@ -190,53 +191,131 @@ function EnvMissingFallback() {
         </div>
       </header>
 
-      {/* Anchored toward the top third, not absolute-centered void (kills tell #5) */}
-      <div className="mx-auto flex max-w-md flex-col px-6 pb-16 pt-16 sm:pt-24">
-        <div className="craft-enter craft-enter-1 overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]">
-          {/* Warm illustrative header band (moments-only character) */}
-          <div className="flex items-center justify-center bg-[var(--color-wash-sky)] py-9">
-            <CalendarGlyph />
+      {/*
+        Same asymmetric split as the happy path: a dominant context rail +
+        a framed action panel. The recovery state earns its composition —
+        it fills the frame instead of floating a card in a centered void.
+      */}
+      <div className="mx-auto grid max-w-6xl gap-8 px-6 py-10 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,480px)] lg:gap-12 lg:py-16">
+        {/* ── Context rail (dominant copy — the call is still real) ──── */}
+        <section className="craft-enter craft-enter-2 flex flex-col lg:pt-2">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-disabled)]">
+            Discovery call
+          </p>
+          <h1 className="mt-3 max-w-[15ch] font-[var(--font-display)] text-[32px] font-medium leading-[1.08] tracking-[-0.02em] text-[var(--color-text-primary)] sm:text-[40px]">
+            Let’s find your{' '}
+            <em className="font-[var(--font-serif)] font-normal italic">time</em>{' '}
+            the human way
+          </h1>
+          <p className="mt-4 max-w-[44ch] text-[15px] leading-[1.55] text-[var(--color-text-muted)]">
+            Our live calendar isn’t reachable this moment — so a strategist
+            books you by hand. Same twenty minutes, same reading of your scan,
+            locked within one business day.
+          </p>
+
+          {/* Trust signal — mono truth, shared with the happy path */}
+          <div className="mt-8 flex items-end gap-8 border-t border-[var(--color-border-subtle)] pt-6">
+            <Stat
+              value="20"
+              unit="min"
+              label="On the call"
+              size="md"
+              align="start"
+            />
+            <Stat
+              value="1"
+              unit="biz day"
+              label="To get booked"
+              size="md"
+              align="start"
+            />
           </div>
 
-          <div className="px-7 py-7">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-disabled)]">
-              Discovery call
-            </p>
-            <h1 className="mt-2 font-[var(--font-display)] text-[28px] font-medium leading-tight tracking-[-0.02em] text-[var(--color-text-primary)] sm:text-[30px]">
-              Let’s find your{' '}
-              <em className="font-[var(--font-serif)] font-normal italic">time</em>{' '}
-              by email
-            </h1>
-            <p className="mt-3 text-[15px] leading-[1.55] text-[var(--color-text-muted)]">
-              Our live calendar isn’t reachable this moment. Email us and a
-              strategist will lock a 20-minute slot within one business day.
-            </p>
+          {/* What you'll still get — tight-within-cluster list, mirrors the embed path */}
+          <ul className="mt-8 flex flex-col gap-px overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-warm)]">
+            {CALL_POINTS.map((point) => (
+              <li
+                key={point.title}
+                className="flex gap-3.5 bg-[var(--color-surface)] px-5 py-4"
+              >
+                <span
+                  aria-hidden="true"
+                  className={
+                    'mt-[7px] h-2 w-2 shrink-0 rounded-full ' +
+                    (point.agent
+                      ? 'bg-[var(--color-agent)]'
+                      : 'bg-[var(--color-accent)]')
+                  }
+                />
+                <div>
+                  <p className="text-[14px] font-semibold leading-snug text-[var(--color-text-primary)]">
+                    {point.title}
+                  </p>
+                  <p className="mt-1 text-[13px] leading-[1.5] text-[var(--color-text-muted)]">
+                    {point.body}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-            {/* Two-tier recovery: primary pill + quiet secondary link */}
-            <div className="mt-6 flex flex-col gap-3">
-              <a
-                href="mailto:hello@beamixai.com?subject=Discovery%20call"
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-accent)] px-6 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
-              >
-                Email us to book
-              </a>
-              <a
-                href="/dashboard"
-                className="inline-flex h-9 items-center justify-center text-[13px] font-medium text-[var(--color-text-muted)] underline-offset-4 transition-colors hover:text-[var(--color-text-primary)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
-              >
-                Back to your dashboard
-              </a>
+        {/* ── Framed action panel (TIER-1 focal — the recovery) ──────── */}
+        <section className="craft-enter craft-enter-3">
+          <div className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card-hero)]">
+            <div className="flex items-center justify-between border-b border-[var(--color-border-subtle)] px-5 py-3">
+              <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-disabled)]">
+                Book by email
+              </span>
+              <span className="flex items-center gap-1.5 text-[12px] text-[var(--color-text-muted)]">
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-1.5 rounded-full bg-[var(--color-status-warning)]"
+                />
+                Calendar offline
+              </span>
             </div>
 
-            <p className="mt-5 border-t border-[var(--color-border-subtle)] pt-4 text-[13px] text-[var(--color-text-muted)]">
-              Reach us at{' '}
-              <span className="font-[var(--font-mono)] text-[var(--color-text-primary)]">
-                hello@beamixai.com
-              </span>
-              . No credit card, no commitment.
-            </p>
+            {/* Warm illustrative band (moments-only character) */}
+            <div className="flex items-center justify-center bg-[var(--color-wash-sky)] py-10">
+              <CalendarGlyph />
+            </div>
+
+            <div className="px-7 py-7">
+              <h2 className="text-[18px] font-semibold leading-snug tracking-[-0.01em] text-[var(--color-text-primary)]">
+                Email us and we’ll lock your slot
+              </h2>
+              <p className="mt-2 text-[14px] leading-[1.55] text-[var(--color-text-muted)]">
+                One reply and a strategist holds a time for you — no form, no
+                wait beyond one business day.
+              </p>
+
+              {/* Two-tier recovery: primary pill + quiet secondary link */}
+              <div className="mt-6 flex flex-col gap-3">
+                <a
+                  href="mailto:hello@beamixai.com?subject=Discovery%20call"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-accent)] px-6 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
+                >
+                  Email us to book
+                </a>
+                <a
+                  href="/dashboard"
+                  className="inline-flex h-9 items-center justify-center text-[13px] font-medium text-[var(--color-text-muted)] underline-offset-4 transition-colors hover:text-[var(--color-text-primary)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
+                >
+                  Back to your dashboard
+                </a>
+              </div>
+
+              <p className="mt-5 border-t border-[var(--color-border-subtle)] pt-4 text-[13px] text-[var(--color-text-muted)]">
+                Reach us at{' '}
+                <span className="font-[var(--font-mono)] text-[var(--color-text-primary)]">
+                  hello@beamixai.com
+                </span>
+                . No credit card, no commitment.
+              </p>
+            </div>
           </div>
-        </div>
+        </section>
       </div>
     </main>
   )
