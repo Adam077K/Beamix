@@ -229,7 +229,7 @@ export function BuilderSurface({ state }: BuilderSurfaceProps) {
           <DialogHeader>
             <DialogTitle className="text-[18px]">Run this workflow?</DialogTitle>
             <DialogDescription className="text-[14px] leading-[1.5]">
-              All {workflow.nodes.length} steps will execute against your live
+              All {workflow.nodes.length} stages will execute against your live
               data. This consumes credits.
             </DialogDescription>
           </DialogHeader>
