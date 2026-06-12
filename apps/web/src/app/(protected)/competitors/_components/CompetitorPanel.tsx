@@ -23,7 +23,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { X, Plus, ExternalLink, ArrowRight } from 'lucide-react'
+import { X, Plus, ExternalLink, ArrowRight, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/empty-state'
@@ -74,14 +74,54 @@ function PriorityPill({ priority }: { priority: 'high' | 'medium' | 'low' }) {
 }
 
 // ---------------------------------------------------------------------------
-// Engine badge
+// Engine badge — neutral ground + a per-engine series dot.
+//
+// The old badge painted every engine on the same blue #EEF2FF ground, so the
+// Engines column read as a monotone blue wall (tell #8). Here the chip is a
+// quiet neutral pill and the only color is a tiny dot keyed to the engine's
+// data-viz series color — the same encoding the SoV chart / analytics use — so
+// engines are differentiable at a glance without five identical blue blocks.
 // ---------------------------------------------------------------------------
+
+const ENGINE_DOT: Record<string, string> = {
+  ChatGPT: 'var(--color-data-1)', // blue
+  Gemini: 'var(--color-data-3)', // cyan
+  Perplexity: 'var(--color-data-4)', // green
+  Claude: 'var(--color-data-5)', // amber
+  'AI Overviews': 'var(--color-data-6)', // red
+}
 
 function EngineBadge({ engine }: { engine: string }) {
   return (
-    <span className="inline-flex h-5 items-center rounded-full bg-[#EEF2FF] px-2 text-[10px] font-medium text-[#3370FF]">
+    <span className="inline-flex h-5 items-center gap-1.5 rounded-full border border-[#E5E7EB] bg-white px-2 text-[10px] font-medium text-[#374151]">
+      <span
+        className="h-1.5 w-1.5 shrink-0 rounded-full"
+        style={{ backgroundColor: ENGINE_DOT[engine] ?? '#9CA3AF' }}
+        aria-hidden="true"
+      />
       {engine}
     </span>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Range pill — the header's primary control (M3 right-slot).
+//
+// Anchors the header band so the title no longer trails into dead white. In
+// Phase 1 this is a calm static selector (no backend window-switching yet); it
+// mirrors the "Last N weeks" control the Profound/Otterly headers anchor.
+// ---------------------------------------------------------------------------
+
+function RangePill() {
+  return (
+    <button
+      type="button"
+      className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-3 text-[13px] font-medium text-[#374151] transition-colors hover:border-[#D1D5DB] hover:bg-[#FAFAFA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1"
+      aria-label="Comparison window: last 5 weeks"
+    >
+      <Calendar className="h-3.5 w-3.5 text-[#9CA3AF]" aria-hidden="true" />
+      Last <span className="font-mono tabular-nums">5</span> weeks
+    </button>
   )
 }
 
@@ -146,13 +186,15 @@ function CompetitorPanelSkeleton() {
           <Skeleton className="mb-2 h-3 w-32" />
           <Skeleton className="h-10 w-20" />
         </div>
-        <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-[1fr_200px]">
-          <Skeleton className="h-[140px] w-full rounded-lg" />
-          <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-[1fr_208px]">
+          <Skeleton className="h-[210px] w-full rounded-lg" />
+          <div className="space-y-5">
             {[1, 2, 3].map((i) => (
               <div key={i} className="space-y-2">
                 <Skeleton className="h-3 w-full" />
-                <Skeleton className="h-1.5 w-full rounded-full" />
+                <Skeleton className="h-2 w-full rounded-full" />
+                <Skeleton className="h-2.5 w-2/3" />
+                <Skeleton className="h-1 w-full rounded-full" />
               </div>
             ))}
           </div>
@@ -412,15 +454,17 @@ function GapTable({
               ))}
             </div>
 
-            {/* Action — deep-links to tool page */}
+            {/* Action — quiet text-link by default; the filled blue affordance
+                is reserved for hover/focus so the column reads as a calm table,
+                not a stacked ladder of identical blue pills (P2.8, tell #8). */}
             <div role="cell" className="flex justify-start sm:justify-end">
               <Link
                 href={gap.actionHref}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#EEF2FF] px-3 text-sm font-medium text-[#3370FF] transition-colors hover:bg-[#3370FF] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF]"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-[#3370FF] transition-colors hover:bg-[#3370FF] hover:text-white focus-visible:bg-[#EEF2FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] sm:text-[#6B7280] sm:group-hover:text-[#3370FF]"
                 aria-label={`${gap.actionLabel} for: ${gap.prompt}`}
               >
                 {gap.actionLabel}
-                <ArrowRight className="h-3.5 w-3.5" />
+                <ArrowRight className="h-3.5 w-3.5 -translate-x-0.5 opacity-60 transition-transform group-hover:translate-x-0 group-hover:opacity-100" />
               </Link>
             </div>
           </div>
@@ -504,20 +548,27 @@ function CoCitationView({
 function CompetitorPanelSuccess() {
   const data = DEMO_COMPETITORS
   const topCompetitor = data.rows[0]
+  const yourSov = data.shareOfVoiceHistory[data.shareOfVoiceHistory.length - 1].us
 
   return (
     <div className="space-y-0">
-      {/* Page header */}
+      {/* Page header — M3: dominant-left title/subtitle, control-right range pill
+          fills the previously-dead right gutter. */}
       <div className="craft-enter craft-enter-1">
         <PageHeader
           eyebrow={DEMO_BUSINESS.name}
           title="Competitor Tracker"
+          action={<RangePill />}
           subtitle={
             <>
               Your share of voice is{' '}
               <SerifVerdict>narrowing</SerifVerdict> the gap — Smile Center
-              leads at {topCompetitor.shareOfVoice}%, you are at{' '}
-              {data.shareOfVoiceHistory[data.shareOfVoiceHistory.length - 1].us}%.
+              leads at{' '}
+              <span className="font-mono tabular-nums text-[#374151]">
+                {topCompetitor.shareOfVoice}%
+              </span>
+              , you are at{' '}
+              <span className="font-mono tabular-nums text-[#374151]">{yourSov}%</span>.
             </>
           }
         />
@@ -574,45 +625,49 @@ function CompetitorPanelSuccess() {
 // ---------------------------------------------------------------------------
 
 export function CompetitorPanel({ state, onRetry }: CompetitorPanelProps) {
+  // The DashboardShell already supplies the page <main> landmark + frame
+  // (mx-auto max-w-[1200px] px-6 py-8). This wrapper only content-caps the
+  // reading column flush-left under that frame — no nested <main>, no double
+  // padding, no min-h forcing a centered narrow column to float in the 1200px
+  // field (which is what produced the mis-weighted header dead-zone).
+  const frame = 'w-full max-w-[920px]'
+
   if (state === 'loading') {
     return (
-      <main className="mx-auto min-h-[100dvh] max-w-[880px] px-4 py-8 sm:px-6">
+      <div className={frame}>
         <CompetitorPanelSkeleton />
-      </main>
+      </div>
     )
   }
 
   if (state === 'error') {
     return (
-      <main className="mx-auto min-h-[100dvh] max-w-[880px] px-4 py-8 sm:px-6">
+      <div className={frame}>
         <ErrorState
           title="Could not load competitor data"
           description="We hit a snag fetching your competitor tracking data. Try again — it clears right up."
           onRetry={onRetry}
           retryLabel="Try again"
         />
-      </main>
+      </div>
     )
   }
 
   if (state === 'empty') {
     return (
-      <main className="mx-auto min-h-[100dvh] max-w-[880px] px-4 py-8 sm:px-6">
+      <div className={frame}>
         <div className="craft-enter craft-enter-1">
-          <PageHeader
-            eyebrow={DEMO_BUSINESS.name}
-            title="Competitor Tracker"
-          />
+          <PageHeader eyebrow={DEMO_BUSINESS.name} title="Competitor Tracker" />
         </div>
         <CompetitorPanelEmpty />
-      </main>
+      </div>
     )
   }
 
   // success
   return (
-    <main className="mx-auto min-h-[100dvh] max-w-[880px] px-4 py-8 sm:px-6">
+    <div className={frame}>
       <CompetitorPanelSuccess />
-    </main>
+    </div>
   )
 }
