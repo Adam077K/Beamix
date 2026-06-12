@@ -361,8 +361,15 @@ export function ContentTabs() {
   const avgScore = tabDocs.length > 0
     ? Math.round(tabDocs.reduce((sum, d) => sum + d.visibilityScore, 0) / tabDocs.length)
     : null
-  const sparklinePoints = tabDocs.length > 0
-    ? [28, 31, 30, 34, avgScore ?? 31]
+  // M4: no real per-page run-history series exists in demo state. Pass null so the
+  // foundation sparkline renders its designed baseline + endpoint dot — NEVER a
+  // fabricated 5-point wiggle (CRAFT-SYSTEM tell #4 / "never fake data").
+  const sparklinePoints = null
+
+  // Lowest-scoring page in this tab = highest-opportunity target (real fixture
+  // data, not fabricated). Drives the rail's verdict beat + opportunity callout.
+  const opportunityDoc = tabDocs.length > 0
+    ? tabDocs.reduce((lowest, d) => (d.visibilityScore < lowest.visibilityScore ? d : lowest), tabDocs[0])
     : null
 
   // What this does — per tab
@@ -490,7 +497,148 @@ export function ContentTabs() {
       />}
       state={pageState}
       historyHref="/archive"
+      widthMode="wide"
+      rail={
+        <ContentContextRail
+          tab={activeTab}
+          docs={tabDocs}
+          opportunityDoc={opportunityDoc}
+          agentLabel={config.agentLabel}
+          /* M5: at most ONE Fraunces beat per rendered screen. The FAQ success
+             output already carries its beat ("Ready"); the rail beat is shown
+             only where no other beat is present (idle / empty / running / error). */
+          showBeat={pageState !== 'success'}
+        />
+      }
     />
+  )
+}
+
+// ---------------------------------------------------------------------------
+// ContentContextRail — "earn the width" live-context rail (M3/M10)
+// ---------------------------------------------------------------------------
+
+const SCORE_BANDS = [
+  { min: 75, label: 'Excellent', text: '#06B6D4', bg: '#ECFEFF' },
+  { min: 50, label: 'Good', text: '#10B981', bg: '#ECFDF5' },
+  { min: 25, label: 'Fair', text: '#B8770B', bg: '#FDF3E0' },
+  { min: 0, label: 'Critical', text: '#DC2626', bg: '#FDECEC' },
+] as const
+
+function bandFor(score: number) {
+  return SCORE_BANDS.find((b) => score >= b.min) ?? SCORE_BANDS[SCORE_BANDS.length - 1]
+}
+
+/**
+ * ContentContextRail — fills the freed working area on wide viewports with REAL
+ * context (the pages this agent can act on + their visibility bands), so the
+ * lower/right canvas earns its space instead of reading half-finished
+ * (CRAFT-SYSTEM tell #5 / P1-4). Stacks under the spine below lg.
+ *
+ * Carries the single Fraunces beat for the idle state (M5) — one verdict word
+ * naming the band of the highest-opportunity page, inline in a sans sentence.
+ * All numbers are Geist Mono tabular (M11).
+ */
+function ContentContextRail({
+  tab,
+  docs,
+  opportunityDoc,
+  agentLabel,
+  showBeat,
+}: {
+  tab: ContentTab
+  docs: ContentDoc[]
+  opportunityDoc: ContentDoc | null
+  agentLabel: string
+  showBeat: boolean
+}) {
+  const isFaq = tab === 'faq'
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Opportunity verdict — the one Fraunces beat (M5) */}
+      {showBeat && opportunityDoc && (
+        <div className="card-inset px-4 py-4">
+          <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+            Biggest opportunity
+          </p>
+          <p className="text-[14px] leading-relaxed text-[#374151]">
+            {opportunityDoc.title.split('—')[0]?.trim()} is your{' '}
+            <SerifVerdict>{bandFor(opportunityDoc.visibilityScore).label.toLowerCase()}</SerifVerdict>{' '}
+            page — a{' '}
+            <span className="font-[var(--font-mono)] tabular-nums text-[#0A0A0A]">
+              {opportunityDoc.visibilityScore}
+            </span>{' '}
+            visibility score is where {agentLabel} makes the most difference.
+          </p>
+        </div>
+      )}
+
+      {/* Pages this agent can act on (real fixture rows, band-shaded) */}
+      {!isFaq && docs.length > 0 && (
+        <div className="card-inset px-4 py-4">
+          <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+            {tab === 'optimize' ? 'Pages to optimize' : 'Stale pages'}
+          </p>
+          <ul className="flex flex-col gap-2.5">
+            {docs.map((doc) => {
+              const band = bandFor(doc.visibilityScore)
+              return (
+                <li key={doc.id} className="flex items-center gap-3">
+                  <span
+                    className="h-7 w-[3px] shrink-0 rounded-full"
+                    style={{ backgroundColor: band.text }}
+                    aria-hidden="true"
+                  />
+                  <span className="min-w-0 flex-1 truncate text-[13px] text-[#374151]">
+                    {doc.title.split('—')[0]?.trim()}
+                  </span>
+                  <span
+                    className="font-[var(--font-mono)] text-[13px] tabular-nums"
+                    style={{ color: band.text }}
+                  >
+                    {doc.visibilityScore}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
+
+      {/* What a run produces — quiet "here's the payoff" affordance */}
+      <div className="card-inset px-4 py-4">
+        <p className="mb-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+          What you&apos;ll get
+        </p>
+        <ul className="flex flex-col gap-2 text-[13px] leading-relaxed text-[#6B7280]">
+          {(isFaq
+            ? ['Citation-ready FAQ answers', 'Mapped to your scan-gap queries', 'Routed to approvals before publish']
+            : ['A side-by-side content diff', 'Local signals + structured price data', 'Routed to approvals before publish']
+          ).map((line) => (
+            <li key={line} className="flex items-start gap-2">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 14 14"
+                fill="none"
+                className="mt-0.5 shrink-0"
+                aria-hidden="true"
+              >
+                <path d="M2.5 7L5.5 10L11.5 4" stroke="#3370FF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>{line}</span>
+            </li>
+          ))}
+        </ul>
+        <Link
+          href="/archive"
+          className="mt-3 inline-flex text-[13px] font-medium text-[#3370FF] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1"
+        >
+          See previous runs →
+        </Link>
+      </div>
+    </div>
   )
 }
 
@@ -587,18 +735,27 @@ function DocSelectRow({
   selected: boolean
   onSelect: () => void
 }) {
+  const band = bandFor(doc.visibilityScore)
+
   return (
     <button
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
       className={cn(
-        'group flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1',
+        'group relative flex w-full items-center gap-3 overflow-hidden rounded-lg border px-3 py-2.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1',
         selected
           ? 'border-[#3370FF] bg-[#EEF2FF]'
           : 'border-[#E5E7EB] bg-white hover:border-[#C7D7FF] hover:bg-[#F8FAFF]',
       )}
     >
+      {/* M7 left status-color hairline keyed to the visibility band */}
+      <span
+        className="absolute inset-y-0 left-0 w-[3px]"
+        style={{ backgroundColor: band.text }}
+        aria-hidden="true"
+      />
+
       {/* Selected indicator */}
       <div
         className={cn(
@@ -639,12 +796,18 @@ function DocSelectRow({
         </p>
       </div>
 
-      {/* Stats rail */}
-      <div className="flex shrink-0 flex-col items-end gap-0.5 text-right">
-        <span className="font-[var(--font-mono)] text-[13px] tabular-nums text-[#0A0A0A]">
+      {/* Stats rail — M7 number-over-label: the band-colored score dominates,
+          the label recedes. */}
+      <div className="flex shrink-0 flex-col items-end gap-0 text-right">
+        <span
+          className="font-[var(--font-mono)] text-[17px] font-medium leading-none tabular-nums tracking-[-0.02em]"
+          style={{ color: band.text }}
+        >
           {doc.visibilityScore}
         </span>
-        <span className="text-[11px] text-[#9CA3AF]">visibility</span>
+        <span className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.06em] text-[#9CA3AF]">
+          visibility
+        </span>
       </div>
     </button>
   )
