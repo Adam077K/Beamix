@@ -1,26 +1,33 @@
 'use client'
 
 import { useCallback } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronRight } from 'lucide-react'
 import type { TraceabilityData } from '@/types/traceability'
 import { TraceabilityEmpty } from './TraceabilityEmpty'
 import { TraceabilityLoading } from './TraceabilityLoading'
 import { TraceabilityError } from './TraceabilityError'
-import { OutcomeCard } from './OutcomeCard'
+import { OutcomeHero } from './OutcomeHero'
+import { OutcomeLedgerRow } from './OutcomeLedgerRow'
+import { TrailSummary } from './TrailSummary'
 
 interface TraceabilityListProps {
   data: TraceabilityData
 }
 
 /**
- * TraceabilityList — top-level state switch for the traceability surface.
+ * TraceabilityList — top-level state switch + the redesigned "forensic receipt".
  *
- * State machine: loading -> empty | error | ready (list).
- * Single-expand: at most one OutcomeCard is open at a time.
- * Each outcome row also links to /traceability/[outcome.id] for the
- * full drill-down detail view.
+ * State machine: loading → empty | error | ready.
+ *
+ * The ready layout (M1/M3/M10) is a real composition, not a flat stack:
+ *  1. TIER-1 OutcomeHero — the latest/highest-impact outcome, 64px proof figure,
+ *     one Fraunces engine beat, asymmetric band. Exactly one TIER-1 focal.
+ *  2. A dense TIER-3 ledger of the remaining outcomes — dated, metric-clustered
+ *     rows that read like a receipt body and fill the frame.
+ *  3. TIER-3 TrailSummary — mono <Stat> totals so the lower canvas earns its
+ *     space instead of floating empty.
+ *
+ * Each row (hero + ledger) routes to /traceability/[id] for the full work trail.
  */
 export function TraceabilityList({ data }: TraceabilityListProps) {
   const router = useRouter()
@@ -39,51 +46,40 @@ export function TraceabilityList({ data }: TraceabilityListProps) {
   }
 
   // state === 'ready', outcomes.length > 0
+  const [hero, ...rest] = data.outcomes
+  const stagger = ['craft-enter-2', 'craft-enter-3', 'craft-enter-4', 'craft-enter-4']
+
   return (
-    <div>
-      {/* List count — mono, muted, consistent with WeeklyNarrative pattern */}
-      <p className="mb-3 font-mono text-[12px] tabular-nums text-[#6B7280]">
-        {data.outcomes.length} result{data.outcomes.length !== 1 ? 's' : ''} traced
-      </p>
+    <div className="space-y-6">
+      {/* 1 ── TIER-1 hero focal */}
+      <OutcomeHero outcome={hero} />
 
-      <div className="space-y-3">
-        {data.outcomes.map((outcome) => (
-          <div key={outcome.id} className="group relative">
-            <OutcomeCard
-              outcome={outcome}
-              expanded={false}
-              onToggle={() => {
-                // No-op: the semantic overlay <Link> below owns navigation.
-                // Keeping the prop to satisfy OutcomeCard's interface without
-                // introducing a duplicate router.push.
-              }}
-            />
-            {/* Semantic overlay Link — sole navigation owner for this row.
-                tabIndex={-1} keeps it out of the tab order; the row's inner
-                button (OutcomeCard header) handles keyboard focus naturally. */}
-            <Link
-              href={`/traceability/${outcome.id}`}
-              aria-label={`View full work trail for: ${outcome.statement}`}
-              className="absolute inset-0 rounded-[var(--radius-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-inset"
-              tabIndex={-1}
-            >
-              <span className="sr-only">View detail</span>
-            </Link>
+      {/* 2 ── Dense TIER-3 ledger of the remaining outcomes */}
+      {rest.length > 0 && (
+        <section aria-label="Earlier results">
+          <div className="mb-3 flex items-baseline justify-between">
+            <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#9CA3AF]">
+              Earlier results
+            </p>
+            <p className="font-mono text-[12px] tabular-nums text-[#9CA3AF]">
+              {data.outcomes.length} traced
+            </p>
           </div>
-        ))}
-      </div>
 
-      {/* Quiet hint linking to detail pages */}
-      <p className="mt-4 text-[12px] text-[#9CA3AF]">
-        Select a result to see the full work trail.{' '}
-        <Link
-          href={`/traceability/${data.outcomes[0].id}`}
-          className="text-accent hover:text-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2 focus-visible:rounded"
-        >
-          View latest
-          <ChevronRight className="inline h-3 w-3 -mt-0.5" aria-hidden="true" />
-        </Link>
-      </p>
+          <div className="card-console divide-y divide-[#F0F1F3] overflow-hidden">
+            {rest.map((outcome, idx) => (
+              <OutcomeLedgerRow
+                key={outcome.id}
+                outcome={outcome}
+                enterClass={stagger[Math.min(idx, stagger.length - 1)]}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 3 ── TIER-3 trail-at-a-glance, fills the lower canvas */}
+      <TrailSummary outcomes={data.outcomes} />
     </div>
   )
 }
