@@ -707,7 +707,11 @@ function PopulatedBody({ data }: { data: DemoTeam }) {
               Members
             </h2>
             <p className="mt-0.5 text-[13px] text-[var(--color-text-muted)]">
-              Everyone with access to this workspace.
+              Everyone with access to this{' '}
+              <em className="font-[var(--font-serif)] font-normal italic">
+                workspace
+              </em>
+              .
             </p>
           </div>
           <SeatMeter
