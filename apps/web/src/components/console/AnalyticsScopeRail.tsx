@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { useAnalyticsFilter, type Timeframe } from './AnalyticsFilterContext'
+import { FilterChip } from './FilterChip'
 
 // ---------------------------------------------------------------------------
 // Engine swatch colors — mapped to the data-viz series tokens
@@ -88,31 +89,17 @@ export function AnalyticsScopeRail({ topicGroup = null, className }: AnalyticsSc
         <div className="space-y-1.5">
           {ENGINE_ORDER.map((engine) => {
             const active = engines[engine] !== false
-            const color = ENGINE_COLORS[engine] ?? '#9CA3AF'
-
             return (
-              <button
+              <FilterChip
                 key={engine}
-                type="button"
-                role="checkbox"
-                aria-checked={active}
-                aria-label={`Toggle ${engine}`}
-                onClick={() => toggleEngine(engine)}
-                className={cn(
-                  'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1',
-                  active
-                    ? 'bg-[#EEF2FF] text-[#3370FF]'
-                    : 'bg-transparent text-[#6B7280] hover:bg-[#F7F7F7] hover:text-[#0A0A0A]',
-                )}
+                active={active}
+                onToggle={() => toggleEngine(engine)}
+                ariaLabel={`Toggle ${engine}`}
+                color={ENGINE_COLORS[engine] ?? '#9CA3AF'}
+                marker="swatch"
               >
-                {/* 8px color swatch */}
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: active ? color : '#D1D5DB' }}
-                  aria-hidden="true"
-                />
-                <span className="flex-1 text-left truncate">{engine}</span>
-              </button>
+                {engine}
+              </FilterChip>
             )
           })}
         </div>

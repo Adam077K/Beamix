@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { useAnalyticsFilter, type Timeframe } from '@/components/console/AnalyticsFilterContext'
+import { FilterChip } from '@/components/console/FilterChip'
 import { BOT_COLORS, BOT_ORDER } from './bot-colors'
 
 /**
@@ -55,31 +56,17 @@ export function TrafficScopeRail({ topicGroup = null, className }: TrafficScopeR
         <div className="space-y-1.5">
           {BOT_ORDER.map((bot) => {
             const active = engines[bot] !== false
-            const color = BOT_COLORS[bot] ?? '#9CA3AF'
-
             return (
-              <button
+              <FilterChip
                 key={bot}
-                type="button"
-                role="checkbox"
-                aria-checked={active}
-                aria-label={`Toggle ${bot}`}
-                onClick={() => toggleEngine(bot)}
-                className={cn(
-                  'flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1',
-                  active
-                    ? 'bg-[#EEF2FF] text-[#3370FF]'
-                    : 'bg-transparent text-[#6B7280] hover:bg-[#F7F7F7] hover:text-[#0A0A0A]',
-                )}
+                active={active}
+                onToggle={() => toggleEngine(bot)}
+                ariaLabel={`Toggle ${bot}`}
+                color={BOT_COLORS[bot] ?? '#9CA3AF'}
+                marker="swatch"
               >
-                {/* 8px color swatch */}
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: active ? color : '#D1D5DB' }}
-                  aria-hidden="true"
-                />
-                <span className="flex-1 truncate text-left font-mono text-[13px]">{bot}</span>
-              </button>
+                <span className="font-mono text-[13px]">{bot}</span>
+              </FilterChip>
             )
           })}
         </div>
