@@ -1,13 +1,17 @@
 /**
  * /discovery — Cal.com booking page
  *
- * Warm-minimal shell. Server Component.
+ * Warm-minimal shell. Server Component. This is the bottom-of-funnel
+ * conversion surface (book the discovery call after a free scan), so it
+ * carries the full craft contract: one TIER-1 focal, one Fraunces beat,
+ * stepped type, felt depth, choreographed entrance, two-tier recovery.
  *
- * Scope: the WRAPPER + states only. Booking widget internals untouched.
- * - Branded header: Beamix wordmark + headline/subtitle
+ * Scope: the WRAPPER + states only. The Cal.com booking widget internals
+ * are untouched (third-party iframe).
+ * - Asymmetric layout: a "what you'll get" context rail + the framed embed
  * - Token-only colors (zero inline hex)
  * - Branded loading state for the iframe (client component)
- * - Designed env-missing fallback (recovery copy + link, never a raw error)
+ * - Designed env-missing fallback (M8 two-tier recovery, never a raw error)
  * - email + scan_id query-param prefill behavior preserved
  *
  * Query params:
@@ -17,6 +21,7 @@
  */
 
 import { Metadata } from 'next'
+import { Stat } from '@/components/ui/stat'
 import { CalEmbed } from './_components/CalEmbed'
 
 export const metadata: Metadata = {
@@ -28,6 +33,30 @@ export const metadata: Metadata = {
 interface DiscoveryPageProps {
   searchParams: Promise<{ email?: string; scan_id?: string }>
 }
+
+/** What the call delivers — the conversion-rail context. */
+interface CallPoint {
+  title: string
+  body: string
+  /** Marks an agent-work item — gets the violet dot (blue=you / violet=agents). */
+  agent?: boolean
+}
+
+const CALL_POINTS: CallPoint[] = [
+  {
+    title: 'Your scan, read aloud',
+    body: 'We walk the engines you’re missing from and why — line by line.',
+  },
+  {
+    title: 'The fix, named',
+    body: 'The exact pages, prompts and entities our agents would rewrite first.',
+    agent: true,
+  },
+  {
+    title: 'What to expect',
+    body: 'A plain timeline for visibility to move — no jargon, no upsell.',
+  },
+]
 
 export default async function DiscoveryPage({ searchParams }: DiscoveryPageProps) {
   const calcomLink = process.env.NEXT_PUBLIC_CALCOM_DISCOVERY_LINK
@@ -44,67 +73,228 @@ export default async function DiscoveryPage({ searchParams }: DiscoveryPageProps
 
   return (
     <main className="min-h-screen bg-[var(--color-surface-warm)]">
-      {/* Branded header */}
-      <div className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="mx-auto max-w-3xl px-6 py-5 text-center">
-          {/* Wordmark */}
-          <p className="font-[var(--font-display)] text-[18px] font-semibold tracking-tight text-[var(--color-text-primary)]">
+      {/* Thin branded marquee — wordmark only, lets the split below carry weight */}
+      <header className="craft-enter craft-enter-1 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+        <div className="mx-auto flex max-w-6xl items-center gap-2.5 px-6 py-4">
+          <BeamixMark />
+          <span className="font-[var(--font-display)] text-[16px] font-semibold tracking-tight text-[var(--color-text-primary)]">
             Beamix
-          </p>
-          {/* Eyebrow */}
-          <p className="mt-4 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-disabled)]">
+          </span>
+        </div>
+      </header>
+
+      {/* Asymmetric body: context rail (dominant copy) + framed booking embed */}
+      <div className="mx-auto grid max-w-6xl gap-8 px-6 py-10 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)] lg:gap-12 lg:py-16">
+        {/* ── Context rail ───────────────────────────────────── */}
+        <section className="craft-enter craft-enter-2 flex flex-col lg:pt-2">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-disabled)]">
             Discovery call
           </p>
-          {/* Headline */}
-          <h1 className="mt-2 font-[var(--font-display)] text-[28px] font-medium leading-tight tracking-[-0.02em] text-[var(--color-text-primary)] sm:text-[32px]">
-            Let&apos;s talk about your AI search visibility
+          <h1 className="mt-3 max-w-[15ch] font-[var(--font-display)] text-[32px] font-medium leading-[1.08] tracking-[-0.02em] text-[var(--color-text-primary)] sm:text-[40px]">
+            Let’s{' '}
+            <em className="font-[var(--font-serif)] font-normal italic">talk</em>{' '}
+            about your AI search visibility
           </h1>
-          {/* Subtitle */}
-          <p className="mx-auto mt-2 max-w-[480px] text-[15px] leading-[1.5] text-[var(--color-text-muted)]">
-            A free 20-minute call. We&apos;ll walk through your scan results and
-            show you exactly what we&apos;ll fix — and what to expect.
+          <p className="mt-4 max-w-[44ch] text-[15px] leading-[1.55] text-[var(--color-text-muted)]">
+            Twenty focused minutes. We read your scan with you and show exactly
+            what our agents would fix — and what moving looks like.
           </p>
-        </div>
-      </div>
 
-      {/* Cal.com embed — client component handles loading state */}
-      <div className="w-full">
-        <CalEmbed calUrl={calUrl} />
+          {/* Trust signal — mono truth (M11) */}
+          <div className="mt-8 flex items-end gap-8 border-t border-[var(--color-border-subtle)] pt-6">
+            <Stat
+              value="20"
+              unit="min"
+              label="On the call"
+              size="md"
+              align="start"
+            />
+            <Stat
+              value="1"
+              unit=":1"
+              label="With a strategist"
+              size="md"
+              align="start"
+            />
+          </div>
+
+          {/* What you'll get — tight-within-cluster list (M12) */}
+          <ul className="mt-8 flex flex-col gap-px overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-warm)]">
+            {CALL_POINTS.map((point) => (
+              <li
+                key={point.title}
+                className="flex gap-3.5 bg-[var(--color-surface)] px-5 py-4"
+              >
+                <span
+                  aria-hidden="true"
+                  className={
+                    'mt-[7px] h-2 w-2 shrink-0 rounded-full ' +
+                    (point.agent
+                      ? 'bg-[var(--color-agent)]'
+                      : 'bg-[var(--color-accent)]')
+                  }
+                />
+                <div>
+                  <p className="text-[14px] font-semibold leading-snug text-[var(--color-text-primary)]">
+                    {point.title}
+                  </p>
+                  <p className="mt-1 text-[13px] leading-[1.5] text-[var(--color-text-muted)]">
+                    {point.body}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <p className="mt-5 text-[13px] text-[var(--color-text-muted)]">
+            No credit card. No commitment. Cancel anytime before.
+          </p>
+        </section>
+
+        {/* ── Framed booking embed (TIER-1 focal) ────────────── */}
+        <section className="craft-enter craft-enter-3">
+          <div className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card-hero)]">
+            <div className="flex items-center justify-between border-b border-[var(--color-border-subtle)] px-5 py-3">
+              <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-disabled)]">
+                Pick a time
+              </span>
+              <span className="flex items-center gap-1.5 text-[12px] text-[var(--color-text-muted)]">
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-1.5 rounded-full bg-[var(--color-status-positive)]"
+                />
+                Live availability
+              </span>
+            </div>
+            <CalEmbed calUrl={calUrl} />
+          </div>
+        </section>
       </div>
     </main>
   )
 }
 
 // ---------------------------------------------------------------------------
-// Env-missing fallback — recovery copy + link, never a raw error
+// Env-missing fallback — M8 two-tier recovery, never a raw error
 // ---------------------------------------------------------------------------
 
 function EnvMissingFallback() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-surface-warm)] px-6 py-16 text-center">
-      {/* Wordmark */}
-      <p className="font-[var(--font-display)] text-[18px] font-semibold tracking-tight text-[var(--color-text-primary)]">
-        Beamix
-      </p>
-      <div className="mt-8 w-full max-w-[480px] rounded-[var(--radius-card)] bg-[var(--color-surface)] p-8 text-center shadow-[var(--shadow-card)]">
-        <h1 className="font-[var(--font-display)] text-[22px] font-semibold text-[var(--color-text-primary)]">
-          Book a Discovery Call
-        </h1>
-        <p className="mx-auto mt-3 max-w-[380px] text-[15px] leading-[1.5] text-[var(--color-text-muted)]">
-          Our booking calendar isn&apos;t loading right now. Email us and
-          we&apos;ll set up a time within one business day.
-        </p>
-        <a
-          href="mailto:hello@beamixai.com"
-          className="mt-6 inline-flex h-11 items-center gap-2 rounded-lg bg-[var(--color-accent)] px-6 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
-        >
-          Email hello@beamixai.com
-        </a>
-        <p className="mt-4 text-[13px] text-[var(--color-text-disabled)]">
-          No credit card. No commitment.
-        </p>
+    <main className="min-h-screen bg-[var(--color-surface-warm)]">
+      <header className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+        <div className="mx-auto flex max-w-6xl items-center gap-2.5 px-6 py-4">
+          <BeamixMark />
+          <span className="font-[var(--font-display)] text-[16px] font-semibold tracking-tight text-[var(--color-text-primary)]">
+            Beamix
+          </span>
+        </div>
+      </header>
+
+      {/* Anchored toward the top third, not absolute-centered void (kills tell #5) */}
+      <div className="mx-auto flex max-w-md flex-col px-6 pb-16 pt-16 sm:pt-24">
+        <div className="craft-enter craft-enter-1 overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]">
+          {/* Warm illustrative header band (moments-only character) */}
+          <div className="flex items-center justify-center bg-[var(--color-wash-sky)] py-9">
+            <CalendarGlyph />
+          </div>
+
+          <div className="px-7 py-7">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-disabled)]">
+              Discovery call
+            </p>
+            <h1 className="mt-2 font-[var(--font-display)] text-[28px] font-medium leading-tight tracking-[-0.02em] text-[var(--color-text-primary)] sm:text-[30px]">
+              Let’s find your{' '}
+              <em className="font-[var(--font-serif)] font-normal italic">time</em>{' '}
+              by email
+            </h1>
+            <p className="mt-3 text-[15px] leading-[1.55] text-[var(--color-text-muted)]">
+              Our live calendar isn’t reachable this moment. Email us and a
+              strategist will lock a 20-minute slot within one business day.
+            </p>
+
+            {/* Two-tier recovery: primary pill + quiet secondary link */}
+            <div className="mt-6 flex flex-col gap-3">
+              <a
+                href="mailto:hello@beamixai.com?subject=Discovery%20call"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[var(--color-accent)] px-6 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
+              >
+                Email us to book
+              </a>
+              <a
+                href="/dashboard"
+                className="inline-flex h-9 items-center justify-center text-[13px] font-medium text-[var(--color-text-muted)] underline-offset-4 transition-colors hover:text-[var(--color-text-primary)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
+              >
+                Back to your dashboard
+              </a>
+            </div>
+
+            <p className="mt-5 border-t border-[var(--color-border-subtle)] pt-4 text-[13px] text-[var(--color-text-muted)]">
+              Reach us at{' '}
+              <span className="font-[var(--font-mono)] text-[var(--color-text-primary)]">
+                hello@beamixai.com
+              </span>
+              . No credit card, no commitment.
+            </p>
+          </div>
+        </div>
       </div>
     </main>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Inline marks (on-brand, token-only — no stock icons)
+// ---------------------------------------------------------------------------
+
+/** Small Beamix mark — rounded accent tile. */
+function BeamixMark() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 22 22"
+      fill="none"
+      aria-hidden="true"
+      className="shrink-0"
+    >
+      <rect width="22" height="22" rx="6" fill="var(--color-accent)" />
+      <path
+        d="M7 6h5a2.6 2.6 0 0 1 0 5.2H7V6Zm0 5.2h5.4a2.6 2.6 0 0 1 0 5.2H7v-5.2Z"
+        fill="#fff"
+      />
+    </svg>
+  )
+}
+
+/** Warm calendar glyph for the recovery header — blue frame, violet booked slot. */
+function CalendarGlyph() {
+  return (
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <rect
+        x="8"
+        y="13"
+        width="48"
+        height="43"
+        rx="8"
+        fill="var(--color-surface)"
+        stroke="var(--color-accent)"
+        strokeWidth="2"
+      />
+      <path d="M8 24h48" stroke="var(--color-accent)" strokeWidth="2" />
+      <path
+        d="M20 9v8M44 9v8"
+        stroke="var(--color-accent)"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <circle cx="22" cy="35" r="2.5" fill="var(--color-border-strong)" />
+      <circle cx="32" cy="35" r="2.5" fill="var(--color-border-strong)" />
+      <circle cx="42" cy="44" r="2.5" fill="var(--color-border-strong)" />
+      {/* the booked slot — agent violet */}
+      <circle cx="42" cy="35" r="3.5" fill="var(--color-agent)" />
+      <circle cx="22" cy="44" r="2.5" fill="var(--color-border-strong)" />
+      <circle cx="32" cy="44" r="2.5" fill="var(--color-border-strong)" />
+    </svg>
   )
 }
 
