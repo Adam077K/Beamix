@@ -41,14 +41,21 @@ interface Tab {
   label: string
   Icon: React.ComponentType<{ className?: string }>
   isDestructive?: boolean
+  /**
+   * Agent-domain tab (M6 — blue=you / violet=agents). Brand fingerprint,
+   * Approval preferences, and Publishing integrations all govern what the crew
+   * does on your behalf — the rail signals that with a glanceable violet cue so
+   * the you-vs-agents law reads here too. Violet stays off every button.
+   */
+  isAgent?: boolean
 }
 
 const TABS: Tab[] = [
   { id: 'profile', label: 'Profile', Icon: User },
-  { id: 'brand', label: 'Brand fingerprint', Icon: Fingerprint },
+  { id: 'brand', label: 'Brand fingerprint', Icon: Fingerprint, isAgent: true },
   { id: 'billing', label: 'Billing', Icon: CreditCard },
-  { id: 'approvals', label: 'Approval preferences', Icon: ShieldCheck },
-  { id: 'integrations', label: 'Publishing integrations', Icon: Plug },
+  { id: 'approvals', label: 'Approval preferences', Icon: ShieldCheck, isAgent: true },
+  { id: 'integrations', label: 'Publishing integrations', Icon: Plug, isAgent: true },
   { id: 'cancel', label: 'Cancel', Icon: LogOut, isDestructive: true },
 ]
 
@@ -102,9 +109,31 @@ function SettingsContent() {
             'md:w-[200px] md:shrink-0 md:pr-0 md:mr-8',
           )}
         >
-          {/* Main tabs */}
+          {/* You — personal / account tabs */}
+          <div className="flex flex-row gap-0.5 md:flex-col md:gap-0">
+            {TABS.filter((t) => !t.isDestructive && !t.isAgent).map((tab) => (
+              <RailTab
+                key={tab.id}
+                tab={tab}
+                active={activeTab === tab.id}
+                onClick={() => navigate(tab.id)}
+              />
+            ))}
+          </div>
+
+          {/*
+            Crew — agent-domain tabs (M6). A violet eyebrow + a violet hairline
+            group these visually so the rail itself states the you-vs-agents
+            promise. The eyebrow is hidden on the mobile horizontal strip.
+          */}
+          <div className="hidden md:flex md:items-center md:gap-2 md:px-3 md:pb-1 md:pt-4">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-agent)]">
+              The crew
+            </span>
+            <span className="h-px flex-1 bg-[var(--color-agent-hairline)]/40" aria-hidden="true" />
+          </div>
           <div className="flex flex-row gap-0.5 md:flex-col md:gap-0 md:flex-1">
-            {TABS.filter((t) => !t.isDestructive).map((tab) => (
+            {TABS.filter((t) => !t.isDestructive && t.isAgent).map((tab) => (
               <RailTab
                 key={tab.id}
                 tab={tab}
@@ -155,7 +184,7 @@ interface RailTabProps {
 }
 
 function RailTab({ tab, active, onClick, destructive }: RailTabProps) {
-  const { Icon, label } = tab
+  const { Icon, label, isAgent } = tab
   return (
     /*
       item #8: plain button with aria-current="page" (URL-addressable nav pattern).
@@ -179,27 +208,42 @@ function RailTab({ tab, active, onClick, destructive }: RailTabProps) {
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-1',
         // Desktop: stretch full width, add left-border active indicator
         'md:w-full md:rounded-l-md md:rounded-r-none',
-        // Inactive state (non-destructive)
-        !active && !destructive && 'text-[var(--color-text-muted)] hover:bg-[#F4F6FA] hover:text-[var(--color-text-secondary)]',
+        // Inactive — you/account tabs: neutral, blue-grey hover
+        !active && !destructive && !isAgent && 'text-[var(--color-text-muted)] hover:bg-[#F4F6FA] hover:text-[var(--color-text-secondary)]',
+        // Inactive — agent tabs (M6): violet-tinted hover ground signals "the crew"
+        !active && !destructive && isAgent && 'text-[var(--color-text-muted)] hover:bg-[var(--color-agent-zone)] hover:text-[var(--color-agent)]',
         // Destructive (Cancel) inactive: more muted + critical-tinted hover to signal danger
         !active && destructive && 'text-[var(--color-text-muted)] opacity-75 hover:bg-[var(--color-status-critical-bg,#FDECEC)] hover:text-[var(--color-status-critical)] hover:opacity-100',
-        // Active state: accent-tint bg + accent-deep text + left blue border (desktop)
-        active && 'bg-[var(--color-accent-tint)] text-[var(--color-accent-deep)]',
+        // Active — you tabs: blue accent-tint (you are navigating)
+        active && !isAgent && 'bg-[var(--color-accent-tint)] text-[var(--color-accent-deep)]',
+        // Active — agent tabs: violet zone tint + violet text (the crew's domain)
+        active && isAgent && 'bg-[var(--color-agent-zone)] text-[var(--color-agent)]',
         // Mobile: shrink wrap with padding
         'whitespace-nowrap md:whitespace-normal',
       )}
     >
-      {/* Active left border — desktop only */}
+      {/* Active left border — desktop only; violet for agent tabs (M6) */}
       {active && (
         <span
-          className="absolute left-0 top-0 hidden h-full w-0.5 rounded-r-sm bg-[var(--color-accent)] md:block"
+          className={cn(
+            'absolute left-0 top-0 hidden h-full w-0.5 rounded-r-sm md:block',
+            isAgent ? 'bg-[var(--color-agent)]' : 'bg-[var(--color-accent)]',
+          )}
           aria-hidden="true"
         />
       )}
       <Icon
         className={cn(
           'h-[18px] w-[18px] shrink-0 transition-colors',
-          active ? 'text-[var(--color-accent)]' : 'text-current opacity-70',
+          // Agent-domain icons carry a resting violet tint so the crew group is
+          // glanceable even when inactive (M6). You-tabs stay neutral until active.
+          active
+            ? isAgent
+              ? 'text-[var(--color-agent)]'
+              : 'text-[var(--color-accent)]'
+            : isAgent
+              ? 'text-[var(--color-agent)] opacity-60'
+              : 'text-current opacity-70',
         )}
       />
       {/* On mobile, only show icon for compact tabs except first 3 */}

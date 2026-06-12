@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { MoreHorizontal, RotateCcw, Users } from 'lucide-react'
+import { Lock, MoreHorizontal, RotateCcw, Users } from 'lucide-react'
 
 import { PageHeader } from '@/components/page-header'
 import { ErrorState } from '@/components/error-state'
@@ -84,21 +84,51 @@ function isValidEmail(value: string): boolean {
    Shell — every state renders inside the same Settings-family content column
    ──────────────────────────────────────────────────────────────────────── */
 
+/**
+ * Shell — every state renders inside one centered reading column.
+ *
+ * UIX-F1 (foundation): the DashboardShell now owns the page frame
+ * (`mx-auto max-w-[1200px] px-6 sm:px-8 py-8`), which fixed the old left-pin /
+ * 40%-dead-space tell. We no longer set our own `max-w-[760px]` with no
+ * centering. Instead we sit on the shared track and constrain the *reading*
+ * width to a comfortable, symmetric column — a Settings-family surface reads
+ * best as a centered measure, not edge-to-edge.
+ */
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen pb-16">
-      <PageHeader
-        title="Team & Roles"
-        subtitle="Invite your team and control what each person can do."
-      />
-      <div className="max-w-[760px]">{children}</div>
+    <div className="pb-16">
+      <div className="mx-auto max-w-[880px]">
+        <PageHeader
+          title="Team & Roles"
+          subtitle="Invite your team and control what each person can do."
+        />
+        {children}
+      </div>
     </div>
   )
 }
 
-/** Hairline cluster divider — the M12 rhythm between content clusters. */
-function ClusterDivider() {
-  return <div className="my-8 h-px w-full bg-[var(--color-border)]" />
+/**
+ * Hairline cluster divider — the M12 editorial rhythm.
+ *
+ * `gap` varies the air by *relationship*: `tight` for clusters that belong
+ * together (seat-meter → table), `loose` for unrelated blocks (before
+ * Enterprise). Not one global `my-8`. Some boundaries carry no rule at all.
+ */
+function ClusterDivider({
+  gap = 'normal',
+  rule = true,
+}: {
+  gap?: 'tight' | 'normal' | 'loose'
+  rule?: boolean
+}) {
+  const space =
+    gap === 'tight' ? 'my-5' : gap === 'loose' ? 'my-12' : 'my-8'
+  if (!rule) {
+    const h = gap === 'tight' ? 'h-6' : gap === 'loose' ? 'h-12' : 'h-8'
+    return <div className={cn(h, 'w-full')} aria-hidden="true" />
+  }
+  return <div className={cn(space, 'h-px w-full bg-[var(--color-border)]')} />
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -127,9 +157,12 @@ const ROLE_MODEL: { role: MemberRole; can: string }[] = [
 function PermissionLegend({ id }: { id?: string }) {
   return (
     <section id={id} aria-labelledby="role-model-heading" className="card-inset p-5">
+      <p className="mb-1 text-xs font-semibold uppercase leading-none tracking-[0.08em] text-[#9CA3AF]">
+        Reference
+      </p>
       <h2
         id="role-model-heading"
-        className="mb-1 text-[15px] font-semibold text-[var(--color-text-primary)]"
+        className="mb-1 text-[14px] font-medium text-[var(--color-text-secondary)]"
       >
         What each role can do
       </h2>
@@ -380,20 +413,15 @@ function MembersTable({
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          {/* Owner is immutable — disabled picker, real tooltip. */}
-                          <span className="inline-block w-full cursor-not-allowed">
-                            <Select value={member.role} disabled>
-                              <SelectTrigger aria-label={`Role for ${member.name}`}>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {MEMBER_ROLES.map((r) => (
-                                  <SelectItem key={r} value={r}>
-                                    {r}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                          {/* Owner is immutable — a static locked token, NOT a
+                              washed-out disabled picker. Reads deliberate, not
+                              broken (P2-1). */}
+                          <span className="inline-flex cursor-default items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-warm)] py-1 pl-2.5 pr-2 text-[13px] font-medium text-[var(--color-text-secondary)]">
+                            Owner
+                            <Lock
+                              className="h-3 w-3 text-[var(--color-text-muted)]"
+                              aria-hidden="true"
+                            />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -406,7 +434,13 @@ function MembersTable({
                       value={member.role}
                       onValueChange={(v) => onRoleChange(member.id, v as MemberRole)}
                     >
-                      <SelectTrigger aria-label={`Role for ${member.name}`}>
+                      {/* Ghost trigger: quiet inline value by default, border
+                          appears on hover/focus so the member NAME commands and
+                          the control recedes until touched (P2-1, M7). */}
+                      <SelectTrigger
+                        aria-label={`Role for ${member.name}`}
+                        className="h-8 w-[124px] border-transparent bg-transparent px-2 text-[13px] font-medium text-[var(--color-text-secondary)] shadow-none transition-colors hover:border-[var(--color-border)] hover:bg-white data-[state=open]:border-[var(--color-accent)] data-[state=open]:bg-white"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -561,11 +595,13 @@ function EmptyBody({
 }) {
   return (
     <div>
-      <SeatMeter used={seats.used} total={seats.total} />
+      <div className="craft-enter craft-enter-1">
+        <SeatMeter used={seats.used} total={seats.total} />
+      </div>
 
       <ClusterDivider />
 
-      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-warm)] px-6 py-10 text-center sm:px-10">
+      <section className="craft-enter craft-enter-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-warm)] px-6 py-10 text-center sm:px-10">
         {/* Warm glyph — moments-only character. Not a bare Lucide in a void. */}
         <div
           className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-accent-tint)]"
@@ -595,9 +631,11 @@ function EmptyBody({
         </p>
       </section>
 
-      <ClusterDivider />
+      <ClusterDivider gap="loose" />
 
-      <PermissionLegend id="role-model" />
+      <div className="craft-enter craft-enter-3">
+        <PermissionLegend id="role-model" />
+      </div>
     </div>
   )
 }
@@ -651,33 +689,46 @@ function PopulatedBody({ data }: { data: DemoTeam }) {
         </div>
       )}
 
-      {/* 1 — Seat meter (the signature) */}
-      <SeatMeter
-        used={seats.used}
-        total={seats.total}
-        onAddSeats={() => {
-          /* Phase 2: opens billing seats flow. Calm, intentional no-op here. */
-        }}
-      />
+      {/* ── FOCAL CLUSTER: seats + members table ──────────────────────────
+          The members table is the reason this page exists, so it is the
+          surface's TIER-1 focal (M1/M2/M10). The seat-meter is its summary
+          header context, sitting TIGHT above it (M12) — one cluster, not two
+          equal-weight blocks. Everything below recedes. */}
+      <section
+        aria-labelledby="members-heading"
+        className="craft-enter craft-enter-1 card-console p-5 sm:p-6"
+      >
+        <div className="mb-5 flex flex-col gap-4 border-b border-[var(--color-border)] pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2
+              id="members-heading"
+              className="text-[15px] font-semibold text-[var(--color-text-primary)]"
+            >
+              Members
+            </h2>
+            <p className="mt-0.5 text-[13px] text-[var(--color-text-muted)]">
+              Everyone with access to this workspace.
+            </p>
+          </div>
+          <SeatMeter
+            used={seats.used}
+            total={seats.total}
+            onAddSeats={() => {
+              /* Phase 2: opens billing seats flow. Calm, intentional no-op. */
+            }}
+          />
+        </div>
 
-      <ClusterDivider />
+        <MembersTable
+          members={members}
+          onRoleChange={handleRoleChange}
+          onRemove={handleRemove}
+        />
+      </section>
 
-      {/* 2 — Members table */}
-      <MembersTable
-        members={members}
-        onRoleChange={handleRoleChange}
-        onRemove={handleRemove}
-      />
-
-      <ClusterDivider />
-
-      {/* 3 — Role model + permission legend */}
-      <PermissionLegend id="role-model" />
-
-      <ClusterDivider />
-
-      {/* 4 — Invite composer */}
-      <section aria-labelledby="invite-heading">
+      {/* ── Invite a teammate — secondary action, related to the table ──── */}
+      <ClusterDivider gap="normal" rule={false} />
+      <section aria-labelledby="invite-heading" className="craft-enter craft-enter-2">
         <h2
           id="invite-heading"
           className="mb-3 text-xs font-semibold uppercase leading-none tracking-[0.08em] text-[#9CA3AF]"
@@ -685,21 +736,31 @@ function PopulatedBody({ data }: { data: DemoTeam }) {
           Invite a teammate
         </h2>
         <InviteComposer onSend={handleSend} />
+
+        {/* Pending invites sit tight under the composer — same cluster. */}
+        {invites.length > 0 && (
+          <div className="mt-6">
+            <PendingInvitesList
+              invites={invites}
+              onResend={handleResend}
+              onRevoke={handleRevoke}
+            />
+          </div>
+        )}
       </section>
 
-      <ClusterDivider />
+      {/* ── Role legend — TIER-3 recede, clearly secondary reference ────── */}
+      <ClusterDivider gap="normal" rule={false} />
+      <div className="craft-enter craft-enter-3">
+        <PermissionLegend id="role-model" />
+      </div>
 
-      {/* 5 — Pending invites */}
-      <PendingInvitesList
-        invites={invites}
-        onResend={handleResend}
-        onRevoke={handleRevoke}
-      />
-
-      <ClusterDivider />
-
-      {/* 6 — Enterprise affordances (gated, never hidden) */}
-      <section aria-labelledby="enterprise-heading">
+      {/* ── Enterprise — unrelated block, pushed apart with a ruled gap ──── */}
+      <ClusterDivider gap="loose" />
+      <section
+        aria-labelledby="enterprise-heading"
+        className="craft-enter craft-enter-4"
+      >
         <h2
           id="enterprise-heading"
           className="mb-1 text-xs font-semibold uppercase leading-none tracking-[0.08em] text-[#9CA3AF]"

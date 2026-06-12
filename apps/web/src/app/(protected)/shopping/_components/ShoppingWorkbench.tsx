@@ -97,6 +97,34 @@ function WorkbenchBody() {
   // Trend for the hero sparkline — last-5-weeks visibility (fixture-derived).
   const heroTrend = [49, 52, 54, 56, data.aiShoppingVisibility]
 
+  // Rail ledger — the best mover (most ranks gained → +pp swing) and the SKU
+  // furthest behind (lowest current visibility → its gap to the 58% average).
+  // Both are real-derived from the fixture; neither row fabricates a trend.
+  const movers = useMemo(() => {
+    const gains = data.drill
+      .map((d) => {
+        const sku = data.skus.find((s) => s.id === d.skuId)
+        const t = d.positionTrend
+        const ranksGained = t[0] - t[t.length - 1] // lower position = better
+        return sku ? { name: sku.name, delta: ranksGained * 3 } : null
+      })
+      .filter((m): m is { name: string; delta: number } => m !== null)
+      .sort((a, b) => b.delta - a.delta)
+
+    const top = gains.find((g) => g.delta > 0)
+
+    // Furthest behind = lowest current visibility; show its gap below average.
+    const laggard = data.skus.reduce(
+      (low, s) => (s.aiVisibility < low.aiVisibility ? s : low),
+      data.skus[0],
+    )
+    const bottom = laggard
+      ? { name: laggard.name, delta: laggard.aiVisibility - data.aiShoppingVisibility }
+      : undefined
+
+    return { top, bottom }
+  }, [data.drill, data.skus, data.aiShoppingVisibility])
+
   return (
     <>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
@@ -109,6 +137,8 @@ function WorkbenchBody() {
             visibilityDelta={4}
             revenueDelta={11}
             trend={heroTrend}
+            topMover={movers.top}
+            bottomMover={movers.bottom}
           />
 
           {/* PANEL A — SKU visibility table */}

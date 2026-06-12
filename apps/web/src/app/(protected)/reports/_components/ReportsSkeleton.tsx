@@ -28,8 +28,8 @@ export function CanvasSkeleton() {
       <Skeleton className="h-3 w-56" />
       {/* cover */}
       <Skeleton className="h-40 w-full rounded-2xl" />
-      {/* 2-up weighted */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px]">
+      {/* 2-up weighted — matches the populated BodyGrid ratio */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.35fr_1fr]">
         <Skeleton className="h-52 w-full rounded-2xl" />
         <Skeleton className="h-52 w-full rounded-2xl" />
       </div>

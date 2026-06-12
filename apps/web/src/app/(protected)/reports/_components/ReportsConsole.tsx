@@ -159,10 +159,10 @@ export function ReportsConsole({ state: initialState }: ReportsConsoleProps) {
   } else if (state === 'empty') {
     canvas = (
       <EmptyState
-        illustration="workspace"
         align="top"
+        preview={<ReportComposerPreview />}
         title="Build your first report"
-        description="Pick a block from the left to start, or use a starter."
+        description="Compose visibility scores, engine breakdowns, and agent activity into one shareable report — then export, schedule, or send it to a client."
         action={
           <div className="flex flex-col items-center gap-3">
             <Button onClick={applyStarter}>Use the Visibility starter</Button>
@@ -193,7 +193,12 @@ export function ReportsConsole({ state: initialState }: ReportsConsoleProps) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+    // No inner frame: the shell (UIX-F1) already centres this page in
+    // `max-w-[1200px] px-6 sm:px-8 py-8`. A second frame here was the root of the
+    // clipped export drawer — it shrank the usable track by ~64px so the
+    // 240 + 1fr + 320 three-zone grid overflowed. The drawer is also narrowed to
+    // 300px and gutters tightened so all three zones fit the shared track.
+    <div className="w-full">
       <PageHeader
         title={HEADER.title}
         subtitle={HEADER.subtitle}
@@ -246,12 +251,14 @@ export function ReportsConsole({ state: initialState }: ReportsConsoleProps) {
         </div>
       )}
 
-      {/* Three-zone grid */}
+      {/* Three-zone grid — 224px rail · fluid canvas · 300px drawer.
+          Sized to fit the shell's max-w-[1200px] track minus padding with no
+          clip: 224 + 24 + canvas + 24 + 300 ≤ usable width. */}
       <div
         className={cn(
-          'grid grid-cols-1 gap-x-8 gap-y-6',
-          'lg:grid-cols-[240px_minmax(0,1fr)]',
-          hasCanvas && 'xl:grid-cols-[240px_minmax(0,1fr)_320px]',
+          'grid grid-cols-1 gap-x-6 gap-y-6',
+          'lg:grid-cols-[224px_minmax(0,1fr)]',
+          hasCanvas && 'xl:grid-cols-[224px_minmax(0,1fr)_300px]',
         )}
       >
         {/* LEFT RAIL (desktop) */}
@@ -273,6 +280,46 @@ export function ReportsConsole({ state: initialState }: ReportsConsoleProps) {
             </div>
           </aside>
         )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * ReportComposerPreview — a ghosted scrim-preview of the real composed report
+ * (cover figure + 2-up viz tiles), shown behind the empty state so the stub
+ * previews the SHAPE of the feature instead of an apologetic void (§4.3 / M8).
+ * Non-interactive, aria-hidden; EmptyState scrims it to ~40% + fades to white.
+ */
+function ReportComposerPreview() {
+  return (
+    <div aria-hidden="true" className="flex flex-col gap-3 text-left">
+      {/* Cover — mono figure + verdict line */}
+      <div className="card-console-hero p-5">
+        <div className="h-2 w-24 rounded bg-[#E5E7EB]" />
+        <div className="mt-3 flex items-baseline gap-2">
+          <span className="font-mono text-[40px] font-medium leading-none tabular-nums text-[#0A0A0A]">
+            68
+          </span>
+          <span className="font-mono text-[13px] tabular-nums text-[#9CA3AF]">
+            / 100
+          </span>
+        </div>
+        <div className="mt-3 h-2.5 w-3/4 rounded bg-[#EEF2FF]" />
+      </div>
+      {/* 2-up viz tiles */}
+      <div className="grid grid-cols-[1fr_120px] gap-3">
+        <div className="card-console space-y-2 p-4">
+          <div className="h-2 w-20 rounded bg-[#E5E7EB]" />
+          <div className="h-1.5 w-full rounded bg-[#F0F0F0]" />
+          <div className="h-1.5 w-5/6 rounded bg-[#F0F0F0]" />
+          <div className="h-1.5 w-2/3 rounded bg-[#F0F0F0]" />
+        </div>
+        <div className="card-console space-y-2 p-4">
+          <div className="h-2 w-12 rounded bg-[#E5E7EB]" />
+          <div className="h-1.5 w-full rounded bg-[#F0F0F0]" />
+          <div className="h-1.5 w-3/4 rounded bg-[#F0F0F0]" />
+        </div>
       </div>
     </div>
   )
@@ -313,7 +360,7 @@ function PopulatedCanvas({
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
           aria-label="Report title"
-          className="w-full bg-transparent font-[var(--font-display)] text-[26px] font-medium leading-[1.15] tracking-[-0.02em] text-[#0A0A0A] outline-none transition-colors placeholder:text-[#9CA3AF] focus:text-[#0A0A0A] sm:text-[30px]"
+          className="w-full truncate bg-transparent font-[var(--font-display)] text-[22px] font-medium leading-[1.15] tracking-[-0.02em] text-[#0A0A0A] outline-none transition-colors placeholder:text-[#9CA3AF] focus:text-[#0A0A0A] sm:text-[28px]"
           placeholder="Untitled report"
         />
         <p className="mt-2 font-mono text-[13px] tabular-nums text-[#9CA3AF]">
@@ -322,7 +369,7 @@ function PopulatedCanvas({
       </div>
 
       {/* TIER-1 cover — full width, the ONE Fraunces beat */}
-      <div className="craft-enter craft-enter-1 mb-10">
+      <div className="craft-enter craft-enter-1 mb-8">
         <ReportCover figure="68" unit="/ 100" verdict="improving" />
       </div>
 
@@ -392,10 +439,11 @@ function BodyGrid({
   const [first, second, ...rest] = blocks
 
   return (
-    <div className="flex flex-col gap-10">
-      {/* Weighted 2-up: first wide, second narrow */}
+    <div className="flex flex-col gap-8">
+      {/* Weighted 2-up: first wide, second narrow. Ratio (not a fixed 360px
+          column) so the split holds inside the narrower three-zone canvas. */}
       {second ? (
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px]">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.35fr_1fr]">
           {renderTile(first, 0, 0)}
           {renderTile(second, 1, 1)}
         </div>
