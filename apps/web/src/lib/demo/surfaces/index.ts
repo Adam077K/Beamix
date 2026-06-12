@@ -22,6 +22,15 @@ export { DEMO_OFFSITE } from './offsite'
 export { DEMO_BLOG } from './blog-studio'
 export { DEMO_ANALYTICS } from './analytics'
 export { DEMO_SENTIMENT } from './sentiment'
+// Batch 2-5 fixture exports
+export { DEMO_TRAFFIC } from './traffic'
+export { DEMO_MARKET } from './market'
+export { DEMO_ASK } from './ask'
+export { DEMO_BUILDER } from './builder'
+export { DEMO_REPORTS } from './reports'
+export { DEMO_TEAM } from './team'
+export { DEMO_AGENCY } from './agency'
+export { DEMO_SHOPPING } from './shopping'
 
 // Shared types — re-exported for surface worker convenience
 export type {
@@ -51,5 +60,59 @@ export type {
   ClaimAccuracyRow,
   RecoveryEvent,
   DemoSentiment,
+  // Traffic surface
+  CrawlerBotPoint,
+  CrawlerTrend,
+  ReferralAttribution,
+  ContentPerformance,
+  TrafficDrillRow,
+  DemoTraffic,
+  // Market surface
+  MarketPromptRow,
+  TrendingPrompt,
+  AgeBand,
+  IncomeBand,
+  MarketDemographics,
+  MarketPromptDrill,
+  DemoMarket,
+  // Ask surface
+  AskCitation,
+  AskMessage,
+  GroundingStep,
+  DemoAsk,
+  // Builder surface
+  WorkflowTemplate,
+  WorkflowNode,
+  WorkflowEdge,
+  Workflow,
+  DryRunStep,
+  SavedWorkflow,
+  DemoBuilder,
+  // Reports surface
+  ReportBlock,
+  SavedReport,
+  ActiveReport,
+  ReportConnector,
+  DemoReports,
+  // Team surface
+  TeamMember,
+  PendingInvite,
+  SeatUsage,
+  DemoTeam,
+  // Agency surface
+  AuditFinding,
+  ProspectAudit,
+  AgencyDryRunStep,
+  AgencyClient,
+  WhiteLabelConfig,
+  AgencyLead,
+  DemoAgency,
+  // Shopping surface
+  AttributeCheck,
+  AttributeMatrix,
+  SkuSentiment,
+  ShoppingSku,
+  ShoppingDrillRow,
+  DemoShopping,
 } from './types'
 export { DEMO_BUSINESS } from './types'
