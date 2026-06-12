@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { ToolPage } from '@/components/console/ToolPage'
+import { BlogContextRail } from './BlogContextRail'
 import { ContextStat } from '@/components/console/ContextStat'
 import { RunControl } from '@/components/console/RunControl'
 import { PipelineLedger } from '@/components/console/PipelineLedger'
@@ -183,7 +184,7 @@ function BlogInputPanel({
             onChange={(e) => onTopicChange(e.target.value)}
             disabled={disabled}
             placeholder="e.g. Is teeth whitening safe for sensitive teeth?"
-            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#0A0A0A] placeholder:text-[#D1D5DB] focus:border-[#3370FF] focus:outline-none focus:ring-2 focus:ring-[#3370FF] focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-10 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-[14px] text-[#0A0A0A] placeholder:text-[#9CA3AF] focus:border-[#3370FF] focus:outline-none focus:ring-2 focus:ring-[#3370FF] focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
             aria-describedby="blog-topic-hint"
           />
           <span id="blog-topic-hint" className="sr-only">
@@ -191,23 +192,23 @@ function BlogInputPanel({
           </span>
         </div>
 
-        {/* Page lock indicator */}
-        <div className="flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2.5">
+        {/* Page lock — passive status note (M12). A quiet hairline row, NOT a
+            second bordered box: it recedes so the topic field stays the focal. */}
+        <div className="-mt-2.5 flex items-center gap-1.5 text-[#9CA3AF]">
           <svg
-            width="14"
-            height="14"
+            width="12"
+            height="12"
             viewBox="0 0 14 14"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             aria-hidden="true"
-            className="shrink-0 text-[#9CA3AF]"
+            className="shrink-0"
           >
             <rect x="2.5" y="6" width="9" height="6.5" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
             <path d="M4.5 6V4.5a2.5 2.5 0 0 1 5 0V6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" fill="none" />
           </svg>
-          <p className="text-[12px] text-[#6B7280]">
-            <span className="font-medium text-[#0A0A0A]">Page lock active.</span>{' '}
-            The article will be locked for editing while the agent runs.
+          <p className="text-[12px] leading-snug">
+            The page locks for editing while the agent runs.
           </p>
         </div>
 
@@ -226,9 +227,12 @@ function BlogInputPanel({
             onChange={(e) => onCustomInstructionsChange(e.target.value)}
             disabled={disabled}
             rows={3}
-            placeholder="e.g. Focus on post-procedure care. Avoid mentioning specific product brands. Target a patient who has never had implants before."
-            className="w-full resize-y rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#0A0A0A] placeholder:text-[#D1D5DB] focus:border-[#3370FF] focus:outline-none focus:ring-2 focus:ring-[#3370FF] focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
+            placeholder="e.g. Focus on post-procedure care."
+            className="w-full resize-y rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-[14px] text-[#0A0A0A] placeholder:text-[#9CA3AF] focus:border-[#3370FF] focus:outline-none focus:ring-2 focus:ring-[#3370FF] focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50"
           />
+          <p className="text-[12px] leading-snug text-[#9CA3AF]">
+            Tone, audience, angles to avoid — anything that should shape the draft.
+          </p>
         </div>
       </div>
     </div>
@@ -600,6 +604,13 @@ export function BlogEditor({ planTier }: BlogEditorProps) {
     />
   )
 
+  // "Earn the width" rail (M3/M10 — blog-studio P1-2): live context beside the
+  // input during the planning phase (idle/empty). Once the agent is running or a
+  // draft has landed, the ledger / full-width editor leads — drop the rail so the
+  // output commands its TIER-1 width.
+  const showRail = pageState === 'idle' || pageState === 'empty'
+  const rail = showRail ? <BlogContextRail drafts={DEMO_BLOG.drafts} /> : undefined
+
   // Zone 5 output
   let output: React.ReactNode = null
 
@@ -730,6 +741,7 @@ export function BlogEditor({ planTier }: BlogEditorProps) {
       ledger={ledger}
       output={output ?? undefined}
       state={pageState}
+      rail={rail}
       historyHref="/archive"
     />
   )
