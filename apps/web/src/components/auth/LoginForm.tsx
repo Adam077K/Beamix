@@ -71,7 +71,7 @@ export function LoginForm() {
       eyebrow="Welcome back"
       heading={
         <>
-          Sign <em className="font-[var(--font-serif)] italic font-normal">in.</em>
+          Sign <em className="font-[var(--font-serif)] italic font-normal">in</em>.
         </>
       }
       subheading="Your AI search crew is standing by."
@@ -152,28 +152,31 @@ export function LoginForm() {
           </div>
         </div>
 
-        {/* Submit */}
+        {/* Primary action — dominant: taller (lg/h-11), full-width, commands the eye. */}
         <Button
           type="submit"
-          className="mt-6 w-full"
+          size="lg"
+          className="mt-6 w-full shadow-[0_1px_2px_rgba(51,112,255,0.25)]"
           disabled={formState === 'submitting'}
           aria-label={formState === 'submitting' ? 'Signing in…' : 'Sign in'}
         >
           {formState === 'submitting' ? <Dots /> : 'Sign in'}
         </Button>
 
-        {/* Divider */}
-        <div className="relative my-5 flex items-center" aria-hidden="true">
+        {/* Divider — wider gap (my-6) so the secondary path reads as a step down,
+            not a paired equal. */}
+        <div className="relative my-6 flex items-center" aria-hidden="true">
           <div className="flex-1 border-t border-[#E5E7EB]" />
           <span className="mx-3 text-[12px] text-[#9CA3AF]">or</span>
           <div className="flex-1 border-t border-[#E5E7EB]" />
         </div>
 
-        {/* Google OAuth */}
+        {/* Google OAuth — secondary: recedes to a quiet ghost, default height
+            (h-9, shorter than the lg primary), no border weight. */}
         <Button
           type="button"
-          variant="outline"
-          className="w-full"
+          variant="ghost"
+          className="w-full text-[#374151] hover:bg-[#F3F4F6]"
           disabled={formState === 'submitting'}
           onClick={() => {
             void handleGoogleOAuth(next, {
@@ -214,6 +217,11 @@ export function LoginForm() {
           </svg>
           Continue with Google
         </Button>
+
+        {/* Trust microcopy — quiet reassurance, never competes with the CTA. */}
+        <p className="mt-5 text-center text-[12px] leading-[1.5] text-[#9CA3AF]">
+          Encrypted connection. We never post or email on your behalf.
+        </p>
       </form>
     </AuthCard>
   )
