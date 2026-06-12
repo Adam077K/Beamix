@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { useState } from 'react'
 import type { SentimentTheme } from '@/lib/demo/surfaces/types'
 import { SentimentBadge, type Sentiment } from './SentimentBadge'
 import { VerbatimQuote } from './VerbatimQuote'
@@ -8,6 +8,9 @@ const SENTIMENT_RANK: Record<Sentiment, number> = {
   neutral: 1,
   positive: 2,
 }
+
+/** How many secondary tiles show before the "view N more" fold (M3 — no wall of equal tiles). */
+const SECONDARY_VISIBLE = 2
 
 interface SentimentThemesProps {
   themes: SentimentTheme[]
@@ -50,14 +53,45 @@ export function SentimentThemes({ themes, onDrill }: SentimentThemesProps) {
         {/* Focus card — wider, carries the verbatim quote */}
         <FocusThemeCard theme={focus} onDrill={() => onDrill(focus)} />
 
-        {/* Secondary themes — TIER-3 inset stack */}
-        <div className="flex flex-col gap-3">
-          {rest.map((theme) => (
-            <InsetThemeCard key={theme.name} theme={theme} onDrill={() => onDrill(theme)} />
-          ))}
-        </div>
+        {/* Secondary themes — TIER-3 inset stack, capped at SECONDARY_VISIBLE
+            with a "view N more" fold so it never reads as a wall of equal tiles. */}
+        <SecondaryThemeStack themes={rest} onDrill={onDrill} />
       </div>
     </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Secondary theme stack — capped list + progressive reveal (M3)
+// ---------------------------------------------------------------------------
+
+function SecondaryThemeStack({
+  themes,
+  onDrill,
+}: {
+  themes: SentimentTheme[]
+  onDrill: (theme: SentimentTheme) => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const hidden = themes.length - SECONDARY_VISIBLE
+  const visible = expanded ? themes : themes.slice(0, SECONDARY_VISIBLE)
+
+  return (
+    <div className="flex flex-col gap-3">
+      {visible.map((theme) => (
+        <InsetThemeCard key={theme.name} theme={theme} onDrill={() => onDrill(theme)} />
+      ))}
+
+      {!expanded && hidden > 0 && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="self-start rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-[#3370FF] transition-colors hover:bg-[#EEF2FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+        >
+          View {hidden} more theme{hidden === 1 ? '' : 's'} →
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -123,26 +157,33 @@ function InsetThemeCard({ theme, onDrill }: { theme: SentimentTheme; onDrill: ()
     <button
       type="button"
       onClick={onDrill}
-      className="card-inset flex flex-col gap-2.5 px-4 py-3.5 text-left transition-colors hover:bg-[#F4F6FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
-      aria-label={`Open all quotes for theme: ${theme.name}`}
+      className="card-inset flex items-start gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-[#F4F6FA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-2"
+      aria-label={`Open all quotes for theme: ${theme.name} — ${theme.mentionCount} mentions`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="min-w-0 text-[14px] font-medium leading-snug text-[#0A0A0A]">
-          {theme.name}
-        </h3>
-        <SentimentBadge sentiment={theme.sentiment as Sentiment} />
-      </div>
-
-      <div className="flex items-baseline gap-1.5">
-        <span className="font-[var(--font-mono)] text-[13px] tabular-nums text-[#0A0A0A]">
+      {/* Number-over-label (M7): the mono mention-count is the dominant figure,
+          the "mentions" caption recedes beneath it. */}
+      <div className="flex w-12 shrink-0 flex-col items-start leading-none">
+        <span className="font-[var(--font-mono)] text-[22px] font-medium tabular-nums tracking-[-0.03em] text-[#0A0A0A]">
           {theme.mentionCount}
         </span>
-        <span className="text-[12px] text-[#6B7280]">mentions</span>
+        <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.06em] text-[#9CA3AF]">
+          mentions
+        </span>
       </div>
 
-      <p className={cn('line-clamp-2 text-[13px] leading-relaxed text-[#6B7280]')}>
-        “{theme.representativeQuote.fullResponse}”
-      </p>
+      {/* Theme name + recessed quote preview. No forced line-clamp-2, so tile
+          heights vary by content instead of reading as identical clones. */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2.5">
+          <h3 className="min-w-0 text-[14px] font-medium leading-snug text-[#0A0A0A]">
+            {theme.name}
+          </h3>
+          <SentimentBadge sentiment={theme.sentiment as Sentiment} />
+        </div>
+        <p className="mt-1.5 line-clamp-1 text-[12px] leading-relaxed text-[#9CA3AF]">
+          “{theme.representativeQuote.fullResponse}”
+        </p>
+      </div>
     </button>
   )
 }
