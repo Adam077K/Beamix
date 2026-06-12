@@ -168,12 +168,16 @@ function SuccessBody({ data }: { data: DemoSentiment }) {
   return (
     <>
       {/* ── TIER-1 hero + the ONE Fraunces beat ───────────────── */}
+      {/* The single focal of the page. The deepened --shadow-card-hero (foundation
+          UIX-F1) + the extra vertical breathing room here make the 64px score and
+          30px verdict unmistakably the loudest element — they must out-mass every
+          card beneath (audit P1#2, M1/M2). */}
       <section
-        className="card-console-hero grid grid-cols-1 gap-6 p-6 lg:grid-cols-[1fr_360px] lg:gap-8"
+        className="card-console-hero grid grid-cols-1 gap-6 p-7 lg:grid-cols-[1fr_352px] lg:gap-10 lg:p-9"
         aria-labelledby="integrity-heading"
       >
         {/* LEFT — score + verdict sentence */}
-        <div className="flex flex-col justify-center">
+        <div className="flex flex-col justify-center py-1">
           <p
             id="integrity-heading"
             className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]"
@@ -181,7 +185,7 @@ function SuccessBody({ data }: { data: DemoSentiment }) {
             Brand integrity · {DEMO_BUSINESS.name}
           </p>
 
-          <div className="mt-3 flex items-baseline gap-3">
+          <div className="mt-4 flex items-baseline gap-3">
             <span
               className="font-[var(--font-mono)] text-[64px] font-medium leading-none tabular-nums tracking-[-0.04em]"
               style={{ color: present.color }}
@@ -193,8 +197,10 @@ function SuccessBody({ data }: { data: DemoSentiment }) {
             </span>
           </div>
 
-          {/* STEP-2 verdict sentence — the single Fraunces word lives here */}
-          <p className="mt-5 max-w-[440px] text-[18px] font-medium leading-[1.4] tracking-[-0.01em] text-[#0A0A0A]">
+          {/* STEP-2 verdict sentence — the single Fraunces word lives here.
+              30px InterDisplay-Medium -0.02em: the emotional payload of the page,
+              raised from 18px so it commands rather than whispers (audit P1#2). */}
+          <p className="mt-6 max-w-[520px] font-[var(--font-display)] text-[30px] font-medium leading-[1.22] tracking-[-0.02em] text-[#0A0A0A]">
             Across AI answers your brand reads{' '}
             <SerifVerdict>{present.word}</SerifVerdict> — {present.claimClause}.
           </p>
@@ -313,8 +319,11 @@ function LoadingBody() {
 // ---------------------------------------------------------------------------
 
 function EmptyBody() {
+  // M8 designed empty: the first-run sits on the warm TIER-3 inset ground (not a
+  // cold white card), so a new user's default experience reads warm + intentional.
+  // EmptyState supplies the scan glyph + two-tier CTA (primary pill + quiet link).
   return (
-    <div className={cn('card-console p-2')}>
+    <div className={cn('card-inset px-2 py-10 sm:py-14')}>
       <EmptyState
         illustration="scan"
         title="We haven’t heard the engines describe you yet"
