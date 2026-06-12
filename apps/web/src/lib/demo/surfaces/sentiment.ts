@@ -11,7 +11,8 @@ import type {
  * DEMO_SENTIMENT — Sentiment surface fixture
  * Business: Bright Smile Dental, Ramat Gan
  *
- * Integrity score: 86 (positive band).
+ * Integrity score: 86 (excellent band, 75–100).
+ * Recent trend climbs as the 2026-06-02 recovery event corrected a false claim.
  * Two claim-accuracy issues caught before they spread.
  * One before/after recovery event shows a previously-wrong claim now corrected.
  * Verbatim quotes are written as genuine model outputs — not copy-paste fakes.
@@ -132,7 +133,10 @@ const recoveryEvent: RecoveryEvent = {
 
 export const DEMO_SENTIMENT: DemoSentiment = {
   integrityScore: 86,
-  integrityBand: 'good',
+  integrityBand: 'excellent',
+  // Oldest → newest. The dip to 74 coincides with the false-claim spread before
+  // the 2026-06-02 correction; the last point is the current integrityScore (86).
+  integrityTrend: [79, 76, 74, 81, 86],
   split,
   themes,
   claimAccuracy,

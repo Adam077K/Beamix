@@ -352,6 +352,11 @@ export interface DemoSentiment {
   integrityScore: number
   /** Score band */
   integrityBand: 'excellent' | 'good' | 'fair' | 'critical'
+  /**
+   * Recent integrity-score history (oldest → newest, last point === integrityScore).
+   * Powers the hero micro-sparkline so the owner sees the trend behind the number.
+   */
+  integrityTrend: number[]
   /** Positive/neutral/negative split */
   split: SentimentSplit
   /** Recurring themes with verbatim quotes */
