@@ -25,30 +25,60 @@ export interface NodeTypeMeta {
   eyebrow: string
   /** Quiet step-count hint shown in Geist Mono */
   stepHint: string
+  /** Numeric step estimate — drives hierarchy + resting cost figure */
+  steps: number
 }
 
 export const NODE_VOCAB: Record<NodeType, NodeTypeMeta> = {
-  plan: { icon: Compass, eyebrow: 'PLAN', stepHint: '~1 step' },
-  research: { icon: Search, eyebrow: 'RESEARCH', stepHint: '~2 steps' },
-  do: { icon: Wand2, eyebrow: 'DO', stepHint: '~4 steps' },
-  qa: { icon: ShieldCheck, eyebrow: 'QA', stepHint: '~1 step' },
-  summarize: { icon: FileText, eyebrow: 'SUMMARISE', stepHint: '~1 step' },
+  plan: { icon: Compass, eyebrow: 'PLAN', stepHint: '~1 step', steps: 1 },
+  research: { icon: Search, eyebrow: 'RESEARCH', stepHint: '~2 steps', steps: 2 },
+  do: { icon: Wand2, eyebrow: 'DO', stepHint: '~4 steps', steps: 4 },
+  qa: { icon: ShieldCheck, eyebrow: 'QA', stepHint: '~1 step', steps: 1 },
+  summarize: { icon: FileText, eyebrow: 'SUMMARISE', stepHint: '~1 step', steps: 1 },
+}
+
+/**
+ * Node weight tiers drive felt hierarchy (M1): the highest-cost DO node reads as
+ * the TIER-1 hero card, multi-step nodes sit at TIER-2, single-step utility nodes
+ * recede toward TIER-3 .card-inset weight. The eye must land on DO first.
+ */
+export type NodeWeight = 'hero' | 'standard' | 'utility'
+
+export function nodeWeight(type: NodeType): NodeWeight {
+  const steps = NODE_VOCAB[type].steps
+  if (steps >= 4) return 'hero'
+  if (steps >= 2) return 'standard'
+  return 'utility'
 }
 
 // ---------------------------------------------------------------------------
 // Canvas geometry — hand-built layout (no React Flow at MVP).
 //
-// Nodes lay out on a single vertical spine, each row centred. Edges are SVG
-// paths between consecutive nodes. This is intentionally simple: the MVP node
-// set is plan→research→do→qa→summarize (linear), and a hand-built layout is
-// lighter and fully on-brand. React Flow is the documented escape hatch only if
-// free pan/zoom + 30+ node graphs become load-bearing post-MVP.
+// uix-p-builder rethink: the flow is LEFT-ANCHORED inside the canvas (not a
+// dead-center ribbon in a void) and runs down a spine rail with a left gutter
+// for the connector. The freed right ~40% of the frame is the persistent
+// inspector/cost rail (owned by BuilderSurface). Node heights are NOT uniform:
+// the dominant DO node is taller (hero), single-step utility nodes shorter, so
+// the eye lands on the center of gravity. React Flow stays the documented
+// escape hatch only if pan/zoom + 30+ node graphs become load-bearing.
 // ---------------------------------------------------------------------------
 
-export const NODE_W = 320
-export const NODE_H = 96
-export const ROW_GAP = 56 // vertical gap between node cards
-export const TRIGGER_H = 64
+export const NODE_W = 360 // wider — the flow now fills its column, not a ribbon
+export const TRIGGER_H = 60
+export const ROW_GAP = 40 // vertical gap between node cards (tighter rhythm)
+export const RAIL_X = 26 // x of the vertical connector rail (left gutter)
+export const NODE_X = 64 // top-left x of every card (left-anchored)
+
+/** Per-weight card heights — felt hierarchy (M1). */
+const HEIGHT_BY_WEIGHT: Record<NodeWeight, number> = {
+  hero: 116,
+  standard: 96,
+  utility: 80,
+}
+
+export function nodeHeight(type: NodeType): number {
+  return HEIGHT_BY_WEIGHT[nodeWeight(type)]
+}
 
 export interface NodeBox {
   id: string
@@ -61,18 +91,23 @@ export interface NodeBox {
 }
 
 /**
- * Lay nodes out on a centred vertical spine beneath the trigger node.
- * Returns absolute boxes (relative to the canvas content origin) keyed by id.
+ * Lay nodes out on a LEFT-ANCHORED vertical flow beneath the trigger node.
+ * The connector rail sits in the left gutter (RAIL_X); cards align at NODE_X.
+ * Returns absolute boxes (relative to the canvas content origin) keyed by id,
+ * with per-node type metadata so the renderer can pick its weight.
  */
 export function layoutSpine(
-  nodeIds: string[],
-  contentWidth: number,
-): { trigger: NodeBox; nodes: Record<string, NodeBox>; height: number } {
-  const cx = contentWidth / 2
+  types: { id: string; type: NodeType }[],
+): {
+  trigger: NodeBox
+  nodes: Record<string, NodeBox>
+  width: number
+  height: number
+} {
   const triggerY = 0
   const trigger: NodeBox = {
     id: '__trigger__',
-    x: cx - NODE_W / 2,
+    x: NODE_X,
     y: triggerY,
     w: NODE_W,
     h: TRIGGER_H,
@@ -80,23 +115,27 @@ export function layoutSpine(
 
   const nodes: Record<string, NodeBox> = {}
   let y = triggerY + TRIGGER_H + ROW_GAP
-  for (const id of nodeIds) {
-    nodes[id] = { id, x: cx - NODE_W / 2, y, w: NODE_W, h: NODE_H }
-    y += NODE_H + ROW_GAP
+  for (const { id, type } of types) {
+    const h = nodeHeight(type)
+    nodes[id] = { id, x: NODE_X, y, w: NODE_W, h }
+    y += h + ROW_GAP
   }
 
-  return { trigger, nodes, height: y - ROW_GAP }
+  return {
+    trigger,
+    nodes,
+    width: NODE_X + NODE_W,
+    height: y - ROW_GAP,
+  }
 }
 
 /**
- * SVG cubic path between the bottom-centre of a source box and the top-centre
- * of a target box — a calm vertical S-curve.
+ * SVG path from the connector rail to a node's left edge — a calm right-angle
+ * elbow that reads as one continuous pipeline down the gutter. The vertical
+ * trunk is drawn separately; this returns the short horizontal stub into each
+ * card's left-middle.
  */
-export function edgePath(from: NodeBox, to: NodeBox): string {
-  const x1 = from.x + from.w / 2
-  const y1 = from.y + from.h
-  const x2 = to.x + to.w / 2
-  const y2 = to.y
-  const midY = (y1 + y2) / 2
-  return `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`
+export function edgeStub(box: NodeBox): string {
+  const y = box.y + box.h / 2
+  return `M ${RAIL_X} ${y} L ${box.x} ${y}`
 }
