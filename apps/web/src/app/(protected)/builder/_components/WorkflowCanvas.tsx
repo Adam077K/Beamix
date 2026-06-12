@@ -155,8 +155,8 @@ export function WorkflowCanvas({
         {/* Trigger node — BLUE structure (your input) */}
         <TriggerNode box={shiftBox(layout.trigger, contentTop)} />
 
-        {/* Agent nodes — VIOLET (the work), with felt hierarchy */}
-        {workflow.nodes.map((node) => {
+        {/* Agent nodes — VIOLET (the work), with felt hierarchy + entrance stagger */}
+        {workflow.nodes.map((node, i) => {
           const box = layout.nodes[node.id]
           if (!box) return null
           return (
@@ -165,6 +165,7 @@ export function WorkflowCanvas({
               node={node}
               box={shiftBox(box, contentTop)}
               weight={nodeWeight(node.type)}
+              index={i}
               selected={selectedNodeId === node.id}
               hasError={errorNodeIds.includes(node.id)}
               onSelect={() => onSelectNode(node.id)}
@@ -220,10 +221,21 @@ function TriggerNode({ box }: { box: NodeBox }) {
 // Agent node — violet agent, weight-tiered
 // ---------------------------------------------------------------------------
 
+const ENTER_STAGGER = [
+  'craft-enter-2',
+  'craft-enter-3',
+  'craft-enter-4',
+  'craft-enter-5',
+  'craft-enter-6',
+  'craft-enter-7',
+  'craft-enter-8',
+]
+
 function AgentNode({
   node,
   box,
   weight,
+  index,
   selected,
   hasError,
   onSelect,
@@ -231,6 +243,7 @@ function AgentNode({
   node: WorkflowNode
   box: NodeBox
   weight: NodeWeight
+  index: number
   selected: boolean
   hasError: boolean
   onSelect: () => void
@@ -247,6 +260,8 @@ function AgentNode({
       aria-pressed={selected}
       className={cn(
         'group absolute flex flex-col justify-center overflow-hidden rounded-[var(--radius-card)] text-left',
+        'craft-enter',
+        ENTER_STAGGER[Math.min(index, ENTER_STAGGER.length - 1)],
         'transition-[box-shadow,transform] duration-200 focus-visible:outline-none',
         // hierarchy: hero commands (white card + hero shadow + violet left rail),
         // standard is a calm white card, utility recedes to the inset weight.

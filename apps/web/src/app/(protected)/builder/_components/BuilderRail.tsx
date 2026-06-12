@@ -40,6 +40,28 @@ export function BuilderRail({
     0,
   )
 
+  // Blank canvas: the cost figure is meaningless with zero steps. Show an
+  // M8-style "what happens next" rail instead of a zeroed estimate.
+  if (workflow.nodes.length === 0) {
+    return (
+      <section className="card-inset overflow-hidden">
+        <div className="px-5 pb-5 pt-4">
+          <p className="text-[11px] font-semibold uppercase leading-none tracking-[0.08em] text-[#9CA3AF]">
+            This run
+          </p>
+          <p className="mt-3 text-[14px] font-medium leading-[1.4] text-[#0A0A0A]">
+            Nothing to estimate yet
+          </p>
+          <p className="mt-1.5 text-[12px] leading-[1.5] text-[#6B7280]">
+            Add your first agent on the canvas. As you compose the flow, this rail
+            shows the honest step count and estimated cost before you spend a
+            credit.
+          </p>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {/* Resting cost panel — the commanding figure (M2 STEP-1 / M11) */}
@@ -62,7 +84,7 @@ export function BuilderRail({
             <div className="h-10 w-px bg-[var(--color-agent-hairline)]" aria-hidden="true" />
             <div>
               <p className="font-[var(--font-mono)] text-[34px] font-medium leading-none tabular-nums text-[#0A0A0A]">
-                {estCost.replace('$', '$')}
+                {estCost}
               </p>
               <p className="mt-1.5 flex items-center gap-1.5 text-[12px] text-[#6B7280]">
                 <Coins className="h-3.5 w-3.5 text-[#9CA3AF]" aria-hidden="true" />
