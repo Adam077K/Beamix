@@ -28,7 +28,11 @@ export default async function DigestsPage() {
       : []
 
   return (
-    <main className="mx-auto min-h-[100dvh] max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    // No inner max-w container — the DashboardShell frame already supplies
+    // `mx-auto max-w-[1200px] px-6 py-8`. A second narrower wrapper here was
+    // what stranded the list left and left ~45% of the frame dead (audit #3).
+    // We fill the shell frame and let DigestList own the [1fr_rail] split.
+    <div className="min-h-[60dvh]">
       <PageHeader
         title="Weekly digests"
         subtitle="Every week, written up — what moved, what the crew shipped, and what we'd love your eyes on."
@@ -37,7 +41,7 @@ export default async function DigestsPage() {
       <Suspense fallback={<DigestArchiveSkeleton />}>
         <DigestArchivePage digests={digests} />
       </Suspense>
-    </main>
+    </div>
   )
 }
 
