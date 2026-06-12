@@ -132,8 +132,8 @@ function WorkbenchBody() {
           <TrendingPromptsPanel prompts={data.trendingPrompts} />
         </div>
 
-        {/* Audience + co-citation 2-up */}
-        <div className="grid gap-8 lg:grid-cols-2">
+        {/* Audience + co-citation 2-up — co-citation field wider (asymmetry contract) */}
+        <div className="grid gap-8 lg:grid-cols-[1fr_1.2fr]">
           <AudienceCard demographics={data.demographics} totalVolume={totalVolume} />
           <CoCitationPanel market={data} />
         </div>

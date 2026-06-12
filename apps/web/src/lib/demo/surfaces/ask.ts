@@ -83,7 +83,7 @@ const thread: AskMessage[] = [
       {
         type: 'prompt',
         label: 'Prompt: zoom whitening one session Israel (1,100/mo)',
-        href: '/prompts?id=p14',
+        href: '/prompts?id=p21',
       },
     ],
   },

@@ -160,7 +160,7 @@ export function TrafficHeroPanel({
         </div>
 
         {/* RIGHT — 360px crawl-volume rail */}
-        <div className="flex flex-col items-stretch gap-5">
+        <div className="flex flex-col items-stretch justify-center gap-5">
           <CrawlVolumeBars volumes={volumes} total={total} />
         </div>
       </div>

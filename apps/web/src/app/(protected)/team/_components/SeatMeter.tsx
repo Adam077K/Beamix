@@ -47,7 +47,10 @@ export function SeatMeter({ used, total, onAddSeats }: SeatMeterProps) {
     return () => cancelAnimationFrame(id)
   }, [])
 
-  const segments = Math.max(total, 0)
+  // Cap visible circle segments at 12 to prevent multi-row blob on large accounts.
+  const MAX_SEGMENTS = 12
+  const segments = Math.max(Math.min(total, MAX_SEGMENTS), 0)
+  const overflow = Math.max(total - MAX_SEGMENTS, 0)
   const nearCap = total - used <= 1
 
   return (
@@ -60,31 +63,43 @@ export function SeatMeter({ used, total, onAddSeats }: SeatMeterProps) {
         {used} of {total}
       </span>
 
-      {/* The pill-bar — N circle segments, filled left-to-right */}
-      <div
-        className="flex h-6 items-center gap-1.5"
-        role="img"
-        aria-label={`${used} of ${total} seats used`}
-      >
-        {Array.from({ length: segments }).map((_, i) => {
-          const isFilled = i < used
-          return (
-            <span
-              key={i}
-              aria-hidden="true"
-              className={cn(
-                'h-6 w-6 rounded-full transition-transform duration-300 ease-out',
-                isFilled ? 'bg-[#3370FF]' : 'bg-[#E5E7EB]',
-              )}
-              style={{
-                // Filled segments scale-in once on first mount, staggered L→R.
-                // Empty segments are static.
-                transform: isFilled && !filled ? 'scale(0)' : 'scale(1)',
-                transitionDelay: isFilled ? `${i * 50}ms` : '0ms',
-              }}
-            />
-          )
-        })}
+      {/* The pill-bar — up to MAX_SEGMENTS circle segments, filled left-to-right */}
+      <div className="flex items-center gap-2">
+        <div
+          className="flex h-6 items-center gap-1.5"
+          role="img"
+          aria-label={`${used} of ${total} seats used`}
+        >
+          {Array.from({ length: segments }).map((_, i) => {
+            const isFilled = i < Math.min(used, MAX_SEGMENTS)
+            return (
+              <span
+                key={i}
+                aria-hidden="true"
+                className={cn(
+                  'h-6 w-6 rounded-full transition-transform duration-300 ease-out',
+                  isFilled ? 'bg-[#3370FF]' : 'bg-[#E5E7EB]',
+                )}
+                style={{
+                  // Filled segments scale-in once on first mount, staggered L→R.
+                  // Empty segments are static.
+                  transform: isFilled && !filled ? 'scale(0)' : 'scale(1)',
+                  transitionDelay: isFilled ? `${i * 50}ms` : '0ms',
+                }}
+              />
+            )
+          })}
+        </div>
+
+        {/* Overflow indicator — shown when total exceeds MAX_SEGMENTS */}
+        {overflow > 0 && (
+          <span
+            aria-hidden="true"
+            className="font-mono text-[11px] tabular-nums text-[#9CA3AF]"
+          >
+            +{overflow}
+          </span>
+        )}
       </div>
 
       {nearCap && onAddSeats && (

@@ -300,7 +300,7 @@ export function AgencyWorkspace({ initialState }: AgencyWorkspaceProps) {
           onClick={() => setScope('all')}
           className="self-start text-[13px] text-[#6B7280] underline-offset-2 transition-colors hover:text-[#0A0A0A] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1"
         >
-          Use last scope
+          Reset scope
         </button>
       </div>
     )

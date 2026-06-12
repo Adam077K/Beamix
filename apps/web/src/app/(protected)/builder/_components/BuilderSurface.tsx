@@ -27,6 +27,7 @@ import { WorkflowCanvas } from './WorkflowCanvas'
 import { NodeConfigPanel } from './NodeConfigPanel'
 import { DryRunLedger } from './DryRunLedger'
 import { SheetsView } from './SheetsView'
+import { TEMPLATE_WORKFLOWS } from './template-seeds'
 
 export type BuilderState = 'empty' | 'success' | 'error'
 
@@ -66,9 +67,10 @@ export function BuilderSurface({ state }: BuilderSurfaceProps) {
 
   const selectedNode = workflow?.nodes.find((n) => n.id === selectedNodeId) ?? null
 
-  function pickTemplate(_templateId: string) {
-    // Design-only: every template seeds the same demo workflow shape.
-    setWorkflow(data.workflow)
+  function pickTemplate(templateId: string) {
+    // Use a distinct workflow shape per template id; fall back to the hero workflow.
+    const seeded = TEMPLATE_WORKFLOWS[templateId] ?? data.workflow
+    setWorkflow(seeded)
     setView('canvas')
   }
 

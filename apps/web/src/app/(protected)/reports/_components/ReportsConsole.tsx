@@ -206,9 +206,9 @@ export function ReportsConsole({ state: initialState }: ReportsConsoleProps) {
         }
       />
 
-      {/* Mobile controls — rail + drawer become Sheets <1024px */}
+      {/* Mobile/tablet controls — rail + drawer become Sheets <1280px */}
       {hasCanvas && (
-        <div className="mb-5 flex items-center gap-2 lg:hidden">
+        <div className="mb-5 flex items-center gap-2 xl:hidden">
           <Sheet open={railOpen} onOpenChange={setRailOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
