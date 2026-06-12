@@ -92,9 +92,22 @@ function ResolvedTag({ state }: { state: 'approved' | 'rejected' }) {
 
 interface ApprovalRowProps {
   item: ApprovalQueueItem
+  /** Row position in the ledger — drives the staggered entrance (M9). */
+  index?: number
 }
 
-export function ApprovalRow({ item }: ApprovalRowProps) {
+// M9 entrance: map ledger position → stagger class. Capped at 6 so deep
+// ledgers don't trail; rows past the cap share the last delay.
+const STAGGER = [
+  'craft-enter-3',
+  'craft-enter-4',
+  'craft-enter-5',
+  'craft-enter-6',
+  'craft-enter-7',
+  'craft-enter-8',
+] as const
+
+export function ApprovalRow({ item, index = 0 }: ApprovalRowProps) {
   const [expanded, setExpanded] = React.useState(false)
   const [resolved, setResolved] = React.useState<ActionResolved | null>(null)
 
@@ -127,10 +140,19 @@ export function ApprovalRow({ item }: ApprovalRowProps) {
   return (
     <li
       className={cn(
-        'transition-colors duration-200',
+        'relative transition-colors duration-200 craft-enter',
+        STAGGER[Math.min(index, STAGGER.length - 1)],
         isResolved && 'opacity-60',
       )}
     >
+      {/* M6 Violet Structure — a 2px violet hairline marks every row as
+          agent-authored, so the you-vs-agents split reads spatially while the
+          row is collapsed. Never on the button; the Approve action stays blue. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 left-0 w-[2px]"
+        style={{ backgroundColor: 'var(--color-agent-hairline)' }}
+      />
       {/* Collapsed row — button-as-row */}
       <button
         id={triggerId}
