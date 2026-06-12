@@ -49,7 +49,7 @@ export function DigestRow({
     <Link
       href={`/digests/${digest.id}`}
       className={cn(
-        'relative flex w-full items-center gap-3 px-5 py-4 text-left transition-colors',
+        'relative flex w-full items-start gap-4 px-5 py-4 text-left transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#3370FF]',
         'hover:bg-[#F4F6FA]',
         isSelected && !isMobile && 'bg-accent-tint',
@@ -72,23 +72,24 @@ export function DigestRow({
         />
       )}
 
-      {/* Date stamp */}
-      <div className="w-24 shrink-0 text-left">
-        <p className="text-[14px] font-medium leading-snug text-[#0A0A0A]">
+      {/* Date stamp — relative label is prose (Inter), week label medium ink */}
+      <div className="w-[6.5rem] shrink-0 text-left">
+        <p className="text-[13px] font-medium leading-snug text-[#0A0A0A]">
           {digest.weekLabel}
         </p>
-        <p className="mt-0.5 font-mono text-[12px] text-[#6B7280] tabular-nums">
-          {digest.weekRelative}
-        </p>
+        <p className="mt-0.5 text-[12px] text-[#9CA3AF]">{digest.weekRelative}</p>
       </div>
 
-      {/* Headline excerpt */}
-      <p className="min-w-0 flex-1 truncate text-[14px] text-[#374151]">
+      {/*
+       * Verdict — the content, and the dominant row element (audit #1/#9).
+       * Two-line clamp (never single-line truncate to nonsense). Ink #0A0A0A.
+       */}
+      <p className="min-w-0 flex-1 text-[14px] font-medium leading-snug text-[#0A0A0A] line-clamp-2">
         {digest.digest.headline}
       </p>
 
-      {/* Delta trio — compact on mobile */}
-      <div className="shrink-0">
+      {/* Delta trio — secondary metric, fixed right column */}
+      <div className="hidden shrink-0 sm:block">
         {isMobile ? (
           <DeltaTrioBadge deltas={digest.digest.engineDeltas} compact />
         ) : (
@@ -96,20 +97,20 @@ export function DigestRow({
         )}
       </div>
 
-      {/* Win count */}
-      <span className="shrink-0 font-mono text-[12px] text-[#6B7280] tabular-nums">
-        {winCount} win{winCount !== 1 ? 's' : ''}
-      </span>
-
-      {/* Reviewed pill — violet, agent work signal */}
-      {approvalCount > 0 && (
-        <span
-          className="shrink-0 rounded-full bg-status-agent px-2 py-0.5 text-[11px] font-medium text-status-agent"
-          aria-label={`${approvalCount} reviewed`}
-        >
-          {approvalCount} reviewed
+      {/* TIER-3 metadata column — quiet, right-aligned, demoted under the verdict */}
+      <div className="flex w-[5.5rem] shrink-0 flex-col items-end gap-1">
+        <span className="font-mono text-[12px] text-[#9CA3AF] tabular-nums">
+          {winCount} win{winCount !== 1 ? 's' : ''}
         </span>
-      )}
+        {approvalCount > 0 && (
+          <span
+            className="rounded-full bg-status-agent px-1.5 py-0.5 text-[11px] font-medium text-status-agent"
+            aria-label={`${approvalCount} reviewed`}
+          >
+            {approvalCount} reviewed
+          </span>
+        )}
+      </div>
 
       {/* Chevron */}
       <ChevronRight

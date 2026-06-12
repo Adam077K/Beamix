@@ -70,6 +70,24 @@ function DeltaBadge({ value, nextValue, variant, showSign }: DeltaBadgeProps) {
 
   const sign = showSign ? (value > 0 ? '+' : '') : ''
 
+  // When showing a before→after pair, the BEFORE value recedes and the AFTER
+  // value is the figure (audit #5 — the now-score is the truth that matters).
+  if (nextValue !== undefined) {
+    return (
+      <span
+        className={cn(
+          'inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 font-mono text-[12px] tabular-nums',
+          bgClass,
+          textClass,
+        )}
+      >
+        <span className="text-[#9CA3AF]">{value}</span>
+        <span aria-hidden="true" className="text-[#C4C9D2]">→</span>
+        <span className="font-medium">{nextValue}</span>
+      </span>
+    )
+  }
+
   return (
     <span
       className={cn(
@@ -80,9 +98,6 @@ function DeltaBadge({ value, nextValue, variant, showSign }: DeltaBadgeProps) {
     >
       {sign}
       {value}
-      {nextValue !== undefined && (
-        <span className="ml-0.5 opacity-70">→{nextValue}</span>
-      )}
     </span>
   )
 }
