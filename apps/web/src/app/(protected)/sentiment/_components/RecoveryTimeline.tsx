@@ -1,18 +1,24 @@
 import type { RecoveryEvent } from '@/lib/demo/surfaces/types'
 
 /**
- * RecoveryTimeline — horizontal before/after correction timeline (TIER-2).
+ * RecoveryTimeline — horizontal before/after correction timeline (TIER-3 recede).
  *
  * LEFT node = the wrong claim (critical-tinted old model quote + mono date)
  *   → violet connector hairline with a 6px violet node "Agent corrected this" →
  * RIGHT node = the now-accurate model quote (positive-tinted, newer mono date).
+ *
+ * Demoted to .card-inset (TIER-3) 2026-06-12 (audit P1#1, M1): this is the "past /
+ * already settled" section — it should recede behind the live hero (TIER-1) and the
+ * live themes + claims-to-correct (TIER-2), giving the page a felt depth staircase
+ * instead of a wall of equal white cards. The before/after nodes inside are raised
+ * back to plain white panels so they still read against the warm inset ground.
  *
  * Proves the loop closed. The page hides this section entirely when there is no
  * recovery event (no empty void).
  */
 export function RecoveryTimeline({ event }: { event: RecoveryEvent }) {
   return (
-    <section aria-labelledby="recovery-heading" className="card-console p-5">
+    <section aria-labelledby="recovery-heading" className="card-inset p-5">
       <h2
         id="recovery-heading"
         className="mb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]"
@@ -31,7 +37,7 @@ export function RecoveryTimeline({ event }: { event: RecoveryEvent }) {
           dateLabel={event.wrongDate}
           quote={event.wrongQuote}
           rule="var(--color-status-critical)"
-          quoteColor="#7F1D1D"
+          quoteColor="var(--color-status-critical-text)"
         />
 
         {/* Connector — violet hairline + node */}
@@ -50,7 +56,7 @@ export function RecoveryTimeline({ event }: { event: RecoveryEvent }) {
           dateLabel={event.correctedDate}
           quote={event.correctedQuote}
           rule="var(--color-status-positive)"
-          quoteColor="#14532D"
+          quoteColor="var(--color-status-positive-text)"
         />
       </div>
 
@@ -81,7 +87,9 @@ function RecoveryNode({
   quoteColor: string
 }) {
   return (
-    <figure className="card-inset relative flex-1 overflow-hidden pl-4 pr-4 py-4">
+    // Plain white panel (not .card-inset): the parent section is now a TIER-3 warm
+    // inset, so these nodes raise back to white + hairline to stay legible on it.
+    <figure className="relative flex-1 overflow-hidden rounded-[var(--radius-card,16px)] border border-[#E5E7EB] bg-white pl-4 pr-4 py-4">
       <span
         aria-hidden="true"
         className="absolute inset-y-0 left-0 w-[2px]"
