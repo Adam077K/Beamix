@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { ArrowLeft, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Stat } from '@/components/ui/stat'
+import { EngineMicroSparkline } from '@/components/dashboard/EngineMicroSparkline'
 import type { WeeklyDigest, DigestWin, DigestApproval, EngineVisibilityDelta, WinType } from '@/types/digest'
 
 // ---------------------------------------------------------------------------
@@ -155,56 +157,16 @@ interface EngineDeltaSectionProps {
   deltas: EngineVisibilityDelta[]
 }
 
-/** Inline sparkline — 3-point SVG from fourWeeksAgo → lastWeek → thisWeek */
-function DeltaSparkline({ points }: { points: number[] }) {
-  if (points.length < 2) return null
-
-  const min = Math.min(...points)
-  const max = Math.max(...points)
-  const range = max - min || 1
-  const W = 64
-  const H = 24
-  const PAD = 3
-  const step = W / (points.length - 1)
-
-  const coords = points.map((v, i) => ({
-    x: i * step,
-    y: H - PAD - ((v - min) / range) * (H - PAD * 2),
-  }))
-
-  const polylinePoints = coords.map((pt) => `${pt.x.toFixed(1)},${pt.y.toFixed(1)}`).join(' ')
-  const currentScore = points[points.length - 1]
-  const color = scoreColor(currentScore)
-
-  return (
-    <svg
-      width={W}
-      height={H}
-      viewBox={`0 0 ${W} ${H}`}
-      aria-hidden="true"
-    >
-      <polyline
-        points={polylinePoints}
-        fill="none"
-        stroke={color}
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {/* End-point dot */}
-      <circle
-        cx={coords[coords.length - 1].x}
-        cy={coords[coords.length - 1].y}
-        r={2.5}
-        fill={color}
-      />
-    </svg>
-  )
+/** Sparkline series for an engine delta: fourWeeksAgo → lastWeek → thisWeek. */
+function deltaSparkPoints(delta: EngineVisibilityDelta): number[] {
+  return delta.fourWeeksAgo !== null
+    ? [delta.fourWeeksAgo, delta.lastWeek, delta.thisWeek]
+    : [delta.lastWeek, delta.thisWeek]
 }
 
 /** TIER-2 focus card — the engine with the highest absolute delta (most interesting) */
 function FocusDeltaCard({ delta }: { delta: EngineVisibilityDelta }) {
-  const { engine, thisWeek, lastWeek, fourWeeksAgo, delta: change } = delta
+  const { engine, thisWeek, lastWeek, delta: change } = delta
   const deltaSign = change > 0 ? '+' : ''
   const deltaVariant = change > 0 ? 'positive' : change < 0 ? 'warning' : 'neutral'
   const deltaBg = {
@@ -213,12 +175,6 @@ function FocusDeltaCard({ delta }: { delta: EngineVisibilityDelta }) {
     neutral: 'bg-status-neutral text-status-neutral',
   }[deltaVariant]
   const color = scoreColor(thisWeek)
-
-  const sparkPoints =
-    fourWeeksAgo !== null
-      ? [fourWeeksAgo, lastWeek, thisWeek]
-      : [lastWeek, thisWeek]
-
   const label = `${ENGINE_LABELS[engine] ?? engine}: ${thisWeek} this week, was ${lastWeek}, change ${deltaSign}${change}`
 
   return (
@@ -245,17 +201,24 @@ function FocusDeltaCard({ delta }: { delta: EngineVisibilityDelta }) {
         <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
           {ENGINE_LABELS[engine] ?? engine}
         </p>
-        {/* M4 signature sparkline */}
-        <DeltaSparkline points={sparkPoints} />
+        {/* M4 signature sparkline (foundation hardened) */}
+        <EngineMicroSparkline
+          points={deltaSparkPoints(delta)}
+          currentScore={thisWeek}
+          width={72}
+          height={26}
+        />
       </div>
 
-      {/* M2 STEP-1 — 44px mono score (the prominent number) */}
-      <div className="mt-3 flex items-baseline gap-1.5">
-        <span className="font-mono text-[44px] font-medium leading-none tracking-[-0.03em] tabular-nums text-[#0A0A0A]">
-          {thisWeek}
-        </span>
-        <span className="font-mono text-[14px] text-[#9CA3AF]">/100</span>
-      </div>
+      {/* M2 STEP-1 — 44px mono score (the prominent number), via shared Stat */}
+      <Stat
+        className="mt-3"
+        size="lg"
+        value={thisWeek}
+        unit="/100"
+        valueColor={color}
+        align="start"
+      />
 
       {/* from/delta row — M11 mono for truth */}
       <div className="mt-2 flex items-center gap-2">
@@ -278,7 +241,7 @@ function FocusDeltaCard({ delta }: { delta: EngineVisibilityDelta }) {
 
 /** TIER-3 inset card — non-focus engines */
 function InsetDeltaCard({ delta }: { delta: EngineVisibilityDelta }) {
-  const { engine, thisWeek, lastWeek, fourWeeksAgo, delta: change } = delta
+  const { engine, thisWeek, lastWeek, delta: change } = delta
   const deltaSign = change > 0 ? '+' : ''
   const deltaVariant = change > 0 ? 'positive' : change < 0 ? 'warning' : 'neutral'
   const deltaBg = {
@@ -287,12 +250,6 @@ function InsetDeltaCard({ delta }: { delta: EngineVisibilityDelta }) {
     neutral: 'bg-status-neutral text-status-neutral',
   }[deltaVariant]
   const color = scoreColor(thisWeek)
-
-  const sparkPoints =
-    fourWeeksAgo !== null
-      ? [fourWeeksAgo, lastWeek, thisWeek]
-      : [lastWeek, thisWeek]
-
   const label = `${ENGINE_LABELS[engine] ?? engine}: ${thisWeek} this week, was ${lastWeek}, change ${deltaSign}${change}`
 
   return (
@@ -312,15 +269,22 @@ function InsetDeltaCard({ delta }: { delta: EngineVisibilityDelta }) {
         <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
           {ENGINE_LABELS[engine] ?? engine}
         </p>
-        <DeltaSparkline points={sparkPoints} />
+        <EngineMicroSparkline
+          points={deltaSparkPoints(delta)}
+          currentScore={thisWeek}
+          width={64}
+          height={22}
+        />
       </div>
 
-      <div className="mt-3 flex items-baseline gap-1.5">
-        <span className="font-mono text-[28px] font-medium leading-none tracking-[-0.03em] tabular-nums text-[#0A0A0A]">
-          {thisWeek}
-        </span>
-        <span className="font-mono text-[12px] text-[#9CA3AF]">/100</span>
-      </div>
+      <Stat
+        className="mt-3"
+        size="md"
+        value={thisWeek}
+        unit="/100"
+        valueColor={color}
+        align="start"
+      />
 
       <div className="mt-1.5 flex items-center gap-2">
         <span className="font-mono text-[12px] text-[#9CA3AF] tabular-nums">
