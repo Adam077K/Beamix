@@ -30,6 +30,14 @@ function ils(n: number): string {
   return `₪${n.toLocaleString('en-US')}`
 }
 
+/** Score-band color for the in-cell visibility micro-bar (data-viz only). */
+function bandHex(score: number): string {
+  if (score >= 75) return '#06B6D4'
+  if (score >= 50) return '#10B981'
+  if (score >= 25) return '#F59E0B'
+  return '#EF4444'
+}
+
 export function SkuVisibilityTable({ skus, drill, onSelect }: SkuVisibilityTableProps) {
   // The worst-performing SKU (lowest visibility) earns the critical hairline.
   const worstId = skus.reduce(
@@ -37,12 +45,21 @@ export function SkuVisibilityTable({ skus, drill, onSelect }: SkuVisibilityTable
     skus[0],
   )?.id
 
+  // Max visibility scopes the in-row proportion bar so the texture is relative
+  // to the field, not absolute — the leader's bar reads full, the laggard short.
+  const maxVis = skus.reduce((m, s) => Math.max(m, s.aiVisibility), 0) || 100
+
   const trendFor = (skuId: string): number[] | null => {
     const row = drill.find((d) => d.skuId === skuId)
-    if (!row) return null
-    // Lower position is better — invert into a 0-ish "rank score" for the
-    // sparkline shape so the line still reads as a trend (not fabricated data).
-    return row.positionTrend.map((p) => Math.max(0, 100 - p * 6))
+    if (!row || row.positionTrend.length < 2) return null
+    // Lower position is better. Invert into a bounded "rank score" so the line
+    // reads as a real trend. A poor-but-MEASURED position (e.g. #20) still draws
+    // a distinct LOW line inside [8,96] — it must never floor to the flat
+    // baseline, which is reserved for null/no-data only (M4, fixes P2-4).
+    return row.positionTrend.map((p) => {
+      const score = 100 - p * 5 // #1 → 95, #18 → 10
+      return Math.min(96, Math.max(8, score))
+    })
   }
 
   return (
@@ -66,7 +83,7 @@ export function SkuVisibilityTable({ skus, drill, onSelect }: SkuVisibilityTable
             <TableHead className="text-right">AI visibility</TableHead>
             <TableHead className="text-right">Avg position</TableHead>
             <TableHead className="text-right pr-6">AI revenue</TableHead>
-            <TableHead className="w-[88px] pr-6 text-right">Trend</TableHead>
+            <TableHead className="w-[124px] pr-6 text-right">Trend</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -96,8 +113,26 @@ export function SkuVisibilityTable({ skus, drill, onSelect }: SkuVisibilityTable
                 >
                   {sku.name}
                 </TableCell>
-                <TableCell className="text-right font-mono tabular-nums text-[#0A0A0A]">
-                  {sku.aiVisibility}%
+                <TableCell className="text-right align-middle">
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="font-mono tabular-nums text-[#0A0A0A]">
+                      {sku.aiVisibility}%
+                    </span>
+                    {/* In-row proportion bar — relative texture so no two rows
+                        read N-equal flat (M7). */}
+                    <span
+                      className="block h-[3px] w-[56px] overflow-hidden rounded-full bg-[#F0F1F4]"
+                      aria-hidden="true"
+                    >
+                      <span
+                        className="block h-full rounded-full"
+                        style={{
+                          width: `${Math.max(6, (sku.aiVisibility / maxVis) * 100)}%`,
+                          backgroundColor: bandHex(sku.aiVisibility),
+                        }}
+                      />
+                    </span>
+                  </div>
                 </TableCell>
                 <TableCell className="text-right font-mono tabular-nums text-[#6B7280]">
                   #{sku.position}
@@ -110,6 +145,7 @@ export function SkuVisibilityTable({ skus, drill, onSelect }: SkuVisibilityTable
                     <EngineMicroSparkline
                       points={trendFor(sku.id)}
                       currentScore={sku.aiVisibility}
+                      showDelta
                     />
                   </div>
                 </TableCell>
