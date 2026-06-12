@@ -1,9 +1,27 @@
 'use client'
 
 import { type ReactNode } from 'react'
+import { Stat } from '@/components/ui/stat'
 import { SerifVerdict } from '@/components/console/SerifVerdict'
 import type { AskCitation } from '@/lib/demo/surfaces/types'
 import { CitationChip } from './CitationChip'
+
+/**
+ * The TIER-1 focal lifted above the prose on the FIRST grounded answer (M2/M10).
+ * Pulls the single load-bearing figure out of the body so the eye lands on the
+ * verdict NUMBER before reading — the move Profound's 65% makes and the flat
+ * prose wall was missing. Only ONE answer on the surface receives this.
+ */
+export interface AnswerFocal {
+  /** STEP-3 eyebrow above the figure, e.g. "CITED FIRST · CHATGPT + GEMINI". */
+  eyebrow: string
+  /** The figure itself — Geist Mono hero, e.g. "5". */
+  value: string
+  /** Receding unit appended to the figure, e.g. "/6 tests". */
+  unit?: string
+  /** One quiet caption line under the figure naming what it measures. */
+  caption: string
+}
 
 /**
  * Wraps EVERY standalone number / figure / score / price token in a paragraph
@@ -71,6 +89,11 @@ interface AnswerCardProps {
    * Only ONE AnswerCard on the whole surface should receive this.
    */
   verdictWord?: string | null
+  /**
+   * The single TIER-1 focal block, pulled above the prose. Only ONE AnswerCard
+   * on the surface should receive this — the first grounded answer.
+   */
+  focal?: AnswerFocal | null
   /** Entrance stagger index (craft-enter), 1–8. */
   enterIndex?: number
 }
@@ -88,6 +111,7 @@ export function AnswerCard({
   content,
   citations,
   verdictWord = null,
+  focal = null,
   enterIndex,
 }: AnswerCardProps) {
   const paragraphs = content.split('\n\n').filter(Boolean)
@@ -111,6 +135,26 @@ export function AnswerCard({
         </span>
       </div>
 
+      {/* TIER-1 focal — the verdict NUMBER lands before the prose (M2/M10).
+          One per surface; the eye commits to the figure at arm's length, then
+          reads the explanation. Mono figure dominates; eyebrow + caption recede. */}
+      {focal && (
+        <div className="mb-5 flex items-baseline gap-4 border-b border-[var(--color-border-subtle)] pb-5">
+          <Stat
+            value={focal.value}
+            unit={focal.unit}
+            label={focal.eyebrow}
+            labelPosition="top"
+            size="hero"
+            align="start"
+            className="shrink-0 gap-1.5"
+          />
+          <p className="max-w-[300px] pb-1 text-[14px] leading-[1.5] text-[#6B7280]">
+            {focal.caption}
+          </p>
+        </div>
+      )}
+
       {/* Answer prose */}
       <div className="space-y-3.5 text-[16px] leading-[1.62] text-[#1A1A1A]">
         {paragraphs.map((para, i) => (
@@ -118,15 +162,24 @@ export function AnswerCard({
         ))}
       </div>
 
-      {/* Citations — inline, never footnoted */}
+      {/* Citations — inline, never footnoted. Surfaced in a quiet violet
+          agent-zone (M6): the "where this came from" provenance reads as
+          agent-authored at arm's length, in every static state — so the
+          violet promise is present even when the live grounding ledger isn't. */}
       {citations && citations.length > 0 && (
-        <div className="mt-4 flex flex-wrap items-center gap-1.5">
-          <span className="mr-0.5 text-[11px] font-medium uppercase tracking-[0.06em] text-[#9CA3AF]">
-            Grounded in
-          </span>
-          {citations.map((c, i) => (
-            <CitationChip key={`${c.type}-${i}`} citation={c} />
-          ))}
+        <div className="agent-zone agent-zone-accent mt-5 px-4 pb-3.5 pt-3">
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2">
+            <span className="mr-1 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.07em] text-[#6E56F0]">
+              <span
+                className="h-1.5 w-1.5 rounded-full bg-[#6E56F0]"
+                aria-hidden="true"
+              />
+              Grounded in
+            </span>
+            {citations.map((c, i) => (
+              <CitationChip key={`${c.type}-${i}`} citation={c} />
+            ))}
+          </div>
         </div>
       )}
     </div>
