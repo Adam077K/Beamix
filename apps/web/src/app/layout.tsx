@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Inter_Tight, Geist_Mono } from 'next/font/google'
+import { Inter, Inter_Tight, Geist_Mono, Fraunces } from 'next/font/google'
 import './globals.css'
 
 const inter = Inter({
@@ -27,6 +27,23 @@ const geistMono = Geist_Mono({
   display: 'swap',
 })
 
+// Fraunces — the editorial serif beat (DESIGN-VISION §4 "disciplined serif").
+// Used ONLY for verdict words, hero display moments, report covers, and the
+// score-reveal verdict — never in UI chrome. Loaded as --font-fraunces so the
+// globals.css `--font-serif` token resolves to a real face instead of falling
+// back to Georgia. Italic is the canonical beat (the "Excellent" / verdict word
+// inline in a sans sentence) so the italic axis is requested explicitly.
+// FONT BUG FIX (2026-06-12): ~20 source files reference var(--font-serif) for
+// the Fraunces beat, but Fraunces was never imported — every beat rendered as
+// Georgia. See docs/design/ui-excellence-audit/_FONT-VERIFICATION.md.
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  variable: '--font-fraunces',
+  display: 'swap',
+  weight: ['400', '500', '600'],
+  style: ['normal', 'italic'],
+})
+
 export const metadata: Metadata = {
   title: {
     default: 'Beamix — AI Search Visibility',
@@ -44,7 +61,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${interDisplay.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${inter.variable} ${interDisplay.variable} ${geistMono.variable} ${fraunces.variable} antialiased`}>
         {children}
       </body>
     </html>
