@@ -23,7 +23,7 @@ export function SentimentBadge({
   return (
     <span
       className={cn(
-        'inline-flex h-5 shrink-0 items-center rounded-full px-2 font-[var(--font-mono)] text-[10px] font-medium uppercase tracking-[0.06em]',
+        'inline-flex h-[18px] shrink-0 items-center rounded-full px-2 font-[var(--font-mono)] text-[11px] font-medium uppercase tracking-[0.05em]',
         pill,
         className,
       )}
