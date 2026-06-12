@@ -24,6 +24,13 @@ import {
   Radar,
   BarChart2,
   MessageSquare,
+  Sparkles,
+  Activity,
+  TrendingUp,
+  ShoppingBag,
+  GitMerge,
+  FileBarChart,
+  Briefcase,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -32,16 +39,19 @@ import { useSidebarStore } from '@/store/sidebar'
 // Top-level nav items (before Tools)
 const topNavItems = [
   { href: '/dashboard', label: 'Outcomes', icon: LayoutDashboard },
+  { href: '/ask', label: 'Ask Beamix', icon: Sparkles },
   { href: '/approvals', label: 'Approval Queue', icon: CheckCircle2 },
   { href: '/digests', label: 'Weekly Digest', icon: ScrollText },
   { href: '/traceability', label: 'Traceability', icon: GitBranch },
 ]
 
 // Intelligence disclosure children
-// Batch 2 will add: AI Traffic (/ai-traffic) + Market Intelligence (/market-intelligence)
 const intelligenceChildren = [
   { href: '/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/sentiment', label: 'Sentiment', icon: MessageSquare },
+  { href: '/traffic', label: 'Traffic', icon: Activity },
+  { href: '/market', label: 'Market', icon: TrendingUp },
+  { href: '/shopping', label: 'Shopping', icon: ShoppingBag },
 ]
 
 // The Intelligence group header icon for the collapsed icon-rail
@@ -56,10 +66,18 @@ const toolsChildren = [
   { href: '/offsite', label: 'Off-Site', icon: Radio },
   { href: '/blog-studio', label: 'Blog Studio', icon: BookOpen },
   { href: '/archive', label: 'Run History', icon: Clock },
+  { href: '/builder', label: 'Workflow Builder', icon: GitMerge },
 ]
 
 // The Tools group header links to /automation (Mode Hub)
 const TOOLS_HREF = '/automation'
+
+// Top-level items rendered between Tools group and Settings
+const bottomNavItems = [
+  { href: '/reports', label: 'Reports', icon: FileBarChart },
+  { href: '/agency', label: 'Agency', icon: Briefcase },
+  { href: '/team', label: 'Team', icon: Users },
+]
 
 // Settings — always last
 const settingsItem = { href: '/settings', label: 'Settings', icon: Settings }
@@ -309,6 +327,22 @@ function NavList({ pathname, iconOnly = false, onNavigate }: NavListProps) {
           )}
         </div>
       )}
+
+      {/* Reports, Agency, Team — above Settings */}
+      {bottomNavItems.map(({ href, label, icon: Icon }) => {
+        const isActive = pathname === href || pathname.startsWith(href + '/')
+        return (
+          <NavLink
+            key={href}
+            href={href}
+            label={label}
+            icon={Icon}
+            iconOnly={iconOnly}
+            onNavigate={onNavigate}
+            isActive={isActive}
+          />
+        )
+      })}
 
       {/* Settings — always last */}
       <NavLink
