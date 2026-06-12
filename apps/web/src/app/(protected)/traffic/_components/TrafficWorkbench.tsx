@@ -20,9 +20,11 @@
  *  M6  — violet structure: agent ReferenceDots + drawer agent-action card
  *  M9  — craft-enter stagger; charts have no looping motion
  *  M11 — every number Geist Mono tabular-nums
+ *  M12 — hairline rhythm: hero+chart cluster tight (40px), 2-up/table wider (56px)
  *
- *  NOTE: NO Fraunces beat on /traffic — its signature is the gesture, mirroring
- *  /analytics' disciplined-blue posture (serif budget = MAX one, spent elsewhere).
+ *  Serif budget: exactly ONE Fraunces beat on /traffic — the hero verdict's
+ *  italic "booked." (the sanctioned sans + italic-serif device). It earns the
+ *  hero its warmth without re-stating the focal figure; no Fraunces in chrome.
  */
 
 import { useMemo, useState } from 'react'
@@ -127,7 +129,11 @@ function WorkbenchBody() {
 
   return (
     <>
-      <div className="space-y-8">
+      {/* M12 — hairline editorial rhythm: NOT one global space-y-8. The hero and
+          its dominant chart read as one cluster (40px); the supporting 2-up and
+          the table step apart with wider air (56px) so the eye descends in
+          relationships, not an even shelf. */}
+      <div>
         {/* TIER-1 hero */}
         <TrafficHeroPanel
           aiReferredSessions={data.aiReferredSessions}
@@ -136,17 +142,21 @@ function WorkbenchBody() {
           crawlerTrend={data.crawlerTrend}
         />
 
-        {/* Dominant full-width crawler activity */}
-        <CrawlerActivityChart data={data.crawlerTrend} />
+        {/* Dominant full-width crawler activity — tight to the hero (one story) */}
+        <div className="mt-10">
+          <CrawlerActivityChart data={data.crawlerTrend} />
+        </div>
 
-        {/* Weighted 2-up: referral (~60%) + bot mix (~40%) */}
-        <div className="grid gap-8 lg:grid-cols-[1.5fr_1fr]">
+        {/* Weighted 2-up: referral (~60%) + bot mix (~40%) — wider break */}
+        <div className="mt-14 grid gap-8 lg:grid-cols-[1.5fr_1fr]">
           <ReferralAttributionPanel data={data.referralAttribution} />
           <BotMixPanel data={data.crawlerTrend} />
         </div>
 
         {/* Full-width content performance */}
-        <ContentPerformanceTable data={data.contentPerformance} onRowClick={setDrillPath} />
+        <div className="mt-14">
+          <ContentPerformanceTable data={data.contentPerformance} onRowClick={setDrillPath} />
+        </div>
       </div>
 
       {/* Drill drawer */}

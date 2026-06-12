@@ -40,10 +40,13 @@ interface PromptVolumeChartProps {
   prompts: MarketPromptRow[]
 }
 
+// Desaturated data-viz SERIES band (DESIGN-VISION §3) — same tokens as the hero
+// donut so chart + donut read as ONE instrument. Hex (not CSS var) because
+// recharts gradient stops need a resolvable color string.
 const INTENT_AREA: Record<IntentKey, string> = {
-  informational: '#9DB8FF',
-  transactional: '#7FD7B4',
-  navigational: '#CBCFD6',
+  informational: '#3370FF', // data-1
+  transactional: '#10B981', // data-4
+  navigational: '#06B6D4', // data-3
 }
 
 // 8 weekly buckets; the final bucket equals the fixture's current per-intent
@@ -164,17 +167,40 @@ export function PromptVolumeChart({ prompts }: PromptVolumeChartProps) {
             />
             <Tooltip content={<VolumeTooltip />} cursor={{ stroke: '#E5E7EB', strokeWidth: 1 }} />
 
-            {/* Violet agent-run marker — the only violet on the chart */}
+            {/* Violet agent-run marker — the only violet on the chart. The
+                label is anchored tight to the W6 line top-left (not floated in
+                dead center) so it reads as "this line = an agent run" (M6). */}
             <ReferenceLine
               x={AGENT_WEEK}
-              stroke="rgba(110,86,240,0.4)"
-              strokeWidth={1}
-              label={{
-                value: 'Agent promoted content',
-                position: 'top',
-                fontSize: 11,
-                fill: '#6E56F0',
-                fontFamily: 'var(--font-sans)',
+              stroke="rgba(110,86,240,0.55)"
+              strokeWidth={1.5}
+              strokeDasharray="3 3"
+              label={(props: { viewBox?: { x?: number; y?: number } }) => {
+                const x = props.viewBox?.x ?? 0
+                const y = props.viewBox?.y ?? 0
+                const text = 'Agent promoted content'
+                const w = text.length * 5.6 + 16
+                return (
+                  <g transform={`translate(${x - w - 6}, ${y + 2})`}>
+                    <rect
+                      width={w}
+                      height={18}
+                      rx={9}
+                      fill="#EEEAFD"
+                    />
+                    <circle cx={9} cy={9} r={3} fill="#6E56F0" />
+                    <text
+                      x={17}
+                      y={13}
+                      fontSize={10}
+                      fontWeight={600}
+                      fill="#6E56F0"
+                      fontFamily="var(--font-sans)"
+                    >
+                      {text}
+                    </text>
+                  </g>
+                )
               }}
             />
 

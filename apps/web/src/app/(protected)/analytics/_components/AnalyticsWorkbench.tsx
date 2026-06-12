@@ -14,11 +14,14 @@
  *  M4  — signature detail: avg-position micro-sparklines
  *  M9  — craft-enter stagger; charts have no looping motion
  *  M11 — every number Geist Mono tabular-nums
+ *  M12 — hairline rhythm: inter-section gaps vary BY RELATIONSHIP (the trend
+ *        chart hugs the hero as its proof; wider breaks introduce new sections)
+ *        rather than one global space-y.
  *  Signature moment — toggling one engine ripples across trend + SoV + matrix
  *                     in one 200ms gesture (engineOpacity, no refetch).
  *
- *  NOTE: /analytics keeps no Fraunces beat — it is the disciplined blue-structure
- *  page (the serif beat belongs to /sentiment per the brief).
+ *  Serif beat (M5): ONE Fraunces italic word lives in the SoV verdict noun
+ *  ("answers"). That is the single screen-level serif beat — never in chrome.
  */
 
 import { useMemo, useState } from 'react'
@@ -84,15 +87,25 @@ function InsightsHeader({ withAction }: { withAction: boolean }) {
 // ---------------------------------------------------------------------------
 
 function WorkbenchPreview() {
+  // Ghost of the real workbench — echoes the asymmetric hero (figure + donut)
+  // and its proof chart. The blue donut arc previews "you", so even at 40%
+  // scrim it reads as the instrument that's coming, not a loading skeleton.
   return (
     <div className="space-y-4">
-      <div className="card-console-hero grid gap-6 p-6 lg:grid-cols-[1fr_200px]">
+      <div className="card-console-hero grid gap-6 p-6 lg:grid-cols-[1fr_200px] lg:items-center">
         <div className="space-y-3">
           <div className="h-3 w-24 rounded bg-[#EEF2FF]" />
-          <div className="h-12 w-32 rounded bg-[#EEF2FF]" />
+          <div className="h-12 w-32 rounded bg-[#DCE6FF]" />
           <div className="h-5 w-2/3 rounded bg-[#F3F4F6]" />
         </div>
-        <div className="mx-auto h-[120px] w-[120px] rounded-full border-[18px] border-[#EEF2FF]" />
+        {/* Ghost donut with a blue "you" wedge so the asymmetry previews */}
+        <div className="relative mx-auto h-[120px] w-[120px]">
+          <div className="absolute inset-0 rounded-full border-[18px] border-[#EEF2FF]" />
+          <div
+            className="absolute inset-0 rounded-full border-[18px] border-transparent"
+            style={{ borderTopColor: '#3370FF', borderRightColor: '#3370FF' }}
+          />
+        </div>
       </div>
       <div className="card-console h-[120px] p-6">
         <div className="h-full w-full rounded bg-gradient-to-r from-[#EEF2FF] to-transparent" />
@@ -123,24 +136,34 @@ function WorkbenchBody() {
 
   return (
     <>
-      <div className="space-y-8">
+      {/* M12 hairline rhythm — gaps vary by RELATIONSHIP, not one global space-y.
+          The trend chart is the hero's proof, so it HUGS the hero (mt-6 ≈ 24px);
+          new sections (the competitive 2-up, then the matrix) earn a wider
+          mt-12 ≈ 48px break so the eye is led instead of metronomed. */}
+      <div>
         {/* TIER-1 hero */}
         <SovHeroPanel heroSov={data.heroSov} sovDelta={data.sovDelta} latest={latestSov} />
 
-        {/* Dominant full-width trend */}
-        <VisibilityTrendChart data={data.visibilityTrend} />
+        {/* Dominant full-width trend — proof of the hero, kept close to it */}
+        <div className="mt-6">
+          <VisibilityTrendChart data={data.visibilityTrend} />
+        </div>
 
-        {/* Weighted 2-up: SoV-over-time (~60%) + avg position (~40%) */}
-        <div className="grid gap-8 lg:grid-cols-[1.5fr_1fr]">
+        {/* Weighted 2-up: SoV-over-time (~60%) + avg position (~40%). New
+            "competitive field" section → wider break. AvgPositionPanel is the
+            lighter half, demoted to its TIER-3 inset (P1.3). */}
+        <div className="mt-12 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
           <SovOverTimeChart data={data.sovTrend} />
           <AvgPositionPanel stats={data.avgPositions} />
         </div>
 
-        {/* Full-width matrix */}
-        <TopicRankMatrix
-          cells={data.topicMatrix}
-          onCellClick={(topic, engine) => setDrill({ topic, engine })}
-        />
+        {/* Full-width matrix — its own section */}
+        <div className="mt-12">
+          <TopicRankMatrix
+            cells={data.topicMatrix}
+            onCellClick={(topic, engine) => setDrill({ topic, engine })}
+          />
+        </div>
       </div>
 
       {/* Drill drawer */}

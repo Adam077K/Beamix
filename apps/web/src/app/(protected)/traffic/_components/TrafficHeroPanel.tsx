@@ -42,16 +42,20 @@ function DeltaChip({ delta }: { delta: number }) {
     ? 'bg-status-positive text-status-positive'
     : 'bg-status-critical text-status-critical'
   const Icon = positive ? ArrowUpRight : ArrowDownRight
+  // The pill carries ONLY the mono figure (P3-1: no sans tail inside a mono
+  // chip); the comparison window sits as a quiet caption beside it.
   return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-medium ${cls}`}
-    >
-      <Icon className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2} />
-      <span className="font-mono tabular-nums">
-        {positive ? '+' : ''}
-        {delta}%
+    <span className="inline-flex items-center gap-2">
+      <span
+        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-medium ${cls}`}
+      >
+        <Icon className="h-3.5 w-3.5" aria-hidden="true" strokeWidth={2} />
+        <span className="font-mono tabular-nums">
+          {positive ? '+' : ''}
+          {delta}%
+        </span>
       </span>
-      <span className="font-sans text-[#6B7280]">vs. previous 30d</span>
+      <span className="text-[12px] text-[#9CA3AF]">vs. previous 30 days</span>
     </span>
   )
 }
@@ -140,13 +144,18 @@ export function TrafficHeroPanel({
               {aiReferredSessions.toLocaleString()}
             </span>
           </div>
-          {/* STEP-2 verdict */}
+          {/* STEP-2 verdict — carries the SECOND fact (conversions); the figure
+              above is the only place the session count appears (M2: one number
+              per type-step, the 64px figure IS the headline). Carries the page's
+              single Fraunces beat (the sanctioned sans + italic-serif device) so
+              the hero earns warmth without repeating the focal number. */}
           <h2
             id="traffic-hero-heading"
             className="mt-4 max-w-[520px] font-[var(--font-display)] text-[30px] font-medium leading-[1.15] tracking-[-0.02em] text-[#0A0A0A]"
           >
-            AI engines sent you {aiReferredSessions.toLocaleString()} sessions and {conversions}{' '}
-            conversions this month
+            AI-referred visits this month, and{' '}
+            <span className="font-mono tabular-nums">{conversions}</span> of them{' '}
+            <em className="font-[var(--font-serif)] font-normal italic">booked.</em>
           </h2>
           {/* Delta chip */}
           <div className="mt-4">
