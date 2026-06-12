@@ -18,14 +18,14 @@
  *    ~300ms) and the cited AnswerCard fades up below.
  */
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { PageHeader } from '@/components/page-header'
 import { ErrorState } from '@/components/error-state'
 import { DEMO_ASK } from '@/lib/demo/surfaces'
 import type { AskMessage } from '@/lib/demo/surfaces/types'
 
 import { UserTurn } from './UserTurn'
-import { AnswerCard } from './AnswerCard'
+import { AnswerCard, type AnswerFocal } from './AnswerCard'
 import { GroundingLedger } from './GroundingLedger'
 import { StarterQuestions } from './StarterQuestions'
 import { McpConnectStrip } from './McpConnectStrip'
@@ -39,7 +39,19 @@ interface AskThreadProps {
 }
 
 // The one Fraunces verdict word lifted in the first grounded answer.
-const VERDICT_WORD = 'gap'
+// Lands on the actual judgement of the answer ("Smile Center is cited FIRST"),
+// not the common noun "gap" — so the serif beat reads as a verdict, not a typo.
+const VERDICT_WORD = 'first'
+
+// The single TIER-1 focal pulled above the first answer's prose (M2/M10).
+// The load-bearing fact of the whole thread: the citation-rate verdict.
+const FIRST_ANSWER_FOCAL: AnswerFocal = {
+  eyebrow: 'Cited first · ChatGPT + Gemini',
+  value: '5',
+  unit: '/6 tests',
+  caption:
+    'Smile Center is surfaced ahead of you on the three most-searched whitening queries in your region.',
+}
 
 // A live turn in the rendered thread (seeded or user-driven).
 type LiveTurn =
@@ -79,9 +91,15 @@ export function AskThread({ state }: AskThreadProps) {
   // Local override so the error state's recovery can clear without a reload.
   const [recovered, setRecovered] = useState(false)
 
+  // Scroll the latest turn into view after the user asks — never on the initial
+  // seed (so the demo lands on the H1 + the focal hero, not the thread tail).
+  const scrollAnchorRef = useRef<HTMLDivElement>(null)
+  const hasAskedRef = useRef(false)
+
   const askQuestion = useCallback((question: string) => {
     const q = question.trim()
     if (!q) return
+    hasAskedRef.current = true
     setComposerValue('')
     setTurns((prev) => [
       ...prev,
@@ -89,6 +107,15 @@ export function AskThread({ state }: AskThreadProps) {
     ])
     setPending({ question: q })
   }, [])
+
+  // Keep the newest turn / grounding ledger in view as the conversation grows.
+  useEffect(() => {
+    if (!hasAskedRef.current) return
+    scrollAnchorRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'end',
+    })
+  }, [turns, pending])
 
   // Called once the grounding ledger finishes its morph — mount the answer.
   const handleGroundingComplete = useCallback(() => {
@@ -145,9 +172,11 @@ export function AskThread({ state }: AskThreadProps) {
 
   return (
     <div className="relative flex h-full flex-col">
-      {/* Scrollable thread column */}
+      {/* Scrollable thread column. Bottom padding reserves clearance for the
+          pinned composer so the last turn is fully readable above it (M12) —
+          the composer rests beneath the thread, never crops it. */}
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-[760px] px-5 pb-44 pt-10 sm:px-8">
+        <div className="mx-auto w-full max-w-[760px] px-5 pb-[13.5rem] pt-10 sm:px-8">
           <AskHeader />
 
           {isEmptyThread ? (
@@ -181,12 +210,14 @@ export function AskThread({ state }: AskThreadProps) {
                     />
                   )
                 }
+                const isFirstAnswer = turn.id === firstAnswerId
                 return (
                   <AnswerCard
                     key={turn.id}
                     content={turn.message.content}
                     citations={turn.message.citations}
-                    verdictWord={turn.id === firstAnswerId ? VERDICT_WORD : null}
+                    verdictWord={isFirstAnswer ? VERDICT_WORD : null}
+                    focal={isFirstAnswer ? FIRST_ANSWER_FOCAL : null}
                     enterIndex={Math.min(i + 1, 8)}
                   />
                 )
@@ -200,13 +231,19 @@ export function AskThread({ state }: AskThreadProps) {
                   onComplete={handleGroundingComplete}
                 />
               )}
+
+              {/* Scroll target — keeps the newest turn in view after a question. */}
+              <div ref={scrollAnchorRef} aria-hidden="true" />
             </div>
           )}
         </div>
       </div>
 
-      {/* Sticky composer pinned to the bottom of the column */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-white via-white to-transparent pb-5 pt-8">
+      {/* Sticky composer pinned to the bottom of the column. The fade band is
+          short (pt-6) and the solid-white floor only covers the composer's own
+          height — so the gradient eases the thread tail OUT below the last
+          readable line instead of cropping live content mid-sentence (P1.3). */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-white from-60% via-white/95 to-transparent pb-5 pt-6">
         <div className="pointer-events-auto mx-auto w-full max-w-[760px] px-5 sm:px-8">
           <Composer
             value={composerValue}
