@@ -70,10 +70,10 @@ export function SignupForm() {
   if (formState === 'success') {
     return (
       <AuthCard
-        eyebrow="Get started"
+        eyebrow="Account created"
         heading={
           <>
-            You&apos;re <em className="font-[var(--font-serif)] italic font-normal">in.</em>
+            You&apos;re <em className="font-[var(--font-serif)] italic font-normal">in</em>.
           </>
         }
         footer={null}
@@ -92,14 +92,11 @@ export function SignupForm() {
             </svg>
           </div>
           <p className="text-[15px] leading-[1.5] text-[#374151]">
-            Account created. Check your inbox to confirm your email.
+            Account created. Check your inbox to confirm your email — then you&apos;re ready.
           </p>
-          <a
-            href={next}
-            className="text-[14px] text-[#3370FF] underline-offset-4 hover:underline"
-          >
-            Continue to dashboard
-          </a>
+          <Button asChild size="lg" className="mt-1 w-full">
+            <a href={next}>Continue to dashboard</a>
+          </Button>
         </div>
       </AuthCard>
     )
@@ -107,13 +104,13 @@ export function SignupForm() {
 
   return (
     <AuthCard
-      eyebrow="Get started"
+      eyebrow="Free · No card required"
       heading={
         <>
-          Start <em className="font-[var(--font-serif)] italic font-normal">here.</em>
+          Start <em className="font-[var(--font-serif)] italic font-normal">here</em>.
         </>
       }
-      subheading="See exactly where AI search ranks your business — in minutes."
+      subheading="See where AI search ranks your business in minutes."
       footer={
         <>
           Already have an account?{' '}
@@ -183,28 +180,31 @@ export function SignupForm() {
           </div>
         </div>
 
-        {/* Submit */}
+        {/* Primary action — dominant: taller (lg/h-11), full-width, commands the eye. */}
         <Button
           type="submit"
-          className="mt-6 w-full"
+          size="lg"
+          className="mt-6 w-full shadow-[0_1px_2px_rgba(51,112,255,0.25)]"
           disabled={formState === 'submitting'}
           aria-label={formState === 'submitting' ? 'Creating account…' : 'Create account'}
         >
           {formState === 'submitting' ? <Dots /> : 'Create account'}
         </Button>
 
-        {/* Divider */}
-        <div className="relative my-5 flex items-center" aria-hidden="true">
+        {/* Divider — wider gap (my-6) so the secondary path reads as a step down,
+            not a paired equal. */}
+        <div className="relative my-6 flex items-center" aria-hidden="true">
           <div className="flex-1 border-t border-[#E5E7EB]" />
           <span className="mx-3 text-[12px] text-[#9CA3AF]">or</span>
           <div className="flex-1 border-t border-[#E5E7EB]" />
         </div>
 
-        {/* Google OAuth */}
+        {/* Google OAuth — secondary: recedes to a quiet ghost, default height
+            (h-9, shorter than the lg primary), no border weight. */}
         <Button
           type="button"
-          variant="outline"
-          className="w-full"
+          variant="ghost"
+          className="w-full text-[#374151] hover:bg-[#F3F4F6]"
           disabled={formState === 'submitting'}
           onClick={() => {
             void handleGoogleOAuth(next, {
@@ -245,6 +245,11 @@ export function SignupForm() {
           </svg>
           Continue with Google
         </Button>
+
+        {/* Trust microcopy — quiet reassurance below the secondary path. */}
+        <p className="mt-5 text-center text-[12px] leading-[1.5] text-[#9CA3AF]">
+          14-day money-back guarantee. No credit card to start.
+        </p>
       </form>
     </AuthCard>
   )
