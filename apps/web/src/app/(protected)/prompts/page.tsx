@@ -198,7 +198,97 @@ export default function PromptsPage() {
       }
       state={toolState}
       historyHref="/archive"
+      widthMode="wide"
+      rail={
+        <CoverageRail
+          tracked={trackedCount}
+          covered={coveredCount}
+          gap={gapCount}
+        />
+      }
     />
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Coverage rail (Zone "earn the width" — M3/M10)
+//
+// The dense table fills the working area in widthMode="wide"; the rail keeps the
+// freed right space alive with persistent context instead of dead white (audit
+// P1-1). Shows the covered-vs-gap split and the queries competitors own that you
+// don't — the single "what to do next" signal beside the table.
+// ---------------------------------------------------------------------------
+
+interface CoverageRailProps {
+  tracked: number
+  covered: number
+  gap: number
+}
+
+function CoverageRail({ tracked, covered, gap }: CoverageRailProps) {
+  const coveredPct = tracked > 0 ? Math.round((covered / tracked) * 100) : 0
+  const topGaps = DEMO_PROMPTS.uncitedGaps.slice(0, 4)
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Coverage split card */}
+      <div className="card-inset px-5 py-4">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+          Coverage
+        </p>
+
+        <div className="mt-3 flex items-baseline gap-1.5">
+          <span className="font-[var(--font-mono)] text-[40px] leading-none tabular-nums tracking-[-0.02em] text-[#0A0A0A]">
+            {covered}
+          </span>
+          <span className="font-[var(--font-mono)] text-[15px] tabular-nums text-[#9CA3AF]">
+            / {tracked} covered
+          </span>
+        </div>
+
+        {/* Split bar — covered (positive) vs gap (critical), glanceable */}
+        <div
+          className="mt-3 flex h-2 overflow-hidden rounded-full bg-[#F3F4F6]"
+          role="img"
+          aria-label={`${covered} of ${tracked} prompts covered, ${gap} gaps`}
+        >
+          <div
+            className="h-full bg-[#0E9E6E]"
+            style={{ width: `${coveredPct}%` }}
+          />
+        </div>
+
+        <div className="mt-3 flex items-center justify-between text-[12px]">
+          <span className="inline-flex items-center gap-1.5 text-[#6B7280]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#0E9E6E]" aria-hidden />
+            Covered
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-[#6B7280]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#EF4444]" aria-hidden />
+            {gap} gaps
+          </span>
+        </div>
+      </div>
+
+      {/* Top uncited gaps — competitors own these, you don't */}
+      <div className="card-inset px-5 py-4">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+          Top gaps to close
+        </p>
+        <ul className="mt-3 flex flex-col gap-3">
+          {topGaps.map((g) => (
+            <li key={g.id} className="flex flex-col gap-1">
+              <span className="text-[13px] font-medium leading-snug text-[#0A0A0A]">
+                {g.query}
+              </span>
+              <span className="text-[11px] text-[#9CA3AF]">
+                {g.volume} volume · owned by {g.ownedBy.join(', ')}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   )
 }
 
@@ -314,12 +404,21 @@ function PromptOutput({
   // ToolPage Zone 5). We need to add the header inside.
   return (
     <div>
-      {/* Output header — SerifVerdict beat (M5, one per screen) */}
-      <div className="mb-4 flex items-baseline justify-between gap-4">
-        <p className="text-[15px] text-[#6B7280]">
-          Your query landscape is{' '}
-          <SerifVerdict>{trendWord}</SerifVerdict>. Run Query Mapper to expand it.
-        </p>
+      {/* Output header — SerifVerdict beat at STEP-2 weight (M2/M5, one verdict
+          per screen). Was rendered at 15px body grey, undersized vs the type
+          contract (audit P2-2); now a 30px InterDisplay verdict line so the beat
+          actually lands as the report headline. */}
+      <div className="flex items-start justify-between gap-4 border-b border-[#F3F4F6] px-5 pb-5 pt-6">
+        <div className="min-w-0">
+          <p className="font-[var(--font-display)] text-[30px] font-medium leading-[1.15] tracking-[-0.02em] text-[#0A0A0A]">
+            Your query landscape is{' '}
+            <SerifVerdict>{trendWord}</SerifVerdict>.
+          </p>
+          <p className="mt-1.5 text-[14px] leading-relaxed text-[#6B7280]">
+            Run Query Mapper to expand it — every gap below is a query competitors
+            already own.
+          </p>
+        </div>
         {/* Dev state cycle button — visible only in dev for QA review */}
         {process.env.NODE_ENV === 'development' && (
           <button
