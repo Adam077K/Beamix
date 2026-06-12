@@ -93,7 +93,15 @@ function FocusThemeCard({ theme, onDrill }: { theme: SentimentTheme; onDrill: ()
       </div>
 
       {/* The representative quote, inline (read-only inside the button) */}
-      <VerbatimQuote quote={theme.representativeQuote} className="pointer-events-none" />
+      <VerbatimQuote
+        quote={theme.representativeQuote}
+        correctHref={
+          theme.representativeQuote.claimId
+            ? `/agents/new?intent=correct_claim&claim_id=${theme.representativeQuote.claimId}`
+            : null
+        }
+        className="pointer-events-none"
+      />
     </button>
   )
 }

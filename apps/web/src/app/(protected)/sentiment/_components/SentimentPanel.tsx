@@ -233,7 +233,14 @@ function SuccessBody({ data }: { data: DemoSentiment }) {
               <SentimentBadge sentiment={drillTheme.sentiment as Sentiment} />
             </DrillSubRow>
             <DrillSubRow label="Representative AI response">
-              <VerbatimQuote quote={drillTheme.representativeQuote} />
+              <VerbatimQuote
+                quote={drillTheme.representativeQuote}
+                correctHref={
+                  drillTheme.representativeQuote.claimId
+                    ? `/agents/new?intent=correct_claim&claim_id=${drillTheme.representativeQuote.claimId}`
+                    : null
+                }
+              />
             </DrillSubRow>
             <DrillSubRow label="What this means">
               <p>
