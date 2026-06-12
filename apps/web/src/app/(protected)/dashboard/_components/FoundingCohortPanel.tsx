@@ -9,6 +9,7 @@
  */
 
 import { Progress } from '@/components/ui/progress'
+import { cn } from '@/lib/utils'
 import { getFoundingCohortStatus } from '@/lib/billing/founding-100'
 
 interface Props {
@@ -44,7 +45,10 @@ export async function FoundingCohortPanel({ userId }: Props) {
               {enrolledCount === capacity ? (
                 <span className="text-[#6B7280]"> — all seats taken</span>
               ) : (
-                <span className="font-medium text-accent"> — {spotsLabel}</span>
+                /* P1-3 (tell #8): blue #3370FF is reserved for actions/links, not
+                   decorative prose emphasis. The slots count reads in ink; the mono
+                   enrolled/capacity figure on the right carries the legitimate accent. */
+                <span className="font-semibold text-[#0A0A0A]"> — {spotsLabel}</span>
               )}
             </p>
           )}
@@ -55,11 +59,20 @@ export async function FoundingCohortPanel({ userId }: Props) {
             </p>
           )}
 
-          {/* Progress bar */}
+          {/* Progress — P2-9: a 0% empty track reads like a stalled loader at the
+              top of a fresh dashboard. When nothing is filled yet, lead with the
+              scarcity line and suppress the bar entirely (no bar > empty bar). */}
           <div className="mt-3 max-w-[360px]">
-            <Progress value={pct} aria-label={`Founding cohort ${pct}% full`} className="h-1.5" />
-            <p className="mt-1.5 font-mono text-[12px] text-[#9CA3AF] tabular-nums">
-              {pct}% filled{remaining > 0 && ` · ${spotsLabel}`}
+            {pct > 0 && (
+              <Progress value={pct} aria-label={`Founding cohort ${pct}% full`} className="h-1.5" />
+            )}
+            <p
+              className={cn(
+                'font-mono text-[12px] text-[#9CA3AF] tabular-nums',
+                pct > 0 && 'mt-1.5',
+              )}
+            >
+              {pct === 0 ? spotsLabel : `${pct}% filled${remaining > 0 ? ` · ${spotsLabel}` : ''}`}
             </p>
           </div>
         </div>
