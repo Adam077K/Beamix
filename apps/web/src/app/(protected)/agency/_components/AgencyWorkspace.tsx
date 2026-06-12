@@ -220,12 +220,18 @@ export function AgencyWorkspace({ initialState }: AgencyWorkspaceProps) {
   }, [])
 
   // ── Zone 1 — ContextStat ────────────────────────────────────────────────
+  // The header stat NEVER mirrors the audit's own hero score (P1-2, tell M1/M2):
+  // two identical 64px figures would fight for the eye. The audit card owns the
+  // single TIER-1 score; the header always shows a *different* signal — the
+  // agency's live client count — so there is exactly one STEP-1 focal on screen.
+  // No score → no trend, so the sparkline is null: EngineMicroSparkline renders
+  // its hardened flat baseline, never a stray amber stroke (P1-3, tell M4).
   const contextStat = (
     <ContextStat
-      value={hasResult ? audit.score : DEMO_AGENCY.clients.length}
-      label={hasResult ? 'PROSPECT SCORE' : 'CLIENTS'}
-      sparklinePoints={hasResult ? [9, 14, 22, 27, audit.score] : null}
-      currentScore={hasResult ? audit.score : null}
+      value={DEMO_AGENCY.clients.length}
+      label="CLIENTS"
+      sparklinePoints={null}
+      currentScore={null}
     />
   )
 
@@ -281,16 +287,20 @@ export function AgencyWorkspace({ initialState }: AgencyWorkspaceProps) {
   )
 
   // ── Zone 3 — Run control (one blue focal) ────────────────────────────────
+  // Pre-run controls ONLY. Once the audit is running or already on screen, the
+  // re-run affordance lives in the audit footer (AuditReport) — so a loud
+  // "Generate audit" CTA above a generated audit (P1-1, tell M1/M10) is gone.
+  // Foundation ui/button is `inline-flex self-start` → content-sized, never a
+  // full-bleed accent bar (P1-4, tell #5).
   const runControl =
-    pageState === 'running' ? null : (
-      <div className="flex flex-col gap-2">
+    pageState === 'running' || pageState === 'success' ? null : (
+      <div className="flex flex-col items-start gap-2">
         <Button
           variant="default"
           size="default"
           onClick={startRun}
           disabled={!domainValid}
           aria-label="Generate prospect audit"
-          className="gap-2"
         >
           <Sparkles className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           Generate audit
@@ -298,7 +308,7 @@ export function AgencyWorkspace({ initialState }: AgencyWorkspaceProps) {
         <button
           type="button"
           onClick={() => setScope('all')}
-          className="self-start text-[13px] text-[#6B7280] underline-offset-2 transition-colors hover:text-[#0A0A0A] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1"
+          className="text-[13px] text-[#6B7280] underline-offset-2 transition-colors hover:text-[#0A0A0A] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1"
         >
           Reset scope
         </button>
