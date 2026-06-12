@@ -40,6 +40,9 @@
 
   --color-border:          #E5E7EB;
   --color-border-strong:   #D1D5DB;
+  /* Softer hairline for TIER-3 recede surfaces (.card-inset) — lighter than
+     the standard card border so an inset panel reads as receding (UIX-F1). */
+  --color-border-subtle:   #EDEEF0;
 
   /* Score data — for data viz only, not UI accents */
   --color-score-excellent: #06B6D4;
@@ -72,12 +75,24 @@
      16px reads tighter / more premium for dense product surfaces. */
   --radius-card: 16px;
 
-  /* Card finish (Wave A) — three-layer tinted shadow: a hairline ring +
-     tight mid shadow + soft ambient lift. Reads as physically present on white. */
-  --shadow-card: 0 0 0 1px rgba(10,10,10,0.06), 0 1px 3px rgba(10,10,10,0.06), 0 4px 8px rgba(10,10,10,0.04);
+  /* ── Depth tiers (M1 — felt at arm's length) ──────────────
+     Three tiers must read as distinct elevations, not just names.
+     TIER-3 .card-inset (no shadow) < TIER-2 --shadow-card < TIER-1 --shadow-card-hero.
+     The gap between TIER-2 and TIER-1 was widened 2026-06-12 (UIX-F1): the old
+     ramp (4→8px ambient vs 8→24px) read flat. The hero now carries a markedly
+     deeper, wider ambient lift so the one focal card on each screen visibly
+     floats above the standard cards around it. */
 
-  /* Hero card — richer ramp so the ScoreHeroPanel leads the elevation stack */
-  --shadow-card-hero: 0 0 0 1px rgba(10,10,10,0.06), 0 2px 6px rgba(10,10,10,0.06), 0 8px 24px rgba(10,10,10,0.05);
+  /* TIER-2 standard card — hairline ring + tight mid shadow + soft ambient lift.
+     Reads as physically present on white, but clearly grounded vs the hero. */
+  --shadow-card: 0 0 0 1px rgba(10,10,10,0.05), 0 1px 2px rgba(10,10,10,0.05), 0 3px 6px rgba(10,10,10,0.04);
+
+  /* TIER-1 hero card — deeper, wider, two-stage ambient lift. The delta vs
+     --shadow-card is now large enough to be felt at arm's length (M1). */
+  --shadow-card-hero: 0 0 0 1px rgba(10,10,10,0.06), 0 2px 6px rgba(10,10,10,0.07), 0 14px 36px rgba(10,10,10,0.10), 0 4px 12px rgba(10,10,10,0.05);
+
+  /* Hover lift — TIER-2 nudges up one notch toward (not to) hero (M9). */
+  --shadow-card-hover: 0 0 0 1px rgba(10,10,10,0.06), 0 2px 4px rgba(10,10,10,0.06), 0 8px 18px rgba(10,10,10,0.06);
 
   /* Sidebar */
   --sidebar-width:          240px;
@@ -93,6 +108,16 @@
   /* Agent / AI role (violet). Named "agent" — violet NEVER on a button. */
   --color-agent:          #6E56F0;
   --color-agent-tint:     #EEEAFD;
+  /* Solid violet hairline (M6) — a real, readable 1px border for the agent
+     ZONE edge / top-accent. Replaces the old rgba(110,86,240,0.12)-style
+     opacity hairlines that washed out to grey at arm's length. This is a
+     single-toned, light-but-unmistakably-violet line; the zone reads "agents"
+     glanceably without competing with content. Border/illustration only —
+     never on a button or link. */
+  --color-agent-hairline: #C9BEF7;
+  /* Agent ZONE ground — a touch deeper than the badge tint so a whole agent
+     panel reads as a distinct surface (not just a chip). Background only. */
+  --color-agent-zone:     #F3F0FE;
 
   /* Warm off-white surface (soul: restraint + warmth) */
   --color-surface-warm:   #F7F6F2;
@@ -112,7 +137,9 @@
   --color-data-6:         #EF4444;
   --color-data-grid:      #EAEAEA;
 
-  /* Status pills — tinted ground + saturated text; never loud fills */
+  /* Status pills — tinted ground + saturated text; never loud fills.
+     The base tokens below are the SATURATED brand hues — correct for dots,
+     icons, swatches, and any large (≥18px / ≥14px-bold) text. */
   --color-status-info:           #3370FF;
   --color-status-info-bg:        #EEF2FF;
   --color-status-agent:          #6E56F0;
@@ -125,6 +152,24 @@
   --color-status-critical-bg:    #FDECEC;
   --color-status-neutral:        #6B7280;
   --color-status-neutral-bg:     #F3F4F6;
+
+  /* Status pill TEXT tokens (UIX-F1, 2026-06-12) — WCAG AA (≥4.5:1) on their
+     OWN tinted ground, for the small 12–13px pill labels. The saturated base
+     tokens above only clear AA-large (3:1) on these grounds, so small pill
+     text was sub-AA. These darker, same-hue tokens fix it without changing
+     the pill grounds or the dot/icon color.
+       info     #1F5AE0 on #EEF2FF = 5.22:1
+       agent    #5840C8 on #EEEAFD = 5.98:1   (still violet — indicator/text only, never a button)
+       positive #067A55 on #E6F5EE = 4.76:1
+       warning  #92600C on #FDF3E0 = 4.89:1
+       critical #C21C1C on #FDECEC = 5.29:1
+       neutral  #525B6B on #F3F4F6 = 6.22:1 */
+  --color-status-info-text:      #1F5AE0;
+  --color-status-agent-text:     #5840C8;
+  --color-status-positive-text:  #067A55;
+  --color-status-warning-text:   #92600C;
+  --color-status-critical-text:  #C21C1C;
+  --color-status-neutral-text:   #525B6B;
 
   /* Dark panels — testimonials, scan-engine diagram, contrast hero sections */
   --color-panel-dark:     #14140F;
@@ -195,6 +240,11 @@ body {
     box-shadow: var(--shadow-card-hero);
   }
 
+  /* Hover-state shadow — one notch above TIER-2 standard, below the hero */
+  .shadow-card-hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+
   /* Console card finish — white card + hairline + tinted shadow + 16px radius */
   .card-console {
     background-color: var(--color-surface);
@@ -257,19 +307,51 @@ body {
   .bg-wash-blush    { background-color: var(--color-wash-blush); }
   .bg-wash-mint     { background-color: var(--color-wash-mint); }
 
-  /* Status pill helpers */
-  .text-status-info     { color: var(--color-status-info); }
+  /* Status pill helpers.
+     .text-status-* = the AA-passing (≥4.5:1) TEXT token for small pill labels.
+     .bg-status-*   = the tinted ground.
+     For a dot / icon / swatch / large figure that wants the SATURATED hue, use
+     .swatch-status-* (the base brand token) instead — it is the indicator
+     color, not the small-text color. (UIX-F1, 2026-06-12) */
+  .text-status-info     { color: var(--color-status-info-text); }
   .bg-status-info       { background-color: var(--color-status-info-bg); }
-  .text-status-agent    { color: var(--color-status-agent); }
+  .text-status-agent    { color: var(--color-status-agent-text); }
   .bg-status-agent      { background-color: var(--color-status-agent-bg); }
-  .text-status-positive { color: var(--color-status-positive); }
+  .text-status-positive { color: var(--color-status-positive-text); }
   .bg-status-positive   { background-color: var(--color-status-positive-bg); }
-  .text-status-warning  { color: var(--color-status-warning); }
+  .text-status-warning  { color: var(--color-status-warning-text); }
   .bg-status-warning    { background-color: var(--color-status-warning-bg); }
-  .text-status-critical { color: var(--color-status-critical); }
+  .text-status-critical { color: var(--color-status-critical-text); }
   .bg-status-critical   { background-color: var(--color-status-critical-bg); }
-  .text-status-neutral  { color: var(--color-status-neutral); }
+  .text-status-neutral  { color: var(--color-status-neutral-text); }
   .bg-status-neutral    { background-color: var(--color-status-neutral-bg); }
+
+  /* Saturated indicator swatches — dots, icons, ticks (NOT small text). */
+  .swatch-status-info     { color: var(--color-status-info); }
+  .swatch-status-agent    { color: var(--color-status-agent); }
+  .swatch-status-positive { color: var(--color-status-positive); }
+  .swatch-status-warning  { color: var(--color-status-warning); }
+  .swatch-status-critical { color: var(--color-status-critical); }
+  .swatch-status-neutral  { color: var(--color-status-neutral); }
+
+  /* ── Data-viz series (M11 truth, brand §3) ────────────────
+     DISTINCT from the #3370FF ACTION accent so charts never paint data as a
+     CTA. data-1 happens to share the blue HUE (the canonical first series) but
+     these utilities exist so chart code references the data role explicitly
+     and never reaches for .text-accent / .bg-accent. Pastel multi-band, not
+     loud. Use for chart strokes/fills/legend swatches only. */
+  .text-data-1 { color: var(--color-data-1); }
+  .text-data-2 { color: var(--color-data-2); }
+  .text-data-3 { color: var(--color-data-3); }
+  .text-data-4 { color: var(--color-data-4); }
+  .text-data-5 { color: var(--color-data-5); }
+  .text-data-6 { color: var(--color-data-6); }
+  .bg-data-1 { background-color: var(--color-data-1); }
+  .bg-data-2 { background-color: var(--color-data-2); }
+  .bg-data-3 { background-color: var(--color-data-3); }
+  .bg-data-4 { background-color: var(--color-data-4); }
+  .bg-data-5 { background-color: var(--color-data-5); }
+  .bg-data-6 { background-color: var(--color-data-6); }
 
   /* Dark panel backgrounds */
   .bg-panel-dark  { background-color: var(--color-panel-dark); }
@@ -344,12 +426,45 @@ body {
 ─────────────────────────────────────────────────────────── */
 
 @layer utilities {
-  /* TIER-3 recede surface — inset, no elevation */
+  /* TIER-3 recede surface — inset, no elevation (M1).
+     Tuned 2026-06-12 (UIX-F1) to read clearly LIGHTER than .card-console:
+     it sits ON the warm canvas (so it recedes rather than presenting), uses a
+     SOFTER hairline (border-subtle, not the full --color-border), and carries
+     no shadow at all. The result is a felt third tier — a panel that recedes
+     behind both TIER-2 standard cards and the TIER-1 hero, instead of reading
+     as "just another card." */
   .card-inset {
     background-color: var(--color-surface-warm);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-card);
     /* no box-shadow: deliberately flat, recedes behind TIER-1/2 */
+  }
+
+  /* Hover lift for a TIER-2 card — one notch up, never to hero (M9). */
+  .card-hover-lift {
+    transition: box-shadow 200ms cubic-bezier(0, 0, 0.2, 1),
+                transform 200ms cubic-bezier(0, 0, 0.2, 1);
+  }
+  .card-hover-lift:hover {
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-1px);
+  }
+
+  /* ── Agent ZONE structure (M6 — blue=you / violet=agents at arm's length) ──
+     Use .agent-zone on a whole agent/automation/AI panel: a violet-tinted
+     ground + a solid (non-opacity) violet hairline + a violet top-accent rule.
+     This makes the agent surface readable as "the agents at work" from across
+     the room — the product's core promise. NEVER apply to a button or link. */
+  .bg-agent-zone   { background-color: var(--color-agent-zone); }
+  .border-agent-hairline { border-color: var(--color-agent-hairline); }
+  .agent-zone {
+    background-color: var(--color-agent-zone);
+    border: 1px solid var(--color-agent-hairline);
+    border-radius: var(--radius-card);
+  }
+  /* Violet top-accent rule for an agent zone header (3px, solid violet). */
+  .agent-zone-accent {
+    border-top: 3px solid var(--color-agent);
   }
 }
 
