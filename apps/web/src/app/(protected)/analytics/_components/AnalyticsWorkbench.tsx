@@ -35,7 +35,7 @@ import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
 import { Button } from '@/components/ui/button'
 import { DEMO_ANALYTICS } from '@/lib/demo/surfaces'
-import type { TopicRankCell } from '@/lib/demo/surfaces/types'
+import type { DemoAnalytics, TopicRankCell } from '@/lib/demo/surfaces/types'
 
 import { SovHeroPanel } from './SovHeroPanel'
 import { VisibilityTrendChart } from './VisibilityTrendChart'
@@ -50,6 +50,8 @@ export type AnalyticsState = 'loading' | 'empty' | 'error' | 'success'
 
 interface AnalyticsWorkbenchProps {
   state: AnalyticsState
+  /** Real analytics data for non-demo users. Defaults to DEMO_ANALYTICS when omitted. */
+  data?: DemoAnalytics
 }
 
 interface DrillTarget {
@@ -118,8 +120,7 @@ function WorkbenchPreview() {
 // Workbench (success body)
 // ---------------------------------------------------------------------------
 
-function WorkbenchBody() {
-  const data = DEMO_ANALYTICS
+function WorkbenchBody({ data = DEMO_ANALYTICS }: { data?: DemoAnalytics }) {
   const [drill, setDrill] = useState<DrillTarget | null>(null)
 
   const latestSov = data.sovTrend[data.sovTrend.length - 1]
@@ -183,7 +184,7 @@ function WorkbenchBody() {
 // AnalyticsWorkbench (state router)
 // ---------------------------------------------------------------------------
 
-export function AnalyticsWorkbench({ state }: AnalyticsWorkbenchProps) {
+export function AnalyticsWorkbench({ state, data = DEMO_ANALYTICS }: AnalyticsWorkbenchProps) {
   // empty + error render outside the rail grid (no filters to apply yet).
   if (state === 'empty') {
     return (
@@ -239,14 +240,14 @@ export function AnalyticsWorkbench({ state }: AnalyticsWorkbenchProps) {
   }
 
   // loading + success share the rail grid.
-  const topics = Array.from(new Set(DEMO_ANALYTICS.topicMatrix.map((c) => c.topic)))
+  const topics = Array.from(new Set(data.topicMatrix.map((c) => c.topic)))
 
   return (
     <AnalyticsLayout
       header={<InsightsHeader withAction={state === 'success'} />}
       scopeRail={<AnalyticsScopeRail topicGroup={<TopicFilterGroup topics={topics} />} />}
     >
-      {state === 'loading' ? <AnalyticsSkeleton /> : <WorkbenchBody />}
+      {state === 'loading' ? <AnalyticsSkeleton /> : <WorkbenchBody data={data} />}
     </AnalyticsLayout>
   )
 }

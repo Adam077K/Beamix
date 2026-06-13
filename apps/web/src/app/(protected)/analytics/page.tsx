@@ -2,12 +2,11 @@
  * /analytics — Answer-Engine Insights deep-dive (Analytics Console)
  *
  * Data routing:
- *   - Demo users: DEMO_ANALYTICS fixture (unchanged; WorkbenchBody reads from it
- *     directly inside the locked _components surface).
+ *   - Demo users: DEMO_ANALYTICS fixture passed explicitly as `data` prop.
  *   - Real users: loadAnalyticsSov() fetches from scan_engine_results +
- *     query_positions + competitor_results and maps to the DemoAnalytics contract.
- *     State is derived from whether real scan data exists. The loader result is
- *     available for future wiring into the workbench components.
+ *     query_positions + competitor_results, maps to the DemoAnalytics contract,
+ *     and is passed as `data` prop to AnalyticsWorkbench → WorkbenchBody.
+ *     Empty scans → 'empty' state (WorkbenchPreview; data prop not consumed).
  *
  * This is a READ surface (no ledger / run-control) — a coordinated viz workbench.
  *
@@ -19,6 +18,7 @@
 
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { isDemoUser } from '@/lib/demo'
+import { DEMO_ANALYTICS } from '@/lib/demo/surfaces'
 import { loadAnalyticsSov } from '@/lib/analytics/load-sov'
 import { AnalyticsWorkbench, type AnalyticsState } from './_components/AnalyticsWorkbench'
 
@@ -50,18 +50,17 @@ export default async function AnalyticsPage({
   } = await supabase.auth.getUser()
 
   // ------------------------------------------------------------------
-  // Demo branch — unchanged. WorkbenchBody reads DEMO_ANALYTICS fixture
-  // directly inside the locked _components surface.
+  // Demo branch — passes DEMO_ANALYTICS explicitly so the default is
+  // explicit and the demo path is byte-for-byte identical to before.
   // ------------------------------------------------------------------
   if (isDemoUser(user?.email)) {
     const state = override ?? 'success'
-    return <AnalyticsWorkbench state={state} />
+    return <AnalyticsWorkbench state={state} data={DEMO_ANALYTICS} />
   }
 
   // ------------------------------------------------------------------
-  // Real-user branch — fetch from DB, derive state from data presence.
-  // loadAnalyticsSov returns the DemoAnalytics-shaped object ready for
-  // future prop-injection when _components wiring is scheduled.
+  // Real-user branch — fetch from DB, derive state from data presence,
+  // and pass the real DemoAnalytics-shaped object to WorkbenchBody.
   // ------------------------------------------------------------------
 
   // Resolve businessId for this authenticated user
@@ -77,14 +76,15 @@ export default async function AnalyticsPage({
     businessId = (bizData as { id: string } | null)?.id ?? null
   }
 
-  // _realData is populated and typed to DemoAnalytics contract; available for
-  // the next wave when WorkbenchBody accepts an analyticsData prop.
-  const _realData = businessId ? await loadAnalyticsSov(supabase, businessId) : null
+  const realData = businessId ? await loadAnalyticsSov(supabase, businessId) : null
 
   // Determine state: success if we have visibility trend data, else empty.
-  const hasData = (_realData?.visibilityTrend.length ?? 0) > 0
+  const hasData = (realData?.visibilityTrend.length ?? 0) > 0
   const baseState: AnalyticsState = hasData ? 'success' : 'empty'
   const state = override ?? baseState
 
-  return <AnalyticsWorkbench state={state} />
+  // Pass realData when present (success); omit (default=DEMO_ANALYTICS) when
+  // empty — the empty state renders WorkbenchPreview not WorkbenchBody so it
+  // doesn't matter, but defaulting is safe and avoids a null cast.
+  return <AnalyticsWorkbench state={state} data={realData ?? undefined} />
 }
