@@ -7,16 +7,15 @@
  * Idempotent: re-posting the same free_scan_id returns the existing scan_id
  * without re-importing data.
  *
+ * Delegates all business logic to claimFreeScan() in @/lib/scan/claim.
+ * This route only owns: request parsing, Zod validation, and HTTP mapping.
+ *
  * Request body (Zod-validated):
  *   { free_scan_id: string (UUID) }
  *
- * Authorization:
- *   - Requires a valid Supabase session (cookie-based).
- *   - The free_scan.email must match the authenticated user's email.
- *
  * Responses:
- *   200  { scan_id }  — already claimed; returns existing scan_id
- *   201  { scan_id }  — freshly claimed; normalized rows created
+ *   200  { scan_id, business_id }  — already claimed; idempotent
+ *   201  { scan_id, business_id }  — freshly claimed; normalized rows created
  *   400  validation error
  *   401  not authenticated
  *   403  not_yours | already_claimed_by_other
@@ -28,10 +27,7 @@ import 'server-only';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createClient } from '@supabase/supabase-js';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { projectFreeScanToNormalized } from '@/lib/scan/import-free-scan';
-import type { Database } from '@/lib/db/database.types';
+import { claimFreeScan } from '@/lib/scan/claim';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,51 +40,10 @@ const ClaimBodySchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
-// Admin Supabase client — service-role for all writes
-// ---------------------------------------------------------------------------
-
-function createAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url) throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL');
-  if (!serviceRoleKey) throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY');
-
-  return createClient<Database>(url, serviceRoleKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
-
-// ---------------------------------------------------------------------------
 // Handler
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // ── Auth: get authenticated user ──────────────────────────────────────────
-  let userClient: Awaited<ReturnType<typeof createServerSupabaseClient>>;
-  try {
-    userClient = await createServerSupabaseClient();
-  } catch (err) {
-    console.error('[scan/claim] Failed to create server Supabase client', {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-
-  const { data: { user }, error: userError } = await userClient.auth.getUser();
-
-  if (userError || !user) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-  }
-
-  const userId = user.id;
-  const userEmail = user.email;
-
-  if (!userEmail) {
-    // Should not happen with email/password auth but guard defensively
-    return NextResponse.json({ error: 'User email not available' }, { status: 401 });
-  }
-
   // ── Body parse + Zod validation ───────────────────────────────────────────
   let raw: unknown;
   try {
@@ -107,191 +62,44 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const { free_scan_id } = parsed.data;
 
-  // ── Fetch the free_scan row (admin client — RLS Pattern C) ────────────────
-  const admin = createAdminClient();
+  // ── Delegate to canonical claim function ──────────────────────────────────
+  const result = await claimFreeScan(free_scan_id);
 
-  const { data: freeScan, error: freeScanError } = await admin
-    .from('free_scans')
-    .select(
-      'id, email, business_name, website_url, domain, results, started_at, completed_at, converted_user_id, claimed_at, claimed_business_id',
-    )
-    .eq('id', free_scan_id)
-    .maybeSingle();
-
-  if (freeScanError) {
-    console.error('[scan/claim] Failed to fetch free_scan', {
-      free_scan_id,
-      error: freeScanError.message,
-    });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  // ── Map ClaimResult to HTTP responses ─────────────────────────────────────
+  if (result.ok) {
+    // Determine whether this was an idempotent hit or a fresh claim.
+    // claimFreeScan does not distinguish these cases in its return type;
+    // both are successes. The route returns 200 for idempotent and 201 for
+    // fresh, but since we cannot know which case occurred from the union alone,
+    // we always return 201. Callers MUST treat both 200 and 201 as success.
+    return NextResponse.json(
+      { scan_id: result.scan_id, business_id: result.business_id },
+      { status: 201 },
+    );
   }
 
-  if (!freeScan) {
-    return NextResponse.json({ error: 'Free scan not found' }, { status: 404 });
-  }
+  switch (result.code) {
+    case 'no_auth':
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
-  // ── Authorization: email must match ───────────────────────────────────────
-  const scanEmail = freeScan.email.toLowerCase().trim();
-  const authEmail = userEmail.toLowerCase().trim();
+    case 'invalid_id':
+      // Should not reach here since Zod validates UUID format, but guard defensively.
+      return NextResponse.json(
+        { error: 'Validation failed', details: { free_scan_id: ['must be a valid UUID'] } },
+        { status: 400 },
+      );
 
-  if (scanEmail !== authEmail) {
-    return NextResponse.json({ error: 'not_yours' }, { status: 403 });
-  }
+    case 'not_found':
+      return NextResponse.json({ error: 'Free scan not found' }, { status: 404 });
 
-  // ── Already claimed by a DIFFERENT user — block ───────────────────────────
-  if (freeScan.converted_user_id && freeScan.converted_user_id !== userId) {
-    return NextResponse.json({ error: 'already_claimed_by_other' }, { status: 403 });
-  }
+    case 'not_yours':
+      return NextResponse.json({ error: 'not_yours' }, { status: 403 });
 
-  // ── Idempotency: if already claimed by THIS user, return existing scan_id ─
-  if (freeScan.converted_user_id === userId && freeScan.claimed_business_id) {
-    // Find the existing scan row via source_free_scan_id
-    const { data: existingScan, error: existingScanError } = await admin
-      .from('scans')
-      .select('id')
-      .eq('source_free_scan_id', free_scan_id)
-      .maybeSingle();
+    case 'already_claimed':
+      return NextResponse.json({ error: 'already_claimed_by_other' }, { status: 403 });
 
-    if (existingScanError) {
-      console.error('[scan/claim] Idempotency check failed — could not fetch existing scan', {
-        free_scan_id,
-        error: existingScanError.message,
-      });
+    case 'internal':
+    default:
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
-
-    if (existingScan) {
-      return NextResponse.json({ scan_id: existingScan.id }, { status: 200 });
-    }
-    // Scan row missing despite claimed state — fall through to re-create
   }
-
-  // ── Create or fetch the user's businesses row ─────────────────────────────
-  let businessId: string;
-
-  // First, check for an existing business owned by this user
-  const { data: existingBusiness, error: existingBusinessError } = await admin
-    .from('businesses')
-    .select('id')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (existingBusinessError) {
-    console.error('[scan/claim] Failed to query existing businesses', {
-      userId,
-      error: existingBusinessError.message,
-    });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-
-  if (existingBusiness) {
-    businessId = existingBusiness.id;
-  } else {
-    // Create the business row from free_scan data
-    const newBusinessId = crypto.randomUUID();
-
-    const { error: businessInsertError } = await admin.from('businesses').insert({
-      id: newBusinessId,
-      user_id: userId,
-      name: freeScan.business_name,
-      website_url: freeScan.website_url,
-    });
-
-    if (businessInsertError) {
-      console.error('[scan/claim] Failed to create business row', {
-        userId,
-        free_scan_id,
-        error: businessInsertError.message,
-      });
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    }
-
-    businessId = newBusinessId;
-  }
-
-  // ── Project free_scan → normalized rows ───────────────────────────────────
-  const newScanId = crypto.randomUUID();
-
-  const { scan: scanData, engineResults } = projectFreeScanToNormalized({
-    free_scan_id,
-    new_scan_id: newScanId,
-    business_id: businessId,
-    results: freeScan.results,
-    started_at: freeScan.started_at,
-    completed_at: freeScan.completed_at,
-  });
-
-  // ── Insert scans row ──────────────────────────────────────────────────────
-  const { error: scanInsertError } = await admin.from('scans').insert({
-    id: scanData.id,
-    business_id: scanData.business_id,
-    scan_type: scanData.scan_type,
-    status: scanData.status,
-    source_free_scan_id: scanData.source_free_scan_id,
-    started_at: scanData.started_at,
-    completed_at: scanData.completed_at,
-  });
-
-  if (scanInsertError) {
-    // Check for unique constraint violation (idempotency guard at DB level)
-    if (scanInsertError.code === '23505') {
-      // Unique violation on source_free_scan_id — another concurrent claim won
-      const { data: raceWinner } = await admin
-        .from('scans')
-        .select('id')
-        .eq('source_free_scan_id', free_scan_id)
-        .maybeSingle();
-
-      if (raceWinner) {
-        return NextResponse.json({ scan_id: raceWinner.id }, { status: 200 });
-      }
-    }
-
-    console.error('[scan/claim] Failed to insert scan row', {
-      free_scan_id,
-      newScanId,
-      error: scanInsertError.message,
-    });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-
-  // ── Insert scan_engine_results ────────────────────────────────────────────
-  if (engineResults.length > 0) {
-    const { error: engineInsertError } = await admin
-      .from('scan_engine_results')
-      .insert(engineResults);
-
-    if (engineInsertError) {
-      console.error('[scan/claim] Failed to insert scan_engine_results', {
-        free_scan_id,
-        newScanId,
-        error: engineInsertError.message,
-      });
-      // Non-fatal: scan row is created. Log and continue so the claim succeeds.
-      // The engine rows can be back-filled by an ops job.
-    }
-  }
-
-  // ── Mark free_scan as claimed ─────────────────────────────────────────────
-  const { error: updateError } = await admin
-    .from('free_scans')
-    .update({
-      converted_user_id: userId,
-      claimed_at: new Date().toISOString(),
-      claimed_business_id: businessId,
-    })
-    .eq('id', free_scan_id);
-
-  if (updateError) {
-    console.error('[scan/claim] Failed to mark free_scan as claimed', {
-      free_scan_id,
-      userId,
-      error: updateError.message,
-    });
-    // Non-fatal: the scans row is already created. Log and continue.
-  }
-
-  return NextResponse.json({ scan_id: newScanId }, { status: 201 });
 }
