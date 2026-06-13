@@ -3,9 +3,10 @@ date: 2026-06-12
 role: ceo
 task: surface-phase1b-batches2-5
 tier: full
-qa_verdict: 8/8 design-critic PASS (8-9/10) → polished → next build GREEN — pending Adam visual
+qa_verdict: PASS
+qa_note: design-only/mock; 8/8 design-critic PASS (8-9/10) polished; next build GREEN; Adam visual sign-off 2026-06-13 (bottom-up stack merge 3/3)
 pr: 183
-base: feat/b1-intelligence
+base: main
 branch: feat/phase1b-b25-intelligence
 ---
 
