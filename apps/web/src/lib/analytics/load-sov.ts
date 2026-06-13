@@ -114,7 +114,7 @@ export async function loadAnalyticsSov(
       .from('scans')
       .select('id, created_at, status')
       .eq('business_id', businessId)
-      .eq('status', 'completed')
+      .eq('status', 'complete')
       .order('created_at', { ascending: false })
       .limit(8)
 
@@ -323,57 +323,47 @@ export async function loadAnalyticsSov(
 
   // ------------------------------------------------------------------
   // Step 7: topicMatrix — topic × engine rank cells from query_positions
-  // Use latest scan only. Group by query_text × engine.
+  // Use latest scan only. Group via Map-of-Map (topic → engine → positions[])
+  // so topic/engine come from real fields — never parsed from a composite key.
   // ------------------------------------------------------------------
   const latestAllQpRows = queryPositionRows.filter((r) => r.scan_id === latestScanId)
 
-  // Group by (query_text, engine) → collect positions
-  const matrixMap: Record<string, number[]> = {}
+  // Map<topic, Map<engine, number[]>>
+  const matrixMap = new Map<string, Map<string, number[]>>()
   for (const row of latestAllQpRows) {
-    const key = `${row.query_text}__${row.engine}`
-    if (!matrixMap[key]) matrixMap[key] = []
-    if (row.position !== null) matrixMap[key].push(row.position)
+    if (!matrixMap.has(row.query_text)) matrixMap.set(row.query_text, new Map())
+    const engineMap = matrixMap.get(row.query_text)!
+    if (!engineMap.has(row.engine)) engineMap.set(row.engine, [])
+    if (row.position !== null) engineMap.get(row.engine)!.push(row.position)
   }
 
-  const topicMatrix: TopicRankCell[] = Object.entries(matrixMap)
-    .map(([key, positions]): TopicRankCell => {
-      const [topic, engine] = key.split('__')
+  const topicMatrix: TopicRankCell[] = []
+  for (const [topic, engineMap] of matrixMap) {
+    for (const [engine, positions] of engineMap) {
       const avgRank =
         positions.length > 0
           ? Math.round((positions.reduce((a, b) => a + b, 0) / positions.length) * 10) / 10
           : 5.0
-      return {
-        topic,
-        engine,
-        avgRank,
-        scoreBand: rankToScoreBand(avgRank),
-      }
-    })
-    .sort((a, b) => a.topic.localeCompare(b.topic) || a.engine.localeCompare(b.engine))
-
-  // ------------------------------------------------------------------
-  // Step 8: drillData — one entry per (topic, engine) pair in topicMatrix
-  // Populate promptsTested from query_text values; snippets are not
-  // stored in the DB at this schema version, so we use empty strings.
-  // ------------------------------------------------------------------
-  const drillData: Record<string, AnalyticsDrillData> = {}
-
-  // Group query_text per (topic_key, engine) using the latest scan rows
-  const drillQueries: Record<string, string[]> = {}
-  for (const row of latestAllQpRows) {
-    const key = `${row.query_text}__${row.engine}`
-    if (!drillQueries[key]) drillQueries[key] = []
-    if (!drillQueries[key].includes(row.query_text)) {
-      drillQueries[key].push(row.query_text)
+      topicMatrix.push({ topic, engine, avgRank, scoreBand: rankToScoreBand(avgRank) })
     }
   }
+  topicMatrix.sort((a, b) => a.topic.localeCompare(b.topic) || a.engine.localeCompare(b.engine))
+
+  // ------------------------------------------------------------------
+  // Step 8: drillData — one entry per (topic, engine) pair in topicMatrix.
+  // promptsTested = distinct query_text values WHERE query_text === topic
+  // AND engine === engine for that cell. Key = "${topic}__${engine}" to
+  // match the lookup convention used by AnalyticsDrillDrawer.
+  // ------------------------------------------------------------------
+  const drillData: Record<string, AnalyticsDrillData> = {}
 
   for (const cell of topicMatrix) {
     const key = `${cell.topic}__${cell.engine}`
     const queriesForCell: string[] = []
-    // Collect all distinct query_text values for this (topic, engine)
     for (const row of latestAllQpRows) {
-      if (row.engine === cell.engine && !queriesForCell.includes(row.query_text)) {
+      // Both predicates required: topic match AND engine match
+      if (row.query_text === cell.topic && row.engine === cell.engine &&
+          !queriesForCell.includes(row.query_text)) {
         queriesForCell.push(row.query_text)
       }
     }

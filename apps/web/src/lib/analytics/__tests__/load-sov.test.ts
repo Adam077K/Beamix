@@ -20,7 +20,7 @@ import type { Database } from '@/lib/db/database.types'
 // ---------------------------------------------------------------------------
 
 function makeScan(id: string, createdAt: string) {
-  return { id, created_at: createdAt, status: 'completed', business_id: 'biz-1' }
+  return { id, created_at: createdAt, status: 'complete', business_id: 'biz-1' }
 }
 
 function makeSer(scanId: string, engine: string, isMentioned: boolean, rankPosition: number | null = null) {
@@ -328,5 +328,55 @@ describe('loadAnalyticsSov', () => {
       expect(result.drillData[key].topic).toBe(cell.topic)
       expect(result.drillData[key].engine).toBe(cell.engine)
     }
+  })
+
+  // Regression: query_text containing '__' must NOT corrupt the engine field
+  it('topic containing __ does not corrupt engine in topicMatrix', async () => {
+    const scan = makeScan('scan-1', '2026-06-09T10:00:00Z')
+    // query_text has a double-underscore — old split('__') would produce wrong engine
+    const qpRows = [
+      makeQp('scan-1', 'ChatGPT', 'teeth__whitening__special', 2),
+    ]
+    const supabase = buildSupabaseMock({
+      scans: [scan],
+      scan_engine_results: [makeSer('scan-1', 'ChatGPT', true)],
+      query_positions: qpRows,
+      competitor_results: [],
+      competitors: [],
+    })
+    const result = await loadAnalyticsSov(supabase, BIZ_ID)
+    expect(result.topicMatrix).toHaveLength(1)
+    // topic must be the full original query_text, engine must be 'ChatGPT'
+    expect(result.topicMatrix[0].topic).toBe('teeth__whitening__special')
+    expect(result.topicMatrix[0].engine).toBe('ChatGPT')
+  })
+
+  // Regression: drillData promptsTested must not leak across topics for same engine
+  it('drillData promptsTested contains only the cell topic, not other topics on same engine', async () => {
+    const scan = makeScan('scan-1', '2026-06-09T10:00:00Z')
+    // ChatGPT has two distinct topics; each cell must only see its own topic
+    const qpRows = [
+      makeQp('scan-1', 'ChatGPT', 'emergency dentist', 1),
+      makeQp('scan-1', 'ChatGPT', 'teeth whitening', 2),
+    ]
+    const supabase = buildSupabaseMock({
+      scans: [scan],
+      scan_engine_results: [makeSer('scan-1', 'ChatGPT', true)],
+      query_positions: qpRows,
+      competitor_results: [],
+      competitors: [],
+    })
+    const result = await loadAnalyticsSov(supabase, BIZ_ID)
+
+    const emergencyKey = 'emergency dentist__ChatGPT'
+    const whiteningKey = 'teeth whitening__ChatGPT'
+
+    expect(result.drillData[emergencyKey]).toBeDefined()
+    expect(result.drillData[whiteningKey]).toBeDefined()
+
+    // No cross-topic leak: emergency dentist cell must NOT include 'teeth whitening'
+    expect(result.drillData[emergencyKey].promptsTested).not.toContain('teeth whitening')
+    // Symmetrical: whitening cell must NOT include 'emergency dentist'
+    expect(result.drillData[whiteningKey].promptsTested).not.toContain('emergency dentist')
   })
 })
