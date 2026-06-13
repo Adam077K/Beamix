@@ -40,6 +40,13 @@ export interface DashboardOutcomes {
    * baseline. Omitted entirely for users with no scan history yet.
    */
   overallTrend?: OverallTrendPoint[]
+  /**
+   * Top priority gaps from the user's latest completed free scan.
+   * Optional — absent when no scan has been run yet, or when the scan
+   * predates the scan_v2 result format.
+   * Demo users receive DEMO_GAP_LIST from fixtures.
+   */
+  gapList?: import('@/lib/scan/gap-types').RankedGap[]
 }
 
 export type ApprovalItemResource = 'content' | 'email' | 'outreach'
