@@ -156,6 +156,18 @@ export interface LiveEmitterHandle {
  *
  * FORBIDDEN: never `.from('free_scans')` in this file. Only `scan_progress`.
  */
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+/** Polling interval used in the HTTP fallback path (1Hz). */
+const POLL_INTERVAL_MS = 1000
+
+/**
+ * If the Realtime subscription is live but no delta arrives for this long,
+ * fall back to polling. Guards against Supabase sending SUBSCRIBED but then
+ * silently dropping events (e.g. Realtime publication misconfiguration).
+ */
+const STALE_DELTA_TIMEOUT_MS = 5000
+
 export function createLiveScanEmitter(
   scanId: string,
   domain: string,
@@ -165,14 +177,42 @@ export function createLiveScanEmitter(
   let stopped = false
   let previousEngines: EngineProgress[] = [...DEFAULT_ENGINE_PROGRESS]
   let pollInterval: ReturnType<typeof setInterval> | null = null
+  let staleDeltaTimer: ReturnType<typeof setTimeout> | null = null
   let realtimeChannel: ReturnType<ReturnType<typeof getAnonClient>['channel']> | null = null
   let reconnectFailures = 0
   const MAX_RECONNECT_FAILURES = 3
 
   const supabase = getAnonClient()
 
+  /** Start / reset the stale-delta watchdog. Cancels and restarts the 5s timer. */
+  function resetStaleDeltaTimer() {
+    if (staleDeltaTimer) {
+      clearTimeout(staleDeltaTimer)
+      staleDeltaTimer = null
+    }
+    if (stopped) return
+    staleDeltaTimer = setTimeout(() => {
+      if (stopped) return
+      // No delta for 5s — fall back to polling.
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel)
+        realtimeChannel = null
+      }
+      startPolling()
+    }, STALE_DELTA_TIMEOUT_MS)
+  }
+
+  function stopStaleDeltaTimer() {
+    if (staleDeltaTimer) {
+      clearTimeout(staleDeltaTimer)
+      staleDeltaTimer = null
+    }
+  }
+
   function handleRow(row: ScanProgress) {
     if (stopped) return
+    // A row arrived — reset the stale-delta watchdog.
+    resetStaleDeltaTimer()
     const event = mapToScanEvent(row, previousEngines)
     previousEngines = [...row.engines]
     emit(event)
@@ -184,6 +224,8 @@ export function createLiveScanEmitter(
 
   function startPolling() {
     if (pollInterval) return
+    // Stop the stale-delta watchdog — polling is the active strategy now.
+    stopStaleDeltaTimer()
     pollInterval = setInterval(async () => {
       if (stopped) return
       try {
@@ -201,7 +243,7 @@ export function createLiveScanEmitter(
       } catch {
         // network error — keep polling
       }
-    }, 1500)
+    }, POLL_INTERVAL_MS)
   }
 
   function stopPolling() {
@@ -214,6 +256,7 @@ export function createLiveScanEmitter(
   function cleanup() {
     stopped = true
     stopPolling()
+    stopStaleDeltaTimer()
     if (realtimeChannel) {
       supabase.removeChannel(realtimeChannel)
       realtimeChannel = null
@@ -274,6 +317,9 @@ export function createLiveScanEmitter(
             reconnectFailures = 0
             // Race guard: fetch initial row now that the subscription is live.
             fetchInitialRow()
+            // Start the stale-delta watchdog — if no row arrives within 5s,
+            // fall back to polling.
+            resetStaleDeltaTimer()
           } else if (
             status === 'CHANNEL_ERROR' ||
             status === 'TIMED_OUT' ||
