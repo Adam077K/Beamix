@@ -32,6 +32,12 @@
  *   value-preview rail — real choreography for the first paid moment.
  * M11 Mono for truth: pct always Geist Mono tabular-nums via <Stat>.
  * M12 Hairline rhythm: varied gaps + hairline dividers, not global space-y.
+ *
+ * ACTIVATION BRIDGE (Phase 2):
+ * Receives a `claimResult` prop from the RSC page (server-side claim of the
+ * free scan). On success the onboarding completes then routes to
+ * /dashboard?scan_imported=1. On failure (any error code) a non-blocking
+ * dismissible banner surfaces; the full onboarding flow continues unaffected.
  */
 
 import { useEffect, useReducer, useRef, useState } from 'react'
@@ -40,6 +46,7 @@ import { cn } from '@/lib/utils'
 import { DEMO_DAY1 } from '@/lib/demo/fixtures'
 import { Stat } from '@/components/ui/stat'
 import type { Day1Step } from '@/types/day1'
+import type { ClaimResult } from '@/lib/scan/claim'
 import { ValuePreviewRail } from './_components/value-preview-rail'
 
 // ---------------------------------------------------------------------------
@@ -480,11 +487,117 @@ function WaitingBlock() {
 }
 
 // ---------------------------------------------------------------------------
+// Claim banner — non-blocking, dismissible (shown on claim failure only)
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps a claim error code to a brief user-facing message.
+ * Kept vague — we never expose internal error details to the UI.
+ */
+function claimErrorMessage(
+  code: Extract<ClaimResult, { ok: false }>['code'],
+): string {
+  switch (code) {
+    case 'not_yours':
+      return 'That scan was registered to a different email — nothing to import.'
+    case 'already_claimed':
+      return 'Scan already imported to your account.'
+    case 'not_found':
+    case 'invalid_id':
+      return 'Scan not found — it may have expired.'
+    case 'no_auth':
+    case 'internal':
+    default:
+      return 'Could not import your scan. You can run a fresh one from the dashboard.'
+  }
+}
+
+interface ClaimBannerProps {
+  code: Extract<ClaimResult, { ok: false }>['code']
+  onDismiss: () => void
+}
+
+function ClaimBanner({ code, onDismiss }: ClaimBannerProps) {
+  return (
+    <div
+      role="alert"
+      className="flex items-start gap-3 rounded-lg border border-[var(--color-status-warning-bg)] bg-[var(--color-status-warning-bg)] px-4 py-3"
+      style={
+        {
+          '--color-status-warning-bg': '#FDF3E0',
+          '--color-status-warning': '#B8770B',
+        } as React.CSSProperties
+      }
+    >
+      {/* Warning icon */}
+      <svg
+        className="mt-0.5 h-4 w-4 shrink-0"
+        style={{ color: '#B8770B' }}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+        <line x1="12" y1="9" x2="12" y2="13" />
+        <line x1="12" y1="17" x2="12.01" y2="17" />
+      </svg>
+
+      <p className="flex-1 text-[13px] leading-relaxed" style={{ color: '#B8770B' }}>
+        {claimErrorMessage(code)}
+      </p>
+
+      {/* Dismiss */}
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label="Dismiss"
+        className="ml-1 rounded p-0.5 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#B8770B] hover:bg-[rgba(184,119,11,0.1)]"
+        style={{ color: '#B8770B' }}
+      >
+        <svg
+          className="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main export
 // ---------------------------------------------------------------------------
 
-export function PostPaymentScan() {
+interface PostPaymentScanProps {
+  /**
+   * Result of server-side free-scan claim (null when no scan_id was present
+   * in the URL). Passed from the RSC page — never fetched client-side.
+   */
+  claimResult: ClaimResult | null
+}
+
+export function PostPaymentScan({ claimResult }: PostPaymentScanProps) {
   const router = useRouter()
+
+  // Claim banner visibility — only shown for failed claims; auto-dismissed
+  // when the user navigates to the dashboard.
+  const [bannerDismissed, setBannerDismissed] = useState(false)
+  const showClaimBanner =
+    !bannerDismissed &&
+    claimResult !== null &&
+    !claimResult.ok
 
   // Dev/test error trigger — toggle via URL ?error=1 or a hidden keystroke.
   // This keeps the error state fully accessible in QA without affecting prod.
@@ -505,7 +618,14 @@ export function PostPaymentScan() {
   const currentStep = DEMO_DAY1.steps[stepIndex]
 
   function handleContinue() {
-    router.push('/home')
+    // Route directly to /dashboard — bypass /home which is a bare redirect()
+    // that strips query params. scan_imported=1 lets the dashboard surface a
+    // welcome card for the imported free scan.
+    if (claimResult?.ok) {
+      router.push('/dashboard?scan_imported=1')
+    } else {
+      router.push('/dashboard')
+    }
   }
 
   // The value-preview rail shows once payment is confirmed (everything except
@@ -548,7 +668,16 @@ export function PostPaymentScan() {
 
         <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1.1fr_minmax(0,420px)] lg:gap-8">
           {/* ── LEFT: TIER-1 hero ritual panel (the one focal of the screen) ── */}
-          <div className="craft-enter craft-enter-2 flex flex-col">
+          <div className="craft-enter craft-enter-2 flex flex-col gap-3">
+            {/* Non-blocking claim banner — only visible on claim failures.
+                Lives ABOVE the card so the onboarding flow is unaffected. */}
+            {showClaimBanner && (
+              <ClaimBanner
+                code={(claimResult as Extract<ClaimResult, { ok: false }>).code}
+                onDismiss={() => setBannerDismissed(true)}
+              />
+            )}
+
             <div className="card-console-hero flex flex-1 flex-col justify-center p-7 sm:p-9 lg:p-10">
               {phase === 'waiting' && <WaitingBlock />}
 

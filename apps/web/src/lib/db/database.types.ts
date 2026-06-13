@@ -484,6 +484,54 @@ export type Database = {
           },
         ]
       }
+      business_contexts: {
+        Row: {
+          built_from_scan_id: string | null
+          business_id: string
+          context: Json
+          created_at: string
+          expires_at: string
+          id: string
+          model_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          built_from_scan_id?: string | null
+          business_id: string
+          context: Json
+          created_at?: string
+          expires_at?: string
+          id?: string
+          model_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          built_from_scan_id?: string | null
+          business_id?: string
+          context?: Json
+          created_at?: string
+          expires_at?: string
+          id?: string
+          model_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_contexts_built_from_scan_id_fkey"
+            columns: ["built_from_scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_contexts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       businesses: {
         Row: {
           created_at: string
@@ -927,6 +975,51 @@ export type Database = {
           },
         ]
       }
+      factor_catalog: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_name: string
+          factor_key: string
+          id: string
+          impact_weight: number
+          is_active: boolean
+          playbook_id: string | null
+          promises_lift: boolean
+          tier: number
+          version: number
+          weight_source: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_name: string
+          factor_key: string
+          id?: string
+          impact_weight?: number
+          is_active?: boolean
+          playbook_id?: string | null
+          promises_lift?: boolean
+          tier: number
+          version?: number
+          weight_source?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          factor_key?: string
+          id?: string
+          impact_weight?: number
+          is_active?: boolean
+          playbook_id?: string | null
+          promises_lift?: boolean
+          tier?: number
+          version?: number
+          weight_source?: string
+        }
+        Relationships: []
+      }
       feature_flags: {
         Row: {
           description: string | null
@@ -989,6 +1082,8 @@ export type Database = {
       free_scans: {
         Row: {
           business_name: string
+          claimed_at: string | null
+          claimed_business_id: string | null
           completed_at: string | null
           converted_user_id: string | null
           created_at: string
@@ -1004,6 +1099,8 @@ export type Database = {
         }
         Insert: {
           business_name: string
+          claimed_at?: string | null
+          claimed_business_id?: string | null
           completed_at?: string | null
           converted_user_id?: string | null
           created_at?: string
@@ -1019,6 +1116,8 @@ export type Database = {
         }
         Update: {
           business_name?: string
+          claimed_at?: string | null
+          claimed_business_id?: string | null
           completed_at?: string | null
           converted_user_id?: string | null
           created_at?: string
@@ -1034,10 +1133,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "free_scans_converted_user_id_fkey"
-            columns: ["converted_user_id"]
+            foreignKeyName: "free_scans_claimed_business_id_fkey"
+            columns: ["claimed_business_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "businesses"
             referencedColumns: ["id"]
           },
         ]
@@ -1349,35 +1448,53 @@ export type Database = {
       query_positions: {
         Row: {
           business_id: string
+          ci_high: number | null
+          ci_low: number | null
           created_at: string
           engine: string
+          evidence_id: string
           id: string
           is_mentioned: boolean
+          model_id: string | null
           position: number | null
           query_id: string | null
           query_text: string
+          run_kind: string | null
+          sample_n: number | null
           scan_id: string
         }
         Insert: {
           business_id: string
+          ci_high?: number | null
+          ci_low?: number | null
           created_at?: string
           engine: string
+          evidence_id?: string
           id?: string
           is_mentioned?: boolean
+          model_id?: string | null
           position?: number | null
           query_id?: string | null
           query_text: string
+          run_kind?: string | null
+          sample_n?: number | null
           scan_id: string
         }
         Update: {
           business_id?: string
+          ci_high?: number | null
+          ci_low?: number | null
           created_at?: string
           engine?: string
+          evidence_id?: string
           id?: string
           is_mentioned?: boolean
+          model_id?: string | null
           position?: number | null
           query_id?: string | null
           query_text?: string
+          run_kind?: string | null
+          sample_n?: number | null
           scan_id?: string
         }
         Relationships: [
@@ -1512,6 +1629,8 @@ export type Database = {
           raw_response: string | null
           scan_id: string
           sentiment: string | null
+          shape: string | null
+          shape_outcome: string | null
         }
         Insert: {
           business_id: string
@@ -1525,6 +1644,8 @@ export type Database = {
           raw_response?: string | null
           scan_id: string
           sentiment?: string | null
+          shape?: string | null
+          shape_outcome?: string | null
         }
         Update: {
           business_id?: string
@@ -1538,6 +1659,8 @@ export type Database = {
           raw_response?: string | null
           scan_id?: string
           sentiment?: string | null
+          shape?: string | null
+          shape_outcome?: string | null
         }
         Relationships: [
           {
@@ -1556,6 +1679,44 @@ export type Database = {
           },
         ]
       }
+      scan_progress: {
+        Row: {
+          current_query: string | null
+          done: boolean
+          engines: Json
+          progress: number
+          scan_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          current_query?: string | null
+          done?: boolean
+          engines?: Json
+          progress?: number
+          scan_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          current_query?: string | null
+          done?: boolean
+          engines?: Json
+          progress?: number
+          scan_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_progress_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: true
+            referencedRelation: "free_scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scans: {
         Row: {
           business_id: string
@@ -1565,6 +1726,7 @@ export type Database = {
           id: string
           metadata: Json | null
           scan_type: string
+          source_free_scan_id: string | null
           started_at: string | null
           status: string
         }
@@ -1576,6 +1738,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           scan_type?: string
+          source_free_scan_id?: string | null
           started_at?: string | null
           status?: string
         }
@@ -1587,6 +1750,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           scan_type?: string
+          source_free_scan_id?: string | null
           started_at?: string | null
           status?: string
         }
@@ -1596,6 +1760,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scans_source_free_scan_id_fkey"
+            columns: ["source_free_scan_id"]
+            isOneToOne: false
+            referencedRelation: "free_scans"
             referencedColumns: ["id"]
           },
         ]
@@ -1758,6 +1929,47 @@ export type Database = {
         }
         Relationships: []
       }
+      telemetry_events: {
+        Row: {
+          business_id: string
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          occurred_at: string
+          source: string | null
+          url: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          source?: string | null
+          url?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          source?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telemetry_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       topic_ledger: {
         Row: {
           agent_type: Database["public"]["Enums"]["agent_type"]
@@ -1834,10 +2046,13 @@ export type Database = {
           created_at: string
           id: string
           intent: string | null
+          intent_bucket: string | null
           is_active: boolean
+          is_branded: boolean
           query_text: string
           updated_at: string
           volume_estimate: number | null
+          weight: number
         }
         Insert: {
           business_id: string
@@ -1845,10 +2060,13 @@ export type Database = {
           created_at?: string
           id?: string
           intent?: string | null
+          intent_bucket?: string | null
           is_active?: boolean
+          is_branded?: boolean
           query_text: string
           updated_at?: string
           volume_estimate?: number | null
+          weight?: number
         }
         Update: {
           business_id?: string
@@ -1856,10 +2074,13 @@ export type Database = {
           created_at?: string
           id?: string
           intent?: string | null
+          intent_bucket?: string | null
           is_active?: boolean
+          is_branded?: boolean
           query_text?: string
           updated_at?: string
           volume_estimate?: number | null
+          weight?: number
         }
         Relationships: [
           {
