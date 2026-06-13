@@ -4,9 +4,10 @@
  * Phase 1B: design + mock data only. ZERO backend wiring.
  * All data from DEMO_TEAM fixture (lib/demo/surfaces/team.ts).
  *
- * The calm contract: no hero card, no Fraunces, no sparkline, no violet (no
- * agent surface lives here). Just a Settings-shell table + forms. The single
- * signature moment is the seat-meter pill-bar. Restraint IS the design.
+ * The calm contract: no hero card, no sparkline, no violet (no agent surface
+ * lives here). Just a Settings-shell table + forms. The single signature moment
+ * is the seat-meter pill-bar, with exactly one editorial serif verdict beat
+ * (Fraunces italic "workspace" in the Members subtitle). Restraint IS the design.
  *
  * Demo users see the populated team. Real users see the designed empty state
  * ("It's just you for now") with an invite-first composer.
