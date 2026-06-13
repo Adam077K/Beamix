@@ -142,13 +142,11 @@ describe('loadDashboardGaps', () => {
     expect(result).toEqual([])
   })
 
-  it('(4) reads free_scans via admin client; missing scan_v2 returns []', async () => {
-    const adminFromSpy = vi.fn()
-    const adminStub = {
-      from: adminFromSpy.mockReturnValue(
-        makeChain({ data: { results: MISSING_SCAN_V2_RESULTS }, error: null }),
-      ),
-    }
+  it('(4) reads free_scans via admin client with id filter; missing scan_v2 returns []', async () => {
+    // Capture the chain so we can assert the WHERE filter was applied
+    const adminChain = makeChain({ data: { results: MISSING_SCAN_V2_RESULTS }, error: null })
+    const adminFromSpy = vi.fn().mockReturnValue(adminChain)
+    const adminStub = { from: adminFromSpy }
     const anonStub = makeAnonStub({
       businesses: makeChain({ data: { id: BUSINESS_ID }, error: null }),
       scans: makeChain({ data: { id: SCAN_ID, source_free_scan_id: FREE_SCAN_ID }, error: null }),
@@ -158,9 +156,13 @@ describe('loadDashboardGaps', () => {
 
     const result = await loadDashboardGaps(USER_ID)
 
-    // Assert the admin client was used for free_scans, not the anon client
+    // P1 pin: assert the admin client was used for free_scans, not the anon client
     expect(adminFromSpy).toHaveBeenCalledWith('free_scans')
     expect(anonStub.from).not.toHaveBeenCalledWith('free_scans')
+    // P1 pin: assert the cross-tenant ownership WHERE filter is applied on the admin chain
+    // Dropping .eq('id', freeScanId) would be an unscoped read across all free_scans rows.
+    const adminEq = adminChain.eq as ReturnType<typeof vi.fn>
+    expect(adminEq.mock.calls).toContainEqual(['id', FREE_SCAN_ID])
     expect(result).toEqual([])
   })
 
@@ -187,13 +189,11 @@ describe('loadDashboardGaps', () => {
     consoleSpy.mockRestore()
   })
 
-  it('(6) happy path — admin client reads free_scans, returns RankedGap[] rank-ordered', async () => {
-    const adminFromSpy = vi.fn()
-    const adminStub = {
-      from: adminFromSpy.mockReturnValue(
-        makeChain({ data: { results: HAPPY_FREE_SCAN_RESULTS }, error: null }),
-      ),
-    }
+  it('(6) happy path — admin client reads free_scans with id filter, returns RankedGap[] rank-ordered', async () => {
+    // Capture the chain so we can assert the WHERE filter was applied
+    const adminChain = makeChain({ data: { results: HAPPY_FREE_SCAN_RESULTS }, error: null })
+    const adminFromSpy = vi.fn().mockReturnValue(adminChain)
+    const adminStub = { from: adminFromSpy }
     const anonStub = makeAnonStub({
       businesses: makeChain({ data: { id: BUSINESS_ID }, error: null }),
       scans: makeChain({ data: { id: SCAN_ID, source_free_scan_id: FREE_SCAN_ID }, error: null }),
@@ -203,9 +203,13 @@ describe('loadDashboardGaps', () => {
 
     const result = await loadDashboardGaps(USER_ID)
 
-    // Assert admin client used for free_scans
+    // P1 pin: admin client used for free_scans, not the anon client
     expect(adminFromSpy).toHaveBeenCalledWith('free_scans')
     expect(anonStub.from).not.toHaveBeenCalledWith('free_scans')
+    // P1 pin: cross-tenant ownership filter must be present on the admin chain
+    // A regression dropping .eq('id', freeScanId) would cause this to fail
+    const adminEq = adminChain.eq as ReturnType<typeof vi.fn>
+    expect(adminEq.mock.calls).toContainEqual(['id', FREE_SCAN_ID])
 
     // Rank order preserved: 1, 2, 3
     expect(result).toHaveLength(3)
