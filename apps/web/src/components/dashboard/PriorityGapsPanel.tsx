@@ -64,7 +64,6 @@ interface GapRowProps {
 function GapRow({ gap, isHygiene }: GapRowProps) {
   const fixLabel = fixabilityLabel(gap.fixability)
   const playbookChip = playbookLabel(gap.playbook_id)
-  const showImpactFallbackNote = gap.ordering_mode === 'impact_fallback'
 
   const fixColor =
     gap.fixability === 'fast'
@@ -110,13 +109,7 @@ function GapRow({ gap, isHygiene }: GapRowProps) {
         <p className="text-[14px] leading-[1.5] text-[var(--color-text-muted)]">
           {gap.contrastive_evidence}
         </p>
-
-        {/* Impact fallback note — only when ordering mode is degraded */}
-        {showImpactFallbackNote && (
-          <p className="mt-1 text-[12px] text-[var(--color-text-disabled)] italic">
-            Ordered by impact (no competitor comparison this scan)
-          </p>
-        )}
+        {/* Impact fallback note is shown once in the panel header, not per-row */}
       </div>
     </div>
   )

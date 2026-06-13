@@ -1,32 +1,44 @@
 /**
  * Unit tests for loadDashboardGaps and getLatestScanId (load-gaps.ts).
  *
- * All DB calls are stubbed via an injected Supabase client mock.
- * Zero live DB calls.
+ * Client split under test:
+ *   - businesses + scans:  user-scoped anon client (createServerSupabaseClient)
+ *   - free_scans:          admin client (getAdminClient — service-role)
+ *
+ * All DB calls are stubbed. Zero live DB calls.
  *
  * Branches covered:
  *   (1)  No business → []
  *   (2)  Business exists, no completed scans → []
  *   (3)  Scan exists but no source_free_scan_id → []
- *   (4)  Free scan exists but no scan_v2 key (missing_scan_v2 fixture) → []
- *   (5)  scan_v2 gap_list Zod parse fails (corrupted fixture) → [] + console.error
- *   (6)  Happy path → RankedGap[] with rank order preserved
- *   (7)  DB error (businesses query) → [] (no throw)
+ *   (4)  Free scan read uses admin client; missing scan_v2 → []
+ *   (5)  scan_v2 gap_list Zod parse fails → [] + console.error
+ *   (6)  Happy path — admin client reads free_scans, returns RankedGap[] rank-ordered
+ *   (7)  DB error (businesses query) → [] no throw
  *   (8)  Gap list > 8 items → capped at 8
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ---------------------------------------------------------------------------
-// Mock 'server-only' (no-op — vitest.config.ts aliases this)
+// Hoisted mock fns — must be declared before vi.mock calls
 // ---------------------------------------------------------------------------
 
+const { mockGetAdminClient } = vi.hoisted(() => {
+  const mockGetAdminClient = vi.fn()
+  return { mockGetAdminClient }
+})
+
 // ---------------------------------------------------------------------------
-// Mock createServerSupabaseClient
+// vi.mock calls
 // ---------------------------------------------------------------------------
 
 vi.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: vi.fn(),
+}))
+
+vi.mock('@/lib/agents/db/admin-client', () => ({
+  getAdminClient: mockGetAdminClient,
 }))
 
 import { loadDashboardGaps, getLatestScanId } from '../load-gaps'
@@ -60,7 +72,7 @@ function makeChain(result: { data?: unknown; error?: unknown; count?: number | n
 }
 
 // ---------------------------------------------------------------------------
-// Test-level mock setup helpers
+// Stub builders
 // ---------------------------------------------------------------------------
 
 const USER_ID = 'user-aaaa-aaaa-aaaa-aaaa'
@@ -68,10 +80,17 @@ const BUSINESS_ID = 'biz-bbbb-bbbb-bbbb-bbbb'
 const SCAN_ID = 'scan-cccc-cccc-cccc-cccc'
 const FREE_SCAN_ID = 'free-dddd-dddd-dddd-dddd'
 
-/**
- * Build a supabase stub where .from() returns a chain configured per table name.
- */
-function makeSupabaseStub(tableMap: Record<string, ReturnType<typeof makeChain>>) {
+/** Anon client stub — handles businesses + scans via user-scoped RLS. */
+function makeAnonStub(tableMap: Record<string, ReturnType<typeof makeChain>>) {
+  return {
+    from: vi.fn((table: string) => {
+      return tableMap[table] ?? makeChain({ data: null, error: null })
+    }),
+  }
+}
+
+/** Admin client stub — handles free_scans only. */
+function makeAdminStub(tableMap: Record<string, ReturnType<typeof makeChain>>) {
   return {
     from: vi.fn((table: string) => {
       return tableMap[table] ?? makeChain({ data: null, error: null })
@@ -89,58 +108,74 @@ describe('loadDashboardGaps', () => {
   })
 
   it('(1) returns [] when no business exists', async () => {
-    const stub = makeSupabaseStub({
+    const anonStub = makeAnonStub({
       businesses: makeChain({ data: null, error: null }),
     })
-    vi.mocked(createServerSupabaseClient).mockResolvedValue(stub as never)
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(anonStub as never)
+    mockGetAdminClient.mockReturnValue(makeAdminStub({}))
 
     const result = await loadDashboardGaps(USER_ID)
     expect(result).toEqual([])
   })
 
   it('(2) returns [] when business exists but no completed scans', async () => {
-    const stub = makeSupabaseStub({
+    const anonStub = makeAnonStub({
       businesses: makeChain({ data: { id: BUSINESS_ID }, error: null }),
       scans: makeChain({ data: null, error: null }),
     })
-    vi.mocked(createServerSupabaseClient).mockResolvedValue(stub as never)
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(anonStub as never)
+    mockGetAdminClient.mockReturnValue(makeAdminStub({}))
 
     const result = await loadDashboardGaps(USER_ID)
     expect(result).toEqual([])
   })
 
   it('(3) returns [] when scan has no source_free_scan_id', async () => {
-    const stub = makeSupabaseStub({
+    const anonStub = makeAnonStub({
       businesses: makeChain({ data: { id: BUSINESS_ID }, error: null }),
       scans: makeChain({ data: { id: SCAN_ID, source_free_scan_id: null }, error: null }),
     })
-    vi.mocked(createServerSupabaseClient).mockResolvedValue(stub as never)
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(anonStub as never)
+    mockGetAdminClient.mockReturnValue(makeAdminStub({}))
 
     const result = await loadDashboardGaps(USER_ID)
     expect(result).toEqual([])
   })
 
-  it('(4) returns [] when free_scan results has no scan_v2 key', async () => {
-    const stub = makeSupabaseStub({
+  it('(4) reads free_scans via admin client; missing scan_v2 returns []', async () => {
+    const adminFromSpy = vi.fn()
+    const adminStub = {
+      from: adminFromSpy.mockReturnValue(
+        makeChain({ data: { results: MISSING_SCAN_V2_RESULTS }, error: null }),
+      ),
+    }
+    const anonStub = makeAnonStub({
       businesses: makeChain({ data: { id: BUSINESS_ID }, error: null }),
       scans: makeChain({ data: { id: SCAN_ID, source_free_scan_id: FREE_SCAN_ID }, error: null }),
-      free_scans: makeChain({ data: { results: MISSING_SCAN_V2_RESULTS }, error: null }),
     })
-    vi.mocked(createServerSupabaseClient).mockResolvedValue(stub as never)
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(anonStub as never)
+    mockGetAdminClient.mockReturnValue(adminStub)
 
     const result = await loadDashboardGaps(USER_ID)
+
+    // Assert the admin client was used for free_scans, not the anon client
+    expect(adminFromSpy).toHaveBeenCalledWith('free_scans')
+    expect(anonStub.from).not.toHaveBeenCalledWith('free_scans')
     expect(result).toEqual([])
   })
 
   it('(5) returns [] and logs console.error when gap_list Zod parse fails', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
-    const stub = makeSupabaseStub({
-      businesses: makeChain({ data: { id: BUSINESS_ID }, error: null }),
-      scans: makeChain({ data: { id: SCAN_ID, source_free_scan_id: FREE_SCAN_ID }, error: null }),
+    const adminStub = makeAdminStub({
       free_scans: makeChain({ data: { results: CORRUPTED_SCAN_V2_RESULTS }, error: null }),
     })
-    vi.mocked(createServerSupabaseClient).mockResolvedValue(stub as never)
+    const anonStub = makeAnonStub({
+      businesses: makeChain({ data: { id: BUSINESS_ID }, error: null }),
+      scans: makeChain({ data: { id: SCAN_ID, source_free_scan_id: FREE_SCAN_ID }, error: null }),
+    })
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(anonStub as never)
+    mockGetAdminClient.mockReturnValue(adminStub)
 
     const result = await loadDashboardGaps(USER_ID)
     expect(result).toEqual([])
@@ -152,17 +187,28 @@ describe('loadDashboardGaps', () => {
     consoleSpy.mockRestore()
   })
 
-  it('(6) happy path — returns RankedGap[] with rank order preserved', async () => {
-    const stub = makeSupabaseStub({
+  it('(6) happy path — admin client reads free_scans, returns RankedGap[] rank-ordered', async () => {
+    const adminFromSpy = vi.fn()
+    const adminStub = {
+      from: adminFromSpy.mockReturnValue(
+        makeChain({ data: { results: HAPPY_FREE_SCAN_RESULTS }, error: null }),
+      ),
+    }
+    const anonStub = makeAnonStub({
       businesses: makeChain({ data: { id: BUSINESS_ID }, error: null }),
       scans: makeChain({ data: { id: SCAN_ID, source_free_scan_id: FREE_SCAN_ID }, error: null }),
-      free_scans: makeChain({ data: { results: HAPPY_FREE_SCAN_RESULTS }, error: null }),
     })
-    vi.mocked(createServerSupabaseClient).mockResolvedValue(stub as never)
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(anonStub as never)
+    mockGetAdminClient.mockReturnValue(adminStub)
 
     const result = await loadDashboardGaps(USER_ID)
-    expect(result).toHaveLength(3)
+
+    // Assert admin client used for free_scans
+    expect(adminFromSpy).toHaveBeenCalledWith('free_scans')
+    expect(anonStub.from).not.toHaveBeenCalledWith('free_scans')
+
     // Rank order preserved: 1, 2, 3
+    expect(result).toHaveLength(3)
     expect(result[0]!.rank).toBe(1)
     expect(result[0]!.factor_key).toBe('review_systems')
     expect(result[1]!.rank).toBe(2)
@@ -174,13 +220,14 @@ describe('loadDashboardGaps', () => {
   it('(7) returns [] (does not throw) on businesses DB error', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
-    const stub = makeSupabaseStub({
+    const anonStub = makeAnonStub({
       businesses: makeChain({
         data: null,
         error: { code: 'PGRST301', message: 'Connection refused' },
       }),
     })
-    vi.mocked(createServerSupabaseClient).mockResolvedValue(stub as never)
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(anonStub as never)
+    mockGetAdminClient.mockReturnValue(makeAdminStub({}))
 
     await expect(loadDashboardGaps(USER_ID)).resolves.toEqual([])
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -192,7 +239,6 @@ describe('loadDashboardGaps', () => {
   })
 
   it('(8) caps gap list at 8 items when more are present', async () => {
-    // Build a gap_list with 12 items
     const bigGapList = Array.from({ length: 12 }, (_, i) => ({
       factor_key: `factor_${i + 1}`,
       display_name: `Factor ${i + 1}`,
@@ -209,30 +255,28 @@ describe('loadDashboardGaps', () => {
       ordering_mode: 'contrastive' as const,
     }))
 
-    const resultsWithBigList = {
-      scan_v2: {
-        gap_list: bigGapList,
-      },
-    }
-
-    const stub = makeSupabaseStub({
+    const adminStub = makeAdminStub({
+      free_scans: makeChain({
+        data: { results: { scan_v2: { gap_list: bigGapList } } },
+        error: null,
+      }),
+    })
+    const anonStub = makeAnonStub({
       businesses: makeChain({ data: { id: BUSINESS_ID }, error: null }),
       scans: makeChain({ data: { id: SCAN_ID, source_free_scan_id: FREE_SCAN_ID }, error: null }),
-      free_scans: makeChain({ data: { results: resultsWithBigList }, error: null }),
     })
-    vi.mocked(createServerSupabaseClient).mockResolvedValue(stub as never)
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(anonStub as never)
+    mockGetAdminClient.mockReturnValue(adminStub)
 
     const result = await loadDashboardGaps(USER_ID)
     expect(result).toHaveLength(8)
-    // First item should have rank 1
     expect(result[0]!.rank).toBe(1)
-    // Last item should have rank 8
     expect(result[7]!.rank).toBe(8)
   })
 })
 
 // ---------------------------------------------------------------------------
-// getLatestScanId tests
+// getLatestScanId tests (uses anon client only — no admin client needed)
 // ---------------------------------------------------------------------------
 
 describe('getLatestScanId', () => {
@@ -241,32 +285,32 @@ describe('getLatestScanId', () => {
   })
 
   it('returns null when no business exists', async () => {
-    const stub = makeSupabaseStub({
+    const anonStub = makeAnonStub({
       businesses: makeChain({ data: null, error: null }),
     })
-    vi.mocked(createServerSupabaseClient).mockResolvedValue(stub as never)
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(anonStub as never)
 
     const result = await getLatestScanId(USER_ID)
     expect(result).toBeNull()
   })
 
   it('returns null when no completed scan exists', async () => {
-    const stub = makeSupabaseStub({
+    const anonStub = makeAnonStub({
       businesses: makeChain({ data: { id: BUSINESS_ID }, error: null }),
       scans: makeChain({ data: null, error: null }),
     })
-    vi.mocked(createServerSupabaseClient).mockResolvedValue(stub as never)
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(anonStub as never)
 
     const result = await getLatestScanId(USER_ID)
     expect(result).toBeNull()
   })
 
   it('returns scan id when a completed scan exists', async () => {
-    const stub = makeSupabaseStub({
+    const anonStub = makeAnonStub({
       businesses: makeChain({ data: { id: BUSINESS_ID }, error: null }),
       scans: makeChain({ data: { id: SCAN_ID }, error: null }),
     })
-    vi.mocked(createServerSupabaseClient).mockResolvedValue(stub as never)
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(anonStub as never)
 
     const result = await getLatestScanId(USER_ID)
     expect(result).toBe(SCAN_ID)
