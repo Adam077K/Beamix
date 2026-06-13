@@ -288,13 +288,109 @@ describe('createLiveScanEmitter', () => {
     capturedStatusCallback?.('CHANNEL_ERROR')
     capturedStatusCallback?.('CHANNEL_ERROR')
 
-    // Advance timers past the poll interval (1500ms).
-    await vi.advanceTimersByTimeAsync(2000)
+    // Advance timers past the poll interval (1000ms = 1Hz).
+    await vi.advanceTimersByTimeAsync(1500)
 
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/scan/free/scan-poll/progress',
       expect.objectContaining({ cache: 'no-store' }),
     )
+
+    emitter.stop()
+    vi.useRealTimers()
+  })
+
+  it('switches to polling after 5s stale-delta timeout (no row received after SUBSCRIBED)', async () => {
+    vi.useFakeTimers()
+
+    const pollingResponse: ScanProgress = {
+      engines: [
+        { id: 'chatgpt', status: 'querying', queryCount: 30, totalQueries: 412 },
+        { id: 'gemini', status: 'queued', queryCount: 0, totalQueries: 318 },
+        { id: 'perplexity', status: 'queued', queryCount: 0, totalQueries: 247 },
+      ],
+      progress: 0.05,
+      currentQuery: 'best SaaS CRM for small teams',
+      done: false,
+      status: 'running',
+      updated_at: new Date().toISOString(),
+    }
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => pollingResponse,
+    })
+
+    const { createLiveScanEmitter } = await import('./createLiveScanEmitter')
+    const emitter = createLiveScanEmitter('scan-stale', 'example.com', undefined, vi.fn())
+
+    emitter.start()
+
+    // Subscription becomes active — starts the 5s watchdog.
+    capturedStatusCallback?.('SUBSCRIBED')
+
+    // No Realtime rows arrive. Advance 4999ms — should NOT have polled yet.
+    await vi.advanceTimersByTimeAsync(4999)
+    expect(mockFetch).not.toHaveBeenCalled()
+
+    // Advance 1 more ms — watchdog fires, polling starts.
+    await vi.advanceTimersByTimeAsync(1)
+    // Advance past the poll interval to trigger the first fetch call.
+    await vi.advanceTimersByTimeAsync(1100)
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/scan/free/scan-stale/progress',
+      expect.objectContaining({ cache: 'no-store' }),
+    )
+
+    emitter.stop()
+    vi.useRealTimers()
+  })
+
+  it('resets the stale-delta watchdog when a Realtime row arrives', async () => {
+    vi.useFakeTimers()
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        engines: [],
+        progress: 0.1,
+        currentQuery: null,
+        done: false,
+        status: 'running',
+        updated_at: new Date().toISOString(),
+      }),
+    })
+
+    const { createLiveScanEmitter } = await import('./createLiveScanEmitter')
+    const emitter = createLiveScanEmitter('scan-watchdog-reset', 'example.com', undefined, vi.fn())
+
+    emitter.start()
+    capturedStatusCallback?.('SUBSCRIBED')
+
+    // Advance 4s — watchdog still running.
+    await vi.advanceTimersByTimeAsync(4000)
+
+    // A Realtime row arrives — resets the watchdog timer.
+    const midRow: Record<string, unknown> = {
+      engines: [
+        { id: 'chatgpt', status: 'querying', queryCount: 200, totalQueries: 412 },
+        { id: 'gemini', status: 'queued', queryCount: 0, totalQueries: 318 },
+        { id: 'perplexity', status: 'queued', queryCount: 0, totalQueries: 247 },
+      ],
+      progress: 0.3,
+      current_query: 'CRM comparison 2026',
+      done: false,
+      status: 'running',
+      updated_at: new Date().toISOString(),
+    }
+    capturedRealtimeCallback?.({ new: midRow })
+
+    // Advance another 4.9s — watchdog was reset by the row so still has ~0.1s left.
+    await vi.advanceTimersByTimeAsync(4900)
+
+    // Polling should NOT have started (watchdog was reset).
+    expect(mockFetch).not.toHaveBeenCalled()
 
     emitter.stop()
     vi.useRealTimers()

@@ -30,6 +30,11 @@ import { useLiveScan } from './useLiveScan'
 const UUID_V4_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+// Dev flag: forces the mock scan path regardless of whether a real scan_id
+// was returned from the backend. Set NEXT_PUBLIC_SCAN_FORCE_MOCK=1 in .env.local.
+// Also active when no scan_id is present (autoStart without email/token).
+const FORCE_MOCK = process.env.NEXT_PUBLIC_SCAN_FORCE_MOCK === '1'
+
 type Act = 'entry' | 'scan' | 'failed'
 
 interface ScanPayload extends EntrySubmitPayload {
@@ -143,8 +148,8 @@ export function FreeScanFlow({
   }
 
   if (act === 'scan' && payload) {
-    if (payload.scanId) {
-      // Live path — real scan_id from backend.
+    // Live path: real scan_id from backend AND not overridden by the dev flag.
+    if (payload.scanId && !FORCE_MOCK) {
       return (
         <main className="min-h-[100dvh] bg-white">
           <ScanRunnerLive
@@ -160,7 +165,7 @@ export function FreeScanFlow({
       )
     }
 
-    // Mock path — no scanId (autoStart from post-payment onboarding or storybook).
+    // Mock path: no scanId (autoStart / storybook) OR NEXT_PUBLIC_SCAN_FORCE_MOCK=1.
     return (
       <main className="min-h-[100dvh] bg-white">
         <ScanRunnerMock
