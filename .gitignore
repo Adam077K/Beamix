@@ -28,3 +28,8 @@ node_modules/
 
 # Supabase CLI link cache
 apps/web/supabase/.temp/
+
+# UI-excellence audit screenshots (heavy, kept local in ceo worktree)
+docs/design/ui-excellence-audit/screenshots/
+docs/design/ui-excellence-audit/screenshots-after/
+docs/design/ui-excellence-audit/screenshots-final/

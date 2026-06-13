@@ -6,12 +6,14 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
+import { Stat } from '@/components/ui/stat'
 import {
   CheckCircle2,
   AlertCircle,
   Eye,
   EyeOff,
   Upload,
+  Camera,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -22,9 +24,18 @@ export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 // ── Shared section primitives ─────────────────────────────────────────────────
 
 /**
- * SectionCard — wraps a group of form rows in the .card-console shell.
- * Optional header: eyebrow + heading + helper text.
+ * SectionCard — wraps a group of form rows.
+ *
+ * M1 depth staging (CRAFT-SYSTEM): a settings page has no hero metric, but it
+ * still needs *felt* hierarchy. The primary identity card sits at TIER-2
+ * (`.card-console`, standard --shadow-card) so it commands; secondary/utility
+ * groupings (Password, danger-zone, supporting toggles) drop to TIER-3
+ * (`.card-inset` — warm ground, soft hairline, NO shadow) so they recede.
+ * Never two cards at the same elevation — that uniform-depth flatness is the
+ * canonical AI tell.
  */
+type SectionTier = 'standard' | 'inset'
+
 interface SectionCardProps {
   eyebrow?: string
   heading: string
@@ -33,15 +44,50 @@ interface SectionCardProps {
   /** Footer slot — where the save-bar lives */
   footer?: React.ReactNode
   className?: string
+  /** Depth tier (M1). 'standard' = TIER-2 focal; 'inset' = TIER-3 recede. */
+  tier?: SectionTier
+  /**
+   * Optional agent-zone treatment (M6 — blue=you / violet=agents). When true,
+   * the card reads as "the crew" at arm's length: violet-tinted ground + violet
+   * hairline + a 3px violet top-accent rule. Violet NEVER touches a button.
+   */
+  agent?: boolean
 }
 
-export function SectionCard({ eyebrow, heading, helper, children, footer, className }: SectionCardProps) {
+export function SectionCard({
+  eyebrow,
+  heading,
+  helper,
+  children,
+  footer,
+  className,
+  tier = 'standard',
+  agent = false,
+}: SectionCardProps) {
+  // Dividers track the surface ground so hairlines read on warm/violet too.
+  const divider = agent
+    ? 'border-[var(--color-agent-hairline)]/40'
+    : tier === 'inset'
+      ? 'border-[var(--color-border-subtle)]'
+      : 'border-[#F3F4F6]'
+
   return (
-    <div className={cn('card-console overflow-hidden', className)}>
+    <div
+      className={cn(
+        'overflow-hidden',
+        agent ? 'agent-zone agent-zone-accent' : tier === 'inset' ? 'card-inset' : 'card-console',
+        className,
+      )}
+    >
       {/* Header */}
       <div className="px-5 py-4">
         {eyebrow && (
-          <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
+          <p
+            className={cn(
+              'mb-1 text-[12px] font-semibold uppercase tracking-[0.08em]',
+              agent ? 'text-[var(--color-agent)]' : 'text-[#9CA3AF]',
+            )}
+          >
             {eyebrow}
           </p>
         )}
@@ -51,13 +97,15 @@ export function SectionCard({ eyebrow, heading, helper, children, footer, classN
         )}
       </div>
       {/* Divider */}
-      <div className="border-t border-[#F3F4F6]" />
+      <div className={cn('border-t', divider)} />
       {/* Form rows */}
-      <div className="divide-y divide-[#F3F4F6]">{children}</div>
+      <div className={cn('divide-y', agent ? 'divide-[var(--color-agent-hairline)]/40' : tier === 'inset' ? 'divide-[var(--color-border-subtle)]' : 'divide-[#F3F4F6]')}>
+        {children}
+      </div>
       {/* Save-bar footer */}
       {footer && (
         <>
-          <div className="border-t border-[#F3F4F6]" />
+          <div className={cn('border-t', divider)} />
           {footer}
         </>
       )}
@@ -138,8 +186,14 @@ export function SaveBar({
             {errorMessage}
           </span>
         )}
+        {/*
+          P2-7: a freshly-loaded clean form has saved nothing — asserting
+          "Saved" reads as a stale/false status. Idle+clean shows a neutral
+          "No changes"; the "Saved" confirmation is reserved for the post-save
+          state above (which auto-fades).
+        */}
         {state === 'idle' && !isDirty && (
-          <span className="text-[12px] text-[var(--color-text-muted)]">Saved</span>
+          <span className="text-[12px] text-[var(--color-text-muted)]">No changes</span>
         )}
       </div>
 
@@ -411,11 +465,16 @@ export function ProfileTab() {
   if (isLoading) return <ProfileSkeleton />
 
   return (
-    <div className="space-y-6">
-      {/* ── Personal information ── */}
+    // M12 hairline rhythm: identity (TIER-2) and security (TIER-3) are different
+    // concern-classes — give them a more generous, intentional gap than a flat
+    // uniform stack.
+    <div className="space-y-8">
+      {/* ── Personal information — TIER-2 focal (M1) ── */}
       <SectionCard
         eyebrow="Profile"
         heading="Personal information"
+        // M9 entrance: priority-ordered fade-up (behind prefers-reduced-motion)
+        className="craft-enter craft-enter-1"
         footer={
           <SaveBar
             state={profileSave}
@@ -447,19 +506,31 @@ export function ProfileTab() {
                 alt="Profile avatar preview"
                 className="h-14 w-14 shrink-0 rounded-full object-cover"
               />
-            ) : (
+            ) : profile.fullName ? (
               <div
                 className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent-tint)] text-lg font-semibold text-[var(--color-accent-deep)] select-none"
                 aria-label="Profile avatar initials"
               >
                 {profile.fullName
-                  ? profile.fullName
-                      .split(' ')
-                      .slice(0, 2)
-                      .map((n) => n[0]?.toUpperCase())
-                      .join('')
-                  : '?'}
+                  .split(' ')
+                  .slice(0, 2)
+                  .map((n) => n[0]?.toUpperCase())
+                  .join('')}
               </div>
+            ) : (
+              /*
+                P2-8 (M8 warmth): no name and no avatar = first-run. A bare "?"
+                is the centered-icon empty the rubric warns against. Instead show
+                a warm-neutral, photo-ready affordance that invites the upload.
+              */
+              <button
+                type="button"
+                onClick={handleUploadClick}
+                aria-label="Add a profile photo"
+                className="group flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full border border-dashed border-[var(--color-border)] bg-[var(--color-surface-warm)] text-[var(--color-text-muted)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2"
+              >
+                <Camera className="h-5 w-5" aria-hidden="true" strokeWidth={1.5} />
+              </button>
             )}
             <div className="flex gap-2">
               <Button
@@ -564,11 +635,13 @@ export function ProfileTab() {
         </FieldRow>
       </SectionCard>
 
-      {/* ── Password ── */}
+      {/* ── Password — TIER-3 recede (M1): supporting setting, not core identity ── */}
       <SectionCard
+        tier="inset"
         eyebrow="Security"
         heading="Password"
         helper="Choose a strong password you don't use elsewhere."
+        className="craft-enter craft-enter-2"
         footer={
           <SaveBar
             state={passwordSave}
@@ -607,19 +680,36 @@ export function ProfileTab() {
               aria-invalid={passwordSave === 'error' || undefined}
             />
             {password.next && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Progress
                   value={strength.score}
                   className="h-1 flex-1"
                   // Tint the indicator with the strength color
                   style={{ '--progress-color': strength.color } as React.CSSProperties}
                 />
-                <span
-                  className="text-[11px] font-medium"
-                  style={{ color: strength.color }}
-                >
-                  {strength.label}
-                </span>
+                {/*
+                  M11 mono-for-truth: the strength % is a real figure — it
+                  renders through <Stat> in Geist Mono tabular-nums so it reads
+                  TRUE, never prose-styled.
+                  M5 serif beat: the verdict word ("Strong"/"Good"…) carries the
+                  one Fraunces italic beat on this tab — a genuine verdict,
+                  inline in a sans sentence, never in chrome.
+                */}
+                <div className="flex shrink-0 items-baseline gap-1.5">
+                  <Stat
+                    value={strength.score}
+                    unit="%"
+                    size="sm"
+                    valueColor={strength.color}
+                    aria-hidden="true"
+                  />
+                  <span
+                    className="font-[var(--font-serif)] text-[13px] italic"
+                    style={{ color: strength.color }}
+                  >
+                    {strength.label}
+                  </span>
+                </div>
               </div>
             )}
           </div>

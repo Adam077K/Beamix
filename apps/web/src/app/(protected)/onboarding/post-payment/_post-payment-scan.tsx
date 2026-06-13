@@ -15,23 +15,32 @@
  * - Violet #6E56F0 = the crew at work (step pill border, draft cards, engine pills)
  * - Violet NEVER on a button.
  *
- * CRAFT RULES APPLIED:
- * M1 Depth staging: TIER-1 hero step label (no card shadow), TIER-2 step
- *   container card-console, draft cards card-inset (TIER-3 recede).
- * M2 Type contract: STEP-1 pct 64px Geist Mono; STEP-2 label 30px InterDisplay;
- *   STEP-3 detail eyebrow; STEP-4 draft text 13px.
- * M5 Serif beat: one Fraunces italic word on the complete state ("Ready.").
- * M6 Violet structure: draft card border accent + crew label glanceable.
- * M9 Entrance: craft-enter stagger on each draft card as it lands.
- * M11 Mono for truth: pct always Geist Mono tabular-nums.
- * M12 Hairline rhythm: varied gaps, not global space-y-8.
+ * CRAFT RULES APPLIED (Wave 2 redesign — audit onboarding-post-payment.md):
+ * M1 Depth staging: page sits on warm canvas; the left ritual panel is the ONE
+ *   TIER-1 hero (.card-console-hero); the right value-preview is the TIER-2
+ *   violet agent-zone; draft rows recede as TIER-3 .card-inset.
+ * M2 Type contract: STEP-1 = the 64px Geist Mono <Stat> progress figure (the
+ *   focal of this dwell state); STEP-2 verdict 30px InterDisplay; STEP-3 eyebrow;
+ *   STEP-4 body/draft text.
+ * M3 Intentional asymmetry: confident [1.1fr_minmax(0,420px)] split that FILLS
+ *   the viewport (content side + value-preview side) — kills the dead-center
+ *   card-in-void (AI tell #5). Collapses to one column < 1024px.
+ * M5 Serif beat: one Fraunces italic word on the complete state ("ready.").
+ * M6 Violet structure: the whole right rail is the agent ZONE (crew at work);
+ *   engine pills anchored in a labeled module, not loose chips.
+ * M9 Entrance: priority-ordered fade-up — crew header → progress focal →
+ *   value-preview rail — real choreography for the first paid moment.
+ * M11 Mono for truth: pct always Geist Mono tabular-nums via <Stat>.
+ * M12 Hairline rhythm: varied gaps + hairline dividers, not global space-y.
  */
 
 import { useEffect, useReducer, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { DEMO_DAY1 } from '@/lib/demo/fixtures'
-import type { Day1Step, Day1Draft } from '@/types/day1'
+import { Stat } from '@/components/ui/stat'
+import type { Day1Step } from '@/types/day1'
+import { ValuePreviewRail } from './_components/value-preview-rail'
 
 // ---------------------------------------------------------------------------
 // State machine
@@ -224,132 +233,109 @@ function EngineGlyph({
 }
 
 // ---------------------------------------------------------------------------
-// Draft card — surfaces progressively as steps complete
+// Progress focal — the 64px Geist Mono <Stat> (STEP-1) + thin blue track.
+// This is the focal of the dwell state: the figure the eye lands on first.
 // ---------------------------------------------------------------------------
 
-const KIND_LABELS: Record<Day1Draft['kind'], string> = {
-  faq: 'FAQ',
-  schema: 'Schema',
-  citation: 'Citation',
-  content: 'Content',
-}
-
-function DraftCard({
-  draft,
-  enterDelay,
-}: {
-  draft: Day1Draft
-  enterDelay: number
-}) {
+function ProgressFocal({ pct, label }: { pct: number; label: string }) {
   return (
-    <div
-      className="card-inset craft-enter p-4"
-      style={{ animationDelay: `${enterDelay}ms` }}
-      aria-label={`Draft: ${draft.title}`}
-    >
-      {/* Violet structure top accent: 1px hairline  */}
-      <div
-        className="mb-3 h-px w-full"
-        style={{ background: 'rgba(110,86,240,0.15)' }}
-        aria-hidden="true"
+    <div className="flex flex-col gap-4">
+      {/* STEP-1 hero figure — blue = your progress (M2/M11) */}
+      <Stat
+        value={pct}
+        unit="%"
+        label={label}
+        size="hero"
+        labelPosition="top"
+        align="start"
+        valueColor="var(--color-accent)"
+        aria-live="polite"
       />
 
-      {/* Kind chip + crew attribution */}
-      <div className="mb-2 flex items-center gap-2">
-        <span
-          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em]"
-          style={{
-            background: 'var(--color-agent-tint)',
-            color: 'var(--color-agent)',
-          }}
-        >
-          {KIND_LABELS[draft.kind]}
-        </span>
-        <span className="text-[11px] text-[var(--color-text-disabled)]">
-          drafted by the crew
-        </span>
-      </div>
-
-      {/* Title */}
-      <p className="text-[13px] font-medium leading-snug text-[var(--color-text-primary)]">
-        {draft.title}
-      </p>
-
-      {/* Summary */}
-      <p className="mt-1 text-[12px] leading-relaxed text-[var(--color-text-muted)]">
-        {draft.summary}
-      </p>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Progress track — thin blue bar + Geist Mono pct (STEP-1)
-// ---------------------------------------------------------------------------
-
-function ProgressTrack({ pct }: { pct: number }) {
-  return (
-    <div className="flex items-center gap-3">
-      {/* Bar */}
-      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--color-border)]">
+      {/* Thin blue track — a touch more presence than a hairline (P3-1) */}
+      <div
+        className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-border)]"
+        role="presentation"
+      >
         <div
-          className="h-full rounded-full bg-[var(--color-accent)] origin-left transition-transform duration-500 ease-out"
+          className="h-full origin-left rounded-full bg-[var(--color-accent)] transition-transform duration-500 ease-out"
           style={{ transform: `scaleX(${pct / 100})`, willChange: 'transform' }}
-          role="presentation"
         />
       </div>
-
-      {/* Pct — STEP-1 focal figure */}
-      <span
-        className="w-10 shrink-0 text-right font-[var(--font-mono)] tabular-nums text-[13px] text-[var(--color-text-muted)]"
-        aria-live="polite"
-        aria-label={`${pct}% complete`}
-      >
-        {pct}%
-      </span>
     </div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// Active step block — the ritual core
+// Active step block — the ritual core (left column)
 // ---------------------------------------------------------------------------
 
 function ActiveStepBlock({ step }: { step: Day1Step }) {
   const isScanRunning = step.state === 'scan_running'
 
   return (
-    <div className="craft-enter craft-enter-1 flex flex-col gap-4">
-      {/* STEP-2: Label — 30px InterDisplay */}
-      <h1
-        className="text-[26px] font-semibold leading-tight tracking-[-0.02em] sm:text-[30px]"
-        style={{ fontFamily: 'var(--font-display)' }}
-        aria-live="polite"
-      >
-        {step.label}
-      </h1>
+    <div className="flex flex-col gap-7">
+      {/* STEP-1 — the progress figure leads, label as eyebrow above it */}
+      <ProgressFocal pct={step.pct} label="Setting up your workspace" />
 
-      {/* STEP-3: Detail eyebrow */}
-      <p
-        className="text-[13px] leading-relaxed text-[var(--color-text-muted)]"
-        aria-live="polite"
-      >
-        {step.detail}
-      </p>
+      {/* Hairline divider — M12 rhythm between focal and the live step */}
+      <div
+        className="h-px w-full bg-[var(--color-border-subtle)]"
+        aria-hidden="true"
+      />
 
-      {/* Engine pills — signature detail, only during scan_running */}
+      {/* STEP-2: verdict label — 30px InterDisplay (what's happening now) */}
+      <div className="flex flex-col gap-2">
+        <h1
+          className="text-[26px] font-semibold leading-tight tracking-[-0.02em] sm:text-[30px]"
+          style={{ fontFamily: 'var(--font-display)' }}
+          aria-live="polite"
+        >
+          {step.label}
+        </h1>
+        <p
+          className="max-w-[460px] text-[14px] leading-relaxed text-[var(--color-text-muted)]"
+          aria-live="polite"
+        >
+          {step.detail}
+        </p>
+      </div>
+
+      {/* Engine pills — anchored in a labeled violet module (M6, fixes P2-3) */}
       <div
         className={cn(
           'transition-all duration-300',
-          isScanRunning ? 'opacity-100' : 'opacity-0 pointer-events-none h-0 overflow-hidden',
+          isScanRunning
+            ? 'opacity-100'
+            : 'pointer-events-none h-0 overflow-hidden opacity-0',
         )}
         aria-hidden={!isScanRunning}
       >
-        <EnginePills active={isScanRunning} />
+        <EngineModule active={isScanRunning} />
       </div>
+    </div>
+  )
+}
 
-      {/* Progress track */}
-      <ProgressTrack pct={step.pct} />
+// ---------------------------------------------------------------------------
+// Engine module — labeled, anchored violet structure (not loose chips)
+// ---------------------------------------------------------------------------
+
+function EngineModule({ active }: { active: boolean }) {
+  return (
+    <div className="flex flex-col gap-2.5">
+      <span
+        className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em]"
+        style={{ color: 'var(--color-agent)' }}
+      >
+        <span
+          className="block h-1.5 w-1.5 rounded-full motion-safe:animate-[scan-dot_1.4s_ease-in-out_infinite]"
+          style={{ background: 'var(--color-agent)' }}
+          aria-hidden="true"
+        />
+        Scanning across
+      </span>
+      <EnginePills active={active} />
     </div>
   )
 }
@@ -494,43 +480,6 @@ function WaitingBlock() {
 }
 
 // ---------------------------------------------------------------------------
-// Drafts panel
-// ---------------------------------------------------------------------------
-
-function DraftsPanel({
-  revealedDraftIds,
-}: {
-  revealedDraftIds: Set<string>
-}) {
-  const visibleDrafts = DEMO_DAY1.drafts.filter((d) =>
-    revealedDraftIds.has(d.id),
-  )
-  if (visibleDrafts.length === 0) return null
-
-  return (
-    <div className="flex flex-col gap-3">
-      {/* Rail label — violet structure (M6) */}
-      <p
-        className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em]"
-        style={{ color: 'var(--color-agent)' }}
-      >
-        <span
-          className="block h-1.5 w-1.5 rounded-full"
-          style={{ background: 'var(--color-agent)' }}
-          aria-hidden="true"
-        />
-        Drafted by the crew
-      </p>
-
-      {/* Draft cards staggered in */}
-      {visibleDrafts.map((draft, i) => (
-        <DraftCard key={draft.id} draft={draft} enterDelay={i * 80} />
-      ))}
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
 // Main export
 // ---------------------------------------------------------------------------
 
@@ -559,22 +508,24 @@ export function PostPaymentScan() {
     router.push('/home')
   }
 
-  // Determine if drafts panel should show (only during in_progress/complete)
-  const showDrafts = phase === 'in_progress' || phase === 'complete'
+  // The value-preview rail shows once payment is confirmed (everything except
+  // the brief waiting beat and a hard error) — it is the "what you just bought"
+  // half of the split that fills the frame.
+  const showRail = phase === 'in_progress' || phase === 'complete'
 
   return (
     <div
       className="fixed inset-0 z-50 overflow-y-auto"
-      style={{ background: 'var(--color-surface)' }}
+      style={{ background: 'var(--color-surface-warm)' }}
       role="main"
       aria-label="Workspace setup"
     >
-      {/* Centered column — single column, no sidebar, asymmetric padding */}
-      <div className="mx-auto flex min-h-full max-w-[640px] flex-col justify-center px-6 py-16 sm:px-10">
-
-        {/* ── Violet crew header — sets the spatial register ── */}
+      {/* Asymmetric split that fills the viewport (M3): dominant ritual column +
+          narrower value-preview rail. Collapses to one column < 1024px. */}
+      <div className="mx-auto min-h-full w-full max-w-[1180px] px-6 py-12 sm:px-10 lg:py-16">
+        {/* ── Violet crew header — sets the spatial register, full width ── */}
         <div
-          className="craft-enter craft-enter-1 mb-8 flex items-center gap-2.5"
+          className="craft-enter craft-enter-1 mb-8 flex items-center gap-2.5 lg:mb-10"
           aria-label="Beamix workspace setup"
         >
           <span
@@ -583,44 +534,59 @@ export function PostPaymentScan() {
             aria-hidden="true"
           />
           <p
-            className="text-[12px] font-semibold uppercase tracking-[0.08em]"
+            className="text-[12px] font-semibold uppercase tracking-[0.1em]"
             style={{ color: 'var(--color-agent)' }}
           >
             {DEMO_DAY1.businessName}
           </p>
+          <span
+            className="ml-auto hidden text-[11px] font-medium tracking-[0.04em] text-[var(--color-text-disabled)] sm:block"
+          >
+            Setting up your workspace
+          </span>
         </div>
 
-        {/* ── TIER-2 main card — the instrument panel ── */}
-        <div className="card-console craft-enter craft-enter-2 p-7 sm:p-9">
+        <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1.1fr_minmax(0,420px)] lg:gap-8">
+          {/* ── LEFT: TIER-1 hero ritual panel (the one focal of the screen) ── */}
+          <div className="craft-enter craft-enter-2 flex flex-col">
+            <div className="card-console-hero flex flex-1 flex-col justify-center p-7 sm:p-9 lg:p-10">
+              {phase === 'waiting' && <WaitingBlock />}
 
-          {/* Phase rendering */}
-          {phase === 'waiting' && <WaitingBlock />}
+              {phase === 'in_progress' && currentStep && (
+                <ActiveStepBlock step={currentStep} />
+              )}
 
-          {phase === 'in_progress' && currentStep && (
-            <ActiveStepBlock step={currentStep} />
+              {phase === 'complete' && (
+                <CompleteBlock onContinue={handleContinue} />
+              )}
+
+              {phase === 'error' && <ErrorBlock onContinue={handleContinue} />}
+            </div>
+
+            {/* Reassurance footer — tied to the ritual cluster (fixes P2-4) */}
+            {(phase === 'in_progress' || phase === 'waiting') && (
+              <p className="craft-enter craft-enter-5 mt-4 pl-1 text-[12px] text-[var(--color-text-disabled)]">
+                This page updates automatically — you don&apos;t need to do
+                anything. Your payment is confirmed.
+              </p>
+            )}
+          </div>
+
+          {/* ── RIGHT: value-preview rail — what you just bought, being set up ── */}
+          {showRail ? (
+            <ValuePreviewRail
+              revealedDraftIds={revealedDraftIds}
+              totalExpected={DEMO_DAY1.drafts.length}
+            />
+          ) : (
+            // Keep the frame filled during waiting / error with the same zone
+            // shell carrying skeletons, so the split never collapses to a void.
+            <ValuePreviewRail
+              revealedDraftIds={new Set<string>()}
+              totalExpected={DEMO_DAY1.drafts.length}
+            />
           )}
-
-          {phase === 'complete' && (
-            <CompleteBlock onContinue={handleContinue} />
-          )}
-
-          {phase === 'error' && <ErrorBlock onContinue={handleContinue} />}
         </div>
-
-        {/* ── M12 gap: 40px between the main card and the drafts rail ── */}
-        <div className="mt-10" />
-
-        {/* ── Drafts panel — surfaces progressively (TIER-3 insets) ── */}
-        {showDrafts && (
-          <DraftsPanel revealedDraftIds={revealedDraftIds} />
-        )}
-
-        {/* ── Reassurance footer ── */}
-        {(phase === 'in_progress' || phase === 'waiting') && (
-          <p className="craft-enter craft-enter-5 mt-10 text-[12px] text-[var(--color-text-disabled)]">
-            This page updates automatically. You don&apos;t need to do anything.
-          </p>
-        )}
       </div>
     </div>
   )

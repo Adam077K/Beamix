@@ -352,6 +352,11 @@ export interface DemoSentiment {
   integrityScore: number
   /** Score band */
   integrityBand: 'excellent' | 'good' | 'fair' | 'critical'
+  /**
+   * Recent integrity-score history (oldest → newest, last point === integrityScore).
+   * Powers the hero micro-sparkline so the owner sees the trend behind the number.
+   */
+  integrityTrend: number[]
   /** Positive/neutral/negative split */
   split: SentimentSplit
   /** Recurring themes with verbatim quotes */
@@ -360,4 +365,416 @@ export interface DemoSentiment {
   claimAccuracy: ClaimAccuracyRow[]
   /** Before/after recovery event */
   recoveryEvent: RecoveryEvent
+}
+
+// ---------------------------------------------------------------------------
+// Traffic surface (AI Traffic & Crawler Analytics)
+// ---------------------------------------------------------------------------
+
+/** A single weekly data point for a specific crawler bot */
+export interface CrawlerBotPoint {
+  /** ISO date string */
+  date: string
+  /** Number of crawl hits */
+  hits: number
+  /** Optional violet agent-event annotation */
+  agentEvent?: { label: string } | null
+}
+
+/** Weekly crawler trend: per-bot time series */
+export interface CrawlerTrend {
+  bot: string
+  points: CrawlerBotPoint[]
+}
+
+/** Per-engine session + conversion attribution */
+export interface ReferralAttribution {
+  engine: string
+  sessions: number
+  conversions: number
+}
+
+/** A page's crawl + citation performance */
+export interface ContentPerformance {
+  path: string
+  crawlHits: number
+  citations: number
+}
+
+/** Per-page drill row */
+export interface TrafficDrillRow {
+  path: string
+  pageTitle: string
+  crawlHits: number
+  citations: number
+  aiSessions: number
+  conversionRate: number
+}
+
+/** Top-level shape for the Traffic surface fixture */
+export interface DemoTraffic {
+  /** Hero: total AI-referred sessions in last 30 days */
+  aiReferredSessions: number
+  /** Hero delta vs previous 30 days (+/−) */
+  aiReferredDelta: number
+  /** Weekly crawler trend per bot */
+  crawlerTrend: CrawlerTrend[]
+  /** Per-engine referral attribution */
+  referralAttribution: ReferralAttribution[]
+  /** Top content pages */
+  contentPerformance: ContentPerformance[]
+  /** Per-page drill rows */
+  drill: TrafficDrillRow[]
+}
+
+// ---------------------------------------------------------------------------
+// Market surface (Market Intelligence & Prompt Volume)
+// ---------------------------------------------------------------------------
+
+/** A single prompt/query row in the market intelligence table */
+export interface MarketPromptRow {
+  id: string
+  query: string
+  monthlyVolume: number
+  region: string
+  intent: 'informational' | 'transactional' | 'navigational'
+  /** Whether we are currently cited for this query */
+  cited: boolean
+  /** Whether Beamix is tracking this prompt */
+  tracked: boolean
+}
+
+/** A trending/emerging prompt to promote */
+export interface TrendingPrompt {
+  query: string
+  weeklyVolumeGrowth: number
+  intent: 'informational' | 'transactional' | 'navigational'
+}
+
+/** Age band in the demographics breakdown */
+export interface AgeBand {
+  range: string
+  pct: number
+}
+
+/** Income band in the demographics breakdown */
+export interface IncomeBand {
+  range: string
+  pct: number
+}
+
+/** Audience demographics breakdown */
+export interface MarketDemographics {
+  ageBands: AgeBand[]
+  incomeBands: IncomeBand[]
+  genderSplit: { male: number; female: number; other: number }
+}
+
+/** Drill data for a single prompt */
+export interface MarketPromptDrill {
+  promptId: string
+  volumeTrend: number[]
+  demographics: MarketDemographics
+  whoCited: string[]
+}
+
+/** Top-level shape for the Market surface fixture */
+export interface DemoMarket {
+  /** Hero: total addressable prompt volume (monthly) */
+  addressableVolume: number
+  /** All tracked + untracked prompts */
+  prompts: MarketPromptRow[]
+  /** Emerging queries to promote */
+  trendingPrompts: TrendingPrompt[]
+  /** Audience demographics */
+  demographics: MarketDemographics
+  /** Per-prompt drill data keyed by prompt id */
+  drill: Record<string, MarketPromptDrill>
+}
+
+// ---------------------------------------------------------------------------
+// Ask surface (Ask Beamix copilot)
+// ---------------------------------------------------------------------------
+
+/** A citation attached to a copilot message */
+export interface AskCitation {
+  type: 'scan' | 'prompt' | 'competitor' | 'page'
+  label: string
+  href: string
+}
+
+/** A single message in the copilot thread */
+export interface AskMessage {
+  id: string
+  role: 'user' | 'beamix'
+  content: string
+  citations?: AskCitation[]
+}
+
+/** A step in the grounding ledger */
+export interface GroundingStep {
+  label: string
+  /** e.g. "Read 3 scans · 18 prompts" */
+  detail: string
+}
+
+/** Top-level shape for the Ask surface fixture */
+export interface DemoAsk {
+  /** Suggested starter questions */
+  suggestedQuestions: string[]
+  /** A sample conversation thread */
+  thread: AskMessage[]
+  /** The grounding ledger steps the agent ran */
+  groundingSteps: GroundingStep[]
+}
+
+// ---------------------------------------------------------------------------
+// Builder surface (Workflow / Agent Builder)
+// ---------------------------------------------------------------------------
+
+/** A workflow template */
+export interface WorkflowTemplate {
+  id: string
+  name: string
+  description: string
+  nodeCount: number
+}
+
+/** A node in a workflow graph */
+export interface WorkflowNode {
+  id: string
+  type: 'plan' | 'research' | 'do' | 'qa' | 'summarize'
+  label: string
+  config: Record<string, string | number | boolean>
+}
+
+/** An edge between two workflow nodes */
+export interface WorkflowEdge {
+  from: string
+  to: string
+}
+
+/** A workflow graph */
+export interface Workflow {
+  name: string
+  nodes: WorkflowNode[]
+  edges: WorkflowEdge[]
+}
+
+/** A step in a dry-run preview */
+export interface DryRunStep {
+  label: string
+  status: 'done' | 'running' | 'pending'
+  /** e.g. "3 pages queued" or "$0.04" */
+  figure: string
+}
+
+/** A saved workflow entry */
+export interface SavedWorkflow {
+  name: string
+  lastRun: string | null
+  schedule: string | null
+}
+
+/** Top-level shape for the Builder surface fixture */
+export interface DemoBuilder {
+  /** Available workflow templates */
+  templates: WorkflowTemplate[]
+  /** A sample workflow graph */
+  workflow: Workflow
+  /** Dry-run preview */
+  dryRun: { steps: DryRunStep[]; estCost: string }
+  /** User's saved workflows */
+  savedWorkflows: SavedWorkflow[]
+}
+
+// ---------------------------------------------------------------------------
+// Reports surface (Reports & Exports)
+// ---------------------------------------------------------------------------
+
+/** A block that can be added to a report */
+export interface ReportBlock {
+  id: string
+  label: string
+  /** 'user' = always available; 'agent' = agent-generated / gated */
+  kind: 'user' | 'agent'
+}
+
+/** A saved report */
+export interface SavedReport {
+  id: string
+  name: string
+  blockCount: number
+  lastSaved: string
+  shareUrl: string | null
+}
+
+/** An active report being built */
+export interface ActiveReport {
+  title: string
+  blocks: string[]
+}
+
+/** An export connector */
+export interface ReportConnector {
+  name: string
+  gated: boolean
+}
+
+/** Top-level shape for the Reports surface fixture */
+export interface DemoReports {
+  blockCatalog: ReportBlock[]
+  savedReports: SavedReport[]
+  activeReport: ActiveReport
+  connectors: ReportConnector[]
+}
+
+// ---------------------------------------------------------------------------
+// Team surface (Team & Roles)
+// ---------------------------------------------------------------------------
+
+/** A team member row */
+export interface TeamMember {
+  id: string
+  name: string
+  email: string
+  role: 'Owner' | 'Admin' | 'Analyst' | 'Viewer'
+  lastActive: string
+  avatarUrl: string | null
+}
+
+/** A pending invite row */
+export interface PendingInvite {
+  email: string
+  role: 'Admin' | 'Analyst' | 'Viewer'
+  sentAt: string
+}
+
+/** Seat usage */
+export interface SeatUsage {
+  used: number
+  total: number
+}
+
+/** Top-level shape for the Team surface fixture */
+export interface DemoTeam {
+  members: TeamMember[]
+  pendingInvites: PendingInvite[]
+  seats: SeatUsage
+  ssoEnabled: boolean
+  auditLogGated: boolean
+}
+
+// ---------------------------------------------------------------------------
+// Agency surface (Agency / Pitch Workspace)
+// ---------------------------------------------------------------------------
+
+/** A finding in a prospect audit */
+export interface AuditFinding {
+  label: string
+  severity: 'critical' | 'warning' | 'info'
+  detail: string
+}
+
+/** A generated prospect audit */
+export interface ProspectAudit {
+  prospectDomain: string
+  score: number
+  headline: string
+  findings: AuditFinding[]
+  generatedAt: string
+}
+
+/** A step in the dry-run audit pipeline ledger */
+export interface AgencyDryRunStep {
+  label: string
+  detail: string
+}
+
+/** A client roster entry */
+export interface AgencyClient {
+  name: string
+  domain: string
+  status: 'active' | 'pitching' | 'lead'
+}
+
+/** White-label config per client */
+export interface WhiteLabelConfig {
+  clientId: string
+  logoUrl: string | null
+  accent: string
+  customDomain: string | null
+}
+
+/** A lead in the agency pipeline */
+export interface AgencyLead {
+  prospect: string
+  stage: 'audit' | 'pitch' | 'client'
+}
+
+/** Top-level shape for the Agency surface fixture */
+export interface DemoAgency {
+  sampleAudit: ProspectAudit
+  dryRunSteps: AgencyDryRunStep[]
+  clients: AgencyClient[]
+  whiteLabel: WhiteLabelConfig[]
+  leads: AgencyLead[]
+}
+
+// ---------------------------------------------------------------------------
+// Shopping surface (Shopping / Ecommerce — Bright Smile Dental shop)
+// ---------------------------------------------------------------------------
+
+/** Per-attribute accuracy check for a SKU */
+export interface AttributeCheck {
+  correct: boolean
+  claimedValue: string
+  actualValue: string
+  claimId?: string
+  /** href to the fix agent if incorrect */
+  correctHref?: string
+}
+
+/** Attribute matrix for a SKU */
+export interface AttributeMatrix {
+  price: AttributeCheck
+  specs: AttributeCheck
+  availability: AttributeCheck
+}
+
+/** Shopper sentiment for a SKU */
+export interface SkuSentiment {
+  positive: number
+  neutral: number
+  negative: number
+}
+
+/** A SKU in the shopping surface */
+export interface ShoppingSku {
+  id: string
+  name: string
+  aiVisibility: number
+  position: number
+  aiRevenue: number
+  attributeMatrix: AttributeMatrix
+  shopperSentiment: SkuSentiment
+}
+
+/** A per-SKU drill detail row */
+export interface ShoppingDrillRow {
+  skuId: string
+  engine: string
+  queriesTested: string[]
+  positionTrend: number[]
+  topCitedCompetitor: string | null
+}
+
+/** Top-level shape for the Shopping surface fixture */
+export interface DemoShopping {
+  /** Hero: AI-attributed revenue (ILS) */
+  aiAttributedRevenue: number
+  /** Hero: AI shopping visibility % */
+  aiShoppingVisibility: number
+  skus: ShoppingSku[]
+  drill: ShoppingDrillRow[]
 }

@@ -48,29 +48,32 @@ export const DEMO_CONTENT: {
       pageLocked: false,
     },
     {
+      // A genuinely DISTINCT optimize-target page — NOT a duplicate of c1.
+      // Carries the page-lock demo scenario (a run is already active here).
       id: 'c4',
-      url: 'https://brightsmile-dental.co.il/services/whitening',
-      title: 'Teeth Whitening — Bright Smile Dental',
+      url: 'https://brightsmile-dental.co.il/services/veneers',
+      title: 'Porcelain Veneers — Bright Smile Dental',
       tab: 'optimize',
-      wordCount: 412,
-      daysSinceUpdate: 47,
-      visibilityScore: 31,
+      wordCount: 521,
+      daysSinceUpdate: 63,
+      visibilityScore: 22,
       pageLocked: true, // demo page-lock scenario
     },
   ] as ContentDoc[],
 
   /**
    * pageLockConflictDoc — a doc that is currently page-locked by another run.
-   * Used to show the page-lock conflict error state.
+   * Used to show the page-lock conflict error state. Points to the distinct
+   * locked optimize page (c4 — Porcelain Veneers).
    */
   pageLockConflictDoc: {
     id: 'c4',
-    url: 'https://brightsmile-dental.co.il/services/whitening',
-    title: 'Teeth Whitening — Bright Smile Dental',
+    url: 'https://brightsmile-dental.co.il/services/veneers',
+    title: 'Porcelain Veneers — Bright Smile Dental',
     tab: 'optimize',
-    wordCount: 412,
-    daysSinceUpdate: 47,
-    visibilityScore: 31,
+    wordCount: 521,
+    daysSinceUpdate: 63,
+    visibilityScore: 22,
     pageLocked: true,
   } as ContentDoc,
 

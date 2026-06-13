@@ -36,7 +36,7 @@ export default async function TraceabilityPage() {
     : EMPTY_DATA
 
   return (
-    <main className="mx-auto min-h-[100dvh] max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto min-h-[100dvh] max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Page header — console heading system (§4) */}
       <PageHeader
         eyebrow="EVIDENCE"
@@ -49,9 +49,7 @@ export default async function TraceabilityPage() {
         }
       />
 
-      <div className="space-y-8">
-        <TraceabilityList data={traceabilityData} />
-      </div>
+      <TraceabilityList data={traceabilityData} />
     </main>
   )
 }

@@ -21,6 +21,7 @@ import { PageHeader } from '@/components/page-header'
 import { Skeleton } from '@/components/loading-state'
 import { EmptyState } from '@/components/empty-state'
 import { ErrorState } from '@/components/error-state'
+import { Stat } from '@/components/ui/stat'
 import { AgentModeRow } from './_components/AgentModeRow'
 import { DEMO_AUTOMATION } from '@/lib/demo/surfaces/automation'
 import { AGENT_REGISTRY } from '@/lib/agents/config/registry'
@@ -46,10 +47,10 @@ function ModeExplainer() {
       </p>
       {/* M3: weighted columns — Autonomous (dominant) gets 1.4fr */}
       <div className="grid gap-4 sm:grid-cols-[1fr_1.4fr_1.2fr]">
-        {/* Manual */}
+        {/* Manual — blue = you (the dot teaches blue=you on the very card that models the spectrum) */}
         <div>
           <div className="mb-1.5 flex items-center gap-2">
-            <span className="inline-block h-2 w-2 rounded-full bg-[#E5E7EB]" aria-hidden="true" />
+            <span className="inline-block h-2 w-2 rounded-full bg-[#3370FF]" aria-hidden="true" />
             <span className="text-[13px] font-semibold text-[#0A0A0A]">Manual</span>
           </div>
           <p className="text-[13px] leading-[1.55] text-[#6B7280]">
@@ -60,9 +61,9 @@ function ModeExplainer() {
         {/* Autonomous */}
         <div>
           <div className="mb-1.5 flex items-center gap-2">
-            {/* Violet tint dot — M6 spatial signal, not a button */}
+            {/* Violet dot at full strength — agent territory (M6 spatial signal, not a button) */}
             <span
-              className="inline-block h-2 w-2 rounded-full bg-[#6E56F0]/40"
+              className="inline-block h-2 w-2 rounded-full bg-[#6E56F0]"
               aria-hidden="true"
             />
             <span className="text-[13px] font-semibold text-[#0A0A0A]">Autonomous</span>
@@ -76,8 +77,9 @@ function ModeExplainer() {
         {/* Done-for-you */}
         <div>
           <div className="mb-1.5 flex items-center gap-2">
+            {/* Done-for-you — violet deep, ring-filled: the uncapped end of the spectrum */}
             <span
-              className="inline-block h-2 w-2 rounded-full bg-[#6E56F0]"
+              className="inline-block h-2 w-2 rounded-full bg-[#4B33C9] ring-2 ring-inset ring-[#6E56F0]/30"
               aria-hidden="true"
             />
             <span className="text-[13px] font-semibold text-[#0A0A0A]">Done-for-you</span>
@@ -96,6 +98,29 @@ function ModeExplainer() {
 // Loading skeleton — matches real row shape
 // ---------------------------------------------------------------------------
 
+/** Single row skeleton matching the real 4-track grid (name/sparkline/toggle/link). */
+function AutomationRowSkeleton({ inset = false }: { inset?: boolean }) {
+  return (
+    <div
+      className={
+        inset
+          ? 'rounded-[16px] border border-[#DED6F8] bg-white/55 px-5 py-4'
+          : 'card-console rounded-[16px] px-5 py-4'
+      }
+    >
+      <div className="flex flex-col gap-4 sm:grid sm:grid-cols-[minmax(0,1fr)_88px_auto_96px] sm:items-center sm:gap-5">
+        <div>
+          <Skeleton className="mb-2 h-4 w-40" />
+          <Skeleton className="h-3 w-28" />
+        </div>
+        <Skeleton className="hidden h-[22px] w-[72px] sm:block" />
+        <Skeleton className="h-9 w-44 rounded-lg" />
+        <Skeleton className="h-4 w-20 sm:justify-self-end" />
+      </div>
+    </div>
+  )
+}
+
 function AutomationLoadingSkeleton() {
   return (
     <div
@@ -104,10 +129,11 @@ function AutomationLoadingSkeleton() {
       aria-label="Loading automation settings…"
       className="space-y-3"
     >
-      {/* 3-mode explainer skeleton */}
+      {/* 3-mode explainer skeleton — mirrors the real 1fr/1.4fr/1.2fr weights so
+          it does not visibly reflow when content lands */}
       <div className="card-inset mb-8 rounded-[16px] p-5">
         <Skeleton className="mb-4 h-3 w-32" />
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-[1fr_1.4fr_1.2fr]">
           {[0, 1, 2].map((i) => (
             <div key={i}>
               <Skeleton className="mb-2 h-3 w-20" />
@@ -117,22 +143,23 @@ function AutomationLoadingSkeleton() {
         </div>
       </div>
 
-      {/* Row skeletons */}
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div
-          key={i}
-          className="rounded-[16px] border border-[#E5E7EB] bg-white px-5 py-4"
-        >
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1">
-              <Skeleton className="mb-2 h-4 w-40" />
-              <Skeleton className="h-3 w-28" />
-            </div>
-            <Skeleton className="h-9 w-44 shrink-0 rounded-lg" />
-            <Skeleton className="h-4 w-20 shrink-0" />
-          </div>
+      {/* Violet agent-zone skeleton — the contiguous "Beamix is running" block */}
+      <div className="agent-zone agent-zone-accent mb-10 px-4 pb-4 pt-5">
+        <Skeleton className="mb-4 ml-1 h-3 w-40" />
+        <div className="space-y-2.5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <AutomationRowSkeleton key={i} inset />
+          ))}
         </div>
-      ))}
+      </div>
+
+      {/* Manual section skeleton */}
+      <Skeleton className="mb-4 h-3 w-32" />
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <AutomationRowSkeleton key={i} />
+        ))}
+      </div>
       <span className="sr-only">Loading automation settings…</span>
     </div>
   )
@@ -206,8 +233,27 @@ export default function AutomationPage() {
   // Demo plan tier — Discover user sees the authority_blog_strategist locked
   const planTier: 'discover' | 'build' | 'scale' = 'discover'
 
+  // Resolve each row's registry config once, dropping any unknown label.
+  const resolved = rows
+    .map((row) => ({ row, config: registryByLabel[row.agentLabel] }))
+    .filter((r): r is { row: (typeof rows)[number]; config: NonNullable<typeof r.config> } =>
+      Boolean(r.config),
+    )
+
+  const isUnlocked = (config: (typeof resolved)[number]['config']) =>
+    config.availableOnTiers.includes(planTier)
+
+  // M6 / M12 — group by mode so the violet agent territory is CONTIGUOUS:
+  //   autonomous (handed to Beamix) first, inside one violet zone, then manual.
+  const autonomousRows = resolved.filter(
+    ({ row, config }) => row.mode === 'beamix' && isUnlocked(config),
+  )
+  const manualRows = resolved.filter(
+    ({ row, config }) => !(row.mode === 'beamix' && isUnlocked(config)),
+  )
+
   // Count how many are handed to Beamix
-  const autonomousCount = rows.filter((r) => r.mode === 'beamix').length
+  const autonomousCount = autonomousRows.length
 
   return (
     <div className="mx-auto max-w-[880px]">
@@ -217,20 +263,28 @@ export default function AutomationPage() {
       <PageHeader
         eyebrow="Bright Smile Dental"
         title="Automation"
-        subtitle="Choose how each agent works — you, or Beamix on a schedule."
+        subtitle={
+          /* M5 serif beat — the one Fraunces italic verdict word on this screen,
+             landed in the most-read spot: the subhead. The mixed sans + italic-serif
+             headline device (DESIGN-VISION §4 / CRAFT-SYSTEM M5). Never in chrome. */
+          <>
+            {'Choose how each agent works — you, or Beamix runs it '}
+            <SerifVerdict size="inline">automatically</SerifVerdict>
+            {'.'}
+          </>
+        }
         action={
-          /* M1 TIER-1 hero focal — the page's single STEP-1 number (M2, M11) */
-          <div className="card-console-hero flex min-w-[140px] flex-col items-end rounded-[12px] px-5 py-4 text-right">
-            <span
-              aria-label={`${autonomousCount} agents running autonomously`}
-              className="font-[var(--font-mono)] text-[64px] font-normal leading-none tabular-nums text-[#0A0A0A]"
-            >
-              {autonomousCount}
-            </span>
-            <span className="mt-1 text-[11px] font-semibold uppercase tracking-[0.07em] text-[#9CA3AF]">
-              AUTONOMOUS
-            </span>
-          </div>
+          /* M1 TIER-1 hero focal — the page's single STEP-1 number, via the shared
+             <Stat> primitive (M2, M11). sm:self-center aligns the card vertically
+             to the title cluster and its right edge to the body frame below (M3 —
+             "dominant title column + aligned stat rail", not a card adrift). */
+          <Stat
+            value={autonomousCount}
+            label="Autonomous"
+            size="hero"
+            align="end"
+            className="card-console-hero min-w-[132px] rounded-[12px] px-5 py-4 sm:self-center"
+          />
         }
       />
 
@@ -256,37 +310,74 @@ export default function AutomationPage() {
           {/* 3-mode explainer — inline, once, at the top */}
           <ModeExplainer />
 
-          {/* ---- Section heading ---- */}
-          {/* M12: hairline editorial rhythm — wider gap before section label */}
-          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] craft-enter craft-enter-2">
-            All agents
-          </p>
-
-          {/* ---- Agent rows — TIER-2 cards (M1) ---- */}
-          <div className="space-y-3">
-            {rows.map((row, i) => {
-              const config = registryByLabel[row.agentLabel]
-              // If registry doesn't have this agentLabel (shouldn't happen), skip gracefully
-              if (!config) return null
-              return (
-                <AgentModeRow
-                  key={row.id}
-                  row={row}
-                  config={config}
-                  planTier={planTier}
-                  onModeChange={handleModeChange}
-                  enterIndex={i + 2} // offset so rows stagger after the header
+          {/* ---- Section A: the violet AGENT ZONE (M6) ----
+              Every autonomous agent lives inside ONE contiguous violet zone with a
+              solid violet top-accent, so "what Beamix is running for you" reads at
+              arm's length — not a per-row token detail. Rows recede into the zone
+              as TIER-3 insets (M1), except a row awaiting sign-off, which steps up
+              to a TIER-2 focus card so it asks for attention. */}
+          {autonomousRows.length > 0 && (
+            <section
+              aria-label="Agents Beamix is running for you"
+              className="agent-zone agent-zone-accent mb-10 px-4 pb-4 pt-5 craft-enter craft-enter-2"
+            >
+              <div className="mb-4 flex items-center gap-2 px-1">
+                <span
+                  aria-hidden
+                  className="inline-block h-2 w-2 rounded-full bg-[#6E56F0]"
                 />
-              )
-            })}
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6E56F0]">
+                  Beamix is running
+                </p>
+                <span className="font-[var(--font-mono)] text-[12px] tabular-nums text-[#9CA3AF]">
+                  {autonomousCount} {autonomousCount === 1 ? 'agent' : 'agents'}
+                </span>
+              </div>
+
+              {/* M12 — tight rhythm WITHIN the cluster (space-y-2.5, not the page gap) */}
+              <div className="space-y-2.5">
+                {autonomousRows.map(({ row, config }, i) => {
+                  const needsSignOff = config.requiresApproval
+                  return (
+                    <AgentModeRow
+                      key={row.id}
+                      row={row}
+                      config={config}
+                      planTier={planTier}
+                      onModeChange={handleModeChange}
+                      // Sign-off rows step up to TIER-2 focus; healthy rows recede.
+                      tier={needsSignOff ? 'focus' : 'inset'}
+                      enterIndex={i + 2}
+                    />
+                  )
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* ---- Section B: manual agents — on the white canvas (you = neutral) ----
+              Wider gap before this section (M12 — vary whitespace by relationship). */}
+          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.08em] text-[#9CA3AF] craft-enter craft-enter-3">
+            Run it yourself
+          </p>
+          <div className="space-y-3">
+            {manualRows.map(({ row, config }, i) => (
+              <AgentModeRow
+                key={row.id}
+                row={row}
+                config={config}
+                planTier={planTier}
+                onModeChange={handleModeChange}
+                tier="focus"
+                enterIndex={i + 3}
+              />
+            ))}
           </div>
 
-          {/* ---- Serif beat (M5) — one Fraunces italic word in the whole page ---- */}
-          {/* Placed as an editorial footer-note, not in chrome */}
-          <p className="mb-4 mt-10 max-w-[560px] text-[13px] leading-[1.6] text-[#9CA3AF] craft-enter craft-enter-8">
-            {'Agents set to Autonomous will run on schedule. Items requiring approval are '}
-            <SerifVerdict>handled</SerifVerdict>
-            {' in Approvals until you review them. '}
+          {/* Reassurance footnote — plain sans. The single M5 serif beat lives in the
+              subhead (one beat per screen, CRAFT-SYSTEM tell #6), so this stays quiet. */}
+          <p className="mb-4 mt-10 max-w-[560px] text-[14px] leading-[1.65] text-[#374151] craft-enter craft-enter-8">
+            {'Whatever you hand off, nothing publishes behind your back — anything that needs a human lands in Approvals and waits, safely, until you say go. '}
             <Link
               href="/archive"
               className="text-[#6B7280] underline decoration-[#E5E7EB] hover:text-[#0A0A0A] hover:decoration-[#9CA3AF] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#3370FF]"

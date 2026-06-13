@@ -209,9 +209,12 @@ function FocusEngineCard({
   return (
     <div
       role="region"
-      aria-label={`${meta.label} visibility score: ${score.score} out of 100 — needs attention`}
+      aria-label={`${meta.label} visibility score: ${score.score} out of 100 — your lowest engine, start here`}
+      /* M3/M7: focus card carries TIER-1 hero elevation so it reads clearly
+         heavier than the TIER-3 .card-inset stack beside it — killing the
+         N-equal-tiles feel the audit flagged (P2-6). */
       className={cn(
-        'card-console relative overflow-hidden p-5 transition-shadow duration-200 hover:shadow-[0_0_0_1px_rgba(10,10,10,0.07),0_2px_8px_rgba(10,10,10,0.07),0_6px_16px_rgba(10,10,10,0.05)]',
+        'card-console relative overflow-hidden p-6 shadow-card-hero transition-shadow duration-200 hover:shadow-card-hover',
         className,
       )}
     >
@@ -234,18 +237,23 @@ function FocusEngineCard({
         {/* M4 micro-sparkline */}
         <EngineMicroSparkline points={historyPoints} currentScore={score.score} />
       </div>
-      {/* M7 number-over-label extreme hierarchy */}
+      {/* M7 number-over-label extreme hierarchy — 48px Geist Mono focus figure */}
       <div className="mt-4 flex items-baseline gap-1.5">
         <span
-          className="font-mono text-[36px] font-medium leading-none tracking-[-0.03em] tabular-nums text-[#0A0A0A]"
+          className="font-mono text-[48px] font-medium leading-none tracking-[-0.03em] tabular-nums text-[#0A0A0A]"
         >
           {score.score}
         </span>
-        <span className="font-mono text-[13px] text-[#9CA3AF]">/100</span>
-        <span className="ml-auto self-end pb-[2px]">
+        <span className="font-mono text-[14px] text-[#9CA3AF]">/100</span>
+        <span className="ml-auto self-end pb-[3px]">
           <TrendIcon trend={score.trend} />
         </span>
       </div>
+
+      {/* P2-6: tell the eye which engine matters — the lowest is where work starts */}
+      <p className="mt-1.5 text-[12px] font-medium" style={{ color }}>
+        Your lowest engine — start here
+      </p>
 
       {/* thin progress rail */}
       <div
@@ -299,6 +307,10 @@ export function VisibilityScorePanel({
   if (scores.length === 0) return null
 
   const fIdx = focusIndex(scores)
+  // P1-5: when no engine has reported, the hero already owns the one primary
+  // "run a scan" CTA. Collapse the whole breakdown to a single quiet line so the
+  // empty dashboard asks once, not four times (no per-engine CTA duplication).
+  const allEmpty = scores.every((s) => s.score === null)
 
   return (
     <section aria-labelledby="visibility-heading">
@@ -313,7 +325,15 @@ export function VisibilityScorePanel({
         <span className="text-[12px] text-[#9CA3AF]">Where each AI ranks you</span>
       </div>
 
-      {scores.length === 1 ? (
+      {allEmpty ? (
+        /* P1-5 single quiet inset — no duplicated CTAs, no clipped focus card */
+        <div className="card-inset flex items-center gap-3 p-4 craft-enter craft-enter-3">
+          <EngineMicroSparkline points={null} currentScore={null} />
+          <p className="text-[13px] text-[#6B7280]">
+            ChatGPT, Gemini, and Perplexity report here after your first scan.
+          </p>
+        </div>
+      ) : scores.length === 1 ? (
         /* Single engine — just TIER-2 focus */
         <FocusEngineCard
           score={scores[0]}
@@ -327,7 +347,7 @@ export function VisibilityScorePanel({
          * - Others = narrower TIER-3 (.card-inset) stacked
          * Layout: [focus | others-stack] on large screens
          */
-        <div className={cn('grid gap-4', 'grid-cols-1 lg:grid-cols-[1fr_300px]')}>
+        <div className={cn('grid gap-4', 'grid-cols-1 lg:grid-cols-[1.4fr_280px]')}>
           {/* TIER-2 focus card — lowest scoring engine */}
           <FocusEngineCard
             score={scores[fIdx]}

@@ -157,8 +157,8 @@ export function BillingTab() {
   return (
     <div className="space-y-6">
 
-      {/* ── Current plan ── */}
-      <div className="card-console overflow-hidden">
+      {/* ── Current plan — TIER-2 focal, first paint (M9) ── */}
+      <div className="card-console overflow-hidden craft-enter craft-enter-1">
         <div className="px-5 py-4">
           <p className="mb-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
             Current plan
@@ -176,6 +176,21 @@ export function BillingTab() {
                 <span className="text-[13px] text-[var(--color-text-muted)]">{PLAN.period}</span>
                 <PlanStatusPill status={PLAN.status} />
               </div>
+              {/*
+                M5 serif beat (one per screen): a single Fraunces italic verdict
+                word on the genuine account-standing verdict — inline in a sans
+                sentence, never in chrome. This is the editorial warmth that
+                separates Billing from a generic SaaS plan card.
+              */}
+              {PLAN.status === 'active' && (
+                <p className="mt-1.5 text-[14px] leading-snug text-[var(--color-text-secondary)]">
+                  Your account is in{' '}
+                  <span className="font-[var(--font-serif)] italic text-[var(--color-status-positive)]">
+                    good standing
+                  </span>
+                  .
+                </p>
+              )}
               {/* Meta */}
               <p className="mt-1 text-[13px] text-[var(--color-text-muted)]">
                 Renews{' '}
@@ -219,8 +234,8 @@ export function BillingTab() {
         </div>
       </div>
 
-      {/* ── 60-day guarantee ── */}
-      <div className="card-console overflow-hidden bg-[var(--color-surface-warm)]">
+      {/* ── 60-day guarantee — TIER-3 recede (M1) ── */}
+      <div className="card-inset overflow-hidden craft-enter craft-enter-2">
         <div className="flex items-start gap-3 px-5 py-4">
           <ShieldCheck
             className="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-status-positive)]"
@@ -249,8 +264,8 @@ export function BillingTab() {
         </div>
       </div>
 
-      {/* ── Payment method ── */}
-      <div className="card-console overflow-hidden">
+      {/* ── Payment method — TIER-3 recede (M1) ── */}
+      <div className="card-inset overflow-hidden craft-enter craft-enter-3">
         <div className="px-5 py-4">
           <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
             Payment method
@@ -287,8 +302,8 @@ export function BillingTab() {
         </div>
       </div>
 
-      {/* ── Invoices ── */}
-      <div className="card-console overflow-hidden">
+      {/* ── Invoices — kept on white card-console for data legibility (M1) ── */}
+      <div className="card-console overflow-hidden craft-enter craft-enter-4">
         <div className="px-5 pt-5 pb-2">
           <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]">
             Invoices

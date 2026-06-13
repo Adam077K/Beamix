@@ -32,6 +32,7 @@ import { ErrorState } from '@/components/error-state'
 import { Skeleton } from '@/components/loading-state'
 import { PageHeader } from '@/components/page-header'
 import { SerifVerdict } from '@/components/console/SerifVerdict'
+import { EngineMicroSparkline } from '@/components/dashboard/EngineMicroSparkline'
 import { AnalyticsLayout } from '@/components/console/AnalyticsLayout'
 import { AnalyticsScopeRail } from '@/components/console/AnalyticsScopeRail'
 import {
@@ -68,7 +69,22 @@ const HEADER = {
     'The exact words the engines use — and any claims we need to correct.',
 }
 
-/** Map the integrity band → score color token + the verdict word + sentence frame. */
+/**
+ * Score-band color — the SAME four-band logic the dashboard uses
+ * (ScoreHeroPanel.ringColor / EngineMicroSparkline.scoreColor):
+ *   ≥75 excellent → data-3 (cyan) · ≥50 good → data-4 (green)
+ *   ≥25 fair → data-5 (amber)     · else critical → data-6 (red)
+ * Driving the color off the score (not the fixture's band string) guarantees the
+ * hero number is painted in its true band — an Excellent score can never read green.
+ */
+function scoreBandColor(score: number): string {
+  if (score >= 75) return 'var(--color-data-3)' // cyan — excellent
+  if (score >= 50) return 'var(--color-data-4)' // green — good
+  if (score >= 25) return 'var(--color-data-5)' // amber — fair
+  return 'var(--color-data-6)' //                 red — critical
+}
+
+/** Map the integrity band → the verdict word + sentence frame (color comes from the score). */
 function bandPresentation(band: DemoSentiment['integrityBand'], claimCount: number) {
   const claimClause =
     claimCount === 0
@@ -77,14 +93,13 @@ function bandPresentation(band: DemoSentiment['integrityBand'], claimCount: numb
 
   switch (band) {
     case 'excellent':
-      return { color: 'var(--color-status-positive)', word: 'Trusted', claimClause }
     case 'good':
-      return { color: 'var(--color-status-positive)', word: 'Trusted', claimClause }
+      return { word: 'Trusted', claimClause }
     case 'fair':
-      return { color: 'var(--color-status-warning)', word: 'Mixed', claimClause }
+      return { word: 'Mixed', claimClause }
     case 'critical':
     default:
-      return { color: 'var(--color-status-critical)', word: 'Fragile', claimClause }
+      return { word: 'Fragile', claimClause }
   }
 }
 
@@ -164,16 +179,21 @@ function SuccessBody({ data }: { data: DemoSentiment }) {
   const visibleThemes = data.themes.filter((t) => topics[t.name] !== false)
 
   const present = bandPresentation(data.integrityBand, data.claimAccuracy.length)
+  const scoreColor = scoreBandColor(data.integrityScore)
 
   return (
     <>
       {/* ── TIER-1 hero + the ONE Fraunces beat ───────────────── */}
+      {/* The single focal of the page. The deepened --shadow-card-hero (foundation
+          UIX-F1) + the extra vertical breathing room here make the 64px score and
+          30px verdict unmistakably the loudest element — they must out-mass every
+          card beneath (audit P1#2, M1/M2). */}
       <section
-        className="card-console-hero grid grid-cols-1 gap-6 p-6 lg:grid-cols-[1fr_360px] lg:gap-8"
+        className="card-console-hero grid grid-cols-1 gap-6 p-7 lg:grid-cols-[1fr_352px] lg:gap-10 lg:p-9"
         aria-labelledby="integrity-heading"
       >
         {/* LEFT — score + verdict sentence */}
-        <div className="flex flex-col justify-center">
+        <div className="flex flex-col justify-center py-1">
           <p
             id="integrity-heading"
             className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#9CA3AF]"
@@ -181,10 +201,10 @@ function SuccessBody({ data }: { data: DemoSentiment }) {
             Brand integrity · {DEMO_BUSINESS.name}
           </p>
 
-          <div className="mt-3 flex items-baseline gap-3">
+          <div className="mt-4 flex items-baseline gap-3">
             <span
               className="font-[var(--font-mono)] text-[64px] font-medium leading-none tabular-nums tracking-[-0.04em]"
-              style={{ color: present.color }}
+              style={{ color: scoreColor }}
             >
               {data.integrityScore}
             </span>
@@ -193,8 +213,26 @@ function SuccessBody({ data }: { data: DemoSentiment }) {
             </span>
           </div>
 
-          {/* STEP-2 verdict sentence — the single Fraunces word lives here */}
-          <p className="mt-5 max-w-[440px] text-[18px] font-medium leading-[1.4] tracking-[-0.01em] text-[#0A0A0A]">
+          {/* Signature micro-sparkline — the last 5 integrity readings in the
+              score-band color, with a labelled +delta. It earns its place by
+              answering "is my brand integrity recovering or slipping?" right at
+              the hero number. Foundation EngineMicroSparkline (baseline +
+              endpoint dot, never fabricated). */}
+          <div className="mt-4 flex items-center gap-2.5">
+            <EngineMicroSparkline
+              points={data.integrityTrend}
+              currentScore={data.integrityScore}
+              showDelta
+              width={88}
+              height={26}
+            />
+            <span className="text-[12px] text-[#9CA3AF]">over last 5 scans</span>
+          </div>
+
+          {/* STEP-2 verdict sentence — the single Fraunces word lives here.
+              30px InterDisplay-Medium -0.02em: the emotional payload of the page,
+              raised from 18px so it commands rather than whispers (audit P1#2). */}
+          <p className="mt-6 max-w-[520px] font-[var(--font-display)] text-[30px] font-medium leading-[1.22] tracking-[-0.02em] text-[#0A0A0A]">
             Across AI answers your brand reads{' '}
             <SerifVerdict>{present.word}</SerifVerdict> — {present.claimClause}.
           </p>
@@ -313,8 +351,11 @@ function LoadingBody() {
 // ---------------------------------------------------------------------------
 
 function EmptyBody() {
+  // M8 designed empty: the first-run sits on the warm TIER-3 inset ground (not a
+  // cold white card), so a new user's default experience reads warm + intentional.
+  // EmptyState supplies the scan glyph + two-tier CTA (primary pill + quiet link).
   return (
-    <div className={cn('card-console p-2')}>
+    <div className={cn('card-inset px-2 py-10 sm:py-14')}>
       <EmptyState
         illustration="scan"
         title="We haven’t heard the engines describe you yet"

@@ -4,13 +4,18 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { ScoreHeroPanel } from '@/components/dashboard/ScoreHeroPanel'
 import { AgentActivityPanel } from '@/components/dashboard/AgentActivityPanel'
 import { VisibilityScorePanel } from '@/components/dashboard/VisibilityScorePanel'
+import { OverallTrendStrip } from '@/components/dashboard/OverallTrendStrip'
 import { WeeklyNarrative } from '@/components/dashboard/WeeklyNarrative'
 import { FoundingCohortPanel } from './_components/FoundingCohortPanel'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
-import type { DashboardOutcomes, VisibilityScore } from '@/types/outcomes'
+import type {
+  DashboardOutcomes,
+  OverallTrendPoint,
+  VisibilityScore,
+} from '@/types/outcomes'
 import { isDemoUser, DEMO_SCAN_ID } from '@/lib/demo'
-import { DEMO_DASHBOARD } from '@/lib/demo/fixtures'
+import { DEMO_DASHBOARD, DEMO_DIGESTS } from '@/lib/demo/fixtures'
 
 // ---------------------------------------------------------------------------
 // Stub data — Wave 2 will replace with real Supabase fetch
@@ -26,6 +31,28 @@ const EMPTY_OUTCOMES: DashboardOutcomes = {
   visibilityScores: EMPTY_SCORES,
   weeklyNarrative: { type: 'empty' },
   approvalCount: 0,
+}
+
+/**
+ * Derive the week-over-week overall-score trajectory from the demo digests.
+ * Each digest carries per-engine `thisWeek` scores; averaging across engines
+ * gives the one overall figure the trend strip plots. Oldest → newest. This
+ * reuses the canonical fixture arc so the dashboard never invents trend data.
+ */
+function deriveDemoOverallTrend(): OverallTrendPoint[] {
+  return [...DEMO_DIGESTS]
+    .map((d) => {
+      const weekScores = d.digest.engineDeltas
+        .map((e) => e.thisWeek)
+        .filter((s): s is number => typeof s === 'number')
+      if (weekScores.length === 0) return null
+      const score = Math.round(
+        weekScores.reduce((sum, s) => sum + s, 0) / weekScores.length,
+      )
+      return { weekOf: d.weekOf, score }
+    })
+    .filter((p): p is OverallTrendPoint => p !== null)
+    .sort((a, b) => a.weekOf.localeCompare(b.weekOf))
 }
 
 // ---------------------------------------------------------------------------
@@ -63,7 +90,9 @@ export default async function DashboardPage() {
   // Demo mode: return rich fixture data for demo@beamixai.com.
   // Real users are completely unaffected — the guard is a simple email check.
   const isDemo = isDemoUser(user?.email)
-  const outcomes: DashboardOutcomes = isDemo ? DEMO_DASHBOARD : EMPTY_OUTCOMES
+  const outcomes: DashboardOutcomes = isDemo
+    ? { ...DEMO_DASHBOARD, overallTrend: deriveDemoOverallTrend() }
+    : EMPTY_OUTCOMES
 
   return (
     <main className="mx-auto min-h-[100dvh] max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
@@ -100,6 +129,16 @@ export default async function DashboardPage() {
           <ScoreHeroPanel scores={outcomes.visibilityScores} />
           <AgentActivityPanel approvalCount={outcomes.approvalCount} />
         </div>
+
+        {/* M12: 24px gap — the dominant trend chart belongs to the hero context.
+            P1-4: the buyer's #1 question ("am I climbing?") gets a full TIER-2
+            trend chart, not an invisible corner sparkline. */}
+        {outcomes.visibilityScores.some((s) => s.score !== null) && (
+          <>
+            <div className="mt-6" />
+            <OverallTrendStrip points={outcomes.overallTrend} />
+          </>
+        )}
 
         {/* M12: 40px gap — engines section is related but a new register */}
         <div className="mt-10" />

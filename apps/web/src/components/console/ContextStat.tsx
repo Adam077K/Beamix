@@ -39,11 +39,12 @@ export function ContextStat({
         {value}
       </span>
 
-      {/* M4 sparkline — always rendered (flat baseline = no data, not absence) */}
+      {/* M4 sparkline — always rendered: visible baseline + endpoint dot, never
+          a stranded stroke. Flat baseline = no data (never fake). */}
       <EngineMicroSparkline
         points={sparklinePoints}
         currentScore={currentScore}
-        className="mt-0.5"
+        className="mt-1"
       />
 
       {/* STEP-3 label */}
