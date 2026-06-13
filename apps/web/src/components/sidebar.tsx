@@ -21,6 +21,9 @@ import {
   Radio,
   BookOpen,
   Clock,
+  Radar,
+  BarChart2,
+  MessageSquare,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -33,6 +36,16 @@ const topNavItems = [
   { href: '/digests', label: 'Weekly Digest', icon: ScrollText },
   { href: '/traceability', label: 'Traceability', icon: GitBranch },
 ]
+
+// Intelligence disclosure children
+// Batch 2 will add: AI Traffic (/ai-traffic) + Market Intelligence (/market-intelligence)
+const intelligenceChildren = [
+  { href: '/analytics', label: 'Analytics', icon: BarChart2 },
+  { href: '/sentiment', label: 'Sentiment', icon: MessageSquare },
+]
+
+// The Intelligence group header icon for the collapsed icon-rail
+const INTELLIGENCE_HREF = '/analytics'
 
 // Tools disclosure children
 const toolsChildren = [
@@ -109,6 +122,19 @@ interface NavListProps {
 }
 
 function NavList({ pathname, iconOnly = false, onNavigate }: NavListProps) {
+  // Intelligence group expanded state — local, not persisted
+  const [intelligenceExpanded, setIntelligenceExpanded] = useState(false)
+
+  // Auto-expand if the current path is an intelligence child
+  const isInsideIntelligence =
+    pathname === INTELLIGENCE_HREF ||
+    intelligenceChildren.some((c) => pathname === c.href || pathname.startsWith(c.href + '/'))
+
+  // Sync expanded when pathname puts us inside intelligence
+  useEffect(() => {
+    if (isInsideIntelligence) setIntelligenceExpanded(true)
+  }, [isInsideIntelligence])
+
   // Tools group expanded state — local, not persisted
   const [toolsExpanded, setToolsExpanded] = useState(false)
 
@@ -139,6 +165,78 @@ function NavList({ pathname, iconOnly = false, onNavigate }: NavListProps) {
           />
         )
       })}
+
+      {/* Intelligence disclosure group — positioned above Tools */}
+      {iconOnly ? (
+        // Icon-rail: single Radar glyph linking to /analytics
+        <NavLink
+          href={INTELLIGENCE_HREF}
+          label="Intelligence"
+          icon={Radar}
+          iconOnly
+          onNavigate={onNavigate}
+          isActive={isInsideIntelligence}
+        />
+      ) : (
+        <div>
+          {/* Group header row — links to /analytics, chevron toggles children */}
+          <div className="flex min-h-[44px] items-center">
+            <Link
+              href={INTELLIGENCE_HREF}
+              onClick={onNavigate}
+              aria-current={pathname === INTELLIGENCE_HREF ? 'page' : undefined}
+              className={cn(
+                'flex flex-1 items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1',
+                isInsideIntelligence
+                  ? 'bg-[#EFF4FF] font-medium text-[#3370FF]'
+                  : 'text-[#6B7280] hover:bg-[#F7F7F7] hover:text-[#0A0A0A]',
+              )}
+            >
+              <Radar
+                className={cn(
+                  'h-4 w-4 shrink-0',
+                  isInsideIntelligence ? 'text-[#3370FF]' : 'text-current',
+                )}
+              />
+              <span className="truncate">Intelligence</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setIntelligenceExpanded((v) => !v)}
+              aria-expanded={intelligenceExpanded}
+              aria-label={intelligenceExpanded ? 'Collapse Intelligence' : 'Expand Intelligence'}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[#9CA3AF] transition-colors hover:text-[#6B7280] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1"
+            >
+              {intelligenceExpanded ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </div>
+
+          {/* Intelligence children — indented, same active treatment */}
+          {intelligenceExpanded && (
+            <div className="space-y-0.5">
+              {intelligenceChildren.map(({ href, label, icon: Icon }) => {
+                const isActive = pathname === href || pathname.startsWith(href + '/')
+                return (
+                  <NavLink
+                    key={href}
+                    href={href}
+                    label={label}
+                    icon={Icon}
+                    onNavigate={onNavigate}
+                    isActive={isActive}
+                    indented
+                  />
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tools disclosure group */}
       {iconOnly ? (
