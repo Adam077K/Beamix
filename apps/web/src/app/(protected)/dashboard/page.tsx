@@ -16,6 +16,7 @@ import type {
 } from '@/types/outcomes'
 import { isDemoUser, DEMO_SCAN_ID } from '@/lib/demo'
 import { DEMO_DASHBOARD, DEMO_DIGESTS } from '@/lib/demo/fixtures'
+import { loadDashboardOutcomes } from '@/lib/dashboard/load-outcomes'
 
 // ---------------------------------------------------------------------------
 // Stub data — Wave 2 will replace with real Supabase fetch
@@ -90,9 +91,18 @@ export default async function DashboardPage() {
   // Demo mode: return rich fixture data for demo@beamixai.com.
   // Real users are completely unaffected — the guard is a simple email check.
   const isDemo = isDemoUser(user?.email)
-  const outcomes: DashboardOutcomes = isDemo
-    ? { ...DEMO_DASHBOARD, overallTrend: deriveDemoOverallTrend() }
-    : EMPTY_OUTCOMES
+
+  let outcomes: DashboardOutcomes
+  if (isDemo) {
+    // Demo branch — byte-for-byte unchanged fixture data
+    outcomes = { ...DEMO_DASHBOARD, overallTrend: deriveDemoOverallTrend() }
+  } else if (user?.id) {
+    // Real user branch — fetch live data from Supabase
+    outcomes = await loadDashboardOutcomes(user.id)
+  } else {
+    // No authenticated user (should not reach here — middleware guards this route)
+    outcomes = EMPTY_OUTCOMES
+  }
 
   return (
     <main className="mx-auto min-h-[100dvh] max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
