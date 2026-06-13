@@ -194,13 +194,21 @@ export async function claimFreeScan(freeScanId: string): Promise<ClaimResult> {
     // Step 8 — Project free_scan results → normalized rows
     const newScanId = crypto.randomUUID()
 
+    // Imported free scans always have status='complete'. Ensure completed_at is
+    // never null so load-outcomes.ts (.not('completed_at','is',null)) can find
+    // the scan. Fall back to started_at, then now.
+    const importedCompletedAt =
+      freeScan.completed_at ??
+      freeScan.started_at ??
+      new Date().toISOString()
+
     const { scan: scanData, engineResults } = projectFreeScanToNormalized({
       free_scan_id: freeScanId,
       new_scan_id: newScanId,
       business_id: businessId,
       results: freeScan.results,
       started_at: freeScan.started_at ?? null,
-      completed_at: freeScan.completed_at ?? null,
+      completed_at: importedCompletedAt,
     })
 
     // Step 9 — Insert scans row

@@ -356,13 +356,51 @@ describe('claimFreeScan', () => {
 
     await claimFreeScan(VALID_UUID)
 
+    // completed_at is coalesced: freeScan.completed_at ?? freeScan.started_at ?? now()
+    // MOCK_FREE_SCAN has both null, so the call receives a non-null ISO string (now()).
     expect(mockProjection).toHaveBeenCalledWith(
       expect.objectContaining({
         free_scan_id: VALID_UUID,
         business_id: BUSINESS_ID,
         results: MOCK_FREE_SCAN.results,
         started_at: null,
-        completed_at: null,
+        completed_at: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
+      }),
+    )
+  })
+
+  it('calls projectFreeScanToNormalized with freeScan.completed_at when present', async () => {
+    const COMPLETED_AT = '2026-06-01T10:00:00.000Z'
+    let callIndex = 0
+    mockAdminFrom.mockImplementation((table: string) => {
+      callIndex++
+      if (table === 'free_scans' && callIndex === 1) {
+        return buildChain({ data: { ...MOCK_FREE_SCAN, completed_at: COMPLETED_AT }, error: null })
+      }
+      if (table === 'businesses' && callIndex === 2) {
+        return buildChain({ data: { id: BUSINESS_ID }, error: null })
+      }
+      if (table === 'scans' && callIndex === 3) {
+        return buildChain({ error: null })
+      }
+      if (table === 'scan_engine_results' && callIndex === 4) {
+        return buildChain({ error: null })
+      }
+      if (table === 'free_scans' && callIndex === 5) {
+        const chain = buildChain(undefined)
+        chain['update'] = vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ error: null }),
+        })
+        return chain
+      }
+      return buildChain({ data: null, error: null })
+    })
+
+    await claimFreeScan(VALID_UUID)
+
+    expect(mockProjection).toHaveBeenCalledWith(
+      expect.objectContaining({
+        completed_at: COMPLETED_AT,
       }),
     )
   })
@@ -479,6 +517,59 @@ describe('claimFreeScan', () => {
 
     const result = await claimFreeScan(VALID_UUID)
     expect(result.ok).toBe(true)
+  })
+
+  // ─── 23505 race branch (P1-4) ─────────────────────────────────────────────
+
+  it('23505 race: scans insert conflicts → raceWinner found → returns ok:true with winner scan_id', async () => {
+    const RACE_WINNER_ID = 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa'
+    let callIndex = 0
+    mockAdminFrom.mockImplementation((table: string) => {
+      callIndex++
+      if (table === 'free_scans' && callIndex === 1) {
+        return buildChain({ data: MOCK_FREE_SCAN, error: null })
+      }
+      if (table === 'businesses' && callIndex === 2) {
+        return buildChain({ data: { id: BUSINESS_ID }, error: null })
+      }
+      if (table === 'scans' && callIndex === 3) {
+        // scans insert hits unique constraint on source_free_scan_id
+        return buildChain({ error: { message: 'duplicate key', code: '23505' } })
+      }
+      if (table === 'scans' && callIndex === 4) {
+        // Follow-up select by source_free_scan_id returns the race winner
+        return buildChain({ data: { id: RACE_WINNER_ID }, error: null })
+      }
+      return buildChain({ data: null, error: null })
+    })
+
+    const result = await claimFreeScan(VALID_UUID)
+    expect(result).toEqual({ ok: true, scan_id: RACE_WINNER_ID, business_id: BUSINESS_ID })
+  })
+
+  it('23505 race: scans insert conflicts → no raceWinner found → returns internal', async () => {
+    let callIndex = 0
+    mockAdminFrom.mockImplementation((table: string) => {
+      callIndex++
+      if (table === 'free_scans' && callIndex === 1) {
+        return buildChain({ data: MOCK_FREE_SCAN, error: null })
+      }
+      if (table === 'businesses' && callIndex === 2) {
+        return buildChain({ data: { id: BUSINESS_ID }, error: null })
+      }
+      if (table === 'scans' && callIndex === 3) {
+        // scans insert hits unique constraint
+        return buildChain({ error: { message: 'duplicate key', code: '23505' } })
+      }
+      if (table === 'scans' && callIndex === 4) {
+        // Follow-up select returns no row (race winner disappeared)
+        return buildChain({ data: null, error: null })
+      }
+      return buildChain({ data: null, error: null })
+    })
+
+    const result = await claimFreeScan(VALID_UUID)
+    expect(result).toEqual({ ok: false, code: 'internal' })
   })
 
   it('returns ok:true even when converted_user_id update fails (non-fatal)', async () => {

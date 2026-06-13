@@ -618,12 +618,13 @@ export function PostPaymentScan({ claimResult }: PostPaymentScanProps) {
   const currentStep = DEMO_DAY1.steps[stepIndex]
 
   function handleContinue() {
-    // Successful claim: add scan_imported param so dashboard can surface a
-    // welcome card referencing the imported scan.
+    // Route directly to /dashboard — bypass /home which is a bare redirect()
+    // that strips query params. scan_imported=1 lets the dashboard surface a
+    // welcome card for the imported free scan.
     if (claimResult?.ok) {
-      router.push('/home?scan_imported=1')
+      router.push('/dashboard?scan_imported=1')
     } else {
-      router.push('/home')
+      router.push('/dashboard')
     }
   }
 

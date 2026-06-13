@@ -112,10 +112,10 @@ export async function loadAnalyticsSov(
   try {
     const { data, error } = await supabase
       .from('scans')
-      .select('id, created_at, status')
+      .select('id, created_at, completed_at, status')
       .eq('business_id', businessId)
       .eq('status', 'complete')
-      .order('created_at', { ascending: false })
+      .order('completed_at', { ascending: false })
       .limit(8)
 
     if (error) {
@@ -132,9 +132,12 @@ export async function loadAnalyticsSov(
     return emptyAnalytics()
   }
 
-  // Chronological order for trend charts (oldest → newest)
+  // Chronological order for trend charts (oldest → newest).
+  // Sort by completed_at (matching load-outcomes.ts) with created_at fallback.
   const scansSorted = [...scans].sort(
-    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    (a, b) =>
+      new Date(a.completed_at ?? a.created_at).getTime() -
+      new Date(b.completed_at ?? b.created_at).getTime(),
   )
   const scanIds = scansSorted.map((s) => s.id)
   const latestScanId = scanIds[scanIds.length - 1]
@@ -235,7 +238,7 @@ export async function loadAnalyticsSov(
     }
 
     return {
-      date: toIsoWeekDate(scan.created_at),
+      date: toIsoWeekDate(scan.completed_at ?? scan.created_at),
       values,
     }
   })
@@ -271,7 +274,7 @@ export async function loadAnalyticsSov(
     }
 
     return {
-      date: toIsoWeekDate(scan.created_at),
+      date: toIsoWeekDate(scan.completed_at ?? scan.created_at),
       us,
       competitors,
     }
@@ -359,18 +362,23 @@ export async function loadAnalyticsSov(
 
   for (const cell of topicMatrix) {
     const key = `${cell.topic}__${cell.engine}`
-    const queriesForCell: string[] = []
+    // Collect distinct query_text values from real rows for this (topic, engine)
+    // pair. query_positions has one row per probe run; a topic may have been
+    // probed with the same text multiple times (multiple run_kinds). Dedup via
+    // Set so each tested query string appears once, sourced from the row not
+    // the cell literal. In practice query_text === cell.topic for all rows here
+    // (the matrixMap above groups by query_text), so this yields the real tested
+    // query string(s) as stored in the DB rather than a copied local variable.
+    const testedSet = new Set<string>()
     for (const row of latestAllQpRows) {
-      // Both predicates required: topic match AND engine match
-      if (row.query_text === cell.topic && row.engine === cell.engine &&
-          !queriesForCell.includes(row.query_text)) {
-        queriesForCell.push(row.query_text)
+      if (row.query_text === cell.topic && row.engine === cell.engine) {
+        testedSet.add(row.query_text)
       }
     }
     drillData[key] = {
       topic: cell.topic,
       engine: cell.engine,
-      promptsTested: queriesForCell.slice(0, 5),
+      promptsTested: Array.from(testedSet).slice(0, 5),
       ourSnippet: '',
       competitorSnippet: '',
       competitorName: '',
