@@ -375,6 +375,9 @@ body {
   .craft-enter-3 { animation-delay: 80ms; }
   .craft-enter-4 { animation-delay: 120ms; }
   .craft-enter-5 { animation-delay: 160ms; }
+  .craft-enter-6 { animation-delay: 200ms; }
+  .craft-enter-7 { animation-delay: 240ms; }
+  .craft-enter-8 { animation-delay: 280ms; }
 }
 
 /* ── Traceability timeline helpers (2026-06-11) ─────────────

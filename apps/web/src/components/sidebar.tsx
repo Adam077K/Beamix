@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -12,17 +12,89 @@ import {
   PanelLeftClose,
   PanelLeft,
   X,
+  Wrench,
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Code2,
+  Users,
+  Radio,
+  BookOpen,
+  Clock,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { useSidebarStore } from '@/store/sidebar'
 
-const navItems = [
+// Top-level nav items (before Tools)
+const topNavItems = [
   { href: '/dashboard', label: 'Outcomes', icon: LayoutDashboard },
   { href: '/approvals', label: 'Approval Queue', icon: CheckCircle2 },
   { href: '/digests', label: 'Weekly Digest', icon: ScrollText },
   { href: '/traceability', label: 'Traceability', icon: GitBranch },
-  { href: '/settings', label: 'Settings', icon: Settings },
 ]
+
+// Tools disclosure children
+const toolsChildren = [
+  { href: '/prompts', label: 'Prompts', icon: FileText },
+  { href: '/content', label: 'Content', icon: FileText },
+  { href: '/schema', label: 'Schema', icon: Code2 },
+  { href: '/competitors', label: 'Competitors', icon: Users },
+  { href: '/offsite', label: 'Off-Site', icon: Radio },
+  { href: '/blog-studio', label: 'Blog Studio', icon: BookOpen },
+  { href: '/archive', label: 'Run History', icon: Clock },
+]
+
+// The Tools group header links to /automation (Mode Hub)
+const TOOLS_HREF = '/automation'
+
+// Settings — always last
+const settingsItem = { href: '/settings', label: 'Settings', icon: Settings }
+
+// ---------------------------------------------------------------------------
+// NavLink — a single nav item with active state
+// ---------------------------------------------------------------------------
+
+function NavLink({
+  href,
+  label,
+  icon: Icon,
+  iconOnly = false,
+  onNavigate,
+  isActive,
+  indented = false,
+}: {
+  href: string
+  label: string
+  icon: LucideIcon
+  iconOnly?: boolean
+  onNavigate?: () => void
+  isActive: boolean
+  indented?: boolean
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onNavigate}
+      aria-label={iconOnly ? label : undefined}
+      aria-current={isActive ? 'page' : undefined}
+      title={iconOnly ? label : undefined}
+      className={cn(
+        'flex min-h-[44px] items-center gap-3 rounded-md py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1',
+        indented ? 'pl-7 pr-2.5' : 'px-2.5',
+        isActive
+          ? 'bg-[#EFF4FF] font-medium text-[#3370FF]'
+          : 'text-[#6B7280] hover:bg-[#F7F7F7] hover:text-[#0A0A0A]',
+        iconOnly && 'justify-center',
+      )}
+    >
+      <Icon
+        className={cn('h-4 w-4 shrink-0', isActive ? 'text-[#3370FF]' : 'text-current')}
+      />
+      {!iconOnly && <span className="truncate">{label}</span>}
+    </Link>
+  )
+}
 
 // ---------------------------------------------------------------------------
 // NavList — shared between the persistent rail and the mobile drawer
@@ -37,33 +109,118 @@ interface NavListProps {
 }
 
 function NavList({ pathname, iconOnly = false, onNavigate }: NavListProps) {
+  // Tools group expanded state — local, not persisted
+  const [toolsExpanded, setToolsExpanded] = useState(false)
+
+  // Auto-expand if the current path is a tools child
+  const isInsideTools =
+    pathname === TOOLS_HREF ||
+    toolsChildren.some((c) => pathname === c.href || pathname.startsWith(c.href + '/'))
+
+  // Sync expanded when pathname puts us inside tools
+  useEffect(() => {
+    if (isInsideTools) setToolsExpanded(true)
+  }, [isInsideTools])
+
   return (
     <nav className="flex-1 space-y-0.5 px-2 py-3" aria-label="Main navigation">
-      {navItems.map(({ href, label, icon: Icon }: { href: string; label: string; icon: LucideIcon }) => {
+      {/* Top-level items */}
+      {topNavItems.map(({ href, label, icon: Icon }) => {
         const isActive = pathname === href || pathname.startsWith(href + '/')
         return (
-          <Link
+          <NavLink
             key={href}
             href={href}
-            onClick={onNavigate}
-            aria-label={iconOnly ? label : undefined}
-            aria-current={isActive ? 'page' : undefined}
-            title={iconOnly ? label : undefined}
-            className={`flex min-h-[44px] items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1 ${
-              isActive
-                ? 'bg-[#EFF4FF] font-medium text-[#3370FF]'
-                : 'text-[#6B7280] hover:bg-[#F7F7F7] hover:text-[#0A0A0A]'
-            } ${iconOnly ? 'justify-center' : ''}`}
-          >
-            <Icon
-              className={`h-4 w-4 shrink-0 ${
-                isActive ? 'text-[#3370FF]' : 'text-current'
-              }`}
-            />
-            {!iconOnly && <span className="truncate">{label}</span>}
-          </Link>
+            label={label}
+            icon={Icon}
+            iconOnly={iconOnly}
+            onNavigate={onNavigate}
+            isActive={isActive}
+          />
         )
       })}
+
+      {/* Tools disclosure group */}
+      {iconOnly ? (
+        // Icon-rail: single Tools glyph linking to /automation
+        <NavLink
+          href={TOOLS_HREF}
+          label="Tools"
+          icon={Wrench}
+          iconOnly
+          onNavigate={onNavigate}
+          isActive={isInsideTools}
+        />
+      ) : (
+        <div>
+          {/* Group header row — links to /automation, chevron toggles children */}
+          <div className="flex min-h-[44px] items-center">
+            <Link
+              href={TOOLS_HREF}
+              onClick={onNavigate}
+              aria-current={pathname === TOOLS_HREF ? 'page' : undefined}
+              className={cn(
+                'flex flex-1 items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1',
+                isInsideTools
+                  ? 'bg-[#EFF4FF] font-medium text-[#3370FF]'
+                  : 'text-[#6B7280] hover:bg-[#F7F7F7] hover:text-[#0A0A0A]',
+              )}
+            >
+              <Wrench
+                className={cn(
+                  'h-4 w-4 shrink-0',
+                  isInsideTools ? 'text-[#3370FF]' : 'text-current',
+                )}
+              />
+              <span className="truncate">Tools</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setToolsExpanded((v) => !v)}
+              aria-expanded={toolsExpanded}
+              aria-label={toolsExpanded ? 'Collapse Tools' : 'Expand Tools'}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[#9CA3AF] transition-colors hover:text-[#6B7280] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3370FF] focus-visible:ring-offset-1"
+            >
+              {toolsExpanded ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </div>
+
+          {/* Children — indented, same active treatment */}
+          {toolsExpanded && (
+            <div className="space-y-0.5">
+              {toolsChildren.map(({ href, label, icon: Icon }) => {
+                const isActive = pathname === href || pathname.startsWith(href + '/')
+                return (
+                  <NavLink
+                    key={href}
+                    href={href}
+                    label={label}
+                    icon={Icon}
+                    onNavigate={onNavigate}
+                    isActive={isActive}
+                    indented
+                  />
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Settings — always last */}
+      <NavLink
+        href={settingsItem.href}
+        label={settingsItem.label}
+        icon={settingsItem.icon}
+        iconOnly={iconOnly}
+        onNavigate={onNavigate}
+        isActive={pathname === settingsItem.href || pathname.startsWith(settingsItem.href + '/')}
+      />
     </nav>
   )
 }
