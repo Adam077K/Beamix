@@ -9,14 +9,16 @@ import { WeeklyNarrative } from '@/components/dashboard/WeeklyNarrative'
 import { FoundingCohortPanel } from './_components/FoundingCohortPanel'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
+import { PriorityGapsPanel } from '@/components/dashboard/PriorityGapsPanel'
 import type {
   DashboardOutcomes,
   OverallTrendPoint,
   VisibilityScore,
 } from '@/types/outcomes'
 import { isDemoUser, DEMO_SCAN_ID } from '@/lib/demo'
-import { DEMO_DASHBOARD, DEMO_DIGESTS } from '@/lib/demo/fixtures'
+import { DEMO_DASHBOARD, DEMO_DIGESTS, DEMO_GAP_LIST } from '@/lib/demo/fixtures'
 import { loadDashboardOutcomes } from '@/lib/dashboard/load-outcomes'
+import { loadDashboardGaps } from '@/lib/dashboard/load-gaps'
 
 // ---------------------------------------------------------------------------
 // Stub data — Wave 2 will replace with real Supabase fetch
@@ -94,11 +96,22 @@ export default async function DashboardPage() {
 
   let outcomes: DashboardOutcomes
   if (isDemo) {
-    // Demo branch — byte-for-byte unchanged fixture data
-    outcomes = { ...DEMO_DASHBOARD, overallTrend: deriveDemoOverallTrend() }
+    // Demo branch — fixture data including pre-built gap list
+    outcomes = {
+      ...DEMO_DASHBOARD,
+      overallTrend: deriveDemoOverallTrend(),
+      gapList: DEMO_GAP_LIST,
+    }
   } else if (user?.id) {
-    // Real user branch — fetch live data from Supabase
-    outcomes = await loadDashboardOutcomes(user.id)
+    // Real user branch — fetch live data from Supabase (parallel)
+    const [loadedOutcomes, gapList] = await Promise.all([
+      loadDashboardOutcomes(user.id),
+      loadDashboardGaps(user.id),
+    ])
+    outcomes = {
+      ...loadedOutcomes,
+      ...(gapList.length > 0 ? { gapList } : {}),
+    }
   } else {
     // No authenticated user (should not reach here — middleware guards this route)
     outcomes = EMPTY_OUTCOMES
@@ -161,6 +174,15 @@ export default async function DashboardPage() {
 
         {/* This week's wins — calm results ledger */}
         <WeeklyNarrative weeklyNarrative={outcomes.weeklyNarrative} />
+
+        {/* Priority gaps panel — shown when gap data is available */}
+        {outcomes.gapList !== undefined && (
+          <>
+            {/* M12: 48px gap — gap list is a distinct section below wins */}
+            <div className="mt-12" />
+            <PriorityGapsPanel gaps={outcomes.gapList} />
+          </>
+        )}
       </div>
     </main>
   )

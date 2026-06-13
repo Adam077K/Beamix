@@ -17,6 +17,7 @@ import type { ApprovalQueueItem } from '@/app/(protected)/approvals/_data'
 import type { WeeklyDigest } from '@/types/digest'
 import type { TraceabilityData } from '@/types/traceability'
 import type { Day1Fixture } from '@/types/day1'
+import type { RankedGap } from '@/lib/scan/gap-types'
 import { DEMO_SCAN_ID } from './index'
 
 // ---------------------------------------------------------------------------
@@ -630,6 +631,117 @@ export const DEMO_DAY1: Day1Fixture = {
     },
   ],
 }
+
+// ---------------------------------------------------------------------------
+// DEMO_GAP_LIST — RankedGap[] for the dashboard PriorityGapsPanel (demo mode)
+//
+// 6 hand-authored gaps for Bright Smile Dental (Ramat Gan):
+//   - 3 lift gaps (tier_1 / tier_2, promises_lift=true) with contrastive signals
+//   - 2 lift gaps (tier_2) showing impact_fallback mode (no competitor comparison)
+//   - 1 hygiene gap (tier_3, promises_lift=false)
+//
+// Ranks are 1-based ascending (rank 1 = most important).
+// Engineering Principle #9: no agent_id / agent names in copy.
+// ---------------------------------------------------------------------------
+
+export const DEMO_GAP_LIST: RankedGap[] = [
+  {
+    factor_key: 'review_systems',
+    display_name: 'Review Systems',
+    tier: 1,
+    impact_weight: 0.85,
+    playbook_id: 'review_presence_planner',
+    promises_lift: true,
+    contrastive_count: 3,
+    competitors_with_factor: ['Smile Center Tel Aviv', 'Ramat Gan Dental', 'Family Dental IL'],
+    contrastive_evidence:
+      '3 of 3 named competitors have Review Systems; you don\'t',
+    fixability: 'medium',
+    effort_score: 2,
+    rank: 1,
+    ordering_mode: 'contrastive',
+  },
+  {
+    factor_key: 'faq_coverage',
+    display_name: 'FAQ Coverage',
+    tier: 1,
+    impact_weight: 0.78,
+    playbook_id: 'content_optimizer',
+    promises_lift: true,
+    contrastive_count: 2,
+    competitors_with_factor: ['Smile Center Tel Aviv', 'Ramat Gan Dental'],
+    contrastive_evidence:
+      '2 of 3 named competitors have FAQ Coverage; you don\'t',
+    fixability: 'fast',
+    effort_score: 1,
+    rank: 2,
+    ordering_mode: 'contrastive',
+  },
+  {
+    factor_key: 'dentist_schema',
+    display_name: 'Dentist Schema Markup',
+    tier: 1,
+    impact_weight: 0.82,
+    playbook_id: 'schema_generator',
+    promises_lift: true,
+    contrastive_count: 1,
+    competitors_with_factor: ['Smile Center Tel Aviv'],
+    contrastive_evidence:
+      '1 of 3 named competitors have Dentist Schema Markup; you don\'t',
+    fixability: 'fast',
+    effort_score: 1,
+    rank: 3,
+    ordering_mode: 'contrastive',
+  },
+  {
+    factor_key: 'local_citation_consistency',
+    display_name: 'Local Citation Consistency',
+    tier: 2,
+    impact_weight: 0.65,
+    playbook_id: null,
+    promises_lift: true,
+    contrastive_count: 0,
+    competitors_with_factor: [],
+    contrastive_evidence:
+      'Ordered by impact (no competitor comparison available this scan)',
+    fixability: 'medium',
+    effort_score: 2,
+    rank: 4,
+    ordering_mode: 'impact_fallback',
+  },
+  {
+    factor_key: 'service_page_depth',
+    display_name: 'Service Page Depth',
+    tier: 2,
+    impact_weight: 0.58,
+    playbook_id: 'content_optimizer',
+    promises_lift: true,
+    contrastive_count: 0,
+    competitors_with_factor: [],
+    contrastive_evidence:
+      'Ordered by impact (no competitor comparison available this scan)',
+    fixability: 'slow',
+    effort_score: 3,
+    rank: 5,
+    ordering_mode: 'impact_fallback',
+  },
+  {
+    factor_key: 'llms_txt',
+    display_name: 'llms.txt File',
+    tier: 3,
+    impact_weight: 0.2,
+    playbook_id: null,
+    promises_lift: false,
+    contrastive_count: 0,
+    competitors_with_factor: [],
+    contrastive_evidence:
+      'No audited competitor has llms.txt File either — lower priority',
+    fixability: 'fast',
+    effort_score: 1,
+    rank: 6,
+    ordering_mode: 'contrastive',
+  },
+]
 
 // ---------------------------------------------------------------------------
 // DEMO_SCAN — shape consumed by the /scan/[scan_id] page
