@@ -18,6 +18,7 @@ skills:
   - design-orchestration
   - high-end-visual-design
   - emilkowal-animations
+  - beamix-brand-quality-bar
   - minimalist-ui
   - stitch-design-taste
 risk_tier_default: lite
@@ -93,7 +94,7 @@ If no `team_name` is set, you are in legacy mode (T2 dispatch-packet) — follow
 Read these as one cached block (do not re-read mid-session):
 
 1. `CLAUDE.md` — stack, conventions, MCP table, routing
-2. `docs/BRAND_GUIDELINES.md` — color (the project's primary accent), fonts (Inter/InterDisplay/Fraunces/Geist Mono), spacing (8px grid), voice
+2. `docs/BRAND_GUIDELINES.md` — color (#3370FF primary accent), fonts (Inter/InterDisplay/Fraunces/Geist Mono), spacing (8px grid), voice
 3. `docs/PRODUCT_DESIGN_SYSTEM.md` — dashboard design tokens and patterns
 4. `.claude/skills/design-taste-frontend/SKILL.md` — MANDATORY base skill; anti-slop rules, 3-dial system (DESIGN_VARIANCE, MOTION_INTENSITY, VISUAL_DENSITY)
 5. The Linear ticket via `mcp__linear__get_issue`
@@ -214,7 +215,7 @@ Required for NEW_PAGE and REDESIGN. Optional for other types if spec is complete
 
 #### Layer 2 — Typography and colors
 - Font application: Inter (body), InterDisplay (headings), Fraunces (serif accent — dark testimonial sections only), Geist Mono (code)
-- Color application from BRAND_GUIDELINES.md: the project's primary accent, plus its text/muted/border neutrals
+- Color application from BRAND_GUIDELINES.md: #3370FF primary accent, #0A0A0A text, #6B7280 muted, #E5E7EB borders
 - Contrast check: WCAG AA minimum
 
 #### Layer 3 — Content and media
@@ -310,7 +311,7 @@ mcp__playwright__browser_resize({width: 1440, height: 900}) → desktop
 ```
 
 Compare against design intent:
-- Colors match BRAND_GUIDELINES.md (project's accent, correct contrast)?
+- Colors match BRAND_GUIDELINES.md (#3370FF, correct contrast)?
 - Typography follows the type scale (InterDisplay for headings)?
 - All 4 states present (loading, empty, error, success)?
 - Does it look professional and intentional — or generic?
@@ -355,7 +356,7 @@ return: PASS or BLOCK with specific issues
 If BLOCK → fix issues → re-check. Never ship with accessibility failures.
 
 Also verify brand compliance:
-- Primary accent matches the project's brand guidelines (no off-brand substitutions)
+- Primary accent is #3370FF (not orange, not navy, not cyan)
 - Fonts are Inter / InterDisplay / Fraunces / Geist Mono only
 - Spacing follows 8px base grid
 - Icons from Lucide React only
@@ -432,16 +433,3 @@ Load these in addition to the defaults above when the task matches. Read with `R
 - **DO NOT merge branches** — signal completion to CTO/CEO; they handle the merge.
 - **DO NOT hard-fail on MCP unavailability** — log the failure, fall back to code-first, continue.
 - **DO NOT load more than 5 skills total** — context bloat degrades quality; prioritize by task type.
-
-## MANDATORY craft skills — READ BEFORE ANY DESIGN WORK
-
-Before you generate, judge, or polish ANY design, you MUST `Read` these globally-installed craft skills and apply them. They live at `~/.claude/skills/<name>/SKILL.md` and are available in every project:
-
-- `ui-typography` — typographic correctness (quotes, dashes, spacing, hierarchy)
-- `baseline-ui` — fast spacing / hierarchy / layout cleanup
-- `frontend-design` — distinctive, production-grade UI (anti-generic)
-- `12-principles-of-animation` — motion quality
-- `design-audit` — systematic visual audit → phased refinement plan
-- `web-design-guidelines` — Vercel web-design guidelines
-
-These are non-optional. On any conflict, the project's own brand tokens / design-system skill WINS over a generic skill's prescribed fonts or colors.

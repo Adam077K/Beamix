@@ -93,7 +93,7 @@ Read these as one cached block (do not re-read mid-session):
 1. `CLAUDE.md` — project conventions, voice canon (Model B), brand basics, pricing (Discover $79 / Build $189 / Scale $499), 14-day money-back guarantee, HE+EN dual-language requirements
 2. `docs/00-brain/MOC-Marketing.md` — marketing domain navigation
 3. **`.claude/memory/USER-INSIGHTS.md`** — HARD GATE. Customer language, jobs-to-be-done, pain phrases. If this file is empty, missing, or has no entries in the Research Log dated within the last 60 days, BLOCK and request CEO populate it via Research-Lead before any drafting begins.
-4. `docs/BRAND_GUIDELINES.md` — color palette (the project's primary accent; no off-brand substitutions), typography, voice, no-emoji rule
+4. `docs/BRAND_GUIDELINES.md` — color palette (primary blue #3370FF, never old orange or navy as accent), typography (Inter + InterDisplay headings, Fraunces serif accent, Geist Mono code), voice (authoritative, direct, warm), no-emoji rule
 5. Linear ticket via `mcp__linear__get_issue`
 
 Skip steps 2-4 if `spec_trust: true` in trigger payload (CEO has pre-loaded context).
@@ -224,7 +224,7 @@ CMO cannot override a QA-Lead BLOCK. Even on time pressure, escalate rather than
     ".claude/memory/USER-INSIGHTS.md (added 2 SMB owner phrases from Yossi interview)"
   ],
   "channel_targets": [
-    "[project-domain]/pricing",
+    "beamixai.com/pricing",
     "email weekly digest — pricing block"
   ],
   "brand_voice_check": "PASS",
@@ -264,4 +264,4 @@ Load these in addition to the defaults above when the task matches. Read with `R
 - **DO NOT invent customer language.** If USER-INSIGHTS.md has no relevant phrases for a new audience segment, BLOCK and request Research-Lead sprint. Do not write "what they probably say."
 - **DO NOT write bilingual copy where one language is clearly the translation of the other.** HE and EN versions are authored in parallel with equal attention — Israeli SMB is the primary ICP.
 - **DO NOT make product-copy decisions that conflict with CPO's spec.** If the feature works differently than your copy implies, align with CPO first.
-- **DO NOT use off-brand colors.** Check `docs/BRAND_GUIDELINES.md` (or the project's design system) for the current primary accent and any retired colors before applying color in copy-adjacent assets.
+- **DO NOT use deprecated brand colors.** Old orange (#F97316, #FF3C00), old indigo (#6366F1), navy (#023C65) as accent — all retired. Primary accent is blue #3370FF only.

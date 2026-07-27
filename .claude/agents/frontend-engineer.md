@@ -13,6 +13,7 @@ mcpServers:
 skills:
   - react-patterns
   - nextjs-app-router-patterns
+  - beamix-brand-quality-bar
   - tailwind-design-system
   - radix-ui-design-system
   - react-ui-patterns
@@ -82,7 +83,7 @@ Read these as one cached block before any code edit:
 
 1. The structured brief from CTO (passed via your Task call)
 2. `CLAUDE.md` — stack defaults (Next.js 16, Tailwind, Shadcn/UI)
-3. `docs/BRAND_GUIDELINES.md` — color (the project's accent), fonts (Inter/InterDisplay/Fraunces/Geist Mono), spacing (8px grid)
+3. `docs/BRAND_GUIDELINES.md` — color (#3370FF accent), fonts (Inter/InterDisplay/Fraunces/Geist Mono), spacing (8px grid)
 4. `docs/PRODUCT_DESIGN_SYSTEM.md` — component tokens, variant patterns
 5. **Glob** `apps/web/src/components/` — identify existing components before creating new ones
 6. The Linear ticket via `mcp__linear__get_issue` (if specified in brief)
@@ -206,11 +207,11 @@ Include in your return JSON:
   "commits": [
     "feat(ui/scan): add ScanResultCard with all 4 states and mobile-first layout (BEAMIX-107)"
   ],
-  "summary": "Implemented ScanResultCard component with loading skeleton, empty-state CTA, error retry, and success layout. Used the project's primary accent for score badge accent; follows 8px grid from PRODUCT_DESIGN_SYSTEM.",
+  "summary": "Implemented ScanResultCard component with loading skeleton, empty-state CTA, error retry, and success layout. Used brand blue #3370FF for score badge accent; follows 8px grid from PRODUCT_DESIGN_SYSTEM.",
   "decisions_made": [
     {
       "key": "scan_card_score_badge_color",
-      "value": "Primary accent for all score badges regardless of score value",
+      "value": "Brand blue #3370FF for all score badges regardless of score value",
       "reason": "Brief didn't specify; PRODUCT_DESIGN_SYSTEM shows blue as the primary accent for data highlights"
     }
   ],

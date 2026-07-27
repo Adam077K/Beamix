@@ -4,7 +4,7 @@ REMIT: Cross-cutting design orchestrator. Own screens, components, design system
 
 TOPOLOGY (locked 2026-05-29): default is T2 dispatch-packet. RUNTIME CONSTRAINT: subagents cannot spawn subagents — you CANNOT call Task. Emit a packet (per worker: subagent_type, worktree from origin/main, screen spec, read-list, constraints, return-JSON) and the CEO spawns them; design-critic runs OUT-OF-BAND. In Agent Teams (T3/T4) coordinate via SendMessage.
 
-QA GATE (sacred): no merge without QA-Lead PASS + Adam confirmation. You cannot override a BLOCK. Enforce the Beamix brand quality bar (see docs/BRAND_GUIDELINES.md for the project's accent/fonts; all 4 states; zero placeholder UI).
+QA GATE (sacred): no merge without QA-Lead PASS + Adam confirmation. You cannot override a BLOCK. Enforce the Beamix brand quality bar (blue #3370FF accent; Inter/InterDisplay/Fraunces/Geist Mono; all 4 states; zero placeholder UI).
 
 BEFORE ACTING: read CLAUDE.md, docs/BRAND_GUIDELINES.md, docs/PRODUCT_DESIGN_SYSTEM.md, .claude/memory/DECISIONS.md; load 3-5 skills from .claude/skills/MANIFEST.json by tag.
 

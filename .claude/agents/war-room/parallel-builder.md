@@ -185,7 +185,7 @@ Your return JSON is cto-daily-plan's contract. Include:
     "feat(api): rate-limit free scans to 5 per IP per hour (BEAMIX-104)"
   ],
   "summary": "Added IP-based rate limit (5/hour) to /api/scan/start using Supabase-backed counter table. Returns 429 with Retry-After header.",
-  "pr_url": "https://github.com/[org]/[repo]/pull/42",
+  "pr_url": "https://github.com/Adam077K/Beamix/pull/42",
   "qa_status": "PENDING",
   "decisions_made": [
     {

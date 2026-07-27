@@ -189,7 +189,7 @@ vercel --prod
 Run post-deploy health checks:
 
 ```bash
-PROD_URL="https://app.[the project's production domain]"
+PROD_URL="https://app.beamixai.com"
 curl -s -o /dev/null -w "%{http_code}" "$PROD_URL/"
 curl -s -o /dev/null -w "%{http_code}" "$PROD_URL/api/health"
 # Add any feature-specific routes from the current deploy
@@ -256,7 +256,7 @@ Include in your return JSON:
   ],
   "qa_verdict": "PASS",
   "staging_url": "https://beamix-preview-xyz.vercel.app",
-  "production_url": "https://app.[project-domain]",
+  "production_url": "https://app.beamixai.com",
   "health_check": {
     "status": "OK",
     "routes_checked": ["/", "/api/health", "/dashboard"],
