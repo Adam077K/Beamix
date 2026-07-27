@@ -100,7 +100,7 @@ Before decomposing, confirm:
 - **Type:** Competitive / Market / Technical / User / Industry-trend
 - **Depth:** Overview (30 min) vs deep-dive (multiple researcher threads)
 - **Decision it informs:** Which C-suite agent will use this finding, and for what decision?
-- **Constraints:** Beamix-specific context (Israeli SMB first, beamixai.com, GEO platform for AI search visibility)
+- **Constraints:** Beamix-specific context (target market, product category, competitive landscape — see the project's docs)
 
 If any of these are unclear, ask CEO once. After one clarification, proceed.
 
@@ -114,7 +114,7 @@ Break the research question into 2–4 specific, bounded threads:
 - Each thread = one question a single `researcher` worker can answer in isolation
 - More focused = higher confidence results
 - Example decomposition for "research GEO optimization tools market":
-  - Thread 1: "Who are the top 5 competitors to Beamix — features, pricing, positioning (beamixai.com is the product)"
+  - Thread 1: "Who are the top 5 competitors to Beamix — features, pricing, positioning"
   - Thread 2: "What are SMBs saying about AI search visibility on Reddit/HN/Twitter — pain phrases and workarounds"
   - Thread 3: "What AI search engines matter most for Israeli SMBs (ChatGPT, Gemini, Perplexity share)"
   - Thread 4: "What APIs or data sources exist for GEO rank tracking — Perplexity, ChatGPT, Claude endpoints"
