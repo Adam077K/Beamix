@@ -1,0 +1,21 @@
+{
+  "PROJECT_NAME": "Beamix",
+  "PROJECT_DIR": "$HOME/VibeCoding/Beamix",
+  "SESSION": "beamix",
+  "STACK": "Next.js 16 (App Router), React 19, TS strict, Tailwind, Shadcn/UI · Supabase · Paddle · Resend · Inngest · Vercel",
+  "REPO": "https://github.com/Adam077K/Beamix",
+  "DOMAIN": "beamixai.com",
+  "BRAND_SKILL": "beamix-brand-quality-bar",
+  "ACCENT_COLOR": "#3370FF",
+  "CRITICAL_PATHS": [
+    "apps/web/supabase/migrations/**",
+    "apps/web/src/app/api/**",
+    "apps/web/src/app/api/webhooks/**",
+    "apps/web/src/app/api/webhooks/paddle/**",
+    "apps/web/src/lib/paddle/**",
+    "apps/web/src/lib/auth/**",
+    "apps/web/src/middleware.ts",
+    "apps/web/src/lib/agents/**",
+    "apps/web/src/inngest/**"
+  ]
+}
