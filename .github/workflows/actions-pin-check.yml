@@ -1,0 +1,51 @@
+name: Actions Pin Check
+
+# Supply-chain guard: every third-party / GitHub-owned Action referenced from
+# .github/workflows/*.yml must be pinned to a full 40-character commit SHA
+# (not a mutable tag like @v4). Local reusable-workflow references
+# (uses: ./.github/workflows/...) are exempt since they resolve to a commit
+# in this repo already, not a third-party supply chain.
+#
+# The checker (.github/scripts/actions_pin_check.py) FAILS CLOSED (exit 1)
+# on any workflow file that contains a YAML anchor or alias (&name / *name).
+# PyYAML's compose() API returns the identical Node object for every alias
+# site (verified against PyYAML 6.0.3's Composer.compose_node(), which does
+# `return self.anchors[anchor]` for an AliasEvent with no new start_mark) --
+# so the alias's own source line can never be recovered from the public
+# compose() API, and line-level pin/comment attribution would be unreliable
+# or, for a self-referential (cyclic) anchor, would recurse forever if
+# followed. Rewrite the workflow without anchors/aliases if this check fails
+# for that reason -- GitHub Actions workflows essentially never need them.
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - '.github/scripts/**'
+
+permissions:
+  contents: read
+
+jobs:
+  pin-check:
+    name: Verify all GitHub Actions are SHA-pinned
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned PyYAML
+        run: pip install --no-cache-dir --disable-pip-version-check pyyaml==6.0.3
+
+      - name: Run pin-check unit tests
+        run: python3 -m unittest discover .github/scripts/tests -v
+
+      - name: "Verify every uses: line is pinned to a full commit SHA"
+        run: python3 .github/scripts/actions_pin_check.py
