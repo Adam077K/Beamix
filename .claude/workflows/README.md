@@ -12,12 +12,14 @@ See `.claude/agents/ceo.md` → "Topology classification" and the topology memor
 | `coding.js` | `Workflow({name:"coding", args})` | `slices: [{id, agentType, brief, files}]` (+ `tier`) | per-slice results + chained QA verdict |
 | `design.js` | `Workflow({name:"design", args})` | `brief` (+ `target`, `variations`, `reference`) | winning direction + build-ready spec |
 | `research.js` | `Workflow({name:"research", args})` | `question` (+ `depth: "standard"\|"deep"`) | cited, confidence-rated brief |
+| `system-redesign.js` | `Workflow({name:"system-redesign", args})` | (all optional) `scope: string[]`, `max_skill_batch`, `max_agent_batch`, `max_command_batch` | per-artifact KEEP/CUT/MERGE/REWRITE verdicts + target-state design (roster/skills/commands/mechanics changes) with net-count guarantees |
 
 ## Shapes
 - **qa** — 5 dimension reviewers → 3 adversarial verifiers on *block-eligible* findings only (P1 always; P2 at irreversible — P3/advisory are reported unverified, never block) → Opus judge with a deterministic P1-always-BLOCK override. Strict-majority + quorum vote. Irreversible adds loop-until-dry fresh-eyes rounds (budget-guarded, max 3). Pure vote/verdict logic is unit-tested in `lib/gate-logic.mjs` (`node --test .claude/workflows/lib/gate-logic.test.mjs`).
 - **coding** — parallel build slices in isolated worktrees → always chains the combined diff into `qa.js`. Never merges (Adam-gated after PASS).
 - **design** — N variations from distinct angles → parallel `design-critic` scoring → Opus synthesis grafting best runner-up ideas.
 - **research** — Opus decompose → multi-modal parallel sweep → adversarial per-claim verification → Opus cited synthesis.
+- **system-redesign** — Bash-driven inventory of every `.claude/` artifact (deterministic reference_count / last_referenced / enforcement_class / session_hits) → parallel batched judges (agents ~6, skills ~15, commands ~7, workflows/hooks single-batch) verdicting KEEP/CUT/MERGE/REWRITE with pre-computed evidence → Opus overlap pass for cross-cutting merge groups → Opus target-state synthesis bound to hard constraints (no net-count rise, no new prose rules, no nested spawning, frozen tier/role names, defend the keeps). JS post-filter demotes any CUT verdict on a `reference_count > 0` artifact to `FLAGGED_REVIEW` — cutting anything actively wired requires a human.
 
 ## Rules
 - Authorization: classifying a task **T5** is the CEO's standing permission to run these. `ultracode` = Adam's manual force-everything override.
