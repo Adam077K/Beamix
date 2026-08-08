@@ -12,12 +12,15 @@ See `.claude/agents/ceo.md` → "Topology classification" and the topology memor
 | `coding.js` | `Workflow({name:"coding", args})` | `slices: [{id, agentType, brief, files}]` (+ `tier`) | per-slice results + chained QA verdict |
 | `design.js` | `Workflow({name:"design", args})` | `brief` (+ `target`, `variations`, `reference`) | winning direction + build-ready spec |
 | `research.js` | `Workflow({name:"research", args})` | `question` (+ `depth: "standard"\|"deep"`) | cited, confidence-rated brief |
+| `capability-gap-map.js` | `Workflow({name:"capability-gap-map", args})` | `deep: string[]`, `survey: string[]`, `baseline: {...}` (+ `max_gapdive`) | capability inventory + diff + evidence-gated recommendations |
+| `capability-gap-map-followup.js` | `Workflow({name:"capability-gap-map-followup", args})` | none (targets + redo are hardcoded per-run; edit before reuse) | supplemental inventory + redo of a specific failed deep-dive |
 
 ## Shapes
 - **qa** — 5 dimension reviewers → 3 adversarial verifiers on *block-eligible* findings only (P1 always; P2 at irreversible — P3/advisory are reported unverified, never block) → Opus judge with a deterministic P1-always-BLOCK override. Strict-majority + quorum vote. Irreversible adds loop-until-dry fresh-eyes rounds (budget-guarded, max 3). Pure vote/verdict logic is unit-tested in `lib/gate-logic.mjs` (`node --test .claude/workflows/lib/gate-logic.test.mjs`).
 - **coding** — parallel build slices in isolated worktrees → always chains the combined diff into `qa.js`. Never merges (Adam-gated after PASS).
 - **design** — N variations from distinct angles → parallel `design-critic` scoring → Opus synthesis grafting best runner-up ideas.
 - **research** — Opus decompose → multi-modal parallel sweep → adversarial per-claim verification → Opus cited synthesis.
+- **capability-gap-map** — sibling of `agent-audit.js`'s resolve → extract → verify → adopt skeleton, retargeted at inventory instead of architecture: resolve N project targets (deep-clone vs API-survey) → single inventory extractor per project across 5 fixed dimensions (agent_roster, skill_corpus, command_set, hook_library, sandbox_permission_model) → one Opus collapse+diff pass per dimension against a caller-supplied `baseline` (never re-derived by an agent) → evidence-gated deep-dive + adversarial verify on confirmed GAP capabilities only, capped by `max_gapdive` (default 20, max 40). Same JS evidence-gate discipline as `agent-audit.js`: an unverified finding is demoted to `open_questions`, never silently kept. Run 2026-08-08 (`wf_e3a4ad25-1d2`, 60 agents) + `capability-gap-map-followup.js` (`wf_394f5e4c-3b9`, 8 agents, hand-edited one-off targets) produced `docs/08-agents_work/2026-08-08-CAPABILITY-GAP-MAP-HANDOFF.md`. The followup script's targets/redo are hardcoded for that specific run — copy and edit rather than re-invoking as-is for a different follow-up.
 
 ## Rules
 - Authorization: classifying a task **T5** is the CEO's standing permission to run these. `ultracode` = Adam's manual force-everything override.
