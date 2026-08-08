@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { normalizeArgs, isConfirmed, decideVerdict, capBySeverity, isBlockEligible } from './gate-logic.mjs'
+import { normalizeArgs, isConfirmed, decideVerdict, capBySeverity, isBlockEligible, deriveSpecConformance } from './gate-logic.mjs'
 
 test('isBlockEligible: P1 always eligible', () => {
   assert.equal(isBlockEligible('P1', 'full'), true)
@@ -84,4 +84,20 @@ test('capBySeverity: over cap keeps highest severity first', () => {
   const { kept, dropped } = capBySeverity(f, 2)
   assert.equal(dropped, 1)
   assert.deepEqual(kept.map(x => x.id), ['b', 'c'])
+})
+
+test('deriveSpecConformance: spec-conformance in failedDims -> FAIL', () => {
+  assert.equal(deriveSpecConformance({ confirmed: [], failedDims: ['spec-conformance'] }), 'FAIL')
+})
+test('deriveSpecConformance: confirmed finding with dimension spec-conformance -> FAIL', () => {
+  assert.equal(deriveSpecConformance({ confirmed: [{ dimension: 'spec-conformance', severity: 'P3' }], failedDims: [] }), 'FAIL')
+})
+test('deriveSpecConformance: confirmed findings only in OTHER dimensions -> PASS (no false positive)', () => {
+  assert.equal(deriveSpecConformance({ confirmed: [{ dimension: 'security', severity: 'P1' }], failedDims: [] }), 'PASS')
+})
+test('deriveSpecConformance: no findings, no failed dims -> PASS', () => {
+  assert.equal(deriveSpecConformance({ confirmed: [], failedDims: [] }), 'PASS')
+})
+test('deriveSpecConformance: defaults (no args) -> PASS', () => {
+  assert.equal(deriveSpecConformance({}), 'PASS')
 })

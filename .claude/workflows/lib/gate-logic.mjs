@@ -54,3 +54,16 @@ export function capBySeverity(findings, max) {
   const sorted = [...findings].sort((a, b) => (order[a && a.severity] ?? 3) - (order[b && b.severity] ?? 3))
   return { kept: sorted.slice(0, max), dropped: findings.length - max }
 }
+
+/**
+ * Spec-conformance is PASS unless the spec-conformance dimension failed to review (coverage gap)
+ * or has at least one CONFIRMED finding (a real, adversarially-verified spec deviation).
+ * Deliberately independent of overall PASS/BLOCK: a P3 spec-conformance finding can coexist with
+ * an overall PASS (non-blocking at this tier) while still correctly reporting FAIL here, so a
+ * human/CI check for spec_conformance catches it even when it didn't block the merge.
+ */
+export function deriveSpecConformance({ confirmed = [], failedDims = [] }) {
+  if (failedDims.includes('spec-conformance')) return 'FAIL'
+  const hasConfirmedSpecGap = confirmed.some(f => f && f.dimension === 'spec-conformance')
+  return hasConfirmedSpecGap ? 'FAIL' : 'PASS'
+}
