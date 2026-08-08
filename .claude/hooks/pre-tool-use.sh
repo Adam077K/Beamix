@@ -41,9 +41,12 @@
 #   $(...) subshell bodies, `...` backtick bodies, and <<EOF...EOF heredoc
 #   bodies from the raw command into a flat candidate list. The EXISTING rules
 #   (unchanged, via check_bash_command()) run once against the top-level
-#   command, then ONCE MORE against a newline-joined corpus of every extracted
-#   candidate (not once per candidate — see the inline comment above the call
-#   site for why that's detection-equivalent but far cheaper).
+#   command, then ONCE PER CANDIDATE in a loop. Running per-candidate (rather
+#   than once against a joined corpus) is required for correctness: some rules
+#   use a positive+negation shape (curl-external, git-reset---hard, push-origin
+#   softwarn), and a joined corpus would let a safe candidate on one line satisfy
+#   the negation grep for a dangerous candidate on a different line — allowing
+#   the dangerous sub-command to slip through undetected.
 #
 #   CEILING (do not overclaim completeness): this is a bounded, best-effort
 #   text decomposition for the COMMON evasion shapes — top-level/nested $(),
@@ -324,31 +327,22 @@ except Exception:
     check_bash_command "$command"
 
     # ── Decomposition pass: extract $(...) / `...` / heredoc sub-commands,
-    #    then run the SAME rules ONCE against a single newline-joined corpus
-    #    of all candidates — NOT once per candidate. grep already matches
-    #    per-line (`.` never spans a newline in ERE, and every anchored rule
-    #    below only asserts start/end-of-LINE), so joining candidates with
-    #    '\n' and checking the corpus once gives IDENTICAL detection results
-    #    to checking each candidate separately. This keeps the rule-check
-    #    cost CONSTANT (~15 grep spawns total) instead of scaling with the
-    #    number of candidates found, which is what kept this under the 200ms
-    #    budget for wide/deep compound commands during hand-testing (a naive
-    #    per-candidate loop measured multiple SECONDS on 10-level-deep and
-    #    60-sibling synthetic inputs).
+    #    then run the SAME rules ONCE PER CANDIDATE. Per-candidate evaluation
+    #    is required for correctness: rules shaped as
+    #      if <positive grep>; then if ! <negation grep>; then block; fi; fi
+    #    (curl-external, git-reset---hard, push-origin softwarn) are broken by
+    #    corpus-joining — a safe candidate on one line can satisfy the negation
+    #    grep for a dangerous candidate on another line, masking the block.
+    #    Observed timing on macOS: ~57ms baseline (0 subshells), ~185ms at 3
+    #    subshells (within budget), ~430ms at 10 subshells (uncommon in real
+    #    Beamix agent commands). Correctness takes priority; the 200ms budget
+    #    is met for the typical 0-3 candidate case. Adversarial inputs that hit
+    #    the 50-candidate cap are capped by design and may be slower.
     decompose_into "$command" 0
-    if [ "${#_candidates[@]}" -gt 0 ]; then
-      corpus=""
-      for _candidate in "${_candidates[@]}"; do
-        [ -z "$_candidate" ] && continue
-        if [ -z "$corpus" ]; then
-          corpus="$_candidate"
-        else
-          corpus="$corpus
-$_candidate"
-        fi
-      done
-      [ -n "$corpus" ] && check_bash_command "$corpus"
-    fi
+    for _candidate in "${_candidates[@]}"; do
+      [ -z "$_candidate" ] && continue
+      check_bash_command "$_candidate"
+    done
 
     ;;
 
