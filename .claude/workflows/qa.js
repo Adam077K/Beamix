@@ -75,6 +75,7 @@ const DIMENSIONS = [
   { key: 'patterns', critical: false, lens: 'Beamix conventions (Zod on inputs, TS strict, error handling, no placeholder UI), naming, dead code, duplication' },
   { key: 'tests', critical: false, lens: 'missing/weak test coverage for the changed paths, untested error branches, flaky patterns' },
   { key: 'perf', critical: false, lens: 'N+1 queries, missing indexes implied by new queries, needless re-renders, unbounded loops, blocking I/O' },
+  { key: 'spec-conformance', critical: false, lens: "does the diff actually deliver what the CEO's stated context/intent (passed in as CONTEXT) describes? Flag scope gaps, silently-skipped requirements, or deviations from the stated intent as findings. P1 if the delivered work doesn't actually solve what was asked; P2/P3 for minor or partial gaps. If no meaningful context was provided (CONTEXT is the default 'No extra context provided.'), return an empty findings array — there is nothing to check conformance against." },
 ]
 
 function reviewPrompt(d, attempt) {
@@ -139,6 +140,14 @@ function verifyFinding(f, phaseName) {
   })
 }
 
+// Mirrored from ./lib/gate-logic.mjs — the Workflow sandbox has no module import.
+// Keep in sync with the canonical, unit-tested version there.
+function deriveSpecConformance({ confirmed = [], failedDims = [] }) {
+  if (failedDims.includes('spec-conformance')) return 'FAIL'
+  const hasConfirmedSpecGap = confirmed.some(f => f && f.dimension === 'spec-conformance')
+  return hasConfirmedSpecGap ? 'FAIL' : 'PASS'
+}
+
 // ── Phase 1: dimension review (retry-hardened) ──
 phase('Review')
 const dimResults = await parallel(DIMENSIONS.map(d => () => reviewDim(d)))
@@ -194,6 +203,7 @@ if (TIER === 'irreversible') {
 // ── Phase 4: binding judge + deterministic coverage-gap safety override ──
 phase('Judge')
 const confirmed = allFindings.filter(f => f.confirmed)
+const specConformance = deriveSpecConformance({ confirmed, failedDims })
 // The judge is the ONE agent whose output controls PASS/BLOCK. If it drops out, fail SAFE to
 // BLOCK — never throw (that would be fail-open for a binding gate).
 const verdict = (await agent(judgePrompt(confirmed, TIER, failedDims, advisory), { label: 'judge', phase: 'Judge', model: 'opus', schema: GATE_SCHEMA }).catch(() => null))
@@ -229,4 +239,5 @@ return {
   judge_verdict: verdict.verdict,
   summary: verdict.summary,
   blockers,
+  spec_conformance: specConformance,
 }
