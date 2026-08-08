@@ -62,3 +62,4 @@
 ## Important Decisions
 
 - [Cross-referenced with DECISIONS.md — key cross-session decisions only]
+- 2026-08-08: Capability gap map run (`capability-gap-map.js`, sibling of `agent-audit.js`) found 15 evidence-gated adoption recs vs. 14 external OSS agent frameworks; net +6 new files / 0 deletions proposed, conflicting with the "net counts must not rise" constraint — needs Adam's call before any are actioned. See DECISIONS.md same date.
