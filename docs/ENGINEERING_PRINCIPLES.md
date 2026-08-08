@@ -170,9 +170,10 @@ Scope: the feature or module name, e.g., `auth`, `billing`, `dashboard`
 - **Webhooks:** Verify HMAC signatures on all inbound webhooks (Paddle, Inngest).
 - **Rate limiting:** Apply per-user rate limits on all public API routes and the /scan form.
 - **Cost circuit breaker:** Hard-stop LLM spend if hourly cost exceeds threshold. Configured in Inngest budget-guard function.
+- **CI token scope:** Every GitHub Actions workflow must declare an explicit, minimal `permissions:` block at the top level — never rely on the default `GITHUB_TOKEN` scope. Grant only what that workflow's steps actually need (e.g. `contents: read`, `pull-requests: read`); grant `write` scopes only to the specific job that needs them, not workflow-wide. See `.github/workflows/qa-lead-pass.yml` for the reference pattern. This is checked as part of QA-Lead review on any PR touching `.github/workflows/**` (already floored at `tier: irreversible` in `.claude/qa-tier-floor.yml`) — no separate CI job enforces it today.
 
 ---
 
-_Last updated: 2026-04-19 | Updated by: technical-writer_
+_Last updated: 2026-08-08 | Updated by: ceo (Wave 2 planning, capability-gap-map item #5 CI-half)_
 
 *Historical build plan archived to docs/_archive/2026-03-19_engineering-build-plan.md*
