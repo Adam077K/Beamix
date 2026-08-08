@@ -10,6 +10,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/**'
+      - '.github/scripts/**'
 
 permissions:
   contents: read
@@ -23,93 +24,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
+      - name: Run pin-check unit tests
+        run: python3 -m unittest discover .github/scripts/tests -v
+
       - name: "Verify every uses: line is pinned to a full commit SHA"
-        run: |
-          set -euo pipefail
-          python3 << 'PYEOF'
-          import sys, re, glob, yaml
-
-          # @<40-hex-SHA> case-insensitive; end-of-value or before whitespace.
-          PIN_SHA = re.compile(r'@[0-9a-fA-F]{40}(?:\s|$)')
-          # Requires # vX.Y.Z anywhere on the raw source line.
-          VERSION_COMMENT = re.compile(r'#\s*v\S+')
-          # Local reusable-workflow refs (uses: ./...) are exempt.
-          LOCAL_PREFIX = re.compile(r'^\.\/')
-
-          def find_uses(node):
-              if isinstance(node, dict):
-                  if 'uses' in node and isinstance(node['uses'], str):
-                      yield node['uses']
-                  for v in node.values():
-                      yield from find_uses(v)
-              elif isinstance(node, list):
-                  for item in node:
-                      yield from find_uses(item)
-
-          fail = 0
-          files_checked = 0
-
-          filepaths = sorted(
-              glob.glob('.github/workflows/*.yml') +
-              glob.glob('.github/workflows/*.yaml')
-          )
-
-          for filepath in filepaths:
-              files_checked += 1
-              print(f"Checking {filepath}")
-
-              with open(filepath) as fh:
-                  raw = fh.read()
-
-              try:
-                  data = yaml.safe_load(raw)
-              except yaml.YAMLError as e:
-                  print(f"  YAML parse error: {e}")
-                  fail = 1
-                  continue
-
-              raw_lines = raw.splitlines()
-
-              for ref in find_uses(data):
-                  if LOCAL_PREFIX.match(ref):
-                      print(f"  local reusable workflow -- OK: {ref}")
-                      continue
-
-                  lineno = 0
-                  raw_line = ""
-                  for i, line in enumerate(raw_lines, 1):
-                      if ref in line:
-                          lineno = i
-                          raw_line = line
-                          break
-
-                  if not PIN_SHA.search(ref):
-                      print(f"  [{filepath}:{lineno}] NOT PINNED (no 40-char SHA): uses: {ref}")
-                      fail = 1
-                      continue
-
-                  if not VERSION_COMMENT.search(raw_line):
-                      print(f"  [{filepath}:{lineno}] MISSING version comment (# vX.Y.Z): uses: {ref}")
-                      fail = 1
-                      continue
-
-                  print(f"  [{filepath}:{lineno}] pinned -- OK: uses: {ref}")
-
-          print(f"\nChecked {files_checked} workflow file(s).")
-
-          if files_checked == 0:
-              print("No workflow files found -- pin check did not run. Failing closed.")
-              sys.exit(1)
-
-          if fail:
-              print("")
-              print("One or more Actions references are not pinned to a full 40-character commit SHA.")
-              print("Pin third-party/GitHub-owned actions like:")
-              print("  uses: owner/repo@<40-hex-char-commit-sha> # vX.Y.Z")
-              print("")
-              print("Resolve the SHA with:")
-              print("  gh api repos/<owner>/<repo>/commits/<tag> --jq '.sha'")
-              sys.exit(1)
-
-          print("\nAll Actions references are SHA-pinned.")
-          PYEOF
+        run: python3 .github/scripts/actions_pin_check.py

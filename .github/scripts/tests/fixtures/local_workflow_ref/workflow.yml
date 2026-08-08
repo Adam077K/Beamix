@@ -1,0 +1,7 @@
+name: Test Local Workflow Ref
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/other.yml
