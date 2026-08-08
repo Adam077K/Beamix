@@ -1,0 +1,5 @@
+name: fixture
+on: push
+jobs:
+  call-reusable:
+    uses: ./.github/workflows/some-other-workflow.yml

@@ -1,0 +1,14 @@
+name: fixture
+on: push
+# Self-referential anchor: `b` aliases back to the mapping that contains it,
+# forming a cycle in the composed YAML node graph. This fixture exists to
+# prove the checker does not hang or blow the stack on a cyclic anchor --
+# it must fail closed quickly instead.
+x: &cycle
+  b: *cycle
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
