@@ -4,7 +4,7 @@ export const meta = {
   phases: [
     { title: 'Resolve', detail: 'gh api / gh search to independently establish repo identity + head_sha for every target (deep + survey); caller list treated as unverified metadata', model: 'haiku' },
     { title: 'Extract', detail: 'deep: clone --depth 1 + two blind axis-half extractors (retry on dropout); survey: gh api tree + ≤6 contents fetches, no retry, strength capped at medium' },
-    { title: 'Verify', detail: 'adversarial re-check of load-bearing deep findings against the existing clone; survey findings are advisory-by-construction and never verified; capped at 10 total' },
+    { title: 'Verify', detail: 'adversarial re-check of load-bearing deep findings against the existing clone; survey findings are advisory-by-construction and never verified; capped at a caller-configurable limit (default 10; pass args.max_verify, max 60)' },
     { title: 'Matrix', detail: 'JS pre-builds a deterministic axis×project grid; opus fills normalization/divergence/summary text; JS re-stitches to guarantee no rows are silently dropped', model: 'opus' },
     { title: 'Adopt', detail: 'opus emits recommendations; JS filter demotes any rec with zero verified evidence_ids to open_questions; runtime-blocked mechanisms surface as BLOCKED_BY_RUNTIME', model: 'opus' },
   ],
@@ -569,7 +569,10 @@ if (budgetTight) {
   verifiable = []
 }
 
-const MAX_VERIFY = 10
+const DEFAULT_MAX_VERIFY = 10
+const _rawMv = parseInt(A.max_verify, 10)
+const MAX_VERIFY = (!isNaN(_rawMv) && _rawMv > 0) ? Math.min(_rawMv, 60) : DEFAULT_MAX_VERIFY
+if (MAX_VERIFY !== DEFAULT_MAX_VERIFY) log(`args.max_verify provided (${A.max_verify}) — effective verify cap: ${MAX_VERIFY} (upper bound 60).`)
 if (verifiable.length > MAX_VERIFY) {
   const STRENGTH_ORDER = { high: 0, medium: 1, low: 2 }
   const sorted = [...verifiable].sort((a, b) =>
