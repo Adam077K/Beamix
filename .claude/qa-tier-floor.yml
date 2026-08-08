@@ -37,6 +37,9 @@ rules:
   - pattern: ".claude/hooks/**"
     tier: irreversible
     reason: "PostToolUse / SessionStart hooks execute on every action"
+  - pattern: ".claude/workflows/**"
+    tier: irreversible
+    reason: "T5 workflow scripts (qa.js, coding.js, etc.) ARE the QA gate and build orchestration logic; a bad script cascades across every future PR"
   - pattern: "apps/web/src/app/api/billing/**"
     tier: irreversible
     reason: "Paddle webhook + checkout flow — silent failure = lost revenue"
