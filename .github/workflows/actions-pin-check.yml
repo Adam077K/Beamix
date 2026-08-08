@@ -1,0 +1,96 @@
+name: Actions Pin Check
+
+# Supply-chain guard: every third-party / GitHub-owned Action referenced from
+# .github/workflows/*.yml must be pinned to a full 40-character commit SHA
+# (not a mutable tag like @v4). Local reusable-workflow references
+# (uses: ./.github/workflows/...) are exempt since they resolve to a commit
+# in this repo already, not a third-party supply chain.
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+
+jobs:
+  pin-check:
+    name: Verify all GitHub Actions are SHA-pinned
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Verify every uses: line is pinned to a full commit SHA
+        run: |
+          set -euo pipefail
+
+          # Pattern each extracted `uses: ...` value must match to be considered pinned.
+          PIN_PATTERN='^uses:\s+\S+@[0-9a-f]{40}(\s|$)'
+          # Local reusable-workflow references (uses: ./...) are exempt.
+          LOCAL_PATTERN='^uses:\s+\./'
+
+          FAIL=0
+          FILES_CHECKED=0
+
+          shopt -s nullglob
+          for f in .github/workflows/*.yml .github/workflows/*.yaml; do
+            FILES_CHECKED=$((FILES_CHECKED + 1))
+            echo "Checking ${f}"
+
+            # Find every line containing a `uses:` key, whether it's a
+            # standalone mapping key ("        uses: ...") or the first key
+            # of a YAML sequence item ("      - uses: ...").
+            CANDIDATE_LINES=$(grep -nP '^\s*-?\s*uses:\s+' "${f}" || true)
+
+            if [ -z "${CANDIDATE_LINES}" ]; then
+              continue
+            fi
+
+            while IFS= read -r line; do
+              [ -z "${line}" ] && continue
+
+              # Strip the "N:" line-number prefix grep -n adds for reporting.
+              lineno="${line%%:*}"
+              rest="${line#*:}"
+
+              # Normalize to the "uses: <value>" substring so both the
+              # standalone-key and sequence-item ("- uses: ...") forms are
+              # validated against the same anchored pattern.
+              content=$(echo "${rest}" | grep -oP 'uses:.*$')
+
+              # Local reusable-workflow references (uses: ./...) are allowed
+              # to stay unpinned — they resolve within this repo, not a
+              # third-party supply chain.
+              if echo "${content}" | grep -qP "${LOCAL_PATTERN}"; then
+                echo "  [${f}:${lineno}] local reusable workflow — OK: ${content}"
+                continue
+              fi
+
+              if echo "${content}" | grep -qP "${PIN_PATTERN}"; then
+                echo "  [${f}:${lineno}] pinned — OK: ${content}"
+              else
+                echo "  [${f}:${lineno}] NOT PINNED: ${content}"
+                FAIL=1
+              fi
+            done <<< "${CANDIDATE_LINES}"
+          done
+
+          echo ""
+          echo "Checked ${FILES_CHECKED} workflow file(s)."
+
+          if [ "${FAIL}" -ne 0 ]; then
+            echo ""
+            echo "One or more Actions references are not pinned to a full 40-character commit SHA."
+            echo "Pin third-party/GitHub-owned actions like:"
+            echo "  uses: owner/repo@<40-hex-char-commit-sha> # vX.Y.Z"
+            echo ""
+            echo "Resolve the SHA with:"
+            echo "  gh api repos/<owner>/<repo>/commits/<tag> --jq '.sha'"
+            exit 1
+          fi
+
+          echo ""
+          echo "All Actions references are SHA-pinned."

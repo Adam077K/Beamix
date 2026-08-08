@@ -1,0 +1,9 @@
+version: 2
+updates:
+  # Keep GitHub Actions SHA pins current. Dependabot understands SHA-pinned
+  # `uses:` references and opens a PR bumping the SHA (with the matching
+  # version comment) whenever the pinned action publishes a new release.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
