@@ -76,6 +76,8 @@ jobs:
           # ── Step 3: Check for qa_verdict: PASS in session file ──────────────
           # F11: Case-insensitive, whitespace-tolerant, handles quoted YAML values.
           # Multi-session PRs: ALL changed session files must have qa_verdict: PASS.
+          # For tier: full|irreversible sessions, ALSO require spec_conformance: PASS
+          # (set by qa.js; not required for tier: lite|trivial sessions).
           QA_PASS=false
           if [ -n "$SESSION_FILE" ] && [ -f "$SESSION_FILE" ]; then
             # If we fell back to PR diff, validate all changed sessions
@@ -85,6 +87,15 @@ jobs:
                 if [ ! -f "$s" ]; then continue; fi
                 if grep -qiE 'qa_verdict:[[:space:]]+"?PASS"?[[:space:]]*$' "$s"; then
                   echo "✓ qa_verdict: PASS in $s"
+                  if grep -qiE 'tier:[[:space:]]+"?(full|irreversible)"?[[:space:]]*$' "$s"; then
+                    if grep -qiE 'spec_conformance:[[:space:]]+"?PASS"?[[:space:]]*$' "$s"; then
+                      echo "✓ spec_conformance: PASS in $s (required for tier: full|irreversible)"
+                    else
+                      echo "✗ spec_conformance: PASS missing in $s (required when tier: full|irreversible)"
+                      grep "spec_conformance" "$s" || echo "  (no spec_conformance line at all)"
+                      ALL_PASS=false
+                    fi
+                  fi
                 else
                   echo "✗ qa_verdict: PASS missing in $s"
                   grep "qa_verdict" "$s" || echo "  (no qa_verdict line at all)"
@@ -95,7 +106,17 @@ jobs:
             else
               if grep -qiE 'qa_verdict:[[:space:]]+"?PASS"?[[:space:]]*$' "$SESSION_FILE"; then
                 echo "✓ qa_verdict: PASS found in ${SESSION_FILE}"
-                QA_PASS=true
+                SPEC_OK=true
+                if grep -qiE 'tier:[[:space:]]+"?(full|irreversible)"?[[:space:]]*$' "$SESSION_FILE"; then
+                  if grep -qiE 'spec_conformance:[[:space:]]+"?PASS"?[[:space:]]*$' "$SESSION_FILE"; then
+                    echo "✓ spec_conformance: PASS found in ${SESSION_FILE} (required for tier: full|irreversible)"
+                  else
+                    echo "✗ spec_conformance: PASS missing in ${SESSION_FILE} (required when tier: full|irreversible)"
+                    grep "spec_conformance" "$SESSION_FILE" || echo "(no spec_conformance line at all)"
+                    SPEC_OK=false
+                  fi
+                fi
+                if [ "$SPEC_OK" = "true" ]; then QA_PASS=true; fi
               else
                 echo "✗ qa_verdict: PASS not found in ${SESSION_FILE}"
                 grep "qa_verdict" "$SESSION_FILE" || echo "(no qa_verdict line at all)"
