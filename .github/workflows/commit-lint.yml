@@ -18,5 +18,24 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run commitlint smoke test
+        run: pnpm run commitlint:smoke
+
       - name: Run commitlint
         uses: wagoid/commitlint-github-action@v5
+        env:
+          NODE_PATH: ${{ github.workspace }}/node_modules
