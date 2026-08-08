@@ -6,6 +6,8 @@
 // is NOT derived from the branch-prefix regex in qa-lead-pass.yml — that regex
 // (^(feat|fix|chore)/) governs branch NAMING for session-file lookup and is a
 // separate, unrelated convention. The two live independently.
+// Known duplication: this type-enum is hand-synced with stop.sh:82. No automated
+// sync exists; if you add or remove a type here, update stop.sh:82 manually.
 //
 // header-max-length: raised to 140 because real Beamix commit headers routinely
 // exceed the config-conventional default of 100 (e.g. craft-elevation headers).

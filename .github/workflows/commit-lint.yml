@@ -14,28 +14,32 @@ jobs:
 
     steps:
       - name: Checkout PR head
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v3.0.0
         with:
           version: 9
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install dependencies (root only)
+        # --filter beamix installs only the root package's deps (turbo, husky, @commitlint/cli,
+        # @commitlint/config-conventional) and skips apps/web's ~46 heavy deps (Next.js, Supabase,
+        # OpenAI/Anthropic/Google SDKs, Tailwind, Radix, etc.) that are unneeded for commit linting.
+        run: pnpm install --frozen-lockfile --filter beamix
 
       - name: Run commitlint smoke test
         run: pnpm run commitlint:smoke
 
-      - name: Run commitlint
-        uses: wagoid/commitlint-github-action@v5
-        env:
-          NODE_PATH: ${{ github.workspace }}/node_modules
+      - name: Run commitlint on PR commits
+        # Uses the same binary as the local husky commit-msg hook, eliminating the
+        # local/CI divergence class that existed when wagoid/commitlint-github-action
+        # resolved @commitlint/config-conventional from a different root than the hook did.
+        run: pnpm exec commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}

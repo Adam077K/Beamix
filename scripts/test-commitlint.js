@@ -3,26 +3,30 @@
 // Run via: pnpm run commitlint:smoke
 // Exits non-zero if any assertion fails.
 
-const { execSync } = require('child_process');
+const { spawnSync } = require('child_process');
 
 const PASS = [];
 const FAIL = [];
 
+const COMMITLINT = './node_modules/.bin/commitlint';
+
+// Feed message via stdin so multi-line messages (header + blank + body) work correctly.
+// The previous echo-based approach couldn't carry newlines safely.
 function check(label, message, expectPass) {
-  const cmd = `echo "${message.replace(/"/g, '\\"')}" | ./node_modules/.bin/commitlint`;
-  try {
-    execSync(cmd, { stdio: 'pipe' });
-    if (expectPass) {
-      PASS.push(`  PASS  [accept] ${label}`);
-    } else {
-      FAIL.push(`  FAIL  [accept] expected REJECT but commitlint accepted: ${label}`);
-    }
-  } catch {
-    if (!expectPass) {
-      PASS.push(`  PASS  [reject] ${label}`);
-    } else {
-      FAIL.push(`  FAIL  [reject] expected ACCEPT but commitlint rejected: ${label}`);
-    }
+  const result = spawnSync(COMMITLINT, [], {
+    input: message,
+    encoding: 'utf8',
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+  const passed = result.status === 0;
+  if (expectPass && passed) {
+    PASS.push(`  PASS  [accept] ${label}`);
+  } else if (!expectPass && !passed) {
+    PASS.push(`  PASS  [reject] ${label}`);
+  } else if (expectPass && !passed) {
+    FAIL.push(`  FAIL  [reject] expected ACCEPT but commitlint rejected: ${label}`);
+  } else {
+    FAIL.push(`  FAIL  [accept] expected REJECT but commitlint accepted: ${label}`);
   }
 }
 
@@ -57,16 +61,30 @@ check(
   'docs(sessions): CEO show-the-work Wave 0+1 session + log',
   true,
 );
-check('test(auth) pattern', 'test(auth): add token expiry coverage', true);
-check('refactor(auth) pattern', 'refactor(auth): simplify session logic', true);
+
+// Multi-line body coverage — body-max-line-length: [0] means bodies of any
+// line length must be accepted. These assertions guard that override is effective.
+check(
+  'multi-line: long body line accepted (body-max-line-length disabled)',
+  'feat(scan): implement rate limiting\n\n' +
+    'This is a very long body line that deliberately exceeds one hundred characters in total length — it must be accepted because body-max-line-length is set to [0] (disabled) in commitlint.config.js.',
+  true,
+);
+check(
+  'multi-line: multi-paragraph body accepted',
+  'docs(sessions): update session notes\n\n' +
+    'First paragraph explaining what changed and why it was necessary.\n\n' +
+    'Second paragraph with additional context. This body also exceeds 100 characters per line and must be accepted because the body-max-line-length override is active in our commitlint config.',
+  true,
+);
 
 // ── Known-bad messages (must be rejected) ───────────────────────────────────
 
-check('unknown type wip',           'wip: work in progress', false);
-check('unknown type hotfix',        'hotfix: emergency patch', false);
-check('missing colon',              'feat add feature without colon', false);
-check('empty description',          'feat: ', false);
-check('header over 140 chars',      'feat(scope): ' + 'x'.repeat(130), false);
+check('unknown type wip',      'wip: work in progress', false);
+check('unknown type hotfix',   'hotfix: emergency patch', false);
+check('missing colon',         'feat add feature without colon', false);
+check('empty description',     'feat: ', false);
+check('header over 140 chars', 'feat(scope): ' + 'x'.repeat(130), false);
 
 // ── Report ───────────────────────────────────────────────────────────────────
 
