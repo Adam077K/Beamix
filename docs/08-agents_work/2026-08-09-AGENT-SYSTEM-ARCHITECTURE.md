@@ -242,6 +242,11 @@ decisions 22 and 23 above. **Every design question is answered and every compone
    `09b81ee`) — are decided to fix but unscheduled.
 3. Skills 149→109 is a target with no list behind it. Criteria decided ("useless in EVERY project"), the test is
    now runnable against 24 cloned systems plus 9 live repos, the work is not done.
+4. **The plan's own disqualification rule has no resolver.** All ten components do name a mechanism, but only six
+   carry an explicit `**Mechanism:**` field — 3, 7, 8 and 9 name theirs in body prose. So verifying "no component
+   is enforced by prose" currently requires a human reading prose. Make `**Mechanism:**` a required labelled field
+   and `schema-lint` can check it. Found by applying the day's own method rule to a claim in a commit message:
+   a `grep` returned 6 of 10, and the gap between that number and the truth was formatting, not design.
 
 ## Open items
 

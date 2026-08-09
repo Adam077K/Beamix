@@ -58,10 +58,18 @@ same `SKILL.md` format already in use here** — no corpus migration to plan.
 
 ---
 
-## The design — nine components, each with a mechanism
+## The design — ten components, each with a mechanism
 
 A component without a named hook, CI job, resolver, or data file is disqualified by construction. "The agent
 should remember" is what produced the current state.
+
+*Component 10 added 2026-08-09 (decision 22). Verified the same day that all ten do name a mechanism — but only six
+carry an explicit `**Mechanism:**` field; components 3, 7, 8 and 9 name theirs in body prose (`qa-verdict.json` +
+`commit_sha == head.sha` + the ruleset; the `gate-logic.mjs` drift check; the static trigger list in the same YAML
+plus the logged boolean; `schema-lint` + tier re-classification + a per-file sha256 manifest + refuse-on-failure).*
+**Note the recursion: this rule — the one that disqualifies mechanism-less components — has no resolver of its own.**
+Checking it means a human reading prose, which is the exact failure mode it exists to prevent. Making
+`**Mechanism:**` a required labelled field on every component would let `schema-lint` check it. Filed as a spec gap.
 
 ### 1 · Tier-floor file gains an advisory lane and a provenance axis · **M**
 `.claude/qa-tier-floor.yml` is already the system's only working deterministic classifier (**highest-tier-wins** —
