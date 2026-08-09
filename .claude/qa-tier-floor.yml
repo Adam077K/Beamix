@@ -15,7 +15,7 @@ generated: 2026-05-16
 rules:
   # ──────────────── IRREVERSIBLE ────────────────
   # Money flows, schema changes, workflow definitions, agent identity.
-  # Require: tier:full review + 2-of-3 multi-judge + Adam sign-off.
+  # Require: full review + 2-of-3 multi-judge + Adam sign-off.
   - pattern: "apps/web/supabase/migrations/**"
     tier: irreversible
     reason: "DB schema change — destructive replay impossible"
