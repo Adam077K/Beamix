@@ -4,10 +4,48 @@
 # any PR touching the matching files must carry. Workers may upgrade; never downgrade.
 #
 # Tiers (ascending severity): trivial < lite < full < irreversible
-# Match order: first match wins (most-specific patterns FIRST).
 #
-# Update protocol: append-only; if a pattern's tier changes, add a `supersedes:`
-# entry and keep the old one commented for one release cycle.
+# Match semantics — CONFIRMED against the consuming step ("Auto-tier from
+# file-path tier-floor map" in .github/workflows/qa-lead-pass.yml, F15) on
+# 2026-08-09: this is HIGHEST-TIER-WINS, NOT first-match-wins. For each
+# changed file, the workflow scans every rule below and keeps the MAXIMUM
+# rank among all patterns that match — order in this file has no effect on
+# the resolved tier. A specific rule is therefore never "shadowed" by a
+# broader rule that appears earlier; conversely, a broader rule with a
+# HIGHER tier than a nested specific rule cannot be carved down by placing
+# the specific rule first (an earlier attempt to carve `_seeds/**` down from
+# `.claude/agents/**`'s irreversible floor was dropped for exactly this
+# reason — see docs/08-agents_work/sessions/2026-05-29-ceo-war-room-seed-
+# externalize.md). Group rules by tier for human readability only; do not
+# rely on ordering for correctness. When adding a narrower rule to RAISE a
+# path's floor above a broader rule that already covers it, any position
+# works — when you mean to LOWER it, you cannot via this file's rules.
+#
+# NOTE: the catch-all "**" rule at the bottom of this file (assigned lite)
+# matches every changed file, so under highest-tier-wins semantics no file
+# can ever resolve to trivial via the automated F15 check — trivial and lite
+# are functionally identical there (neither hard-blocks; only irreversible
+# hard-blocks, full only prints a soft hint). The trivial-labelled rules
+# below still matter as the source of truth for which review pipeline a
+# worker should self-declare per CLAUDE.md's QA gate table; they just don't
+# change F15's own computed floor. Flagged for a human decision, not fixed
+# here — fixing it means changing the matching algorithm itself, not this
+# data file.
+#
+# PARSER HAZARD — read before adding prose to this file: the F15 bash step
+# does substring matching, not YAML parsing. Any comment line that echoes
+# one of the two rule field names immediately followed by a colon (as it
+# would appear in a real rule) is mistaken for an actual rule line, even
+# inside a `#` comment. When writing prose about the rule fields here,
+# phrase around it — "pattern is" / "tier is" / "assigned X" — rather than
+# reproducing "fieldname:" verbatim. (Confirmed exploitable: an earlier
+# draft of this exact comment block did this and silently promoted every
+# file in the repo to the full tier during verification — caught by
+# before/after repro testing, not by inspection. See PR description for
+# the repro.)
+#
+# Update protocol: append-only; if a pattern's assigned tier changes, add a
+# `supersedes:` entry and keep the old one commented for one release cycle.
 
 version: 1
 generated: 2026-05-16
@@ -34,6 +72,9 @@ rules:
   - pattern: ".claude/qa-tier-floor.yml*"
     tier: irreversible
     reason: "This file itself — bad tier map silently downgrades reviews. Glob covers a future .proposed draft the same way .claude/settings.json* now does"
+  - pattern: ".claude/skills/MANIFEST.json"
+    tier: irreversible
+    reason: "Referenced by every agent's skills: field; schema-lint.js (wired into CI by #197) validates every agent against it. A trivial-tier PR pruning one entry turns every agent's lint into a failure, bricking the merge pipeline for every subsequent PR — same blast radius as .claude/agents/** and .github/workflows/**, so it must not resolve below the tier those already carry"
   - pattern: ".claude/hooks/**"
     tier: irreversible
     reason: "PostToolUse / SessionStart hooks execute on every action"
