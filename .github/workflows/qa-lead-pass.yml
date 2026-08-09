@@ -23,6 +23,17 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # ── Trivial-tier gate: agent frontmatter/schema validation ──────────────
+      # Per CLAUDE.md's 4-tier QA gate, Trivial-tier PRs rely on this lint as
+      # the auto-pass check. Runs for every PR (all tiers) since agent-file
+      # drift is cheap to catch here and expensive to catch later.
+      - name: Schema-lint agent files
+        run: node .claude/hooks/schema-lint.js
+
       - name: Check QA Lead PASS or bypass
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
