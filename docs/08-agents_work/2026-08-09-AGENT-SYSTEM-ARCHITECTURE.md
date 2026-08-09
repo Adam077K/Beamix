@@ -220,6 +220,27 @@ implementing file:
   documented, and registered nowhere. An external team with a larger hook library has the same disease — the
   strongest available evidence that this is a missing-resolver problem, not a discipline problem.
 
+## Planning is not complete — two components have no mechanism
+
+Recorded 2026-08-09. All 21 design **questions** are answered; two **components** are not. A component whose
+enforcement is prose is disqualified by this document's own rule, and these two currently are. Close both before
+building past step 1.
+
+1. **Advisory context hooks — a new component with no home.** The hook audit found 31 of GSD's 47 hooks are
+   advisory: they inject `additionalContext`/`systemMessage`, cache state, or scan output — shaping what an agent
+   *knows*, not what it *may do*. Beamix has one. This is the only genuinely new idea the 24 cloned reference
+   systems produced, and it fits *constrain outcomes, not methods* better than any gate in this design, because it
+   widens what a worker knows without narrowing what it may try. **The plan has no component for it.** Decide: new
+   component, folded into an existing one, or rejected with a reason recorded.
+2. **The self-improvement pilot has no mechanism.** The plan's locked decision 5 specifies the *policy* — skill
+   descriptions only, one worker type, dedicated branch, rate-capped, 100% human review. It names no hook, no CI
+   job, no resolver, no data file for *how an agent proposes a description edit*. Decide the mechanism, or
+   explicitly defer the pilot until the run log has data.
+
+Three smaller gaps are spec or scheduling rather than design: component 3's third half does not say *which* commands
+CI must execute; the three remaining classifier holes (`.mcp.json`, `.claude/commands/**`, `.claude/workflows/**`)
+are decided but unscheduled; and skills 149→109 is a target with no list behind it.
+
 ## Open items
 
 - **The skills cut list needs re-running.** Its 30 cuts used "wrong-stack for Beamix"; decision 12 changed
