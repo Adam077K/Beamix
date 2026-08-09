@@ -195,8 +195,8 @@ function lintFile(filePath) {
   }
 
   // maxTurns
-  if (typeof fm.maxTurns === 'number' && (fm.maxTurns < 5 || fm.maxTurns > 30)) {
-    issues.push(`frontmatter: maxTurns=${fm.maxTurns} outside range [5, 30]`);
+  if (typeof fm.maxTurns === 'number' && (fm.maxTurns < 5 || fm.maxTurns > 60)) {
+    issues.push(`frontmatter: maxTurns=${fm.maxTurns} outside range [5, 60]`);
   }
 
   // isolation
