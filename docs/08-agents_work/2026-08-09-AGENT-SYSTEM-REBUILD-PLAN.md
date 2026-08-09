@@ -236,6 +236,23 @@ lenses independently named this decisive.
 
 ---
 
+### 10 · Context injection — one advisory hook, configured by a data file · **S** *(added 2026-08-09, decision 22)*
+The only component the reference-system harvest ADDED rather than corrected. Measured: Beamix has exactly one hook
+emitting `additionalContext` (`gsa-context-monitor.js`); 31 of GSD's 47 hooks are this class. These shape what an
+agent **knows**, not what it **may do** — which fits *constrain outcomes, not methods* better than any gate in this
+plan, because it widens what a worker knows without narrowing what it may try.
+**Mechanism:** one context-emitting hook reading `.claude/context-injection.yml` — `{on: <event>, when: <condition>,
+inject: <content>}`. Never blocks; emits `additionalContext` only.
+**It already has members decided elsewhere**, which is why it is one component and not five hand-rolled hooks:
+decision 21's reader-staleness warning at SessionStart, decision 18's envelope-reach feedback, and a tier warning
+when an agent opens an irreversible-tier file.
+**Highest-value entry:** inject the relevant `DECISIONS.md` entry when an agent edits a file that decision covers.
+`DECISIONS.md` holds 61 entries, "read before acting" and "leave breadcrumbs" are prose rules nothing enforces, and
+agents demonstrably do not read them. This turns both into context at the moment of editing without blocking anything.
+**Accepted cost, recorded rather than glossed:** injected context is paid in tokens on every matching call, in ~10
+repos, forever — and this plan has never priced context cost or friction. That open question now has a component
+attached to it.
+
 ## Sequence
 
 Each step exists because it unblocks the next.

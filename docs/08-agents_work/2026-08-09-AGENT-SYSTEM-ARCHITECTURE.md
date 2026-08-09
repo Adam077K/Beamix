@@ -76,7 +76,10 @@ Validators sit out-of-band: read-only, never editing what they judge.
 | 20 | **Propagation target is the 9 live repos plus Beamix; sync splits — `--check` lands early, `--apply` stays last.** | Measured, not assumed: 11 repos carry the system, and the 3 without a `qa-tier-floor.yml` are exactly the 3 with zero commits in 90 days. Two live repos out-commit Beamix (etsyc 689, evalove 385 in 90d). `--check` gives drift visibility across 9 live repos with zero write risk, and produces the cross-repo inventory decision 12's "useless in every project" cut test requires. `--apply` stays at step 9 so no half-rebuilt state fans out. |
 | 21 | **A reader agent consumes the run log and acts or escalates; Adam is out of the loop.** | The weekly reader now carries five signals at once (STALLED runs, envelope reaches, BLOCKED-rate, judged-criteria reliability, dead model pins), so a single unread report blinds all five. Every delivery-side fix still terminates at a human who may not look — which is exactly how the vindication triggers, the 50-entry cap, and T3/T4 died. Removing the human is the only structural answer. |
 
-### Decisions 18-21 — detail, and the one hole left open
+| 22 | **Context injection is its own component: one hook plus one data file, always advisory.** | The class already had members scattered across other decisions — 21's reader-staleness warning, 18's envelope-reach feedback, a tier warning on opening an irreversible file — and naming it prevents five hand-rolled hooks that drift, the same argument that produced the one parametrized fan-out engine. Measured: Beamix has exactly ONE hook emitting `additionalContext` (`gsa-context-monitor.js`); GSD has a family, and 31 of its 47 hooks are this class. It fits *constrain outcomes, not methods* better than any gate in this design, because it widens what a worker knows without narrowing what it may try. Highest-value entry: inject the relevant `DECISIONS.md` entry when an agent edits a file that decision covers — turning "read before acting" and "leave breadcrumbs" from prose into context. **Accepted cost, recorded: injected context is paid in tokens on every matching call, across ~10 repos, and this plan has never priced context cost.** |
+| 23 | **The self-improvement pilot is proposed by the decision-21 reader, gated on 4 weeks of run-log data.** | The run log already carries the exact signal: an envelope reach means the CEO's composition missed a skill the worker needed; a loaded-but-unused skill means the description oversold it. Both are description-quality evidence, and the reader already reads them — so this adds **no new mechanism** and stop condition 7 never starts a clock. The 4-week gate exists because the plan's own step 7 says there is nothing to improve from until the log has data; specifying against zero evidence is the trap depth-selection avoided by shipping in shadow mode. Output: one PR per week, dedicated branch, capped at N edits, 100% human review. Accepted cost: it loads a second job onto the agent whose own liveness needed a heartbeat. |
+
+### Decisions 18-23 — detail, and how the two planning gaps closed
 
 Resolved by `/grill-me` with Adam, 2026-08-09, same session. These close the envelope, acceptance-criteria, cross-project-fit
 and single-point-of-consumption items. Two of the plan's five "questions kept open" are now answered with measurement rather
@@ -220,26 +223,25 @@ implementing file:
   documented, and registered nowhere. An external team with a larger hook library has the same disease — the
   strongest available evidence that this is a missing-resolver problem, not a discipline problem.
 
-## Planning is not complete — two components have no mechanism
+## Planning gaps — both CLOSED 2026-08-09
 
-Recorded 2026-08-09. All 21 design **questions** are answered; two **components** are not. A component whose
-enforcement is prose is disqualified by this document's own rule, and these two currently are. Close both before
-building past step 1.
+Two components had no named mechanism, which this document's own rule disqualifies. Both are now closed as
+decisions 22 and 23 above. **Every design question is answered and every component names a mechanism.**
 
-1. **Advisory context hooks — a new component with no home.** The hook audit found 31 of GSD's 47 hooks are
-   advisory: they inject `additionalContext`/`systemMessage`, cache state, or scan output — shaping what an agent
-   *knows*, not what it *may do*. Beamix has one. This is the only genuinely new idea the 24 cloned reference
-   systems produced, and it fits *constrain outcomes, not methods* better than any gate in this design, because it
-   widens what a worker knows without narrowing what it may try. **The plan has no component for it.** Decide: new
-   component, folded into an existing one, or rejected with a reason recorded.
-2. **The self-improvement pilot has no mechanism.** The plan's locked decision 5 specifies the *policy* — skill
-   descriptions only, one worker type, dedicated branch, rate-capped, 100% human review. It names no hook, no CI
-   job, no resolver, no data file for *how an agent proposes a description edit*. Decide the mechanism, or
-   explicitly defer the pilot until the run log has data.
+- **Advisory context hooks** → decision 22. One hook, one data file (`.claude/context-injection.yml`), always
+  advisory. Verified premise before deciding: `gsa-context-monitor.js` is the only Beamix hook emitting
+  `additionalContext`; GSD has a family across 73 files.
+- **Self-improvement pilot mechanism** → decision 23. The decision-21 reader proposes, gated on 4 weeks of
+  run-log data, one PR per week, 100% human review.
 
-Three smaller gaps are spec or scheduling rather than design: component 3's third half does not say *which* commands
-CI must execute; the three remaining classifier holes (`.mcp.json`, `.claude/commands/**`, `.claude/workflows/**`)
-are decided but unscheduled; and skills 149→109 is a target with no list behind it.
+**Three smaller gaps remain, spec and scheduling rather than design:**
+1. Component 3's third half says CI must execute code against the diff but not *which* commands (`tsc`? `eslint`?
+   `pnpm test`? `pnpm build`? `pnpm audit`?), on what trigger, failing how.
+2. The three remaining classifier holes — `.mcp.json` (grants every agent's tool and API access, currently `lite`),
+   `.claude/commands/**`, and `.claude/workflows/**` (the QA gate's own scripts; a fix exists on unmerged
+   `09b81ee`) — are decided to fix but unscheduled.
+3. Skills 149→109 is a target with no list behind it. Criteria decided ("useless in EVERY project"), the test is
+   now runnable against 24 cloned systems plus 9 live repos, the work is not done.
 
 ## Open items
 
