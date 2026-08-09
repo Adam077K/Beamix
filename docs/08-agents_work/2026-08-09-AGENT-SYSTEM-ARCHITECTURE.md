@@ -100,11 +100,14 @@ the pre-cleanup 426-574-skill corpus. Note `adamos` carries **11 hooks to Beamix
 is load-bearing on the first `--apply`, not theoretical.
 
 **21 · Consumption.** A scheduled reader agent consumes the run log plus prior reports and decides act / escalate / nothing.
-**Open hole, named by Adam at decision time and not yet closed: who checks that the reader ran?** A reader agent that
-silently stops firing is the same failure one level up, and stop condition 7 starts its two-week clock the moment the
-mechanism is named. *Proposed, not yet locked:* the reader stamps `last_run` into the run log, and a check that executes far
-more often than weekly — CEO session start, or `schema-lint.js` in CI — fails or warns when that stamp is stale. That reuses
-an existing frequent path rather than adding a watcher for the watcher. **Flagged for Adam's decision.**
+**The hole — who checks that the reader ran — is CLOSED (Adam, 2026-08-09).** A reader agent that silently stops firing
+is the same failure one level up, which is how the vindication triggers, the 50-entry cap and T3/T4 all died.
+**Mechanism:** the reader appends `{event: 'reader_ran', ts}` to the run log, and a path that executes far more often
+than weekly — CEO session start, or `schema-lint.js` in CI, which now runs on every PR — warns loudly when that stamp
+goes stale. Chosen because it adds **no new mechanism**, so stop condition 7 never starts a clock on it, and because it
+moves the noticing from monthly to roughly daily. Accepted limitation, recorded rather than glossed: it warns rather
+than blocks, so it still depends on someone reading a warning — the improvement is in frequency and placement, not in
+removing the human. A watcher for the watcher is where this stops being useful.
 
 
 Resolved by `/grill-me` with Adam, 2026-08-09, session `ceo-agent-system-rebuild`. These close the "smaller branches
