@@ -28,12 +28,12 @@ rules:
   - pattern: ".claude/agents/**"
     tier: irreversible
     reason: "Agent definitions; bad prompt cascades across every spawn"
-  - pattern: ".claude/settings.json"
+  - pattern: ".claude/settings.json*"
     tier: irreversible
-    reason: "Runtime permission boundary"
-  - pattern: ".claude/qa-tier-floor.yml"
+    reason: "Runtime permission boundary — glob covers sibling drafts (e.g. .claude/settings.json.proposed); an exact-string pattern let .proposed unwire pre-tool-use.sh + stop.sh without crossing this gate"
+  - pattern: ".claude/qa-tier-floor.yml*"
     tier: irreversible
-    reason: "This file itself — bad tier map silently downgrades reviews"
+    reason: "This file itself — bad tier map silently downgrades reviews. Glob covers a future .proposed draft the same way .claude/settings.json* now does"
   - pattern: ".claude/hooks/**"
     tier: irreversible
     reason: "PostToolUse / SessionStart hooks execute on every action"
