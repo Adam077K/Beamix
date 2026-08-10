@@ -77,10 +77,22 @@ STEP 3 · Tier-floor: advisory lane, provenance axis, remaining holes. (M)
   b) `provenance: untrusted` flag that hard-gates memory and skill writes whose content traces
      to scanned pages, fetched URLs, or third-party API responses — REGARDLESS of file type.
      Directly relevant: 24 third-party systems are cloned at ~/VibeCoding/_reference/.
-  c) Close the three remaining holes: .mcp.json (grants EVERY agent's tool and API access,
-     currently lite), .claude/commands/**, and .claude/workflows/** (the QA gate's own scripts;
+  c) Close the FOUR remaining holes: .mcp.json (grants EVERY agent's tool and API access,
+     currently lite), .claude/commands/**, .claude/workflows/** (the QA gate's own scripts;
      a fix exists on unmerged branch feat/spec-conformance-and-qa-lead-accuracy @ 09b81ee —
-     cherry-pick it, it conflicts textually with merged #198).
+     cherry-pick it, it conflicts textually with merged #198), and — HOLE 6, FOUND 2026-08-11 —
+     **CLAUDE.md and AGENTS.md, which resolve to `lite`.**
+     CLAUDE.md is auto-loaded into EVERY session in ~10 repos. The rationale putting
+     .claude/agents/** at irreversible is "bad prompt cascades across every spawn"; CLAUDE.md
+     cascades across every spawn of every agent — a strictly LARGER blast radius than any single
+     agent file — and it is checked at the same tier as a typo fix. AGENTS.md is the routing
+     table and lands the same way. **STEP 0 EDITS CLAUDE.md**, so this hole is directly under
+     the first thing this build touches.
+     VERIFIED by re-running the CI resolver's own matcher (qa-lead-pass.yml:222-224) in bash:
+     `CLAUDE.md` matches ONLY the `**` catch-all. It does NOT match `**/*.md`, because that
+     pattern needs a slash and bash `case` has no globstar — so the trivial rule for markdown
+     never fires for ANY root-level file. Do the repro in bash; under zsh every case returns
+     false and you will conclude the opposite. (That mistake was made and caught here.)
   d) The static escalation trigger list for the thinking layer (component 8) lives here too.
   KNOWN, DO NOT REDISCOVER: the resolver is HIGHEST-TIER-WINS (max rank, no break,
   qa-lead-pass.yml:215-217) — rule ORDER HAS NO EFFECT. And it SUBSTRING-MATCHES rather than

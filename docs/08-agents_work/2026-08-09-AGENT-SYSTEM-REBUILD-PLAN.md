@@ -117,10 +117,23 @@ forgery paths close together or the cheaper one is simply used.
 | 3 | `.claude/workflows/**` — **the QA gate's own scripts**, 10 tracked files | lite | earlier pass | fixed on unmerged `09b81ee` |
 | 4 | **`.mcp.json`** — defines every agent's MCP/tool access surface | lite | adversary-engineer, PR #198 | **OPEN** |
 | 5 | `.claude/commands/**` — slash-command definitions | lite | adversary-engineer, PR #198 | **OPEN** |
+| 6 | **`CLAUDE.md` and `AGENTS.md`** — auto-loaded into every session in ~10 repos | lite | CEO, 2026-08-11, checking the tier of the file step 0 edits | **OPEN** |
 Hole 4 is the notable one: `.mcp.json` grants tool and API access to every agent, a blast radius comparable to
 `.claude/hooks/**` which is already `irreversible`, and it currently resolves via the `**` catch-all. **The rate of
 discovery is the finding.** Each hole surfaced only when something with teeth was pointed at the file, and the count
 rose every time — which is the argument for the resolver, not for another careful read.
+
+**Hole 6, added 2026-08-11, and it makes the point twice.** `CLAUDE.md` is the file auto-loaded into every session
+in every repo carrying this system. The rationale placing `.claude/agents/**` at `irreversible` is *"bad prompt
+cascades across every spawn"* — `CLAUDE.md` cascades across every spawn of **every agent**, a strictly larger blast
+radius, and it is gated at the same tier as a typo. `AGENTS.md`, the routing table, lands identically. Verified by
+re-running the resolver's own matcher (`qa-lead-pass.yml:222-224`) rather than by reading the YAML: `CLAUDE.md`
+matches **only** the `**` catch-all, because `**/*.md` requires a slash and bash `case` has no globstar — so the
+`trivial` rule for markdown never fires for any root-level file at all. Second-order: this is a *third* independent
+reason `trivial` is unreachable, on top of (e). **And the repro was first run in zsh, where `case` does not glob an
+unquoted variable, which returned false for every pattern including `**` and would have produced the opposite
+conclusion.** The finding survived only because a result that impossible got a second look — the method rule
+applied to a repro rather than to a count.
 
 (d) **PARSER HAZARD — the resolver substring-matches, it does not parse YAML.** `qa-lead-pass.yml:208` runs `sed`
 over lines, so ANY line containing `- pattern:` or `tier:` is read as a real rule — **including comments**. Found
