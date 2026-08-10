@@ -50,7 +50,12 @@ Validators sit out-of-band: read-only, never editing what they judge.
 
 ---
 
-## The 14 locked decisions
+## The 26 locked decisions
+
+*1-14 locked 2026-08-09 (first grill) · 15-17 and 18-21 the same day (rounds 2 and 3) · 22-23 closing the two
+mechanism-less components · 24-26 on 2026-08-11, closing the last conflicts with the 2026-08-08 gap map.
+Nothing in this document is open. The heading said "14" for two days after it stopped being true — a small
+instance of the same drift the implemented-claim resolver exists to catch.*
 
 | # | Decision | Rationale |
 |---|---|---|
@@ -78,6 +83,22 @@ Validators sit out-of-band: read-only, never editing what they judge.
 
 | 22 | **Context injection is its own component: one hook plus one data file, always advisory.** | The class already had members scattered across other decisions — 21's reader-staleness warning, 18's envelope-reach feedback, a tier warning on opening an irreversible file — and naming it prevents five hand-rolled hooks that drift, the same argument that produced the one parametrized fan-out engine. Measured: Beamix has exactly ONE hook emitting `additionalContext` (`gsa-context-monitor.js`); GSD has a family, and 31 of its 47 hooks are this class. It fits *constrain outcomes, not methods* better than any gate in this design, because it widens what a worker knows without narrowing what it may try. Highest-value entry: inject the relevant `DECISIONS.md` entry when an agent edits a file that decision covers — turning "read before acting" and "leave breadcrumbs" from prose into context. **Accepted cost, recorded: injected context is paid in tokens on every matching call, across ~10 repos, and this plan has never priced context cost.** |
 | 23 | **The self-improvement pilot is proposed by the decision-21 reader, gated on 4 weeks of run-log data.** | The run log already carries the exact signal: an envelope reach means the CEO's composition missed a skill the worker needed; a loaded-but-unused skill means the description oversold it. Both are description-quality evidence, and the reader already reads them — so this adds **no new mechanism** and stop condition 7 never starts a clock. The 4-week gate exists because the plan's own step 7 says there is nothing to improve from until the log has data; specifying against zero evidence is the trap depth-selection avoided by shipping in shadow mode. Output: one PR per week, dedicated branch, capped at N edits, 100% human review. Accepted cost: it loads a second job onto the agent whose own liveness needed a heartbeat. |
+
+| 24 | **The envelope ships advisory; its default-deny path is built and left off behind one flag.** | The 2026-08-08 gap map decided a default-deny per-skill envelope (rec 6); decision 18 decided advisory. Both were live, and they are opposite designs for one mechanism. Advisory wins on ordering, not on merit: a blocked reach is a reach nobody sees, so deny-first destroys the signal decision 4 exists to collect. Building the deny path now and disabling it costs a flag, keeps the rec from being re-argued from zero, and means the switch is a config change once the run log shows what it would have caught. |
+| 25 | **Inbound guards enter the build — gap-map recs 4 and 7 only.** | Every other guard in this design is outbound: what an agent may *do*. Nothing inspects what comes *in*, while the scan pipeline ingests third-party pages and four LLM providers' output into agent context and 24 untrusted repos sit on this machine. Rec 4 (injection scanning) has a selected port in both external hook libraries; rec 7 (secret redaction) has **no prior art found** and is genuinely ours. Rec 5 is half-covered by locked decision 4; the other eight recs stay on the not-building list. Rec 3 (commit enforcement) stays **cut** — commitlint broke 50+ worktrees and the hook audit refused the port; an earlier handoff draft recommending it was wrong and is corrected in place. |
+| 26 | **The 2026-08-08 net-zero cut-pairing policy is retired.** | It required every new-file recommendation to be paired with a verified skill cut. This build adds ~15 files, so binding it would force step 13 — the one cut nobody could prove is quality-neutral — to grow by the same amount, on a schedule set by unrelated work. `stripe-integration` and `clerk-auth` remain agreed cuts. Everything else earns its cut against decision 12's "useless in every project" test or stays. |
+
+### Decisions 24-26 — the last three open branches
+
+Closed with Adam 2026-08-11, at the start of the build session. All three were flagged in the build handoff's
+UNRECONCILED section as *"do not guess these"* — they were conflicts between this document and the 2026-08-08
+capability gap map, whose 15 recommendations were also decided with Adam and which the 14-step build order did
+not contain. Each is written into the build step it changes (4c, new 4.5, 13) rather than left as prose here.
+
+**Mechanism (24):** one flag read by `pre-tool-use.sh`; both branches exist in code, the deny branch is
+unreachable until the flag flips. **Mechanism (25):** a PostToolUse hook, same registration path as the
+envelope detector. **Mechanism (26):** none needed — retiring a policy removes a constraint rather than adding
+one, which is why it is the only one of the three with nothing to build.
 
 ### Decisions 18-23 — detail, and how the two planning gaps closed
 

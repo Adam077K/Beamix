@@ -1,6 +1,8 @@
 # BUILD HANDOFF — implement the agent system, then convene the board
 
-**Planning is COMPLETE.** 23 locked decisions, 10 components, every component names a mechanism.
+**Planning is COMPLETE.** 26 locked decisions, 10 components, every component names a mechanism.
+Decisions 24-26 closed the last three open branches on 2026-08-11; nothing in this document is
+waiting on an answer.
 This document is the build order. Paste the block below into a fresh CEO session.
 
 Two phases, in order. **Phase 1 builds. Phase 2 attacks what was built.** Do not skip Phase 2 —
@@ -14,7 +16,7 @@ You are the CEO/orchestrator for Beamix. Read .claude/agents/ceo.md for your rol
 Set /color gold and /name ceo-build-agent-system.
 
 MISSION: BUILD the agent system. Planning is finished — do not re-open the design, do not
-re-run research, do not re-grill. 23 decisions are locked across two documents and every
+re-run research, do not re-grill. 26 decisions are locked across two documents and every
 component names a mechanism. Your job is to turn them into code, in one run, then have a
 board of thinking agents attack the result.
 
@@ -22,13 +24,14 @@ This is a CROSS-PROJECT asset used in ~10 repos. 11 repos carry it today; etsyc 
 commits/90d) and evalove (385) both out-commit Beamix. Build accordingly.
 
 READ FIRST, IN THIS ORDER — cache as one block, do not re-read mid-session:
-1. docs/08-agents_work/2026-08-09-AGENT-SYSTEM-ARCHITECTURE.md   <- 23 decisions
+1. docs/08-agents_work/2026-08-09-AGENT-SYSTEM-ARCHITECTURE.md   <- decisions 1-23
 2. docs/08-agents_work/2026-08-09-AGENT-SYSTEM-REBUILD-PLAN.md   <- 10 components + sequence
 3. docs/08-agents_work/2026-08-09-HANDOFF.md                     <- verified facts, do not re-derive
 4. docs/08-agents_work/2026-08-09-hook-audit/SYNTHESIS.md        <- what is actually broken
 5. THIS FILE's "UNRECONCILED" section below the paste block <- a SECOND decided plan (15 recs,
-   4 waves, agreed with Adam 2026-08-08) that these 14 steps do NOT contain. Read it before
-   step 4 — one of its items is the OPPOSITE design to step 4c.
+   4 waves, agreed with Adam 2026-08-08) that these 14 steps mostly do NOT contain. Its three
+   open conflicts are CLOSED as decisions 24-26 (2026-08-11) and written into steps 4c, 4.5 and
+   13. Read the section for what was deliberately left out and why — not for open questions.
 Only if a component needs it: docs/08-agents_work/2026-08-09-target-system-spec/ (8 files).
 
 ALREADY BUILT — do not redo:
@@ -110,9 +113,36 @@ STEP 4 · pre-tool-use.sh — the single depth-invariant enforcement point. (S)
      {skills[], mcps[], tools[], paths[]}; on an out-of-envelope call append
      {event:'envelope_reach', tool, task_id, agent} to the run log and EXIT 0. ADVISORY. NEVER
      BLOCKS. Session->task_id resolution reuses the per-session scratch file (hooks.md:315).
+     ALSO WRITE THE DENY PATH AND LEAVE IT OFF [decision 24, Adam 2026-08-11]. One env flag or
+     config key flips advisory -> default-deny. It stays DISABLED until the run log shows what
+     it would have blocked. Reason: a blocked reach is a reach you never see, so deny-first
+     destroys the exact signal decision 4 calls the highest-value data the system can collect.
+     Do not ship deny-on. Do not skip writing it either — that is the 2026-08-08 gap-map rec 6,
+     and building it now is what keeps it from being re-litigated later from zero.
   d) The native filesystem/network sandbox replaces the substring blacklist.
   DONE WHEN: a reach is logged at spawn depth 2 without blocking; a blast-radius violation
-             blocks with a non-zero exit.
+             blocks with a non-zero exit; flipping the deny flag in a test blocks the same
+             call the advisory path logged.
+
+STEP 4.5 · INBOUND GUARDS — the whole category this plan had no coverage for. (S)
+  [decision 25, Adam 2026-08-11 — gap-map recs 4 and 7, both previously absent from all 14 steps]
+  Every guard elsewhere in this design is OUTBOUND: what an agent may do. Nothing inspects what
+  comes IN — while the scan pipeline ingests third-party web pages and four LLM providers'
+  output straight into agent context, and 24 untrusted repos now sit at ~/VibeCoding/_reference/.
+  a) rec 4 · PostToolUse scan of Read/WebFetch/MCP output for injection phrasing and invisible
+     unicode. The hook audit already selected the port: `read-injection-scanner`, present in
+     BOTH gsd-core and get-shit-done. Advisory first, same rule as 4c.
+  b) rec 7 · redact secrets from tool output before the model sees it. NO PRIOR ART FOUND — the
+     hook audit searched and came back empty. This one is genuinely ours to build; budget for
+     that and keep it narrow (known key shapes, not a general classifier).
+  NOT IN SCOPE, and stay out: rec 5 credential scoping (already half-covered by locked decision
+  4 on global permissions), and the other 8 absent recs, which remain on the not-building list.
+  CORRECTION, recorded not silently dropped: an earlier draft of this handoff recommended also
+  folding in gap-map rec 3, commit-message enforcement. That contradicts two prior decisions —
+  the rebuild plan CUT commitlint (it broke 50+ worktrees) and the hook audit explicitly refused
+  to port the commit-format validator. Rec 3 stays cut. The recommendation was wrong.
+  DONE WHEN: a Read of a file containing injection phrasing produces a logged advisory event;
+             a tool output containing a known-shape secret reaches the model redacted.
 
 STEP 5 · THE QA GATE — all four parts land together or none matters. (M)
   This is the most important step in the build. Right now anything can merge, including this
@@ -131,8 +161,16 @@ STEP 5 · THE QA GATE — all four parts land together or none matters. (M)
      verified_by: command|judge}. A failed `command` criterion is a deterministic BLOCK via the
      existing P1-override; a failed `judge` criterion enters findings and must survive the
      3-verifier adversarial pass. Run-log fields ac_total, ac_judged, ac_failed.
+  f) DUPLICATE-GATE HAZARD, found 2026-08-11 — check this BEFORE hardening anything. Open
+     PR #189 (feat/gsa-core-sync, 2026-07-27, still MERGEABLE) adds a NEW 343-line
+     .github/workflows/gsa-qa-lead-pass.yml ALONGSIDE the existing qa-lead-pass.yml, and a
+     gsa-promptfoo-eval.yml alongside promptfoo-eval.yml. The sync tool installs gsa-prefixed
+     COPIES rather than overwriting. If that PR lands, two QA-gate workflows run at once and
+     step 5 hardens only one of them. Decide which is canonical and delete the other, or
+     hold #189 until step 5 is merged. Do not harden a gate that has a twin.
   DONE WHEN: a hand-typed PASS string cannot merge anything; the ruleset is a required check;
-             a deliberately-broken diff fails CI on executed code.
+             a deliberately-broken diff fails CI on executed code; exactly ONE qa-lead-pass
+             workflow exists on main.
 
 STEP 6 · Delete the dead surface. (S)  [after step 4 — the hook replaces the convention]
   T1-T5 topology, T3/T4, coding.js, research.js, the self-contradicting routing text in ceo.md,
@@ -231,9 +269,20 @@ STEP 12 · Canonical repo + gsa-sync --apply. (L -> S/M)
       exists; a Beamix draft exists on an unmerged branch. Write it, per project.
    b) The receiving-project re-check on apply (re-run schema-lint + tier classification against
       the RECEIVER, refuse on failure) is the one mechanism gsa-core does NOT have. Add it.
-   c) Beamix is sitting on 3 add / 54 update — including a new AGENT-SYSTEM.md, two hardened CI
-      workflows, and a hooks security-remediation pass. READ THAT DIFF BEFORE BUILDING STEPS
-      2/4/5 — some of this build may already be written and waiting in gsa-core.
+   c) Beamix is sitting on 3 add / 54 update. THAT DIFF IS OPEN AS PR #189 AND IT HAS NOW BEEN
+      READ [2026-08-11]. Answer to "is the build already written and waiting in gsa-core": NO.
+      Verified per-file: pre-tool-use.sh +2/-2, schema-lint.js +1/-1, stop.sh +1/-1, qa.js
+      +5/-5, gate-logic.mjs +1/-1 — version stamps, not substance. Steps 2/4/5 are unwritten.
+      What #189 DOES carry that matters, three things:
+        · gsa-project.json (21 lines) — the file 12a says NO project has. It exists here. This
+          is the draft to finish, not to re-author.
+        · the duplicate-gate hazard — see step 5f. Resolve it there, not here.
+        · CLAUDE.md restructured to `@.claude/AGENT-SYSTEM.md` + 213 new universal lines,
+          -203 local. CHECKED, and it is an extraction rather than a fit-clobber: Framer 8/8,
+          apps/web 4/4, Project State intact; Paddle 3->2 and Supabase 4->3 lost one mention
+          each. Merge base is deabafd — SIX WEEKS STALE. GitHub reports MERGEABLE, which means
+          no textual conflict, NOT that six weeks of CLAUDE.md changes survive. Rebase and
+          re-diff before trusting it.
    d) LANDMINE, do not trip: gsa-core/bin/gsa-launcherize.js would corrupt ~/bin/beamix if run
       against it. Never run it there.
    e) SECOND LINEAGE, unresolved: ~/VibeCoding/GSA/GSA_startup_kit is a hand-maintained twin,
@@ -248,6 +297,11 @@ STEP 13 · Skills cut list, then the agent-file trim. (M) — DELIBERATELY LAST
   Beamix." Run it against step 3.5's cross-repo inventory + the 24 cloned systems
   (~/VibeCoding/_reference/, 1,150 SKILL.md vs our 146). stripe-integration and clerk-auth are
   wrong for Beamix and possibly right for a sibling.
+  THE NET-ZERO CUT-PAIRING POLICY IS RETIRED [decision 26, Adam 2026-08-11]. The 2026-08-08 rule
+  that every new-file recommendation must be paired with a verified cut no longer binds. This
+  build adds ~15 files; binding it would force the ONLY step nobody could prove is quality-
+  neutral to grow by the same amount, on a deadline set by unrelated work. stripe-integration
+  and clerk-auth stay agreed as cuts. Everything else earns its cut on evidence or stays.
   Then trim the 26 agent files (7,012 lines) to short form in one batch. LAST because it is the
   only cut nobody could prove is quality-neutral — it goes after the run log exists to detect a
   quality drop.
@@ -297,17 +351,18 @@ The gap map carries **15 recommendations sequenced into 4 waves, marked "decided
 12 verified zero-reference skill cuts so the net lands at zero rather than +6. Two cuts —
 `stripe-integration`, `clerk-auth` — were agreed unconditionally.
 
-**Only 3 of the 15 appear in the 14-step build order above.** Mapping:
+**Originally only 3 of the 15 appeared in the build order. After decisions 24-26 it is 5 in, 1
+resolved, and 9 explicitly out — every row now has a verdict rather than a gap.** Mapping:
 
 | Gap-map rec | Wave | Status in the 14 steps |
 |---|---|---|
 | 1 · structural decomposition of compound Bash before pattern-matching | 1 | ≈ step 4d (native sandbox) |
 | 2 · pin third-party actions/images to immutable digests | 1 | partly done — #197 SHA-pinned setup-node |
-| 3 · commit-message convention enforcement | 1 | **absent** |
-| 4 · prompt-injection scanning of inbound untrusted content | 2 | **absent** — no UserPromptSubmit hook exists at all |
-| 5 · least-privilege credential scoping per run | 2 | **absent** |
-| 6 · per-skill capability envelope, **default-deny** | 2 | **CONFLICTS with step 4c**, which is advisory-never-blocks |
-| 7 · hooks that rewrite what the model sees (secret redaction) | 2 | **absent** |
+| 3 · commit-message convention enforcement | 1 | **stays CUT** — commitlint broke 50+ worktrees; the hook audit refused the port |
+| 4 · prompt-injection scanning of inbound untrusted content | 2 | **IN THE BUILD** — step 4.5a (decision 25) |
+| 5 · least-privilege credential scoping per run | 2 | **out** — half-covered by locked decision 4 on global permissions |
+| 6 · per-skill capability envelope, **default-deny** | 2 | **RESOLVED** — step 4c builds the deny path and ships it OFF (decision 24) |
+| 7 · hooks that rewrite what the model sees (secret redaction) | 2 | **IN THE BUILD** — step 4.5b (decision 25). No prior art; ours to build |
 | 8 · spec as machine contract / drift detection | 3 | ≈ step 5e (acceptance criteria) |
 | 9 · local git pre-commit gate | 3 | **absent** |
 | 10 · team/personal overrides layered on a shipped skill | 3 | **absent** |
@@ -317,24 +372,25 @@ The gap map carries **15 recommendations sequenced into 4 waves, marked "decided
 | 14 · render one command corpus into every host format | 4 | **absent** — deliberately backlogged, no second host |
 | 15 · install/update/uninstall + packaging | 4 | ≈ step 12 — **and gsa-core v6.3.0 already does most of it** |
 
-**Three decisions are needed before Phase 1 starts. Do not guess these.**
+**All three were open. ALL THREE ARE NOW CLOSED — Adam, 2026-08-11.** They are decisions 24-26,
+and each is written into the step it changes. Phase 1 is unblocked.
 
-1. **Envelope: advisory or default-deny?** Step 4c and gap-map rec 6 are opposite designs for the
-   same mechanism. Decision 18 chose advisory deliberately — the envelope's value was framed as
-   *observation* (reaches are the highest-signal data the system can collect), and a default-deny
-   envelope cannot collect a reach it blocks. Both cannot ship.
-2. **Do the 10 absent recommendations enter this build, a later one, or the not-building list?**
-   Wave 2 in particular is a coherent theme the 14 steps miss entirely: every guard in the current
-   design is *outbound* (what the agent may do); nothing inspects what comes *in* — while the scan
-   pipeline ingests third-party web content and four LLM providers' output into agent context.
-3. **Does the cut-pairing policy still bind?** If yes, this build adds far more than 6 new files
-   and owes a much larger cut list — which lands on step 13, already the least-provable step.
+| # | Question | Decision | Lands in |
+|---|---|---|---|
+| 24 | Envelope: advisory or default-deny? | **Advisory ships on; the deny path is BUILT and left OFF** behind one flag, until the run log shows what it would have blocked | step 4c |
+| 25 | Do the 10 absent gap-map recs enter this build? | **Recs 4 and 7 only** — inbound injection scanning and secret redaction. Rec 5 is half-covered by locked decision 4; the other 8 stay on the not-building list | new step 4.5 |
+| 26 | Does the net-zero cut-pairing policy still bind? | **Retired.** stripe-integration and clerk-auth stay agreed; nothing else is forced | step 13 |
 
-**Recommendation:** fold Wave 1 rec 3 and all of Wave 2 into the build (they are cheap, they close
-the one whole category this plan has no coverage for, and rec 4/7 protect exactly the untrusted-
-provenance path decision 18 and step 3b already care about); keep Waves 3-4 out except where a
-step already covers them; and resolve the envelope conflict in favour of advisory-first with a
-default-deny mode built but left off, so the observation data arrives before the block does.
+Decision 24 keeps the observation data arriving before the block does, and keeps rec 6 from being
+re-litigated from zero later. Decision 25 closes the one whole category this plan had no coverage
+for — everything else in the design guards *outbound* behaviour. Decision 26 stops an unrelated
+policy from inflating the single least-provable step in the build.
+
+**One recommendation in this document was wrong and is corrected rather than deleted:** an earlier
+draft also proposed folding in gap-map rec 3, commit-message enforcement. The rebuild plan had
+already CUT commitlint for breaking 50+ worktrees, and the hook audit explicitly refused to port
+the commit-format validator. Rec 3 stays cut. Recorded here because a plan that quietly drops its
+own bad recommendation is the failure mode this whole rebuild exists to end.
 
 ---
 
