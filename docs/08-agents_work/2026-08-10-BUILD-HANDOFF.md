@@ -26,6 +26,9 @@ READ FIRST, IN THIS ORDER — cache as one block, do not re-read mid-session:
 2. docs/08-agents_work/2026-08-09-AGENT-SYSTEM-REBUILD-PLAN.md   <- 10 components + sequence
 3. docs/08-agents_work/2026-08-09-HANDOFF.md                     <- verified facts, do not re-derive
 4. docs/08-agents_work/2026-08-09-hook-audit/SYNTHESIS.md        <- what is actually broken
+5. THIS FILE's "UNRECONCILED" section below the paste block <- a SECOND decided plan (15 recs,
+   4 waves, agreed with Adam 2026-08-08) that these 14 steps do NOT contain. Read it before
+   step 4 — one of its items is the OPPOSITE design to step 4c.
 Only if a component needs it: docs/08-agents_work/2026-08-09-target-system-spec/ (8 files).
 
 ALREADY BUILT — do not redo:
@@ -49,11 +52,17 @@ STEP 0 · Close the lapsed stop conditions. (XS)
 STEP 2 · Extend schema-lint. (S)  [step 1 done]
   a) Lint `tools:` and `mcpServers:` — a declared capability that does not resolve fails the
      build. Generate .claude/mcp-manifest.json from .mcp.json and check against it.
-     THIS CATCHES: linear (declared in 23 files, configured nowhere), context7 (13 files,
-     nowhere). .mcp.json contains ONLY supabase.
+     THIS CATCHES: linear (declared in 24 files under .claude/, 23 of them agents; configured
+     nowhere), context7 (4 files, nowhere). .mcp.json contains ONLY supabase. [VERIFIED
+     2026-08-10 by grep across the whole .claude/ tree. The earlier "context7 in 13 files" in
+     this handoff was WRONG — 3x overstated. The method rule caught its own author again.]
   b) Description lint — flag truncated/malformed descriptions. Progressive-disclosure selection
      keys on the description field, so a broken one is a SILENT matching failure.
-  c) Fix the MANIFEST generator's three YAML parsing bugs corrupting 62 of 149 descriptions.
+  c) Fix the MANIFEST generator's YAML parsing bug. [VERIFIED 2026-08-10 by parsing MANIFEST.json
+     and diffing every entry against its source SKILL.md frontmatter: 149 entries, 131 clean,
+     18 suspect = 5 empty + 13 captured as a bare YAML block-scalar indicator ("|"), and
+     ZERO mismatch-vs-source. The earlier "62 of 149" was WRONG — 3.4x overstated. The bug is
+     one failure mode: block-scalar descriptions are not read through.]
      THE SOURCE SKILL.md FILES ARE FINE. Fix the generator, not the skills.
   d) Make `**Mechanism:**` a required labelled field on every plan component and lint it —
      the disqualification rule currently has no resolver (spec gap 4).
@@ -78,8 +87,16 @@ STEP 3 · Tier-floor: advisory lane, provenance axis, remaining holes. (M)
              38-path sweep resolves as intended; no comment parses as a rule.
 
 STEP 3.5 · gsa-sync --check across the 9 live repos. (M)
-  Read-only: per-file sha256 vs canonical + receiving-project re-classification. Reports drift,
-  missing tier-floor, per-repo skill presence. NO WRITES.
+  *** THE TOOL ALREADY EXISTS. DO NOT WRITE A NEW ONE. *** [VERIFIED 2026-08-10]
+  /Users/adamks/VibeCoding/gsa-core v6.3.0 ships bin/gsa-sync.js: dry-run by DEFAULT, sha256 in
+  gsa-sync.js + lib/util.js, assertFitPrecedence() with a self-test proving a bad manifest
+  THROWS (gsa-sync.selftest.js:106-115), git clean-gate, backup-before-apply, version stamp.
+  A full-fleet dry-run report already exists at gsa-core/FLEET-DRYRUN-REPORT.md (2026-07-27,
+  700-file core, 9 targets, ZERO fit-clobber anywhere). Beamix's row: 3 add / 54 update / 640
+  identical / 3 skip-fit. This step is now: RE-RUN it, read the report, extend if short.
+  Registry mismatch to resolve: gsa-core/fleet.json lists 8 targets (aiclub beeond etsyc finfun
+  ghostb noam-website realestate beamix) plus a user-global special entry. It does NOT list
+  evalove or adamos, both of which carry the system and both of which this plan targets.
   Targets: aiclub beeond etsyc evalove finfun ghostb noam-website realestate adamos.
   OUT OF SCOPE by data: hitstampjavagame, ml2, test1 — zero commits in 90 days.
   NOTE adamos has 11 hooks to Beamix's 7 — a sibling is AHEAD. Fit-precedence is load-bearing.
@@ -122,7 +139,22 @@ STEP 6 · Delete the dead surface. (S)  [after step 4 — the hook replaces the 
   the ghost roster in ~/CLAUDE.md, and the 13 merged-branch worktrees. Also delete the
   dispatch-packet apparatus: nested spawning WORKS (verified at depth 2), so "chiefs are
   planning-only" is obsolete.
-  DONE WHEN: no file references T1-T5 or dispatch packets; git worktree list is clean.
+  THE GHOST ROSTER IS BIGGER THAN ~/CLAUDE.md, and it is the ONE actively-broken thing on this
+  machine — everything else is merely unapplied. [VERIFIED 2026-08-10]
+    - ~/.claude/agents/ holds 44 agents on the functional-role roster (build-lead, product-lead,
+      growth-lead...). The 12-name persona roster (Iris, Atlas, Scout...) is GONE.
+    - But ~/.claude/commands/daily.md, ship.md and debug.md STILL instruct the CEO to hand off
+      to Iris / Atlas / Scout — three live slash commands invoking agents that do not exist.
+    - ~/.cursor/rules/gsa-startup-kit.mdc still describes the old persona team too.
+    - Fix these FOUR files, not just ~/CLAUDE.md.
+  ALSO, in this repo, three skill counts disagree and all three are cited as authoritative:
+  CLAUDE.md:39 says "117 curated skills"; live is 145 SKILL.md in 146 directories; MANIFEST.json
+  says totalSkills 145 while carrying 149 entries. Pick the live number and make it generated.
+  Debris to drop while here: .claude/gsa-file-manifest.json (dead artefact of a RETIRED tool,
+  not the current sync system) and .claude/skills/security/ (a directory with no SKILL.md,
+  inflating the count).
+  DONE WHEN: no file references T1-T5 or dispatch packets; git worktree list is clean; no
+             command invokes a non-existent agent; one skill count, generated, everywhere.
 
 STEP 7 · Run log v1 + weekly reader + reader heartbeat. (M)
   One JSONL line per run: run_id, TASK_ID, agent, mechanism, model, tokens, cost_usd, tier,
@@ -188,10 +220,26 @@ STEP 11 · Context injection. (S) [decision 22, component 10]
   ACCEPTED COST, do not silently drop it: injected context is paid in tokens on EVERY matching
   call, in ~10 repos. This plan has never priced context cost.
 
-STEP 12 · Canonical repo + gsa-sync --apply. (L)
-  Move to its own repo. On apply, re-run schema-lint and tier classification against the
-  RECEIVING project and refuse on failure. Adopt BMAD's per-file sha256 manifest
-  (~/VibeCoding/_reference/harness/bmad-code-org_BMAD-METHOD, files-manifest.csv).
+STEP 12 · Canonical repo + gsa-sync --apply. (L -> S/M)
+  *** RESCOPED 2026-08-10. THE CANONICAL REPO ALREADY EXISTS. *** [VERIFIED]
+  ~/VibeCoding/gsa-core v6.3.0 IS this step. It already has the per-file sha256 manifest this
+  step said to copy from BMAD, plus fit-precedence, dry-run default, --apply gated behind a
+  SEPARATE --yes, backup-before-write, and unresolved-token hard refusal. Do not rebuild it.
+  What is ACTUALLY missing, and is the whole remaining step:
+   a) NO PROJECT HAS gsa-project.json — not Beamix, not any of the 8 fleet members. That single
+      missing file is why --apply has never run ANYWHERE. gsa-core/core/gsa-project.json.template
+      exists; a Beamix draft exists on an unmerged branch. Write it, per project.
+   b) The receiving-project re-check on apply (re-run schema-lint + tier classification against
+      the RECEIVER, refuse on failure) is the one mechanism gsa-core does NOT have. Add it.
+   c) Beamix is sitting on 3 add / 54 update — including a new AGENT-SYSTEM.md, two hardened CI
+      workflows, and a hooks security-remediation pass. READ THAT DIFF BEFORE BUILDING STEPS
+      2/4/5 — some of this build may already be written and waiting in gsa-core.
+   d) LANDMINE, do not trip: gsa-core/bin/gsa-launcherize.js would corrupt ~/bin/beamix if run
+      against it. Never run it there.
+   e) SECOND LINEAGE, unresolved: ~/VibeCoding/GSA/GSA_startup_kit is a hand-maintained twin,
+      currently at 8ae2c4e — the same commit message as Beamix's own recent HEAD, i.e. someone
+      is hand-porting commits in parallel with the sync tool. Two mechanisms both claim to be
+      canonical and neither knows about the other. Pick ONE and demote the other.
   DONE WHEN: --apply has run end-to-end on 2 NON-BEAMIX projects. Until then every hour above
              pays back in exactly one repo. Stop condition 5 covers this.
 
@@ -236,6 +284,57 @@ claims were checked against implementing files and eight were wrong, every one o
 reality — three of them the CEO's own, including one written INTO the plan describing how to
 prevent exactly this. Verify by reading the implementing file before repeating any number.
 ```
+
+---
+
+## UNRECONCILED — a second decided plan these 14 steps do not contain
+
+Added 2026-08-10 after re-reading the two published artifacts from the 2026-08-08 session
+("GSA Startup Kit — Field Audit" and "Beamix Capability Gap Map").
+
+The gap map carries **15 recommendations sequenced into 4 waves, marked "decided with Adam
+2026-08-08"**, plus a net-file-delta policy: pair every new-file recommendation with one of the
+12 verified zero-reference skill cuts so the net lands at zero rather than +6. Two cuts —
+`stripe-integration`, `clerk-auth` — were agreed unconditionally.
+
+**Only 3 of the 15 appear in the 14-step build order above.** Mapping:
+
+| Gap-map rec | Wave | Status in the 14 steps |
+|---|---|---|
+| 1 · structural decomposition of compound Bash before pattern-matching | 1 | ≈ step 4d (native sandbox) |
+| 2 · pin third-party actions/images to immutable digests | 1 | partly done — #197 SHA-pinned setup-node |
+| 3 · commit-message convention enforcement | 1 | **absent** |
+| 4 · prompt-injection scanning of inbound untrusted content | 2 | **absent** — no UserPromptSubmit hook exists at all |
+| 5 · least-privilege credential scoping per run | 2 | **absent** |
+| 6 · per-skill capability envelope, **default-deny** | 2 | **CONFLICTS with step 4c**, which is advisory-never-blocks |
+| 7 · hooks that rewrite what the model sees (secret redaction) | 2 | **absent** |
+| 8 · spec as machine contract / drift detection | 3 | ≈ step 5e (acceptance criteria) |
+| 9 · local git pre-commit gate | 3 | **absent** |
+| 10 · team/personal overrides layered on a shipped skill | 3 | **absent** |
+| 11 · grow the corpus at runtime (draft-then-approve) | 3 | **absent** |
+| 12 · container/VM isolation of agent execution | 4 | **absent** — highest-frequency gap, 6/10 projects |
+| 13 · office-document production (docx/pptx/xlsx/pdf) | 4 | **absent** — real product need, blocked on toolchain |
+| 14 · render one command corpus into every host format | 4 | **absent** — deliberately backlogged, no second host |
+| 15 · install/update/uninstall + packaging | 4 | ≈ step 12 — **and gsa-core v6.3.0 already does most of it** |
+
+**Three decisions are needed before Phase 1 starts. Do not guess these.**
+
+1. **Envelope: advisory or default-deny?** Step 4c and gap-map rec 6 are opposite designs for the
+   same mechanism. Decision 18 chose advisory deliberately — the envelope's value was framed as
+   *observation* (reaches are the highest-signal data the system can collect), and a default-deny
+   envelope cannot collect a reach it blocks. Both cannot ship.
+2. **Do the 10 absent recommendations enter this build, a later one, or the not-building list?**
+   Wave 2 in particular is a coherent theme the 14 steps miss entirely: every guard in the current
+   design is *outbound* (what the agent may do); nothing inspects what comes *in* — while the scan
+   pipeline ingests third-party web content and four LLM providers' output into agent context.
+3. **Does the cut-pairing policy still bind?** If yes, this build adds far more than 6 new files
+   and owes a much larger cut list — which lands on step 13, already the least-provable step.
+
+**Recommendation:** fold Wave 1 rec 3 and all of Wave 2 into the build (they are cheap, they close
+the one whole category this plan has no coverage for, and rec 4/7 protect exactly the untrusted-
+provenance path decision 18 and step 3b already care about); keep Waves 3-4 out except where a
+step already covers them; and resolve the envelope conflict in favour of advisory-first with a
+default-deny mode built but left off, so the observation data arrives before the block does.
 
 ---
 
