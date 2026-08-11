@@ -90,12 +90,38 @@ currently contain**, and it is the one genuinely new idea the audit surfaced.
 
 ## Declared-never-wired is not a Beamix pathology
 
-**5 of gsd-core's 31 hooks are shipped to disk, config-gated, documented, and registered nowhere** — no code path
-puts them in `hooks.json`. An externally-built system, by a different team, with a larger hook library, has the
-same disease.
+> **RETRACTED AND REPLACED 2026-08-11.** The original claim below was wrong. The replacement is stronger.
 
-That is the strongest available external evidence for decision 8 and for wiring `schema-lint.js` at step 1. It is
-not a discipline problem that better habits would fix. It is what happens to any system with no resolver.
+~~**5 of gsd-core's 31 hooks are shipped to disk, config-gated, documented, and registered nowhere** — no code
+path puts them in `hooks.json`.~~
+
+**What is actually true**, verified by a worker opening all 26 hook files and independently re-verified by the
+CEO before acceptance: **gsd-core ships TWO parallel, non-overlapping hook-registration mechanisms** — a static
+plugin manifest (`hooks/hooks.json`, 10 files) and a classic installer (`bin/install.js` +
+`src/runtime-hooks-surface.cts`, 16 files, overlapping on 6), plus separate Cursor and Windsurf writers. **Every
+one of the 26 files resolves to a registration somewhere**, or is a plain `child_process.spawn` target with no
+event to register against. Nothing is registered nowhere.
+
+The original finding was produced by a scan that checked only the plugin manifest. Crux re-verified directly:
+`gsd-workflow-guard.js` appears **0 times** in `hooks/hooks.json`, **6 times** in `src/runtime-hooks-surface.cts`,
+and does hard-block (`decision: 'block'` at :196, `process.exit(2)` at :203). A manifest-only scan reports it as
+unregistered while it is live for every classic-install user.
+
+**The replacement evidence, and it is better.** The disease *did* occur in gsd-core, once:
+`tests/workflow-guard-registration.test.cjs:7` is a named regression guard for issue #1767 — *"hook file built,
+copied, and installed, but never registered as a PreToolUse entry in install.js."* Their answer was not better
+habits. Line 127 defines a **"hook registration completeness anti-pattern guard"**: every shipped JS hook must
+have a command construction in the installer, or the build fails. `tests/orphaned-hooks.test.cjs` covers the
+inverse. Both exist because the bug happened.
+
+That is still the strongest available external evidence for decision 8 and for wiring `schema-lint.js` at step 1
+— and it now also names the mechanism to steal: **a required test cross-checking every capability-bearing file
+that ships against every place that must register it.**
+
+**Direction of the error, recorded because it matters:** the eight wrong claims catalogued on 2026-08-09 all
+overstated a *gap*. This one overstated *external validation for our own thesis*. It was caught only because the
+worker's brief handed it the number as settled and, in the same breath, told it not to assume the briefer's
+description over what the files say.
 
 ## The four ports that survive
 

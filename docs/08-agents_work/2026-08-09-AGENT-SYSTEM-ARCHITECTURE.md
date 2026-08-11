@@ -240,9 +240,16 @@ implementing file:
   actually leads on is advisory context hooks** — 31 of its 47 inject context, cache state, or scan output rather
   than gating. Beamix has one. That class fits "constrain outcomes, not methods" better than any gate in this
   plan, and the plan does not contain it.
-- **Declared-never-wired is not a Beamix pathology.** 5 of gsd-core's 31 hooks are shipped, config-gated,
-  documented, and registered nowhere. An external team with a larger hook library has the same disease — the
-  strongest available evidence that this is a missing-resolver problem, not a discipline problem.
+- ~~**Declared-never-wired is not a Beamix pathology.** 5 of gsd-core's 31 hooks are shipped, config-gated,
+  documented, and registered nowhere.~~ **RETRACTED 2026-08-11 — the claim was wrong.** gsd-core ships TWO
+  non-overlapping registration mechanisms (plugin manifest + classic installer); every one of its 26 hook files
+  is registered somewhere, and the original figure came from scanning only the manifest. Re-verified directly:
+  `gsd-workflow-guard.js` is absent from `hooks/hooks.json`, registered 6× in `src/runtime-hooks-surface.cts`,
+  and hard-blocks. **The conclusion survives on better evidence:** gsd-core hit this exact bug once (issue #1767,
+  "hook built, copied, installed, never registered") and answered it with a build-failing *registration
+  completeness* test plus an orphaned-hooks test. An external team hit the disease and cured it with a check,
+  not with discipline — still the strongest external support for decision 8, and now it names the mechanism.
+  **This is the ninth wrong claim, and the first that overstated evidence FOR our own thesis rather than a gap.**
 
 ## Planning gaps — both CLOSED 2026-08-09
 

@@ -109,10 +109,29 @@ markdown file, with the actual review script never invoked by anything.
 
 **Two findings generalize beyond the origin project, and you should expect both.**
 
-*First: this is not a discipline problem.* An externally built system, by a different team, with a hook library
-several times larger, has the identical disease — five of its hooks are shipped to disk, documented,
-configuration-gated, and registered nowhere. No code path installs them. Better habits do not fix this. Only a
-resolver does.
+*First: this is not a discipline problem — and how we learned that is itself the lesson.*
+
+An externally built harness, by a different team, with a much larger hook library, hit this exact bug: a hook
+file was built, copied, and installed, but never registered as an event handler. It shipped and did nothing.
+Their fix was not better habits. It was **a required test that fails the build if any shipped hook lacks a
+registration call**, plus a second test for the inverse — registrations pointing at files that no longer exist.
+Both test files exist *because the bug happened*, and both name the issue number in their header comments.
+
+That is the strongest external evidence available for the resolver argument, and it is evidence twice over:
+an experienced team hit the disease, and the thing that cured it was a check, not a convention.
+
+> **RETRACTION, and read the direction of the error.** An earlier draft of this document made a stronger claim:
+> that five of that system's hooks were shipped, documented, and registered *nowhere at all*. **That claim was
+> wrong and is withdrawn.** It came from scanning one of two registration mechanisms — the system ships both a
+> plugin manifest and a classic installer, and a hook registered only by the second looks unregistered to a scan
+> of the first. Verified directly: its workflow guard appears **zero** times in the plugin manifest, **six**
+> times in the installer's registration module, and does hard-block (`decision: 'block'`, `process.exit(2)`).
+> Every one of its 26 hook files resolves to a registration somewhere.
+>
+> The disease was real and occurred once. It was not endemic. **And note which way this error pointed: unlike
+> the eight catalogued in section 11, which all overstated a gap, this one overstated the external evidence for
+> our own thesis.** An error that flatters the argument it supports is the more dangerous class, because nothing
+> about it feels wrong while you are writing it.
 
 *Second: the gap is invisible from inside the documents.* Every audit that read the prose concluded the system
 was in good shape. The gap only appeared when someone executed the implementing files.
@@ -456,13 +475,21 @@ Four things are already established from earlier verified passes and will be car
 - **The mechanisms worth copying rather than inventing** — a per-file hash install manifest, capability-scoped
   credential brokering, a skill-frontmatter capability grammar, and a session-start hook enforcing skill
   invocation. Each exists in readable source. None needed to be designed.
-- **Advisory context hooks are the class we were furthest behind on** — 31 of 47 hooks across two external
-  libraries inject context, cache state, or scan output rather than gating. They shape what an agent *knows*
-  rather than what it *may do*, which fits "constrain outcomes, not methods" better than any gate in this
-  design. The origin project had exactly one hook of this class. It became component 10.
-- **The counts we published first were wrong, all in the same direction.** A claimed 78-vs-7 hook gap was a
-  file-path grep artifact including documentation and tests. The real difference in *live blocking* hooks was
-  two. See section 11.
+- **Advisory context hooks are the class we were furthest behind on.** VERIFIED by opening every file in two
+  external libraries: **29-30 of their 39 hook files (74-77%) contain no code path that can block anything.**
+  They inject context, cache configuration, render a status line, or announce updates. They shape what an agent
+  *knows* rather than what it *may do*, which fits "constrain outcomes, not methods" better than any gate in
+  this design. The origin project had exactly one hook of this class. It became component 10.
+- **The counts published first were wrong, all of them, and the corrections kept coming.** A claimed 78-vs-7
+  hook gap was a file-path grep artifact including documentation and tests. Its replacement — 15-and-8
+  block-capable — was itself revised down to **9 and 1** by opening every file and reading the actual exit and
+  decision paths. Even the denominators (31, 47) could not be reconciled against any file-count basis. Section 11
+  is about this.
+- **The same file name can carry opposite semantics in two forks of one system.** `gsd-workflow-guard.js`
+  hard-blocks in one repo and, in the other, carries the literal header comment *"This is a SOFT guard — it
+  advises, not blocks. The edit still proceeds."* **SPEC, and it costs nothing: make every hook state its own
+  enforcement posture in its first five lines.** Anyone reading the source then knows its blast radius with no
+  other context — which is exactly what nobody had here.
 - **Two assumptions did not survive contact.** One system believed to be an agent organization has zero agents
   and zero hooks — it is a skill-*format* innovation, and copying its mechanism while ignoring its structure was
   correct. Another ships 22 files and has deliberately *retired* its agent roster.
@@ -511,6 +538,25 @@ The corrections, as a class:
 | "A second parser hazard exists" | It did not | Misread a worker's phrase and wrote it into the plan |
 | "62 of 149 descriptions corrupted" | 18, one failure mode | Estimated from a pattern, not a diff against source |
 | "Every component names a mechanism as a field" | 6 of 10 carry the field; all 10 name one in prose | A grep answered a different question than the one asked |
+
+**A ninth arrived two days later, and it is the most instructive of the set.** The claim that an external system
+had five hooks "shipped but registered nowhere" — quoted in section 2 as evidence that this is not a discipline
+problem — was produced by scanning one of that system's *two* registration mechanisms. It was wrong. A worker
+briefed to check rather than accept it opened every file and refuted it, and the refutation was then verified
+independently before being accepted.
+
+Three things separate it from the other eight, and each is worth carrying:
+
+- **It pointed the other way.** The eight all overstated a gap. This one overstated *external validation for our
+  own thesis*. An error that flatters your argument produces no friction while you write it.
+- **It was caught only because the brief said to check it.** The worker was handed the number as settled
+  context — "do not rediscover this" — and told in the same brief not to assume the briefer's description over
+  what the files say. It refuted the number it was told to trust. Without that sentence, it would have carried
+  the error forward with a verified stamp on it.
+- **The corrected finding was better than the false one.** The real story — an experienced team hit the bug once
+  and answered it with a build-failing registration-completeness test — is stronger evidence for the resolver
+  argument than the fabrication it replaced. **Retracting a claim usually improves the case it was supporting**,
+  because what survives verification is load-bearing and what does not was decoration.
 
 **SPEC — four practices that follow, and they cost nothing:**
 
