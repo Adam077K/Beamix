@@ -58,13 +58,24 @@ same `SKILL.md` format already in use here** — no corpus migration to plan.
 
 ---
 
-## The design — nine components, each with a mechanism
+## The design — ten components, each with a mechanism
 
 A component without a named hook, CI job, resolver, or data file is disqualified by construction. "The agent
 should remember" is what produced the current state.
 
+*Component 10 added 2026-08-09 (decision 22). Verified the same day that all ten do name a mechanism — but only six
+carry an explicit `**Mechanism:**` field; components 3, 7, 8 and 9 name theirs in body prose (`qa-verdict.json` +
+`commit_sha == head.sha` + the ruleset; the `gate-logic.mjs` drift check; the static trigger list in the same YAML
+plus the logged boolean; `schema-lint` + tier re-classification + a per-file sha256 manifest + refuse-on-failure).*
+**Note the recursion: this rule — the one that disqualifies mechanism-less components — has no resolver of its own.**
+Checking it means a human reading prose, which is the exact failure mode it exists to prevent. Making
+`**Mechanism:**` a required labelled field on every component would let `schema-lint` check it. Filed as a spec gap.
+
 ### 1 · Tier-floor file gains an advisory lane and a provenance axis · **M**
-`.claude/qa-tier-floor.yml` is already the system's only working deterministic classifier (first-match-wins,
+`.claude/qa-tier-floor.yml` is already the system's only working deterministic classifier (**highest-tier-wins** —
+corrected 2026-08-09; the file's own header comment claimed first-match-wins and this doc inherited the error. The
+CI resolver at `qa-lead-pass.yml:215-217` keeps the MAX rank across ALL matching rules with no `break`, so rule
+order has zero effect. Verified by reading the resolver and by a 34-path before/after sweep,
 zero LLM cost, consumed by CI). Extend in place: prose/docs globs map to a new `advisory` tier; a
 `provenance: untrusted` flag hard-gates memory and skill writes whose content traces to scanned pages,
 fetched URLs, or third-party API responses — **regardless of file type**.
@@ -91,6 +102,60 @@ And ruleset `13276203` has `enforcement: disabled`, so it isn't a required check
 **Both halves land together or neither matters.** A forgery-proof check nobody must pass is theater; enabling
 enforcement on a forgeable grep blocks merges on nothing.
 
+**Amended 2026-08-09 (hook audit) — there is a third half, and a second forgery path.**
+(a) **No CI job anywhere runs `tsc`, `eslint`, `pnpm test`, `pnpm build`, or `pnpm audit`.** The gate is not just
+forgeable — *no code is executed against the diff by CI at all*. A SHA-bound, unforgeable verdict on a gate that
+compiles nothing is still theater, so component 3 must also land actual execution against the diff.
+(b) `qa-lead-pass.yml`'s file-path tier-floor hard-fails **only at `irreversible`**. A `full`-tier floor — e.g.
+touching `apps/web/src/lib/auth/**` — prints an info line and lets a session file declaring `tier: lite` merge. Both
+forgery paths close together or the cheaper one is simply used.
+(f) **The classifier had FIVE holes, found by five separate passes in one day — none by reading the file.**
+| # | Path | Was | Found by | State |
+|---|---|---|---|---|
+| 1 | `.claude/settings.json` (exact string, no glob — missed `.proposed`) | lite | qa-lead, reviewing a fix | fixed, PR #198 |
+| 2 | `.claude/skills/MANIFEST.json` (reachable at a non-blocking tier) | lite | adversary-engineer, reviewing a fix | fixed, PR #198 |
+| 3 | `.claude/workflows/**` — **the QA gate's own scripts**, 10 tracked files | lite | earlier pass | fixed on unmerged `09b81ee` |
+| 4 | **`.mcp.json`** — defines every agent's MCP/tool access surface | lite | adversary-engineer, PR #198 | **OPEN** |
+| 5 | `.claude/commands/**` — slash-command definitions | lite | adversary-engineer, PR #198 | **OPEN** |
+| 6 | **`CLAUDE.md` and `AGENTS.md`** — auto-loaded into every session in ~10 repos | lite | CEO, 2026-08-11, checking the tier of the file step 0 edits | **OPEN** |
+Hole 4 is the notable one: `.mcp.json` grants tool and API access to every agent, a blast radius comparable to
+`.claude/hooks/**` which is already `irreversible`, and it currently resolves via the `**` catch-all. **The rate of
+discovery is the finding.** Each hole surfaced only when something with teeth was pointed at the file, and the count
+rose every time — which is the argument for the resolver, not for another careful read.
+
+**Hole 6, added 2026-08-11, and it makes the point twice.** `CLAUDE.md` is the file auto-loaded into every session
+in every repo carrying this system. The rationale placing `.claude/agents/**` at `irreversible` is *"bad prompt
+cascades across every spawn"* — `CLAUDE.md` cascades across every spawn of **every agent**, a strictly larger blast
+radius, and it is gated at the same tier as a typo. `AGENTS.md`, the routing table, lands identically. Verified by
+re-running the resolver's own matcher (`qa-lead-pass.yml:222-224`) rather than by reading the YAML: `CLAUDE.md`
+matches **only** the `**` catch-all, because `**/*.md` requires a slash and bash `case` has no globstar — so the
+`trivial` rule for markdown never fires for any root-level file at all. Second-order: this is a *third* independent
+reason `trivial` is unreachable, on top of (e). **And the repro was first run in zsh, where `case` does not glob an
+unquoted variable, which returned false for every pattern including `**` and would have produced the opposite
+conclusion.** The finding survived only because a result that impossible got a second look — the method rule
+applied to a repro rather than to a count.
+
+(d) **PARSER HAZARD — the resolver substring-matches, it does not parse YAML.** `qa-lead-pass.yml:208` runs `sed`
+over lines, so ANY line containing `- pattern:` or `tier:` is read as a real rule — **including comments**. Found
+2026-08-09 when a worker's own draft of a corrected header comment silently promoted every file in the repo to tier
+`full`; caught by before/after repro testing, not by inspection. **`main` carries exactly ONE such latent line**
+(old line 18, `Require: tier:full review…`), inert only by position and removed by PR #198.
+*Correction, same day: an earlier draft of this paragraph claimed a "second pre-existing instance dating to
+2026-05-16." That was the CEO misreading a worker's phrase "close the second verified hole" — which referred to the
+MANIFEST.json fix, not a second hazard line — and relaying it unverified. QA-Lead caught it by grepping every line
+of both versions. Logged here rather than silently edited, because it is the exact fabrication class decision 8's
+implemented-claim resolver exists to catch, committed into the document describing the fix.*
+**A comment can corrupt the classifier that gates every merge.** Component 3 must replace
+the substring scan with real YAML parsing, or the data file is not trustworthy no matter how correct its content is.
+(e) **`trivial` is structurally unreachable.** The `**` catch-all sits at `lite`, and the resolver takes MAX rank, so
+no path can ever resolve to `trivial` — the file's `trivial` labels describe a tier CI never computes. Fixing this is
+an algorithm change in the resolver, not a data change, so it was deliberately kept out of the data-only PR #198
+whose 34-path regression sweep would otherwise no longer cover its whole diff. Filed here because component 3 is
+already reopening this logic, and because component 1's advisory lane is what `trivial` was reaching for.
+(c) **Defuse `.claude/settings.json.proposed` first.** It has zero `PreToolUse` and zero `Stop` registrations, and
+CLAUDE.md documents it as "pending apply" — applying it deletes the only blocking hook and the run log's append path
+in one move. Highest-urgency item the audit found, and it is Irreversible by the tier map with nothing checking it.
+
 ### 4 · `schema-lint.js` wired to CI, extended to `mcpServers`, plus a description lint · **S**
 It exists, is named in CLAUDE.md as *the* Trivial-tier gate, is wired to nothing, and fails 10 of 26 agents
 when run. It already cross-checks `skills:` against `MANIFEST.json` — the exact pattern needed.
@@ -109,6 +174,41 @@ in N days, STALLED runs, cost totals.
 auto-retirement logic.
 **Why the envelope:** three separate runs today burned 540k, and then 1.58M tokens returning nothing. Both
 were invisible in real time and reconstructed by archaeology afterward.
+
+**Amended 2026-08-09 — external prior art reframes this component.** Source-level research into Pydantic AI
+(`docs/08-agents_work/2026-08-09-pydantic-ai-research.md`, v2.27.0, read from raw `.py` on `main`) found three
+mechanisms that bear directly on this design, and one of them says we have been diagnosing our own bug wrong:
+
+- **Failures are typed and loud, never silent.** On retry exhaustion — for tool calls and for output validation
+  alike — Pydantic AI raises `UnexpectedModelBehavior`. It never returns `None` and never drops a result. That
+  reframes our 12-agents-returned-nothing incident: if the harness received *nothing*, something between the
+  failure point and the caller is **swallowing the signal**, which is a different defect from "the payload was too
+  big." The STALLED envelope detects the symptom; propagating a typed failure would remove the cause. **Both are
+  worth having; only one is currently planned.**
+- **A pre-flight cost ceiling, not a post-hoc report.** `UsageLimits` (`request_limit`, `cost_limit`,
+  `tool_calls_limit`, token limits) is checked by `check_before_request()` *before the next model call is
+  dispatched*, raising `UsageLimitExceeded`. Our 540k and 1.58M-token runs would have stopped at a request
+  boundary rather than after the money was spent. The run log as designed only observes; this stops.
+- **Oversized structured output has a real answer that is not "write to a file" — and it is NOT the retry loop.**
+  Explicitly confirmed: `ModelRetry` re-runs generation from scratch, so on an oversized payload it repeats the same
+  all-or-nothing attempt and exhausts the retry budget *faster*. The two mechanisms sit adjacent in the same library
+  and read as interchangeable in summary; they are not. Porting the retry loop to fix a size failure would make our
+  incident worse, not better. The size mechanism is separate and architectural: `StreamedRunResult.stream_output()`
+  validates each chunk with Pydantic's `allow_partial=True`, discarding partial-mode failures, and applies the
+  strict check only to the final chunk — so the caller receives every valid partial snapshot as the object arrives.
+  Two closed issues (#2833, #3194) show the seam has had real bugs, so budget for edge cases if we build an
+  equivalent. Our pointer-to-file workaround stays valid and cheaper; this is the more capable version.
+
+Two further confirmations, recorded because they validate decisions made the same day rather than changing them:
+decision 19's split of deterministic from judged acceptance criteria is **the same shape** as Pydantic Evals, where
+`Equals`/`Contains`/`MaxDuration` and `LLMJudge`/`GEval` all subclass one generic `Evaluator` and run from one
+concatenated list — though notably *they* apply no type distinction at all, while our design deliberately gives the
+two halves different teeth. And tool-contract resolution there is **static** (`function_schema()` runs at
+construction, so a bad signature fails at definition time, before any model call), which is exactly the posture
+`schema-lint.js` takes toward declared capabilities.
+
+*Caveat carried from the brief: these strings were read from `main` on 2026-08-09, not a pinned SHA, in a
+near-daily-release repo. Treat exact defaults and error text as true-as-of-that-date.*
 **Why the reader ships with it:** a write-only log is `DECISIONS.md` repeating at higher stakes — 935 lines
 against a 50-entry cap, breached and "noted" by three consecutive sessions.
 
@@ -157,6 +257,23 @@ lenses independently named this decisive.
 
 ---
 
+### 10 · Context injection — one advisory hook, configured by a data file · **S** *(added 2026-08-09, decision 22)*
+The only component the reference-system harvest ADDED rather than corrected. Measured: Beamix has exactly one hook
+emitting `additionalContext` (`gsa-context-monitor.js`); 31 of GSD's 47 hooks are this class. These shape what an
+agent **knows**, not what it **may do** — which fits *constrain outcomes, not methods* better than any gate in this
+plan, because it widens what a worker knows without narrowing what it may try.
+**Mechanism:** one context-emitting hook reading `.claude/context-injection.yml` — `{on: <event>, when: <condition>,
+inject: <content>}`. Never blocks; emits `additionalContext` only.
+**It already has members decided elsewhere**, which is why it is one component and not five hand-rolled hooks:
+decision 21's reader-staleness warning at SessionStart, decision 18's envelope-reach feedback, and a tier warning
+when an agent opens an irreversible-tier file.
+**Highest-value entry:** inject the relevant `DECISIONS.md` entry when an agent edits a file that decision covers.
+`DECISIONS.md` holds 61 entries, "read before acting" and "leave breadcrumbs" are prose rules nothing enforces, and
+agents demonstrably do not read them. This turns both into context at the moment of editing without blocking anything.
+**Accepted cost, recorded rather than glossed:** injected context is paid in tokens on every matching call, in ~10
+repos, forever — and this plan has never priced context cost or friction. That open question now has a component
+attached to it.
+
 ## Sequence
 
 Each step exists because it unblocks the next.
@@ -171,6 +288,11 @@ Each step exists because it unblocks the next.
    trim, which rewrites exactly these fields.
 3. **Extend the tier-floor YAML** — advisory lane, provenance axis, static escalation list. This is the data
    file components 2, 3, and 8 all read.
+3.5 **`gsa-sync --check` across the 9 live repos** (added 2026-08-09, decision 20). Read-only: per-file sha256
+   against the canonical set plus receiving-project re-classification, reporting drift, missing `qa-tier-floor.yml`,
+   and per-repo skill presence. Zero writes, so nothing half-rebuilt fans out. Lands here because it needs steps
+   1-3 and nothing above them, and because it produces the cross-repo inventory decision 12's "useless in every
+   project" cut test requires — which is otherwise unrunnable. `--apply` stays at step 9, unmoved.
 4. **Extend `pre-tool-use.sh`.** Needs step 3's data. This is when nested spawning becomes safe *without*
    org-chart rules — which unblocks step 6.
 5. **Fix the QA verdict + enable the ruleset.** Both halves together.
@@ -238,7 +360,16 @@ More reading cannot resolve them. Only running the system can.
 - **Adam as single point of consumption.** Sole flag-holder, sole log reader, sole question target, sole
   bypass authority. Nobody examined what happens when he does not read — which is precisely how the 50-entry
   cap, the vindication triggers, and T3/T4's silent death all played out.
-- **Cross-project fit.** Nobody checked whether these tier floors and defaults suit the other ~9 projects.
+- ~~**Cross-project fit.** Nobody checked whether these tier floors and defaults suit the other ~9 projects.~~
+  **Measured 2026-08-09** (decision 20). 11 repos carry the system, not "~10 projects" as an aspiration. Eight are
+  near-identical hand-copied clones of Beamix's 26/144/7/13 baseline (`aiclub`, `beeond`, `etsyc`, `evalove`,
+  `finfun`, `ghostb`, `noam-website`, `realestate`); `adamos` is deliberately divergent at 6 agents / 58 skills but
+  **11 hooks to Beamix's 7**; and three — `hitstampjavagame`, `ml2`, `test1` — are stale forks carrying the
+  pre-cleanup 426-574-skill corpus with no `qa-tier-floor.yml`, and are exactly the three repos with **zero commits
+  in 90 days**. They are out of scope by data. What remains genuinely unchecked is whether the *tier floors
+  themselves* suit the 9 live receivers — `--check` at step 3.5 answers it before `--apply` at step 9 can act on it.
+  **Note the ROI is understated, not overstated:** `etsyc` (689 commits/90d) and `evalove` (385, committed
+  2026-08-09) both out-commit Beamix. This system's busiest consumer is not the repo it is built in.
 
 ## The one thing I would pull forward regardless of sequence
 
