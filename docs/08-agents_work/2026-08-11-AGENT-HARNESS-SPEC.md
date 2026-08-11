@@ -487,10 +487,17 @@ enforces nothing:**
 | A multiplayer agent harness | A skill capability grammar (`requiredCapabilities: [egress:<host>]`) with a publish gate that refuses to promote a skill whose required capabilities are not granted | **Every** call site passes the skill's own declaration back in as the grant — self-signing. A schema-typed no-op that can never fail. The granted set is then never read again except to echo it in an admin UI |
 | A methodology framework | A skill validator emitting CRITICAL / HIGH / MEDIUM severity findings | CI lint on committed files only. The severity vocabulary implies runtime consequences that do not exist |
 | A capability-security platform | An approval queue every side-effecting call must pass through, with its own docs saying *"It's critically important that you add ApprovalQueue to all API operations that interact with the outside world, otherwise the gatekeeper security model is broken"* | Enforced by code review. Nothing structurally stops a new adapter from shipping a method that reaches the outside world without ever calling the queue |
+| A feature-packaging subsystem, ~10 source files and 16 test files | Capabilities declare `gates` that can block a step | **The same subsystem is real at one layer and prose at another.** *Activation* — may this bundle's code run at all — is genuinely enforced in code. *Behavior* — what a declared blocking gate does when it fails — exists only as a markdown contract addressed to the model. Its own resolver's comment calls itself a *"Pure renderer."* No code path turns a gate failure into an exit code or an exception |
 
-Note the last one especially: a team that built genuine object-capability security, whose *type system* makes
-certain methods impossible to omit, still has a load-bearing rule enforced by "reviewers read every line."
-**The gap survives even where the surrounding engineering is excellent.**
+Two of these deserve a second look.
+
+A team that built genuine object-capability security, whose *type system* makes certain methods impossible to
+omit, still has a load-bearing rule enforced by "reviewers read every line." **The gap survives even where the
+surrounding engineering is excellent.**
+
+And the last row is the sharpest form of the finding: **one subsystem, two halves, one real and one prose.**
+The half that is real is real because it was attacked — see 9.10, item 2. Enforcement does not arrive by
+intention. It arrives by incident.
 
 **The counter-example is the one to imitate.** One toolkit's workflow engine *rejects* a `permissions:` key on
 shell steps at validation time, with this reasoning in its own source: a shell step always runs with the user's
@@ -571,6 +578,20 @@ backup.** That shape ports even where the infrastructure does not.
 > envelope that is both checked against actual behaviour *and* on by default. The closest live enforcement is a
 > scope-wide admin allowlist that never consults any skill's declaration. **Building the enforcement half is
 > genuinely open work, not a re-implementation of prior art** — which is also a warning about how hard it is.
+
+**A trap worth naming, because this study fell into it.** One system has a large, well-tested subsystem whose
+files and tests are all named "capability." It is **not** a capability envelope. It is feature and runtime
+packaging: its nearest fields mean *"this bundle needs that other bundle"* and *"this only works on that host
+CLI"* — not *"this task may call these tools."* Two of the test names that looked most promising turned out to
+be something else entirely on inspection: a "precedence parity" test is a single-owner identity guard proving
+two modules re-export the same function objects, not a canonical-versus-override precedence check; a "ledger" is
+a package-manager install lockfile recording what an install wrote for clean upgrade and removal, **not a
+per-invocation usage journal**. Nothing in it logs a reach, and nothing reads it.
+
+> **SPEC: two different things in your industry will share the word "capability."** One is *packaging* — what
+> a bundle needs to run. One is *authority* — what a task may touch. They have different owners, different
+> lifetimes, and different failure modes. Name yours precisely, because the more mature systems have both and
+> the names collide.
 
 ### 9.4 · Propagation — four postures, ranked
 
@@ -722,19 +743,28 @@ Ranked by value per unit of effort, each verified in a real implementation:
 1. **A required test that cross-references every capability-bearing file that ships against every place that
    must register it.** The system that has this built it *after* shipping a hook that was installed and never
    registered. It converts an entire class of silent failure into a build failure.
-2. **Per-file update with backup, integrity, and loud-failing rollback** — plus refusing outright to update a
+2. **Move the trust anchor outside the repository, and hash the whole bundle.** One system gates whether a
+   third-party bundle's code may activate at all: it is filtered out of the active set unless a SHA-512 hash of
+   the full bundle matches a consent record **stored outside the repo**. That design exists because of a filed
+   attack — *an in-repo ledger entry could be forged by simply cloning the repo.*
+   **Read that attack against your own gate.** A merge verdict that lives as text in the repository it is
+   guarding has exactly this defect: anyone who can write the repo can write the verdict. Someone else hit this
+   class of bug, named it, and fixed it by moving the anchor out. That is direct external precedent for binding
+   a verdict to a commit rather than to a file, and for keeping the thing that says "approved" somewhere the
+   approved artifact cannot reach.
+3. **Per-file update with backup, integrity, and loud-failing rollback** — plus refusing outright to update a
    hard-linked file rather than corrupting whatever else points at it.
-3. **The structural boundary**: never write generated content into a directory a project customizes.
-4. **Evidence expiry with Refresh / Deprecate / Waive** on any append-only decision record.
-5. **The git-snapshot stall detector**: hash the working tree; if the agent claims done or retries with nothing
+4. **The structural boundary**: never write generated content into a directory a project customizes.
+5. **Evidence expiry with Refresh / Deprecate / Waive** on any append-only decision record.
+6. **The git-snapshot stall detector**: hash the working tree; if the agent claims done or retries with nothing
    changed since the last failure, escalate to exhaustion rather than looping.
-6. **Two enforcement layers per capability grant**: a per-capability gate that throws, plus a coarser hard
+7. **Two enforcement layers per capability grant**: a per-capability gate that throws, plus a coarser hard
    sandbox as backup.
-7. **Cycle detection in any hook that can re-trigger itself**, with a unit test.
-8. **Every hook declares its own enforcement posture in its first five lines.**
-9. **Name the escape hatch and require an explicit flag to use it** — block by default, with one documented,
+8. **Cycle detection in any hook that can re-trigger itself**, with a unit test.
+9. **Every hook declares its own enforcement posture in its first five lines.**
+10. **Name the escape hatch and require an explicit flag to use it** — block by default, with one documented,
    greppable override.
-10. **A rationalization table**: map the specific plausible excuses a model uses to skip a step to one-line
+11. **A rationalization table**: map the specific plausible excuses a model uses to skip a step to one-line
     rebuttals. Pure text, no infrastructure, and aimed at the real failure mode.
 
 ### 9.11 · The refuse list
@@ -866,6 +896,25 @@ Three things separate it from the other eight, and each is worth carrying:
   and answered it with a build-failing registration-completeness test — is stronger evidence for the resolver
   argument than the fabrication it replaced. **Retracting a claim usually improves the case it was supporting**,
   because what survives verification is load-bearing and what does not was decoration.
+
+**A tenth arrived within the hour, from the author of this section, in the act of applying the rule.** Listing
+one system's test directory turned up fifteen files named `capability-*`. Reading only the filenames, the
+conclusion written into the follow-up brief was: *"names like consent, trust, ledger and precedence-parity do
+not describe a frontmatter linter — they describe a capability subsystem with grant and audit semantics,"*
+followed by two specific guesses about what two of those tests checked.
+
+The subsystem exists. It is not an authority system — it is feature and runtime packaging (9.3). And **both
+specific guesses were wrong**: the "ledger" is an install lockfile, not a usage journal; the "precedence parity"
+test is a module-identity guard, not a canonical-versus-override check.
+
+**That is a count produced by pattern-matching, published as a finding, in a brief written to enforce the rule
+against exactly that.** It is the second time in this project that this specific inversion has occurred — the
+first was a fabrication committed into the document describing how to prevent fabrications.
+
+> The generalization is unwelcome and worth stating: **the rule does not protect its author.** Knowing the
+> failure mode, having written it down, and being actively engaged in enforcing it on others provided no
+> protection whatsoever. Only the resolver did — here, a worker instructed to open the files. **Build the check.
+> Do not rely on knowing better.**
 
 **SPEC — four practices that follow, and they cost nothing:**
 
